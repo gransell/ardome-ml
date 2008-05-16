@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openimagelib name="oil" version="0.2.0">
+		<plugin name="OpenLibraries EXR plugin" type="input" in_filter="*.exr" extension='".*\.exr"' merit="40" filename='"libopenimagelib_exr.so", "libopenimagelib_exr.dylib", "openimagelib_exr-vc71-d-0_4_1.dll", "openimagelib_exr-vc71-r-0_4_1.dll", "openimagelib_exr-vc80-d-0_4_1.dll", "openimagelib_exr-vc80-r-0_4_1.dll"'/>
+	</openimagelib>
+</openlibraries>

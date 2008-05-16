@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openmedialib name="oml" version="0.2.0">
+		<plugin name="OpenLibraries mlt plugin" type="input" in_filter="*.jef *.ogg *.mov *.mp4 *.westley" extension='".*\.jef", ".*\.ogg", ".*\.mov", ".*\.mp4", ".*\.westley"' merit="0" filename='"libopenmedialib_mlt.so", "libopenmedialib_mlt.dylib", "openmedialib_mlt-vc71-d-0_4_1.dll", "openmedialib_mlt-vc71-r-0_4_1.dll", "openmedialib_mlt-vc80-d-0_4_1.dll", "openmedialib_mlt-vc80-r-0_4_1.dll"'/>
+	</openmedialib>
+</openlibraries>

@@ -1,0 +1,12 @@
+
+Name: boost_thread
+Description: boost thread lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+CFlags: -pthread
+
+Libs:	-lboost_thread-mt${debug}-1_34_1
+

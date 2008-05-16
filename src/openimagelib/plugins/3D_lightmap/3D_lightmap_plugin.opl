@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openimagelib name="oil" version="0.2.0">
+		<plugin name="OpenLibraries 3D lightmap plugin" type="input" extension='".*\.3D_lightmap"' merit="80" filename='"libopenimagelib_3D_lightmap.so", "libopenimagelib_3D_lightmap.dylib", "./plugins/openimagelib_3D_lightmap-vc80-d-0_4_1.dll" "./plugins/openimagelib_3D_lightmap-vc71-d-0_4_1.dll"'/>
+	</openimagelib>
+</openlibraries>

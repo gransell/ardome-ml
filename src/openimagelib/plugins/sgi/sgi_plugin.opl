@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openimagelib name="oil" version="0.2.0">
+		<plugin name="OpenLibraries SGI plugin" type="input" in_filter="*.sgi *.rgb *.rgba *.la *.bw" extension='".*\.sgi", ".*\.rgb", ".*\.rgba", ".*\.la", ".*\.bw"' merit="40" filename='"libopenimagelib_sgi.so", "libopenimagelib_sgi.dylib", "openimagelib_sgi-vc71-d-0_4_1.dll", "openimagelib_sgi-vc71-r-0_4_1.dll", "openimagelib_sgi-vc80-d-0_4_1.dll", "openimagelib_sgi-vc80-r-0_4_1.dll"'/>
+	</openimagelib>
+</openlibraries>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openimagelib name="oil" version="0.2.0">
+		<plugin name="OpenLibraries PNG plugin" type="input" in_filter="*.png" extension='".*\.png"' merit="80" filename='"libopenimagelib_png.so", "libopenimagelib_png.dylib", "openimagelib_png-vc71-d-0_4_1.dll", "openimagelib_png-vc71-r-0_4_1.dll", "openimagelib_png-vc80-d-0_4_1.dll", "openimagelib_png-vc80-r-0_4_1.dll"'/>
+		<plugin name="OpenLibraries PNG plugin" type="output" extension='".*\.png"' merit="80" filename='"libopenimagelib_png.so", "libopenimagelib_png.dylib", "openimagelib_png-vc71-d-0_4_1.dll", "openimagelib_png-vc71-r-0_4_1.dll", "openimagelib_png-vc80-d-0_4_1.dll", "openimagelib_png-vc80-r-0_4_1.dll"'/>
+	</openimagelib>
+</openlibraries>

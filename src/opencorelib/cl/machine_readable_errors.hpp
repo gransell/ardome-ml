@@ -1,0 +1,36 @@
+#ifndef _CORE_MACHINE_READABLE_ERRORS_H_
+#define _CORE_MACHINE_READABLE_ERRORS_H_
+
+#include "./minimal_string_defines.hpp"
+
+namespace olib 
+{
+    class CORE_API error 
+	{
+    public:
+        static const TCHAR * null_pointer() { return _T("olib.error.null_pointer"); }
+        static const TCHAR * plugin_creation_failure() { return _T("olib.error.plugin_creation_failure"); }
+        static const TCHAR * xerces_not_initialized() { return _T("olib.error.xerces_not_initialized"); }
+        static const TCHAR * logical_error() { return _T("olib.error.logical_error"); }
+        static const TCHAR * dlopen_failed() { return _T("olib.error.dlopen_failed"); }
+        static const TCHAR * dlsym_failed() { return _T("olib.error.dlsym_failed"); }
+        static const TCHAR * filter_not_available() { return _T("olib.error.filter_not_available"); }
+        static const TCHAR * filter_not_defined() { return _T("olib.error.filter_not_defined"); }
+		/// Issued when a transition can't be found in the_effect_handler.
+		static const TCHAR * transition_not_defined() { return _T("olib.error.transition_not_defined"); }
+		/// Something is wrong in the settings of amf
+		static const TCHAR * settings_error() { return _T("olib.error.settings_error"); }
+		/// The given transition is not correct (in one way or the other)
+		static const TCHAR * invalid_transition() { return _T("olib.error.invalid_transition"); }
+
+        /// A search for a suitable target track failed.
+        static const TCHAR * target_track_not_found() { return _T("olib.error.target_track_not_found"); }
+		
+		static const TCHAR * value_out_of_range() { return _T("olib.error.value_out_of_range"); }
+		static const TCHAR * parse_error() { return _T("olib.error.parse_error"); }
+		static const TCHAR * invalid_parameter_value() { return _T("olib.error.invalid_parameter_value"); }
+        static const TCHAR * file_not_found() { return _T("olib.error.file_not_found"); }
+    };
+}
+
+#endif //_CORE_MACHINE_READABLE_ERRORS_H_

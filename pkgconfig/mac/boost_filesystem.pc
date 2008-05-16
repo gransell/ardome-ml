@@ -1,0 +1,10 @@
+
+Name: boost_filesystem
+Description: boost filesystem lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+Libs:	-lboost_filesystem-mt${debug}-1_34_1
+

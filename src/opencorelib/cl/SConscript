@@ -1,0 +1,174 @@
+Import(['main_env'])
+
+local_env = main_env.Clone( )
+local_env.UseBoost( 'boost_thread', 'boost_signals' )
+local_env.UseXerces( )
+local_env.UseLoki( )
+local_env.UseUUID( )
+local_env.CoreLibs( )
+local_env.InstallName( 'libopencorelib_cl' )
+
+local_env.Append( CPPDEFINES = [ 'PREFIX=\\\"' + local_env.prefix + '\\\"', 'AMF_VERSION=\\\"0.0.1\\\"' ] )
+
+sources = [ 
+	'assembly_class_creator.cpp',
+	'assembly_class_factory.cpp',
+	'assert.cpp',
+	'assert_persistance.cpp',
+	'assert_presenter.cpp',
+	'base_exception.cpp',
+	'basic_enums.cpp',
+	'central_plugin_factory.cpp',
+	'color.cpp',
+	'core.cpp',
+	'core_enums.cpp',
+	'create_selection_dialog.cpp',
+	'deserializer.cpp',
+	'detail/plugin_metadata_saxhandler.cpp',
+	'enforce.cpp',
+	'exception_context.cpp',
+	'exception_presenter.cpp',
+	'frames.cpp',
+	'function_job.cpp',
+	'invoker.cpp',
+	'ip_address.cpp',
+	'jobbase.cpp',
+	'logger.cpp',
+	'loghandler.cpp',
+	'logprinter.cpp',
+	'logtarget.cpp',
+	'media_definitions.cpp',
+	'media_time.cpp',
+	'message_queue.cpp',
+	'object.cpp',
+	'plugin_class_base_implementation.cpp',
+	'plugin_loader.cpp',
+	'plugin_metadata.cpp',
+	'point.cpp',
+	'precompiled_headers.cpp',
+	'property_bag.cpp',
+	'rectangle.cpp',
+	'serious_error_handler.cpp',
+	'size.cpp',
+	'span.cpp',
+	'special_folders.cpp',
+	'stream_logtarget.cpp',
+	'string_conversions.cpp',
+	'str_util.cpp',
+	'thread_pool.cpp',
+	'time_code.cpp',
+	'time_helpers.cpp',
+	'utilities.cpp',
+	'uuid_16b.cpp',
+	'worker.cpp',
+	'xerces_sax_handler.cpp',
+	'xerces_sax_traverser.cpp',
+	'xml_sax_parser.cpp' ] 
+
+mac_sources = [
+	'mac/mac_selection_dlg.cpp',
+	'mac/invoker_impl.cpp',
+	'mac/special_folders_impl.cpp',
+	'mac/stack_walker.cpp' ]
+
+mac_objc = [ 'mac/stack_dump.mm', 'mac/mac_invoker.mm', 'mac/special_folders_mac.mm' ]
+
+linux_sources = [ 'unix/special_folders_unix.cpp' ]
+
+win32_sources = [
+	'msw/core.rc',
+	'msw/debughlp.cpp',
+	'msw/serious_error_handler.cpp',
+	'msw/subclass.cpp',
+	'msw/dlmsw.cpp',
+	'msw/special_folders.cpp',
+	'msw/icon2.ico',
+	'msw/stack_walker.cpp',
+	'msw/windows_invoker.cpp' ]
+
+extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sources }
+objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
+
+object = local_env.SharedLibrary( 'opencorelib_cl', sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], CXXFLAGS='-fobjc-gc' ) )
+
+local_env.Install( local_env.stage_libdir( ), object )
+
+local_env.Install( local_env.stage_include( ) + '/ardome-ml/opencorelib/cl', [ 
+	'assembly_class_creator.hpp',
+	'assembly_class_factory.hpp',
+	'assert_defines.hpp',
+	'assert.hpp',
+	'assert_persistance.hpp',
+	'assert_presenter.hpp',
+	'base_exception.hpp',
+	'basic_enums.hpp',
+	'boost_headers.hpp',
+	'boost_link_defines.hpp',
+	'central_plugin_factory.hpp',
+	'color.hpp',
+	'config.hpp',
+	'core_enums.hpp',
+	'core.hpp',
+	'create_selection_dialog.hpp',
+	'deserializer.hpp',
+	'disabled_warnings.hpp',
+	'doxygen_documentation.hpp',
+	'enforce_defines.hpp',
+	'enforce.hpp',
+	'exception_context.hpp',
+	'exception_presenter.hpp',
+	'export_defines.hpp',
+	'factory.hpp',
+	'frames.hpp',
+	'function_job.hpp',
+	'guard_define.hpp',
+	'initializer.hpp',
+	'invoker.hpp',
+	'ip_address.hpp',
+	'jobbase.hpp',
+	'local_plugin_factory.hpp',
+	'log_defines.hpp',
+	'logger.hpp',
+	'loghandler.hpp',
+	'logprinter.hpp',
+	'logtarget.hpp',
+	'machine_readable_errors.hpp',
+	'macro_definitions.hpp',
+	'media_definitions.hpp',
+	'media_time.hpp',
+	'message_queue.hpp',
+	'minimal_string_defines.hpp',
+	'object.hpp',
+	'platform_defines.hpp',
+	'platform.hpp',
+	'plugin_class_base_implementation.hpp',
+	'plugin_loader.hpp',
+	'plugin_metadata.hpp',
+	'point.hpp',
+	'precompiled_headers.hpp',
+	'property_bag.hpp',
+	'rectangle.hpp',
+	'selection_dialog.hpp',
+	'serializer.hpp',
+	'serious_error_handler.hpp',
+	'size.hpp',
+	'span.hpp',
+	'special_folders.hpp',
+	'stack_walker.hpp',
+	'stream_logtarget.hpp',
+	'string_conversions.hpp',
+	'string_defines.hpp',
+	'str_util.hpp',
+	'thread_pool.hpp',
+	'throw_try_catch_defines.hpp',
+	'time_code.hpp',
+	'time_helpers.hpp',
+	'typedefs.hpp',
+	'utilities.hpp',
+	'uuid_16b.hpp',
+	'worker.hpp',
+	'xerces_sax_handler.hpp',
+	'xerces_sax_traverser.hpp',
+	'xml_sax_parser.hpp'
+] )
+

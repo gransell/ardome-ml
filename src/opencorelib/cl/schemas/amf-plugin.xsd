@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<xs:schema 	xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+			      xmlns:tns="http://www.ardendo.com/amf/core/"
+			targetNamespace="http://www.ardendo.com/amf/core/" 
+			elementFormDefault="qualified" >
+	
+	 <xs:complexType name="release_debug_name_type">
+		<xs:sequence/>
+		<xs:attribute name="release" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The name of the assembly built for release mode.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="debug" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The name of the assembly built for debug mode.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	
+	<xs:complexType name="assembly_name_type">
+		<xs:sequence>
+			<xs:element name="windows" type="tns:release_debug_name_type" />
+			<xs:element name="mac" type="tns:release_debug_name_type" />
+			<xs:element name="linux" type="tns:release_debug_name_type" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="assembly_name" type="tns:assembly_name_type"/>
+	
+	<xs:complexType name="class_type">
+		<xs:sequence>
+			<xs:element name="description" type="xs:string"/>
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>The id used to create the class.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType> 
+	
+	<xs:element name="class" type="tns:class_type"/> 
+	
+	<xs:complexType name="classes_type">
+		<xs:sequence>
+			<xs:element ref="tns:class" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="classes" type="tns:classes_type"/>
+	
+	<xs:complexType name="amf_plugin_description_type">
+		<xs:annotation>
+			<xs:documentation>Describes an amf plugin.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element ref="tns:assembly_name"/>
+			<xs:element ref="tns:classes" /> 
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:element name="amf_plugin_description" type="tns:amf_plugin_description_type"/>
+	
+</xs:schema>

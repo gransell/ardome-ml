@@ -1,0 +1,58 @@
+Import(['main_env'])
+
+local_env = main_env.Clone( )
+local_env.UseBoost( 'boost_thread', 'boost_filesystem', 'boost_regex' )
+local_env.UseXML( )
+local_env.InstallName( 'libopenpluginlib_pl' )
+
+local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env.PrefixLocationOIL( ) ] )
+local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env.PrefixLocationOML( ) ] )
+
+object = local_env.SharedLibrary( 'openpluginlib_pl', [ 	
+	'bind_info.cpp',
+	'content_handler_libxml.cpp',
+	'fast_math.cpp',
+	'log.cpp',
+	'openplugin.cpp',
+	'openpluginlib.cpp',
+	'opl_importer.cpp',
+	'registry.cpp',
+	'utf8_utils.cpp',
+	'opl_parser_action.cpp',
+	'pool.cpp',
+	'timer.cpp',
+	'pcos/key.cpp',
+	'pcos/property.cpp',
+	'pcos/property_container.cpp',
+	'pcos/subject.cpp'
+] )
+
+local_env.Install( local_env.stage_libdir( ), object )
+
+local_env.Install( local_env.stage_include( ) + '/ardome-ml/openpluginlib/pl', [ 
+	'bind_info.hpp',
+	'discovery_traits.hpp', 
+	'openplugin.hpp', 
+	'openpluginlib.hpp', 
+	'config.hpp', 
+	'log.hpp', 
+	'pool.hpp', 
+	'utf8_utils.hpp', 
+	'string.hpp', 
+	'timer.hpp', 
+	'geometry.hpp', 
+	'string.hpp', 
+] )
+
+local_env.Install( local_env.stage_include( ) + '/ardome-ml/openpluginlib/pl/pcos', [ 
+	'pcos/key.hpp', 
+	'pcos/observer.hpp', 
+	'pcos/iproperty_container.hpp', 
+	'pcos/property.hpp', 
+	'pcos/property_container.hpp', 
+	'pcos/subject.hpp', 
+	'pcos/any.hpp', 
+	'pcos/visitor.hpp', 
+	'pcos/isubject.hpp', 
+	'pcos/iclonable.hpp'
+] )

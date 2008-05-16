@@ -1,0 +1,10 @@
+Import(['main_env'])
+
+local_env = main_env.Clone( )
+local_env.UseAvformat( )
+local_env.UseBoost( 'boost', 'boost_thread' )
+
+object = local_env.SharedLibrary( 'openmedialib_avformat', [ 'avformat_plugin.cpp' ] )
+
+local_env.Install( local_env.PluginLocationOML( ), object )
+local_env.Install( local_env.PluginLocationOML( ), 'avformat_plugin.opl' )

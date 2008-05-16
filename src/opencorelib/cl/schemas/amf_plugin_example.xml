@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<u:amf_plugin_description 	xmlns:u="http://www.ardendo.com/amf/core/" 
+							xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<u:assembly_name>
+		<u:windows release="example.dll" debug="example_d.dll" />
+		<u:mac release="example.so" debug="example_d.so" />
+		<u:linux release="example.so" debug="example_d.so" />
+	</u:assembly_name>
+	<u:classes>
+		<u:class id="a_test_class">
+			<u:description>This class is used to test the plugin framework.</u:description>
+		</u:class>
+	</u:classes>
+</u:amf_plugin_description>

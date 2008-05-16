@@ -1,0 +1,10 @@
+Import(['main_env'])
+
+local_env = main_env.Clone( )
+local_env.UseBoost( 'boost', 'boost_thread' )
+local_env.UseSDL( )
+
+object = local_env.SharedLibrary( 'openmedialib_sdl', [ 'sdl_plugin.cpp' ] )
+
+local_env.Install( local_env.PluginLocationOML( ), object )
+local_env.Install( local_env.PluginLocationOML( ), 'sdl_plugin.opl' )

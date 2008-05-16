@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="OpenLibraries quicktime plugin" type="input" in_filter="*.mov *.mp4" extension='".*\.mov", ".*\.mp4"' merit="1" filename='"libopenmedialib_quicktime.so", "libopenmedialib_quicktime.dylib", "openmedialib_quicktime-vc71-d-0_4_1.dll", "openmedialib_quicktime-vc71-r-0_4_1.dll", "openmedialib_quicktime-vc80-d-0_4_1.dll", "openmedialib_quicktime-vc80-r-0_4_1.dll"'/>
+		<plugin name="OpenLibraries quicktime plugin" type="output" extension='".*\.mov", ".*\.mp4"' merit="1" filename='"libopenmedialib_quicktime.so", "libopenmedialib_quciktime.dylib", "openmedialib_quicktime-vc71-d-0_4_1.dll", "openmedialib_quicktime-vc71-r-0_4_1.dll", "openmedialib_quicktime-vc80-d-0_4_1.dll", "openmedialib_quicktime-vc80-r-0_4_1.dll"'/>
+</openmedialib>
+</openlibraries>

@@ -1,0 +1,9 @@
+Import(['main_env'])
+
+local_env = main_env.Clone( )
+local_env.UseBoost( 'boost', 'boost_thread' )
+
+object = local_env.SharedLibrary( 'openmedialib_gensys', [ 'gensys_plugin.cpp' ] )
+
+local_env.Install( local_env.PluginLocationOML( ), object )
+local_env.Install( local_env.PluginLocationOML( ), 'gensys_plugin.opl' )

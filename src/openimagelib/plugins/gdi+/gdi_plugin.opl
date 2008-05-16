@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<!-- plugins go here -->
+	<openimagelib name="oil" version="0.2.0">
+		<plugin name="OpenLibraries GDI+ plugin" type="input" in_filter="*.bmp *.gif *.jpg *.jpeg *.png, *.tif *.tiff *.wmf *.emf *.ico" extension='".*\.bmp", ".*\.gif", ".*\.jpg", ".*\.jpeg", ".*\.png", ".*\.tif", ".*\.tiff", ".*\.wmf", ".*\.emf", ".*\.ico"' merit="40" filename='"oil-gdi+.dll"'/>
+	</openimagelib>
+</openlibraries>
