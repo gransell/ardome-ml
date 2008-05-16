@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd tmp-build
+cd package
 
 echo "Compressing result ()"
 tar -cjf $TARGET ardome-ml/
