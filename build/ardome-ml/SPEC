@@ -39,5 +39,5 @@ ubuntu64_BUILDSCRIPT2: build/ardome-ml/ubuntu_build_zip.sh
 ### Build for 32 bit system, using standard Makefile on Linux
 ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
 ubuntu32_POSTGRAB: build/ardome-ml/ubuntu_postgrab.sh
-ubuntu64_BUILDSCRIPT: PKG_CONFIG_PATH=bcomp/ffmpeg/lib/pkgconfig scons distdir=`pwd`/package prefix=ardome-ml -j 4 install
+ubuntu32_BUILDSCRIPT: PKG_CONFIG_PATH=bcomp/ffmpeg/lib/pkgconfig scons distdir=`pwd`/package prefix=ardome-ml -j 4 install
 ubuntu32_BUILDSCRIPT2: build/ardome-ml/ubuntu_build_zip.sh
