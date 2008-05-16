@@ -225,7 +225,8 @@ class AMLEnvironment( Environment ):
 					   ( '@BOOST_THREAD_LIBS@', self.boost_thread_libs( ) ),
 					   ( '@OLIB_CORE_CXXFLAGS@', self.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', self.olib_ldflags( ) ) ]
-			search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc.out', tokens )
+			search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
+			self.Install( self.stage_libdir( ) + '/pkgconfig/ardome_ml.pc', 'ardome_ml.pc' )
 
 def search_and_replace( filename, out, tokens ):
 	input = open( filename )
