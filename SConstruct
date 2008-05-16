@@ -18,7 +18,7 @@ class AMLEnvironment( Environment ):
 		self.DefinePkgconfig( )
 
 	def SetInstall( self ):
-		self.install = True
+		self.install = 'install' in sys.argv
 
 	def ConfigurePlatform( self ):
 		if self['PLATFORM'] == 'darwin':
@@ -248,7 +248,6 @@ opts.Save( 'options.conf', main_env )
 Help( opts.GenerateHelpText( main_env ) )
 
 main_env.Alias( target = "install", source = main_env.SetInstall( ) )
-main_env.Alias( target = "uninstall", source = main_env.SetInstall( ) )
 
 if main_env.CheckDependencies( ):
 	main_env.Build( 'src/openmedialib/ml' )
