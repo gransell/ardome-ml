@@ -1,9 +1,0 @@
-
-Name: boost_filesystem
-Description: boost filesystem lib
-Version: 0.0.1
-
-Requires: boost
-
-Libs:	-lboost_filesystem
-
