@@ -1,0 +1,13 @@
+#! /bin/bash
+
+if test "`uname`" = "Darwin" ; then
+	libtoolize_=glibtoolize
+else
+	libtoolize_=libtoolize
+fi
+
+aclocal -I m4
+$libtoolize_ --force --copy
+autoheader
+automake --add-missing --copy
+autoconf

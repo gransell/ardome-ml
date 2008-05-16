@@ -1,0 +1,9 @@
+
+Name: boost_python
+Description: boost python lib
+Version: 0.0.1
+
+Requires: boost
+
+Libs:	-lboost_python-mt
+

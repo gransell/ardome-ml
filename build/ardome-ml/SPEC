@@ -1,0 +1,43 @@
+PRODUCT: ardome-ml
+MAJORVER: 0
+MINORVER: 1
+# PRODGROUP: amf
+
+# Replaces the string $ARDENDO$ with a version string based on the major and minor version 
+# along with user that prodded and product name
+# ARDENDOTAGFILES: CMakeLists.txt
+
+
+MAILTO: mats@ardendo.se, gransell@ardendo.se, bga@ardendo.se, rasmus@ardendo.se
+
+### Buildsteps related to the Visual Studio 2008 compiler:
+vs2008_POSTGRAB: build/ardome-ml/vs2008_postgrab.sh
+vs2008_TARGET: ardome-ml-vs2008.zip
+vs2008_BUILDSCRIPT: build/ardome-ml/vs2008_build_step.sh
+vs2008_BUILDSCRIPT2: build/ardome-ml/vs2008_test_step.sh
+vs2008_BUILDSCRIPT3: build/ardome-ml/vs2008_build_zip.sh
+
+### Buildsteps related to the Visual Studio 2003 compiler:
+vs2003_POSTGRAB: build/ardome-ml/vs2003_postgrab.sh
+vs2003_TARGET: ardome-ml-vs2003.zip
+vs2003_BUILDSCRIPT: build/ardome-ml/vs2003_build_step.sh
+vs2003_BUILDSCRIPT2: build/ardome-ml/vs2003_test_step.sh
+vs2003_BUILDSCRIPT3: build/ardome-ml/vs2003_build_zip.sh
+
+### Build using standard Makefile on Mac OSX
+osx_TARGET: ardome-ml-osx-10.5.tbz2 
+osx_POSTGRAB: build/ardome-ml/osx_postgrab.sh
+osx_BUILDSCRIPT: build/ardome-ml/osx_build_step.sh
+osx_BUILDSCRIPT2: build/ardome-ml/osx_build_zip.sh
+
+### Build for 64 bit system, using standard Makefile on Ubuntu Linux
+ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
+ubuntu64_POSTGRAB: build/ardome-ml/ubuntu_postgrab.sh
+ubuntu64_BUILDSCRIPT: PKG_CONFIG_PATH=bcomp/ffmpeg/lib/pkgconfig scons distdir=tmp-build prefix=ardome-ml -j 4 install
+ubuntu64_BUILDSCRIPT2: build/ardome-ml/ubuntu_build_zip.sh
+
+### Build for 32 bit system, using standard Makefile on Linux
+ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
+ubuntu32_POSTGRAB: build/ardome-ml/ubuntu_postgrab.sh
+ubuntu32_BUILDSCRIPT: PKG_CONFIG_PATH=bcomp/ffmpeg/lib/pkgconfig scons -j 4
+ubuntu32_BUILDSCRIPT2: build/ardome-ml/ubuntu_build_zip.sh

@@ -1,0 +1,9 @@
+ardome-ml: svn+http://ardome-ml.svn.sourceforge.net/svnroot/ardome-ml 
+vs2008_boost: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/boost-1.34.1.tar.gz
+ffmpeg: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/ffmpeg-win32-20080303.zip -> ffmpeg-win32.zip 
+sdl: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/sdl-win32.zip
+vs2008_xerces: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/xerces-c-2_8_0.tar.gz
+
+loki : http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/loki-0.1.6.zip
+
+
