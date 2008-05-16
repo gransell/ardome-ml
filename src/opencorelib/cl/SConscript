@@ -8,7 +8,7 @@ local_env.UseUUID( )
 local_env.CoreLibs( )
 local_env.InstallName( 'libopencorelib_cl' )
 
-local_env.Append( CPPDEFINES = [ 'PREFIX=\\\"' + local_env.prefix + '\\\"', 'AMF_VERSION=\\\"0.0.1\\\"' ] )
+local_env.Append( CPPDEFINES = [ 'PREFIX=\\\"' + local_env[ 'prefix' ] + '\\\"', 'AMF_VERSION=\\\"0.0.1\\\"' ] )
 
 sources = [ 
 	'assembly_class_creator.cpp',

@@ -3,19 +3,22 @@ import sys
 
 class AMLEnvironment( Environment ):
 
-	def __init__( self, args ):
+	def __init__( self, opts ):
 		Environment.__init__( self )
+		opts.Update( self )
+		self.install = False
 		self.Append( ENV = { 'PATH' : os.environ['PATH'] } )
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 		self.ConfigurePlatform( )
-		self.Debug( args.get( 'debug', 0 ) )
+		self.Debug( )
 		self.root = os.path.abspath( '.' )
-		self.prefix = args.get('prefix', '/usr/local')
-		self.distdir = args.get('distdir', '')
 		self.libdir = 'lib'
-		if os.uname( )[ 4 ] == 'x86_64':
+		if self[ 'PLATFORM' ] != 'win32' and os.uname( )[ 4 ] == 'x86_64':
 			self.libdir = 'lib64'
 		self.DefinePkgconfig( )
+
+	def SetInstall( self ):
+		self.install = True
 
 	def ConfigurePlatform( self ):
 		if self['PLATFORM'] == 'darwin':
@@ -24,11 +27,12 @@ class AMLEnvironment( Environment ):
 		elif self['PLATFORM'] == 'posix':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
 		elif self['PLATFORM'] == 'win32':
-			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF16', 'OLIB_ON_WINDOWS' ] ) 
+			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF16' ] ) 
 		else:
 			throw( "Unknown platform" )
 
 	def DefinePkgconfig( self ):
+		if self[ 'PLATFORM' ] == 'win32': return
 		self.pkgconfig_flags = { }
 		self.pkgconfig_path = ''
 		for r, d, files in os.walk( 'bcomp' ):
@@ -57,9 +61,8 @@ class AMLEnvironment( Environment ):
 
 		os.environ[ 'PKG_CONFIG_PATH' ] = self.pkgconfig_path
 
-	def Debug( self, debug ):
-		self.debug = debug
-		if debug:
+	def Debug( self ):
+		if self[ 'debug' ] == '1':
 			self.build_prefix = 'build/debug'
 			self.Append( CCFLAGS = '-ggdb -O0')
 		else:
@@ -90,7 +93,10 @@ class AMLEnvironment( Environment ):
 		return result
 
 	def stage_prefix( self ):
-		return self.root + '/' + self.build_prefix
+		if not self.install:
+			return self.root + '/' + self.build_prefix
+		else:
+			return self[ 'distdir' ] + '/' + self[ 'prefix' ]
 
 	def stage_include( self ):
 		return self.stage_prefix( ) + '/include'
@@ -99,10 +105,10 @@ class AMLEnvironment( Environment ):
 		return self.stage_prefix( ) + '/' + self.libdir
 
 	def PrefixLocationOIL( self ):
-		return self.prefix + '/' + self.libdir + '/ardome-ml/openimagelib/plugins'
+		return self[ 'prefix' ] + '/' + self.libdir + '/ardome-ml/openimagelib/plugins'
 
 	def PrefixLocationOML( self ):
-		return self.prefix + '/' + self.libdir + '/ardome-ml/openmedialib/plugins'
+		return self[ 'prefix' ] + '/' + self.libdir + '/ardome-ml/openmedialib/plugins'
 
 	def PluginLocationOIL( self ):
 		return self.stage_libdir( ) + '/ardome-ml/openimagelib/plugins'
@@ -114,7 +120,7 @@ class AMLEnvironment( Environment ):
 		command = 'pkg-config ' + switch + ' '
 		if part in self.pkgconfig_flags.keys( ):
 			command += '--define-variable=prefix=' + self.pkgconfig_flags[ part ] + ' '
-			if self.debug:
+			if self[ 'debug' ] == '1':
 				command += '--define-variable=debug=-d '
 		command += part
 		return command
@@ -203,12 +209,12 @@ class AMLEnvironment( Environment ):
 
 	def CreatePkgConfig( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
-			tokens = [ ( '@prefix@', main_env.prefix ),
+			tokens = [ ( '@prefix@', self[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
 					   ( '@libdir@', '${prefix}/' + self.libdir ),
 					   ( '@includedir@', '${prefix}/include' ),
-					   ( '@OPENIMAGELIB_PLUGINPATH@', main_env.PrefixLocationOIL( ) ),
-					   ( '@OPENMEDIALIB_PLUGINPATH@', main_env.PrefixLocationOML( ) ), 
+					   ( '@OPENIMAGELIB_PLUGINPATH@', self.PrefixLocationOIL( ) ),
+					   ( '@OPENMEDIALIB_PLUGINPATH@', self.PrefixLocationOML( ) ), 
 					   ( '@OL_MAJOR@.@OL_MINOR@.@OL_SUB@', '1.0.0' ),
 					   ( '@OPENCORELIB_LDFLAGS@', '-L${libdir} -lopencorelib_cl' ),
 					   ( '@OPENPLUGINLIB_LDFLAGS@', '-lopenpluginlib_pl' ),
@@ -230,23 +236,19 @@ def search_and_replace( filename, out, tokens ):
 	output.close( )
 	input.close( )
 
-def add_options( opts ):
-	opts.Add( 'prefix', "Directory of architecture independant files.", "/usr" )
-	opts.Add( 'eprefix', "Directory of architecture dependant files.", "${%s}" % 'prefix' )
-	opts.Add( 'bindir', "Directory of executables.", "${%s}/bin" % 'eprefix' )
-	opts.Add( 'libdir', "Directory of libraries.", "${%s}/lib" % 'eprefix' )
-	opts.Add( 'includedir', "Directory of header files.", "${%s}/include" % 'prefix' )
-	opts.Add( 'distdir', "Directory to actually install to.  Prefix will be used inside this.",
-                  "/" )
-
-main_env = AMLEnvironment( ARGUMENTS )
 opts = Options( 'options.conf', ARGUMENTS )
-add_options( opts )
-opts.Update( main_env )
+
+opts.Add( 'prefix', "Directory of architecture independant files.", "/usr/local" )
+opts.Add( 'distdir', "Directory to actually install to.  Prefix will be used inside this.", "" )
+opts.Add( 'debug', "Debug or release - 1 or 0 resp.", '0' )
+
+main_env = AMLEnvironment( opts )
+
 opts.Save( 'options.conf', main_env )
 Help( opts.GenerateHelpText( main_env ) )
 
-main_env.Alias( target="install", source = main_env.Install(dir = main_env.distdir + '/' + main_env.prefix, source= "build/release/") )
+main_env.Alias( target = "install", source = main_env.SetInstall( ) )
+main_env.Alias( target = "uninstall", source = main_env.SetInstall( ) )
 
 if main_env.CheckDependencies( ):
 	main_env.Build( 'src/openmedialib/ml' )
