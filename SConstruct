@@ -19,6 +19,7 @@ class AMLEnvironment( Environment ):
 
 	def SetInstall( self ):
 		self.install = 'install' in sys.argv
+		return self.stage_prefix( )
 
 	def ConfigurePlatform( self ):
 		if self['PLATFORM'] == 'darwin':
