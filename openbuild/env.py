@@ -20,3 +20,11 @@ class Environment( BaseEnvironment ):
 		self.root = os.path.abspath( '.' )
 		self.package_list = package_manager.walk( self )
 
+	def build( self, path, deps = [] ):
+		"""Invokes a SConscript, cloning the environment and linking against any inter
+		project dependencies specified."""
+		local_env = self.Clone( )
+		local_env.Append( LIBS = deps )
+		return local_env.SConscript( [ path + '/SConscript' ], exports=[ 'local_env' ] )
+
+

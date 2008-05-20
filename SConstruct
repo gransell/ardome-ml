@@ -90,11 +90,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@loader_path/%s.dylib' % lib ] )
 
-	def build( self, path, deps = [] ):
-		local_env = self.Clone( )
-		local_env.Append( LIBS = deps )
-		return local_env.SConscript( [ path + '/SConscript' ], exports=[ 'local_env' ] )
-
 	def olib_core_cxxflags( self ):
 		if self['PLATFORM'] == 'darwin':
 			return '-DOLIB_USE_UTF8'
