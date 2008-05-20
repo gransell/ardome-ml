@@ -1,7 +1,6 @@
-Import(['main_env'])
+Import(['local_env'])
 
-local_env = main_env.Clone( )
-local_env.UseBoost( 'boost_thread', 'boost_filesystem' )
+local_env.packages( 'boost_thread', 'boost_filesystem' )
 local_env.InstallName( 'libopenmedialib_ml' )
 
 object = local_env.SharedLibrary( 'openmedialib_ml', [ 'filter.cpp', 'frame.cpp', 'ml.cpp', 'openmedialib_plugin.cpp', 'utilities.cpp' ] )
@@ -9,3 +8,4 @@ object = local_env.SharedLibrary( 'openmedialib_ml', [ 'filter.cpp', 'frame.cpp'
 local_env.Install( local_env.stage_libdir( ), object )
 local_env.Install( local_env.stage_include( ) + '/ardome-ml/openmedialib/ml', [ 'audio.hpp', 'config.hpp', 'filter.hpp', 'frame.hpp', 'input.hpp', 'ml.hpp', 'openmedialib_plugin.hpp', 'store.hpp', 'utilities.hpp' ] )
 
+Return( 'object' )

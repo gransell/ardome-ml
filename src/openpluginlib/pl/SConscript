@@ -1,8 +1,6 @@
-Import(['main_env'])
+Import(['local_env'])
 
-local_env = main_env.Clone( )
-local_env.UseBoost( 'boost_thread', 'boost_filesystem', 'boost_regex' )
-local_env.UseXML( )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_regex', 'libxml-2.0' )
 local_env.InstallName( 'libopenpluginlib_pl' )
 
 local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env.PrefixLocationOIL( ) ] )
@@ -56,3 +54,5 @@ local_env.Install( local_env.stage_include( ) + '/ardome-ml/openpluginlib/pl/pco
 	'pcos/isubject.hpp', 
 	'pcos/iclonable.hpp'
 ] )
+
+Return( 'object' )

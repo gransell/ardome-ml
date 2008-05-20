@@ -1,10 +1,6 @@
-Import(['main_env'])
+Import(['local_env'])
 
-local_env = main_env.Clone( )
-local_env.UseBoost( 'boost_thread', 'boost_signals' )
-local_env.UseXerces( )
-local_env.UseLoki( )
-local_env.UseUUID( )
+local_env.packages( 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
 local_env.CoreLibs( )
 local_env.InstallName( 'libopencorelib_cl' )
 
@@ -172,3 +168,4 @@ local_env.Install( local_env.stage_include( ) + '/ardome-ml/opencorelib/cl', [
 	'xml_sax_parser.hpp'
 ] )
 
+Return( 'object' )
