@@ -1,9 +1,11 @@
 import os
 
 def arch( ):
+	"""Returns the architecture of the current system"""
 	return os.uname( )[ 4 ]
 
 def walk( self ):
+	"""Walk the bcomp directory to pick out all the .pc files"""
 	flags = { }
 	paths = { }
 	for r, d, files in os.walk( self.root + '/bcomp' ):
@@ -30,16 +32,22 @@ def walk( self ):
 	return flags
 
 def packages( self, *packages ):
+	"""Extracts compile and link flags for the specified packages and adds to the 
+	current environment."""
 	for package in packages:
 		self.ParseConfig( pkgconfig_cmd( self, package ) )
 
 def package_cflags( self, package ):
+	"""Extracts compile flags for the specified packages."""
 	return os.popen( pkgconfig_cmd( self, package, "--cflags" ) ).read( ).replace( '\n', '' )
 
 def package_libs( self, package ):
+	"""Extracts lib flags for the specified packages."""
 	return os.popen( pkgconfig_cmd( self, package, "--libs" ) ).read( ).replace( '\n', '' )
 
 def pkgconfig_cmd( self, package, switches = '--cflags --libs' ):
+	"""General purpose accessor for pkg-config - will override to use bcomp prefix 
+	when necessary."""
 	command = 'pkg-config %s ' % switches
 	if package in self.package_list.keys( ):
 		command += '--define-variable=prefix=' + self.package_list[ package ] + ' '
