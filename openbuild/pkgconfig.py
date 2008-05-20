@@ -11,7 +11,7 @@ def walk( self ):
 			if f.endswith( '.pc' ):
 				pkg = f.replace( ".pc", "" )
 				prefix = r.rsplit( '/', 2 )[ 0 ]
-				pkgconfig_flags[ pkg ] = prefix
+				flags[ pkg ] = prefix
 				paths[ prefix ] = 1
 
 	full = ''
