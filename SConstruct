@@ -1,25 +1,28 @@
 import os
 import sys
+import openbuild.opt
 import openbuild.env
+import openbuild.utils
 
 class AMLEnvironment( openbuild.env.Environment ):
 
 	def __init__( self, opts ):
-		openbuild.env.Environment.__init__( self )
-		opts.Update( self )
-		self.install = False
+		openbuild.env.Environment.__init__( self, opts )
 		self.Append( ENV = { 'PATH' : os.environ['PATH'] } )
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 		self.ConfigurePlatform( )
 		self.Debug( )
-		self.root = os.path.abspath( '.' )
-		self.libdir = 'lib'
-		if self[ 'PLATFORM' ] != 'win32' and os.uname( )[ 4 ] == 'x86_64':
-			self.libdir = 'lib64'
-
-	def SetInstall( self ):
-		self.install = 'install' in sys.argv
-		return self.stage_prefix( )
+		self[ 'il_plugin' ] = 'ardome-ml/openimagelib/plugins'
+		self[ 'ml_plugin' ] = 'ardome-ml/openmedialib/plugins'
+		self[ 'install_il_plugin' ] = os.path.join( self[ 'prefix' ], self[ 'libdir' ], self[ 'il_plugin' ] )
+		self[ 'install_ml_plugin' ] = os.path.join( self[ 'prefix' ], self[ 'libdir' ], self[ 'ml_plugin' ] )
+		self[ 'stage_il_plugin' ] = os.path.join( self[ 'stage_libdir' ], self[ 'il_plugin' ] )
+		self[ 'stage_ml_plugin' ] = os.path.join( self[ 'stage_libdir' ], self[ 'ml_plugin' ] )
+		self[ 'cl_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/opencorelib/cl' )
+		self[ 'il_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openimagelib/il' )
+		self[ 'ml_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openmedialib/ml' )
+		self[ 'pl_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openpluginlib/pl' )
+		self[ 'pcos_include' ] = os.path.join( self[ 'pl_include' ], 'pcos' )
 
 	def ConfigurePlatform( self ):
 		if self['PLATFORM'] == 'darwin':
@@ -34,10 +37,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def Debug( self ):
 		if self[ 'debug' ] == '1':
-			self.build_prefix = 'build/debug'
 			self.Append( CCFLAGS = '-ggdb -O0')
 		else:
-			self.build_prefix = 'build/release'
 			if self['PLATFORM'] == 'darwin':
 				self.Append( CCFLAGS = ['-Oz', ]) 
 				self.Append( OBJCFLAGS = ['-fobjc-gc'] )
@@ -46,41 +47,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			elif self['PLATFORM'] == 'posix':
 				self.Append( CCFLAGS=['-Wall', '-O4', '-pipe'])
 			else:
-				print "Unknown platform", main_env['PLATFORM']
-
-	def CheckDependencies( self ):
-		result = True
-		temp = self.Clone( )
-		try:
-			temp.packages( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libxml-2.0", "libavformat", "loki", "xerces", "sdl", "uuid" )
-		except OSError, e:
-			result = False
-			print "Dependency check" + str( e )
-		return result
-
-	def stage_prefix( self ):
-		if not self.install:
-			return self.root + '/' + self.build_prefix
-		else:
-			return self[ 'distdir' ] + '/' + self[ 'prefix' ]
-
-	def stage_include( self ):
-		return self.stage_prefix( ) + '/include'
-
-	def stage_libdir( self ):
-		return self.stage_prefix( ) + '/' + self.libdir
-
-	def PrefixLocationOIL( self ):
-		return self[ 'prefix' ] + '/' + self.libdir + '/ardome-ml/openimagelib/plugins'
-
-	def PrefixLocationOML( self ):
-		return self[ 'prefix' ] + '/' + self.libdir + '/ardome-ml/openmedialib/plugins'
-
-	def PluginLocationOIL( self ):
-		return self.stage_libdir( ) + '/ardome-ml/openimagelib/plugins'
-
-	def PluginLocationOML( self ):
-		return self.stage_libdir( ) + '/ardome-ml/openmedialib/plugins'
+				print "Unknown platform", self['PLATFORM']
 
 	def CoreLibs( self ):
 		if self[ 'PLATFORM' ] == 'darwin':
@@ -112,10 +79,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
 			tokens = [ ( '@prefix@', self[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
-					   ( '@libdir@', '${prefix}/' + self.libdir ),
+					   ( '@libdir@', os.path.join( '${prefix}', self[ 'libdir' ] ) ),
 					   ( '@includedir@', '${prefix}/include' ),
-					   ( '@OPENIMAGELIB_PLUGINPATH@', self.PrefixLocationOIL( ) ),
-					   ( '@OPENMEDIALIB_PLUGINPATH@', self.PrefixLocationOML( ) ), 
+					   ( '@OPENIMAGELIB_PLUGINPATH@', self[ 'install_il_plugin' ] ),
+					   ( '@OPENMEDIALIB_PLUGINPATH@', self[ 'install_ml_plugin' ] ), 
 					   ( '@OL_MAJOR@.@OL_MINOR@.@OL_SUB@', '1.0.0' ),
 					   ( '@OPENCORELIB_LDFLAGS@', '-L${libdir} -lopencorelib_cl' ),
 					   ( '@OPENPLUGINLIB_LDFLAGS@', '-lopenpluginlib_pl' ),
@@ -125,44 +92,25 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@BOOST_THREAD_LIBS@', self.package_libs( 'boost_thread' ) ),
 					   ( '@OLIB_CORE_CXXFLAGS@', self.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', self.olib_ldflags( ) ) ]
-			search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
-			self.Install( self.stage_libdir( ) + '/pkgconfig/', 'ardome_ml.pc' )
+			openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
+			self.Install( self[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
-def search_and_replace( filename, out, tokens ):
-	input = open( filename )
-	output = open( out, 'w' )
-	result = input.read( )
-	for couple in tokens:
-		result = result.replace( couple[ 0 ], couple[ 1 ] )
-	output.write( result )
-	output.close( )
-	input.close( )
+opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
-opts = Options( 'options.conf', ARGUMENTS )
+env = AMLEnvironment( opts )
 
-opts.Add( 'prefix', "Directory of architecture independant files.", "/usr/local" )
-opts.Add( 'distdir', "Directory to actually install to.  Prefix will be used inside this.", "" )
-opts.Add( 'debug', "Debug or release - 1 or 0 resp.", '0' )
+if env.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libxml-2.0", "libavformat", "loki", "xerces", "sdl", "uuid" ):
+	cl = env.build( 'src/opencorelib/cl' )
+	pl = env.build( 'src/openpluginlib/pl' )
+	ml = env.build( 'src/openmedialib/ml', [ pl ] )
+	il = env.build( 'src/openimagelib/il', [ pl ] )
 
-main_env = AMLEnvironment( opts )
+	env.build( 'src/openmedialib/plugins/avformat', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
 
-opts.Save( 'options.conf', main_env )
-Help( opts.GenerateHelpText( main_env ) )
-
-main_env.Alias( target = "install", source = main_env.SetInstall( ) )
-
-if main_env.CheckDependencies( ):
-	cl = main_env.build( 'src/opencorelib/cl' )
-	pl = main_env.build( 'src/openpluginlib/pl' )
-	ml = main_env.build( 'src/openmedialib/ml', [ pl ] )
-	il = main_env.build( 'src/openimagelib/il', [ pl ] )
-
-	main_env.build( 'src/openmedialib/plugins/avformat', [ pl, il, ml ] )
-	main_env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
-	main_env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
-	main_env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
-
-	main_env.CreatePkgConfig( )
+	env.CreatePkgConfig( )
 
 else:
 	print "Dependencies missing - aborting"

@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
+local_env.packages( 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
 local_env.CoreLibs( )
 local_env.InstallName( 'libopencorelib_cl' )
 
@@ -87,9 +87,9 @@ objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
 
 object = local_env.SharedLibrary( 'opencorelib_cl', sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], CXXFLAGS='-fobjc-gc' ) )
 
-local_env.Install( local_env.stage_libdir( ), object )
+local_env.Install( local_env[ 'stage_libdir' ], object )
 
-local_env.Install( local_env.stage_include( ) + '/ardome-ml/opencorelib/cl', [ 
+local_env.Install( local_env[ 'cl_include' ], [ 
 	'assembly_class_creator.hpp',
 	'assembly_class_factory.hpp',
 	'assert_defines.hpp',

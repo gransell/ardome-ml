@@ -1,8 +1,5 @@
 import os
-
-def arch( ):
-	"""Returns the architecture of the current system"""
-	return os.uname( )[ 4 ]
+import utils
 
 def walk( self ):
 	"""Walk the bcomp directory to pick out all the .pc files"""
@@ -21,7 +18,7 @@ def walk( self ):
 		full += path + ':'
 
 	if self[ 'PLATFORM' ] == 'posix':
-		if arch( ) == 'x86_64':
+		if utils.arch( ) == 'x86_64':
 			full += self.root + '/pkgconfig/ubuntu64'
 		else:
 			full += self.root + '/pkgconfig/ubuntu32'

@@ -5,7 +5,18 @@ local_env.InstallName( 'libopenimagelib_il' )
 
 object = local_env.SharedLibrary( 'openimagelib_il', [ 'il.cpp', 'openimagelib_plugin.cpp', 'utility.cpp' ] )
 
-local_env.Install( local_env.stage_libdir( ), object )
-local_env.Install( local_env.stage_include( ) + '/ardome-ml/openimagelib/il', [ 'basic_image.hpp', 'compression_traits.hpp', 'config.hpp', 'float_traits.hpp', 'il.hpp', 'noise_traits.hpp', 'openimagelib_plugin.hpp', 'rgb_traits.hpp', 'traits.hpp', 'utility.hpp', 'yuv_traits.hpp' ] )
+local_env.Install( local_env[ 'stage_libdir' ], object )
+
+local_env.Install( local_env[ 'il_include' ], [ 
+	'basic_image.hpp', 
+	'compression_traits.hpp', 
+	'config.hpp', 
+	'float_traits.hpp', 
+	'il.hpp', 'noise_traits.hpp', 
+	'openimagelib_plugin.hpp', 
+	'rgb_traits.hpp', 
+	'traits.hpp', 
+	'utility.hpp', 
+	'yuv_traits.hpp' ] )
 
 Return( 'object' )
