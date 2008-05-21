@@ -43,7 +43,7 @@ class Environment( BaseEnvironment ):
 		project dependencies specified."""
 		local_env = self.Clone( )
 		local_env.Append( LIBS = deps )
-		return local_env.SConscript( [ path + '/SConscript' ], exports=[ 'local_env' ] )
+		return local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], exports=[ 'local_env' ] )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
