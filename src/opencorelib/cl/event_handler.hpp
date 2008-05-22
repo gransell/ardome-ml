@@ -3,6 +3,7 @@
 
 #include "./typedefs.hpp"
 #include "./object.hpp"
+#include <boost/thread.hpp>
  
 namespace olib
 {
