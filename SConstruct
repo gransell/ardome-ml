@@ -8,10 +8,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def __init__( self, opts ):
 		openbuild.env.Environment.__init__( self, opts )
-		self.Append( ENV = { 'PATH' : os.environ['PATH'] } )
-		self.Append( CPPPATH = [ '#/src', '.' ] )
-		self.ConfigurePlatform( )
-		self.Debug( )
+		self.configure_platform( )
+
 		self[ 'il_plugin' ] = 'ardome-ml/openimagelib/plugins'
 		self[ 'ml_plugin' ] = 'ardome-ml/openmedialib/plugins'
 		self[ 'install_il_plugin' ] = os.path.join( self[ 'prefix' ], self[ 'libdir' ], self[ 'il_plugin' ] )
@@ -24,10 +22,13 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'pl_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openpluginlib/pl' )
 		self[ 'pcos_include' ] = os.path.join( self[ 'pl_include' ], 'pcos' )
 
-	def ConfigurePlatform( self ):
+		self.Append( CPPPATH = [ '#/src', '.' ] )
+
+	def configure_platform( self ):
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
 			self.Append( LINKFLAGS = '-undefined dynamic_lookup' )
+			self.Append( OBJCFLAGS = [ '-fobjc-gc'] )
 		elif self['PLATFORM'] == 'posix':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
 		elif self['PLATFORM'] == 'win32':
@@ -35,27 +36,11 @@ class AMLEnvironment( openbuild.env.Environment ):
 		else:
 			throw( "Unknown platform" )
 
-	def Debug( self ):
-		if self[ 'debug' ] == '1':
-			self.Append( CCFLAGS = '-ggdb -O0')
+	def check_externals( self ):
+		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libxml-2.0", "libavformat", "loki", "xerces", "sdl", "uuid" )
 		else:
-			if self['PLATFORM'] == 'darwin':
-				self.Append( CCFLAGS = ['-Oz', ]) 
-				self.Append( OBJCFLAGS = ['-fobjc-gc'] )
-			elif self['PLATFORM'] == 'win32':
-	   			self.Append( CCFLAGS=['/O2', '/W3', '/EHsc'])
-			elif self['PLATFORM'] == 'posix':
-				self.Append( CCFLAGS=['-Wall', '-O4', '-pipe'])
-			else:
-				print "Unknown platform", self['PLATFORM']
-
-	def CoreLibs( self ):
-		if self[ 'PLATFORM' ] == 'darwin':
-			self[ 'FRAMEWORKS' ] = [ 'ExceptionHandling', 'Foundation', 'CoreServices' ]
-
-	def InstallName( self, lib ):
-		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@loader_path/%s.dylib' % lib ] )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
 		if self['PLATFORM'] == 'darwin':
@@ -63,7 +48,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self['PLATFORM'] == 'posix':
 			return '-DOLIB_USE_UTF8 -DOLIB_ON_LINUX'
 		elif self['PLATFORM'] == 'win32':
-			return '-DOLIB_USE_UTF16 -DOLIB_ON_WINDOWS'
+			return '-DOLIB_USE_UTF16'
 		else:
 			throw( "Unknown platform" )
 
@@ -75,7 +60,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		else:
 			throw( "Don't know" )
 
-	def CreatePkgConfig( self ):
+	def create_package( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
 			tokens = [ ( '@prefix@', self[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
@@ -99,7 +84,8 @@ opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
 env = AMLEnvironment( opts )
 
-if env.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libxml-2.0", "libavformat", "loki", "xerces", "sdl", "uuid" ):
+if env.check_externals( ):
+
 	cl = env.build( 'src/opencorelib/cl' )
 	pl = env.build( 'src/openpluginlib/pl' )
 	ml = env.build( 'src/openmedialib/ml', [ pl ] )
@@ -110,7 +96,7 @@ if env.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "bo
 	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
 
-	env.CreatePkgConfig( )
+	env.create_package( )
 
 else:
 	print "Dependencies missing - aborting"

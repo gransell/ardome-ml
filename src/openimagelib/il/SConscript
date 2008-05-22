@@ -1,9 +1,8 @@
 Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem' )
-local_env.InstallName( 'libopenimagelib_il' )
 
-object = local_env.SharedLibrary( 'openimagelib_il', [ 'il.cpp', 'openimagelib_plugin.cpp', 'utility.cpp' ] )
+object = local_env.shared_library( 'openimagelib_il', [ 'il.cpp', 'openimagelib_plugin.cpp', 'utility.cpp' ] )
 
 local_env.Install( local_env[ 'stage_libdir' ], object )
 

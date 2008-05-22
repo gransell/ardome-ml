@@ -15,8 +15,9 @@ def install_target( self ):
 	return os.path.join( self.root, self[ 'build_prefix' ] )
 
 def search_and_replace( filename, out, tokens ):
-	"""Utility function which does a search and replace in a text file - tokens
-	are provided in the form of a python associative array."""
+	"""Utility function which does a search and replace in a text file and 
+	generates a new file - tokens are provided in the form of a python 
+	associative array."""
 	input = open( filename )
 	output = open( out, 'w' )
 	result = input.read( )
@@ -25,3 +26,4 @@ def search_and_replace( filename, out, tokens ):
 	output.write( result )
 	output.close( )
 	input.close( )
+

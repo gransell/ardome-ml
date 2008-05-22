@@ -2,7 +2,7 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'libavformat' )
 
-object = local_env.SharedLibrary( 'openmedialib_avformat', [ 'avformat_plugin.cpp' ] )
+object = local_env.plugin( 'openmedialib_avformat', [ 'avformat_plugin.cpp' ] )
 
 local_env.Install( local_env[ 'stage_ml_plugin' ], [ object, 'avformat_plugin.opl' ] )
 

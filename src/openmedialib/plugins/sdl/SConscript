@@ -2,7 +2,7 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'sdl' )
 
-object = local_env.SharedLibrary( 'openmedialib_sdl', [ 'sdl_plugin.cpp' ] )
+object = local_env.plugin( 'openmedialib_sdl', [ 'sdl_plugin.cpp' ] )
 
 local_env.Install( local_env[ 'stage_ml_plugin' ], [ object, 'sdl_plugin.opl' ] )
 

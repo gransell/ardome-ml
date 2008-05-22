@@ -26,7 +26,7 @@ def walk( self ):
 		full += '/usr/lib/pkgconfig:' + self.root + '/pkgconfig/mac'
 
 	os.environ[ 'PKG_CONFIG_PATH' ] = full
-	return flags
+	self.package_list = flags
 
 def packages( self, *packages ):
 	"""Extracts compile and link flags for the specified packages and adds to the 
