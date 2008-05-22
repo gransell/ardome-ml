@@ -33,6 +33,9 @@ namespace olib
         {
         public:
  
+            /// To make boost::bind happy we need this typedef.
+            typedef void result_type;
+            
             typedef boost::function< void ( const Sender&, const EventArgs& ) > callback_signature;
 
             /// Connects a registrant derived from opencorelib::object to this event_handeler.
