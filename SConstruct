@@ -10,17 +10,17 @@ class AMLEnvironment( openbuild.env.Environment ):
 		openbuild.env.Environment.__init__( self, opts )
 		self.configure_platform( )
 
-		self[ 'il_plugin' ] = 'ardome-ml/openimagelib/plugins'
-		self[ 'ml_plugin' ] = 'ardome-ml/openmedialib/plugins'
-		self[ 'install_il_plugin' ] = os.path.join( self[ 'prefix' ], self[ 'libdir' ], self[ 'il_plugin' ] )
-		self[ 'install_ml_plugin' ] = os.path.join( self[ 'prefix' ], self[ 'libdir' ], self[ 'ml_plugin' ] )
-		self[ 'stage_il_plugin' ] = os.path.join( self[ 'stage_libdir' ], self[ 'il_plugin' ] )
-		self[ 'stage_ml_plugin' ] = os.path.join( self[ 'stage_libdir' ], self[ 'ml_plugin' ] )
-		self[ 'cl_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/opencorelib/cl' )
-		self[ 'il_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openimagelib/il' )
-		self[ 'ml_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openmedialib/ml' )
-		self[ 'pl_include' ] = os.path.join( self[ 'stage_include' ], 'ardome-ml/openpluginlib/pl' )
-		self[ 'pcos_include' ] = os.path.join( self[ 'pl_include' ], 'pcos' )
+		self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
+		self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
+		self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
+		self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
+		self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
+		self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
+		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
+		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
+		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
+		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
+		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
 
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 
@@ -62,6 +62,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def create_package( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
+			self.prep_release( )
 			tokens = [ ( '@prefix@', self[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
 					   ( '@libdir@', os.path.join( '${prefix}', self[ 'libdir' ] ) ),

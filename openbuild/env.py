@@ -28,40 +28,59 @@ class Environment( BaseEnvironment ):
 
 		SCons.Script.Help( opts.GenerateHelpText( self ) )
 
+		self[ 'debug_prefix' ] = os.path.join( 'build', 'debug' )
+		self[ 'release_prefix' ] = os.path.join( 'build', 'release' )
+		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
+		self[ 'stage_include' ] = os.path.join( '$stage_prefix', 'include' )
+		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
+		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
+
 		self.root = os.path.abspath( '.' )
 		package_manager.walk( self )
 
-		self[ 'build_prefix' ] = os.path.join( 'build', [ 'release', 'debug' ][ int( self[ 'debug' ] ) ] )
-		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
-		self[ 'stage_prefix' ] = utils.install_target( self )
-		self[ 'stage_include' ] = os.path.join( self[ 'stage_prefix' ], 'include' )
-		self[ 'stage_libdir' ] = os.path.join( self[ 'stage_prefix' ], self[ 'libdir' ] )
-		self[ 'stage_pkgconfig' ] = os.path.join( self[ 'stage_libdir' ], 'pkgconfig' )
+		self.Alias( 'install', '$release_prefix' )
+		self.Alias( 'debug-install', '$debug_prefix' )
 
-		if self[ 'PLATFORM' ] == 'posix' and self[ 'debug' ] == '0':
-			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
-		elif self[ 'PLATFORM' ] == 'posix':
+	def prep_debug( self ):
+		self[ 'debug' ] = '0'
+		self[ 'build_prefix' ] = os.path.join( 'build', 'debug' )
+		self[ 'stage_prefix' ] = utils.install_target( self )
+
+		if self[ 'PLATFORM' ] == 'posix':
 			self.Append( CCFLAGS = [ '-Wall', '-ggdb', '-O0' ] )
-		elif self[ 'PLATFORM' ] == 'darwin' and self[ 'debug' ] == '0':
-			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
-		elif self[ 'PLATFORM' ] == 'win32' and self[ 'debug' ] == '0':
-			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
 			self.Append( CCFLAGS = [ '/W3', '/O0' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
-		self.Alias( 'install', self[ 'stage_prefix' ] )
+	def prep_release( self ):
+		self[ 'debug' ] = '1'
+		self[ 'build_prefix' ] = os.path.join( 'build', 'release' )
+		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
+		self[ 'stage_prefix' ] = utils.install_target( self )
+
+		if self[ 'PLATFORM' ] == 'posix':
+			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
+		elif self[ 'PLATFORM' ] == 'darwin':
+			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
+		elif self[ 'PLATFORM' ] == 'win32':
+			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc' ] )
+		else:
+			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
 	def build( self, path, deps = [] ):
 		"""Invokes a SConscript, cloning the environment and linking against any inter
 		project dependencies specified."""
-		local_env = self.Clone( )
-		if self[ 'PLATFORM' ] != 'posix':
-			local_env.Append( LIBS = deps )
-		return local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], exports=[ 'local_env' ] )
+		result = { }
+		for build_type in [ Environment.prep_release, Environment.prep_debug ]:
+			local_env = self.Clone( )
+			build_type( local_env )
+			if self[ 'PLATFORM' ] != 'posix':
+				local_env.Append( LIBS = deps[ build_type ] )
+			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], build_dir=os.path.join( local_env[ 'stage_prefix' ], path ), duplicate=0, exports=[ 'local_env' ] )
+		return result
 
 	def shared_library( self, lib, sources, *kw ):
 		"""Build the shared library"""
@@ -77,6 +96,7 @@ class Environment( BaseEnvironment ):
 		"""Ensure that all the listed packages are found."""
 		result = True
 		temp = self.Clone( )
+		temp.prep_release( )
 		for package in packages:
 			try:
 				temp.packages( *packages )
