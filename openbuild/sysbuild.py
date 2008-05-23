@@ -1,15 +1,16 @@
 import env
 import os
 
-def build( self, path, deps = {} ):
+def build( self, path, deps = [] ):
 	"""Invokes a SConscript, cloning the environment and linking against any inter
 	project dependencies specified."""
 	result = { }
 	for build_type in [ env.Environment.prep_release, env.Environment.prep_debug ]:
 		local_env = self.Clone( )
 		build_type( local_env )
-		if self[ 'PLATFORM' ] != 'posix' and build_type in deps.keys( ):
-			local_env.Append( LIBS = deps[ build_type ] )
+		if self[ 'PLATFORM' ] != 'posix':
+			for dep in deps:
+				local_env.Append( LIBS = dep[ build_type ] )
 		result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], build_dir=os.path.join( local_env[ 'stage_prefix' ], path ), duplicate=0, exports=[ 'local_env' ] )
 	return result
 
