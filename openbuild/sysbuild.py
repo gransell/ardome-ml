@@ -1,7 +1,7 @@
 import env
 import os
 
-def build( self, path, deps = [] ):
+def build( self, path, deps = {} ):
 	"""Invokes a SConscript, cloning the environment and linking against any inter
 	project dependencies specified."""
 	result = { }
