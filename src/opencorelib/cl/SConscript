@@ -115,6 +115,7 @@ local_env.Install( local_env[ 'cl_include' ], [
 	'exception_context.hpp',
 	'exception_presenter.hpp',
 	'export_defines.hpp',
+	'event_handler.hpp',
 	'factory.hpp',
 	'frames.hpp',
 	'function_job.hpp',
