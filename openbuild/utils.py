@@ -27,3 +27,8 @@ def search_and_replace( filename, out, tokens ):
 	output.close( )
 	input.close( )
 
+def vs() :
+	for a in sys.argv:
+		if "vs=" in a :
+			return a.split("=")[1]
+	return None
