@@ -15,7 +15,7 @@ def walk( self ):
 
 	full = ''
 	for path in paths:
-		full += path + ':'
+		full += path + '/lib/pkgconfig' + ':'
 
 	if self[ 'PLATFORM' ] == 'posix':
 		if utils.arch( ) == 'x86_64':
@@ -24,7 +24,7 @@ def walk( self ):
 			full += self.root + '/pkgconfig/ubuntu32'
 	elif self[ 'PLATFORM' ] == 'darwin':
 		full += '/usr/lib/pkgconfig:' + self.root + '/pkgconfig/mac'
-
+    
 	os.environ[ 'PKG_CONFIG_PATH' ] = full
 	self.package_list = flags
 
