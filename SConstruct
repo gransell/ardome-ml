@@ -62,24 +62,25 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def create_package( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
-			self.prep_release( )
-			tokens = [ ( '@prefix@', self[ 'prefix' ] ),
+			clone = self.Clone( )
+			clone.prep_release( )
+			tokens = [ ( '@prefix@', clone[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
-					   ( '@libdir@', os.path.join( '${prefix}', self[ 'libdir' ] ) ),
+					   ( '@libdir@', os.path.join( '${prefix}', clone[ 'libdir' ] ) ),
 					   ( '@includedir@', '${prefix}/include' ),
-					   ( '@OPENIMAGELIB_PLUGINPATH@', self[ 'install_il_plugin' ] ),
-					   ( '@OPENMEDIALIB_PLUGINPATH@', self[ 'install_ml_plugin' ] ), 
+					   ( '@OPENIMAGELIB_PLUGINPATH@', clone[ 'install_il_plugin' ] ),
+					   ( '@OPENMEDIALIB_PLUGINPATH@', clone[ 'install_ml_plugin' ] ), 
 					   ( '@OL_MAJOR@.@OL_MINOR@.@OL_SUB@', '1.0.0' ),
 					   ( '@OPENCORELIB_LDFLAGS@', '-L${libdir} -lopencorelib_cl' ),
 					   ( '@OPENPLUGINLIB_LDFLAGS@', '-lopenpluginlib_pl' ),
 					   ( '@OPENIMAGELIB_LDFLAGS@', '-lopenimagelib_il' ),
 					   ( '@OPENMEDIALIB_LDFLAGS@', '-lopenmedialib_ml' ),
-					   ( '@BOOST_FILESYSTEM_LIBS@', self.package_libs( 'boost_filesystem' ) ),
-					   ( '@BOOST_THREAD_LIBS@', self.package_libs( 'boost_thread' ) ),
-					   ( '@OLIB_CORE_CXXFLAGS@', self.olib_core_cxxflags( ) ),
-					   ( '@OLIB_LDFLAGS@', self.olib_ldflags( ) ) ]
+					   ( '@BOOST_FILESYSTEM_LIBS@', clone.package_libs( 'boost_filesystem' ) ),
+					   ( '@BOOST_THREAD_LIBS@', clone.package_libs( 'boost_thread' ) ),
+					   ( '@OLIB_CORE_CXXFLAGS@', clone.olib_core_cxxflags( ) ),
+					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
 			openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
-			self.Install( self[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
+			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
