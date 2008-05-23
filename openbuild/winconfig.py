@@ -5,12 +5,13 @@ import utils
 def walk( self ):
 	"""Walk the bcomp directory to pick out all the .wc files"""
 	flags = { }
-	for r, d, files in os.walk( self.root + '/bcomp' ):
-		for f in files:
-			if f.endswith( '.pc' ):
-				pkg = f.replace( '.pc', '' )
-				prefix = r.rsplit( '/', 2 )[ 0 ]
-				flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
+	for repo in [ 'pkgconfig/win32', 'bcomp/common', 'bcomp/' + self[ 'target' ] ]:
+		for r, d, files in os.walk( os.path.join( self.root, repo ) ):
+			for f in files:
+				if f.endswith( '.wc' ):
+					pkg = f.replace( '.wc', '' )
+					prefix = os.path.join( r, '..', '..' )
+					flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 	self.package_list = flags
 
 def remove_ws( tokens ):
@@ -124,6 +125,8 @@ def obtain_rules( self, package, checked = [ ] ):
 					requires_list += rules[ 'Requires' ].split( )
 
 		return rules
+	else:
+		print package
 
 	return { }
 
@@ -138,7 +141,11 @@ def packages( self, *packages ):
 			cflags += rules[ 'CFlags' ] + ' '
 		if 'Libs' in rules.keys( ):
 			libflags += rules[ 'Libs' ] + ' '
-	self.MergeFlags( cflags + libflags )
+	if self[ 'PLATFORM' ] == 'win32':
+		self.Append( CCFLAGS = cflags )
+		self.Append( LIBFLAGS = libflags )
+	else:
+		self.MergeFlags( cflags + libflags )
 
 def package_cflags( self, *packages ):
 	"""Obtains the CFlags in the .wc file"""

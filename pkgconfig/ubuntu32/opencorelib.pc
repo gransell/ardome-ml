@@ -1,0 +1,7 @@
+Name: Opencorelib build config
+Description: Build flags for opencorelib
+Version: 0.0.1
+
+CFlags:
+
+Libs: 

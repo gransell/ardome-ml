@@ -1,0 +1,3 @@
+CFlags: /DOPENPLUGINLIB_EXPORTS
+
+Libs: /lMSXML

@@ -60,7 +60,7 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CCFLAGS = [ '/W3', '/O0' ] )
+			self.Append( CCFLAGS = [ '/W3' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
@@ -86,7 +86,7 @@ class Environment( BaseEnvironment ):
 		temp.prep_release( )
 		for package in packages:
 			try:
-				temp.packages( *packages )
+				temp.packages( package )
 			except OSError, e:
 				result = False
 				print "Dependency check" + str( e )

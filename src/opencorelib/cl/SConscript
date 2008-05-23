@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
+local_env.packages( 'opencorelib', 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
 
 if local_env[ 'PLATFORM' ] == 'darwin':
 	local_env[ 'FRAMEWORKS' ] = [ 'ExceptionHandling', 'Foundation', 'CoreServices' ]

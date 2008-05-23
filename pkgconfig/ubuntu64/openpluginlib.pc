@@ -1,0 +1,7 @@
+Name: Openpluginlib build config
+Description: Build flags for openpluginlib
+Version: 0.0.1
+
+CFlags:
+
+Libs:

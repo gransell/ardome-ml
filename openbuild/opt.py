@@ -23,6 +23,9 @@ def determine_target( ):
 		if os.uname( )[ 0 ] == 'Darwin': target = 'osx'
 		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': target = 'ubuntu64'
 		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': target = 'ubuntu32'
+		else: target = 'vs2003'
 	elif os.name == 'win32':
+		target = 'vs2003'
+	elif os.name == 'nt':
 		target = 'vs2003'
 	return target

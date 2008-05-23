@@ -33,8 +33,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
 		elif self['PLATFORM'] == 'win32':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF16' ] ) 
+			self.Append( CCFLAGS = ['/EHsc', '/MD', '/GS', '/GR', '/W3', '/TP', '/Zm800'] )
+			self.Append( CPPDEFINES = ['OLIB_USE_UTF16', 'AMF_ON_WINDOWS', 'WIN32', '_WINDOWS', 'UNICODE', '_UNICODE', 'ML_PLUGIN_EXPORTS'] )
 		else:
-			throw( "Unknown platform" )
+			raise( "Unknown platform" )
 
 	def check_externals( self ):
 		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
@@ -50,7 +52,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self['PLATFORM'] == 'win32':
 			return '-DOLIB_USE_UTF16'
 		else:
-			throw( "Unknown platform" )
+			raise( "Unknown platform" )
 
 	def olib_ldflags( self ):
 		if self['PLATFORM'] == 'darwin':
@@ -58,7 +60,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self['PLATFORM'] == 'posix':
 			return '-Wl,--export-dynamic'
 		else:
-			throw( "Don't know" )
+			raise( "Don't know" )
 
 	def create_package( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
@@ -81,6 +83,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
 			openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
 			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
+
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 

@@ -1,0 +1,3 @@
+CFlags: /DCORE_EXPORTS /DDYNAMIC_BUILD
+
+Libs: 

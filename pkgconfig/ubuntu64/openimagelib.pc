@@ -1,0 +1,7 @@
+Name: Opeimageelib build config
+Description: Build flags for openimagelib
+Version: 0.0.1
+
+CFlags:
+
+Libs: 

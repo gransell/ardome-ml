@@ -1,0 +1,7 @@
+Name: Openmedialib build config
+Description: Build flags for openmedialib
+Version: 0.0.1
+
+CFlags:
+
+Libs: 

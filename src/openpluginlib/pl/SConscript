@@ -1,13 +1,17 @@
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_regex', 'libxml-2.0' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_regex', 'libxml-2.0', 'openpluginlib' )
 
 local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_il_plugin' ] ] )
 local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_ml_plugin' ] ] )
 
+libxml2_sources = [ 'content_handler_libxml.cpp' ]
+msxml_sources = [ 'content_handler_msxml.cpp' ]
+
+extras = { 'posix' : libxml2_sources, 'darwin' : libxml2_sources, 'win32' : msxml_sources }
+
 object = local_env.shared_library( 'openpluginlib_pl', [ 	
 	'bind_info.cpp',
-	'content_handler_libxml.cpp',
 	'fast_math.cpp',
 	'log.cpp',
 	'openplugin.cpp',
@@ -22,7 +26,7 @@ object = local_env.shared_library( 'openpluginlib_pl', [
 	'pcos/property.cpp',
 	'pcos/property_container.cpp',
 	'pcos/subject.cpp'
-] )
+] + extras[ local_env[ 'PLATFORM' ] ] )
 
 local_env.Install( local_env[ 'stage_libdir' ], object )
 

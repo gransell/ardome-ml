@@ -52,7 +52,7 @@
 // library search record (auto link).
 #if defined( WIN32 ) && !defined( OPENPLUGINLIB_BUILD )
 #	if defined( OPENPLUGINLIB_LIBNAME ) && defined( OPENPLUGINLIB_TOOLSET ) && defined( OPENPLUGINLIB_DEBUG_SUFFIX ) && defined( OPENPLUGINLIB_VERSION )
-#		pragma comment( lib, OPENPLUGINLIB_LIBNAME "-" OPENPLUGINLIB_TOOLSET "-" OPENPLUGINLIB_DEBUG_SUFFIX "-" OPENPLUGINLIB_VERSION ".lib" )
+#		pragma comment( lib, OPENPLUGINLIB_LIBNAME ".lib" )
 #	endif
 #endif
 
