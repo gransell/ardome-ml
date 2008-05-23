@@ -9,11 +9,20 @@ if os.name == 'posix':
 else:
 	import winconfig as package_manager
 
+if 'vs=1' in sys.argv:
+	import vsbuild as build_manager
+else:
+	import sysbuild as build_manager
+
 class Environment( BaseEnvironment ):
 
 	packages = package_manager.packages
 	package_cflags = package_manager.package_cflags
 	package_libs = package_manager.package_libs
+
+	build = build_manager.build
+	shared_library = build_manager.shared_library
+	plugin = build_manager.plugin
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
 
@@ -69,28 +78,6 @@ class Environment( BaseEnvironment ):
 			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
-
-	def build( self, path, deps = [] ):
-		"""Invokes a SConscript, cloning the environment and linking against any inter
-		project dependencies specified."""
-		result = { }
-		for build_type in [ Environment.prep_release, Environment.prep_debug ]:
-			local_env = self.Clone( )
-			build_type( local_env )
-			if self[ 'PLATFORM' ] != 'posix':
-				local_env.Append( LIBS = deps[ build_type ] )
-			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], build_dir=os.path.join( local_env[ 'stage_prefix' ], path ), duplicate=0, exports=[ 'local_env' ] )
-		return result
-
-	def shared_library( self, lib, sources, *kw ):
-		"""Build the shared library"""
-		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
-		return self.SharedLibrary( lib, sources, *kw )
-
-	def plugin( self, lib, sources, *kw ):
-		"""Build the plugin"""
-		return self.SharedLibrary( lib, sources, *kw )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
