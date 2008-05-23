@@ -84,7 +84,7 @@ namespace olib
                 {
                     boost::recursive_mutex::scoped_lock lck(m_mtx);
                     // Clean up dead references:
-                    callback_collection::iterator it( m_callbacks.begin()), eit(m_callbacks.end());
+                    typename callback_collection::iterator it( m_callbacks.begin()), eit(m_callbacks.end());
                     for( ; it != eit; ++it )
                     {
                         object_ptr is_alive = it->first.lock();
@@ -100,7 +100,7 @@ namespace olib
 
                 // Iterate through the copy, this makes it possible to connect to this signal 
                 // during the callback-phase.
-                callback_collection::iterator it( copy_of_callbacks.begin()), eit(copy_of_callbacks.end());
+                typename callback_collection::iterator it( copy_of_callbacks.begin()), eit(copy_of_callbacks.end());
                 for( ; it != eit; ++it )
                 {
                     object_ptr is_alive = it->first.lock();
