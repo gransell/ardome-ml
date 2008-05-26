@@ -75,7 +75,7 @@ linux_sources = [ 'unix/special_folders_unix.cpp' ]
 win32_sources = [
 	'msw/core.rc',
 	'msw/debughlp.cpp',
-	'msw/serious_error_handler.cpp',
+	#'msw/serious_error_handler.cpp',
 	'msw/subclass.cpp',
 	'msw/dlmsw.cpp',
 	'msw/special_folders.cpp',
