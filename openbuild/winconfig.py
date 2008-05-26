@@ -9,12 +9,12 @@ class WinConfig :
 	def walk( self, env ):
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
-		for repo in [ 'pkgconfig/win32', 'bcomp/common', 'bcomp/' + env[ 'target' ] ]:
+		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ) ]:
 			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
 				for f in files:
 					if f.endswith( '.wc' ):
 						pkg = f.replace( '.wc', '' )
-						prefix = os.path.join( r, '..', '..' )
+						prefix = r.rsplit( '\\', 2 )[ 0 ]
 						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 		return flags
 
@@ -30,7 +30,7 @@ class WinConfig :
 		"""Read the file, honour line continuations (ending in \) and return contents"""
 		input = open( filename )
 		result = input.read( )
-		result = result.replace( '\\' + os.linesep, '' )
+		result = result.replace( ' \\' + os.linesep, '' )
 		input.close( )
 		return result
 
@@ -124,8 +124,10 @@ class WinConfig :
 					# If we haven't checked before, check now and add to the main rules
 					if package not in checked:
 						deprules = self.obtain_rules( env, package, checked )
-						if 'CFlags' in deprules.keys( ): rules[ 'CFlags' ] += ' ' + deprules[ 'CFlags' ]
-						if 'Libs' in deprules.keys( ): rules[ 'Libs' ] += ' ' + deprules[ 'Libs' ]
+						if 'CFlags' in deprules.keys( ): 
+							rules[ 'CFlags' ] = deprules[ 'CFlags' ] + ' ' + rules[ 'CFlags' ]
+						if 'Libs' in deprules.keys( ): 
+							rules[ 'Libs' ] = deprules[ 'Libs' ] + ' ' + rules[ 'Libs' ]
 						requires_list += rules[ 'Requires' ].split( )
 
 			return rules
@@ -142,12 +144,12 @@ class WinConfig :
 		for package in packages:
 			rules = self.obtain_rules( env, package, checked )
 			if 'CFlags' in rules.keys( ):
-				cflags += rules[ 'CFlags' ] + ' '
+				cflags += ' ' + rules[ 'CFlags' ]
 			if 'Libs' in rules.keys( ):
-				libflags += rules[ 'Libs' ] + ' '
+				libflags += ' ' + rules[ 'Libs' ]
 		if env[ 'PLATFORM' ] == 'win32':
 			env.Append( CCFLAGS = cflags )
-			env.Append( LIBFLAGS = libflags )
+			env.Append( LINKFLAGS = libflags.split( ' ' ) )
 		else:
 			env.MergeFlags( cflags + libflags )
 
