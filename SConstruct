@@ -8,23 +8,38 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def __init__( self, opts ):
 		openbuild.env.Environment.__init__( self, opts )
-		self.configure_platform( )
 
-		self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
-		self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
-		self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
-		self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
-		self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
-		self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
-		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
-		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
-		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
-		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
-		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
+		self.configure_platform( )
 
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 
 	def configure_platform( self ):
+		if self['PLATFORM'] == 'darwin' or self['PLATFORM']:
+			self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
+			self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
+			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
+			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
+			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
+			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
+			self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
+			self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
+			self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
+			self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
+			self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
+		else:
+			self.libdir = 'bin'
+			self[ 'il_plugin' ] = ''
+			self[ 'ml_plugin' ] = ''
+			self[ 'install_il_plugin' ] = os.path.join( '$prefix', 'bin' )
+			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', 'bin' )
+			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
+			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
+			self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
+			self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
+			self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
+			self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
+			self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
+
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
 			self.Append( LINKFLAGS = '-undefined dynamic_lookup' )
