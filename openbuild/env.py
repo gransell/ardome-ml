@@ -33,7 +33,7 @@ class Environment( BaseEnvironment ):
 			kw -- The rest of the passed parameters to this constructor.
 			"""
 
-		BaseEnvironment.__init__( self, *kw )
+		BaseEnvironment.__init__( self, ENV = os.environ, *kw )
 
 		opts.Update( self )
 		opts.Save( opts.file, self )
