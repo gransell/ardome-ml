@@ -159,19 +159,19 @@ class Environment( BaseEnvironment ):
 		"""
 	
 		if "shared_library" in dir(self.build_manager) : 
-			return self.build_manager.shared_library( self, lib, sources, headers, pre, nopre, keywords )
+			return self.build_manager.shared_library( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
-		return self.SharedLibrary( lib, sources, keywords )
+		return self.SharedLibrary( lib, sources, *keywords )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
 		
 		if "plugin" in dir(self.build_manager) : 
-			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, keywords )
+			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
-		return self.SharedLibrary( lib, sources, keywords )
+		return self.SharedLibrary( lib, sources, *keywords )
 	
 
 
