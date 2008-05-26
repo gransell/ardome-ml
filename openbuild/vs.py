@@ -3,7 +3,6 @@ import uuid
 import re
 import StringIO
 
-vc_version = "7.1"
 
 class CompilerOptions:
 	""" A class that holds options related to the compiler tool in visual studio.

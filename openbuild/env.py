@@ -4,17 +4,19 @@ from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 import SCons.Script
 import utils
 import vsbuild
+from pkgconfig import PkgConfig as PkgConfig
+from winconfig import WinConfig as WinConfig
 
-if os.name == 'posix':
-	import pkgconfig as package_manager
-else:
-	import winconfig as package_manager
+# if os.name == 'posix':
+#	import pkgconfig as package_manager
+#else:
+#	import winconfig as package_manager
 
 class Environment( BaseEnvironment ):
 
-	packages = package_manager.packages
-	package_cflags = package_manager.package_cflags
-	package_libs = package_manager.package_libs
+	# packages = package_manager.packages
+	# package_cflags = package_manager.package_cflags
+	# package_libs = package_manager.package_libs
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
 
@@ -35,9 +37,14 @@ class Environment( BaseEnvironment ):
 		opts.Update( self )
 		opts.Save( opts.file, self )
 		
+		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
 		elif utils.vs() : self.build_manager = vsbuild.VsBuilder( utils.vs() )
-		else: self.build_manager = None 
+		else: self.build_manager = None
+
+		# Instanciate a package manager for the current platform:
+		if os.name == 'posix' : self.package_manager = PkgConfig( )
+		else : self.package_manager = WinConfig( )
 	
 		SCons.Script.Help( opts.GenerateHelpText( self ) )
 
@@ -49,7 +56,7 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
 
 		self.root = os.path.abspath( '.' )
-		package_manager.walk( self )
+		self.package_list = self.package_manager.walk( self )
 
 		self.Alias( 'install', '$release_prefix' )
 		self.Alias( 'debug-install', '$debug_prefix' )
@@ -67,6 +74,9 @@ class Environment( BaseEnvironment ):
 			self.Append( CCFLAGS = [ '/W3' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
+	
+	def packages( self, *packages ) :
+		self.package_manager.packages( self, packages )
 
 	def prep_release( self ):
 		self[ 'debug' ] = '1'
@@ -90,7 +100,7 @@ class Environment( BaseEnvironment ):
 		temp.prep_release( )
 		for package in packages:
 			try:
-				temp.packages( package )
+				temp.package_manager.packages( self, package )
 			except OSError, e:
 				result = False
 				print "Dependency check" + str( e )
@@ -98,7 +108,16 @@ class Environment( BaseEnvironment ):
 		
 	def build( self, path, deps = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
-			project dependencies specified."""
+			project dependencies specified.
+			
+			Can  be overridden by a Visual Studio build_manager or an external
+			build_manager.
+			
+			Keyword arguments:
+			path -- The path to the SConscipt file that shold be parsed
+			deps -- Any dependencies built by another Environment.build call
+			returns a dictinary: buildtype ('debug'/'release') -> SCons representation of the generated
+					result of the SConscript."""
 			
 		if "build" in dir(self.build_manager) : 
 			return self.build_manager.build( self, path, deps )
@@ -116,7 +135,7 @@ class Environment( BaseEnvironment ):
 		return result
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
-		"""Build a shared library ( dll or so )
+		"""	Build a shared library ( dll or so )
 			
 			Keyword arguments:
 			lib -- The name of the library to build
@@ -140,21 +159,8 @@ class Environment( BaseEnvironment ):
 		return self.SharedLibrary( lib, sources, keywords )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
-		"""Build a plugin
+		"""	Build a plugin. See shared_library in this class for a detailed description. """
 		
-			Keyword arguments:
-			lib -- The name of the library to build
-			sources -- A list of c++ source files
-			headers -- A list of c++ header files, not needed for the build, but could be used 
-						by certain build_managers that create IDE files.
-			pre -- A tuple with two elements, the first is the name of the header file that is 
-					included in all source-files using precompiled headers, the second is the
-					name of the actual source file creating the precompiled header file itself.
-			nopre -- If pre is set, this parameter contains a list of source files (that should
-						be present in sources) that will not use precompiled headers. These files
-						do not include the header file in pre[0].
-			keywords -- All other parameters passed with keyword assignment."""
-			
 		if "plugin" in dir(self.build_manager) : 
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, keywords )
 		
