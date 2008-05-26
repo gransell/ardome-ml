@@ -6,7 +6,7 @@ class PkgConfig:
 		"""Walk the bcomp directory to pick out all the .pc files"""
 		flags = { }
 		paths = { }
-		for r, d, files in os.walk( self.root + '/bcomp' ):
+		for r, d, files in os.walk( env.root + '/bcomp' ):
 			for f in files:
 				if f.endswith( '.pc' ):
 					pkg = f.replace( ".pc", "" )
@@ -20,11 +20,11 @@ class PkgConfig:
 
 		if env[ 'PLATFORM' ] == 'posix':
 			if utils.arch( ) == 'x86_64':
-				full += self.root + '/pkgconfig/ubuntu64'
+				full += env.root + '/pkgconfig/ubuntu64'
 			else:
-				full += self.root + '/pkgconfig/ubuntu32'
-		elif self[ 'PLATFORM' ] == 'darwin':
-			full += '/usr/lib/pkgconfig:' + self.root + '/pkgconfig/mac'
+				full += env.root + '/pkgconfig/ubuntu32'
+		elif env[ 'PLATFORM' ] == 'darwin':
+			full += '/usr/lib/pkgconfig:' + env.root + '/pkgconfig/mac'
 	    
 		os.environ[ 'PKG_CONFIG_PATH' ] = full
 		return flags
@@ -33,7 +33,7 @@ class PkgConfig:
 		"""Extracts compile and link flags for the specified packages and adds to the 
 		current environment."""
 		for package in packages:
-			env.ParseConfig( pkgconfig_cmd( self, package ) )
+			env.ParseConfig( self.pkgconfig_cmd( env, package ) )
 
 	def package_cflags( self, env, package ):
 		"""Extracts compile flags for the specified packages."""
@@ -48,8 +48,8 @@ class PkgConfig:
 		when necessary."""
 		command = 'pkg-config %s ' % switches
 		if package in env.package_list.keys( ):
-			command += '--define-variable=prefix=' + self.package_list[ package ] + ' '
-			if self[ 'debug' ] == '1':
+			command += '--define-variable=prefix=' + env.package_list[ package ] + ' '
+			if env[ 'debug' ] == '1':
 				command += '--define-variable=debug=-d '
 		command += package
 		return command

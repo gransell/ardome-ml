@@ -3,7 +3,8 @@ import sys
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 import SCons.Script
 import utils
-import vsbuild
+if utils.vs( ):
+	import vsbuild
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 
@@ -76,7 +77,13 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 	
 	def packages( self, *packages ) :
-		self.package_manager.packages( self, packages )
+		self.package_manager.packages( self, *packages )
+
+	def package_cflags( self, package ) :
+		return self.package_manager.package_cflags( self, package )
+
+	def package_libs( self, package ) :
+		return self.package_manager.package_libs( self, package )
 
 	def prep_release( self ):
 		self[ 'debug' ] = '1'
@@ -96,11 +103,11 @@ class Environment( BaseEnvironment ):
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
 		result = True
-		temp = self.Clone( )
-		temp.prep_release( )
 		for package in packages:
 			try:
-				temp.package_manager.packages( self, package )
+				temp = self.Clone( )
+				temp.prep_release( )
+				temp.package_manager.packages( temp, package )
 			except OSError, e:
 				result = False
 				print "Dependency check" + str( e )
