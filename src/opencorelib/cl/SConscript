@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'opencorelib', 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
+local_env.packages( 'opencorelib', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
 
 if local_env[ 'PLATFORM' ] == 'darwin':
 	local_env[ 'FRAMEWORKS' ] = [ 'ExceptionHandling', 'Foundation', 'CoreServices' ]
@@ -42,7 +42,6 @@ sources = [
 	'plugin_loader.cpp',
 	'plugin_metadata.cpp',
 	'point.cpp',
-	'precompiled_headers.cpp',
 	'property_bag.cpp',
 	'rectangle.cpp',
 	'serious_error_handler.cpp',
@@ -73,20 +72,21 @@ mac_objc = [ 'mac/stack_dump.mm', 'mac/mac_invoker.mm', 'mac/special_folders_mac
 linux_sources = [ 'unix/special_folders_unix.cpp' ]
 
 win32_sources = [
-	'msw/core.rc',
+	'dynlib.cpp',
+	'msw/core.res',
 	'msw/debughlp.cpp',
 	#'msw/serious_error_handler.cpp',
 	'msw/subclass.cpp',
 	'msw/dlmsw.cpp',
 	'msw/special_folders.cpp',
-	'msw/icon2.ico',
+	#'msw/icon2.ico',
 	'msw/stack_walker.cpp',
 	'msw/windows_invoker.cpp' ]
 
 extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sources }
 objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
 
-object = local_env.shared_library( 'opencorelib_cl', sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], CXXFLAGS='-fobjc-gc' ) )
+object = local_env.shared_library( 'opencorelib_cl', sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], CXXFLAGS='-fobjc-gc' ), pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
 
 local_env.Install( local_env[ 'stage_libdir' ], object )
 

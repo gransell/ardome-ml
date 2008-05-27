@@ -66,7 +66,7 @@
 // library search record (auto link).
 #if defined( WIN32 ) && !defined( OPENMEDIALIB_BUILD )
 #	if defined( OPENMEDIALIB_LIBNAME ) && defined( OPENMEDIALIB_TOOLSET ) && defined( OPENMEDIALIB_DEBUG_SUFFIX ) && defined( OPENMEDIALIB_VERSION )
-#		pragma comment( lib, OPENMEDIALIB_LIBNAME "-" OPENMEDIALIB_TOOLSET "-" OPENMEDIALIB_DEBUG_SUFFIX "-" OPENMEDIALIB_VERSION ".lib" )
+#		pragma comment( lib, OPENMEDIALIB_LIBNAME ".lib" )
 #	endif
 #endif
 

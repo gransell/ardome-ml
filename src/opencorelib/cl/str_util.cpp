@@ -13,6 +13,7 @@
 
 #ifdef OLIB_ON_WINDOWS
 	#include <comutil.h>
+	#include <comdef.h>
 #endif
 
 #include "./assert.hpp"

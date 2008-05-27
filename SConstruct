@@ -14,7 +14,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 
 	def configure_platform( self ):
-		if self['PLATFORM'] == 'darwin' or self['PLATFORM']:
+		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
 			self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
 			self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )

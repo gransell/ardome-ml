@@ -49,7 +49,7 @@
 // library search record (auto link).
 #if defined( WIN32 ) && !defined( OPENIMAGELIB_BUILD )
 #	if defined( OPENIMAGELIB_LIBNAME ) && defined( OPENIMAGELIB_TOOLSET ) && defined( OPENIMAGELIB_DEBUG_SUFFIX ) && defined( OPENIMAGELIB_VERSION )
-#		pragma comment( lib, OPENIMAGELIB_LIBNAME "-" OPENIMAGELIB_TOOLSET "-" OPENIMAGELIB_DEBUG_SUFFIX "-" OPENIMAGELIB_VERSION ".lib" )
+#		pragma comment( lib, OPENIMAGELIB_LIBNAME ".lib" )
 #	endif
 #endif
 

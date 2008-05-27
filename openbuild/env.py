@@ -62,6 +62,8 @@ class Environment( BaseEnvironment ):
 		self.Alias( 'install', '$release_prefix' )
 		self.Alias( 'debug-install', '$debug_prefix' )
 
+		self.Builder( action = '$RCCOM', suffix = '.rc' )
+
 	def prep_debug( self ):
 		self[ 'debug' ] = '0'
 		self[ 'build_prefix' ] = os.path.join( 'build', 'debug' )
@@ -133,12 +135,18 @@ class Environment( BaseEnvironment ):
 		for build_type in [ Environment.prep_release, Environment.prep_debug ]:
 			local_env = self.Clone( )
 			build_type( local_env )
-			if self[ 'PLATFORM' ] != 'posix':
+			if self[ 'PLATFORM' ] == 'win32':
+				local_env.Append( LIBPATH = os.path.join( self.root, local_env[ 'build_prefix' ], 'lib' ) )
+				for dep in deps:
+					local_env.Append( LIBS = dep[ build_type ] )
+			elif self[ 'PLATFORM' ] != 'posix':
 				for dep in deps:
 					local_env.Append( LIBS = dep[ build_type ] )
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
 															build_dir=os.path.join( local_env[ 'stage_prefix' ], path ), 
 															duplicate=0, exports=[ 'local_env' ] )
+			if self[ 'PLATFORM' ] == 'win32':
+				result[ build_type ] = [ str( result[ build_type ][ 0 ] ).split( '\\' )[ -1 ].split( '.' )[ 0 ] ]
 		return result
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
@@ -163,6 +171,9 @@ class Environment( BaseEnvironment ):
 		
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
+		elif self[ 'PLATFORM' ] == 'win32' and pre is not None:
+			sources.extend( [ pre[ 0 ] ] )
+
 		return self.SharedLibrary( lib, sources, *keywords )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
