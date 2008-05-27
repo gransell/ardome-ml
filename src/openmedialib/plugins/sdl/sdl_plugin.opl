@@ -2,6 +2,6 @@
 <openlibraries version="1.0">
 	<!-- plugins go here -->
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="OpenLibraries sdl plugin" type="output" extension='"sdl:", "sdl_video:", "sdl_audio:"' merit="0" filename='"libopenmedialib_sdl.so", "libopenmedialib_sdl.dylib", "aml-sdl.dll"'/>
+		<plugin name="OpenLibraries sdl plugin" type="output" extension='"sdl:", "sdl_video:", "sdl_audio:"' merit="0" filename='"libopenmedialib_sdl.so", "libopenmedialib_sdl.dylib", "openmedialib_sdl.dll"'/>
 	</openmedialib>
 </openlibraries>
