@@ -1,6 +1,7 @@
 import os
 import sys
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
+import SCons.Tool
 import SCons.Script
 import utils
 if utils.vs( ):
@@ -28,9 +29,12 @@ class Environment( BaseEnvironment ):
 					and plugin.
 			kw -- The rest of the passed parameters to this constructor.
 			"""
-
-		BaseEnvironment.__init__( self, ENV = os.environ, *kw )
-
+			
+		self.toolpath = [ self.path_to_openbuild_tools() ]
+		self.options = opts
+		
+		BaseEnvironment.__init__( self, ENV = os.environ ,*kw )
+		
 		opts.Update( self )
 		opts.Save( opts.file, self )
 		
@@ -57,6 +61,12 @@ class Environment( BaseEnvironment ):
 
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
+		
+	def path_to_openbuild( self ) :
+		return os.path.split(__file__)[0]
+		
+	def path_to_openbuild_tools( self ) :
+		return os.path.join( self.path_to_openbuild(), "Tools")
 
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
@@ -136,7 +146,7 @@ class Environment( BaseEnvironment ):
 		elif self.debug_install: builds.pop( 0 )
 
 		for build_type in builds:
-			local_env = self.Clone( )
+			local_env = self.Clone(  )
 			build_type( local_env )
 			if self[ 'PLATFORM' ] == 'win32':
 				local_env.Append( LIBPATH = os.path.join( self.root, local_env[ 'build_prefix' ], 'lib' ) )
@@ -186,6 +196,12 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		return self.SharedLibrary( lib, sources, *keywords )
+		
+	def Tool(self, tool, toolpath=None, **kw):
+		if toolpath == None :
+			toolpath = [ self.path_to_openbuild_tools() ]
+		
+		BaseEnvironment.Tool( self, tool, toolpath, **kw )
 	
 
 
