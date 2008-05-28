@@ -9,10 +9,10 @@ def arch( ):
 def install_target( self ):
 	"""Handle the install target logic - when install is specified, return the
 	installation directory, otherwise, return the staging environment."""
-	self.install = 'install' in sys.argv
-	if self.install:
-		return os.path.join( self[ 'distdir' ], self[ 'prefix' ] )
-	return os.path.join( self.root, self[ 'build_prefix' ] )
+	if self.release_install or self.debug_install:
+		return self[ 'distdir' ] + self[ 'prefix' ] 
+	else:
+		return os.path.join( self.root, self[ 'build_prefix' ] )
 
 def search_and_replace( filename, out, tokens ):
 	"""Utility function which does a search and replace in a text file and 
@@ -32,3 +32,4 @@ def vs() :
 		if "vs=" in a :
 			return a.split("=")[1]
 	return None
+

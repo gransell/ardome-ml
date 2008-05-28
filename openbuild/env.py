@@ -59,8 +59,11 @@ class Environment( BaseEnvironment ):
 		self.root = os.path.abspath( '.' )
 		self.package_list = self.package_manager.walk( self )
 
-		self.Alias( 'install', '$release_prefix' )
-		self.Alias( 'debug-install', '$debug_prefix' )
+		self.release_install = 'install' in sys.argv
+		self.debug_install = 'debug-install' in sys.argv
+
+		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
+		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
 
 		self.Builder( action = '$RCCOM', suffix = '.rc' )
 
@@ -74,7 +77,7 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CCFLAGS = [ '/W3' ] )
+			self.Append( CCFLAGS = [ '/W3', '/DEBUG', '/Od' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 	
@@ -132,7 +135,12 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.build( self, path, deps )
 			
 		result = { }
-		for build_type in [ Environment.prep_release, Environment.prep_debug ]:
+
+		builds = [ Environment.prep_release, Environment.prep_debug ]
+		if self.release_install: builds.pop( 1 )
+		elif self.debug_install: builds.pop( 0 )
+
+		for build_type in builds:
 			local_env = self.Clone( )
 			build_type( local_env )
 			if self[ 'PLATFORM' ] == 'win32':
@@ -143,7 +151,7 @@ class Environment( BaseEnvironment ):
 				for dep in deps:
 					local_env.Append( LIBS = dep[ build_type ] )
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
-															build_dir=os.path.join( local_env[ 'stage_prefix' ], path ), 
+															build_dir=os.path.join( local_env[ 'build_prefix' ], path ), 
 															duplicate=0, exports=[ 'local_env' ] )
 			if self[ 'PLATFORM' ] == 'win32':
 				result[ build_type ] = [ str( result[ build_type ][ 0 ] ).split( '\\' )[ -1 ].split( '.' )[ 0 ] ]
