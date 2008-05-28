@@ -62,16 +62,16 @@ class Environment( BaseEnvironment ):
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
 		
+		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
+		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
+
+		self.Builder( action = '$RCCOM', suffix = '.rc' )
+
 	def path_to_openbuild( self ) :
 		return os.path.split(__file__)[0]
 		
 	def path_to_openbuild_tools( self ) :
 		return os.path.join( self.path_to_openbuild(), "Tools")
-
-		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
-		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
-
-		self.Builder( action = '$RCCOM', suffix = '.rc' )
 
 	def prep_debug( self ):
 		self[ 'debug' ] = '0'
