@@ -99,6 +99,17 @@ class AMLEnvironment( openbuild.env.Environment ):
 			openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
 			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
+	def install_openbuild( self ):
+		use = ''
+		start = os.path.join( self[ 'prefix' ], self[ 'libdir' ], 'python' )
+		for path in sys.path:
+			if path.startswith( start ) and path.endswith( 'site-packages' ):
+				use = path
+				break
+		if use != '':
+			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( 'openbuild/*.py' ) )
+		else:
+			print "Couldn't find python site-packages in " + self[ 'prefix' ]
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
@@ -117,6 +128,7 @@ if env.check_externals( ):
 	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
 
 	env.create_package( )
+	env.install_openbuild( )
 
 else:
 	print "Dependencies missing - aborting"
