@@ -15,10 +15,6 @@ from winconfig import WinConfig as WinConfig
 
 class Environment( BaseEnvironment ):
 
-	# packages = package_manager.packages
-	# package_cflags = package_manager.package_cflags
-	# package_libs = package_manager.package_libs
-
 	"""Base environment for Ardendo AML/AMF and related builds."""
 
 	def __init__( self, opts, bmgr = None , *kw ):
@@ -49,8 +45,8 @@ class Environment( BaseEnvironment ):
 	
 		SCons.Script.Help( opts.GenerateHelpText( self ) )
 
-		self[ 'debug_prefix' ] = os.path.join( 'build', 'debug' )
-		self[ 'release_prefix' ] = os.path.join( 'build', 'release' )
+		self[ 'debug_prefix' ] = os.path.join( 'build', 'debug', self[ 'target' ] )
+		self[ 'release_prefix' ] = os.path.join( 'build', 'release', self[ 'target' ] )
 		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
 		self[ 'stage_include' ] = os.path.join( '$stage_prefix', 'include' )
 		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
@@ -69,7 +65,7 @@ class Environment( BaseEnvironment ):
 
 	def prep_debug( self ):
 		self[ 'debug' ] = '0'
-		self[ 'build_prefix' ] = os.path.join( 'build', 'debug' )
+		self[ 'build_prefix' ] = '$debug_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
 		if self[ 'PLATFORM' ] == 'posix':
@@ -81,19 +77,9 @@ class Environment( BaseEnvironment ):
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 	
-	def packages( self, *packages ) :
-		self.package_manager.packages( self, *packages )
-
-	def package_cflags( self, package ) :
-		return self.package_manager.package_cflags( self, package )
-
-	def package_libs( self, package ) :
-		return self.package_manager.package_libs( self, package )
-
 	def prep_release( self ):
 		self[ 'debug' ] = '1'
-		self[ 'build_prefix' ] = os.path.join( 'build', 'release' )
-		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
+		self[ 'build_prefix' ] = '$release_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
 		if self[ 'PLATFORM' ] == 'posix':
@@ -104,6 +90,15 @@ class Environment( BaseEnvironment ):
 			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
+
+	def packages( self, *packages ) :
+		self.package_manager.packages( self, *packages )
+
+	def package_cflags( self, package ) :
+		return self.package_manager.package_cflags( self, package )
+
+	def package_libs( self, package ) :
+		return self.package_manager.package_libs( self, package )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
