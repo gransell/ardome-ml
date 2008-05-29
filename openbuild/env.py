@@ -172,14 +172,13 @@ class Environment( BaseEnvironment ):
 
 		return result
 		
-	def setup_precompiled_headers( self, pre = None , nopre = None ) :
+	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
 		if nopre is not None: 
 			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
 
 		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
 			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
-			self.Append( PCHSTOP = pre[1],
-						 PCH = self.PCH(pre[0])[0] )
+			self.Append( PCHSTOP = pre[1], PCH = self.PCH(pre[0])[0] )
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a shared library ( dll or so )
@@ -204,7 +203,7 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
-		self.setup_precompiled_headers( pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre )
 		
 		self['PDB'] = lib + '.pdb'
 		
@@ -216,7 +215,7 @@ class Environment( BaseEnvironment ):
 		if "plugin" in dir(self.build_manager) : 
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
-		self.setup_precompiled_headers( pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre )
 		
 		self['PDB'] = lib + '.pdb'
 
@@ -224,7 +223,7 @@ class Environment( BaseEnvironment ):
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 
-		self.setup_precompiled_headers( pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre )
 		self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 
