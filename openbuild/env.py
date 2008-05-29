@@ -167,7 +167,6 @@ class Environment( BaseEnvironment ):
 						lib = lib.replace( 'lib', '-l', 1 )
 					else:
 						libpath = '/LIBPATH:' + libpath
-					print libpath, lib
 					local_env.Append( LINKFLAGS = [ libpath, lib ] )
 
 		return result
