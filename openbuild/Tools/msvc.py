@@ -186,6 +186,7 @@ def setup_standard_environment( env ):
 	env['BUILDERS']['SharedLibrary'].add_src_builder(res_builder)
 	
 	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Z7") or ""}'])
+	#env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
 	env['CCPCHFLAGS'] = SCons.Util.CLVar(['${(PCH and "/Yu%s /Fp%s"%(PCHSTOP or "",File(PCH))) or ""}'])
 	env['CCCOMFLAGS'] = '$CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo$TARGET $CCPCHFLAGS $CCPDBFLAGS'
 	env['CC']		 = 'cl'

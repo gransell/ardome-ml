@@ -167,6 +167,7 @@ class Environment( BaseEnvironment ):
 						lib = lib.replace( 'lib', '-l', 1 )
 					else:
 						libpath = '/LIBPATH:' + libpath
+						lib += '.lib'
 					local_env.Append( LINKFLAGS = [ libpath, lib ] )
 
 		return result
@@ -204,6 +205,8 @@ class Environment( BaseEnvironment ):
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
 		self.setup_precompiled_headers( pre, nopre )
+		
+		self['PDB'] = lib + '.pdb'
 		
 		return self.SharedLibrary( lib, sources, *keywords )
 		
