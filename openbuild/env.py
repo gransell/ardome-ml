@@ -217,12 +217,15 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		self.setup_precompiled_headers( pre, nopre )
+		
+		self['PDB'] = lib + '.pdb'
 
 		return self.SharedLibrary( lib, sources, *keywords )
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 
 		self.setup_precompiled_headers( pre, nopre )
+		self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 
 	def Tool(self, tool, toolpath=None, **kw):
