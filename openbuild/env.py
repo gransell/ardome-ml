@@ -55,6 +55,7 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_include' ] = os.path.join( '$stage_prefix', 'include' )
 		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
+		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
 
 		self.root = os.path.abspath( '.' )
 		self.package_list = self.package_manager.walk( self )
@@ -123,7 +124,7 @@ class Environment( BaseEnvironment ):
 				print "Dependency check" + str( e )
 		return result
 		
-	def build( self, path, deps = [] ):
+	def build( self, path, deps = [], apply = False ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
 			
@@ -136,6 +137,7 @@ class Environment( BaseEnvironment ):
 			returns a dictinary: buildtype ('debug'/'release') -> SCons representation of the generated
 					result of the SConscript."""
 			
+
 		if "build" in dir(self.build_manager) : 
 			return self.build_manager.build( self, path, deps )
 			
@@ -148,18 +150,26 @@ class Environment( BaseEnvironment ):
 		for build_type in builds:
 			local_env = self.Clone(  )
 			build_type( local_env )
-			if self[ 'PLATFORM' ] == 'win32':
-				local_env.Append( LIBPATH = os.path.join( self.root, local_env[ 'build_prefix' ], 'lib' ) )
-				for dep in deps:
-					local_env.Append( LIBS = dep[ build_type ] )
-			elif self[ 'PLATFORM' ] != 'posix':
-				for dep in deps:
-					local_env.Append( LIBS = dep[ build_type ] )
+
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
 															build_dir=os.path.join( local_env[ 'build_prefix' ], path ), 
 															duplicate=0, exports=[ 'local_env' ] )
-			if self[ 'PLATFORM' ] == 'win32':
-				result[ build_type ] = [ str( result[ build_type ][ 0 ] ).split( '\\' )[ -1 ].split( '.' )[ 0 ] ]
+
+			for dep in deps:
+				if dep is not None:
+					self.Requires( result[ build_type ], dep[ build_type ] )
+					file = str( dep[ build_type ][ 0 ] )
+					libpath, lib = file.rsplit( os.sep, 1 )
+					libpath = os.path.join( self.root, libpath )
+					lib = lib.rsplit( '.', 1 )[ 0 ]
+					if self[ 'PLATFORM' ] != 'win32': 
+						libpath = '-L' + libpath
+						lib = lib.replace( 'lib', '-l', 1 )
+					else:
+						libpath = '/LIBPATH:' + libpath
+					print libpath, lib
+					local_env.Append( LINKFLAGS = [ libpath, lib ] )
+
 		return result
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
@@ -184,8 +194,11 @@ class Environment( BaseEnvironment ):
 		
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
-		elif self[ 'PLATFORM' ] == 'win32' and pre is not None:
-			sources.extend( [ pre[ 0 ] ] )
+
+		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
+
+		if nopre is not None: 
+			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
 
 		return self.SharedLibrary( lib, sources, *keywords )
 		
@@ -195,8 +208,21 @@ class Environment( BaseEnvironment ):
 		if "plugin" in dir(self.build_manager) : 
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
+		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
+
+		if nopre is not None: 
+			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
+
 		return self.SharedLibrary( lib, sources, *keywords )
-		
+
+	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
+
+		if nopre is not None: 
+			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
+
+		return self.Program( lib, sources, *keywords )
+
 	def Tool(self, tool, toolpath=None, **kw):
 		if toolpath == None :
 			toolpath = [ self.path_to_openbuild_tools() ]
