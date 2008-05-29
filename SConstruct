@@ -113,9 +113,9 @@ if env.check_externals( ):
 
 	cl = env.build( 'src/opencorelib/cl' )
 	pl = env.build( 'src/openpluginlib/pl' )
-	ml = env.build( 'src/openmedialib/ml', [ pl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
-
+	ml = env.build( 'src/openmedialib/ml', [ pl, il ] )
+	
 	env.build( 'src/openmedialib/plugins/avformat', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
