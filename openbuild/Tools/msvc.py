@@ -1,6 +1,7 @@
 import os
 import SCons.Util
 import SCons.Platform
+import SCons.Scanner
 import SCons.Tool.msvs as default_msvs
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 
@@ -120,6 +121,7 @@ def pch_emitter(target, source, env):
 def object_emitter(target, source, env, parent_emitter):
 	"""Sets up the PCH dependencies for an object file."""
 
+	#print "object_emitter", target, source
 	validate_vars(env)
 
 	parent_emitter(target, source, env)
@@ -136,6 +138,15 @@ def static_object_emitter(target, source, env):
 def shared_object_emitter(target, source, env):
 	return object_emitter(target, source, env,
 						  SCons.Defaults.SharedObjectEmitter)
+						  
+# def res_emitter( target, source, env) :	
+	# print "res_emitter", target[0].get_path(), target[0].name, source[0].get_path()
+	# target[0].name = 'core.res'
+	# return ( target, source  )
+	
+# def res_scanner( node, env, path, argument) :
+	# print ""
+	# return []
 		
 def setup_object_builders( env ):
 	c_source_files = ['.c', '.C']
@@ -154,6 +165,7 @@ def setup_object_builders( env ):
 		shared_obj.add_action(suffix, SCons.Defaults.ShCXXAction)
 		static_obj.add_emitter(suffix, static_object_emitter)
 		shared_obj.add_emitter(suffix, shared_object_emitter)
+	
 		
 def setup_standard_environment( env ):
 	pch_action = SCons.Action.Action('$PCHCOM', '$PCHCOMSTR')
@@ -162,7 +174,6 @@ def setup_standard_environment( env ):
 										source_scanner=SCons.Tool.SourceFileScanner)
 										
 	res_action = SCons.Action.Action('$RCCOM', '$RCCOMSTR')
-	
 	res_builder = SCons.Builder.Builder(action=res_action,
 										src_suffix='.rc',
 										suffix='.res',
@@ -170,6 +181,9 @@ def setup_standard_environment( env ):
 										source_scanner=SCons.Tool.SourceFileScanner)
 	
 	SCons.Tool.SourceFileScanner.add_scanner('.rc', SCons.Defaults.CScan)
+	
+	#print "setup_standard_environment SharedLibrary", env['BUILDERS']['SharedLibrary']
+	env['BUILDERS']['SharedLibrary'].add_src_builder(res_builder)
 	
 	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Z7") or ""}'])
 	env['CCPCHFLAGS'] = SCons.Util.CLVar(['${(PCH and "/Yu%s /Fp%s"%(PCHSTOP or "",File(PCH))) or ""}'])
@@ -198,7 +212,7 @@ def setup_standard_environment( env ):
 	env['RC'] = 'rc'
 	env['RCFLAGS'] = SCons.Util.CLVar('')
 	env['RCCOM'] = '$RC $_CPPDEFFLAGS $_CPPINCFLAGS $RCFLAGS /fo$TARGET $SOURCES'
-	env['BUILDERS']['RES'] = res_builder
+	# env['BUILDERS']['RES'] = res_builder
 	env['OBJPREFIX']	  = ''
 	env['OBJSUFFIX']	  = '.obj'
 	env['SHOBJPREFIX']	= '$OBJPREFIX'
@@ -209,6 +223,7 @@ def setup_standard_environment( env ):
 	env['PCHPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Yd") or ""}'])
 	env['PCHCOM'] = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo${TARGETS[1]} /Yc$PCHSTOP /Fp${TARGETS[0]} $CCPDBFLAGS $PCHPDBFLAGS'
 	env['BUILDERS']['PCH'] = pch_builder
+	
 
 		
 def exists(env):

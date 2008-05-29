@@ -141,9 +141,10 @@ def generate(env):
 	env['SHLINKCOM']  =  compositeLinkAction
 	env.Append(SHLIBEMITTER = [windowsLibEmitter])
 	env['LINK']	= 'link'
+	env['SHLINK']	= 'link'
 	env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
 	env['_PDB'] = pdbGenerator
-	env['LINKCOM'] = '${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}'
+	env['LINKCOM'] = 'linkapa'
 	env.Append(PROGEMITTER = [prog_emitter])
 	env['LIBDIRPREFIX']='/LIBPATH:'
 	env['LIBDIRSUFFIX']=''

@@ -170,6 +170,15 @@ class Environment( BaseEnvironment ):
 					local_env.Append( LINKFLAGS = [ libpath, lib ] )
 
 		return result
+		
+	def setup_precompiled_headers( self, pre = None , nopre = None ) :
+		if nopre is not None: 
+			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
+
+		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
+			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
+			self.Append( PCHSTOP = pre[1],
+						 PCH = self.PCH(pre[0])[0] )
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a shared library ( dll or so )
@@ -194,11 +203,8 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
-		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
-
-		if nopre is not None: 
-			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
-
+		self.setup_precompiled_headers( pre, nopre )
+		
 		return self.SharedLibrary( lib, sources, *keywords )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
@@ -207,19 +213,13 @@ class Environment( BaseEnvironment ):
 		if "plugin" in dir(self.build_manager) : 
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
-		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
-
-		if nopre is not None: 
-			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
+		self.setup_precompiled_headers( pre, nopre )
 
 		return self.SharedLibrary( lib, sources, *keywords )
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
-		if self[ 'PLATFORM' ] == 'win32' and pre is not None: sources.extend( [ pre[ 0 ] ] )
 
-		if nopre is not None: 
-			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
-
+		self.setup_precompiled_headers( pre, nopre )
 		return self.Program( lib, sources, *keywords )
 
 	def Tool(self, tool, toolpath=None, **kw):
