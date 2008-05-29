@@ -6,6 +6,10 @@ import SCons.Tool.msvs as default_msvs
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 
 class VisualStudio:
+	""" A class that describes a version of VisualStudio.
+		Is it installed or not, if it is, what is the install
+		path and the path to the vcvars.bat file """
+		
 	def __init__(self, version, regpath, install_path, vsvars_sub_path ):
 		self.version = version
 		self.registry_path = regpath
@@ -15,6 +19,14 @@ class VisualStudio:
 		self.install_path_internal = None
 		
 	def is_installed( self ) :
+		""" For now, just use the registry for discovery.
+			Could be refined in the future to look in the 
+			default install path. See default version of msvc.py in 
+			SCons/Tools/ 
+			
+			Calling this function will also set the internal install path
+			since that is found in the registry. """
+			
 		if not self.install_path_internal is None : return True
 		try:
 			local_machine = SCons.Util.HKEY_LOCAL_MACHINE
@@ -41,6 +53,8 @@ class VisualStudio:
 		else: return self.install_path_internal
 		
 class VSVersions:
+	""" Provides all known versions of visual studio.
+		Add more versions here as we find new ones. """
 	vs2003 = VisualStudio( version = "vs2003",	
 									regpath = "7.1\\Setup\\VS", 
 									install_path = "Microsoft Visual Studio .NET 2003",
@@ -71,9 +85,13 @@ class VSVersions:
 		
 
 def run_vcvars_bat( env, vsver):
+	""" This file will run the correct version of vsvars.bat and
+		copy the environment created by that call to the 
+		environment passed to this function """
 	
 	file_name = os.path.join( os.path.split(__file__)[0], "call_vcvars.bat")
 	
+	# The contents of the temporary bat-file.
 	contents = "@echo off\n"
 	contents += "call \"" +  vsver.vsvars_path() + "\\vsvars32.bat\" > nul 2> nul\n"
 	contents += "set\n"
@@ -90,7 +108,8 @@ def run_vcvars_bat( env, vsver):
 		if len(tokens) == 2 : env[ 'ENV' ][ tokens[0] ] = tokens[1]
 		
 def validate_vars(env):
-	"""Validate the PCH and PCHSTOP construction variables."""
+	"""	Stolen from SCons/Tools/msvc.py
+		Validate the PCH and PCHSTOP construction variables."""
 	if env.has_key('PCH') and env['PCH']:
 		if not env.has_key('PCHSTOP'):
 			raise SCons.Errors.UserError, "The PCHSTOP construction must be defined if PCH is defined."
@@ -98,7 +117,8 @@ def validate_vars(env):
 			raise SCons.Errors.UserError, "The PCHSTOP construction variable must be a string: %r"%env['PCHSTOP']
 
 def pch_emitter(target, source, env):
-	"""Adds the object file target."""
+	"""	Stolen from SCons/Tools/msvc.py
+		Adds the object file target."""
 
 	validate_vars(env)
 
@@ -119,9 +139,9 @@ def pch_emitter(target, source, env):
 	return (target, source)
 		
 def object_emitter(target, source, env, parent_emitter):
-	"""Sets up the PCH dependencies for an object file."""
+	"""	Stolen from SCons/Tools/msvc.py
+		Sets up the PCH dependencies for an object file."""
 
-	#print "object_emitter", target, source
 	validate_vars(env)
 
 	parent_emitter(target, source, env)
@@ -132,23 +152,18 @@ def object_emitter(target, source, env, parent_emitter):
 	return (target, source)
 
 def static_object_emitter(target, source, env):
+	""" Stolen from SCons/Tools/msvc.py """
 	return object_emitter(target, source, env,
 						  SCons.Defaults.StaticObjectEmitter)
 
 def shared_object_emitter(target, source, env):
+	""" Stolen from SCons/Tools/msvc.py """
 	return object_emitter(target, source, env,
 						  SCons.Defaults.SharedObjectEmitter)
 						  
-# def res_emitter( target, source, env) :	
-	# print "res_emitter", target[0].get_path(), target[0].name, source[0].get_path()
-	# target[0].name = 'core.res'
-	# return ( target, source  )
-	
-# def res_scanner( node, env, path, argument) :
-	# print ""
-	# return []
 		
 def setup_object_builders( env ):
+	""" Creates the obj-file builders for msvc """
 	c_source_files = ['.c', '.C']
 	cpp_source_files = ['.cc', '.cpp', '.cxx', '.c++', '.C++']
 	
@@ -168,6 +183,11 @@ def setup_object_builders( env ):
 	
 		
 def setup_standard_environment( env ):
+	""" Most of this code was stolen from the default setup of 
+		msvc. The most important thing that was added was the
+		res_builder to the SharedLibrary builder. Some minor changes to
+		pdb-file generation as well."""
+		
 	pch_action = SCons.Action.Action('$PCHCOM', '$PCHCOMSTR')
 	pch_builder = SCons.Builder.Builder(action=pch_action, suffix='.pch',
 										emitter=pch_emitter,
@@ -182,11 +202,9 @@ def setup_standard_environment( env ):
 	
 	SCons.Tool.SourceFileScanner.add_scanner('.rc', SCons.Defaults.CScan)
 	
-	#print "setup_standard_environment SharedLibrary", env['BUILDERS']['SharedLibrary']
 	env['BUILDERS']['SharedLibrary'].add_src_builder(res_builder)
 	
-	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Z7") or ""}'])
-	#env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
+	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Zi") or ""}'])
 	env['CCPCHFLAGS'] = SCons.Util.CLVar(['${(PCH and "/Yu%s /Fp%s"%(PCHSTOP or "",File(PCH))) or ""}'])
 	env['CCCOMFLAGS'] = '$CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo$TARGET $CCPCHFLAGS $CCPDBFLAGS'
 	env['CC']		 = 'cl'
@@ -213,7 +231,6 @@ def setup_standard_environment( env ):
 	env['RC'] = 'rc'
 	env['RCFLAGS'] = SCons.Util.CLVar('')
 	env['RCCOM'] = '$RC $_CPPDEFFLAGS $_CPPINCFLAGS $RCFLAGS /fo$TARGET $SOURCES'
-	# env['BUILDERS']['RES'] = res_builder
 	env['OBJPREFIX']	  = ''
 	env['OBJSUFFIX']	  = '.obj'
 	env['SHOBJPREFIX']	= '$OBJPREFIX'
@@ -221,18 +238,29 @@ def setup_standard_environment( env ):
 	env['CFILESUFFIX'] = '.c'
 	env['CXXFILESUFFIX'] = '.cc'
 
-	env['PCHPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Yd") or ""}'])
 	env['PCHCOM'] = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo${TARGETS[1]} /Yc$PCHSTOP /Fp${TARGETS[0]} $CCPDBFLAGS $PCHPDBFLAGS'
 	env['BUILDERS']['PCH'] = pch_builder
 	
 
 		
 def exists(env):
+	""" Required function that must be implemented by all tools.
+		Checks for all versions if they are installed. If
+		at least one is, return true """
 	for ver in VSVersions().all_versions() :
 		if ver.is_installed() : return 1
 	return 0
 	
 def current_vc_version( env ) :
+	""" Get the currently selected version of VisualStudio.
+		If the passed environment is a openbuild.env it
+		will have an options variable, if that has a 
+		target key, its value will be used.
+		
+		If the compiler_name is still not known, we are
+		looking for a TOOL variable in env. If that 
+		also fail, we call VSVersions.default_version(). """
+		
 	compiler_name = None
 	
 	if 'options' in dir(env) :
@@ -251,6 +279,7 @@ def current_vc_version( env ) :
 	return vsver
 	
 def generate(env):
+	""" Setup the environment to use one version of VisualStudio"""
 	
 	vsver = current_vc_version( env )
 	
