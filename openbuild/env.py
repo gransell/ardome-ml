@@ -124,7 +124,7 @@ class Environment( BaseEnvironment ):
 				print "Dependency check" + str( e )
 		return result
 		
-	def build( self, path, deps = [], apply = False ):
+	def build( self, path, deps = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
 			
