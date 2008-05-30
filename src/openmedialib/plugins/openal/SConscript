@@ -1,0 +1,8 @@
+Import(['local_env'])
+
+local_env.optional( 'openal' )
+
+if local_env[ 'have_openal' ]:
+	local_env.packages( 'boost_thread', 'openal' )
+	object = local_env.plugin( 'openmedialib_openal', [ 'openal_plugin.cpp' ] )
+	local_env.Install( local_env[ 'stage_ml_plugin' ], [ object, 'openal_plugin.opl' ] )

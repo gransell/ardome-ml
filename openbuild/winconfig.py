@@ -133,7 +133,7 @@ class WinConfig :
 
 			return rules
 		else:
-			print package
+			raise Exception, 'Unable to locate %s' % package
 
 		return { }
 
@@ -153,6 +153,16 @@ class WinConfig :
 			env.Append( LINKFLAGS = libflags.split( ' ' ) )
 		else:
 			env.MergeFlags( cflags + libflags )
+
+	def optional( self, env, *packages ):
+		"""Extracts compile and link flags for the specified packages and adds to the 
+		current environment along with a have_package variable to allow dependency checks."""
+		for package in packages:
+			try:
+				env.packages( package )
+				env[ 'have_' + package ] = 1
+			except Exception, e:
+				env[ 'have_' + package ] = 0
 
 	def package_cflags( self, env, *packages ):
 		"""Obtains the CFlags in the .wc file"""

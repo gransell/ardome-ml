@@ -125,6 +125,7 @@ if env.check_externals( ):
 	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/openal', [ pl, il, ml ] )
 
 	env.create_package( )
 	env.install_openbuild( )
