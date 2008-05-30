@@ -25,7 +25,7 @@ class PkgConfig:
 			else:
 				full += env.root + '/pkgconfig/ubuntu32'
 		elif env[ 'PLATFORM' ] == 'darwin':
-			full += '/usr/lib/pkgconfig:' + env.root + '/pkgconfig/mac'
+			full += '/usr/lib/pkgconfig:' + env.root + '/pkgconfig/osx'
 
 		full += ':' + os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
 
