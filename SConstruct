@@ -129,6 +129,7 @@ if env.check_externals( ):
 
 	env.create_package( )
 	env.install_openbuild( )
+	env.package_install_libs( )
 
 else:
 	print "Dependencies missing - aborting"

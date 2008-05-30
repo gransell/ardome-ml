@@ -70,7 +70,7 @@ class Environment( BaseEnvironment ):
 		return os.path.join( self.path_to_openbuild(), "Tools")
 
 	def prep_debug( self ):
-		self[ 'debug' ] = '0'
+		self[ 'debug' ] = '1'
 		self[ 'build_prefix' ] = '$debug_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
@@ -84,7 +84,7 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 	
 	def prep_release( self ):
-		self[ 'debug' ] = '1'
+		self[ 'debug' ] = '0'
 		self[ 'build_prefix' ] = '$release_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
@@ -108,6 +108,17 @@ class Environment( BaseEnvironment ):
 
 	def package_libs( self, package ) :
 		return self.package_manager.package_libs( self, package )
+
+	def package_install_libs( self ):
+		builds = [ Environment.prep_release, Environment.prep_debug ]
+		if self.release_install: builds.pop( 1 )
+		elif self.debug_install: builds.pop( 0 )
+
+		for build_type in builds:
+			env = self.Clone( )
+			build_type( env )
+			for lib in env.package_manager.package_install_libs( env ):
+				env.Install( env[ 'stage_libdir' ], lib )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
