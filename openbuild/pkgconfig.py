@@ -34,12 +34,14 @@ class PkgConfig:
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
 		current environment along with a have_package variable to allow dependency checks."""
+		result = {}
 		for package in packages:
 			try:
 				env.ParseConfig( self.pkgconfig_cmd( env, package ) )
-				env[ 'have_' + package ] = 1
+				result[ 'have_' + package ] = 1
 			except Exception, e:
-				env[ 'have_' + package ] = 0
+				result[ 'have_' + package ] = 0
+		return result
 
 	def packages( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 

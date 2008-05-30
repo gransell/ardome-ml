@@ -157,12 +157,14 @@ class WinConfig :
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
 		current environment along with a have_package variable to allow dependency checks."""
+		result = {}
 		for package in packages:
 			try:
 				env.packages( package )
-				env[ 'have_' + package ] = 1
+				result[ 'have_' + package ] = 1
 			except Exception, e:
-				env[ 'have_' + package ] = 0
+				result[ 'have_' + package ] = 0
+		return result
 
 	def package_cflags( self, env, *packages ):
 		"""Obtains the CFlags in the .wc file"""

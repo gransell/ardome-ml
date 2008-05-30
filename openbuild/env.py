@@ -98,7 +98,7 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
 	def optional( self, *packages ):
-		self.package_manager.optional( self, *packages )
+		return self.package_manager.optional( self, *packages )
 
 	def packages( self, *packages ) :
 		self.package_manager.packages( self, *packages )
