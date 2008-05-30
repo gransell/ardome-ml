@@ -11,7 +11,7 @@ class WinConfig :
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
-		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ) ], shared:
+		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ), shared ]:
 			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
 				for f in files:
 					if f.endswith( '.wc' ):
@@ -193,7 +193,7 @@ class WinConfig :
 		for package in env.package_list.keys( ):
 			if env.package_list[ package ][ 'prefix' ].startswith( os.path.join( env.root, 'bcomp' ) ):
 				rules = self.obtain_rules( env, package, checked )
-				libs = rules[ 'install_libs' ]
-				if libs != '':
+				if 'install_libs' in rules.keys( ):
+					libs = rules[ 'install_libs' ]
 					result += glob.glob( libs )
 		return result
