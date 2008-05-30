@@ -102,6 +102,11 @@ class AMLEnvironment( openbuild.env.Environment ):
 				break
 		if use != '':
 			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( 'openbuild/*.py' ) )
+			path = os.path.join( 'pkgconfig', self[ 'target' ] )
+			list = os.listdir( path )
+			for package in list:
+				if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
+					self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
 		else:
 			print "Couldn't find python site-packages in " + self[ 'prefix' ]
 

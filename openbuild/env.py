@@ -9,11 +9,6 @@ if utils.vs( ):
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 
-# if os.name == 'posix':
-#	import pkgconfig as package_manager
-#else:
-#	import winconfig as package_manager
-
 class Environment( BaseEnvironment ):
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
