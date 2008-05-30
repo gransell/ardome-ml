@@ -12,7 +12,10 @@ from winconfig import WinConfig as WinConfig
 class Environment( BaseEnvironment ):
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
-
+	
+	vs_builder = None 
+	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
+	
 	def __init__( self, opts, bmgr = None , *kw ):
 		"""	Constructor. The Options object is added to the environment, and all 
 			common install and build related variables are defined as needed.
@@ -35,7 +38,7 @@ class Environment( BaseEnvironment ):
 		
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
-		elif utils.vs() : self.build_manager = vsbuild.VsBuilder( utils.vs() )
+		elif utils.vs() : self.build_manager = Environment.vs_builder
 		else: self.build_manager = None
 
 		# Instanciate a package manager for the current platform:
@@ -171,13 +174,18 @@ class Environment( BaseEnvironment ):
 					libpath, lib = file.rsplit( os.sep, 1 )
 					libpath = os.path.join( self.root, libpath )
 					lib = lib.rsplit( '.', 1 )[ 0 ]
-					if self[ 'PLATFORM' ] != 'win32': 
-						libpath = '-L' + libpath
-						lib = lib.replace( 'lib', '-l', 1 )
-					else:
-						libpath = '/LIBPATH:' + libpath
-						lib += '.lib'
-					local_env.Append( LINKFLAGS = [ libpath, lib ] )
+					local_env.Append( LIBPATH = [libpath] )
+					local_env.Append( LIBS = [lib] )
+					
+					# if self[ 'PLATFORM' ] != 'win32': 
+						# libpath = '-L' + libpath
+						# lib = lib.replace( 'lib', '-l', 1 )
+					# else:
+						# local_env.Append( LIBPATH = [libpath] )
+						# local_env.Append( LIBS = [lib + ".lib"] )
+						# libpath = '/LIBPATH:' + libpath
+						# lib += '.lib'
+					# local_env.Append( LINKFLAGS = [ libpath, lib ] )
 
 		return result
 		
@@ -232,9 +240,16 @@ class Environment( BaseEnvironment ):
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 
+		if "program" in dir(self.build_manager) : 
+			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
+			
 		self.setup_precompiled_headers( sources, pre, nopre )
 		self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
+		
+	def done( self ) :
+		if "done" in dir(self.build_manager) : 
+			self.build_manager.done( self )
 
 	def Tool(self, tool, toolpath=None, **kw):
 		if toolpath == None :

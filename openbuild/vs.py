@@ -101,13 +101,16 @@ class CompilerOptions:
 	def include_directories_as_string( self ) :
 		res = ""
 		for lib in self.include_directories:
-			if( len(res) > 0 ) : res += ";"
-			res += "&quot;" + lib.replace("#/", "$(SolutionDir)") + "&quot;"
+			if len(lib) == 0 : continue
+			if len(res) > 0  : res += ";"
+			lib = lib.replace("\\\\", "\\")
+			res += "&quot;" + lib + "&quot;"
 		return res
 		
 	def preprocessor_flags_as_string( self ) :
 		res = ""
 		for flag in self.preprocessor_flags:
+			flag = flag.replace("\\\"", "")
 			if( len(res) > 0 ) : res += ";"
 			res += flag
 		return res
@@ -152,15 +155,18 @@ class LinkerOptions:
 	def additional_dependencies_as_string( self ) :
 		res = ""
 		for dep in self.additional_dependencies:
-			if len(res) == 0 : res += dep + ".lib"
-			else : res += " " + dep + ".lib"
+			if len(dep) == 0 : continue
+			if len(res) == 0 : res += dep 
+			else : res += " " + dep 
 		return res
 			
 	def additional_library_directories_as_string( self ) :
 		res = ""
 		for lib in self.additional_library_directories:
+			if len(lib) == 0 : continue
 			if( len(res) > 0 ) : res += ";"
-			res += "&quot;" + lib.replace("#/", "$(SolutionDir)") + "&quot;"
+			lib = lib.replace("\\\\", "\\")
+			res += "&quot;" + lib + "&quot;"
 		return res
 
 class BuildConfiguration:
@@ -176,13 +182,12 @@ class BuildConfiguration:
 		self.intermediate_directory = ""
 		self.target_type = target_type
 		self.character_set = "unicode"
-		self.compiler_options = CompilerOptions( product_name )
+		self.compiler_options = CompilerOptions()
 		self.linker_options = LinkerOptions( product_name, target_type )
 		
 	def set_vc_version( self, vc_version ):
 		self.vc_version = vc_version
-		self.output_directory = "$(SolutionDir)bin_" + self.vc_version + "\\" + self.name.replace("|","-")
-		self.intermediate_directory = "$(SolutionDir)tmp_" + self.vc_version + "\\" + self.product_name + "\\" + self.name.replace("|","-") 
+		
 	 
 	def binary_type( self ) :
 		if( self.target_type == "dll") : return "2"
@@ -365,7 +370,9 @@ class VSSolution :
 	 
 	def create_sln_and_vcproj_files( self, sln_file_name ) :
 		#Start to save projects
+		print "Saving sln-file", sln_file_name
 		for proj in self.projects:
+			print "Saving vcproj-file", proj.file_system_location
 			f = open( proj.file_system_location, "w");
 			f.write( str(proj) );
 			f.close();

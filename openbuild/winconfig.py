@@ -11,7 +11,7 @@ class WinConfig :
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
-		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ), shared ]:
+		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ) ]  :
 			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
 				for f in files:
 					if f.endswith( '.wc' ):
@@ -106,6 +106,8 @@ class WinConfig :
 			# Ensure we have minimal CFlags and libs
 			if 'CFlags' not in rules.keys( ): rules[ 'CFlags' ] = ''
 			if 'Libs' not in rules.keys( ): rules[ 'Libs' ] = ''
+			if 'LibPath' not in rules.keys( ): rules[ 'LibPath' ] = ''
+			if 'CppPath' not in rules.keys( ): rules[ 'CppPath' ] = ''
 
 			# Check the Requires rule
 			if 'Requires' in rules.keys( ):
@@ -130,6 +132,10 @@ class WinConfig :
 							rules[ 'CFlags' ] = deprules[ 'CFlags' ] + ' ' + rules[ 'CFlags' ]
 						if 'Libs' in deprules.keys( ): 
 							rules[ 'Libs' ] = deprules[ 'Libs' ] + ' ' + rules[ 'Libs' ]
+						if 'LibPath' in deprules.keys( ): 
+							rules[ 'LibPath' ] = deprules[ 'LibPath' ] + ' ' + rules[ 'LibPath' ]
+						if 'CppPath' in deprules.keys( ): 
+							rules[ 'CppPath' ] = deprules[ 'CppPath' ] + ' ' + rules[ 'CppPath' ]
 						requires_list += rules[ 'Requires' ].split( )
 
 			return rules
@@ -142,6 +148,8 @@ class WinConfig :
 		"""Add packages to the environment"""
 		cflags = ''
 		libflags = ''
+		libpath = ''
+		cpp_path = ''
 		checked = []
 		for package in packages:
 			rules = self.obtain_rules( env, package, checked )
@@ -149,9 +157,15 @@ class WinConfig :
 				cflags += ' ' + rules[ 'CFlags' ]
 			if 'Libs' in rules.keys( ):
 				libflags += ' ' + rules[ 'Libs' ]
+			if 'LibPath' in rules.keys( ):
+				libpath += ' ' + rules[ 'LibPath' ]
+			if 'CppPath' in rules.keys( ):
+				cpp_path += ' ' + rules[ 'CppPath' ]
 		if env[ 'PLATFORM' ] == 'win32':
 			env.Append( CCFLAGS = cflags )
-			env.Append( LINKFLAGS = libflags.split( ' ' ) )
+			env.Append( LIBS = libflags.split( ' ' ) )
+			env.Append( LIBPATH = libpath.split( ' ' ) )
+			env.Append( CPPPATH = cpp_path.split( ' ' ) )
 		else:
 			env.MergeFlags( cflags + libflags )
 
@@ -193,7 +207,7 @@ class WinConfig :
 		for package in env.package_list.keys( ):
 			if env.package_list[ package ][ 'prefix' ].startswith( os.path.join( env.root, 'bcomp' ) ):
 				rules = self.obtain_rules( env, package, checked )
-				if 'install_libs' in rules.keys( ):
-					libs = rules[ 'install_libs' ]
+				libs = rules[ 'install_libs' ]
+				if libs != '':
 					result += glob.glob( libs )
 		return result

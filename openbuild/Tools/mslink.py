@@ -144,7 +144,7 @@ def generate(env):
 	env['SHLINK']	= 'link'
 	env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
 	env['_PDB'] = pdbGenerator
-	env['LINKCOM'] = 'linkapa'
+	env['LINKCOM'] = 'link'
 	env.Append(PROGEMITTER = [prog_emitter])
 	env['LIBDIRPREFIX']='/LIBPATH:'
 	env['LIBDIRSUFFIX']=''
