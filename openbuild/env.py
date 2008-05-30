@@ -161,6 +161,8 @@ class Environment( BaseEnvironment ):
 
 		for build_type in builds:
 			local_env = self.Clone(  )
+			local_env.full_path = os.path.join( local_env.root, path )
+			
 			build_type( local_env )
 
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 

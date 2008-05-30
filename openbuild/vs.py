@@ -2,6 +2,7 @@ import xml.dom.minidom
 import uuid
 import re
 import StringIO
+import os
 
 
 class CompilerOptions:
@@ -98,12 +99,13 @@ class CompilerOptions:
 		if( m ) : return "4"
 		return "3"
 			
-	def include_directories_as_string( self ) :
+	def include_directories_as_string( self, root_dir ) :
 		res = ""
 		for lib in self.include_directories:
 			if len(lib) == 0 : continue
 			if len(res) > 0  : res += ";"
 			lib = lib.replace("\\\\", "\\")
+			lib = lib.replace("#/", root_dir + "\\" )
 			res += "&quot;" + lib + "&quot;"
 		return res
 		
@@ -160,12 +162,13 @@ class LinkerOptions:
 			else : res += " " + dep 
 		return res
 			
-	def additional_library_directories_as_string( self ) :
+	def additional_library_directories_as_string( self, root_dir ) :
 		res = ""
 		for lib in self.additional_library_directories:
 			if len(lib) == 0 : continue
 			if( len(res) > 0 ) : res += ";"
 			lib = lib.replace("\\\\", "\\")
+			lib = lib.replace("#/", root_dir + "\\" )
 			res += "&quot;" + lib + "&quot;"
 		return res
 
@@ -199,7 +202,10 @@ class BuildConfiguration:
 		return "0"
 		
 class VSProject :
-	def __init__( self, name = "", configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
+	def __init__( self, name, root_dir, full_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
+		""" root_dir -- The directory where the SConstruct file resides
+			full_path -- The directory where the SConsript file resides. """
+		
 		self.name = name
 		self.configurations = configurations
 			
@@ -207,6 +213,8 @@ class VSProject :
 		self.cpp_files = source_files
 		self.vc_version = vc_version
 		self.file_system_location = ""
+		self.full_path = full_path
+		self.root_dir = root_dir
 		
 		for conf in self.configurations:
 			conf.set_vc_version( self.vc_version )
@@ -214,13 +222,13 @@ class VSProject :
 				self.cpp_files.append(conf.compiler_options.precomp_headers[2]) 
 		
 	def __str__(self) :
-		os = StringIO.StringIO();
-		os.write("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\n")
-		self.handle_project(os)
-		return os.getvalue()
+		ostr = StringIO.StringIO();
+		ostr.write("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\n")
+		self.handle_project(ostr)
+		return ostr.getvalue()
 		
 	   
-	def handle_project(self, os):
+	def handle_project(self, ostr):
 		project_header = """<VisualStudioProject	 
 				ProjectType="Visual C++"
 				Version="7.10"
@@ -232,40 +240,40 @@ class VSProject :
 			<Platform Name="Win32"/>
 		</Platforms>"""
 
-		os.write( project_header % (self.name , uuid.uuid4() , self.name) )
+		ostr.write( project_header % (self.name , uuid.uuid4() , self.name) )
 
-		os.write("\n<Configurations>\n")
+		ostr.write("\n<Configurations>\n")
 		for config in self.configurations:
-			self.handle_configuration(config, os)
+			self.handle_configuration(config, ostr)
 			
-		os.write("</Configurations>\n")
-		os.write("<References />\n")
+		ostr.write("</Configurations>\n")
+		ostr.write("<References />\n")
 
-		os.write("<Files>\n")
-		self.handle_cpp_files(os)
-		self.handle_h_files(os)
-		os.write("</Files>\n")
-		os.write("<Globals/>\n")
-		os.write("</VisualStudioProject>\n")
+		ostr.write("<Files>\n")
+		self.handle_cpp_files(ostr)
+		self.handle_h_files(ostr)
+		ostr.write("</Files>\n")
+		ostr.write("<Globals/>\n")
+		ostr.write("</VisualStudioProject>\n")
 
-	def handle_configuration( self, config, os):
+	def handle_configuration( self, config, ostr):
 		config_start = """<Configuration	Name="%s"
 			OutputDirectory="%s"
 			IntermediateDirectory="%s"
 			ConfigurationType="%s"
 			CharacterSet="%s" >"""
 		config_name = config.name
-		os.write("\n");
-		os.write( config_start % (  config.name, config.output_directory, config.intermediate_directory, 
+		ostr.write("\n");
+		ostr.write( config_start % (  config.name, config.output_directory, config.intermediate_directory, 
 									config.binary_type(), config.character_type() ) )
 
-		self.handle_compiler(config, os)
-		self.handle_linker(config, os)
+		self.handle_compiler(config, ostr)
+		self.handle_linker(config, ostr)
 
-		os.write("</Configuration>\n")
+		ostr.write("</Configuration>\n")
 
 
-	def handle_compiler( self, config, os ) :
+	def handle_compiler( self, config, ostr ) :
 		compiler_tool = """ <Tool
 					Name="VCCLCompilerTool"
 					AdditionalOptions="%s"
@@ -279,8 +287,8 @@ class VSProject :
 					Detect64BitPortabilityProblems="FALSE"
 					DebugInformationFormat="%s"/> """
 
-		os.write( compiler_tool % ( config.compiler_options.additional_options,
-								config.compiler_options.include_directories_as_string(),
+		ostr.write( compiler_tool % ( config.compiler_options.additional_options,
+								config.compiler_options.include_directories_as_string( self.root_dir),
 								config.compiler_options.preprocessor_flags_as_string(),
 								config.compiler_options.runtime_library( config.name ),
 								config.compiler_options.runtime_type_info_as_string(),
@@ -291,7 +299,7 @@ class VSProject :
 								
    
 
-	def handle_linker( linker, config, os ) :
+	def handle_linker( self, config, ostr ) :
 		linker_tool = """ <Tool
 			Name="VCLinkerTool"
 			AdditionalDependencies="%s"
@@ -304,10 +312,10 @@ class VSProject :
 			ImportLibrary="%s"
 			TargetMachine="%s"/> """
 
-		os.write ( linker_tool % (   config.linker_options.additional_dependencies_as_string(),
+		ostr.write ( linker_tool % (   config.linker_options.additional_dependencies_as_string(),
 								config.linker_options.output_file,
 								config.linker_options.incremental_linking( config.name),
-								config.linker_options.additional_library_directories_as_string(),
+								config.linker_options.additional_library_directories_as_string( self.root_dir),
 								config.linker_options.generate_debug_information_as_string(),
 								config.linker_options.program_database_file,
 								config.linker_options.subsystem(),
@@ -322,7 +330,7 @@ class VSProject :
 		return filter_element % ( filter_name, file_types, uuid.uuid4() )
 
 
-	def handle_file_configuration( self, cpp_file, config, os ) :
+	def handle_file_configuration( self, cpp_file, config, ostr ) :
 		config_element = """<FileConfiguration Name="%s">
 			<Tool
 				Name="VCCLCompilerTool"
@@ -330,34 +338,36 @@ class VSProject :
 				PrecompiledHeaderThrough="%s"/>
 			</FileConfiguration>"""
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
-		os.write( config_element % ( config.name, precomp_flag, precomp_file) )
+		ostr.write( config_element % ( config.name, precomp_flag, precomp_file) )
 
-	def handle_src_file( self, cpp_file, os ) :
-		os.write( "<File RelativePath=\".\\%s\" >\n" % cpp_file.replace("/", "\\") )
+	def handle_src_file( self, cpp_file, ostr ) :
+		thepath = os.path.join(self.full_path, cpp_file)
+		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\")  )
 
 		for config in self.configurations :
-			self.handle_file_configuration(cpp_file, config, os)
+			self.handle_file_configuration(cpp_file, config, ostr)
 
-		os.write( "</File>\n" )
+		ostr.write( "</File>\n" )
 
-	def handle_header_file( self, h_file_path, os ) :
-		os.write( "<File RelativePath=\".\\%s\" />\n" % h_file_path  )
+	def handle_header_file( self, h_file_path, ostr ) :
+		thepath = os.path.join(self.full_path, h_file_path)
+		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
 
-	def handle_cpp_files( self, os ) :
-		os.write( self.create_filter("Source Files", "cpp;c;cxx") + "\n")
+	def handle_cpp_files( self, ostr ) :
+		ostr.write( self.create_filter("Source Files", "cpp;c;cxx") + "\n")
 		if self.cpp_files :
 			self.cpp_files.sort()
 			for cpp_file in self.cpp_files:
-				self.handle_src_file(cpp_file, os)
-		os.write("</Filter>\n")
+				self.handle_src_file(cpp_file, ostr)
+		ostr.write("</Filter>\n")
 
-	def handle_h_files( self, os ) :
-		os.write( self.create_filter("Header Files", "h;hpp;hxx") + "\n")
+	def handle_h_files( self, ostr ) :
+		ostr.write( self.create_filter("Header Files", "h;hpp;hxx") + "\n")
 		if self.header_files:
 			self.header_files.sort()
 			for h_file in self.header_files :
-				self.handle_header_file(h_file, os)
-		os.write( "</Filter>\n" )
+				self.handle_header_file(h_file, ostr)
+		ostr.write( "</Filter>\n" )
 
 class VSSolution :
 	def __init__(self) :

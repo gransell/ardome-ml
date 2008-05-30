@@ -35,6 +35,8 @@ class VsBuilder :
 		if( existing_project ) : existing_project.configurations.append(curr_cfg)
 		else :
 			vcproj = vs.VSProject(  name = lib, 
+									root_dir = env.root,
+									full_path = env.full_path,
 									configurations = [ curr_cfg ], 
 									header_files = headers, 
 									source_files = sources, 
