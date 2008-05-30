@@ -29,7 +29,11 @@ class PkgConfig:
 
 		full += ':' + os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
 
-		os.environ[ 'PKG_CONFIG_PATH' ] = full
+		if 'PKG_CONFIG_PATH' not in os.environ.keys( ) or os.environ[ 'PKG_CONFIG_PATH' ] == '':
+			os.environ[ 'PKG_CONFIG_PATH' ] = full
+		else:
+			os.environ[ 'PKG_CONFIG_PATH' ] += ':' + full
+
 		return flags
 
 	def optional( self, env, *packages ):
