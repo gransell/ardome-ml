@@ -99,6 +99,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			use = openbuild.utils.default_pydir( self )
 		if use != '':
 			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( 'openbuild/*.py' ) )
+			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'Tools' ), Glob( 'openbuild/Tools/*.py' ) )
 			path = os.path.join( 'pkgconfig', self[ 'target' ] )
 			list = os.listdir( path )
 			for package in list:

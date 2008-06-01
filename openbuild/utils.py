@@ -39,7 +39,6 @@ def default_pydir( self ):
 	use = ''
 	start = os.path.join( env[ 'prefix' ], env[ 'libdir' ] )
 	for path in sys.path:
-		print path
 		if path.startswith( start ) and path.endswith( 'site-packages' ):
 			use = path
 			break

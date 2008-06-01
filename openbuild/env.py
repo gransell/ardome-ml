@@ -16,7 +16,7 @@ class Environment( BaseEnvironment ):
 	vs_builder = None 
 	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
 	
-	def __init__( self, opts, bmgr = None , *kw ):
+	def __init__( self, opts, bmgr = None , **kw ):
 		"""	Constructor. The Options object is added to the environment, and all 
 			common install and build related variables are defined as needed.
 			
@@ -31,7 +31,7 @@ class Environment( BaseEnvironment ):
 		self.toolpath = [ self.path_to_openbuild_tools() ]
 		self.options = opts
 		
-		BaseEnvironment.__init__( self, ENV = os.environ ,*kw )
+		BaseEnvironment.__init__( self, ENV = os.environ , **kw )
 		
 		opts.Update( self )
 		opts.Save( opts.file, self )
@@ -136,7 +136,7 @@ class Environment( BaseEnvironment ):
 				print "Dependency check" + str( e )
 		return result
 		
-	def build( self, path, deps = [] ):
+	def build( self, path, deps = [], tools = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
 			
@@ -160,7 +160,7 @@ class Environment( BaseEnvironment ):
 		elif self.debug_install: builds.pop( 0 )
 
 		for build_type in builds:
-			local_env = self.Clone(  )
+			local_env = self.Clone( tools = tools )
 			local_env.full_path = os.path.join( local_env.root, path )
 			
 			build_type( local_env )
