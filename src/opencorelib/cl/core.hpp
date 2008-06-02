@@ -9,8 +9,8 @@
 
     #ifndef CORE_EXPORTS
         #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-            #pragma message ("Linking with open_core_library.lib")
-            #pragma comment (lib, "open_core_library.lib")
+            #pragma message ("Linking with opencorelib_cl.lib")
+            #pragma comment (lib, "opencorelib_cl.lib")
         #endif
 
     #endif
