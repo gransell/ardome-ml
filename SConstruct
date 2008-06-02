@@ -98,10 +98,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if use == '':
 			use = openbuild.utils.default_pydir( self )
 		if use != '':
-			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( 'openbuild/*.py' ) )
-			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'Tools' ), Glob( 'openbuild/Tools/*.py' ) )
+			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( os.path.join( 'openbuild', '*.py' ) ) )
+			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'Tools' ), Glob( os.path.join( 'openbuild', 'Tools', '*.py' ) ) )
 			path = os.path.join( 'pkgconfig', self[ 'target' ] )
-			list = os.listdir( path )
+			list = Glob( path )
 			for package in list:
 				if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
 					self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
@@ -127,7 +127,7 @@ if env.check_externals( ):
 
 	env.create_package( )
 	env.install_openbuild( )
-	env.package_install_libs( )
+	env.package_install( )
 
 else:
 	print "Dependencies missing - aborting"

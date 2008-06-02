@@ -73,6 +73,15 @@ class PkgConfig:
 		command += package + ' 2> /dev/null'
 		return command
 
+	def package_install_include( self, env ):
+		result = []
+		for package in env.package_list.keys( ):
+			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
+				include = os.popen( self.pkgconfig_cmd( env, package, "--variable=install_include" ) ).read( ).replace( '\n', '' )
+				if include != '':
+					result += glob.glob( include )
+		return result
+
 	def package_install_libs( self, env ):
 		result = []
 		for package in env.package_list.keys( ):

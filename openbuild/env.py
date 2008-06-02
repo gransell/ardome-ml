@@ -112,7 +112,7 @@ class Environment( BaseEnvironment ):
 	def package_libs( self, package ) :
 		return self.package_manager.package_libs( self, package )
 
-	def package_install_libs( self ):
+	def package_install( self ):
 		builds = [ Environment.prep_release, Environment.prep_debug ]
 		if self.release_install: builds.pop( 1 )
 		elif self.debug_install: builds.pop( 0 )
@@ -122,6 +122,8 @@ class Environment( BaseEnvironment ):
 			build_type( env )
 			for lib in env.package_manager.package_install_libs( env ):
 				env.Install( env[ 'stage_libdir' ], lib )
+			for include in env.package_manager.package_install_include( env ):
+				env.Install( env[ 'stage_include' ], include )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
@@ -224,7 +226,7 @@ class Environment( BaseEnvironment ):
 
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
-		self['PDB'] = lib + '.pdb'
+		#self['PDB'] = lib + '.pdb'
 		
 		return self.SharedLibrary( lib, sources, *keywords )
 		
@@ -236,7 +238,7 @@ class Environment( BaseEnvironment ):
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
-		self['PDB'] = lib + '.pdb'
+		#self['PDB'] = lib + '.pdb'
 
 		return self.SharedLibrary( lib, sources, *keywords )
 
@@ -246,7 +248,7 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
-		self['PDB'] = lib + '.pdb'
+		#self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 		
 	def done( self ) :

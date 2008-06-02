@@ -163,9 +163,9 @@ class WinConfig :
 				cpp_path += ' ' + rules[ 'CppPath' ]
 		if env[ 'PLATFORM' ] == 'win32':
 			env.Append( CCFLAGS = cflags )
+			env.Append( CPPPATH = cpp_path.split( ' ' ) )
 			env.Append( LIBS = libflags.split( ' ' ) )
 			env.Append( LIBPATH = libpath.split( ' ' ) )
-			env.Append( CPPPATH = cpp_path.split( ' ' ) )
 		else:
 			env.MergeFlags( cflags + libflags )
 
@@ -201,13 +201,25 @@ class WinConfig :
 				flags += rules[ 'Libs' ] + ' '
 		return flags
 
+	def package_install_include( self, env ):
+		result = []
+		checked = []
+		for package in env.package_list.keys( ):
+			if env.package_list[ package ][ 'prefix' ].startswith( os.path.join( env.root, 'bcomp' ) ):
+				rules = self.obtain_rules( env, package, checked )
+				if 'install_include' in rules.keys( ):
+					include = rules[ 'install_include' ]
+					result += glob.glob( include )
+		return result
+
 	def package_install_libs( self, env ):
 		result = []
 		checked = []
 		for package in env.package_list.keys( ):
 			if env.package_list[ package ][ 'prefix' ].startswith( os.path.join( env.root, 'bcomp' ) ):
 				rules = self.obtain_rules( env, package, checked )
-				libs = rules[ 'install_libs' ]
-				if libs != '':
+				if 'install_libs' in rules.keys( ):
+					libs = rules[ 'install_libs' ]
 					result += glob.glob( libs )
 		return result
+
