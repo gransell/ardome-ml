@@ -44,6 +44,6 @@ def default_pydir( self ):
 				use = path
 				break
 	if use == '':
-		use = os.path.join( env[ 'stage_prefix' ], 'lib', 'openbuild' )
+		use = os.path.join( env[ 'stage_prefix' ], 'lib' )
 	return use
 

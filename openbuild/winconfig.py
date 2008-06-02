@@ -171,8 +171,8 @@ class WinConfig :
 			env.Append( CCFLAGS = cflags )
 			env.Append( CPPDEFINES = cppdefines.split( ' ' ) )
 			env.Append( CPPPATH = cpp_path.split( ' ' ) )
-			env.Append( LIBS = libflags.split( ' ' ) )
 			env.Append( LIBPATH = libpath.split( ' ' ) )
+			env.Append( LIBS = libflags.split( ' ' ) )
 		else:
 			env.MergeFlags( cflags + libflags )
 

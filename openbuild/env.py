@@ -124,9 +124,15 @@ class Environment( BaseEnvironment ):
 			env = self.Clone( )
 			build_type( env )
 			for lib in env.package_manager.package_install_libs( env ):
-				env.Install( env[ 'stage_libdir' ], lib )
+				if os.path.isdir( lib ):
+					env.install_dir( env[ 'stage_libdir' ], lib )
+				else:
+					env.Install( env[ 'stage_libdir' ], lib )
 			for include in env.package_manager.package_install_include( env ):
-				env.Install( env[ 'stage_include' ], include )
+				if os.path.isdir( include ):
+					env.install_dir( os.path.join( env[ 'stage_include' ], include.rsplit( os.sep, 1 )[ -1 ] ), include )
+				else:
+					env.Install( env[ 'stage_include' ], include )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
@@ -283,6 +289,20 @@ class Environment( BaseEnvironment ):
 			toolpath = [ self.path_to_openbuild_tools() ]
 		
 		BaseEnvironment.Tool( self, tool, toolpath, **kw )
-	
 
+	def install_dir( self, dst, src ):
+		""" Installs the contents of src to dst, walking through the src directory and invoking 
+			Install on every file found.
+
+			Keyword arguments:
+			dst -- destination directory
+			src -- source directory
+		"""
+
+		for root, d, files in os.walk( src ):
+			for f in files:
+				full = os.path.join( root, f )
+				# Only include if there's no hidden content here (ie: .svn existing in the path)
+				if full.find( os.sep + '.' ) == -1:
+					self.Install( dst + root.replace( src, '' ), full )
 

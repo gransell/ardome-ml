@@ -94,16 +94,25 @@ class AMLEnvironment( openbuild.env.Environment ):
 			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
 	def install_openbuild( self ):
-		use = openbuild.utils.default_pydir( self )
-		print use
+		clone = self.Clone( )
+		clone.prep_release( )
+		use = clone.subst( openbuild.utils.default_pydir( clone ) )
 		if use != '':
-			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( os.path.join( 'openbuild', '*.py' ) ) )
-			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'Tools' ), Glob( os.path.join( 'openbuild', 'Tools', '*.py' ) ) )
-			path = os.path.join( 'pkgconfig', self[ 'target' ] )
-			list = Glob( path )
-			for package in list:
-				if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
-					self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
+			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( self.root, 'openbuild' ) )
+			if clone[ 'PLATFORM' ] != 'win32':
+				path = os.path.join( 'pkgconfig', clone[ 'target' ] )
+				list = Glob( path )
+				for package in list:
+					if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
+						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
+			else:
+				install = os.path.join( clone[ 'stage_libdir' ], 'winconfig' )
+				for path in [ os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', clone[ 'target' ] ) ]:
+					print path
+					for r, d, files in os.walk( path ):
+						for f in files:
+							if f.endswith( '.wc' ):
+								clone.Install( install, os.path.join( r, f ) )
 		else:
 			print "Couldn't find python site-packages in " + self[ 'prefix' ]
 
