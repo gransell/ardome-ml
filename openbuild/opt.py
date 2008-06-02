@@ -11,7 +11,6 @@ def create_options( file, args ):
 	opts.Add( 'target', 'Target operating system and build environment.', target )
 	opts.Add( 'prefix', 'Directory for installation.', '/usr/local' )
 	opts.Add( 'distdir', 'Directory to actually install to.  Prefix will be used inside this.', '' )
-	opts.Add( 'pydir', 'Directory to install the openbuild into', '' )
 
 	if target == 'osx':
 		opts.Add( 'install_name', 'Bundle install name', '@loader_path' )

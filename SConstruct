@@ -94,9 +94,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
 	def install_openbuild( self ):
-		use = self[ 'pydir' ]
-		if use == '':
-			use = openbuild.utils.default_pydir( self )
+		use = openbuild.utils.default_pydir( self )
+		print use
 		if use != '':
 			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild' ), Glob( os.path.join( 'openbuild', '*.py' ) ) )
 			self.Install( os.path.join( self[ 'distdir' ] + use, 'openbuild', 'Tools' ), Glob( os.path.join( 'openbuild', 'Tools', '*.py' ) ) )
