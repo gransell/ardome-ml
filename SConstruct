@@ -127,6 +127,8 @@ if env.check_externals( ):
 	env.create_package( )
 	env.install_openbuild( )
 	env.package_install( )
+	
+	env.done( 'ardome-ml' )
 
 else:
 	print "Dependencies missing - aborting"

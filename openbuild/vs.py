@@ -19,7 +19,7 @@ class CompilerOptions:
 		self.include_directories = []
 		self.wchar_t_is_built_in = False
 		self.runtime_type_info = True
-		self.precomp_headers = True, "precompiled_headers.h", "precompiled_headers.cpp"
+		self.precomp_headers = False, "precompiled_headers.h", "precompiled_headers.cpp"
 		self.sources_not_using_precomp = []
 		self.warning_level = 3
 		self.additional_options = ""
@@ -112,10 +112,12 @@ class CompilerOptions:
 	def preprocessor_flags_as_string( self ) :
 		res = ""
 		for flag in self.preprocessor_flags:
+			if len(flag) == 0 : continue
 			flag = flag.replace("\\\"", "")
 			if( len(res) > 0 ) : res += ";"
 			res += flag
 		return res
+		
 		
 class LinkerOptions:
 	def __init__(self, name , target_type  ) :
@@ -202,7 +204,7 @@ class BuildConfiguration:
 		return "0"
 		
 class VSProject :
-	def __init__( self, name, root_dir, full_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
+	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
 		""" root_dir -- The directory where the SConstruct file resides
 			full_path -- The directory where the SConsript file resides. """
 		
@@ -213,7 +215,7 @@ class VSProject :
 		self.cpp_files = source_files
 		self.vc_version = vc_version
 		self.file_system_location = ""
-		self.full_path = full_path
+		self.relative_path = relative_path
 		self.root_dir = root_dir
 		
 		for conf in self.configurations:
@@ -341,7 +343,7 @@ class VSProject :
 		ostr.write( config_element % ( config.name, precomp_flag, precomp_file) )
 
 	def handle_src_file( self, cpp_file, ostr ) :
-		thepath = os.path.join(self.full_path, cpp_file)
+		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file)
 		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\")  )
 
 		for config in self.configurations :
@@ -350,7 +352,7 @@ class VSProject :
 		ostr.write( "</File>\n" )
 
 	def handle_header_file( self, h_file_path, ostr ) :
-		thepath = os.path.join(self.full_path, h_file_path)
+		thepath = os.path.join(self.relative_sln, self.relative_path, h_file_path)
 		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
 
 	def handle_cpp_files( self, ostr ) :
@@ -372,29 +374,47 @@ class VSProject :
 class VSSolution :
 	def __init__(self) :
 		self.projects = []
+		self.target_dir = ""
 		
 	def find_project_by_name( self, project_name ) :
 		for proj in self.projects:
 			if proj.name == project_name : return proj
 		return None
 	 
-	def create_sln_and_vcproj_files( self, sln_file_name ) :
+	def create_sln_and_vcproj_files( self, sln_file_name, deps ) :
 		#Start to save projects
-		print "Saving sln-file", sln_file_name
+		where_to_write = (self.root + self.target_dir).replace("/", "\\")
+		try:
+			os.makedirs(  where_to_write  )
+		except os.error, e:
+			print e
+			pass
+			
+		print "Saving sln-file", where_to_write
 		for proj in self.projects:
-			print "Saving vcproj-file", proj.file_system_location
-			f = open( proj.file_system_location, "w");
+			proj_file = self.root + self.target_dir +  proj.file_name
+			proj_file = proj_file.replace("\\", "/")
+			print "Saving vcproj-file", proj_file
+			proj.relative_sln = self.relative_root
+			proj.guid = uuid.uuid4()
+			f = open( proj_file, "w");
 			f.write( str(proj) );
 			f.close();
 		# Now, build the solution-file
-		sln = open(sln_file_name, "w")
+		sln = open(os.path.join( where_to_write, sln_file_name) , "w")
 		visual_studio_guid = "8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
 		sln.write("Microsoft Visual Studio Solution File, Format Version 8.00\n")
 		for proj in self.projects:
 			project_element = """Project("{%s}") = "%s", "%s", "{%s}" """
-			sln.write( project_element % (visual_studio_guid, proj.name, proj.file_system_location, uuid.uuid4() ) )
+			sln.write( project_element % (visual_studio_guid, proj.name, ".\\" + proj.file_name,  proj.guid ) )
 			sln.write( "\n" )
 			sln.write("\tProjectSection(ProjectDependencies) = postProject\n")
+			if proj.name in deps :
+				proj_deps = deps[ proj.name ]
+				for d in proj_deps :
+					dependent_project = self.find_project_by_name( d )
+					sln.write("\t\t{%s}={%s}\n" % (dependent_project.guid, dependent_project.guid ))
+			
 			sln.write("\tEndProjectSection\n")
 			sln.write("EndProject\n")
 			

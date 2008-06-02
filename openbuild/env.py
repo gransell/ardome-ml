@@ -8,6 +8,7 @@ if utils.vs( ):
 	import vsbuild
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
+from sets import Set
 
 class Environment( BaseEnvironment ):
 
@@ -40,6 +41,8 @@ class Environment( BaseEnvironment ):
 		if bmgr : self.build_manager = bmgr
 		elif utils.vs() : self.build_manager = Environment.vs_builder
 		else: self.build_manager = None
+		
+		self.dependencies = {}
 
 		# Instanciate a package manager for the current platform:
 		if os.name == 'posix' : self.package_manager = PkgConfig( )
@@ -138,6 +141,23 @@ class Environment( BaseEnvironment ):
 				print "Dependency check" + str( e )
 		return result
 		
+	def add_dependencies( self, result, dep , build_type) :
+		if result[build_type] == None : return
+		res_min = str(result[ build_type ][ 0 ])
+		dep_min = str(dep[ build_type ][ 0 ]) 
+		
+		res_min = res_min[ res_min.rfind("\\") + 1 : res_min.rfind(".dll") ]
+		dep_min = dep_min[ dep_min.rfind("\\") + 1 : dep_min.rfind(".dll") ]
+		
+		existing_deps = self.dependencies.get( res_min, None)
+		if existing_deps == None :
+			new_set = Set()
+			new_set.add( dep_min )
+			self.dependencies[ res_min ] = new_set
+		else :
+			existing_deps.add( dep_min )
+		
+		
 	def build( self, path, deps = [], tools = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
@@ -164,6 +184,7 @@ class Environment( BaseEnvironment ):
 		for build_type in builds:
 			local_env = self.Clone( tools = tools )
 			local_env.full_path = os.path.join( local_env.root, path )
+			local_env.relative_path = path
 			
 			build_type( local_env )
 
@@ -173,6 +194,8 @@ class Environment( BaseEnvironment ):
 
 			for dep in deps:
 				if dep is not None:
+					self.add_dependencies(result, dep, build_type)
+						
 					self.Requires( result[ build_type ], dep[ build_type ] )
 					file = str( dep[ build_type ][ 0 ] )
 					libpath, lib = file.rsplit( os.sep, 1 )
@@ -251,9 +274,9 @@ class Environment( BaseEnvironment ):
 		#self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 		
-	def done( self ) :
+	def done( self, project_name = None ) :
 		if "done" in dir(self.build_manager) : 
-			self.build_manager.done( self )
+			self.build_manager.done( self, project_name )
 
 	def Tool(self, tool, toolpath=None, **kw):
 		if toolpath == None :

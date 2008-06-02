@@ -105,6 +105,7 @@ class WinConfig :
 
 			# Ensure we have minimal CFlags and libs
 			if 'CFlags' not in rules.keys( ): rules[ 'CFlags' ] = ''
+			if 'CppDefines' not in rules.keys( ): rules[ 'CppDefines' ] = ''
 			if 'Libs' not in rules.keys( ): rules[ 'Libs' ] = ''
 			if 'LibPath' not in rules.keys( ): rules[ 'LibPath' ] = ''
 			if 'CppPath' not in rules.keys( ): rules[ 'CppPath' ] = ''
@@ -130,6 +131,8 @@ class WinConfig :
 						deprules = self.obtain_rules( env, package, checked )
 						if 'CFlags' in deprules.keys( ): 
 							rules[ 'CFlags' ] = deprules[ 'CFlags' ] + ' ' + rules[ 'CFlags' ]
+						if 'CppDefines' in deprules.keys( ): 
+							rules[ 'CppDefines' ] = deprules[ 'CppDefines' ] + ' ' + rules[ 'CppDefines' ]
 						if 'Libs' in deprules.keys( ): 
 							rules[ 'Libs' ] = deprules[ 'Libs' ] + ' ' + rules[ 'Libs' ]
 						if 'LibPath' in deprules.keys( ): 
@@ -147,6 +150,7 @@ class WinConfig :
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
 		cflags = ''
+		cppdefines = ''
 		libflags = ''
 		libpath = ''
 		cpp_path = ''
@@ -155,6 +159,8 @@ class WinConfig :
 			rules = self.obtain_rules( env, package, checked )
 			if 'CFlags' in rules.keys( ):
 				cflags += ' ' + rules[ 'CFlags' ]
+			if 'CppDefines' in rules.keys( ):
+				cppdefines += ' ' + rules[ 'CppDefines' ]
 			if 'Libs' in rules.keys( ):
 				libflags += ' ' + rules[ 'Libs' ]
 			if 'LibPath' in rules.keys( ):
@@ -163,6 +169,7 @@ class WinConfig :
 				cpp_path += ' ' + rules[ 'CppPath' ]
 		if env[ 'PLATFORM' ] == 'win32':
 			env.Append( CCFLAGS = cflags )
+			env.Append( CPPDEFINES = cppdefines.split( ' ' ) )
 			env.Append( CPPPATH = cpp_path.split( ' ' ) )
 			env.Append( LIBS = libflags.split( ' ' ) )
 			env.Append( LIBPATH = libpath.split( ' ' ) )
