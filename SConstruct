@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import openbuild.opt
 import openbuild.env
 import openbuild.utils
@@ -101,7 +102,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( self.root, 'openbuild' ) )
 			if clone[ 'PLATFORM' ] != 'win32':
 				path = os.path.join( 'pkgconfig', clone[ 'target' ] )
-				list = Glob( path )
+				list = glob.glob( path )
 				for package in list:
 					if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
