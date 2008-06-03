@@ -98,7 +98,7 @@ class WinConfig :
 			prefix = env.package_list[ package ][ 'prefix' ]
 
 			# Set up the overrides associative array
-			overrides = [ ( 'prefix', prefix ) ]
+			overrides = [ ( 'prefix', prefix ) , ('debug', '${debug_flag}')] 
 
 			# Parse the config file
 			rules = self.parse( env.package_list[ package ][ 'file' ], overrides )
