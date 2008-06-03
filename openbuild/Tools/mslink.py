@@ -144,7 +144,8 @@ def generate(env):
 	env['SHLINK']	= 'link'
 	env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
 	env['_PDB'] = pdbGenerator
-	env['LINKCOM'] = 'link'
+	# This command is run when building a program or a static library,, see shlibLinkAction above for the command used for linking shared libraries.
+	env['LINKCOM'] = '${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}'
 	env.Append(PROGEMITTER = [prog_emitter])
 	env['LIBDIRPREFIX']='/LIBPATH:'
 	env['LIBDIRSUFFIX']=''
