@@ -87,8 +87,8 @@ class WinConfig :
 		return rules 
 
 	def obtain_rules( self, env, package, checked = [ ] ):
-		"""Returns the compete set of rules for the package recursively calling this 
-		function for any Requires usage."""
+		"""Returns the compete set of rules for the package recursively 
+		calling this function for any Requires usage."""
 
 		if package in env.package_list.keys( ):
 			# Make sure we only handle this package once
@@ -98,7 +98,8 @@ class WinConfig :
 			prefix = env.package_list[ package ][ 'prefix' ]
 
 			# Set up the overrides associative array
-			overrides = [ ( 'prefix', prefix ) , ('debug', '${debug_flag}')] 
+			overrides = [ ( 'prefix', prefix ) ]
+			if env.has_key( 'debug' ) and env[ 'debug' ] == '1': overrides += [ ('debug', '${debug_flag}') ]
 
 			# Parse the config file
 			rules = self.parse( env.package_list[ package ][ 'file' ], overrides )
@@ -140,6 +141,13 @@ class WinConfig :
 						if 'CppPath' in deprules.keys( ): 
 							rules[ 'CppPath' ] = deprules[ 'CppPath' ] + ' ' + rules[ 'CppPath' ]
 						requires_list += rules[ 'Requires' ].split( )
+	
+			# Expand variables in the rules
+			for name in rules.keys( ):
+				value = rules[ name ]
+				for iter in rules.keys( ):
+					value = value.replace( '${' + iter + '}', rules[ iter ] )
+				rules[ name ] = value
 
 			return rules
 		else:
