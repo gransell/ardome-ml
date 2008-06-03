@@ -204,7 +204,7 @@ class BuildConfiguration:
 		return "0"
 		
 class VSProject :
-	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
+	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=[], source_files=[], vc_version="vc71" ) :
 		""" root_dir -- The directory where the SConstruct file resides
 			full_path -- The directory where the SConsript file resides. """
 		
@@ -254,6 +254,7 @@ class VSProject :
 		ostr.write("<Files>\n")
 		self.handle_cpp_files(ostr)
 		self.handle_h_files(ostr)
+		self.handle_rc_files(ostr)
 		ostr.write("</Files>\n")
 		ostr.write("<Globals/>\n")
 		ostr.write("</VisualStudioProject>\n")
@@ -271,6 +272,7 @@ class VSProject :
 
 		self.handle_compiler(config, ostr)
 		self.handle_linker(config, ostr)
+		self.handle_resource_compiler( config, ostr )
 
 		ostr.write("</Configuration>\n")
 
@@ -323,6 +325,10 @@ class VSProject :
 								config.linker_options.subsystem(),
 								config.linker_options.import_library,
 								config.linker_options.target_machine ) )
+								
+	def handle_resource_compiler( self, config, ostr ) :
+		res_tool = """ <Tool Name="VCResourceCompilerTool"/> """
+		ostr.write( res_tool + "\n")
 
 	def create_filter( self, filter_name, file_types ) :
 		filter_element = """<Filter
@@ -341,6 +347,31 @@ class VSProject :
 			</FileConfiguration>"""
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
 		ostr.write( config_element % ( config.name, precomp_flag, precomp_file) )
+		
+	def get_files_with_filter( self, filterstr ) :
+		suffixes = tuple( filterstr.split(";") )
+		
+		def suffix_filter( str ) :
+			ppos = str.rfind(".")
+			
+			if ppos != -1 : str = str[ppos+1:]
+			else : return False
+			
+			print str, suffixes
+			
+			for ext in suffixes :
+				if str == ext : return True
+			
+			return False
+	
+		to_filter = []
+		
+		if self.cpp_files is not None : to_filter += self.cpp_files
+		if self.header_files is not None : to_filter += self.header_files
+		
+		res_files = filter( suffix_filter , to_filter)
+		res_files.sort()
+		return res_files
 
 	def handle_src_file( self, cpp_file, ostr ) :
 		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file)
@@ -354,21 +385,39 @@ class VSProject :
 	def handle_header_file( self, h_file_path, ostr ) :
 		thepath = os.path.join(self.relative_sln, self.relative_path, h_file_path)
 		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
-
+		
+	def handle_res_file( self, res_file_path, ostr ) :
+		thepath = os.path.join(self.relative_sln, self.relative_path, res_file_path)
+		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
+		
+	def cpp_extensions( self ) :
+		return "cpp;c;cxx"
+		
+	def h_extensions( self ):
+		return "h;hpp;hxx"
+		
+	def res_extensions( self ) :
+		return "rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+		
 	def handle_cpp_files( self, ostr ) :
-		ostr.write( self.create_filter("Source Files", "cpp;c;cxx") + "\n")
-		if self.cpp_files :
-			self.cpp_files.sort()
-			for cpp_file in self.cpp_files:
-				self.handle_src_file(cpp_file, ostr)
+		ostr.write( self.create_filter("Source Files", self.cpp_extensions() ) + "\n")
+		files_to_use = self.get_files_with_filter( self.cpp_extensions() )
+		for cpp_file in files_to_use:
+			self.handle_src_file(cpp_file, ostr)
+		ostr.write("</Filter>\n")
+		
+	def handle_rc_files( self, ostr ) :
+		ostr.write( self.create_filter("Resource Files", self.res_extensions() ) + "\n")		
+		files_to_use = self.get_files_with_filter( self.res_extensions() )
+		for res_file in files_to_use:
+			self.handle_res_file(res_file, ostr)
 		ostr.write("</Filter>\n")
 
 	def handle_h_files( self, ostr ) :
-		ostr.write( self.create_filter("Header Files", "h;hpp;hxx") + "\n")
-		if self.header_files:
-			self.header_files.sort()
-			for h_file in self.header_files :
-				self.handle_header_file(h_file, ostr)
+		ostr.write( self.create_filter("Header Files", self.h_extensions() ) + "\n")
+		files_to_use = self.get_files_with_filter( self.h_extensions() )
+		for h_file in files_to_use :
+			self.handle_header_file(h_file, ostr)
 		ostr.write( "</Filter>\n" )
 
 class VSSolution :
