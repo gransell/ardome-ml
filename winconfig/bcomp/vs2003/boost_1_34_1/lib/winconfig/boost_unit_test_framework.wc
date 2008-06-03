@@ -11,4 +11,4 @@ CFlags:
 # The debug_flag is set to -gd so if we're compiling in debug-mode
 # the file name will change accordingly.
 
-Libs:	boost_thread-vc71-mt${debug}-1_34_1.lib
+Libs: libboost_unit_test_framework-vc71-mt${debug}-1_34_1.lib 
