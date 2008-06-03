@@ -36,8 +36,11 @@ class WinConfig :
 		input.close( )
 		return result
 
-	def parse( self, file, overrides = [ ] ):
+	def parse( self, file, overrides = None ):
 		"""Parse a .wc file with an optional set of variables"""
+
+		# Default overrides
+		if overrides is None: overrides = []
 
 		# Read the data file
 		data = self.read( file )
@@ -86,11 +89,17 @@ class WinConfig :
 
 		return rules 
 
-	def obtain_rules( self, env, package, checked = [ ] ):
+	def obtain_rules( self, env, package, checked = None ):
 		"""Returns the compete set of rules for the package recursively 
 		calling this function for any Requires usage."""
 
+		# Default checked packages
+		if checked is None: checked = []
+
 		if package in env.package_list.keys( ):
+			# Special handling of first case
+			first = len( checked ) == 0
+
 			# Make sure we only handle this package once
 			checked.append( package )
 
@@ -99,7 +108,10 @@ class WinConfig :
 
 			# Set up the overrides associative array
 			overrides = [ ( 'prefix', prefix ) ]
-			if env.has_key( 'debug' ) and env[ 'debug' ] == '1': overrides += [ ('debug', '${debug_flag}') ]
+			if env.has_key( 'debug' ) and env[ 'debug'] == '1':
+				overrides += [ ('debug', '${debug_flag}') ]
+			else:
+				overrides += [ ('debug', '') ]
 
 			# Parse the config file
 			rules = self.parse( env.package_list[ package ][ 'file' ], overrides )
@@ -140,14 +152,18 @@ class WinConfig :
 							rules[ 'LibPath' ] = deprules[ 'LibPath' ] + ' ' + rules[ 'LibPath' ]
 						if 'CppPath' in deprules.keys( ): 
 							rules[ 'CppPath' ] = deprules[ 'CppPath' ] + ' ' + rules[ 'CppPath' ]
+						if 'debug_flag' in deprules.keys( ): 
+							rules[ 'debug_flag' ] = deprules[ 'debug_flag' ]
+
 						requires_list += rules[ 'Requires' ].split( )
 	
 			# Expand variables in the rules
-			for name in rules.keys( ):
-				value = rules[ name ]
-				for iter in rules.keys( ):
-					value = value.replace( '${' + iter + '}', rules[ iter ] )
-				rules[ name ] = value
+			if first:
+				for name in rules.keys( ):
+					value = rules[ name ]
+					for iter in rules.keys( ):
+						value = value.replace( '${' + iter + '}', rules[ iter ] )
+					rules[ name ] = value
 
 			return rules
 		else:
