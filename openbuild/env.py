@@ -228,7 +228,7 @@ class Environment( BaseEnvironment ):
 
 		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
 			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
-			self.Append( PCHSTOP = pre[1], PCH = self.PCH(pre[0])[0] )
+			self.Append( PCHSTOP = pre[1].replace("/", os.sep ), PCH = self.PCH(pre[0])[0] )
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a shared library ( dll or so )
