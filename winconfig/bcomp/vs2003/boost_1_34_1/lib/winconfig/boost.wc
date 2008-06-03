@@ -1,0 +1,19 @@
+Name: boost
+Description: boost
+Version: 0.0.1
+
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}\lib
+includedir=${prefix}\include
+debug_flag=-gd
+
+CFlags:	
+CppDefines: BOOST_SIGNALS_DYN_LINK BOOST_REGEX_DYN_LINK BOOST_DATE_TIME_DYN_LINK BOOST_FILESYSTEM_DYN_LINK BOOST_THREAD_DYN_DLL
+CppPath: ${includedir}
+
+LibPath: ${libdir}
+
+install_libs: ${libdir}\*.*
+install_include: ${includedir}\boost
+

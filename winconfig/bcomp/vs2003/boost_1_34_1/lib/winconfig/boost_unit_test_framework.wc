@@ -1,0 +1,14 @@
+
+Name: boost_unit_test_framework
+Description: boost unit test lib
+Version: 0.0.1
+
+Requires: boost
+
+CFlags: 
+
+# The debug symbol is set to debug_flag, picked up from boost.wc
+# The debug_flag is set to -gd so if we're compiling in debug-mode
+# the file name will change accordingly.
+
+Libs:	boost_thread-vc71-mt${debug}-1_34_1.lib

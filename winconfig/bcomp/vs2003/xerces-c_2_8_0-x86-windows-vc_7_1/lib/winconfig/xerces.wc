@@ -1,0 +1,18 @@
+Name: xerces
+Description: xerces
+Version: 0.0.1
+
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}\lib
+includedir=${prefix}\include
+
+CFlags: 
+CppPath: ${includedir}
+
+Libs: xerces-c_2.lib
+LibPath: ${libdir}
+
+install_libs: ${libdir}\*.*
+install_include: ${includedir}\xercesc
+

@@ -1,0 +1,15 @@
+Name: loki
+Description: loki
+Version: 0.0.1
+
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}\lib
+includedir=${prefix}\include
+
+CFlags: 
+CppPath: ${includedir}
+
+install_include: ${includedir}\loki
+
+

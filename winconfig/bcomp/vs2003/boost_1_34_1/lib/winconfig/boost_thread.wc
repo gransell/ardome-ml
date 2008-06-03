@@ -1,0 +1,11 @@
+
+Name: boost_thread
+Description: boost thread lib
+Version: 0.0.1
+
+Requires: boost
+
+CFlags: 
+
+Libs:	boost_thread-vc71-mt-1_34_1.lib
+
