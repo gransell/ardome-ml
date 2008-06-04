@@ -3,7 +3,103 @@ import uuid
 import re
 import StringIO
 import os
+import codecs
 
+class VS2003:
+	
+	def version_string( self ) :
+		return "7.10"
+		
+	def compiler_tool( self, project, config, options ):
+		tool_str = """ <Tool
+					Name="VCCLCompilerTool"
+					AdditionalOptions="%s"
+					AdditionalIncludeDirectories="%s"
+					PreprocessorDefinitions="%s"
+					RuntimeLibrary="%s"
+					RuntimeTypeInfo="%s"
+					UsePrecompiledHeader="%s"
+					PrecompiledHeaderThrough="%s"
+					WarningLevel="%s"
+					Detect64BitPortabilityProblems="FALSE"
+					DebugInformationFormat="%s"/> """
+
+		return tool_str % ( options.additional_options,
+							options.include_directories_as_string( project.root_dir),
+							options.preprocessor_flags_as_string(),
+							options.runtime_library( config.name ),
+							options.runtime_type_info_as_string(),
+							options.use_precompiled_headers(),
+							options.precompiled_header_file(),
+							options.warning_level,
+							options.debug_information_format( config.name) )
+							
+	def file_configuration( self, config, cpp_file ) :
+		config_element = """<FileConfiguration Name="%s">
+			<Tool
+				Name="VCCLCompilerTool"
+				UsePrecompiledHeader="%d"
+				PrecompiledHeaderThrough="%s" />
+			</FileConfiguration>"""
+		
+		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
+		
+		return config_element % ( config.name, precomp_flag, precomp_file ) 
+		
+	def solution_file_header( self ) :
+		return """Microsoft Visual Studio Solution File, Format Version 8.00"""
+		
+		
+class VS2008 :
+	
+	def version_string( self ) :
+		return "9,00"
+		
+	def compiler_tool( self, project, config, options ):
+		tool_str = """ <Tool
+					Name="VCCLCompilerTool"
+					AdditionalOptions="%s"
+					AdditionalIncludeDirectories="%s"
+					PreprocessorDefinitions="%s"
+					RuntimeLibrary="%s"
+					RuntimeTypeInfo="%s"
+					UsePrecompiledHeader="%s"
+					PrecompiledHeaderThrough="%s"
+					WarningLevel="%s"
+					DebugInformationFormat="%s"/> """
+
+		return tool_str % ( options.additional_options,
+							options.include_directories_as_string( project.root_dir),
+							options.preprocessor_flags_as_string(),
+							options.runtime_library( config.name ),
+							options.runtime_type_info_as_string(),
+							options.use_precompiled_headers(),
+							options.precompiled_header_file(),
+							options.warning_level,
+							options.debug_information_format( config.name) )
+										
+	def file_configuration( self, config, cpp_file ) :
+		config_element = """<FileConfiguration Name="%s">
+		<Tool
+			Name="VCCLCompilerTool"
+			UsePrecompiledHeader="%d"
+			CompileAsManaged="0" />
+		</FileConfiguration>"""
+		
+		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
+		# Changed numbers in vs2008
+		if precomp_flag == 3 : precomp_flag = 2
+		return  config_element % ( config.name, precomp_flag ) 
+		
+	def solution_file_header( self ) :
+		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
+		
+		
+def create_visual_studio( ver ) :
+	if ver == "vs2003" : return VS2003()
+	if ver == "vs2008" : return VS2008()
+	raise Exception, "Unsupported vs version %s " % ver
+		
 
 class CompilerOptions:
 	""" A class that holds options related to the compiler tool in visual studio.
@@ -214,6 +310,7 @@ class VSProject :
 		self.header_files = header_files
 		self.cpp_files = source_files
 		self.vc_version = vc_version
+		self.vs = create_visual_studio( vc_version )
 		self.file_system_location = ""
 		self.relative_path = relative_path
 		self.root_dir = root_dir
@@ -242,9 +339,7 @@ class VSProject :
 			<Platform Name="Win32"/>
 		</Platforms>"""
 
-		ver_string = "7.10"
-		if self.vc_version == "vs2008" : ver_string = "9,00"
-		ostr.write( project_header % (ver_string, self.name , uuid.uuid4() , self.name) )
+		ostr.write( project_header % ( self.vs.version_string() , self.name , uuid.uuid4() , self.name) )
 
 		ostr.write("\n<Configurations>\n")
 		for config in self.configurations:
@@ -280,33 +375,9 @@ class VSProject :
 
 
 	def handle_compiler( self, config, ostr ) :
-		compiler_tool = """ <Tool
-					Name="VCCLCompilerTool"
-					AdditionalOptions="%s"
-					AdditionalIncludeDirectories="%s"
-					PreprocessorDefinitions="%s"
-					RuntimeLibrary="%s"
-					RuntimeTypeInfo="%s"
-					UsePrecompiledHeader="%s"
-					PrecompiledHeaderThrough="%s"
-					WarningLevel="%s"
-					%s
-					DebugInformationFormat="%s"/> """
-
-		detect64bit = "Detect64BitPortabilityProblems=\"FALSE\""
-		if self.vc_version != "vs2003" : detect64bit = ""
-		ostr.write( compiler_tool % ( config.compiler_options.additional_options,
-								config.compiler_options.include_directories_as_string( self.root_dir),
-								config.compiler_options.preprocessor_flags_as_string(),
-								config.compiler_options.runtime_library( config.name ),
-								config.compiler_options.runtime_type_info_as_string(),
-								config.compiler_options.use_precompiled_headers(),
-								config.compiler_options.precompiled_header_file(),
-								config.compiler_options.warning_level,
-								detect64bit,
-								config.compiler_options.debug_information_format( config.name) ) )
+		
+		ostr.write( self.vs.compiler_tool( self, config, config.compiler_options ) )
 								
-   
 
 	def handle_linker( self, config, ostr ) :
 		linker_tool = """ <Tool
@@ -344,23 +415,7 @@ class VSProject :
 
 
 	def handle_file_configuration( self, cpp_file, config, ostr ) :
-		config_element = """<FileConfiguration Name="%s">
-			<Tool
-				Name="VCCLCompilerTool"
-				UsePrecompiledHeader="%d"
-				%s 
-				%s/>
-			</FileConfiguration>"""
-		
-		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
-		
-		precomp_header_through = "PrecompiledHeaderThrough=\"%s\"" % precomp_file
-		compile_as_managed = ""
-		
-		if self.vc_version != "vs2003" : precomp_header_through = ""
-		if self.vc_version == "vs2008" : compile_as_managed = "CompileAsManaged=\"0\""
-		
-		ostr.write( config_element % ( config.name, precomp_flag, precomp_header_through, compile_as_managed ) )
+		ostr.write( self.vs.file_configuration( config, cpp_file ) )
 		
 	def get_files_with_filter( self, filterstr ) :
 		suffixes = tuple( filterstr.split(";") )
@@ -462,12 +517,14 @@ class VSSolution :
 			f.write( str(proj) );
 			f.close();
 		# Now, build the solution-file
+		vs = create_visual_studio(vs_version)
+		
 		sln = open(os.path.join( where_to_write, sln_file_name) , "w")
+		if vs_version != "vs2003" : sln = codecs.EncodedFile( sln, "utf-8-sig")
+		
 		visual_studio_guid = "8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
-		if vs_version == "vs2003" : sln.write("Microsoft Visual Studio Solution File, Format Version 8.00\n")
-		elif vs_version == "vs2008" : 
-			sln.write("Microsoft Visual Studio Solution File, Format Version 10.00\n")
-			sln.write("# Visual Studio 2008\n")
+			
+		sln.write( vs.solution_file_header() + "\n")
 			
 		for proj in self.projects:
 			project_element = """Project("{%s}") = "%s", "%s", "{%s}" """

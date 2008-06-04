@@ -25,10 +25,10 @@ class VsBuilder :
 		
 		# print env.Dump()
 		
-		curr_cfg.linker_options.additional_library_directories = env['LIBPATH']
-		curr_cfg.linker_options.additional_dependencies = env['LIBS']
-		curr_cfg.compiler_options.include_directories = env['CPPPATH']
-		curr_cfg.compiler_options.preprocessor_flags = env['CPPDEFINES']
+		if env.has_key('LIBPATH') : curr_cfg.linker_options.additional_library_directories = env['LIBPATH']
+		if env.has_key('LIBS') : curr_cfg.linker_options.additional_dependencies = env['LIBS']
+		if env.has_key('CPPPATH') : curr_cfg.compiler_options.include_directories = env['CPPPATH']
+		if env.has_key('CPPDEFINES') : curr_cfg.compiler_options.preprocessor_flags = env['CPPDEFINES']
 		if config_name == 'Release|Win32' : curr_cfg.compiler_options.additional_options += "/O2"
 		
 		curr_cfg.set_vc_version(self.vs_version)
