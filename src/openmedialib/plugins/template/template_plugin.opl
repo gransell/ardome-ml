@@ -2,8 +2,8 @@
 <openlibraries version="1.0">
 	<!-- plugins go here -->
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="OpenLibraries template plugin" type="input" extension='"test:"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template-vc71-d-0_4_1.dll", "openmedialib_template-vc71-r-0_4_1.dll", "openmedialib_template-vc80-d-0_4_1.dll", "openmedialib_template.dll"'/>
-		<plugin name="OpenLibraries template plugin" type="output" extension='"ppm:"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template-vc71-d-0_4_1.dll", "openmedialib_template-vc71-r-0_4_1.dll", "openmedialib_template-vc80-d-0_4_1.dll", "openmedialib_template.dll"'/>
-		<plugin name="OpenLibraries template plugin" type="filter" extension='"greyscale"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template-vc71-d-0_4_1.dll", "openmedialib_template-vc71-r-0_4_1.dll", "openmedialib_template-vc80-d-0_4_1.dll", "openmedialib_template-vc80-r-0_4_1.dll"'/>
+		<plugin name="OpenLibraries template plugin" type="input" extension='"test:"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template.dll"'/>
+		<plugin name="OpenLibraries template plugin" type="output" extension='"ppm:"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template.dll"'/>
+		<plugin name="OpenLibraries template plugin" type="filter" extension='"greyscale"' merit="0" filename='"libopenmedialib_template.so", "libopenmedialib_template.dylib", "openmedialib_template.dll"'/>
 	</openmedialib>
 </openlibraries>
