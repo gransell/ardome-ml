@@ -9,6 +9,7 @@ if env.debug: env.Append( LIBS = [ 'xerces-c_2D.lib' ] )
 else : env.Append( LIBS = [ 'xerces-c_2.lib' ] )
 
 env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'bin' ) )
 env.install_dir( os.path.join( env[ 'stage_include' ], 'xercesc' ),  os.path.join( prefix, 'include', 'xercesc' ) )
 
 
