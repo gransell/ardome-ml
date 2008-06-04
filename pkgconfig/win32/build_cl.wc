@@ -1,4 +1,4 @@
-CFlags: 
-CppDefines: CORE_EXPORTS DYNAMIC_BUILD
 
-Libs: User32.lib Oleaut32.lib Winmm.lib Gdi32.lib shell32.lib ole32.lib
+env.Append( CPPDEFINES = [ 'CORE_EXPORTS', 'DYNAMIC_BUILD' ] )
+env.Append( LIBS = [ 'User32.lib', 'Oleaut32.lib', 'Winmm.lib', 'Gdi32.lib', 'shell32.lib' ,'ole32.lib' ] )
+

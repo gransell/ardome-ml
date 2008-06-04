@@ -1,4 +1,4 @@
-CFlags: 
-CppDefines: OPENPLUGINLIB_EXPORTS OPENPLUGINLIB_BUILD
 
-Libs: Shell32.lib Advapi32.lib
+env.Append( CPPDEFINES = [ 'OPENPLUGINLIB_EXPORTS', 'OPENPLUGINLIB_BUILD' ] )
+env.Append( LIBS = [ 'Advapi32.lib', 'shell32.lib' ] )
+

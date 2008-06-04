@@ -68,5 +68,5 @@ class VsBuilder :
 		
 		if project_name == None :
 			project_name = 'solution'
-		self.vs_solution.create_sln_and_vcproj_files( project_name + '.sln', env.dependencies )
+		self.vs_solution.create_sln_and_vcproj_files( project_name + '.sln', env.dependencies, self.vs_version )
 		

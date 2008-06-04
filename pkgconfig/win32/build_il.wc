@@ -1,3 +1,2 @@
-CFlags: 
-CppDefines: IL_EXPORTS OPENIMAGELIB_BUILD
-Libs: 
+
+env.Append( CPPDEFINES = [ 'IL_EXPORTS', 'OPENIMAGELIB_BUILD' ] )

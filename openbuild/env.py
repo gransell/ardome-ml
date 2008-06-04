@@ -17,6 +17,8 @@ class Environment( BaseEnvironment ):
 	vs_builder = None 
 	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
 	
+	already_installed_dirs = {}
+	
 	def __init__( self, opts, bmgr = None , **kw ):
 		"""	Constructor. The Options object is added to the environment, and all 
 			common install and build related variables are defined as needed.
@@ -77,6 +79,7 @@ class Environment( BaseEnvironment ):
 
 	def prep_debug( self ):
 		self[ 'debug' ] = '1'
+		self.debug = True
 		self[ 'build_prefix' ] = '$debug_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
@@ -92,6 +95,7 @@ class Environment( BaseEnvironment ):
 	
 	def prep_release( self ):
 		self[ 'debug' ] = '0'
+		self.debug = False
 		self[ 'build_prefix' ] = '$release_prefix'
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
@@ -147,6 +151,10 @@ class Environment( BaseEnvironment ):
 				result = False
 				print "Dependency check" + str( e )
 		return result
+		
+	def requires( self, *packages ) :
+		if 'requires' in dir( self.package_manager) : 
+			self.package_manager.requires(self, *packages)
 		
 	def add_dependencies( self, result, dep , build_type) :
 		if result[build_type] == None : return
@@ -300,7 +308,12 @@ class Environment( BaseEnvironment ):
 			dst -- destination directory
 			src -- source directory
 		"""
-
+		
+		if dst in Environment.already_installed_dirs.keys() :
+			if src in Environment.already_installed_dirs[dst] : return
+			else : Environment.already_installed_dirs[dst].append(src)
+		else: Environment.already_installed_dirs[dst] = [src]
+		
 		for root, d, files in os.walk( src ):
 			for f in files:
 				full = os.path.join( root, f )

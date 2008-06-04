@@ -5,7 +5,6 @@ import utils
 
 class WinConfig :
 
-	#def __init__(self) :
 		
 	def walk( self, env ):
 		"""Walk the bcomp directory to pick out all the .wc files"""
@@ -19,187 +18,41 @@ class WinConfig :
 						prefix = r.rsplit( '\\', 2 )[ 0 ]
 						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 		return flags
-
-	def remove_ws( self, tokens ):
-		"""Remove whitespace and empty tokens from list"""
-		result = [ ]
-		for token in tokens:
-			if token != '' and not token.isspace( ):
-				result.append( token.strip( ) )
-		return result
-
-	def read( self, filename ):
-		"""Read the file, honour line continuations (ending in \) and return contents"""
-		input = open( filename )
-		result = input.read( )
-		result = result.replace( ' \\' + os.linesep, '' )
-		input.close( )
-		return result
-
-	def parse( self, file, overrides = None ):
-		"""Parse a .wc file with an optional set of variables"""
-
-		# Default overrides
-		if overrides is None: overrides = []
-
-		# Read the data file
-		data = self.read( file )
-
-		# Variables are defined in the file as name=value
-		variables = { }
-
-		# Rules are defined in the file as name: value
-		rules = { }
-
-		# This regex is used to split each line to 'name', delimiter[, 'value' ]
-		expression = re.compile( r'([^a-zA-Z0-9_\.])' )
-
-		# Iterate throught the file and append to variables and rules as appropriate
-		for line in data.splitlines( ):
-			tokens = self.remove_ws( expression.split( line.strip( ), 1 ) )
-			if len( tokens ) >= 2 and tokens[ 1 ] == '=':
-				variables[ tokens[ 0 ] ] = str( tokens[ 2: ] )[ 2:-2 ]
-			elif len( tokens ) >= 2 and tokens[ 1 ] == ':':
-				rules[ tokens[ 0 ] ] = str( tokens[ 2: ] )[ 2:-2 ]
-			elif len( tokens ) and tokens[ 0 ] == '#':
-				pass
-			elif len( tokens ) != 0:
-				print( 'error in %s with line %s' % ( file, line ) )
-
-		# Apply overrides to variables
-		for name, value in overrides:
-			variables[ name ] = value
-
-		# Expand inter variable references (ie: execprefix=${prefix}/bin)
-		for name in variables.keys( ):
-			value = variables[ name ]
-			for iter in variables.keys( ):
-				value = value.replace( '${' + iter + '}', variables[ iter ] )
-			variables[ name ] = value
-
-		# Expand variables in the rules
-		for name in rules.keys( ):
-			value = rules[ name ]
-			for iter in variables.keys( ):
-				value = value.replace( '${' + iter + '}', variables[ iter ] )
-			rules[ name ] = value
-
-		# Merge variables and rules before the return
-		rules.update( variables )
-
-		return rules 
-
-	def obtain_rules( self, env, package, checked = None ):
-		"""Returns the compete set of rules for the package recursively 
-		calling this function for any Requires usage."""
-
-		# Default checked packages
-		if checked is None: checked = []
-
-		if package in env.package_list.keys( ):
-			# Special handling of first case
-			first = len( checked ) == 0
-
-			# Make sure we only handle this package once
-			checked.append( package )
-
-			# Get the prefix of the package
-			prefix = env.package_list[ package ][ 'prefix' ]
-
-			# Set up the overrides associative array
-			overrides = [ ( 'prefix', prefix ) ]
-			if env.has_key( 'debug' ) and env[ 'debug'] == '1':
-				overrides += [ ('debug', '${debug_flag}') ]
-			else:
-				overrides += [ ('debug', '') ]
-
-			# Parse the config file
-			rules = self.parse( env.package_list[ package ][ 'file' ], overrides )
-
-			# Ensure we have minimal CFlags and libs
-			if 'CFlags' not in rules.keys( ): rules[ 'CFlags' ] = ''
-			if 'CppDefines' not in rules.keys( ): rules[ 'CppDefines' ] = ''
-			if 'Libs' not in rules.keys( ): rules[ 'Libs' ] = ''
-			if 'LibPath' not in rules.keys( ): rules[ 'LibPath' ] = ''
-			if 'CppPath' not in rules.keys( ): rules[ 'CppPath' ] = ''
-
-			# Check the Requires rule
-			if 'Requires' in rules.keys( ):
-				# Split into tokens - note that package names may be interspersed with comparions to versions
-				requires_list = rules[ 'Requires' ].split( )
-
-				# Iterate until the list is empty
-				while len( requires_list ):
-					# Remove the package
-					package = requires_list.pop( 0 )
-					cmp = version = ''
-
-					# Check follwing entries for comparitor and version
-					if len( requires_list ) and requires_list[ 0 ] in [ '<', '<=', '=', '>=', '>' ]:
-						cmp = requires_list.pop( 0 )
-						version = requires_list.pop( 0 )
-
-					# If we haven't checked before, check now and add to the main rules
-					if package not in checked:
-						deprules = self.obtain_rules( env, package, checked )
-						if 'CFlags' in deprules.keys( ): 
-							rules[ 'CFlags' ] = deprules[ 'CFlags' ] + ' ' + rules[ 'CFlags' ]
-						if 'CppDefines' in deprules.keys( ): 
-							rules[ 'CppDefines' ] = deprules[ 'CppDefines' ] + ' ' + rules[ 'CppDefines' ]
-						if 'Libs' in deprules.keys( ): 
-							rules[ 'Libs' ] = deprules[ 'Libs' ] + ' ' + rules[ 'Libs' ]
-						if 'LibPath' in deprules.keys( ): 
-							rules[ 'LibPath' ] = deprules[ 'LibPath' ] + ' ' + rules[ 'LibPath' ]
-						if 'CppPath' in deprules.keys( ): 
-							rules[ 'CppPath' ] = deprules[ 'CppPath' ] + ' ' + rules[ 'CppPath' ]
-						if 'debug_flag' in deprules.keys( ): 
-							rules[ 'debug_flag' ] = deprules[ 'debug_flag' ]
-
-						requires_list += rules[ 'Requires' ].split( )
 	
-			# Expand variables in the rules
-			if first:
-				for name in rules.keys( ):
-					value = rules[ name ]
-					for iter in rules.keys( ):
-						value = value.replace( '${' + iter + '}', rules[ iter ] )
-					rules[ name ] = value
-
-			return rules
-		else:
-			raise Exception, 'Unable to locate %s' % package
-
-		return { }
+	def requires( self, env, *packages ) :		
+		""" Will load small snipptes of python-code stored in .wc files.
+			These snippets assume there are a couple of variables available
+			in the current scope: env, prefix . env is the env variable passed
+			to this function, prefix is set before the code is executed. 
+			
+			The snippets can call env.requires( ... ) which will call this 
+			function again recursively.
+			
+			To make sure that we don't call the same snippet twice, we
+			keep a list of checked packages and just pass through the ones
+			already called. """
+			
+		for package in packages :
+			if package in env.checked : continue
+			env.checked.append( package )
+			if package not in env.package_list.keys( ) :
+				raise Exception, 'Unable to locate %s' % package
+			
+			# This can be used in the wc-file code, its the path to the file itself.
+			prefix = env.package_list[ package ][ 'prefix' ]	
+			wcfile = env.package_list[ package ][ 'file' ]
+			
+			wcf = open(wcfile, "r")
+			wcfdata = wcf.read().replace("\r\n", "\n")
+			code = compile(wcfdata, wcfile, "exec")
+			exec( code )
+			
 
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
-		cflags = ''
-		cppdefines = ''
-		libflags = ''
-		libpath = ''
-		cpp_path = ''
-		checked = []
-		for package in packages:
-			rules = self.obtain_rules( env, package, checked )
-			if 'CFlags' in rules.keys( ):
-				cflags += ' ' + rules[ 'CFlags' ]
-			if 'CppDefines' in rules.keys( ):
-				cppdefines += ' ' + rules[ 'CppDefines' ]
-			if 'Libs' in rules.keys( ):
-				libflags += ' ' + rules[ 'Libs' ]
-			if 'LibPath' in rules.keys( ):
-				libpath += ' ' + rules[ 'LibPath' ]
-			if 'CppPath' in rules.keys( ):
-				cpp_path += ' ' + rules[ 'CppPath' ]
-		if env[ 'PLATFORM' ] == 'win32':
-			env.Append( CCFLAGS = cflags )
-			env.Append( CPPDEFINES = cppdefines.split( ' ' ) )
-			env.Append( CPPPATH = cpp_path.split( ' ' ) )
-			env.Append( LIBPATH = libpath.split( ' ' ) )
-			env.Append( LIBS = libflags.split( ' ' ) )
-		else:
-			env.MergeFlags( cflags + libflags )
-
+		env.checked = []
+		env.requires( *packages )
+		
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
 		current environment along with a have_package variable to allow dependency checks."""

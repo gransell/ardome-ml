@@ -106,20 +106,13 @@ class AMLEnvironment( openbuild.env.Environment ):
 				for package in list:
 					if not package.startswith( 'build' ) and ( package.endswith( '.wc' ) or package.endswith( '.pc' ) ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), os.path.join( path, package ) )
-			else:
-				install = os.path.join( clone[ 'stage_libdir' ], 'winconfig' )
-				for path in [ os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', clone[ 'target' ] ) ]:
-					print path
-					for r, d, files in os.walk( path ):
-						for f in files:
-							if f.endswith( '.wc' ):
-								clone.Install( install, os.path.join( r, f ) )
 		else:
 			print "Couldn't find python site-packages in " + self[ 'prefix' ]
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
 env = AMLEnvironment( opts )
+
 
 if env.check_externals( ):
 
@@ -136,7 +129,7 @@ if env.check_externals( ):
 
 	env.create_package( )
 	env.install_openbuild( )
-	env.package_install( )
+	
 	
 	env.done( 'ardome-ml' )
 

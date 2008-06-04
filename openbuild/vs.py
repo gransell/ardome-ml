@@ -233,7 +233,7 @@ class VSProject :
 	def handle_project(self, ostr):
 		project_header = """<VisualStudioProject	 
 				ProjectType="Visual C++"
-				Version="7.10"
+				Version="%s"
 				Name="%s"
 				ProjectGUID="%s"
 				RootNamespace="%s"
@@ -242,7 +242,9 @@ class VSProject :
 			<Platform Name="Win32"/>
 		</Platforms>"""
 
-		ostr.write( project_header % (self.name , uuid.uuid4() , self.name) )
+		ver_string = "7.10"
+		if self.vc_version == "vs2008" : ver_string = "9,00"
+		ostr.write( project_header % (ver_string, self.name , uuid.uuid4() , self.name) )
 
 		ostr.write("\n<Configurations>\n")
 		for config in self.configurations:
@@ -288,9 +290,11 @@ class VSProject :
 					UsePrecompiledHeader="%s"
 					PrecompiledHeaderThrough="%s"
 					WarningLevel="%s"
-					Detect64BitPortabilityProblems="FALSE"
+					%s
 					DebugInformationFormat="%s"/> """
 
+		detect64bit = "Detect64BitPortabilityProblems=\"FALSE\""
+		if self.vc_version != "vs2003" : detect64bit = ""
 		ostr.write( compiler_tool % ( config.compiler_options.additional_options,
 								config.compiler_options.include_directories_as_string( self.root_dir),
 								config.compiler_options.preprocessor_flags_as_string(),
@@ -299,6 +303,7 @@ class VSProject :
 								config.compiler_options.use_precompiled_headers(),
 								config.compiler_options.precompiled_header_file(),
 								config.compiler_options.warning_level,
+								detect64bit,
 								config.compiler_options.debug_information_format( config.name) ) )
 								
    
@@ -343,10 +348,19 @@ class VSProject :
 			<Tool
 				Name="VCCLCompilerTool"
 				UsePrecompiledHeader="%d"
-				PrecompiledHeaderThrough="%s"/>
+				%s 
+				%s/>
 			</FileConfiguration>"""
+		
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
-		ostr.write( config_element % ( config.name, precomp_flag, precomp_file) )
+		
+		precomp_header_through = "PrecompiledHeaderThrough=\"%s\"" % precomp_file
+		compile_as_managed = ""
+		
+		if self.vc_version != "vs2003" : precomp_header_through = ""
+		if self.vc_version == "vs2008" : compile_as_managed = "CompileAsManaged=\"0\""
+		
+		ostr.write( config_element % ( config.name, precomp_flag, precomp_header_through, compile_as_managed ) )
 		
 	def get_files_with_filter( self, filterstr ) :
 		suffixes = tuple( filterstr.split(";") )
@@ -356,8 +370,6 @@ class VSProject :
 			
 			if ppos != -1 : str = str[ppos+1:]
 			else : return False
-			
-			print str, suffixes
 			
 			for ext in suffixes :
 				if str == ext : return True
@@ -430,7 +442,7 @@ class VSSolution :
 			if proj.name == project_name : return proj
 		return None
 	 
-	def create_sln_and_vcproj_files( self, sln_file_name, deps ) :
+	def create_sln_and_vcproj_files( self, sln_file_name, deps, vs_version ) :
 		#Start to save projects
 		where_to_write = (self.root + self.target_dir).replace("/", "\\")
 		try:
@@ -452,7 +464,11 @@ class VSSolution :
 		# Now, build the solution-file
 		sln = open(os.path.join( where_to_write, sln_file_name) , "w")
 		visual_studio_guid = "8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
-		sln.write("Microsoft Visual Studio Solution File, Format Version 8.00\n")
+		if vs_version == "vs2003" : sln.write("Microsoft Visual Studio Solution File, Format Version 8.00\n")
+		elif vs_version == "vs2008" : 
+			sln.write("Microsoft Visual Studio Solution File, Format Version 10.00\n")
+			sln.write("# Visual Studio 2008\n")
+			
 		for proj in self.projects:
 			project_element = """Project("{%s}") = "%s", "%s", "{%s}" """
 			sln.write( project_element % (visual_studio_guid, proj.name, ".\\" + proj.file_name,  proj.guid ) )
