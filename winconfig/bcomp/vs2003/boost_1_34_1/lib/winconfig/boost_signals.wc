@@ -1,9 +1,10 @@
+# Name: boost_signals
+# Description: boost signals lib
+# Version: 1.34.1
 
-Name: boost_signals
-Description: boost signals lib
-Version: 0.0.1
+env.requires( 'boost' )
 
-Requires: boost
+if env.debug : env.Append( LIBS = [ 'boost_signals-vc71-mt-gd-1_34_1.lib' ] )	
+else : env.Append( LIBS = [ 'boost_signals-vc71-mt-1_34_1.lib' ] )	
 
-Libs:	boost_signals-vc71-mt-1_34_1.lib
 

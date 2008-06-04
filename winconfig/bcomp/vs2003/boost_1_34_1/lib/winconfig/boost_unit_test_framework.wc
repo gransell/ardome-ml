@@ -1,14 +1,9 @@
+# Name: boost_unit_test_framework
+# Description: boost unit test lib
+# Version: 1.34.1
 
-Name: boost_unit_test_framework
-Description: boost unit test lib
-Version: 0.0.1
+env.requires('boost')
 
-Requires: boost
+if env.debug : env.Append( LIBS = [ 'libboost_unit_test_framework-vc71-mt-gd-1_34_1.lib ' ] )	
+else : env.Append( LIBS = [ 'libboost_unit_test_framework-vc71-mt-1_34_1.lib ' ] )	
 
-CFlags: 
-
-# The debug symbol is set to debug_flag, picked up from boost.wc
-# The debug_flag is set to -gd so if we're compiling in debug-mode
-# the file name will change accordingly.
-
-Libs: libboost_unit_test_framework-vc71-mt${debug}-1_34_1.lib 

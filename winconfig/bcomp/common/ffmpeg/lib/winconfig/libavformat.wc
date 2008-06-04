@@ -1,19 +1,13 @@
-Name: libavformat
-Description: libavformat
-Version: 0.0.1
+# Name: libavformat
+# Description: libavformat
+# Version: 0.0.1
 
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${exec_prefix}\lib
-includedir=${prefix}\include
+env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
 
-CFlags: 
-CppPath: ${includedir}
+env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+env.Append( LIBS = [ 'avformat.lib', 'avcodec.lib', 'avutil.lib' ] )
 
-Libs: avformat.lib avcodec.lib avutil.lib
-LibPath: ${libdir}
-
-install_libs: ${libdir}\*.*
-install_include: ${includedir}\*
-
+if not env.debug :
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include' ) )
 

@@ -1,19 +1,13 @@
-Name: boost
-Description: boost
-Version: 0.0.1
+# Name: boost
+# Description: boost
+# Version: 1.34.1
 
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${exec_prefix}\lib
-includedir=${prefix}\include
-debug_flag=-gd
+env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
+env.Append( CPPDEFINES = [ 'BOOST_SIGNALS_DYN_LINK', 'BOOST_REGEX_DYN_LINK', 'BOOST_DATE_TIME_DYN_LINK', 'BOOST_FILESYSTEM_DYN_LINK', 'BOOST_THREAD_DYN_DLL' ] )
 
-CFlags:	
-CppDefines: BOOST_SIGNALS_DYN_LINK BOOST_REGEX_DYN_LINK BOOST_DATE_TIME_DYN_LINK BOOST_FILESYSTEM_DYN_LINK BOOST_THREAD_DYN_DLL
-CppPath: ${includedir}
+env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
-LibPath: ${libdir}
-
-install_libs: ${libdir}\*.*
-install_include: ${includedir}\boost
+if not env.debug :
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include', 'boost' ) )
 

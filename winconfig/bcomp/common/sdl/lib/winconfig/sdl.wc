@@ -1,18 +1,13 @@
-Name: SDL
-Description: SDL configuration file
-Version: 0.0.1
+# Name: SDL
+# Description: SDL configuration file
+# Version: 0.0.1
 
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${exec_prefix}\lib
-includedir=${prefix}\include
+env.Append( CPPPATH = [ os.path.join( prefix, 'include', 'SDL') ] )
 
-CFlags: 
-CppPath: ${includedir}\SDL
+env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+env.Append( LIBS = [ 'SDLmain.lib', 'SDL.lib' ] )
 
-Libs: SDLmain.lib SDL.lib
-LibPath: ${libdir}
-
-install_libs: ${libdir}\*.*
-install_include: ${includedir}\SDL
+if not env.debug :
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include', 'SDL' ) )
 

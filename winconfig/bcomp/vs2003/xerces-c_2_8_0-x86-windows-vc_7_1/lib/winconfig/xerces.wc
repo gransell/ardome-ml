@@ -1,18 +1,15 @@
-Name: xerces
-Description: xerces
-Version: 0.0.1
+# Name: xerces
+# Description: xerces
+# Version: 2.8.0
 
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${exec_prefix}\lib
-includedir=${prefix}\include
+env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
+env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
-CFlags: 
-CppPath: ${includedir}
+if env.debug: env.Append( LIBS = [ 'xerces-c_2D.lib' ] )
+else : env.Append( LIBS = [ 'xerces-c_2.lib' ] )
 
-Libs: xerces-c_2.lib
-LibPath: ${libdir}
+if not env.debug :
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include', 'xercesc' ) )
 
-install_libs: ${libdir}\*.*
-install_include: ${includedir}\xercesc
 

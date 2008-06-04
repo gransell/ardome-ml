@@ -1,11 +1,11 @@
+# Name: boost_thread
+# Description: boost thread lib
+# Version: 0.0.1
 
-Name: boost_thread
-Description: boost thread lib
-Version: 0.0.1
+env.requires( 'boost' )
 
-Requires: boost
+if env.debug : env.Append( LIBS = [ 'boost_thread-vc71-mt-gd-1_34_1.lib' ] )	
+else : env.Append( LIBS = [ 'boost_thread-vc71-mt-1_34_1.lib' ] )	
 
-CFlags: 
 
-Libs:	boost_thread-vc71-mt-1_34_1.lib
 

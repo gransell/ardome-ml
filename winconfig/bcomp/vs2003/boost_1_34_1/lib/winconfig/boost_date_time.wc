@@ -1,9 +1,9 @@
+# Name: boost_date_time
+# Description: boost date_time lib
+# Version: 1.34.1
 
-Name: boost_date_time
-Description: boost date_time lib
-Version: 0.0.1
+env.requires( 'boost' )
 
-Requires: boost
-
-Libs:	boost_date_time-vc71-mt-1_34_1.lib
+if env.debug : env.Append( LIBS = [ 'boost_date_time-vc71-mt-gd-1_34_1.lib' ] )	
+else : env.Append( LIBS = [ 'boost_date_time-vc71-mt-1_34_1.lib' ] )	
 

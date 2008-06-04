@@ -1,15 +1,11 @@
-Name: loki
-Description: loki
-Version: 0.0.1
+# Name: loki
+# Description: loki
+# Version: 0.0.1
 
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${exec_prefix}\lib
-includedir=${prefix}\include
+env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
 
-CFlags: 
-CppPath: ${includedir}
+if not env.debug :
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include' ) )
 
-install_include: ${includedir}\loki
 
 
