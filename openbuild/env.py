@@ -265,7 +265,7 @@ class Environment( BaseEnvironment ):
 
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
-		#self['PDB'] = lib + '.pdb'
+		self['PDB'] = lib + '.pdb'
 		
 		return self.SharedLibrary( lib, sources, *keywords )
 		
@@ -277,7 +277,7 @@ class Environment( BaseEnvironment ):
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
-		#self['PDB'] = lib + '.pdb'
+		self['PDB'] = lib + '.pdb'
 
 		return self.SharedLibrary( lib, sources, *keywords )
 
@@ -287,7 +287,7 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
-		#self['PDB'] = lib + '.pdb'
+		self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 		
 	def done( self, project_name = None ) :
