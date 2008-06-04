@@ -5,7 +5,9 @@ import utils
 
 class WinConfig :
 
-		
+	def __init__( self ):
+		self.compiles = {}
+
 	def walk( self, env ):
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
@@ -41,10 +43,13 @@ class WinConfig :
 			# This can be used in the wc-file code, its the path to the file itself.
 			prefix = env.package_list[ package ][ 'prefix' ]	
 			wcfile = env.package_list[ package ][ 'file' ]
-			
-			wcf = open(wcfile, "r")
-			wcfdata = wcf.read().replace("\r\n", "\n")
-			code = compile(wcfdata, wcfile, "exec")
+
+			if wcfile not in self.compiles.keys( ):
+				wcf = open(wcfile, "r")
+				wcfdata = wcf.read().replace("\r\n", "\n")
+				self.compiles[ wcfile ] = compile(wcfdata, wcfile, "exec")
+
+			code = self.compiles[ wcfile ]
 			exec( code )
 			
 

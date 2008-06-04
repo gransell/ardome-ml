@@ -20,15 +20,16 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
+			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
+			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
 		else:
-			self.libdir = 'bin'
-			self[ 'il_plugin' ] = ''
-			self[ 'ml_plugin' ] = ''
-			self[ 'install_il_plugin' ] = os.path.join( '$prefix', 'bin' )
-			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', 'bin' )
+			self[ 'il_plugin' ] = 'aml-plugins'
+			self[ 'ml_plugin' ] = 'aml-plugins'
+			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$il_plugins' )
+			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$ml_plugins' )
+			self[ 'stage_il_plugin' ] = os.path.join( '$stage_prefix', '$il_plugin' )
+			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_prefix', '$ml_plugin' )
 
-		self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
-		self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
 		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
 		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
 		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
