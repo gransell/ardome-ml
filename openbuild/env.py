@@ -17,7 +17,7 @@ class Environment( BaseEnvironment ):
 	vs_builder = None 
 	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
 	
-	already_installed_dirs = {}
+	already_installed = {}
 	
 	def __init__( self, opts, bmgr = None , **kw ):
 		"""	Constructor. The Options object is added to the environment, and all 
@@ -309,15 +309,21 @@ class Environment( BaseEnvironment ):
 			src -- source directory
 		"""
 		
-		if dst in Environment.already_installed_dirs.keys() :
-			if src in Environment.already_installed_dirs[dst] : return
-			else : Environment.already_installed_dirs[dst].append(src)
-		else: Environment.already_installed_dirs[dst] = [src]
+		if dst in Environment.already_installed.keys() :
+			if src in Environment.already_installed[dst] : return
+			else : Environment.already_installed[dst].append(src)
+		else: Environment.already_installed[dst] = [src]
 		
 		for root, d, files in os.walk( src ):
 			for f in files:
 				full = os.path.join( root, f )
 				# Only include if there's no hidden content here (ie: .svn existing in the path)
 				if full.find( os.sep + '.' ) == -1:
-					self.Install( dst + root.replace( src, '' ), full )
+					target_dir = dst + root.replace( src, '' )
+					target_file = os.path.join( target_dir, f )
+					if target_file not in Environment.already_installed:
+						self.Install( target_dir, full )
+						Environment.already_installed[target_file] = [full]
+					elif Environment.already_installed[target_file] != [full]:
+						print "Warning: trying to copy %s to %s, but %s is already there." % ( full, target_file, Environment.already_installed[target][ 0 ] )
 
