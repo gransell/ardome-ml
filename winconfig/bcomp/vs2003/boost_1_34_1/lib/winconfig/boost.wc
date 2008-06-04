@@ -7,7 +7,6 @@ env.Append( CPPDEFINES = [ 'BOOST_SIGNALS_DYN_LINK', 'BOOST_REGEX_DYN_LINK', 'BO
 
 env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
-if not env.debug :
-	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
-	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include', 'boost' ) )
+env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+env.install_dir( os.path.join( env[ 'stage_include' ], 'boost' ),  os.path.join( prefix, 'include', 'boost' ) )
 

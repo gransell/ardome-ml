@@ -7,7 +7,6 @@ env.Append( CPPPATH = [ os.path.join( prefix, 'include', 'SDL') ] )
 env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 env.Append( LIBS = [ 'SDLmain.lib', 'SDL.lib' ] )
 
-if not env.debug :
-	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
-	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include', 'SDL' ) )
+env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+env.install_dir( os.path.join( env[ 'stage_include' ], 'SDL' ),  os.path.join( prefix, 'include', 'SDL' ) )
 
