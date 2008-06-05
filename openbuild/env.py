@@ -319,7 +319,7 @@ class Environment( BaseEnvironment ):
 				elif name.endswith( '.exp' ):
 					pass
 				else:
-					print "Warning: don't know how to release", file
+					self.Install( self[ 'stage_bin' ], file )
 
 	def install_dir( self, dst, src ):
 		""" Installs the contents of src to dst, walking through the src directory and invoking 
