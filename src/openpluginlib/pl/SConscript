@@ -28,7 +28,7 @@ object = local_env.shared_library( 'openpluginlib_pl', [
 	'pcos/subject.cpp'
 ] + extras[ local_env[ 'PLATFORM' ] ] )
 
-local_env.Install( local_env[ 'stage_libdir' ], object )
+local_env.release( object )
 
 local_env.Install( local_env[ 'pl_include' ], [ 
 	'bind_info.hpp',

@@ -300,6 +300,27 @@ class Environment( BaseEnvironment ):
 		
 		BaseEnvironment.Tool( self, tool, toolpath, **kw )
 
+	def release( self, *kw ):
+		for list in kw:
+			for file in list:
+				name = str( file )
+				if name.endswith( '.dll' ):
+					self.Install( self[ 'stage_bin' ], file )
+				elif name.endswith( '.exe' ):
+					self.Install( self[ 'stage_bin' ], file )
+				elif name.endswith( '.pdb' ):
+					self.Install( self[ 'stage_bin' ], file )
+				elif name.endswith( '.lib' ):
+					self.Install( self[ 'stage_libdir' ], file )
+				elif name.endswith( '.so' ):
+					self.Install( self[ 'stage_libdir' ], file )
+				elif name.endswith( '.dylib' ):
+					self.Install( self[ 'stage_libdir' ], file )
+				elif name.endswith( '.exp' ):
+					pass
+				else:
+					print "Warning: don't know how to release", file
+
 	def install_dir( self, dst, src ):
 		""" Installs the contents of src to dst, walking through the src directory and invoking 
 			Install on every file found.
