@@ -22,6 +22,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
 			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
+			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'examples' )
+			self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'plugins' )
 		else:
 			self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', 'lib' )
 			self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )

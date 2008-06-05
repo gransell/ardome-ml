@@ -4,4 +4,4 @@ Version: 0.0.1
 
 CFlags:
 
-Libs: 
+Libs: -ldl
