@@ -204,7 +204,7 @@ class Environment( BaseEnvironment ):
 			build_type( local_env )
 
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
-															build_dir=os.path.join( local_env[ 'build_prefix' ], path ), 
+															build_dir=os.path.join( local_env[ 'build_prefix' ], 'tmp', path ), 
 															duplicate=0, exports=[ 'local_env' ] )
 
 			for dep in deps:
