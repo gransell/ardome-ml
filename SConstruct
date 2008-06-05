@@ -27,10 +27,14 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
 			self[ 'il_plugin' ] = os.path.join( 'bin', 'aml-plugins' )
 			self[ 'ml_plugin' ] = os.path.join( 'bin', 'aml-plugins' )
+			self[ 'mf_plugin' ] = os.path.join( 'bin', 'plugins' )
+			self[ 'examples' ] = os.path.join( 'bin', 'examples' )
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$il_plugins' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$ml_plugins' )
 			self[ 'stage_il_plugin' ] = os.path.join( '$stage_prefix', '$il_plugin' )
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_prefix', '$ml_plugin' )
+			self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', '$mf_plugin' )
+			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', '$examples' )
 
 		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
 		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
@@ -120,6 +124,11 @@ env = AMLEnvironment( opts )
 if env.check_externals( ):
 
 	cl = env.build( 'src/opencorelib/cl' )
+	
+	# Build to test opencorelib:
+	cl_unit_test = env.build('test/opencorelib/unit_tests/', [ cl ] )
+	cl_test_plugin = env.build( 'test/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
+	
 	pl = env.build( 'src/openpluginlib/pl' )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, il ] )

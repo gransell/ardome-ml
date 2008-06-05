@@ -348,3 +348,16 @@ class Environment( BaseEnvironment ):
 					elif Environment.already_installed[target_file] != [full]:
 						print "Warning: trying to copy %s to %s, but %s is already there." % ( full, target_file, Environment.already_installed[target][ 0 ] )
 
+	def generate_tester(source, target, env, for_signature):
+		
+		return '$SOURCE all_tests --log_level=all > $TARGET || (cat $TARGET; exit 1)'
+
+		testrunner = Builder(generator = generate_tester)
+		self.Append( BUILDERS = {'TestRunner': testrunner} )
+	
+	def run_test( self, *args ) :
+		if "run_test" in dir(self.build_manager) : 
+			return self.build_manager.run_test( self, *args )
+		
+		return self.TestRunner(*args)
+

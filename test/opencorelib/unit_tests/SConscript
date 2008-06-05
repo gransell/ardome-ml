@@ -1,0 +1,33 @@
+Import(['local_env'])
+
+local_env.packages( 'boost_filesystem', 'boost_regex', 'boost_thread', 'boost_unit_test_framework' )
+
+local_env.Append( LINKFLAGS="/SUBSYSTEM:CONSOLE" )
+
+test_sources = ['main_entry_unittests.cpp',
+				'test_assert.cpp',
+				'test_color.cpp',
+				'test_event_handler.cpp',
+				# 'test_frames.cpp', Currently empty!!
+				'test_int64_conversions.cpp',
+				'test_invoker.cpp',
+				'test_logprint.cpp',
+				'test_messagequeue.cpp',
+				'test_plugin.cpp',
+				'test_serious_error_handler.cpp',
+				'test_span.cpp',
+				'test_string_conversions.cpp',
+				'test_timecode.cpp',
+				'test_time_helpers.cpp',
+				'test_utilities.cpp',
+				'test_uuid.cpp',
+				'test_worker.cpp' ]
+
+object = local_env.program( 'opencore_unit_tests', test_sources, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
+
+local_env.Install( local_env[ 'stage_examples' ], [ '../../../src/opencorelib/cl/schemas/amf_plugin_example.xml' ] )
+local_env.release( object )
+
+Return( 'object ')
+
+# local_env.Test('check.log', testmain )
