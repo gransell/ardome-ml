@@ -290,6 +290,19 @@ class Environment( BaseEnvironment ):
 		self['PDB'] = lib + '.pdb'
 		return self.Program( lib, sources, *keywords )
 		
+	def console_program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+
+		if "console_program" in dir(self.build_manager) : 
+			return self.build_manager.console_program( self, lib, sources, headers, pre, nopre, *keywords )
+			
+		self.setup_precompiled_headers( sources, pre, nopre )
+		self['PDB'] = lib + '.pdb'
+		
+		if self[ 'PLATFORM' ] == 'win32':
+			self.Append( LINKFLAGS="/SUBSYSTEM:CONSOLE" )
+		
+		return self.Program( lib, sources, *keywords )
+		
 	def done( self, project_name = None ) :
 		if "done" in dir(self.build_manager) : 
 			self.build_manager.done( self, project_name )
