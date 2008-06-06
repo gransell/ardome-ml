@@ -127,7 +127,7 @@ class Environment( BaseEnvironment ):
 		return builds
 
 	def package_install( self ):
-		if self[ "PLATFORM" ] == "win32": return
+		if self[ 'PLATFORM' ] == 'win32': return
 
 		for build_type in self.build_types( ):
 			env = self.Clone( )
