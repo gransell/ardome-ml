@@ -120,26 +120,34 @@ class Environment( BaseEnvironment ):
 	def package_libs( self, package ) :
 		return self.package_manager.package_libs( self, package )
 
-	def package_install( self ):
-		if self[ "PLATFORM" ] == "win32": return
-
+	def build_types( self ):
 		builds = [ Environment.prep_release, Environment.prep_debug ]
 		if self.release_install: builds.pop( 1 )
 		elif self.debug_install: builds.pop( 0 )
+		return builds
 
-		for build_type in builds:
+	def package_install( self ):
+		if self[ "PLATFORM" ] == "win32": return
+
+		for build_type in self.build_types( ):
 			env = self.Clone( )
 			build_type( env )
 			for lib in env.package_manager.package_install_libs( env ):
 				if os.path.isdir( lib ):
 					env.install_dir( os.path.join( env[ 'stage_libdir' ], lib.rsplit( os.sep, 1 )[ -1 ] ), lib )
-				else:
+				elif not os.path.islink( lib ):
 					env.Install( env[ 'stage_libdir' ], lib )
+				else:
+					# TODO: Fix sym link installs 
+					pass
 			for include in env.package_manager.package_install_include( env ):
 				if os.path.isdir( include ):
 					env.install_dir( os.path.join( env[ 'stage_include' ], include.rsplit( os.sep, 1 )[ -1 ] ), include )
-				else:
+				elif not os.path.islink( include ):
 					env.Install( env[ 'stage_include' ], include )
+				else:
+					# TODO: Fix sym link installs 
+					pass
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""

@@ -33,20 +33,6 @@ def vs() :
 			return a.split("=")[1]
 	return None
 
-def default_pydir( self ):
-	env = self.Clone( )
-	env.prep_release( )
-	use = ''
-	if self[ 'PLATFORM' ] == 'posix':
-		start = os.path.join( env[ 'prefix' ], env[ 'libdir' ] )
-		for path in sys.path:
-			if path.startswith( start ) and path.endswith( 'site-packages' ):
-				use = path
-				break
-	if use == '':
-		use = os.path.join( env[ 'stage_prefix' ], 'lib' )
-	return use
-
 def clean_path( str ):
 	tokens = str.split( os.sep )
 	result = ''

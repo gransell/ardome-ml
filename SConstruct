@@ -83,9 +83,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def create_package( self ):
 		if self['PLATFORM'] == 'darwin' or self['PLATFORM'] == 'posix':
-			clone = self.Clone( )
-			clone.prep_release( )
-			tokens = [ ( '@prefix@', clone[ 'prefix' ] ),
+			for type in self.build_types( ):
+				clone = self.Clone( )
+				type( clone )
+				tokens = [ ( '@prefix@', clone[ 'prefix' ] ),
 					   ( '@exec_prefix@', '${prefix}/bin' ),
 					   ( '@libdir@', os.path.join( '${prefix}', clone[ 'libdir' ] ) ),
 					   ( '@includedir@', '${prefix}/include' ),
@@ -100,23 +101,21 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@BOOST_THREAD_LIBS@', clone.package_libs( 'boost_thread' ) ),
 					   ( '@OLIB_CORE_CXXFLAGS@', clone.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
-			openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
-			clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
+				openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
+				clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
 	def install_openbuild( self ):
-		clone = self.Clone( )
-		clone.prep_release( )
-		use = clone.subst( openbuild.utils.default_pydir( clone ) )
-		if use != '':
+		for type in self.build_types( ):
+			clone = self.Clone( )
+			type( clone )
+			use = clone.subst( clone[ 'stage_libdir' ] )
 			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( clone.root, 'openbuild' ) )
 			if clone[ 'PLATFORM' ] != 'win32':
 				path = os.path.join( 'pkgconfig', clone[ 'target' ] )
 				list = glob.glob( os.path.join( path, "*.pc" ) )
 				for package in list:
 					if package.find( os.sep + 'build_' ) == -1 and package.endswith( '.pc' ):
-						clone.Install( os.path.join( clone.subst( clone[ 'stage_libdir' ] ), 'openbuild', 'pkgconfig' ), package )
-		else:
-			print "Couldn't find python site-packages in " + self[ 'prefix' ]
+						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
