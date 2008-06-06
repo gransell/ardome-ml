@@ -1,3 +1,7 @@
+# (C) Ardendo SE 2008
+#
+# Released under the LGPL
+
 import env
 import os
 

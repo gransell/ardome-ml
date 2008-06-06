@@ -1,3 +1,7 @@
+# (C) Ardendo SE 2008
+#
+# Released under the LGPL
+
 Import(['local_env'])
 
 local_env.packages( 'build_cl', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_signals', 'xerces', 'loki', 'uuid' )
