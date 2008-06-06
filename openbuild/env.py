@@ -132,7 +132,7 @@ class Environment( BaseEnvironment ):
 			build_type( env )
 			for lib in env.package_manager.package_install_libs( env ):
 				if os.path.isdir( lib ):
-					env.install_dir( env[ 'stage_libdir' ], lib )
+					env.install_dir( os.path.join( env[ 'stage_libdir' ], lib.rsplit( os.sep, 1 )[ -1 ] ), lib )
 				else:
 					env.Install( env[ 'stage_libdir' ], lib )
 			for include in env.package_manager.package_install_include( env ):
