@@ -47,3 +47,17 @@ def default_pydir( self ):
 		use = os.path.join( env[ 'stage_prefix' ], 'lib' )
 	return use
 
+def clean_path( str ):
+	tokens = str.split( os.sep )
+	result = ''
+	if len( tokens ) > 1:
+		for token in tokens:
+			if token != '':
+				result += os.sep + token
+		if result[ 0 ] != str[ 0 ]:
+			result = result[ 1: ]
+		if str != result:
+			print str, " = ", result
+	else:
+		result = str
+	return result

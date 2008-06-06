@@ -342,7 +342,10 @@ class Environment( BaseEnvironment ):
 			dst -- destination directory
 			src -- source directory
 		"""
-		
+
+		dst = utils.clean_path( dst )
+		src = utils.clean_path( src )
+
 		if dst in Environment.already_installed.keys() :
 			if src in Environment.already_installed[dst] : return
 			else : Environment.already_installed[dst].append(src)
@@ -354,12 +357,12 @@ class Environment( BaseEnvironment ):
 				# Only include if there's no hidden content here (ie: .svn existing in the path)
 				if full.find( os.sep + '.' ) == -1:
 					target_dir = dst + root.replace( src, '' )
-					target_file = os.path.join( target_dir, f )
+					target_file = utils.clean_path( os.path.join( target_dir, f ) )
 					if target_file not in Environment.already_installed:
 						self.Install( target_dir, full )
 						Environment.already_installed[target_file] = [full]
 					elif Environment.already_installed[target_file] != [full]:
-						print "Warning: trying to copy %s to %s, but %s is already there." % ( full, target_file, Environment.already_installed[target][ 0 ] )
+						print "Warning: trying to copy %s to %s, but %s is already there." % ( full, target_file, Environment.already_installed[target_file][ 0 ] )
 
 	def generate_tester(source, target, env, for_signature):
 		

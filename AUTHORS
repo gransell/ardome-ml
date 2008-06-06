@@ -1,0 +1,21 @@
+
+This fork is developed and maintained by Ardendo SE with major contributions
+from:
+
+	Charles Yates
+	Mats Lindeloff
+	Mikael Gransell
+	Rasmus
+
+Original Authors of openlibraries (http://www.sf.net/projects/openlibraries) 
+was funded by Visual Media and maintained by:
+
+	Charles Yates
+	Goncalo de Carvalho
+	Tim Dewhirst
+	Julian Nobel
+
+Some of the code from the original has been dropped for simplication (notably
+openobjectlib and openassetlib). The focus here is purely video related.
+
+

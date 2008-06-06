@@ -27,7 +27,6 @@
 #include <cmath>
 #include <cstdio>
 
-#define BOOST_THREAD_DYN_DLL
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/recursive_mutex.hpp>
