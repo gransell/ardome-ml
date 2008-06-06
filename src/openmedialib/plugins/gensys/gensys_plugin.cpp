@@ -75,6 +75,8 @@ inline void fill( image_type_ptr img, size_t plane, unsigned char val )
 //
 // TODO: Provide support for additional image outputs (yuv planar formats supported)
 
+static opl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
+
 class ML_PLUGIN_DECLSPEC colour_input : public input_type
 {
 	public:
@@ -203,7 +205,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				image = deferred_image_;
 				alpha = deferred_alpha_;
 			}
-			
+
 			// Construct a frame and populate with basic information
 			frame_type *frame = new frame_type( );
 			frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
@@ -215,6 +217,10 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			// Set the image
 			frame->set_image( image );
 			frame->set_alpha( alpha );
+
+			// Identify image as a background
+			opl::pcos::property prop( key_background_ );
+			frame->properties( ).append( prop = 1 );
 
 			// Return a frame
 			return frame_type_ptr( frame );
@@ -405,12 +411,14 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_channels_( pcos::key::from_string( "channels" ) )
 			, prop_pf_( pcos::key::from_string( "pf" ) )
+			, prop_default_( pcos::key::from_string( "default" ) )
 		{
 			properties( ).append( prop_image_ = 1 );
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_pf_ = opl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_default_ = opl::wstring( L"" ) );
 		}
 
 		virtual const opl::wstring get_uri( ) const { return L"conform"; }
@@ -425,14 +433,9 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			{
 				if ( prop_image_.value< int >( ) == 1 )
 				{
-					if ( !result->get_image( ) )
+					if ( !has_image( result ) )
 					{
-						image_type_ptr image = il::allocate( prop_pf_.value< opl::wstring >( ).c_str( ), 720, 576 );
-						fill( image, 0, ( unsigned char )16 );
-						fill( image, 1, ( unsigned char )128 );
-						fill( image, 2, ( unsigned char )128 );
-						result->set_image( image );
-						result->set_sar( 59, 54 );
+						default_image( result );
 					}
 				}
 				else if ( prop_image_.value< int >( ) == 0 )
@@ -461,12 +464,67 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			return result;
 		}
 
+		bool has_image( frame_type_ptr &frame )
+		{
+			bool result = false;
+			std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
+			for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
+			{
+				if ( *iter && ( *iter )->get_image( ) )
+				{
+					opl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
+					result = !prop.valid( ) || prop.value< int >( ) == 0;
+				}
+			}
+			return result;
+		}
+
+		void default_image( frame_type_ptr &result )
+		{
+			if ( prop_default_.value< opl::wstring >( ) != L"" )
+			{
+				// Create the input if we haven't done so before
+				if ( input_default_ == 0 )
+					input_default_ = create_input( prop_default_.value< opl::wstring >( ) );
+
+				// Fetch a frame and apply image and sar to our result
+				if ( input_default_ && input_default_->get_frames( ) > 0 )
+				{
+					// Allow animations to be used but allow them to be consistent (in case of downstream caching)
+					if ( input_default_->get_frames( ) > 1 )
+						input_default_->seek( get_position( ) % input_default_->get_frames( ) );
+
+					// Fetch the frame
+					frame_type_ptr frame = input_default_->fetch( );
+
+					if ( frame && frame->get_image( ) )
+					{
+						// Set image and sar
+						result->set_image( frame->get_image( ) );
+						result->set_sar( frame->get_sar_num( ), frame->get_sar_den( ) );
+					}
+				}
+			}
+
+			if ( result->get_image( ) == 0 )
+			{
+				image_type_ptr image = il::allocate( prop_pf_.value< opl::wstring >( ).c_str( ), 720, 576 );
+				fill( image, 0, ( unsigned char )16 );
+				fill( image, 1, ( unsigned char )128 );
+				fill( image, 2, ( unsigned char )128 );
+				result->set_image( image );
+				result->set_sar( 59, 54 );
+			}
+		}
+
 	private:
 		pcos::property prop_image_;
 		pcos::property prop_audio_;
 		pcos::property prop_frequency_;
 		pcos::property prop_channels_;
 		pcos::property prop_pf_;
+		pcos::property prop_default_;
+		input_type_ptr input_default_;
 };
 
 // Crop filter
@@ -719,6 +777,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				{
 					struct geometry geom = calculate_full( result, overlay );
 					result = composite( result, overlay, geom );
+
+					// If we've composited on to a background, it's no longer a background...
+					opl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+					if ( prop.valid( ) && prop.value< int >( ) == 1 )
+						prop = 0;
 				}
 
 				if ( result->get_audio( ) && overlay->get_audio( ) )
