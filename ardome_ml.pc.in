@@ -25,3 +25,7 @@ Libs: @OPENCORELIB_LDFLAGS@ \
 
 Cflags: -I${includedir}/ardome-ml -I${libdir}/ardome-ml/include @OLIB_CORE_CXXFLAGS@ -pthread
 
+install_libs=${libdir}/*
+
+install_include=${includedir}/*
+

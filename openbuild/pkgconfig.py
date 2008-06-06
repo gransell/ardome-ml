@@ -27,7 +27,7 @@ class PkgConfig:
 		elif env[ 'PLATFORM' ] == 'darwin':
 			full += '/usr/lib/pkgconfig:' + env.root + '/pkgconfig/osx'
 
-		full += ':' + os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
+		full += ':' + os.path.join( env.root, __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
 
 		if 'PKG_CONFIG_PATH' not in os.environ.keys( ) or os.environ[ 'PKG_CONFIG_PATH' ] == '':
 			os.environ[ 'PKG_CONFIG_PATH' ] = full

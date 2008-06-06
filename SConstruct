@@ -108,13 +108,13 @@ class AMLEnvironment( openbuild.env.Environment ):
 		clone.prep_release( )
 		use = clone.subst( openbuild.utils.default_pydir( clone ) )
 		if use != '':
-			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( self.root, 'openbuild' ) )
+			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( clone.root, 'openbuild' ) )
 			if clone[ 'PLATFORM' ] != 'win32':
 				path = os.path.join( 'pkgconfig', clone[ 'target' ] )
 				list = glob.glob( os.path.join( path, "*.pc" ) )
 				for package in list:
 					if package.find( os.sep + 'build_' ) == -1 and package.endswith( '.pc' ):
-						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
+						clone.Install( os.path.join( clone.subst( clone[ 'stage_libdir' ] ), 'openbuild', 'pkgconfig' ), package )
 		else:
 			print "Couldn't find python site-packages in " + self[ 'prefix' ]
 

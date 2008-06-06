@@ -121,6 +121,8 @@ class Environment( BaseEnvironment ):
 		return self.package_manager.package_libs( self, package )
 
 	def package_install( self ):
+		if self[ "PLATFORM" ] == "win32": return
+
 		builds = [ Environment.prep_release, Environment.prep_debug ]
 		if self.release_install: builds.pop( 1 )
 		elif self.debug_install: builds.pop( 0 )
