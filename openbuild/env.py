@@ -331,22 +331,28 @@ class Environment( BaseEnvironment ):
 		for list in kw:
 			for file in list:
 				name = str( file )
+				target = ''
 				if name.endswith( '.dll' ):
-					self.Install( self[ 'stage_bin' ], file )
+					target = self[ 'stage_bin' ]
 				elif name.endswith( '.exe' ):
-					self.Install( self[ 'stage_bin' ], file )
+					target = self[ 'stage_bin' ]
 				elif name.endswith( '.pdb' ):
-					self.Install( self[ 'stage_bin' ], file )
+					target = self[ 'stage_bin' ]
 				elif name.endswith( '.lib' ):
-					self.Install( self[ 'stage_libdir' ], file )
+					target = self[ 'stage_libdir' ]
 				elif name.endswith( '.so' ):
-					self.Install( self[ 'stage_libdir' ], file )
+					target = self[ 'stage_libdir' ]
 				elif name.endswith( '.dylib' ):
-					self.Install( self[ 'stage_libdir' ], file )
+					target = self[ 'stage_libdir' ]
 				elif name.endswith( '.exp' ):
 					pass
 				else:
-					self.Install( self[ 'stage_bin' ], file )
+					target = self[ 'stage_bin' ]
+				if target != '':
+					full = self.subst( os.path.join( target, name ) )
+					if full not in Environment.already_installed:
+						self.Install( target, name )
+						Environment.already_installed[name] = [full]
 
 	def install_dir( self, dst, src ):
 		""" Installs the contents of src to dst, walking through the src directory and invoking 
