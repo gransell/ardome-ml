@@ -6,15 +6,20 @@ if [ ! -d vs2003 ]; then
 	mkdir vs2003
 fi
 
+if [ ! -d common ]; then
+	echo "Creating common subdir to bcomp"
+	mkdir common
+fi
+
 cd vs2003
 
 if [ ! -d boost_1_34_1 ]; then
 
 	echo "Extracting boost [~100 MB]..."
-	tar -jxf ../vs2003_boost/vc71-boost_1_34_1.tar.bz2
+	tar -jxf ../tmp/vc71-boost_1_34_1.B.tar.bz2
 	
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -jxf ../vs2003_boost/vc71-boost_1_34_1.tar.bz2. Terminating."
+		echo "Failed to run: tar -jxf ../tmp/vc71-boost_1_34_1.B.tar.bz2. Terminating."
 		exit
 	fi
 fi
@@ -23,45 +28,45 @@ if [ ! -d xerces-c_2_8_0-x86-windows-vc_7_1 ]; then
 
 	echo "Extracting xerces for c++ [~21 MB]..."
 
-	unzip -oq ../vs2003_xerces/vc71-xerces-c-2_8_0.zip 
+	unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip 
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: unzip -oq ../vs2003_xerces/vc71-xerces-c-2_8_0.zip. Terminating."
+	  echo "Failed to run: unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip. Terminating."
 	  exit 1
 	fi
 fi
 
 cd ..
-cd ..
+cd common
 
-if [ ! -d  bcomp/ffmpeg/include ]; then
+if [ ! -d  ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
-	unzip -oq bcomp/ffmpeg/ffmpeg-win32.zip -d bcomp/ 
-
+	tar -jxf ../tmp/ffmpeg-win32-20080303.B.tar.bz2 
+	
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/ffmpeg/ffmpeg-win32.zip. Terminating."
+	  echo "Failed to run tar -jxf ../tmp/ffmpeg-win32-20080303.B.tar.bz2. Terminating."
 	  exit
 	fi
 fi
 
-if [ ! -d  bcomp/sdl/include ]; then
+if [ ! -d  sdl/include ]; then
 
 	echo "Extracting sdl [~1 MB]..."
-	unzip -oq bcomp/sdl/sdl-win32.zip -d bcomp/ 
+	tar -jxf ../tmp/sdl-win32.B.tar.bz2
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/sdl/sdl-win32.zip. Terminating."
+	  echo "Failed to run tar -jxf ../tmp/sdl-win32.B.tar.bz2. Terminating."
 	  exit
 	fi
 fi
 
-if [ ! -d  bcomp/loki-0.1.6/include ]; then
+if [ ! -d  loki-0.1.6/include ]; then
 
 	echo "Extracting Loki [~11 MB]..."
-	unzip -oq bcomp/loki/loki-0.1.6.zip -d bcomp/ 
+	unzip -oq ../tmp/loki-0.1.6.zip  
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/loki/loki-0.1.6.zip. Terminating."
+	  echo "Failed to run unzip -oq ../tmp/loki-0.1.6.zip. Terminating."
 	  exit
 	fi
 fi

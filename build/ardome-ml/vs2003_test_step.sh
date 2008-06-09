@@ -3,7 +3,7 @@
 echo -e "\n\n\n----- Starting test-suite for ardome-ml -----\n\n"
 
 echo "Running unit tests for opencorelib ..."
-bcomp/ardome-ml/vs2003/bin_vs2003/release/opencorelib_unit_tests.exe all_tests --log_level=all > core_unit_tests.log 2>&1 
+build/release/vs2003/bin/opencore_unit_tests.exe all_tests --log_level=all > core_unit_tests.log 2>&1 
 
 if [ ! $? == 0 ]; then
   cat core_unit_tests.log
