@@ -4,8 +4,16 @@
 
 env.requires( 'boost' )
 
+env.Append( CPPDEFINES = [ 'BOOST_THREAD_DYN_DLL' ] )
+
 if env.debug : env.Append( LIBS = [ 'boost_thread-vc71-mt-gd-1_34_1.lib' ] )	
 else : env.Append( LIBS = [ 'boost_thread-vc71-mt-1_34_1.lib' ] )	
 
+if env.debug : 
+	env.release(  [ os.path.join( prefix, 'lib', 'boost_thread-vc71-mt-gd-1_34_1.lib' ) ] )
+	env.release(  [ os.path.join( prefix, 'bin', 'boost_thread-vc71-mt-gd-1_34_1.dll' ) ] )
+else : 
+	env.release(  [ os.path.join( prefix, 'lib', 'boost_thread-vc71-mt-1_34_1.lib' ) ] )
+	env.release(  [ os.path.join( prefix, 'bin', 'boost_thread-vc71-mt-1_34_1.dll' ) ] )
 
 

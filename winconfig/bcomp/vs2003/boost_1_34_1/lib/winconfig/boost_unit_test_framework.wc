@@ -7,3 +7,7 @@ env.requires('boost')
 if env.debug : env.Append( LIBS = [ 'libboost_unit_test_framework-vc71-mt-gd-1_34_1' ] )	
 else : env.Append( LIBS = [ 'libboost_unit_test_framework-vc71-mt-1_34_1' ] )	
 
+if env.debug : env.release( [ os.path.join( prefix, 'lib', 'libboost_unit_test_framework-vc71-mt-gd-1_34_1.lib' ) ] )
+else : env.release( [ os.path.join( prefix, 'lib', 'libboost_unit_test_framework-vc71-mt-1_34_1.lib' ) ] )
+
+

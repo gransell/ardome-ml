@@ -3,10 +3,8 @@
 # Version: 1.34.1
 
 env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
-env.Append( CPPDEFINES = [ 'BOOST_SIGNALS_DYN_LINK', 'BOOST_REGEX_DYN_LINK', 'BOOST_DATE_TIME_DYN_LINK', 'BOOST_FILESYSTEM_DYN_LINK', 'BOOST_THREAD_DYN_DLL' ] )
-
 env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
-env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
 env.install_dir( os.path.join( env[ 'stage_include' ], 'boost' ),  os.path.join( prefix, 'include', 'boost' ) )
+env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
 
