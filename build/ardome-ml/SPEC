@@ -20,7 +20,7 @@ vs2008_BUILDSCRIPT3: build/ardome-ml/vs2008_build_zip.sh
 ### Buildsteps related to the Visual Studio 2003 compiler:
 vs2003_POSTGRAB: build/ardome-ml/vs2003_postgrab.sh
 vs2003_TARGET: ardome-ml-vs2003.zip
-vs2003_BUILDSCRIPT: scons.bat target=vs2003
+vs2003_BUILDSCRIPT: build/ardome-ml/vs2003_build_step.sh
 vs2003_BUILDSCRIPT2: build/ardome-ml/vs2003_test_step.sh
 vs2003_BUILDSCRIPT3: build/ardome-ml/vs2003_build_zip.sh
 
