@@ -483,10 +483,19 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 		{
 			if ( prop_default_.value< opl::wstring >( ) != L"" )
 			{
+				opl::wstring resource = prop_default_.value< opl::wstring >( );
+
+				// Detect changes in default property
+				if ( resource != current_default_  )
+				{
+					input_default_ = input_type_ptr( );
+					input_pusher_ = input_type_ptr( );
+					current_default_ = resource;
+				}
+
 				// Create the input if we haven't done so before
 				if ( input_default_ == 0 )
 				{
-					opl::wstring resource = prop_default_.value< opl::wstring >( );
 					if ( resource.substr( 0, 7 ) == opl::wstring( L"filter:" ) )
 					{
 						ml::filter_type_ptr filter = create_filter( resource.substr( 7 ) );
@@ -562,6 +571,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 		pcos::property prop_default_;
 		input_type_ptr input_default_;
 		input_type_ptr input_pusher_;
+		opl::wstring current_default_;
 };
 
 // Crop filter
