@@ -4,7 +4,6 @@
 
 Import(['local_env'])
 
-print "Reading SConscript for plugin_test_assembly"
 local_env.packages( 'boost_filesystem' , 'loki')
 
 object = local_env.plugin( 'plugin_test_assembly', [ 'plugin_assembly.cpp' ], pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
