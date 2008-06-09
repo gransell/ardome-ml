@@ -60,6 +60,23 @@ inline void fill( image_type_ptr img, size_t plane, unsigned char val )
 	}
 }
 
+static opl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
+
+static bool has_image( frame_type_ptr &frame )
+{
+	bool result = false;
+	std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
+	for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
+	{
+		if ( *iter && ( *iter )->get_image( ) )
+		{
+			opl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
+			result = !prop.valid( ) || prop.value< int >( ) == 0;
+		}
+	}
+	return result;
+}
+
 // A frame generator which provides a fixed colour
 //
 // NB: Decided to expose the user specified colour at a sample level rather 
@@ -74,8 +91,6 @@ inline void fill( image_type_ptr img, size_t plane, unsigned char val )
 // different colour spaces (RGBA, YIQ, YCbCr etc). 
 //
 // TODO: Provide support for additional image outputs (yuv planar formats supported)
-
-static opl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
 
 class ML_PLUGIN_DECLSPEC colour_input : public input_type
 {
@@ -464,44 +479,65 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			return result;
 		}
 
-		bool has_image( frame_type_ptr &frame )
-		{
-			bool result = false;
-			std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
-			for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
-			{
-				if ( *iter && ( *iter )->get_image( ) )
-				{
-					opl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
-					result = !prop.valid( ) || prop.value< int >( ) == 0;
-				}
-			}
-			return result;
-		}
-
 		void default_image( frame_type_ptr &result )
 		{
 			if ( prop_default_.value< opl::wstring >( ) != L"" )
 			{
 				// Create the input if we haven't done so before
 				if ( input_default_ == 0 )
-					input_default_ = create_input( prop_default_.value< opl::wstring >( ) );
+				{
+					opl::wstring resource = prop_default_.value< opl::wstring >( );
+					if ( resource.substr( 0, 7 ) == opl::wstring( L"filter:" ) )
+					{
+						ml::filter_type_ptr filter = create_filter( resource.substr( 7 ) );
+						if ( filter )
+						{
+							input_pusher_ = input_type_ptr( new pusher_input( ) );
+							filter->connect( input_pusher_ );
+							input_default_ = filter;
+						}
+						else
+						{
+							PL_LOG( opl::level::error, boost::format( "Unable to create requested filter: %s" ) % opl::to_string( resource ) );
+						}
+					}
+					else
+					{
+						input_default_ = create_input( resource );
+						if ( input_default_ == 0 || input_default_->get_frames( ) <= 0 )
+						{
+							PL_LOG( opl::level::error, boost::format( "Unable to create requested input: %s" ) % opl::to_string( resource ) );
+							input_default_ = input_type_ptr( );
+						}
+					}
+				}
 
 				// Fetch a frame and apply image and sar to our result
-				if ( input_default_ && input_default_->get_frames( ) > 0 )
+				if ( input_default_ )
 				{
-					// Allow animations to be used but allow them to be consistent (in case of downstream caching)
-					if ( input_default_->get_frames( ) > 1 )
-						input_default_->seek( get_position( ) % input_default_->get_frames( ) );
-
-					// Fetch the frame
-					frame_type_ptr frame = input_default_->fetch( );
-
-					if ( frame && frame->get_image( ) )
+					// Determine if we're in push mode to a filter, or fetching from an input
+					if ( input_pusher_ )
 					{
-						// Set image and sar
-						result->set_image( frame->get_image( ) );
-						result->set_sar( frame->get_sar_num( ), frame->get_sar_den( ) );
+						// Push and fetch here
+						result->set_image( il::image_type_ptr( ) );
+						input_pusher_->push( result );
+						result = input_default_->fetch( );
+					}
+					else if ( input_default_->get_frames( ) > 0 )
+					{
+						// Allow animations to be used but allow them to be consistent (in case of downstream caching)
+						if ( input_default_->get_frames( ) > 1 )
+							input_default_->seek( get_position( ) % input_default_->get_frames( ) );
+
+						// Fetch the frame
+						frame_type_ptr frame = input_default_->fetch( );
+
+						if ( frame && frame->get_image( ) )
+						{
+							// Set image and sar
+							result->set_image( frame->get_image( ) );
+							result->set_sar( frame->get_sar_num( ), frame->get_sar_den( ) );
+						}
 					}
 				}
 			}
@@ -525,6 +561,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 		pcos::property prop_pf_;
 		pcos::property prop_default_;
 		input_type_ptr input_default_;
+		input_type_ptr input_pusher_;
 };
 
 // Crop filter
@@ -2075,7 +2112,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			properties( ).append( prop_sar_num_ = 1 );
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
-			properties( ).append( prop_colourspace_ = opl::wstring( L"r8g8b8" ) );
+			properties( ).append( prop_colourspace_ = opl::wstring( L"yuv420p" ) );
 		}
 
 		virtual const opl::wstring get_uri( ) const { return L"visualise"; }
@@ -2086,7 +2123,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 
 			frame_type_ptr result = fetch_from_slot( );
 
-			if ( result && ( ( previous_ == 0 && result->get_image( ) == 0 ) || prop_force_.value< int >( ) ) )
+			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
 				visualise( result );
 			else if ( result && result->get_image( ) == 0 )
 				result->set_image( previous_ );
@@ -2391,6 +2428,8 @@ public:
 		else if ( request == L"threader" )
 			return filter_type_ptr( new threader_filter( ) );
 		else if ( request == L"visualise" )
+			return filter_type_ptr( new visualise_filter( ) );
+		else if ( request == L"visualize" )
 			return filter_type_ptr( new visualise_filter( ) );
 		return filter_type_ptr( );
 	}
