@@ -363,8 +363,8 @@ class Environment( BaseEnvironment ):
 			src -- source directory
 		"""
 
-		dst = utils.clean_path( dst )
-		src = utils.clean_path( src )
+		dst = self.subst( utils.clean_path( dst ) )
+		src = self.subst( utils.clean_path( src ) )
 
 		if dst in Environment.already_installed.keys() :
 			if src in Environment.already_installed[dst] : return
