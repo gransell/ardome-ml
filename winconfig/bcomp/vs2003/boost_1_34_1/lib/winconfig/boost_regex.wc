@@ -4,6 +4,7 @@
 
 env.requires( 'boost' )
 
+# Add this to the CPPDEFINES to get diagnostic messages from boost regex during compilation:  BOOST_REGEX_DIAG
 env.Append( CPPDEFINES = [ 'BOOST_REGEX_DYN_LINK' ] )
 
 if env.debug : env.Append( LIBS = [ 'boost_regex-vc71-mt-gd-1_34_1.lib' ] )	

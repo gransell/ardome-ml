@@ -92,7 +92,12 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CCFLAGS = [ '/W3', '/DEBUG', '/Od' ] )
+			self.Append( CPPDEFINES = [ '_WINDOWS', 'DEBUG', '_DEBUG'])
+			# /W3 = Warning Level 3, 
+			# /Od = Optimization Disabled , 
+			# /GR = Enable Runtime Type Information, 
+			# /MDd Multi Threaded Debug Dll Runtime
+			self.Append( CCFLAGS = [ '/W3', '/Od', '/GR', '/EHsc', '/MDd' ] )
 			self.Append( LINKFLAGS = [ '/DEBUG' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
@@ -108,7 +113,13 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc' ] )
+			self.Append( CPPDEFINES = [ '_WINDOWS', 'NDEBUG'])
+			# /W3 = Warning Level 3, 
+			# /O2 = Optimize For Speed, 
+			# /GR = Enable Runtime Type Information, 
+			# /EHsc Enable C++ Exceptions
+			# /MD Multithreaded DLL runtime
+			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc', '/GR', '/MD' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
