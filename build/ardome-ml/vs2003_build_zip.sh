@@ -4,15 +4,15 @@ echo "Trying to build ardome-ml-vs2003.zip target, creating directory named TMPZ
 rm -rf TMPZIP
 
 mkdir TMPZIP || exit 1
-mkdir TMPZIP/ardome-ml || exit 1
-mkdir TMPZIP/ardome-ml/release || exit 1
-mkdir TMPZIP/ardome-ml/debug || exit 1
-mkdir TMPZIP/ardome-ml/src || exit 1
+mkdir TMPZIP/aml || exit 1
+mkdir TMPZIP/aml/release || exit 1
+mkdir TMPZIP/aml/debug || exit 1
+mkdir TMPZIP/aml/src || exit 1
 
 echo "Adding release files..."
-cp -r build/release/vs2003/bin TMPZIP/ardome-ml/release/
-cp -r build/release/vs2003/include TMPZIP/ardome-ml/release/
-cp -r build/release/vs2003/lib TMPZIP/ardome-ml/release/
+cp -r build/release/vs2003/bin TMPZIP/aml/release/
+cp -r build/release/vs2003/include TMPZIP/aml/release/
+cp -r build/release/vs2003/lib TMPZIP/aml/release/
 
 if [ ! $? == 0 ]; then
 	echo "Failed to copy release files"
@@ -21,9 +21,9 @@ fi
 
 	  
 echo "Adding debug files..."
-cp -r build/debug/vs2003/bin TMPZIP/ardome-ml/debug/
-cp -r build/debug/vs2003/include TMPZIP/ardome-ml/debug/
-cp -r build/debug/vs2003/lib TMPZIP/ardome-ml/debug/
+cp -r build/debug/vs2003/bin TMPZIP/aml/debug/
+cp -r build/debug/vs2003/include TMPZIP/aml/debug/
+cp -r build/debug/vs2003/lib TMPZIP/aml/debug/
 
 
 if [ ! $? == 0 ]; then
@@ -33,7 +33,7 @@ fi
 
 					
 echo "Adding source files to be able to debug ..."	  
-cp -r src/ TMPZIP/ardome-ml/src/
+cp -r src/ TMPZIP/aml/src/
 if [ ! $? == 0 ]; then
 	echo "Failed to copy source files"
 	exit 1
