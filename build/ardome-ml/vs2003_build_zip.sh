@@ -4,14 +4,15 @@ echo "Trying to build ardome-ml-vs2003.zip target, creating directory named TMPZ
 rm -rf TMPZIP
 
 mkdir TMPZIP || exit 1
-mkdir TMPZIP/release || exit 1
-mkdir TMPZIP/debug || exit 1
-mkdir TMPZIP/src || exit 1
+mkdir TMPZIP/ardome-ml || exit 1
+mkdir TMPZIP/ardome-ml/release || exit 1
+mkdir TMPZIP/ardome-ml/debug || exit 1
+mkdir TMPZIP/ardome-ml/src || exit 1
 
 echo "Adding release files..."
-cp -r build/release/vs2003/bin TMPZIP/release/
-cp -r build/release/vs2003/include TMPZIP/release/
-cp -r build/release/vs2003/lib TMPZIP/release/
+cp -r build/release/vs2003/bin TMPZIP/ardome-ml/release/
+cp -r build/release/vs2003/include TMPZIP/ardome-ml/release/
+cp -r build/release/vs2003/lib TMPZIP/ardome-ml/release/
 
 if [ ! $? == 0 ]; then
 	echo "Failed to copy release files"
@@ -20,9 +21,9 @@ fi
 
 	  
 echo "Adding debug files..."
-cp -r build/debug/vs2003/bin TMPZIP/debug/
-cp -r build/debug/vs2003/include TMPZIP/debug/
-cp -r build/debug/vs2003/lib TMPZIP/debug/
+cp -r build/debug/vs2003/bin TMPZIP/ardome-ml/debug/
+cp -r build/debug/vs2003/include TMPZIP/ardome-ml/debug/
+cp -r build/debug/vs2003/lib TMPZIP/ardome-ml/debug/
 
 
 if [ ! $? == 0 ]; then
@@ -31,10 +32,10 @@ if [ ! $? == 0 ]; then
 fi
 
 					
-echo "Adding header files to be able to build, adding source files to be able to debug ..."	  
-cp -r src/ TMPZIP/src/
+echo "Adding source files to be able to debug ..."	  
+cp -r src/ TMPZIP/ardome-ml/src/
 if [ ! $? == 0 ]; then
-	echo "Failed to copy include and source files"
+	echo "Failed to copy source files"
 	exit 1
 fi
 
