@@ -252,6 +252,7 @@ class LinkerOptions:
 	def subsystem(self) :
 		# 1 = Console
 		# 2 = Windows
+		if self.sub_system == None : return "windows"
 		if self.sub_system  == "windows"  :
 			return "2"
 		return "1"
@@ -507,14 +508,13 @@ class VSSolution :
 		try:
 			os.makedirs(  where_to_write  )
 		except os.error, e:
-			print e
 			pass
 			
-		print "Saving sln-file", where_to_write
+		# print "Saving sln-file", where_to_write
 		for proj in self.projects:
 			proj_file = self.root + self.target_dir +  proj.file_name
 			proj_file = proj_file.replace("\\", "/")
-			print "Saving vcproj-file", proj_file
+			# print "Saving vcproj-file", proj_file
 			proj.relative_sln = self.relative_root
 			proj.guid = uuid.uuid4()
 			f = open( proj_file, "w");

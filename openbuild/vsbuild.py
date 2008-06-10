@@ -13,7 +13,7 @@ class VsBuilder :
 		self.vs_solution.target_dir = "/build/projects/" + self.vs_version + "/"
 		self.vs_solution.relative_root = "./../../../"
 		
-	def dll_project( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords  ) :
+	def project( self, env, lib, sources, project_type, subsystem=None, headers=None, pre=None, nopre=None, *keywords  ) :
 	
 		self.vs_solution.root = env.root
 		
@@ -21,7 +21,7 @@ class VsBuilder :
 			config_name = 'Debug|Win32'
 		else : config_name = 'Release|Win32'
 			
-		curr_cfg = vs.BuildConfiguration(lib, config_name, target_type="dll" )
+		curr_cfg = vs.BuildConfiguration(lib, config_name, target_type= project_type )
 		
 		curr_cfg.compiler_options.sources_not_using_precomp = nopre
 		
@@ -36,8 +36,11 @@ class VsBuilder :
 		if config_name == 'Release|Win32' : curr_cfg.compiler_options.additional_options += "/O2"
 		
 		curr_cfg.set_vc_version(self.vs_version)
-		curr_cfg.output_directory = env.subst('$stage_libdir')
+		curr_cfg.output_directory = env.subst('$stage_bin')
 		curr_cfg.intermediate_directory = "$(SolutionDir)tmp" + "\\" + lib + "\\" + config_name.split("|")[0]
+		
+		curr_cfg.linker_options.target_type = project_type
+		curr_cfg.linker_options.sub_system = subsystem
 		
 		existing_project = self.vs_solution.find_project_by_name( lib )
 		
@@ -52,25 +55,32 @@ class VsBuilder :
 									vc_version = self.vs_version )
 														
 			vcproj.file_name = lib + '.vcproj'
-			print vcproj.file_system_location
+			# print vcproj.file_system_location
 			self.vs_solution.projects.append(vcproj)
 
-		dll_file = os.path.join( env['stage_libdir'], lib + '.dll')
+		dll_file = os.path.join( env['stage_bin'], lib + '.dll')
 		lib_file = os.path.join( env['stage_libdir'], lib + '.dll')
 		exp_file = os.path.join( env['stage_libdir'], lib + '.dll')
-		pdb_file = os.path.join( env['stage_libdir'], lib + '.dll')
+		pdb_file = os.path.join( env['stage_bin'], lib + '.dll')
 		
 		return [ dll_file, lib_file, exp_file, pdb_file]
 		
-	def shared_library( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
-		return self.dll_project(env, lib, sources, headers, pre, nopre, *keywords)
+	def shared_library( self, env, lib, sources, project_type="dll", headers=None, pre=None, nopre=None, *keywords ):
+		return self.project(env, lib, sources, "dll", headers, pre, nopre, *keywords)
 		
 	def plugin( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
-		return self.dll_project(env, lib, sources, headers, pre, nopre, *keywords)
+		return self.project(env, lib, sources, "dll", None, headers, pre, nopre, *keywords)
+		
+	def program( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		return self.project(env, lib, sources, "exe", "windows", headers, pre, nopre, *keywords)
+		
+	def console_program( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		return self.project(env, lib, sources, "exe", "console", headers, pre, nopre, *keywords)
 		
 	def done( self, env , project_name ) :
 		
 		if project_name == None :
 			project_name = 'solution'
 		self.vs_solution.create_sln_and_vcproj_files( project_name + '.sln', env.dependencies, self.vs_version )
+		return False
 		

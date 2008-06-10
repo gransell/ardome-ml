@@ -146,8 +146,9 @@ if env.check_externals( ):
 	env.create_package( )
 	env.install_openbuild( )
 	
-	
-	env.done( 'ardome-ml' )
+	# Makes it possible for the visual studio builder to terminate scons.
+	if not env.done( 'ardome-ml' ) : 
+		exit()
 
 else:
 	print "Dependencies missing - aborting"

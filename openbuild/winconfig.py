@@ -33,8 +33,20 @@ class WinConfig :
 					if f.endswith( '.wc' ):
 						pkg = f.replace( '.wc', '' )
 						prefix = r.rsplit( '\\', 2 )[ 0 ]
+						type = prefix.split( os.sep )[-1]
+						if type in [ 'debug', 'release'] : pkg += '_' + type
 						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 		return flags
+		
+	def locate_package( self, env, package_name ) :
+		# return prefix and file ...
+		if env.debug and env.package_list.has_key( package_name + "_debug"):
+			return env.package_list[ package_name + "_debug"]
+		elif env.package_list.has_key( package_name + "_release") : 
+			return env.package_list[ package_name + "_release"]
+		elif env.package_list.has_key( package_name ) :
+			return env.package_list[ package_name]
+		else : return None
 	
 	def requires( self, env, *packages ) :		
 		""" Will load small snipptes of python-code stored in .wc files.
@@ -52,12 +64,14 @@ class WinConfig :
 		for package in packages :
 			if package in env.checked : continue
 			env.checked.append( package )
-			if package not in env.package_list.keys( ) :
+			
+			pkg = self.locate_package(env, package)
+			if pkg == None :
 				raise Exception, 'Unable to locate %s' % package
 			
 			# This can be used in the wc-file code, its the path to the file itself.
-			prefix = env.package_list[ package ][ 'prefix' ]	
-			wcfile = env.package_list[ package ][ 'file' ]
+			prefix = pkg[ 'prefix' ]	
+			wcfile = pkg[ 'file' ]
 
 			if wcfile not in self.compiles.keys( ):
 				wcf = open(wcfile, "r")
@@ -67,7 +81,6 @@ class WinConfig :
 			code = self.compiles[ wcfile ]
 			exec( code )
 			
-
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
 		env.checked = []

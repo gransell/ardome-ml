@@ -92,7 +92,7 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CPPDEFINES = [ '_WINDOWS', 'DEBUG', '_DEBUG'])
+			self.Append( CPPDEFINES = [ 'WIN32','_WINDOWS', 'DEBUG', '_DEBUG'])
 			# /W3 = Warning Level 3, 
 			# /Od = Optimization Disabled , 
 			# /GR = Enable Runtime Type Information, 
@@ -113,7 +113,7 @@ class Environment( BaseEnvironment ):
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
-			self.Append( CPPDEFINES = [ '_WINDOWS', 'NDEBUG'])
+			self.Append( CPPDEFINES = [ 'WIN32', '_WINDOWS', 'NDEBUG'])
 			# /W3 = Warning Level 3, 
 			# /O2 = Optimize For Speed, 
 			# /GR = Enable Runtime Type Information, 
@@ -330,7 +330,8 @@ class Environment( BaseEnvironment ):
 		
 	def done( self, project_name = None ) :
 		if "done" in dir(self.build_manager) : 
-			self.build_manager.done( self, project_name )
+			return self.build_manager.done( self, project_name )
+		else : return True
 
 	def Tool(self, tool, toolpath=None, **kw):
 		if toolpath == None :
