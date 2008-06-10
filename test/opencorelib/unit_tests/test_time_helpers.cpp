@@ -87,7 +87,7 @@ void test_full_sleep()
     a_timer.stop();
 
     // Allow some ms for the work administration
-    BOOST_CHECK_MESSAGE(in_range(tv, tv + epsilon, a_timer.elapsed()),
+    BOOST_CHECK_MESSAGE(in_range(tv, tv + 2 * epsilon, a_timer.elapsed()),
                         "Elapsed time in allowed range");
 }
 
