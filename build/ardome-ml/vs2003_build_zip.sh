@@ -7,7 +7,6 @@ mkdir TMPZIP || exit 1
 mkdir TMPZIP/aml || exit 1
 mkdir TMPZIP/aml/release || exit 1
 mkdir TMPZIP/aml/debug || exit 1
-mkdir TMPZIP/aml/src || exit 1
 
 echo "Adding release files..."
 cp -r build/release/vs2003/bin TMPZIP/aml/release/
@@ -33,7 +32,7 @@ fi
 
 					
 echo "Adding source files to be able to debug ..."	  
-cp -r src/ TMPZIP/aml/src/
+cp -r src/ TMPZIP/aml/
 if [ ! $? == 0 ]; then
 	echo "Failed to copy source files"
 	exit 1
