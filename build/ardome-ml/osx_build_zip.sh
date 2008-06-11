@@ -3,10 +3,10 @@
 echo "Copying libs and headers to temporary dir..."
 mkdir -p tmp/ardome-ml/lib
 
-cp -rf build/release/lib tmp/ardome-ml/lib/release
-cp -rf build/debug/lib tmp/ardome-ml/lib/debug
+cp -rf build/release/osx/lib tmp/ardome-ml/lib/release
+cp -rf build/debug/osx/lib tmp/ardome-ml/lib/debug
 cp -rf src/opencorelib/cl/schemas tmp/ardome-ml/
-cp -rf build/release/include tmp/ardome-ml/
+cp -rf build/release/osx/include tmp/ardome-ml/
 
 cd tmp
 
