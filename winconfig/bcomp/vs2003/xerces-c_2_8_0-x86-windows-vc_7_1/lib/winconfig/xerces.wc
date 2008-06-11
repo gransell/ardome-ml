@@ -2,20 +2,24 @@
 # Description: xerces
 # Version: 2.8.0
 
-env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
-env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+import os
 
-if env.debug: env.Append( LIBS = [ 'xerces-c_2D.lib' ] )
-else : env.Append( LIBS = [ 'xerces-c_2.lib' ] )
+def flags( env, prefix ):
+	env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
+	env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
-if env.debug : 
-	env.release( [os.path.join( prefix, 'lib', 'xerces-c_2D.lib') ])
-	env.release( [os.path.join( prefix, 'bin', 'xerces-c_2_8D.dll'), os.path.join( prefix, 'bin', 'xerces-c_2_8D.pdb') ] )
-else :
-	env.release( [os.path.join( prefix, 'lib', 'xerces-c_2.lib') ])
-	env.release( [os.path.join( prefix, 'bin', 'xerces-c_2_8.dll') ] )
+	if env.debug: env.Append( LIBS = [ 'xerces-c_2D.lib' ] )
+	else : env.Append( LIBS = [ 'xerces-c_2.lib' ] )
 
-env.install_dir( os.path.join( env[ 'stage_include' ], 'xercesc' ),  os.path.join( prefix, 'include', 'xercesc' ) )
-env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
+def install( env, prefix ):
+	if env.debug : 
+		env.release( [os.path.join( prefix, 'lib', 'xerces-c_2D.lib') ])
+		env.release( [os.path.join( prefix, 'bin', 'xerces-c_2_8D.dll'), os.path.join( prefix, 'bin', 'xerces-c_2_8D.pdb') ] )
+	else :
+		env.release( [os.path.join( prefix, 'lib', 'xerces-c_2.lib') ])
+		env.release( [os.path.join( prefix, 'bin', 'xerces-c_2_8.dll') ] )
+
+	env.install_dir( os.path.join( env[ 'stage_include' ], 'xercesc' ),  os.path.join( prefix, 'include', 'xercesc' ) )
+	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
 
 

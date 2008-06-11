@@ -1,2 +1,3 @@
 
-env.Append( CPPDEFINES = [ 'IL_EXPORTS', 'OPENIMAGELIB_BUILD' ] )
+def flags( env, prefix ):
+	env.Append( CPPDEFINES = [ 'IL_EXPORTS', 'OPENIMAGELIB_BUILD' ] )

@@ -1,3 +1,4 @@
 
-env.Append( CPPDEFINES = [ 'ML_EXPORTS', 'OPENMEDIALIB_BUILD' ] )
+def flags( env, prefix ):
+	env.Append( CPPDEFINES = [ 'ML_EXPORTS', 'OPENMEDIALIB_BUILD' ] )
 

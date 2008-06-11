@@ -12,6 +12,8 @@ class WinConfig :
 
 	def __init__( self ):
 		self.compiles = {}
+		self.install_debug = {}
+		self.install_release = {}
 
 	def walk( self, env ):
 		"""Walk the bcomp directory to pick out all the .wc files"""
@@ -76,10 +78,26 @@ class WinConfig :
 			if wcfile not in self.compiles.keys( ):
 				wcf = open(wcfile, "r")
 				wcfdata = wcf.read().replace("\r\n", "\n")
-				self.compiles[ wcfile ] = compile(wcfdata, wcfile, "exec")
+				code = compile(wcfdata, wcfile, "exec")
+				namespace = { }
+				exec( code ) in namespace
+				self.compiles[ wcfile ] = namespace
 
-			code = self.compiles[ wcfile ]
-			exec( code )
+			# Retrieve the derived namespace for the package
+			namespace = self.compiles[ wcfile ]
+
+			# Handle the install method on first use
+			if 'install' in namespace.keys( ):
+				if env.debug and wcfile not in self.install_debug.keys( ):
+					self.install_debug[ wcfile ] = True
+					namespace[ 'install' ]( env, prefix )
+				if not env.debug and wcfile not in self.install_release.keys( ):
+					self.install_release[ wcfile ] = True
+					namespace[ 'install' ]( env, prefix )
+
+			# Call the flags method
+			if 'flags' in namespace.keys( ):
+				namespace[ 'flags' ]( env, prefix )
 			
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
