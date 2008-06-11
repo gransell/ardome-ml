@@ -80,7 +80,18 @@ class Environment( BaseEnvironment ):
 		
 	def path_to_openbuild_tools( self ) :
 		return os.path.join( self.path_to_openbuild(), "Tools")
-
+		
+	def relative_path_to_target( self, target ) :
+		""" Given a target (a program or shared_library for instance), get the
+			relative path to the SConscript file, in relation to the root SConstruct file """
+		tmp_path = str( self.File( target ) )
+		return tmp_path[ len(self.root) + 1 : len(tmp_path) - len(target) - 1 ]
+		
+	def temporary_build_path( self, target ) :
+		""" Where will the given target be built by SCons """
+		rel_path = self.relative_path_to_target( target )
+		return os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp' , rel_path )
+		
 	def prep_debug( self ):
 		self[ 'debug' ] = '1'
 		self.debug = True
@@ -243,22 +254,13 @@ class Environment( BaseEnvironment ):
 					lib = lib.rsplit( '.', 1 )[ 0 ]
 					local_env.Append( LIBPATH = [libpath] )
 					local_env.Append( LIBS = [lib] )
-					
-					# if self[ 'PLATFORM' ] != 'win32': 
-						# libpath = '-L' + libpath
-						# lib = lib.replace( 'lib', '-l', 1 )
-					# else:
-						# local_env.Append( LIBPATH = [libpath] )
-						# local_env.Append( LIBS = [lib + ".lib"] )
-						# libpath = '/LIBPATH:' + libpath
-						# lib += '.lib'
-					# local_env.Append( LINKFLAGS = [ libpath, lib ] )
 
 		return result
 		
 	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
 		if nopre is not None: 
-			sources.extend(self.Object(nopre, PCH=None, PCHSTOP=None))
+			for f in nopre:
+				sources.extend(self.Object(f, PCH=None, PCHSTOP=None))
 
 		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
 			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
@@ -325,6 +327,72 @@ class Environment( BaseEnvironment ):
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self.Append( LINKFLAGS="/SUBSYSTEM:CONSOLE" )
+		
+		return self.Program( lib, sources, *keywords )
+	
+	def ensure_output_path_exists( self, opath ) :
+		try:
+			if os.path.exists( os.path.dirname(opath) ) : return
+			os.makedirs(  os.path.dirname(opath)  )
+		except os.error, e:
+			pass
+			
+	def create_moc_file( self, file_to_moc, output_path ) :
+		rel_path = file_to_moc[ : file_to_moc.rfind('.')] + '_moc.h'
+		output_file = os.path.join( output_path, rel_path )
+		self.ensure_output_path_exists( output_file )
+		input_file = str( self.File( file_to_moc ) )
+		moc_command =  self['QT4_MOC'] + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+		for line in os.popen( moc_command ).read().split("\n"):
+			if line != "" : raise Exception, moc_command
+		return output_file
+		
+	def create_resource_cpp_file( self, res_file, output_path ) :
+		rel_path = res_file[ : res_file.rfind('.')] + '.cpp'
+		output_file = os.path.join( output_path, rel_path )
+		self.ensure_output_path_exists( output_file )
+		input_file = str( self.File( res_file ) )
+		moc_command =  self['QT4_RCC'] + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+		for line in os.popen( moc_command ).read().split("\n"):
+			if line != "" : raise Exception, moc_command
+		return output_file
+	
+	def create_moc_cpp( self, generated_header_files, pre, output_path ) :
+		moc_cpp_path = os.path.join( output_path , "moc.cpp")
+		self.ensure_output_path_exists( moc_cpp_path )
+		moc_cpp = open( moc_cpp_path, "w+")
+		if pre is not None:
+			moc_cpp.write( '#include "' + pre[1] + '"\n'  )
+		
+		for gfile in generated_header_files:
+			moc_cpp.write( '#include "' + gfile + '"\n')
+			
+		moc_cpp.write('\n')
+		moc_cpp.close()
+		return moc_cpp_path
+				
+	def qt_program( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
+
+		if "qt_program" in dir(self.build_manager) : 
+			return self.build_manager.qt_program( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
+
+		depfiles = []
+		if nopre == None : nopre = []
+	
+		output_path = self.temporary_build_path( lib ) 
+		
+		for moc_file in moc_files :
+			depfiles.append( self.create_moc_file( moc_file, output_path) )
+			
+		if resources is not None :
+			for res in resources :
+				nopre.append( self.create_resource_cpp_file( res, output_path) )
+
+		sources.append( self.create_moc_cpp( depfiles, pre, output_path ) )
+		
+		self.setup_precompiled_headers( sources, pre, nopre )
+		
+		self['PDB'] = lib + '.pdb'
 		
 		return self.Program( lib, sources, *keywords )
 		
