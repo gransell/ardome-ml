@@ -315,6 +315,10 @@ class Environment( BaseEnvironment ):
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
 		self['PDB'] = lib + '.pdb'
+		
+		if self[ 'PLATFORM' ] == 'win32':
+			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
+			
 		return self.Program( lib, sources, *keywords )
 		
 	def console_program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
