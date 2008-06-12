@@ -398,6 +398,9 @@ class Environment( BaseEnvironment ):
 		
 		self['PDB'] = lib + '.pdb'
 		
+		if self[ 'PLATFORM' ] == 'win32':
+			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
+		
 		return self.Program( lib, sources, *keywords )
 		
 	def done( self, project_name = None ) :
