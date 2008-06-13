@@ -354,29 +354,42 @@ class Environment( BaseEnvironment ):
 			os.makedirs(  os.path.dirname(opath)  )
 		except os.error, e:
 			pass
-			
+	
+	def needs_rebuild( self, src, dst ):
+		result = True
+		if os.path.exists( src ):
+			if os.path.exists( dst ):
+				result = os.path.getmtime( src ) > os.path.getmtime( dst )
+			if result:
+				print "rebuilding %s from %s" % ( dst, src )
+		else:
+			raise Exception, "Error: source file %s does not exist." % src
+		return result
+
 	def create_moc_file( self, file_to_moc, output_path ) :
 		rel_path = file_to_moc[ : file_to_moc.rfind('.')] + '_moc.h'
 		output_file = os.path.join( output_path, rel_path )
-		self.ensure_output_path_exists( output_file )
 		input_file = str( self.File( file_to_moc ) )
-		command = self[ 'QT4_MOC' ].replace( '/', os.sep )
-		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
-		moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
-		for line in os.popen( moc_command ).read().split("\n"):
-			if line != "" : raise Exception, moc_command
+		if self.needs_rebuild( input_file, output_file ):
+			self.ensure_output_path_exists( output_file )
+			command = self[ 'QT4_MOC' ].replace( '/', os.sep )
+			if command.startswith( 'bcomp' ): command = self.root + os.sep + command
+			moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+			for line in os.popen( moc_command ).read().split("\n"):
+				if line != "" : raise Exception, moc_command
 		return output_file
 		
 	def create_resource_cpp_file( self, res_file, output_path ) :
 		rel_path = res_file[ : res_file.rfind('.')] + '.cpp'
 		output_file = os.path.join( output_path, rel_path )
-		self.ensure_output_path_exists( output_file )
 		input_file = str( self.File( res_file ) )
-		command = self[ 'QT4_RCC' ].replace( '/', os.sep )
-		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
-		moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
-		for line in os.popen( moc_command ).read().split("\n"):
-			if line != "" : raise Exception, moc_command
+		if self.needs_rebuild( input_file, output_file ):
+			self.ensure_output_path_exists( output_file )
+			command = self[ 'QT4_RCC' ].replace( '/', os.sep )
+			if command.startswith( 'bcomp' ): command = self.root + os.sep + command
+			moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+			for line in os.popen( moc_command ).read().split("\n"):
+				if line != "" : raise Exception, moc_command
 		return output_file
 	
 	def create_moc_cpp( self, generated_header_files, pre, output_path ) :
