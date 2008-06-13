@@ -1,25 +1,15 @@
 #!/bin/bash
 
 echo "Copying libs and headers to temporary dir..."
-mkdir -p tmp/ardome-ml/lib
+mkdir -p aml/debug
+mv build/debug/osx/bin build/debug/osx/include build/debug/osx/lib build/debug/osx/share aml/debug
 
-cp -rf build/release/osx/lib tmp/ardome-ml/lib/release
-cp -rf build/debug/osx/lib tmp/ardome-ml/lib/debug
-cp -rf src/opencorelib/cl/schemas tmp/ardome-ml/
-cp -rf build/release/osx/include tmp/ardome-ml/
-
-cd tmp
+mkdir -p aml/release
+mv build/release/osx/bin build/release/osx/include build/release/osx/lib build/release/osx/share aml/release
 
 echo Compressing result...
-tar -cjf ardome-ml-osx-10.5.tbz2 ardome-ml/ > /dev/null
+tar -cjf ardome-ml-osx-10.5.tbz2 aml/ > /dev/null
 if [ ! $? == 0 ]; then
 	echo Failed to compress
 	exit 2
 fi
-
-echo Copying result
-cp ardome-ml-osx-10.5.tbz2 ../
-
-cd ..
-rm -rf tmp
-
