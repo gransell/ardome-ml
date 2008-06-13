@@ -16,6 +16,8 @@ class PkgConfig:
 				if f.endswith( '.pc' ):
 					pkg = f.replace( ".pc", "" )
 					prefix = r.rsplit( '/', 2 )[ 0 ]
+					if prefix.endswith( '/debug' ): pkg = 'debug_' + pkg
+					if prefix.endswith( '/release' ): pkg = 'release_' + pkg
 					flags[ pkg ] = prefix
 					paths[ prefix ] = 1
 
@@ -39,6 +41,11 @@ class PkgConfig:
 			os.environ[ 'PKG_CONFIG_PATH' ] += ':' + full
 
 		return flags
+
+	def package_name( self, env, package ):
+		if env.debug and 'debug_' + package in env.package_list.keys( ): return 'debug_' + package
+		elif not env.debug and 'release_' + package in env.package_list.keys( ): return 'release_' + package
+		return package
 
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
@@ -70,16 +77,19 @@ class PkgConfig:
 		"""General purpose accessor for pkg-config - will override to use bcomp prefix 
 		when necessary."""
 		command = 'pkg-config %s ' % switches
-		if package in env.package_list.keys( ):
-			command += '--define-variable=prefix=' + env.package_list[ package ] + ' '
+		name = self.package_name( env, package )
+		if name in env.package_list.keys( ):
+			command += '--define-variable=prefix=' + env.package_list[ name ] + ' '
 			if env[ 'debug' ] == '1':
 				command += '--define-variable=debug=-d '
-		command += package + ' 2> /dev/null'
+		command += name + ' 2> /dev/null'
 		return command
 
 	def package_install_include( self, env ):
 		result = []
 		for package in env.package_list.keys( ):
+			if env.debug and package.startswith( 'release_' ): continue
+			if not env.debug and package.startswith( 'debug_' ): continue
 			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
 				include = os.popen( self.pkgconfig_cmd( env, package, "--variable=install_include" ) ).read( ).replace( '\n', '' )
 				if include != '':
@@ -89,6 +99,8 @@ class PkgConfig:
 	def package_install_libs( self, env ):
 		result = []
 		for package in env.package_list.keys( ):
+			if env.debug and package.startswith( 'release_' ): continue
+			if not env.debug and package.startswith( 'debug_' ): continue
 			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
 				libs = os.popen( self.pkgconfig_cmd( env, package, "--variable=install_libs" ) ).read( ).replace( '\n', '' )
 				if libs != '':

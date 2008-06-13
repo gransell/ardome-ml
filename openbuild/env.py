@@ -79,15 +79,17 @@ class Environment( BaseEnvironment ):
 		""" Given a target (a program or shared_library for instance), get the
 			relative path to the SConscript file, in relation to the root SConstruct file """
 		tmp_path = str( self.File( target ) )
-		return tmp_path[ len(self.root) + 1 : len(tmp_path) - len(target) - 1 ]
-		
-	def temporary_build_path( self, target ) :
+		if tmp_path.startswith( self.root ):
+			return tmp_path.replace( self.root + os.sep, '' ).rsplit( '/', 1 )[ 0 ]
+		else:
+			return target.rsplit( '/', 1 )[ 0 ]
+
+	def qt_build_path( self, target ) :
 		""" Where will the given target be built by SCons """
 		rel_path = self.relative_path_to_target( target )
-		if self[ 'PLATFORM' ] == 'win32':
-			return os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp' , rel_path )
-		else:
-			return os.path.join( self.root, rel_path, [ 'release', 'debug' ][ self.debug ] )
+		path = os.path.join( self.root, rel_path, 'qt', [ 'release', 'debug' ][ int( self.debug ) ] )
+		self.ensure_output_path_exists( path )
+		return path
 		
 	def prep_debug( self ):
 		self[ 'debug' ] = '1'
@@ -414,7 +416,7 @@ class Environment( BaseEnvironment ):
 		depfiles = []
 		if nopre == None : nopre = []
 	
-		output_path = self.temporary_build_path( lib ) 
+		output_path = self.qt_build_path( lib ) 
 		
 		for moc_file in moc_files :
 			depfiles.append( self.create_moc_file( moc_file, output_path) )
