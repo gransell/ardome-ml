@@ -82,7 +82,7 @@ class PkgConfig:
 			command += '--define-variable=prefix=' + env.package_list[ name ] + ' '
 			if env[ 'debug' ] == '1':
 				command += '--define-variable=debug=-d '
-		command += name + ' 2> /dev/null'
+		command += package + ' 2> /dev/null'
 		return command
 
 	def package_install_include( self, env ):
