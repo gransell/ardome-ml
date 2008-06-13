@@ -35,7 +35,7 @@ class Environment( BaseEnvironment ):
 			kw -- The rest of the passed parameters to this constructor.
 			"""
 			
-		self.toolpath = [ self.path_to_openbuild_tools() ]
+		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
 		
 		BaseEnvironment.__init__( self, ENV = os.environ , **kw )
@@ -75,12 +75,6 @@ class Environment( BaseEnvironment ):
 
 		self.Builder( action = '$RCCOM', suffix = '.rc' )
 
-	def path_to_openbuild( self ) :
-		return os.path.split(__file__)[0]
-		
-	def path_to_openbuild_tools( self ) :
-		return os.path.join( self.path_to_openbuild(), "Tools")
-		
 	def relative_path_to_target( self, target ) :
 		""" Given a target (a program or shared_library for instance), get the
 			relative path to the SConscript file, in relation to the root SConstruct file """
@@ -90,7 +84,10 @@ class Environment( BaseEnvironment ):
 	def temporary_build_path( self, target ) :
 		""" Where will the given target be built by SCons """
 		rel_path = self.relative_path_to_target( target )
-		return os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp' , rel_path )
+		if self[ 'PLATFORM' ] == 'win32':
+			return os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp' , rel_path )
+		else:
+			return os.path.join( self.root, rel_path, [ 'release', 'debug' ][ self.debug ] )
 		
 	def prep_debug( self ):
 		self[ 'debug' ] = '1'
@@ -135,9 +132,24 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
 	def optional( self, *packages ):
+		"""Tries to locate optional packages listed.
+
+		Keyword arguments:
+		packages - the list of package names.
+
+		Returns:
+		a dictionary of 'have_' + package = bool"""
+
 		return self.package_manager.optional( self, *packages )
 
 	def packages( self, *packages ) :
+		"""Tries to locate packages - any not found will result in an exception.
+
+		TODO: Handle exception gracefully and normalise for the platforms.
+
+		Keyword arguments:
+		packages - the list of package names."""
+
 		self.package_manager.packages( self, *packages )
 
 	def package_cflags( self, package ) :
@@ -309,27 +321,29 @@ class Environment( BaseEnvironment ):
 		return self.SharedLibrary( lib, sources, *keywords )
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		"""	Build a program. See shared_library in this class for a detailed description. """
 
 		if "program" in dir(self.build_manager) : 
 			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
-		self['PDB'] = lib + '.pdb'
 		
 		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
 			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
 			
 		return self.Program( lib, sources, *keywords )
 		
 	def console_program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		"""	Build a console program. See shared_library in this class for a detailed description. """
 
 		if "console_program" in dir(self.build_manager) : 
 			return self.build_manager.console_program( self, lib, sources, headers, pre, nopre, *keywords )
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
-		self['PDB'] = lib + '.pdb'
 		
 		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
 			self.Append( LINKFLAGS="/SUBSYSTEM:CONSOLE" )
 		
 		return self.Program( lib, sources, *keywords )
@@ -365,7 +379,7 @@ class Environment( BaseEnvironment ):
 		moc_cpp_path = os.path.join( output_path , "moc.cpp")
 		self.ensure_output_path_exists( moc_cpp_path )
 		moc_cpp = open( moc_cpp_path, "w+")
-		if pre is not None:
+		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
 			moc_cpp.write( '#include "' + pre[1] + '"\n'  )
 		
 		for gfile in generated_header_files:
@@ -395,10 +409,9 @@ class Environment( BaseEnvironment ):
 		sources.append( self.create_moc_cpp( depfiles, pre, output_path ) )
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
-		
-		self['PDB'] = lib + '.pdb'
-		
+
 		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
 			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
 		
 		return self.Program( lib, sources, *keywords )
@@ -410,7 +423,7 @@ class Environment( BaseEnvironment ):
 
 	def Tool(self, tool, toolpath=None, **kw):
 		if toolpath == None :
-			toolpath = [ self.path_to_openbuild_tools() ]
+			toolpath = [ utils.path_to_openbuild_tools() ]
 		
 		BaseEnvironment.Tool( self, tool, toolpath, **kw )
 

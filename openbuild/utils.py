@@ -51,3 +51,10 @@ def clean_path( str ):
 	else:
 		result = str
 	return result
+
+def path_to_openbuild( ) :
+	return os.path.split(__file__)[0]
+		
+def path_to_openbuild_tools( ) :
+	return os.path.join( path_to_openbuild(), "Tools")
+
