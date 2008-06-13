@@ -360,7 +360,9 @@ class Environment( BaseEnvironment ):
 		output_file = os.path.join( output_path, rel_path )
 		self.ensure_output_path_exists( output_file )
 		input_file = str( self.File( file_to_moc ) )
-		moc_command =  self['QT4_MOC'] + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+		command = self[ 'QT4_MOC' ].replace( '/', os.sep )
+		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
+		moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
 		for line in os.popen( moc_command ).read().split("\n"):
 			if line != "" : raise Exception, moc_command
 		return output_file
@@ -370,7 +372,9 @@ class Environment( BaseEnvironment ):
 		output_file = os.path.join( output_path, rel_path )
 		self.ensure_output_path_exists( output_file )
 		input_file = str( self.File( res_file ) )
-		moc_command =  self['QT4_RCC'] + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
+		command = self[ 'QT4_RCC' ].replace( '/', os.sep )
+		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
+		moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
 		for line in os.popen( moc_command ).read().split("\n"):
 			if line != "" : raise Exception, moc_command
 		return output_file
