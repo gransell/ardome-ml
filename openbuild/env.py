@@ -4,6 +4,7 @@
 
 import os
 import sys
+import shutil
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 import SCons.Tool
 import SCons.Script
@@ -65,7 +66,6 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
 
 		self.root = os.path.abspath( '.' )
-		self.package_list = self.package_manager.walk( self )
 
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
@@ -74,6 +74,37 @@ class Environment( BaseEnvironment ):
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
 
 		self.Builder( action = '$RCCOM', suffix = '.rc' )
+
+		self.install_packages( )
+		self.package_list = self.package_manager.walk( self )
+
+	def install_config( self, src, dst ):
+		"""	Installs config files for bcomp usage.
+
+			Keyword arguments:
+			src -- source file (normally located in the config/[target])
+			dst -- destination package (eg: bcomp/boost)
+		"""
+
+		src = src.replace( '/', os.sep )
+		dst = dst.replace( '/', os.sep )
+		if os.path.exists( src ):
+			src_file = src.rsplit( os.sep, 1 )[ -1 ]
+			if os.path.exists( dst ):
+				dst_dir = None
+				if src.endswith( '.wc' ): dst_dir = os.path.join( dst, self[ 'libdir' ], 'winconfig' )
+				if src.endswith( '.pc' ): dst_dir = os.path.join( dst, self[ 'libdir' ], 'pkgconfig' )
+				if dst_dir is not None:
+					dst_file = os.path.join( dst_dir, src_file )
+					if not os.path.exists( dst_file ) or os.path.getmtime( src ) > os.path.getmtime( dst_file ):
+						if not os.path.exists( dst_dir ): os.makedirs( dst_dir )
+						shutil.copyfile( src, dst_file )
+				else:
+					raise Exception, "Unable to identify %s as a win or pkg config file" % src
+			else:
+				raise Exception, "Unable to locate %s" % dst
+		else:
+			raise Exception, "Unable to locate %s" % src
 
 	def relative_path_to_target( self, target ) :
 		""" Given a target (a program or shared_library for instance), get the

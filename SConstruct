@@ -18,6 +18,15 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 
+	def install_packages( self ):
+		if self[ 'target' ] == 'vs2003':
+			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
+			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
+			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c_2_8_0-x86-windows-vc_7_1' )
+			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
+							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
+				self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_34_1' )
+
 	def configure_platform( self ):
 		if self[ 'PLATFORM' ] == 'darwin' or self['PLATFORM'] == 'posix':
 			self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )

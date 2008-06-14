@@ -1,0 +1,10 @@
+# Name: boost_python
+# Description: boost python lib
+# Version: 1.34.1
+
+def flags( env, prefix ):
+	env.requires( 'boost' )
+	if env.debug : env.Append( LIBS = [ 'boost_python-vc71-mt-gd-1_34_1.lib' ] )	
+	else : env.Append( LIBS = [ 'boost_python-vc71-mt-1_34_1.lib' ] )	
+
+

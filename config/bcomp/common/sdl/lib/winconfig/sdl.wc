@@ -1,0 +1,17 @@
+# Name: SDL
+# Description: SDL configuration file
+# Version: 0.0.1
+
+import os
+
+def flags( env, prefix ):
+	env.Append( CPPPATH = [ os.path.join( prefix, 'include', 'SDL') ] )
+
+	env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+	env.Append( LIBS = [ 'SDLmain.lib', 'SDL.lib' ] )
+
+def install( env, prefix ):
+	env.install_dir( env[ 'stage_bin' ],  os.path.join( prefix, 'bin' ) )
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( os.path.join( env[ 'stage_include' ], 'SDL' ),  os.path.join( prefix, 'include', 'SDL' ) )
+

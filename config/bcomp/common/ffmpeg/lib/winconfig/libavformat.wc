@@ -1,0 +1,17 @@
+# Name: libavformat
+# Description: libavformat
+# Version: 0.0.1
+
+import os
+
+def flags( env, prefix ):
+	env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
+
+	env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+	env.Append( LIBS = [ 'avformat.lib', 'avcodec.lib', 'avutil.lib' ] )
+
+def install( env, prefix ):
+	env.install_dir( env[ 'stage_bin' ],  os.path.join( prefix, 'bin' ) )
+	env.install_dir( env[ 'stage_libdir' ],  os.path.join( prefix, 'lib' ) )
+	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include' ) )
+

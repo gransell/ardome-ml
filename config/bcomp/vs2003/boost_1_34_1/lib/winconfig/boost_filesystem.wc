@@ -1,0 +1,23 @@
+# Name: boost_filesystem
+# Description: boost filesystem lib
+# Version: 1.34.1
+
+import os
+
+def flags( env, prefix ):
+	env.requires( 'boost' )
+
+	env.Append( CPPDEFINES = [ 'BOOST_FILESYSTEM_DYN_LINK' ] )
+
+	if env.debug : env.Append( LIBS = [ 'boost_filesystem-vc71-mt-gd-1_34_1.lib' ] )	
+	else : env.Append( LIBS = [ 'boost_filesystem-vc71-mt-1_34_1.lib' ] )	
+
+def install( env, prefix ):
+	if env.debug : 
+		env.release( [ os.path.join( prefix, 'lib', 'boost_filesystem-vc71-mt-gd-1_34_1.lib' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', 'boost_filesystem-vc71-mt-gd-1_34_1.dll' ) ] )
+	else : 
+		env.release( [ os.path.join( prefix, 'lib', 'boost_filesystem-vc71-mt-1_34_1.lib' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', 'boost_filesystem-vc71-mt-1_34_1.dll' ) ] )
+
+

@@ -17,16 +17,6 @@ class WinConfig :
 
 	def walk( self, env ):
 		"""Walk the bcomp directory to pick out all the .wc files"""
-		# Start by copying all the .wc files found in winconfig to bcomp
-		for r, d, f in os.walk( 'winconfig' ):
-			for file in f:
-				full = os.path.join( r, file )
-				target = r.replace( 'winconfig' + os.sep, '' )
-				if full.find( os.sep + '.' ) == -1:
-					if not os.path.exists( target ):
-						os.makedirs( target )
-					shutil.copy( full, target )
-
 		flags = { }
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
 		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ) ]  :
