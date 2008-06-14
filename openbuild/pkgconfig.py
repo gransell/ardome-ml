@@ -11,6 +11,7 @@ class PkgConfig:
 		"""Walk the bcomp directory to pick out all the .pc files"""
 		flags = { }
 		paths = { }
+		full_paths = { }
 		for r, d, files in os.walk( env.root + '/bcomp' ):
 			for f in files:
 				if f.endswith( '.pc' ):
@@ -20,10 +21,11 @@ class PkgConfig:
 					if prefix.endswith( '/release' ): pkg = 'release_' + pkg
 					flags[ pkg ] = prefix
 					paths[ prefix ] = 1
+					full_paths[ r ] = 1
 
 		full = ''
-		for path in paths:
-			full += os.path.join( path, env[ 'libdir' ], 'pkgconfig' ) + ':'
+		for path in full_paths:
+			full += path + ':'
 
 		if env[ 'PLATFORM' ] == 'posix':
 			if utils.arch( ) == 'x86_64':
