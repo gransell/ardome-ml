@@ -23,7 +23,7 @@ class PkgConfig:
 
 		full = ''
 		for path in paths:
-			full += path + '/lib/pkgconfig' + ':'
+			full += os.path.join( path, env[ 'libdir' ], 'pkgconfig' ) + ':'
 
 		if env[ 'PLATFORM' ] == 'posix':
 			if utils.arch( ) == 'x86_64':
