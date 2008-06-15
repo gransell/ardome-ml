@@ -51,7 +51,7 @@ sources = [
 	'serious_error_handler.cpp',
 	'size.cpp',
 	'span.cpp',
-	'special_folders.cpp',
+	# 'special_folders.cpp', This file is not needed, empty.
 	'stream_logtarget.cpp',
 	'string_conversions.cpp',
 	'str_util.cpp',

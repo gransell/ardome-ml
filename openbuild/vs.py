@@ -9,6 +9,20 @@ import StringIO
 import os
 import codecs
 
+class SourceFile:
+	def __init__( self, name, addflags = None ) :
+		self.name = name
+		if addflags == None :
+			self.additional_flags = { 'Debug|Win32':'', 'Release|Win32':''}
+		else:
+			self.additional_flags = addflags
+		
+	def get_additional_cl_flags( self, config ) :
+		return self.additional_flags[ config ]
+		
+	def __str__(self):
+		return  "SourceFile " + self.name + " " + str(self.additional_flags)
+
 class VS2003:
 	
 	def version_string( self ) :
@@ -43,12 +57,13 @@ class VS2003:
 			<Tool
 				Name="VCCLCompilerTool"
 				UsePrecompiledHeader="%d"
-				PrecompiledHeaderThrough="%s" />
+				PrecompiledHeaderThrough="%s"
+				AdditionalOptions="%s"/>
 			</FileConfiguration>"""
 		
-		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
+		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file.name )
 		
-		return config_element % ( config.name, precomp_flag, precomp_file ) 
+		return config_element % ( config.name, precomp_flag, precomp_file, cpp_file.get_additional_cl_flags(config.name) ) 
 		
 	def solution_file_header( self ) :
 		return """Microsoft Visual Studio Solution File, Format Version 8.00"""
@@ -119,7 +134,7 @@ class CompilerOptions:
 		self.include_directories = []
 		self.wchar_t_is_built_in = False
 		self.runtime_type_info = True
-		self.precomp_headers = False, "precompiled_headers.h", "precompiled_headers.cpp"
+		self.precomp_headers = False, "", ""
 		self.sources_not_using_precomp = []
 		self.warning_level = 3
 		self.additional_options = ""
@@ -308,7 +323,7 @@ class VSProject :
 	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=[], source_files=[], vc_version="vc71" ) :
 		""" root_dir -- The directory where the SConstruct file resides
 			full_path -- The directory where the SConsript file resides. """
-		
+			
 		self.name = name
 		self.configurations = configurations
 			
@@ -322,8 +337,8 @@ class VSProject :
 		
 		for conf in self.configurations:
 			conf.set_vc_version( self.vc_version )
-			if conf.compiler_options.precomp_headers[0] and conf.compiler_options.precomp_headers[2] not in self.cpp_files:
-				self.cpp_files.append(conf.compiler_options.precomp_headers[2]) 
+			#if conf.compiler_options.precomp_headers[0] and conf.compiler_options.precomp_headers[2] not in self.cpp_files:
+			#	self.cpp_files.append(conf.compiler_options.precomp_headers[2]) 
 		
 	def __str__(self) :
 		ostr = StringIO.StringIO();
@@ -426,13 +441,16 @@ class VSProject :
 		suffixes = tuple( filterstr.split(";") )
 		
 		def suffix_filter( str ) :
-			ppos = str.rfind(".")
+			# str could be a SourceFile, with a name property which is the filename
+			tmpstr = str
+			if 'name' in dir( str ): tmpstr = str.name
+			ppos = tmpstr.rfind(".")
 			
-			if ppos != -1 : str = str[ppos+1:]
+			if ppos != -1 : tmpstr = tmpstr[ppos+1:]
 			else : return False
 			
 			for ext in suffixes :
-				if str == ext : return True
+				if tmpstr == ext : return True
 			
 			return False
 	
@@ -446,7 +464,7 @@ class VSProject :
 		return res_files
 
 	def handle_src_file( self, cpp_file, ostr ) :
-		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file)
+		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file.name )
 		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\")  )
 
 		for config in self.configurations :
@@ -459,7 +477,7 @@ class VSProject :
 		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
 		
 	def handle_res_file( self, res_file_path, ostr ) :
-		thepath = os.path.join(self.relative_sln, self.relative_path, res_file_path)
+		thepath = os.path.join(self.relative_sln, self.relative_path, res_file_path.name)
 		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
 		
 	def cpp_extensions( self ) :

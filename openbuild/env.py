@@ -329,34 +329,36 @@ class Environment( BaseEnvironment ):
 			keywords -- All other parameters passed with keyword assignment.
 		"""
 	
-		if "shared_library" in dir(self.build_manager) : 
+		if "shared_library" in dir(self.build_manager) :
 			return self.build_manager.shared_library( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
 		self.setup_precompiled_headers( sources, pre, nopre )
-		
-		self['PDB'] = lib + '.pdb'
+	
+		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
 		
 		return self.SharedLibrary( lib, sources, *keywords )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
 		
-		if "plugin" in dir(self.build_manager) : 
+		if "plugin" in dir(self.build_manager) :
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
-		self['PDB'] = lib + '.pdb'
+		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
 
 		return self.SharedLibrary( lib, sources, *keywords )
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a program. See shared_library in this class for a detailed description. """
 
-		if "program" in dir(self.build_manager) : 
+		if "program" in dir(self.build_manager) :
 			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
 			
 		self.setup_precompiled_headers( sources, pre, nopre )
