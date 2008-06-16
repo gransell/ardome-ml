@@ -494,10 +494,10 @@ class Environment( BaseEnvironment ):
 				if target != '':
 					full = self.subst( os.path.join( target, name ) )
 					if full not in Environment.already_installed:
-						if os.path.exists( name ):
-							self.copy_files( target, name )
-						else:
+						if 'path' in dir( file ):
 							self.Install( target, file )
+						else:
+							self.copy_files( target, name )
 						Environment.already_installed[name] = [full]
 
 	def install_dir( self, dst, src ):
