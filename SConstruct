@@ -133,7 +133,6 @@ opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
 env = AMLEnvironment( opts )
 
-
 if env.check_externals( ):
 
 	cl = env.build( 'src/opencorelib/cl' )

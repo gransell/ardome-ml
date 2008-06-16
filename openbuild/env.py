@@ -204,21 +204,9 @@ class Environment( BaseEnvironment ):
 			env = self.Clone( )
 			build_type( env )
 			for lib in env.package_manager.package_install_libs( env ):
-				if os.path.isdir( lib ):
-					env.install_dir( os.path.join( env[ 'stage_libdir' ], lib.rsplit( os.sep, 1 )[ -1 ] ), lib )
-				elif not os.path.islink( lib ):
-					env.Install( env[ 'stage_libdir' ], lib )
-				else:
-					# TODO: Fix sym link installs 
-					pass
+				env.copy_files( os.path.join( env[ 'stage_libdir' ], lib.rsplit( os.sep, 1 )[ -1 ] ), lib )
 			for include in env.package_manager.package_install_include( env ):
-				if os.path.isdir( include ):
-					env.install_dir( os.path.join( env[ 'stage_include' ], include.rsplit( os.sep, 1 )[ -1 ] ), include )
-				elif not os.path.islink( include ):
-					env.Install( env[ 'stage_include' ], include )
-				else:
-					# TODO: Fix sym link installs 
-					pass
+				env.copy_files( os.path.join( env[ 'stage_include' ], include.rsplit( os.sep, 1 )[ -1 ] ), include )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
@@ -292,7 +280,7 @@ class Environment( BaseEnvironment ):
 				if dep is not None:
 					self.add_dependencies(result, dep, build_type)
 						
-					self.Requires( result[ build_type ], dep[ build_type ] )
+					self.Depends( result[ build_type ], dep[ build_type ] )
 					file = str( dep[ build_type ][ 0 ] )
 					libpath, lib = file.rsplit( os.sep, 1 )
 					libpath = os.path.join( self.root, libpath )
@@ -503,38 +491,118 @@ class Environment( BaseEnvironment ):
 				if target != '':
 					full = self.subst( os.path.join( target, name ) )
 					if full not in Environment.already_installed:
-						self.Install( target, name )
+						self.copy_files( target, name )
 						Environment.already_installed[name] = [full]
 
 	def install_dir( self, dst, src ):
-		""" Installs the contents of src to dst, walking through the src directory and invoking 
-			Install on every file found.
+		self.copy_files( dst, src )
+
+	def copy_files( self, dst, src ):
+		""" Installs src to dst, walking through the src if needed and invoking 
+			the appropriate install action on every file found.
 
 			Keyword arguments:
 			dst -- destination directory
 			src -- source directory
 		"""
 
-		dst = self.subst( utils.clean_path( dst ) )
-		src = self.subst( utils.clean_path( src ) )
+		# Get scons options
+		execute = not self.GetOption( 'no_exec' )
+		silent = self.GetOption( 'silent' )
 
+		# Clean src and dst to ensure they're normalised
+		dst = self.subst( utils.clean_path( dst ) ).replace( '/', os.sep )
+		src = self.subst( utils.clean_path( src ) ).replace( '/', os.sep )
+
+		# Check that this combination has not been tried before
 		if dst in Environment.already_installed.keys() :
 			if src in Environment.already_installed[dst] : return
 			else : Environment.already_installed[dst].append(src)
 		else: Environment.already_installed[dst] = [src]
-		
-		for root, d, files in os.walk( src ):
-			for f in files:
-				full = os.path.join( root, f )
-				# Only include if there's no hidden content here (ie: .svn existing in the path)
-				if full.find( os.sep + '.' ) == -1:
-					target_dir = dst + root.replace( src, '' )
-					target_file = utils.clean_path( os.path.join( target_dir, f ) )
-					if target_file not in Environment.already_installed:
-						self.Install( target_dir, full )
-						Environment.already_installed[target_file] = [full]
-					elif Environment.already_installed[target_file] != [full]:
-						print "Warning: trying to copy %s to %s, but %s is already there." % ( full, target_file, Environment.already_installed[target_file][ 0 ] )
+
+		# Collect types into these lists
+		all_dirs = [ ]
+		all_links = [ ]
+		all_files = [ ]
+
+		# Handle 
+		if not os.path.exists( src ):
+			raise OSError, "Unable to locate %s to copy to %s" % ( src, dst )
+		elif os.path.isdir( src ):
+			# Source is a directory, walk it and collect the files, dirs and links in it
+			for root, dirs, files in os.walk( src, False ):
+				if root.find( os.sep + '.' ) != -1: continue
+				dst_dir = dst + root.replace( src, '' )
+				all_dirs += [ dst_dir ]
+				for dir in dirs:
+					if dir.startswith( '.' ):
+						dirs.remove( dir )
+					elif os.path.islink( dir ):
+						dirs.remove( dir )
+						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( self.root, dir ) ) ) ]
+				for file in files:
+					full_src = os.path.join( root, file )
+					full_dst = os.path.join( dst_dir, file )
+					if file.startswith( '.' ):
+						files.remove( file )
+					elif os.path.islink( full_src ):
+						all_links += [ ( dst_dir, file, os.readlink( full_src ) ) ]
+					else:
+						all_files += [ ( full_src, full_dst ) ]
+		elif os.path.islink( src ):
+			# Source is a sym link
+			file = src.rsplit( os.sep, 1 )[ -1 ]
+			if not dst.endswith( os.sep + file ):
+				all_dirs += [ dst ]
+			else:
+				dst = dst.rsplit( os.sep, 1 )[ 0 ]
+			all_links += [ ( dst, file, os.readlink( src ) ) ]
+		else:
+			# Source is a regular file
+			file = src.rsplit( os.sep, 1 )[ -1 ]
+			full_dst = dst
+			if not dst.endswith( os.sep + file ):
+				all_dirs += [ dst ]
+				full_dst = os.path.join( dst, file )
+			all_files += [ ( src, full_dst ) ]
+
+		# Uninstall or install according to scons usage
+		if self.GetOption( 'clean' ):
+			for dir, file, link in all_links:
+				full = os.path.join( dir, file )
+				if os.path.exists( full ):
+					if not silent: print 'rm link', dir, file, link
+					if execute: os.unlink( full )
+			for src, dst in all_files:
+				if os.path.exists( os.path.join( dst ) ):
+					if not silent: print 'rm', dst
+					if execute: os.unlink( dst )
+			for dir in all_dirs:
+				if os.path.exists( dir ):
+					if not silent: print 'rmdir', dir
+					if execute:
+						try:
+							os.removedirs( dir )
+						except OSError, e:
+							# Ignore non-empty directories
+							pass
+		else:
+			for dir in all_dirs:
+				if not os.path.exists( dir ):
+					if not silent: print 'mkdir', dir
+					if execute: os.makedirs( dir )
+			for src, dst in all_files:
+				if not os.path.exists( dst ) or os.path.getmtime( src ) > os.path.getmtime( dst ):
+					if not silent: print 'cp', src, dst
+					if execute: shutil.copyfile( src, dst )
+			for dir, file, link in all_links:
+				full = os.path.join( dir, file )
+				if not os.path.exists( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
+					if not silent: print 'link', dir, file, link
+					if execute: 
+						os.chdir( dir )
+						os.symlink( link, file )
+						os.chdir( self.root )
 
 	def generate_tester(source, target, env, for_signature):
 		
