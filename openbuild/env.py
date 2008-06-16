@@ -576,9 +576,9 @@ class Environment( BaseEnvironment ):
 		if self.GetOption( 'clean' ):
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
-				if os.path.exists( full ):
-					if not silent: print 'rm link', dir, file, link
-					if execute: os.unlink( full )
+				if os.path.islink( full ):
+					if not silent: print 'rm link', full
+					if execute: os.remove( full )
 			for src, dst in all_files:
 				if os.path.exists( os.path.join( dst ) ):
 					if not silent: print 'rm', dst
@@ -603,9 +603,10 @@ class Environment( BaseEnvironment ):
 					if execute: shutil.copyfile( src, dst )
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
-				if not os.path.exists( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
+				if not os.path.islink( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
 					if not silent: print 'link', dir, file, link
 					if execute: 
+						if os.path.islink( full ): os.remove( full )
 						os.chdir( dir )
 						os.symlink( link, file )
 						os.chdir( self.root )
