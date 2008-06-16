@@ -90,8 +90,10 @@ win32_sources = [
 extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sources }
 objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
 
-object = local_env.shared_library( 'opencorelib_cl', sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], 
-									CXXFLAGS='-fobjc-gc' ), pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
+cl_headers = local_env.Glob('*.hpp', True, False, True)
+
+object = local_env.shared_library( 'opencorelib_cl', sources = sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], 
+									CXXFLAGS='-fobjc-gc' ), headers = cl_headers, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
 
 local_env.release( object )
 

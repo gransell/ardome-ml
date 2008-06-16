@@ -9,20 +9,98 @@ import StringIO
 import os
 import codecs
 
+class CompilerTool:
+	""" Will use the cl.exe to compile a file """
+	def to_tool_xml( self, the_file, config, vsver ) :
+		""" Keyword arguments:
+			the_file -- The file (as a SourceFile) that will be built.
+			config -- The current BuildConfiguration
+			vsver -- The currently used version of visual studio"""
+		toolstr = """ <Tool
+				Name="VCCLCompilerTool"
+				UsePrecompiledHeader="%d"
+				PrecompiledHeaderThrough="%s"
+				AdditionalOptions="%s"/> """
+				
+		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
+		return toolstr % ( precomp_flag, precomp_file, the_file.get_additional_cl_flags(config.name) ) 
+		
+class QtMocTool :
+	""" Will use moc.exe to create class meta-data """
+	def __init__( self, qtmoc_full_path, root_path ) :
+		""" Keyword arguments:
+			qtmoc_full_path -- The full path to moc.exe
+			root_path -- The path to the SConstruct file """
+		self.qtmoc = qtmoc_full_path
+		self.root_path = root_path
+		
+	def output_file( self, the_file ) :
+		full_path = os.path.join( self.root_path, the_file.name )
+		res = full_path[ : full_path.rfind(".") ] + "_moc.cpp"
+		return res.replace("/", os.sep)
+		
+	def to_tool_xml( self, the_file, config, vsver ) :
+		""" Creates a custom build moc tool. """
+		
+		# The -f flag forces the moc-compiler to insert an include at the top of the file.
+		# The -o flag specifies the output file that moc will create """
+		toolstr = """ 	<Tool
+						Name="VCCustomBuildTool"
+						Description="Running Qt moc tool on [%s] to create class meta-data"
+						CommandLine="&quot;%s&quot; %s -f&quot;%s&quot; -o&quot;%s&quot; &quot;%s&quot;"
+						Outputs="&quot;%s&quot;"/> """
+						
+		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
+		if precomp_flag != 0 : precomp_file = "-f&quot;%s&quot" % (precomp_file)
+		else: precomp_file = ""
+		input_file = os.path.join( self.root_path, the_file.name ).replace("/", os.sep)
+		output_file = self.output_file( the_file )
+		return toolstr % ( the_file.name, self.qtmoc, precomp_file, input_file, output_file, input_file, output_file )
+		
+class QtRccTool : 
+	def __init__( self, qtrcc_full_path, root_path ) :
+		self.qtrcc = qtrcc_full_path
+		self.root_path = root_path
+		
+	def output_file( self, the_file ) :
+		full_path = os.path.join( self.root_path, the_file.name )
+		res = full_path[ : full_path.rfind(".") ] + "_rcc.cpp"
+		return res.replace("/", os.sep)
+		
+	def to_tool_xml( self, the_file, config, vsver ) :
+		toolstr = """ 	<Tool
+						Name="VCCustomBuildTool"
+						Description="Running Qt rcc tool on [%s] to create resources linked into the executable"
+						CommandLine="&quot;%s&quot; -o &quot;%s&quot; &quot;%s&quot;"
+						Outputs="&quot;%s&quot;"/> """
+						
+		input_file = os.path.join( self.root_path, the_file.name ).replace("/", os.sep)
+		output_file = self.output_file( the_file )
+		return toolstr % ( the_file.name, self.qtrcc, output_file, input_file, output_file )
+
 class SourceFile:
 	def __init__( self, name, addflags = None ) :
 		self.name = name
+		self.tools = { 'Debug|Win32': [] , 'Release|Win32': [] }
 		if addflags == None :
 			self.additional_flags = { 'Debug|Win32':'', 'Release|Win32':''}
 		else:
 			self.additional_flags = addflags
+			
+	def __str__( self ) :
+		return self.name
 		
 	def get_additional_cl_flags( self, config ) :
 		return self.additional_flags[ config ]
 		
-	def __str__(self):
-		return  "SourceFile " + self.name + " " + str(self.additional_flags)
-
+	def get_tools( self, config ) :
+		res = []
+		if self.tools.has_key( config.name ):
+			res += self.tools[ config.name ] 
+		if self.tools.has_key( 'all_configurations' ) :
+			res += self.tools['all_configurations'] 
+		return res
+		
 class VS2003:
 	
 	def version_string( self ) :
@@ -52,18 +130,14 @@ class VS2003:
 							options.warning_level,
 							options.debug_information_format( config.name) )
 							
-	def file_configuration( self, config, cpp_file ) :
-		config_element = """<FileConfiguration Name="%s">
-			<Tool
-				Name="VCCLCompilerTool"
-				UsePrecompiledHeader="%d"
-				PrecompiledHeaderThrough="%s"
-				AdditionalOptions="%s"/>
-			</FileConfiguration>"""
-		
-		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file.name )
-		
-		return config_element % ( config.name, precomp_flag, precomp_file, cpp_file.get_additional_cl_flags(config.name) ) 
+	def file_configuration( self, config, the_file, filetype ) :
+		if filetype == "source" or filetype == "header" or filetype == "resource":
+			res = "<FileConfiguration Name=\"" + config.name + "\">"
+			for tool in the_file.get_tools(config) :
+				res += tool.to_tool_xml( the_file, config, "vs2003" )
+			res += "</FileConfiguration>\n"
+			return res		
+		else : return ""
 		
 	def solution_file_header( self ) :
 		return """Microsoft Visual Studio Solution File, Format Version 8.00"""
@@ -97,18 +171,23 @@ class VS2008 :
 							options.warning_level,
 							options.debug_information_format( config.name) )
 										
-	def file_configuration( self, config, cpp_file ) :
-		config_element = """<FileConfiguration Name="%s">
-		<Tool
-			Name="VCCLCompilerTool"
-			UsePrecompiledHeader="%d"
-			CompileAsManaged="0" />
-		</FileConfiguration>"""
-		
-		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( cpp_file )
-		# Changed numbers in vs2008
-		if precomp_flag == 3 : precomp_flag = 2
-		return  config_element % ( config.name, precomp_flag ) 
+	def file_configuration( self, config, the_file, filetype ) :
+		if filetype == "source":
+			config_element = """<FileConfiguration Name="%s">
+			<Tool
+				Name="VCCLCompilerTool"
+				UsePrecompiledHeader="%d"
+				CompileAsManaged="0" />
+			</FileConfiguration>"""
+			
+			precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
+			# Changed numbers in vs2008
+			if precomp_flag == 3 : precomp_flag = 2
+			return  config_element % ( config.name, precomp_flag ) 
+		elif filetype == "header":
+			return ""
+		else : return ""
+			
 		
 	def solution_file_header( self ) :
 		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
@@ -184,7 +263,7 @@ class CompilerOptions:
 		if not self.use_precompiled_headers() : return ""
 		return self.precomp_headers[1]
 			
-	def precompiled_header_source_file( self, file_name ) :
+	def precompiled_header_source_file( self, the_file ) :
 		""" Returns a tuple of an integer and a file name
 		
 			The first number in the tuple is 1 if precompiled headers is used.
@@ -192,16 +271,16 @@ class CompilerOptions:
 			that generates the precompiled header file. 
 			
 			Keyword arguments:
-			file_name -- The source file name for which the precompiled header flags 
+			the_file -- The source file name for which the precompiled header flags 
 						 needs to be set.   
 			"""
 		if self.use_precompiled_headers() == "0" : return 0, ""
 		
 		if self.sources_not_using_precomp :
 			for src in self.sources_not_using_precomp :
-				if file_name in src : return 0, ""
+				if the_file.name in src.name : return 0, ""
 			
-		if self.precomp_headers[2] in file_name : return 1, self.precomp_headers[1]
+		if self.precomp_headers[2] in the_file.name : return 1, self.precomp_headers[1]
 		return  3, self.precomp_headers[1]
 
 	def debug_information_format( self, config_name ) :
@@ -320,13 +399,21 @@ class BuildConfiguration:
 		return "0"
 		
 class VSProject :
-	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=[], source_files=[], vc_version="vc71" ) :
+	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
 		""" root_dir -- The directory where the SConstruct file resides
 			full_path -- The directory where the SConsript file resides. """
 			
 		self.name = name
 		self.configurations = configurations
-			
+		
+		if header_files == None : header_files = []
+		if source_files == None : source_files = []
+		
+		# for hf in header_files:
+			# if isinstance( hf, SourceFile ) :
+				# print "VSProject: hf.tools", hf.name, hf.tools
+			# else : print hf
+		
 		self.header_files = header_files
 		self.cpp_files = source_files
 		self.vc_version = vc_version
@@ -434,8 +521,8 @@ class VSProject :
 		return filter_element % ( filter_name, file_types, uuid.uuid4() )
 
 
-	def handle_file_configuration( self, cpp_file, config, ostr ) :
-		ostr.write( self.vs.file_configuration( config, cpp_file ) )
+	def handle_file_configuration( self, the_file, filetype, config, ostr ) :
+		ostr.write( self.vs.file_configuration( config, the_file, filetype ) )
 		
 	def get_files_with_filter( self, filterstr ) :
 		suffixes = tuple( filterstr.split(";") )
@@ -457,28 +544,41 @@ class VSProject :
 		to_filter = []
 		
 		if self.cpp_files is not None : to_filter += self.cpp_files
-		if self.header_files is not None : to_filter += self.header_files
+		if self.header_files is not None : 
+			to_filter += self.header_files
 		
 		res_files = filter( suffix_filter , to_filter)
-		res_files.sort()
+			
+		def comparer( x, y ) :
+			xtmp = x
+			ytmp = y
+			if isinstance(x, SourceFile) : xtmp = x.name
+			if isinstance(y, SourceFile) : ytmp = y.name
+			return cmp(xtmp, ytmp)
+				
+		res_files.sort( cmp = comparer )
 		return res_files
 
 	def handle_src_file( self, cpp_file, ostr ) :
 		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file.name )
 		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\")  )
-
 		for config in self.configurations :
-			self.handle_file_configuration(cpp_file, config, ostr)
-
+			self.handle_file_configuration(cpp_file, "source", config, ostr )
 		ostr.write( "</File>\n" )
 
-	def handle_header_file( self, h_file_path, ostr ) :
-		thepath = os.path.join(self.relative_sln, self.relative_path, h_file_path)
-		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
+	def handle_header_file( self, h_file_path, ostr ) :			
+		thepath = os.path.join(self.relative_sln, self.relative_path, h_file_path.name )
+		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\") )		
+		for config in self.configurations :
+			self.handle_file_configuration(h_file_path, "header", config, ostr )
+		ostr.write( "</File>\n" )
 		
 	def handle_res_file( self, res_file_path, ostr ) :
-		thepath = os.path.join(self.relative_sln, self.relative_path, res_file_path.name)
-		ostr.write( "<File RelativePath=\"%s\" />\n" % thepath.replace("/", "\\") )
+		thepath = os.path.join(self.relative_sln, self.relative_path, res_file_path.name )
+		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\") )		
+		for config in self.configurations :
+			self.handle_file_configuration(res_file_path, "resource", config, ostr )
+		ostr.write( "</File>\n" )
 		
 	def cpp_extensions( self ) :
 		return "cpp;c;cxx"
@@ -487,7 +587,7 @@ class VSProject :
 		return "h;hpp;hxx"
 		
 	def res_extensions( self ) :
-		return "rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+		return "rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;qrc"
 		
 	def handle_cpp_files( self, ostr ) :
 		ostr.write( self.create_filter("Source Files", self.cpp_extensions() ) + "\n")

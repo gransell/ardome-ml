@@ -105,15 +105,10 @@ class Environment( BaseEnvironment ):
 				raise Exception, "Unable to locate %s" % dst
 		else:
 			raise Exception, "Unable to locate %s" % src
-
-	def relative_path_to_target( self, target ) :
-		""" Given a target (a program or shared_library for instance), get the
-			relative path to the SConscript file, in relation to the root SConstruct file """
-		tmp_path = str( self.File( target ) )
-		if tmp_path.startswith( self.root ):
-			return tmp_path.replace( self.root + os.sep, '' ).rsplit( '/', 1 )[ 0 ]
-		else:
-			return target.rsplit( '/', 1 )[ 0 ]
+		
+	def temporary_build_path( self, target ) :
+		""" Where will the given target be built by SCons """
+		return os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp' , self.relative_path_to_sconscript )
 
 	def qt_build_path( self, target ) :
 		""" Where will the given target be built by SCons """
@@ -258,7 +253,10 @@ class Environment( BaseEnvironment ):
 
 		if "build" in dir(self.build_manager) : 
 			return self.build_manager.build( self, path, deps )
-			
+		
+		# Keep this path in the environment, is used by for instance vsbuild.
+		self.relative_path_to_sconscript = path
+		
 		result = { }
 
 		builds = [ Environment.prep_release, Environment.prep_debug ]
