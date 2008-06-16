@@ -20,6 +20,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def install_packages( self ):
 		if self[ 'target' ] == 'vs2003':
+			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
 			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
 			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
 			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c_2_8_0-x86-windows-vc_7_1' )
