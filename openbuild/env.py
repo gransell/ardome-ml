@@ -488,6 +488,7 @@ class Environment( BaseEnvironment ):
 					pass
 				else:
 					target = self[ 'stage_bin' ]
+				target = self.subst( target )
 				if target != '':
 					full = self.subst( os.path.join( target, name ) )
 					if full not in Environment.already_installed:
