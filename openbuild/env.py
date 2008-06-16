@@ -493,7 +493,11 @@ class Environment( BaseEnvironment ):
 					full = self.subst( os.path.join( target, name ) )
 					if full not in Environment.already_installed:
 						if 'path' in dir( file ):
-							self.Install( target, file )
+							if file.is_derived( ):
+								if self.build_manager is not None:
+									self.Install( target, file )
+							else:
+								self.copy_files( target, name )
 						else:
 							self.copy_files( target, name )
 						Environment.already_installed[name] = [full]
@@ -532,18 +536,29 @@ class Environment( BaseEnvironment ):
 		# Handle 
 		if not os.path.exists( src ):
 			raise OSError, "Unable to locate %s to copy to %s" % ( src, dst )
+
 		elif os.path.isdir( src ):
 			# Source is a directory, walk it and collect the files, dirs and links in it
 			for root, dirs, files in os.walk( src, False ):
+
+				# Ignore hidden directories
 				if root.find( os.sep + '.' ) != -1: continue
+
+				# Derive the destination directory from the src
 				dst_dir = dst + root.replace( src, '' )
+
+				# Add derived dir to list which should be created or removed
 				all_dirs += [ dst_dir ]
+
+				# Remove hidden directories and handle directory sym links
 				for dir in dirs:
 					if dir.startswith( '.' ):
 						dirs.remove( dir )
 					elif os.path.islink( dir ):
 						dirs.remove( dir )
 						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( self.root, dir ) ) ) ]
+
+				# Remove hidden files, add sym links and normal files
 				for file in files:
 					full_src = os.path.join( root, file )
 					full_dst = os.path.join( dst_dir, file )
@@ -553,7 +568,9 @@ class Environment( BaseEnvironment ):
 						all_links += [ ( dst_dir, file, os.readlink( full_src ) ) ]
 					else:
 						all_files += [ ( full_src, full_dst ) ]
+
 		elif os.path.islink( src ):
+
 			# Source is a sym link
 			file = src.rsplit( os.sep, 1 )[ -1 ]
 			if not dst.endswith( os.sep + file ):
@@ -561,7 +578,9 @@ class Environment( BaseEnvironment ):
 			else:
 				dst = dst.rsplit( os.sep, 1 )[ 0 ]
 			all_links += [ ( dst, file, os.readlink( src ) ) ]
+
 		else:
+
 			# Source is a regular file
 			file = src.rsplit( os.sep, 1 )[ -1 ]
 			full_dst = dst
