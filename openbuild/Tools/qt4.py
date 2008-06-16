@@ -23,6 +23,15 @@ SCons.Warnings.enableWarningClass(ToolQtWarning)
 
 def detect_qt4(env):
 	"""Not really safe, but fast method to detect the QT library"""
+	
+	if env['PLATFORM'] == 'win32' : 
+		for r, d, f in os.walk( 'bcomp' ):
+			if 'moc.exe' in f : 
+				# Want vs2003 subfolder for target vs2003, vs2005 for 2005 etc.
+				if env['target'] in r.split(os.sep) :
+					qtpath = os.path.join( env.root, r[ : r.rfind(os.sep)] )
+					return qtpath
+					
 	try: return env['QTDIR']
 	except KeyError: pass
 
