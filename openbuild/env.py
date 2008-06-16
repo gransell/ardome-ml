@@ -470,7 +470,10 @@ class Environment( BaseEnvironment ):
 	def release( self, *kw ):
 		for list in kw:
 			for file in list:
-				name = str( file )
+				if 'path' in dir( file ):
+					name = os.path.join( self.root, file.path )
+				else:
+					name = str( file )
 				target = ''
 				if name.endswith( '.dll' ):
 					target = self[ 'stage_bin' ]
@@ -488,7 +491,6 @@ class Environment( BaseEnvironment ):
 					pass
 				else:
 					target = self[ 'stage_bin' ]
-				target = self.subst( target )
 				if target != '':
 					full = self.subst( os.path.join( target, name ) )
 					if full not in Environment.already_installed:
