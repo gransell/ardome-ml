@@ -9,6 +9,6 @@ def flags( env, prefix ):
 	env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
 
 def install( env, prefix ):
-	env.install_dir( os.path.join( env[ 'stage_include' ], 'boost' ),  os.path.join( prefix, 'include', 'boost' ) )
-	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
+	env.copy_files( os.path.join( env[ 'stage_include' ], 'boost' ),  os.path.join( prefix, 'include', 'boost' ) )
+	env.copy_files( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
 

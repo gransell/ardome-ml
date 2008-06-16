@@ -19,7 +19,7 @@ def install( env, prefix ):
 		env.release( [os.path.join( prefix, 'lib', 'xerces-c_2.lib') ])
 		env.release( [os.path.join( prefix, 'bin', 'xerces-c_2_8.dll') ] )
 
-	env.install_dir( os.path.join( env[ 'stage_include' ], 'xercesc' ),  os.path.join( prefix, 'include', 'xercesc' ) )
-	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
+	env.copy_files( os.path.join( env[ 'stage_include' ], 'xercesc' ),  os.path.join( prefix, 'include', 'xercesc' ) )
+	env.copy_files( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
 
 

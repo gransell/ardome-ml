@@ -9,8 +9,8 @@ def flags( env, prefix ):
 
 def install( env, prefix ):
 
-	env.install_dir( env[ 'stage_include' ],  os.path.join( prefix, 'include' ) )
-	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
+	env.copy_files( env[ 'stage_include' ],  os.path.join( prefix, 'include' ) )
+	env.copy_files( os.path.join( env[ 'stage_libdir' ], 'winconfig' ),  os.path.join( prefix, 'lib', 'winconfig' ) )
 
 
 
