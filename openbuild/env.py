@@ -112,7 +112,7 @@ class Environment( BaseEnvironment ):
 
 	def qt_build_path( self, target ) :
 		""" Where will the given target be built by SCons """
-		rel_path = self.relative_path_to_target( target )
+		rel_path = self.relative_path_to_sconscript
 		path = os.path.join( self.root, rel_path, 'qt', [ 'release', 'debug' ][ int( self.debug ) ] )
 		self.ensure_output_path_exists( path )
 		return path
@@ -494,8 +494,7 @@ class Environment( BaseEnvironment ):
 					if full not in Environment.already_installed:
 						if 'path' in dir( file ):
 							if file.is_derived( ):
-								if self.build_manager == None:
-									self.Install( target, file )
+								self.Install( target, file )
 							else:
 								self.copy_files( target, name )
 						else:
