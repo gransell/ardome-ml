@@ -494,7 +494,7 @@ class Environment( BaseEnvironment ):
 					if full not in Environment.already_installed:
 						if 'path' in dir( file ):
 							if file.is_derived( ):
-								if self.build_manager is not None:
+								if self.build_manager == None:
 									self.Install( target, file )
 							else:
 								self.copy_files( target, name )
@@ -534,7 +534,8 @@ class Environment( BaseEnvironment ):
 		all_files = [ ]
 
 		# Handle 
-		if not os.path.exists( src ):
+		if not os.path.exists( src ) and self.build_manager is not None : return
+		if not os.path.exists( src ) :
 			raise OSError, "Unable to locate %s to copy to %s" % ( src, dst )
 
 		elif os.path.isdir( src ):

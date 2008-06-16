@@ -157,11 +157,6 @@ class VsBuilder :
 			self.prepare_source_files( config_name, sources, env, lib, existing_project.cpp_files )
 			self.prepare_files( config_name, headers, env, lib, existing_project.header_files )
 		else :
-			# if headers is not None:
-				# for hf in headers:
-					# if isinstance( hf, vs.SourceFile ) :
-						# print "project hf.tools", hf.name, hf.tools
-					# else : print hf
 			vcproj = vs.VSProject(  name = lib, 
 									root_dir = env.root,
 									relative_path = env.relative_path,
@@ -171,13 +166,12 @@ class VsBuilder :
 									vc_version = self.vs_version )
 														
 			vcproj.file_name = lib + '.vcproj'
-			# print vcproj.file_system_location
 			self.vs_solution.projects.append(vcproj)
 
 		dll_file = os.path.join( env['stage_bin'], lib + '.dll')
-		lib_file = os.path.join( env['stage_libdir'], lib + '.dll')
-		exp_file = os.path.join( env['stage_libdir'], lib + '.dll')
-		pdb_file = os.path.join( env['stage_bin'], lib + '.dll')
+		lib_file = os.path.join( env['stage_libdir'], lib + '.lib')
+		exp_file = os.path.join( env['stage_libdir'], lib + '.exp')
+		pdb_file = os.path.join( env['stage_bin'], lib + '.pdb')
 		
 		return [ dll_file, lib_file, exp_file, pdb_file]
 		
