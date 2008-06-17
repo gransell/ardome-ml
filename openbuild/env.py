@@ -44,6 +44,9 @@ class Environment( BaseEnvironment ):
 		opts.Update( self )
 		opts.Save( opts.file, self )
 		
+		# Override the default scons hash based checking
+		self.Decider( 'timestamp-match' )
+
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
 		elif utils.vs() : self.build_manager = Environment.vs_builder
