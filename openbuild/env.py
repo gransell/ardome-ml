@@ -49,7 +49,8 @@ class Environment( BaseEnvironment ):
 		opts.Save( opts.file, self )
 		
 		# Override the default scons hash based checking
-		self.Decider( 'timestamp-match' )
+		# TODO: Check logic for generated files
+		# self.Decider( 'timestamp-match' )
 
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
@@ -552,7 +553,7 @@ class Environment( BaseEnvironment ):
 
 		elif os.path.isdir( src ):
 			# Source is a directory, walk it and collect the files, dirs and links in it
-			for root, dirs, files in os.walk( src, False ):
+			for root, dirs, files in os.walk( src ):
 
 				# Ignore hidden directories
 				if root.find( os.sep + '.' ) != -1: continue
@@ -567,9 +568,9 @@ class Environment( BaseEnvironment ):
 				for dir in dirs:
 					if dir.startswith( '.' ):
 						dirs.remove( dir )
-					elif os.path.islink( dir ):
+					elif os.path.islink( os.path.join( root, dir ) ):
 						dirs.remove( dir )
-						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( self.root, dir ) ) ) ]
+						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( root, dir ) ) ) ]
 
 				# Remove hidden files, add sym links and normal files
 				for file in files:
