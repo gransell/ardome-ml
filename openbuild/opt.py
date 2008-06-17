@@ -23,8 +23,8 @@ def validate_target( key, value, environment ) :
 	if os.name == 'win32' or os.name == 'nt' : check_value( key, value, environment, valid_vs_targets)
 	elif os.name == 'posix':
 		if os.uname( )[ 0 ] == 'Darwin': check_value( key, value, environment, valid_mac_targets)
-		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': check_value( key, value, environment, valid_32bit_unix_targets)
-		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': check_value( key, value, environment, valid_64bit_unix_targets)
+		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': check_value( key, value, environment, valid_64bit_unix_targets)
+		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': check_value( key, value, environment, valid_32bit_unix_targets)
 	else :
 		raise SCons.Errors.InternalError, "Unsupported operating system: %s" % (os.name) 
 	
