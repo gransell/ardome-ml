@@ -571,6 +571,8 @@ class Environment( BaseEnvironment ):
 					elif os.path.islink( os.path.join( root, dir ) ):
 						dirs.remove( dir )
 						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( root, dir ) ) ) ]
+					else:
+						all_dirs += [ os.path.join( dst_dir, dir ) ]
 
 				# Remove hidden files, add sym links and normal files
 				for file in files:
@@ -601,6 +603,8 @@ class Environment( BaseEnvironment ):
 			if not dst.endswith( os.sep + file ):
 				all_dirs += [ dst ]
 				full_dst = os.path.join( dst, file )
+			else:
+				all_dirs += [ dst.rsplit( os.sep, 1 )[ 0 ] ]
 			all_files += [ ( src, full_dst ) ]
 
 		# Uninstall or install according to scons usage
@@ -625,8 +629,8 @@ class Environment( BaseEnvironment ):
 							pass
 		else:
 			for dir in all_dirs:
+				if not silent: print 'mkdir', dir
 				if not os.path.exists( dir ):
-					if not silent: print 'mkdir', dir
 					if execute: os.makedirs( dir )
 			for src, dst in all_files:
 				if not os.path.exists( dst ) or os.path.getmtime( src ) > os.path.getmtime( dst ):
