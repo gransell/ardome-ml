@@ -8,7 +8,7 @@ import re
 import StringIO
 import os
 import codecs
-
+ 
 class CompilerTool:
 	""" Will use the cl.exe to compile a file """
 	def to_tool_xml( self, the_file, config, vsver ) :
