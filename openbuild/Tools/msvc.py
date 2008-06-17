@@ -88,12 +88,12 @@ class VSVersions:
 		return None	
 		
 
-def run_vcvars_bat( env, vsver):
+def run_vcvars_bat( env, vsver ):
 	""" This file will run the correct version of vsvars.bat and
 		copy the environment created by that call to the 
 		environment passed to this function """
 	
-	file_name = os.path.join( os.path.split(__file__)[0], "call_vcvars.bat")
+	file_name = os.path.join( env.root, "call_vcvars.bat")
 	
 	# The contents of the temporary bat-file.
 	contents = "@echo off\n"
@@ -107,9 +107,13 @@ def run_vcvars_bat( env, vsver):
 	
 	to_open = "cmd /K \"" + file_name + "\""
 	
-	for line in os.popen( to_open ).read().split("\n"):
+	bat_cmd_file = os.popen( to_open )
+	for line in bat_cmd_file.read().split("\n"):
 		tokens = line.split("=",1)
 		if len(tokens) == 2 : env[ 'ENV' ][ tokens[0] ] = tokens[1]
+	bat_cmd_file.close()
+	os.remove( file_name )
+	
 		
 def validate_vars(env):
 	"""	Stolen from SCons/Tools/msvc.py

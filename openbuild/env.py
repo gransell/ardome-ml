@@ -36,12 +36,16 @@ class Environment( BaseEnvironment ):
 			kw -- The rest of the passed parameters to this constructor.
 			"""
 			
+		self.root = os.path.abspath( '.' )
+			
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
 		
 		BaseEnvironment.__init__( self, ENV = os.environ , **kw )
 		
 		opts.Update( self )
+		# Remove the vs option if it is not given on the command-line.
+		if utils.vs() == None : del self._dict['vs'] 
 		opts.Save( opts.file, self )
 		
 		# Override the default scons hash based checking
@@ -49,8 +53,12 @@ class Environment( BaseEnvironment ):
 
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
-		elif utils.vs() : self.build_manager = Environment.vs_builder
-		else: self.build_manager = None
+		elif utils.vs() : 
+			self.build_manager = Environment.vs_builder
+			self['target'] = utils.vs()
+		else: 
+			self.build_manager = None
+			
 		
 		self.dependencies = {}
 
@@ -68,8 +76,6 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
 		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
 		self[ 'stage_frameworks' ] = os.path.join( '$stage_prefix', 'frameworks' )
-
-		self.root = os.path.abspath( '.' )
 
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
