@@ -1,7 +1,7 @@
 # (C) Ardendo SE 2008
 #
 # Released under the LGPL
- 
+
 import xml.dom.minidom
 import uuid
 import re
