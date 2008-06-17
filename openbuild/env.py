@@ -629,8 +629,8 @@ class Environment( BaseEnvironment ):
 							pass
 		else:
 			for dir in all_dirs:
-				if not silent: print 'mkdir', dir
 				if not os.path.exists( dir ):
+					if not silent: print 'mkdir', dir
 					if execute: os.makedirs( dir )
 			for src, dst in all_files:
 				if not os.path.exists( dst ) or os.path.getmtime( src ) > os.path.getmtime( dst ):
