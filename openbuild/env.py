@@ -45,7 +45,7 @@ class Environment( BaseEnvironment ):
 		
 		opts.Update( self )
 		# Remove the vs option if it is not given on the command-line.
-		if utils.vs() == None : del self._dict['vs'] 
+		if utils.vs() == None and 'vs' in self._dict.keys( ): del self._dict['vs'] 
 		opts.Save( opts.file, self )
 		
 		# Override the default scons hash based checking
