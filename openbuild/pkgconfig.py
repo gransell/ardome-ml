@@ -87,24 +87,15 @@ class PkgConfig:
 		command += package + ' 2> /dev/null'
 		return command
 
-	def package_install_include( self, env ):
+	def package_install_list( self, env, key ):
 		result = []
 		for package in env.package_list.keys( ):
 			if env.debug and package.startswith( 'release_' ): continue
 			if not env.debug and package.startswith( 'debug_' ): continue
 			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
-				include = os.popen( self.pkgconfig_cmd( env, package, "--variable=install_include" ) ).read( ).replace( '\n', '' )
+				include = os.popen( self.pkgconfig_cmd( env, package, "--variable=" + key ) ).read( ).replace( '\n', '' )
 				if include != '':
-					result += glob.glob( include )
+					for component in include.split( ' ' ):
+						result += glob.glob( component )
 		return result
 
-	def package_install_libs( self, env ):
-		result = []
-		for package in env.package_list.keys( ):
-			if env.debug and package.startswith( 'release_' ): continue
-			if not env.debug and package.startswith( 'debug_' ): continue
-			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
-				libs = os.popen( self.pkgconfig_cmd( env, package, "--variable=install_libs" ) ).read( ).replace( '\n', '' )
-				if libs != '':
-					result += glob.glob( libs )
-		return result

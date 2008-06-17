@@ -64,6 +64,7 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
 		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
+		self[ 'stage_frameworks' ] = os.path.join( '$stage_prefix', 'frameworks' )
 
 		self.root = os.path.abspath( '.' )
 
@@ -198,10 +199,11 @@ class Environment( BaseEnvironment ):
 		for build_type in self.build_types( ):
 			env = self.Clone( )
 			build_type( env )
-			for lib in env.package_manager.package_install_libs( env ):
-				env.copy_files( os.path.join( env[ 'stage_libdir' ], lib.rsplit( os.sep, 1 )[ -1 ] ), lib )
-			for include in env.package_manager.package_install_include( env ):
-				env.copy_files( os.path.join( env[ 'stage_include' ], include.rsplit( os.sep, 1 )[ -1 ] ), include )
+			for dest, rule in [ ( 'stage_include', 'install_include' ), 
+								( 'stage_libdir', 'install_libs' ), 
+								( 'stage_frameworks', 'install_frameworks' ) ]:
+				for file in env.package_manager.package_install_list( env, rule ):
+					env.copy_files( os.path.join( env[ dest ], file.rsplit( os.sep, 1 )[ -1 ] ), file )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found."""
@@ -485,6 +487,8 @@ class Environment( BaseEnvironment ):
 					target = self[ 'stage_libdir' ]
 				elif name.endswith( '.dylib' ):
 					target = self[ 'stage_libdir' ]
+				elif name.endswith( '.framework' ):
+					target = self[ 'stage_frameworks' ]
 				elif name.endswith( '.exp' ):
 					pass
 				else:
