@@ -662,7 +662,6 @@ class Environment( BaseEnvironment ):
 					if execute: os.unlink( dst )
 			for dir in all_dirs:
 				if os.path.exists( dir ):
-					if not silent: print 'rmdir', dir
 					if execute:
 						try:
 							os.removedirs( dir )
@@ -674,7 +673,6 @@ class Environment( BaseEnvironment ):
 		else:
 			for dir in all_dirs:
 				if not os.path.exists( dir ):
-					if not silent: print 'mkdir', dir
 					if execute: os.makedirs( dir )
 			for src_file, dst_file in all_files:
 				if not os.path.exists( dst_file ) or os.path.getmtime( src_file ) > os.path.getmtime( dst_file ):
