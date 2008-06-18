@@ -51,7 +51,7 @@ class QtMocTool :
 						Outputs="&quot;%s&quot;"/> """
 						
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
-		if precomp_flag != 0 : precomp_file = "-f&quot;%s&quot" % (precomp_file)
+		if precomp_flag != 0 : precomp_file = "-f&quot;%s&quot;" % (precomp_file)
 		else: precomp_file = ""
 		input_file = os.path.join( self.root_path, the_file.name ).replace("/", os.sep)
 		output_file = self.output_file( the_file )
