@@ -587,6 +587,7 @@ class Environment( BaseEnvironment ):
 		all_links = [ ]
 		all_files = [ ]
 		file_count = 0
+		link_count = 0
 
 		# Handle 
 		if not os.path.exists( src ) and self.build_manager is not None : return
@@ -654,7 +655,7 @@ class Environment( BaseEnvironment ):
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
 				if os.path.islink( full ):
-					if not silent: print 'rm link', full
+					link_count += 1
 					if execute: os.remove( full )
 			for src, dst in all_files:
 				if os.path.exists( os.path.join( dst ) ):
@@ -669,7 +670,7 @@ class Environment( BaseEnvironment ):
 							# Ignore non-empty directories
 							pass
 
-			if not silent: print 'Removed', file_count, 'files from', dst
+			if not silent: print 'Removed', file_count, 'files and', link_count, 'links from', dst 
 		else:
 			for dir in all_dirs:
 				if not os.path.exists( dir ):
@@ -681,12 +682,12 @@ class Environment( BaseEnvironment ):
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
 				if not os.path.islink( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
-					if not silent: print 'link', dir, file, link
+					link_count += 1
 					if execute: 
 						if os.path.islink( full ): os.remove( full )
 						os.chdir( dir )
 						os.symlink( link, file )
 						os.chdir( self.root )
 
-			if not silent and file_count >= 1: print 'Copied', file_count, 'files from', src, 'to', dst
+			if not silent and file_count >= 1: print 'Copied', file_count, 'files and', link_count, 'links from', src, 'to', dst
 

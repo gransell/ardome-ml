@@ -12,16 +12,24 @@ class PkgConfig:
 		flags = { }
 		paths = { }
 		full_paths = { }
-		for r, d, files in os.walk( env.root + '/bcomp' ):
-			for f in files:
-				if f.endswith( '.pc' ):
-					pkg = f.replace( ".pc", "" )
-					prefix = r.rsplit( '/', 2 )[ 0 ]
-					if prefix.endswith( '/debug' ): pkg = 'debug_' + pkg
-					if prefix.endswith( '/release' ): pkg = 'release_' + pkg
-					flags[ pkg ] = prefix
-					paths[ prefix ] = 1
-					full_paths[ r ] = 1
+		dirs = [ env.root + '/bcomp' ]
+		while len( dirs ):
+			dir = dirs[ 0 ]
+			dirs.remove( dir )
+			for r, d, files in os.walk( dir ):
+				for dir in d:
+					full = os.path.join( r, dir )
+					if os.path.islink( full ) and not os.readlink( full ) == '.':
+						dirs += [ full ]
+				for f in files:
+					if f.endswith( '.pc' ):
+						pkg = f.replace( ".pc", "" )
+						prefix = r.rsplit( '/', 2 )[ 0 ]
+						if prefix.endswith( '/debug' ): pkg = 'debug_' + pkg
+						if prefix.endswith( '/release' ): pkg = 'release_' + pkg
+						flags[ pkg ] = prefix
+						paths[ prefix ] = 1
+						full_paths[ r ] = 1
 
 		full = ''
 		for path in full_paths:
@@ -84,8 +92,9 @@ class PkgConfig:
 		for package in env.package_list.keys( ):
 			if env.debug and package.startswith( 'release_' ): continue
 			if not env.debug and package.startswith( 'debug_' ): continue
+			pkg = package.replace( 'debug_', '' ).replace( 'release_', '' )
 			if env.package_list[ package ].startswith( os.path.join( env.root, 'bcomp' ) ):
-				include = os.popen( self.pkgconfig_cmd( env, package, "--variable=" + key ) ).read( ).replace( '\n', '' )
+				include = os.popen( self.pkgconfig_cmd( env, pkg, "--variable=" + key ) ).read( ).replace( '\n', '' )
 				if include != '':
 					for component in include.split( ' ' ):
 						result += glob.glob( component )
