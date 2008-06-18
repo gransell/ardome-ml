@@ -19,8 +19,6 @@ Libs: @OPENCORELIB_LDFLAGS@ \
 	  @OPENPLUGINLIB_LDFLAGS@ \
 	  @OPENIMAGELIB_LDFLAGS@ \
 	  @OPENMEDIALIB_LDFLAGS@ \
-	  @BOOST_FILESYSTEM_LIBS@ \
-	  @BOOST_THREAD_LIBS@ \
 	  @OLIB_LDFLAGS@
 
 Cflags: -I${includedir}/ardome-ml -I${libdir}/ardome-ml/include @OLIB_CORE_CXXFLAGS@ -pthread

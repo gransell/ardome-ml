@@ -67,14 +67,6 @@ class PkgConfig:
 		for package in packages:
 			env.ParseConfig( self.pkgconfig_cmd( env, package ) )
 
-	def package_cflags( self, env, package ):
-		"""Extracts compile flags for the specified packages."""
-		return os.popen( self.pkgconfig_cmd( env, package, "--cflags" ) ).read( ).replace( '\n', '' )
-
-	def package_libs( self, env, package ):
-		"""Extracts lib flags for the specified packages."""
-		return os.popen( self.pkgconfig_cmd( env, package, "--libs" ) ).read( ).replace( '\n', '' )
-
 	def pkgconfig_cmd( self, env, package, switches = '--cflags --libs' ):
 		"""General purpose accessor for pkg-config - will override to use bcomp prefix 
 		when necessary."""

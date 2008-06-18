@@ -58,3 +58,22 @@ def path_to_openbuild( ) :
 def path_to_openbuild_tools( ) :
 	return os.path.join( path_to_openbuild(), "Tools")
 
+def ensure_output_path_exists( opath ) :
+	try:
+		if os.path.exists( os.path.dirname(opath) ) : return
+		os.makedirs(  os.path.dirname(opath)  )
+	except os.error, e:
+		pass
+
+def needs_rebuild( src, dst ):
+	"""Checks if dst exists or src is more recently modified than dst"""
+	result = True
+	if os.path.exists( src ):
+		if os.path.exists( dst ):
+			result = os.path.getmtime( src ) > os.path.getmtime( dst )
+		if result:
+			print "rebuilding %s from %s" % ( dst, src )
+	else:
+		raise Exception, "Error: source file %s does not exist." % src
+	return result
+

@@ -110,8 +110,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@OPENPLUGINLIB_LDFLAGS@', '-lopenpluginlib_pl' ),
 					   ( '@OPENIMAGELIB_LDFLAGS@', '-lopenimagelib_il' ),
 					   ( '@OPENMEDIALIB_LDFLAGS@', '-lopenmedialib_ml' ),
-					   ( '@BOOST_FILESYSTEM_LIBS@', clone.package_libs( 'boost_filesystem' ) ),
-					   ( '@BOOST_THREAD_LIBS@', clone.package_libs( 'boost_thread' ) ),
 					   ( '@OLIB_CORE_CXXFLAGS@', clone.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
 				openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )

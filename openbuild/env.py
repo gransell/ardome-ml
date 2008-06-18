@@ -14,6 +14,7 @@ if utils.vs( ):
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 from sets import Set
+import types
 
 class Environment( BaseEnvironment ):
 
@@ -125,10 +126,12 @@ class Environment( BaseEnvironment ):
 		""" Where will the given target be built by SCons """
 		rel_path = self.relative_path_to_sconscript
 		path = os.path.join( self.root, rel_path, 'qt', [ 'release', 'debug' ][ int( self.debug ) ] )
-		self.ensure_output_path_exists( path )
+		utils.ensure_output_path_exists( path )
 		return path
 		
 	def prep_debug( self ):
+		"""	Prepare the environment for debug use - provides some hard coded debug and link flags."""
+
 		self[ 'debug' ] = '1'
 		self.debug = True
 		self[ 'build_prefix' ] = '$debug_prefix'
@@ -150,6 +153,8 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 	
 	def prep_release( self ):
+		"""	Prepare the environment for release use - provides some hard coded debug and link flags."""
+
 		self[ 'debug' ] = '0'
 		self.debug = False
 		self[ 'build_prefix' ] = '$release_prefix'
@@ -157,6 +162,7 @@ class Environment( BaseEnvironment ):
 
 		if self[ 'PLATFORM' ] == 'posix':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
+			self.Append( LINKFLAGS = [ '-s' ] )
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
@@ -191,19 +197,17 @@ class Environment( BaseEnvironment ):
 
 		self.package_manager.packages( self, *packages )
 
-	def package_cflags( self, package ) :
-		return self.package_manager.package_cflags( self, package )
-
-	def package_libs( self, package ) :
-		return self.package_manager.package_libs( self, package )
-
 	def build_types( self ):
+		"""	Returns the prep methods which are relevant to the current build."""
+
 		builds = [ Environment.prep_release, Environment.prep_debug ]
 		if self.release_install: builds.pop( 1 )
 		elif self.debug_install: builds.pop( 0 )
 		return builds
 
 	def package_install( self ):
+		"""	Installs includes, libs and frameworks listed in .pc files. """
+
 		if self[ 'PLATFORM' ] == 'win32': return
 
 		for build_type in self.build_types( ):
@@ -216,7 +220,12 @@ class Environment( BaseEnvironment ):
 					env.copy_files( os.path.join( env[ dest ], file.rsplit( os.sep, 1 )[ -1 ] ), file )
 
 	def check_dependencies( self, *packages ):
-		"""Ensure that all the listed packages are found."""
+		"""Ensure that all the listed packages are found.
+
+		Keyword arguments:
+		packages -- the list of packages to check.
+		"""
+
 		result = True
 		for package in packages:
 			try:
@@ -229,10 +238,18 @@ class Environment( BaseEnvironment ):
 		return result
 		
 	def requires( self, *packages ) :
+		"""	Method for .wc files to use for package requests.
+
+		Keyword arguments:
+		packages -- the list of packages to check.
+		"""
+
 		if 'requires' in dir( self.package_manager) : 
 			self.package_manager.requires(self, *packages)
 		
 	def add_dependencies( self, result, dep , build_type) :
+		"""	MATS: Unsure about this method - windows only? (dll and bash slash hard coding)."""
+		
 		if result[build_type] == None : return
 		res_min = str(result[ build_type ][ 0 ])
 		dep_min = str(dep[ build_type ][ 0 ]) 
@@ -301,6 +318,14 @@ class Environment( BaseEnvironment ):
 		return result
 		
 	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
+		"""	Adds recompiled headers to the environment for this build.
+
+		Keyword arguments:
+		sources -- the list of source file objects
+		pre -- the tuple of ( cpp-file, hpp-file )
+		nopre -- a list of files which precompiled headers are not applied to
+		"""
+
 		if nopre is not None: 
 			for f in nopre:
 				sources.extend(self.Object(f, PCH=None, PCHSTOP=None))
@@ -381,30 +406,19 @@ class Environment( BaseEnvironment ):
 		
 		return self.Program( lib, sources, *keywords )
 	
-	def ensure_output_path_exists( self, opath ) :
-		try:
-			if os.path.exists( os.path.dirname(opath) ) : return
-			os.makedirs(  os.path.dirname(opath)  )
-		except os.error, e:
-			pass
-	
-	def needs_rebuild( self, src, dst ):
-		result = True
-		if os.path.exists( src ):
-			if os.path.exists( dst ):
-				result = os.path.getmtime( src ) > os.path.getmtime( dst )
-			if result:
-				print "rebuilding %s from %s" % ( dst, src )
-		else:
-			raise Exception, "Error: source file %s does not exist." % src
-		return result
-
 	def create_moc_file( self, file_to_moc, output_path ) :
+		"""QT specific: moc the file requested.
+
+		Keyword arguments:
+		file_to_moc -- input header file
+		output_path - output file
+		"""
+
 		rel_path = file_to_moc[ : file_to_moc.rfind('.')] + '_moc.h'
 		output_file = os.path.join( output_path, rel_path )
 		input_file = str( self.File( file_to_moc ) )
-		if self.needs_rebuild( input_file, output_file ):
-			self.ensure_output_path_exists( output_file )
+		if utils.needs_rebuild( input_file, output_file ):
+			utils.ensure_output_path_exists( output_file )
 			command = self[ 'QT4_MOC' ].replace( '/', os.sep )
 			if command.startswith( 'bcomp' ): command = self.root + os.sep + command
 			moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
@@ -413,11 +427,18 @@ class Environment( BaseEnvironment ):
 		return output_file
 		
 	def create_resource_cpp_file( self, res_file, output_path ) :
+		"""QT specific: rcc the file requested.
+
+		Keyword arguments:
+		res_file -- the resource file
+		output_path - output file
+		"""
+
 		rel_path = res_file[ : res_file.rfind('.')] + '.cpp'
 		output_file = os.path.join( output_path, rel_path )
 		input_file = str( self.File( res_file ) )
-		if self.needs_rebuild( input_file, output_file ):
-			self.ensure_output_path_exists( output_file )
+		if utils.needs_rebuild( input_file, output_file ):
+			utils.ensure_output_path_exists( output_file )
 			command = self[ 'QT4_RCC' ].replace( '/', os.sep )
 			if command.startswith( 'bcomp' ): command = self.root + os.sep + command
 			moc_command = command + ' -o "' + output_file + '" "' + input_file + '"' #  2>&1 >nul'
@@ -426,8 +447,16 @@ class Environment( BaseEnvironment ):
 		return output_file
 	
 	def create_moc_cpp( self, generated_header_files, pre, output_path ) :
+		"""QT specific: Generate the moc.cpp file which includes all the moc output.
+
+		Keyword arguments:
+		generated_header_files -- a list of files created by create_moc_file
+		pre -- precompiled headers tuple
+		output_path -- the full path and name of the output file
+		"""
+
 		moc_cpp_path = os.path.join( output_path , "moc.cpp")
-		self.ensure_output_path_exists( moc_cpp_path )
+		utils.ensure_output_path_exists( moc_cpp_path )
 		moc_cpp = open( moc_cpp_path, "w+")
 		if self[ 'PLATFORM' ] == 'win32' and pre is not None:
 			moc_cpp.write( '#include "' + pre[1] + '"\n'  )
@@ -440,6 +469,7 @@ class Environment( BaseEnvironment ):
 		return moc_cpp_path
 				
 	def qt_program( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
+		"""	Build a qt program. See shared_library in this class for a detailed description. """
 
 		if "qt_program" in dir(self.build_manager) : 
 			return self.build_manager.qt_program( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
@@ -467,18 +497,23 @@ class Environment( BaseEnvironment ):
 		return self.Program( lib, sources, *keywords )
 		
 	def done( self, project_name = None ) :
+		"""Called by SConscruct when the sconscripts are parsed."""
 		if "done" in dir(self.build_manager) : 
 			return self.build_manager.done( self, project_name )
 		else : return True
 
 	def Tool(self, tool, toolpath=None, **kw):
+		"""Override of the base Tool method."""
 		if toolpath == None :
 			toolpath = [ utils.path_to_openbuild_tools() ]
-		
 		BaseEnvironment.Tool( self, tool, toolpath, **kw )
 
 	def release( self, *kw ):
+		"""Identify files by type and install in an appropriate directory."""
+
 		for list in kw:
+			if type( list ) is types.StringType:
+				list = [ list ]
 			for file in list:
 				if 'path' in dir( file ):
 					name = os.path.join( self.root, file.path )
@@ -516,6 +551,7 @@ class Environment( BaseEnvironment ):
 						Environment.already_installed[name] = [full]
 
 	def install_dir( self, dst, src ):
+		"""Synonym for copy_files."""
 		self.copy_files( dst, src )
 
 	def copy_files( self, dst, src ):
@@ -526,6 +562,11 @@ class Environment( BaseEnvironment ):
 			dst -- destination directory
 			src -- source directory
 		"""
+
+		if type( src ) is types.ListType:
+			for entry in src:
+				self.copy_files( dst, entry )
+			return
 
 		# Get scons options
 		execute = not self.GetOption( 'no_exec' )
@@ -545,6 +586,7 @@ class Environment( BaseEnvironment ):
 		all_dirs = [ ]
 		all_links = [ ]
 		all_files = [ ]
+		file_count = 0
 
 		# Handle 
 		if not os.path.exists( src ) and self.build_manager is not None : return
@@ -616,7 +658,7 @@ class Environment( BaseEnvironment ):
 					if execute: os.remove( full )
 			for src, dst in all_files:
 				if os.path.exists( os.path.join( dst ) ):
-					if not silent: print 'rm', dst
+					file_count += 1
 					if execute: os.unlink( dst )
 			for dir in all_dirs:
 				if os.path.exists( dir ):
@@ -627,15 +669,17 @@ class Environment( BaseEnvironment ):
 						except OSError, e:
 							# Ignore non-empty directories
 							pass
+
+			if not silent: print 'Removed', file_count, 'files from', dst
 		else:
 			for dir in all_dirs:
 				if not os.path.exists( dir ):
 					if not silent: print 'mkdir', dir
 					if execute: os.makedirs( dir )
-			for src, dst in all_files:
-				if not os.path.exists( dst ) or os.path.getmtime( src ) > os.path.getmtime( dst ):
-					if not silent: print 'cp', src, dst
-					if execute: shutil.copyfile( src, dst )
+			for src_file, dst_file in all_files:
+				if not os.path.exists( dst_file ) or os.path.getmtime( src_file ) > os.path.getmtime( dst_file ):
+					file_count += 1
+					if execute: shutil.copyfile( src_file, dst_file )
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
 				if not os.path.islink( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
@@ -646,16 +690,5 @@ class Environment( BaseEnvironment ):
 						os.symlink( link, file )
 						os.chdir( self.root )
 
-	def generate_tester(source, target, env, for_signature):
-		
-		return '$SOURCE all_tests --log_level=all > $TARGET || (cat $TARGET; exit 1)'
-
-		testrunner = Builder(generator = generate_tester)
-		self.Append( BUILDERS = {'TestRunner': testrunner} )
-	
-	def run_test( self, *args ) :
-		if "run_test" in dir(self.build_manager) : 
-			return self.build_manager.run_test( self, *args )
-		
-		return self.TestRunner(*args)
+			if not silent and file_count >= 1: print 'Copied', file_count, 'files from', src, 'to', dst
 
