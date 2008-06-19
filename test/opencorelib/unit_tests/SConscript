@@ -27,7 +27,7 @@ test_sources = ['main_entry_unittests.cpp',
 
 object = local_env.console_program( 'opencore_unit_tests', test_sources, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
 
-local_env.Install( local_env[ 'stage_examples' ], [ '../../../src/opencorelib/cl/schemas/amf_plugin_example.xml' ] )
+local_env.copy_project_files( local_env[ 'stage_examples' ], [ '../../../src/opencorelib/cl/schemas/amf_plugin_example.xml' ] )
 local_env.release( object )
 
 Return( 'object ')

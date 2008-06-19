@@ -9,4 +9,4 @@ options = local_env.optional( 'openal' )
 if options[ 'have_openal' ]:
 	local_env.packages( 'boost_thread', 'openal' )
 	object = local_env.plugin( 'openmedialib_openal', [ 'openal_plugin.cpp' ] )
-	local_env.Install( local_env[ 'stage_ml_plugin' ], [ object, 'openal_plugin.opl' ] )
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'openal_plugin.opl' ] )

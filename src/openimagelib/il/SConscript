@@ -10,7 +10,7 @@ object = local_env.shared_library( 'openimagelib_il', [ 'il.cpp', 'openimagelib_
 
 local_env.release( object )
 
-local_env.Install( local_env[ 'il_include' ], [ 
+local_env.copy_project_files( local_env[ 'il_include' ], [ 
 	'basic_image.hpp', 
 	'compression_traits.hpp', 
 	'config.hpp', 

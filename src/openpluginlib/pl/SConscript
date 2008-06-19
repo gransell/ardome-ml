@@ -34,7 +34,7 @@ object = local_env.shared_library( 'openpluginlib_pl', [
 
 local_env.release( object )
 
-local_env.Install( local_env[ 'pl_include' ], [ 
+local_env.copy_project_files( local_env[ 'pl_include' ], [ 
 	'bind_info.hpp',
 	'discovery_traits.hpp', 
 	'openplugin.hpp', 
@@ -49,7 +49,7 @@ local_env.Install( local_env[ 'pl_include' ], [
 	'string.hpp', 
 ] )
 
-local_env.Install( local_env[ 'pcos_include' ], [ 
+local_env.copy_project_files( local_env[ 'pcos_include' ], [ 
 	'pcos/key.hpp', 
 	'pcos/observer.hpp', 
 	'pcos/iproperty_container.hpp', 

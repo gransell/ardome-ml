@@ -97,7 +97,7 @@ object = local_env.shared_library( 'opencorelib_cl', sources = sources + extras[
 
 local_env.release( object )
 
-local_env.Install( local_env[ 'cl_include' ], [ 
+local_env.copy_project_files( local_env[ 'cl_include' ], [ 
 	'assembly_class_creator.hpp',
 	'assembly_class_factory.hpp',
 	'assert_defines.hpp',

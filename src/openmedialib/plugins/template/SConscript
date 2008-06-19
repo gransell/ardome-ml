@@ -8,6 +8,6 @@ local_env.packages( 'boost_thread' )
 
 object = local_env.plugin( 'openmedialib_template', [ 'template_plugin.cpp' ] )
 
-local_env.Install( local_env[ 'stage_ml_plugin' ], [ object, 'template_plugin.opl' ] )
+local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'template_plugin.opl' ] )
 
 Return( 'object' )

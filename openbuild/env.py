@@ -216,8 +216,7 @@ class Environment( BaseEnvironment ):
 			for dest, rule in [ ( 'stage_include', 'install_include' ), 
 								( 'stage_libdir', 'install_libs' ), 
 								( 'stage_frameworks', 'install_frameworks' ) ]:
-				for file in env.package_manager.package_install_list( env, rule ):
-					env.copy_files( os.path.join( env[ dest ], file.rsplit( os.sep, 1 )[ -1 ] ), file )
+				env.copy_files( env[ dest ], env.package_manager.package_install_list( env, rule ) )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found.
@@ -288,11 +287,7 @@ class Environment( BaseEnvironment ):
 		
 		result = { }
 
-		builds = [ Environment.prep_release, Environment.prep_debug ]
-		if self.release_install: builds.pop( 1 )
-		elif self.debug_install: builds.pop( 0 )
-
-		for build_type in builds:
+		for build_type in self.build_types( ):
 			local_env = self.Clone( tools = tools )
 			local_env.full_path = os.path.join( local_env.root, path )
 			local_env.relative_path = path
@@ -511,6 +506,8 @@ class Environment( BaseEnvironment ):
 	def release( self, *kw ):
 		"""Identify files by type and install in an appropriate directory."""
 
+		dict = { }
+
 		for list in kw:
 			if type( list ) is types.StringType:
 				list = [ list ]
@@ -545,16 +542,40 @@ class Environment( BaseEnvironment ):
 							if file.is_derived( ):
 								self.Install( target, file )
 							else:
-								self.copy_files( target, name )
+								if target not in dict.keys( ): dict[ target ] = [ ]
+								dict[ target ] += [ name ]
 						else:
-							self.copy_files( target, name )
+							if target not in dict.keys( ): dict[ target ] = [ ]
+							dict[ target ] += [ name ]
 						Environment.already_installed[name] = [full]
+
+		for target in dict.keys( ):
+			self.copy_files( target, dict[ target ] )
 
 	def install_dir( self, dst, src ):
 		"""Synonym for copy_files."""
 		self.copy_files( dst, src )
 
-	def copy_files( self, dst, src ):
+	def copy_project_files( self, dst, srcs ):
+		list = [ ]
+		if type( srcs ) is types.StringType: srcs = [ srcs ]
+		elif type( srcs ) is not types.ListType: srcs = [ srcs ]
+		for src_list in srcs:
+			if 'all_children' in dir( src_list ): src_list = src_list.all_children( )
+			elif type( src_list ) is types.StringType: src_list = [ src_list ]
+			elif type( src_list ) is not types.ListType: srcs = [ src_list ]
+			for src in src_list:
+				if 'path' in dir( src ):
+					if src.is_derived( ):
+						if self.build_manager is not None : continue
+						self.Install( dst, src )
+					else:
+						list.append( os.path.join( self.root, src.path ) )
+				else:
+					list.append( os.path.join( self.root, self.relative_path_to_sconscript, src ) )
+		self.copy_files( dst, list )
+
+	def copy_files( self, dst, srcs ):
 		""" Installs src to dst, walking through the src if needed and invoking 
 			the appropriate install action on every file found.
 
@@ -563,24 +584,8 @@ class Environment( BaseEnvironment ):
 			src -- source directory
 		"""
 
-		if type( src ) is types.ListType:
-			for entry in src:
-				self.copy_files( dst, entry )
-			return
-
-		# Get scons options
-		execute = not self.GetOption( 'no_exec' )
-		silent = self.GetOption( 'silent' )
-
-		# Clean src and dst to ensure they're normalised
-		dst = self.subst( utils.clean_path( dst ) ).replace( '/', os.sep )
-		src = self.subst( utils.clean_path( src ) ).replace( '/', os.sep )
-
-		# Check that this combination has not been tried before
-		if dst in Environment.already_installed.keys() :
-			if src in Environment.already_installed[dst] : return
-			else : Environment.already_installed[dst].append(src)
-		else: Environment.already_installed[dst] = [src]
+		if type( srcs ) is types.StringType: srcs = [ srcs ]
+		elif type( srcs ) is not types.ListType: srcs = [ srcs ]
 
 		# Collect types into these lists
 		all_dirs = [ ]
@@ -589,66 +594,84 @@ class Environment( BaseEnvironment ):
 		file_count = 0
 		link_count = 0
 
-		# Handle 
-		if not os.path.exists( src ) and self.build_manager is not None : return
-		if not os.path.exists( src ) :
-			raise OSError, "Unable to locate %s to copy to %s" % ( src, dst )
+		# Get scons options
+		execute = not self.GetOption( 'no_exec' )
+		silent = self.GetOption( 'silent' )
 
-		elif os.path.isdir( src ):
-			# Source is a directory, walk it and collect the files, dirs and links in it
-			for root, dirs, files in os.walk( src ):
+		# Clean the dst path
+		dst = self.subst( utils.clean_path( dst ) ).replace( '/', os.sep )
 
-				# Ignore hidden directories
-				if root.find( os.sep + '.' ) != -1: continue
+		for src in srcs:
 
-				# Derive the destination directory from the src
-				dst_dir = dst + root.replace( src, '' )
+			# Clean src and dst to ensure they're normalised
+			src = self.subst( utils.clean_path( src ) ).replace( '/', os.sep )
 
-				# Add derived dir to list which should be created or removed
-				all_dirs += [ dst_dir ]
+			# Check that this combination has not been tried before
+			if dst in Environment.already_installed.keys() :
+				if src in Environment.already_installed[dst] : continue
+				else : Environment.already_installed[dst].append(src)
+			else: Environment.already_installed[dst] = [src]
 
-				# Remove hidden directories and handle directory sym links
-				for dir in dirs:
-					if dir.startswith( '.' ):
-						dirs.remove( dir )
-					elif os.path.islink( os.path.join( root, dir ) ):
-						dirs.remove( dir )
-						all_links += [ ( dst_dir, dir, os.readlink( os.path.join( root, dir ) ) ) ]
-					else:
-						all_dirs += [ os.path.join( dst_dir, dir ) ]
+			# Handle 
+			if not os.path.exists( src ) and self.build_manager is not None : continue
+			if not os.path.exists( src ) :
+				raise OSError, "Unable to locate %s to copy to %s" % ( src, dst )
 
-				# Remove hidden files, add sym links and normal files
-				for file in files:
-					full_src = os.path.join( root, file )
-					full_dst = os.path.join( dst_dir, file )
-					if file.startswith( '.' ):
-						files.remove( file )
-					elif os.path.islink( full_src ):
-						all_links += [ ( dst_dir, file, os.readlink( full_src ) ) ]
-					else:
-						all_files += [ ( full_src, full_dst ) ]
+			elif os.path.isdir( src ):
+				# Source is a directory, walk it and collect the files, dirs and links in it
+				for root, dirs, files in os.walk( src ):
 
-		elif os.path.islink( src ):
+					# Ignore hidden directories
+					if root.find( os.sep + '.' ) != -1: continue
 
-			# Source is a sym link
-			file = src.rsplit( os.sep, 1 )[ -1 ]
-			if not dst.endswith( os.sep + file ):
-				all_dirs += [ dst ]
+					# Derive the destination directory from the src
+					dst_dir = dst + root.replace( src, '' )
+
+					# Add derived dir to list which should be created or removed
+					all_dirs += [ dst_dir ]
+
+					# Remove hidden directories and handle directory sym links
+					for dir in dirs:
+						if dir.startswith( '.' ):
+							dirs.remove( dir )
+						elif os.path.islink( os.path.join( root, dir ) ):
+							dirs.remove( dir )
+							all_links += [ ( dst_dir, dir, os.readlink( os.path.join( root, dir ) ) ) ]
+						else:
+							all_dirs += [ os.path.join( dst_dir, dir ) ]
+	
+					# Remove hidden files, add sym links and normal files
+					for file in files:
+						full_src = os.path.join( root, file )
+						full_dst = os.path.join( dst_dir, file )
+						if file.startswith( '.' ):
+							files.remove( file )
+						elif os.path.islink( full_src ):
+							all_links += [ ( dst_dir, file, os.readlink( full_src ) ) ]
+						else:
+							all_files += [ ( full_src, full_dst ) ]
+	
+			elif os.path.islink( src ):
+	
+				# Source is a sym link
+				file = src.rsplit( os.sep, 1 )[ -1 ]
+				if not dst.endswith( os.sep + file ):
+					all_dirs += [ dst ]
+				else:
+					dst = dst.rsplit( os.sep, 1 )[ 0 ]
+				all_links += [ ( dst, file, os.readlink( src ) ) ]
+	
 			else:
-				dst = dst.rsplit( os.sep, 1 )[ 0 ]
-			all_links += [ ( dst, file, os.readlink( src ) ) ]
-
-		else:
-
-			# Source is a regular file
-			file = src.rsplit( os.sep, 1 )[ -1 ]
-			full_dst = dst
-			if not dst.endswith( os.sep + file ):
-				all_dirs += [ dst ]
-				full_dst = os.path.join( dst, file )
-			else:
-				all_dirs += [ dst.rsplit( os.sep, 1 )[ 0 ] ]
-			all_files += [ ( src, full_dst ) ]
+	
+				# Source is a regular file
+				file = src.rsplit( os.sep, 1 )[ -1 ]
+				full_dst = dst
+				if not dst.endswith( os.sep + file ):
+					all_dirs += [ dst ]
+					full_dst = os.path.join( dst, file )
+				else:
+					all_dirs += [ dst.rsplit( os.sep, 1 )[ 0 ] ]
+				all_files += [ ( src, full_dst ) ]
 
 		# Uninstall or install according to scons usage
 		if self.GetOption( 'clean' ):
@@ -689,5 +712,5 @@ class Environment( BaseEnvironment ):
 						os.symlink( link, file )
 						os.chdir( self.root )
 
-			if not silent and file_count >= 1: print 'Copied', file_count, 'files and', link_count, 'links from', src, 'to', dst
+			if not silent and file_count >= 1: print 'Copied', file_count, 'files and', link_count, 'links to', dst
 
