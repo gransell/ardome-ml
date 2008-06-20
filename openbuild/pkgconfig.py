@@ -22,7 +22,7 @@ class PkgConfig:
 					if os.path.islink( full ) and not os.readlink( full ) == '.':
 						dirs += [ full ]
 				for f in files:
-					if f.endswith( '.pc' ):
+					if f.endswith( '.pc' ) and r.endswith( '/lib/pkgconfig' ) or r.endswith( '/lib64/pkgconfig' ):
 						pkg = f.replace( ".pc", "" )
 						prefix = r.rsplit( '/', 2 )[ 0 ]
 						if prefix.endswith( '/debug' ): pkg = 'debug_' + pkg

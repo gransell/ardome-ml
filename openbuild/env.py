@@ -704,7 +704,7 @@ class Environment( BaseEnvironment ):
 					if execute: shutil.copyfile( src_file, dst_file )
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
-				if not os.path.islink( full ) or os.path.getmtime( src ) > os.path.getmtime( full ):
+				if not os.path.exists( full ):
 					link_count += 1
 					if execute: 
 						if os.path.islink( full ): os.remove( full )
