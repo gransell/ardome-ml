@@ -1,0 +1,10 @@
+
+Name: boost_regex
+Description: boost regex lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+Libs:	-lboost_regex-mt${debug}-1_34_1
+

@@ -27,6 +27,21 @@ class AMLEnvironment( openbuild.env.Environment ):
 			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
 							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
 				self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_34_1' )
+		elif self[ 'target' ] == 'osx':
+			self.install_config( 'config/osx/boost.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_date_time.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_filesystem.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_python.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_regex.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_signals.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_thread.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/libavutil.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/libswscale.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
+			self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
 
 	def configure_platform( self ):
 		if self[ 'PLATFORM' ] == 'darwin' or self['PLATFORM'] == 'posix':
@@ -152,7 +167,9 @@ if env.check_externals( ):
 
 	env.create_package( )
 	env.install_openbuild( )
-	
+
+	env.package_install( )
+
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 
 		exit()
