@@ -11,6 +11,5 @@ CFlags:	-I${includedir}
 
 Libs: -L${libdir}
 
-install_libs=${libdir}
-install_include=${includedir}
+install_libs=${libdir}/*.dylib*
 
