@@ -177,4 +177,8 @@ local_env.copy_project_files( local_env[ 'cl_include' ], [
 	'xml_sax_parser.hpp'
 ] )
 
+local_env.copy_project_files( local_env[ 'stage_mf_schemas' ], [ 
+	'schemas/amf-plugin.xsd',
+] )
+
 Return( 'object' )
