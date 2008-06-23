@@ -42,7 +42,7 @@ def create_options( file, args ):
 		opts.Add( 'vs', desc, '', validate_vs_value )
 
 	if target == 'osx':
-		opts.Add( 'install_name', 'Bundle install name', '@loader_path' )
+		opts.Add( 'install_name', 'Bundle install name', '@loader_path/../lib/' )
 
 	return opts
 

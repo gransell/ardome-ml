@@ -351,7 +351,7 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.shared_library( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
+			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
 		self.setup_precompiled_headers( sources, pre, nopre )
 	
@@ -359,6 +359,43 @@ class Environment( BaseEnvironment ):
 			self['PDB'] = lib + '.pdb'
 		
 		return self.SharedLibrary( lib, sources, *keywords )
+		
+	def framework( self, fmwk, sources, headers=None, public_headers=None, resources=None, pre=None, nopre=None, *keywords):
+		"""	Build a Framework (darwin only)
+			
+			Keyword arguments:
+			fmwk -- The name of the framework to build
+			sources -- A list of source files
+			headers -- A list of header files, not needed for the build, but could be used 
+						by certain build_managers that create IDE files.
+			public_headers -- Alist of header files that will be public in the framework
+			resources -- A list of resources that will be included in the framework
+			pre -- A tuple with two elements, the first is the name of the header file that is 
+					included in all source-files using precompiled headers, the second is the
+					name of the actual source file creating the precompiled header file itself.
+			nopre -- If pre is set, this parameter contains a list of source files (that should
+						be present in sources) that will not use precompiled headers. These files
+						do not include the header file in pre[0].
+			keywords -- All other parameters passed with keyword assignment.
+		"""
+
+		if self['PLATFORM'] != 'darwin':
+			raise Exception, "Framwork builds only supported on darwin."
+        
+		framework_name = '%s.framework' % fmwk
+		
+		if "shared_library" in dir(self.build_manager) :
+			return self.build_manager.framework( self, fmwk, sources, headers, public_headers, resources, pre, nopre, *keywords )
+
+		# self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/%s/Versions/A/%s' % ( self[ 'install_name' ], framework_name, fmwk, fmwk ) ] )
+
+		self.setup_precompiled_headers( sources, pre, nopre )
+
+		loadable_module_obj = self.LoadableModule( target = fmwk, source = sources )
+
+		self.Install( framework_name + '/Versions/A', loadable_module_obj )
+		self.Install( framework_name +'/Versions/A/Headers', public_headers )
+		self.Install( framework_name +'/Versions/A/Resources', resources )
 		
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
