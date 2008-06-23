@@ -351,7 +351,7 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.shared_library( self, lib, sources, headers, pre, nopre, *keywords )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s%s.dylib' % ( self[ 'install_name' ], lib ) ] )
+			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%slib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
 		self.setup_precompiled_headers( sources, pre, nopre )
 	

@@ -36,7 +36,7 @@ def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, **ke
 	"""
 		
 	if self[ 'PLATFORM' ] == 'darwin':
-		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/lib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
+		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%slib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 	return self.SharedLibrary( lib, sources, **keywords )
 
 def plugin( self, lib, sources, headers=None, pre=None, nopre=None, **keywords ):
