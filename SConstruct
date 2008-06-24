@@ -44,9 +44,13 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
 
 	def configure_platform( self ):
-		if self[ 'PLATFORM' ] == 'darwin' or self['PLATFORM'] == 'posix':
-			self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
-			self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
+		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
+			if self[ 'PLATFORM' ] == 'darwin':
+				self[ 'il_plugin' ] = ''
+				self[ 'ml_plugin' ] = ''
+			else:
+				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
+				self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
 			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
