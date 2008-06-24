@@ -50,8 +50,7 @@ class Environment( BaseEnvironment ):
 		opts.Save( opts.file, self )
 		
 		# Override the default scons hash based checking
-		# TODO: Check logic for generated files
-		# self.Decider( 'timestamp-match' )
+		self.Decider( 'MD5-timestamp' )
 
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
@@ -264,7 +263,20 @@ class Environment( BaseEnvironment ):
 		else :
 			existing_deps.add( dep_min )
 		
-		
+	def move_from_path_to_flags( self, paths, switch ):
+		result= [ ]
+		bcomp_dir = [ '#/bcomp', 'bcomp', os.path.join( self.root, 'bcomp' ), '/usr/local' ]
+		for incdir in paths:
+			found = False
+			for bcomp in bcomp_dir:
+				if incdir.startswith( bcomp ):
+					found = True
+					break
+			if found:
+				result += [ switch + incdir ]
+				paths.remove( incdir )
+		return result
+
 	def build( self, path, deps = [], tools = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
@@ -288,7 +300,7 @@ class Environment( BaseEnvironment ):
 		result = { }
 
 		for build_type in self.build_types( ):
-			local_env = self.Clone( tools = tools )
+			local_env = self.Clone( tools = tools, LIBPATH = [ ] )
 			local_env.full_path = os.path.join( local_env.root, path )
 			local_env.relative_path = path
 			
@@ -310,32 +322,14 @@ class Environment( BaseEnvironment ):
 					local_env.Append( LIBPATH = [libpath] )
 					local_env.Append( LIBS = [lib] )
 
-			bcomp_dir = [ '#/bcomp', 'bcomp', os.path.join( local_env.root, 'bcomp' ), '/usr/local' ]
-
-			paths = local_env[ 'CPPPATH' ]
 			switch = [ '/I', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
-			for incdir in paths:
-				found = False
-				for bcomp in bcomp_dir:
-					if incdir.startswith( bcomp ):
-						found = True
-						break
-				if found:
-					local_env.Append( CPPFLAGS = [ switch + incdir ] )
-					paths.remove( incdir )
+			paths = local_env[ 'CPPPATH' ]
+			local_env.Append( CPPFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
 			local_env.Replace( CPPPATH = paths )
 
-			paths = local_env[ 'LIBPATH' ]
 			switch = [ '/LIBPATH:', '-L' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
-			for incdir in paths:
-				found = False
-				for bcomp in bcomp_dir:
-					if incdir.startswith( bcomp ):
-						found = True
-						break
-				if found:
-					local_env.Append( LINKFLAGS = [ switch + incdir ] )
-					paths.remove( incdir )
+			paths = local_env[ 'LIBPATH' ]
+			local_env.Append( LINKFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
 			local_env.Replace( LIBPATH = paths )
 
 		return result
