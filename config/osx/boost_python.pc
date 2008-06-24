@@ -6,5 +6,9 @@ debug=
 
 Requires: boost
 
+prefix=/usr
+libdir=${prefix}/lib
+
 Libs:	-lboost_python-mt${debug}-1_34_1
 
+install_libs=${libdir}/libboost_python-mt${debug}-1_34_1.dylib

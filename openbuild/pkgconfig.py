@@ -82,7 +82,7 @@ class PkgConfig:
 		name = self.package_name( env, package )
 		if name in env.package_list.keys( ):
 			command += '--define-variable=prefix=' + env.package_list[ name ] + ' '
-			if env[ 'debug' ] == '1':
+			if env.debug:
 				command += '--define-variable=debug=-d '
 		command += package + ' 2> /dev/null'
 		return command
