@@ -42,7 +42,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/libswscale.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
 			self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
-			self.install_config( 'config/osx/xerces.pc', 'bcomp/xerces' )
+			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 
 	def configure_platform( self ):
 		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
