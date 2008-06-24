@@ -313,6 +313,7 @@ class Environment( BaseEnvironment ):
 			bcomp_dir = [ '#/bcomp', 'bcomp', os.path.join( local_env.root, 'bcomp' ), '/usr/local' ]
 
 			paths = local_env[ 'CPPPATH' ]
+			switch = [ '/I', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
 			for incdir in paths:
 				found = False
 				for bcomp in bcomp_dir:
@@ -320,11 +321,12 @@ class Environment( BaseEnvironment ):
 						found = True
 						break
 				if found:
-					local_env.Append( CPPFLAGS = [ '-I' + incdir ] )
+					local_env.Append( CPPFLAGS = [ switch + incdir ] )
 					paths.remove( incdir )
 			local_env.Replace( CPPPATH = paths )
 
 			paths = local_env[ 'LIBPATH' ]
+			switch = [ '/LIBPATH:', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
 			for incdir in paths:
 				found = False
 				for bcomp in bcomp_dir:
@@ -332,7 +334,7 @@ class Environment( BaseEnvironment ):
 						found = True
 						break
 				if found:
-					local_env.Append( CPPFLAGS = [ '-L' + incdir ] )
+					local_env.Append( CPPFLAGS = [ switch + incdir ] )
 					paths.remove( incdir )
 			local_env.Replace( LIBPATH = paths )
 
