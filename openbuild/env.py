@@ -326,7 +326,7 @@ class Environment( BaseEnvironment ):
 			local_env.Replace( CPPPATH = paths )
 
 			paths = local_env[ 'LIBPATH' ]
-			switch = [ '/LIBPATH:', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
+			switch = [ '/LIBPATH:', '-L' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
 			for incdir in paths:
 				found = False
 				for bcomp in bcomp_dir:
