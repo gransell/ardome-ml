@@ -334,7 +334,7 @@ class Environment( BaseEnvironment ):
 						found = True
 						break
 				if found:
-					local_env.Append( CPPFLAGS = [ switch + incdir ] )
+					local_env.Append( LINKFLAGS = [ switch + incdir ] )
 					paths.remove( incdir )
 			local_env.Replace( LIBPATH = paths )
 
