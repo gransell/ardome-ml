@@ -51,6 +51,8 @@ class Environment( BaseEnvironment ):
 		
 		# Override the default scons hash based checking
 		self.Decider( 'MD5-timestamp' )
+		self.SetOption('implicit_cache', 1)
+		self.SetOption('max_drift', 1)
 
 		# Check if we need to override default build behaviour.
 		if bmgr : self.build_manager = bmgr
