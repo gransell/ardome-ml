@@ -48,7 +48,7 @@ namespace olib
                     return olib::t_path( str_util::to_t_string(mac::get_home_dir()) );
                 else if( folder_type == special_folder::amf_resources )
                     return olib::t_path( str_util::to_t_string(mac::get_module_directory()) ) /
-                        _T("Resources");
+                        _T("../Resources");
                 
 				olib::t_path fpath( "" );
                 fpath /= str_util::to_string(app_name);
