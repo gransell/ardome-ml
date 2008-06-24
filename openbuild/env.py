@@ -310,6 +310,32 @@ class Environment( BaseEnvironment ):
 					local_env.Append( LIBPATH = [libpath] )
 					local_env.Append( LIBS = [lib] )
 
+			bcomp_dir = [ '#/bcomp', 'bcomp', os.path.join( local_env.root, 'bcomp' ), '/usr/local' ]
+
+			paths = local_env[ 'CPPPATH' ]
+			for incdir in paths:
+				found = False
+				for bcomp in bcomp_dir:
+					if incdir.startswith( bcomp ):
+						found = True
+						break
+				if found:
+					local_env.Append( CPPFLAGS = [ '-I' + incdir ] )
+					paths.remove( incdir )
+			local_env.Replace( CPPPATH = paths )
+
+			paths = local_env[ 'LIBPATH' ]
+			for incdir in paths:
+				found = False
+				for bcomp in bcomp_dir:
+					if incdir.startswith( bcomp ):
+						found = True
+						break
+				if found:
+					local_env.Append( CPPFLAGS = [ '-L' + incdir ] )
+					paths.remove( incdir )
+			local_env.Replace( LIBPATH = paths )
+
 		return result
 		
 	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
