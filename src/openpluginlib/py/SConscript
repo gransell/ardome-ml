@@ -18,6 +18,9 @@ else:
 
 local_env[ 'SHLIBPREFIX' ] = ''
 
+if local_env[ 'target' ] == 'osx':
+	local_env[ 'SHLIBSUFFIX' ] = '.so'
+
 object = local_env.shared_library( 'openpluginlib' + [ '', '_d' ][ int( local_env.debug ) ], [ 
 	'py.cpp', 
 	'openpluginlib.cpp', 
