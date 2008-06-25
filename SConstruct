@@ -43,6 +43,14 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
 			self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
 			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
+		elif self[ 'target' ] == 'ubuntu32':
+			if os.path.exists( 'bcomp/ffmpeg' ):
+				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc', 'libswscale.pc' ]:
+					self.install_config( 'config/ubuntu32/' + package, 'bcomp/ffmpeg' )
+		elif self[ 'target' ] == 'ubuntu64':
+			if os.path.exists( 'bcomp/ffmpeg' ):
+				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc', 'libswscale.pc' ]:
+					self.install_config( 'config/ubuntu64/' + package, 'bcomp/ffmpeg' )
 
 	def configure_platform( self ):
 		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
