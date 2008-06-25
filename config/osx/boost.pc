@@ -11,3 +11,6 @@ CFlags:	-I${includedir}
 
 Libs: -L${libdir}
 
+install_libs=${libdir}/pkgconfig*
+install_include=${includedir}
+

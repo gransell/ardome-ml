@@ -61,7 +61,6 @@ class Environment( BaseEnvironment ):
 			self['target'] = utils.vs()
 		else: 
 			self.build_manager = None
-			
 		
 		self.dependencies = {}
 
@@ -78,7 +77,8 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )
 		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
-		self[ 'stage_frameworks' ] = os.path.join( '$stage_prefix', 'frameworks' )
+		self[ 'stage_frameworks' ] = os.path.join( '$stage_prefix', 'Frameworks' )
+		self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'share' )
 
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
@@ -216,8 +216,15 @@ class Environment( BaseEnvironment ):
 			build_type( env )
 			for dest, rule in [ ( 'stage_include', 'install_include' ), 
 								( 'stage_libdir', 'install_libs' ), 
-								( 'stage_frameworks', 'install_frameworks' ) ]:
-				env.copy_files( env[ dest ], env.package_manager.package_install_list( env, rule ) )
+								( 'stage_frameworks', 'install_frameworks' ),
+								( 'stage_bin', 'install_bin' ),
+								( 'stage_share', 'install_share' ) ]:
+				list = env.package_manager.package_install_list( env, rule )
+				for key in list.keys( ):
+					if key != '':
+						env.copy_files( os.path.join( env[ dest ], key ), list[ key ] )
+					else:
+						env.copy_files( env[ dest ], list[ key ] )
 
 	def check_dependencies( self, *packages ):
 		"""Ensure that all the listed packages are found.
@@ -706,7 +713,7 @@ class Environment( BaseEnvironment ):
 						full_src = os.path.join( root, file )
 						full_dst = os.path.join( dst_dir, file )
 						if file.startswith( '.' ):
-							files.remove( file )
+							pass
 						elif os.path.islink( full_src ):
 							all_links += [ ( dst_dir, file, os.readlink( full_src ) ) ]
 						else:

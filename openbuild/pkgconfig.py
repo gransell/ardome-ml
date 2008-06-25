@@ -88,7 +88,7 @@ class PkgConfig:
 		return command
 
 	def package_install_list( self, env, key ):
-		result = []
+		result = { }
 		for package in env.package_list.keys( ):
 			if env.debug and package.startswith( 'release_' ): continue
 			if not env.debug and package.startswith( 'debug_' ): continue
@@ -97,6 +97,10 @@ class PkgConfig:
 				include = os.popen( self.pkgconfig_cmd( env, pkg, "--variable=" + key ) ).read( ).replace( '\n', '' )
 				if include != '':
 					for component in include.split( ' ' ):
-						result += glob.glob( component )
+						for file in glob.glob( component ):
+							name = ''
+							if component.find( '*' ) != -1: name = file.rsplit( '/', 1 )[ -1 ]
+							if name not in result.keys( ): result[ name ] = [ ]
+							result[ name ] += [ file ]
 		return result
 

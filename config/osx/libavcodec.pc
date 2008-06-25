@@ -10,6 +10,6 @@ Requires:  libavutil = 49.6.0
 Conflicts:
 Libs: -L${libdir} -lavcodec   -lz -lm   
 Cflags: -I${includedir}
-install_libs=${libdir}/*.dylib*
+install_libs=${libdir}/*.dylib* ${libdir}/pkgconfig*
 install_include=${includedir}
 
