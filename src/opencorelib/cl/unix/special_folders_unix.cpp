@@ -38,6 +38,8 @@ namespace olib
                         ARLOG_DEBUG("Using prefix %1% from env")(env_prefix);
                         return env_prefix;
                     } else {
+                        // TODO Try to deduce the prefix from /proc/$pid/exe
+                        // ... before falling back to the compile-time PREFIX.
                         ARLOG_DEBUG("Using compilation prefix " PREFIX);
                         return PREFIX;
                     }
