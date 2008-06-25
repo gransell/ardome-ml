@@ -12,14 +12,13 @@ namespace opl = olib::openpluginlib;
 
 BOOST_PYTHON_MODULE( openpluginlib )
 {
-	opl::detail::py_geometry( );
 	opl::detail::py_string( );
 	opl::detail::py_openpluginlib( );
-        opl::detail::py_pcos_key();
-        opl::detail::py_pcos_observer(); 
-        opl::detail::py_pcos_subject(); 
-        opl::detail::py_pcos_property_container(); 
-        opl::detail::py_pcos_property(); 
-        opl::detail::py_pcos_any(); 
-        opl::detail::py_pcos_visitor(); 
+	opl::detail::py_pcos_key();
+	opl::detail::py_pcos_observer(); 
+	opl::detail::py_pcos_subject(); 
+	opl::detail::py_pcos_property_container(); 
+	opl::detail::py_pcos_property(); 
+	opl::detail::py_pcos_any(); 
+	opl::detail::py_pcos_visitor(); 
 }

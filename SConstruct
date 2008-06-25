@@ -87,6 +87,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
 		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
+		version = sys.version_info
+		self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
@@ -158,6 +160,11 @@ class AMLEnvironment( openbuild.env.Environment ):
 					if package.find( os.sep + 'build_' ) == -1 and package.endswith( '.pc' ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
 
+	def have_boost_python( self ):
+		clone = self.Clone( )
+		clone.prep_release( )
+		return clone.optional( 'boost_python' )[ 'have_boost_python' ]
+
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
 env = AMLEnvironment( opts )
@@ -179,6 +186,11 @@ if env.check_externals( ):
 	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/openal', [ pl, il, ml ] )
+
+	if env.have_boost_python( ):
+		env.build( 'src/openpluginlib/py', [ pl ] )
+		env.build( 'src/openimagelib/py', [ pl, il ] )
+		env.build( 'src/openmedialib/py', [ pl, il, ml ] )
 
 	env.create_package( )
 	env.install_openbuild( )

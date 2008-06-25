@@ -10,7 +10,6 @@
 
 namespace olib { namespace openpluginlib { namespace detail {
 
-void py_geometry( );
 void py_string( );
 void py_openpluginlib( );
 void py_pcos_key();

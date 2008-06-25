@@ -1,0 +1,21 @@
+# (C) Ardendo SE 2008
+#
+# Released under the LGPL
+
+import sys
+
+Import(['local_env'])
+
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_regex', 'boost_python' )
+
+prefix = sys.exec_prefix
+version = sys.version_info
+local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )
+
+local_env[ 'SHLIBPREFIX' ] = ''
+
+object = local_env.shared_library( 'openmedialib' + [ '', '_d' ][ int( local_env.debug ) ], [ 'ml.cpp', 'py.cpp' ] )
+
+local_env.Install( local_env[ 'python_packages' ], object )
+
+Return( 'object' )
