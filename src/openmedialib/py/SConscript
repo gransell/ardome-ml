@@ -9,8 +9,11 @@ Import(['local_env'])
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_regex', 'boost_python' )
 
 prefix = sys.exec_prefix
-version = sys.version_info
-local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )
+if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008':
+	local_env.Append( CPPPATH = [ '%s/include' % prefix ] )
+else:
+	version = sys.version_info
+	local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )
 
 local_env[ 'SHLIBPREFIX' ] = ''
 

@@ -87,8 +87,12 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
 		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
-		version = sys.version_info
-		self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
+
+		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008':
+			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'site-packages' )
+		else:
+			version = sys.version_info
+			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
