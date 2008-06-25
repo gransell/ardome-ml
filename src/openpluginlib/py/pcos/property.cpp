@@ -13,6 +13,7 @@
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
 #include <openimagelib/il/basic_image.hpp>
+#include <boost/cstdint.hpp>
 
 namespace opl	= olib::openpluginlib;
 namespace pcos	= olib::openpluginlib::pcos;
@@ -57,8 +58,8 @@ bool			 ( pcos::property::*is_a_string )( ) const = &pcos::property::is_a<opl::s
 bool			 ( pcos::property::*is_a_wstring_list )( ) const = &pcos::property::is_a<opl::wstring_list>;
 bool			 ( pcos::property::*is_a_string_list )( ) const = &pcos::property::is_a<opl::string_list>;
 bool			 ( pcos::property::*is_a_int )( ) const = &pcos::property::is_a<int>;
-bool			 ( pcos::property::*is_a_int64 )( ) const = &pcos::property::is_a<int64_t>;
-bool			 ( pcos::property::*is_a_uint64 )( ) const = &pcos::property::is_a<uint64_t>;
+bool			 ( pcos::property::*is_a_int64 )( ) const = &pcos::property::is_a<boost::int64_t>;
+bool			 ( pcos::property::*is_a_uint64 )( ) const = &pcos::property::is_a<boost::uint64_t>;
 bool			 ( pcos::property::*is_a_double )( ) const = &pcos::property::is_a<double>;
 bool			 ( pcos::property::*is_a_int_list )( ) const = &pcos::property::is_a<pcos::int_list>;
 bool			 ( pcos::property::*is_a_double_list )( ) const = &pcos::property::is_a<pcos::double_list>;
