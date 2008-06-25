@@ -93,8 +93,6 @@ objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
 
 cl_headers = local_env.Glob('*.hpp', True, False, True)
 
-local_env['Gch'] = local_env.Gch('precompiled_headers.hpp')[0]
-
 object = local_env.shared_library( 'opencorelib_cl', sources = sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], 
 									CXXFLAGS='-fobjc-gc' ), headers = cl_headers, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
 
