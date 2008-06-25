@@ -35,6 +35,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/boost_regex.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/boost_signals.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/boost_thread.pc', 'bcomp/boost' )
+			self.install_config( 'config/osx/boost_unit_test_framework.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
