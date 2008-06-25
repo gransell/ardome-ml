@@ -69,9 +69,10 @@ mac_sources = [
 	'mac/mac_selection_dlg.cpp',
 	'mac/invoker_impl.cpp',
 	'mac/special_folders_impl.cpp',
-	'mac/stack_walker.cpp' ]
+	'mac/stack_walker.cpp',
+	'mac/stack_dump.cpp' ]
 
-mac_objc = [ 'mac/stack_dump.mm', 'mac/mac_invoker.mm', 'mac/special_folders_mac.mm' ]
+mac_objc = [ 'mac/mac_invoker.mm', 'mac/special_folders_mac.mm' ]
 
 linux_sources = [ 'unix/special_folders_unix.cpp' ]
 
@@ -91,6 +92,8 @@ extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sour
 objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }
 
 cl_headers = local_env.Glob('*.hpp', True, False, True)
+
+local_env['Gch'] = local_env.Gch('precompiled_headers.hpp')[0]
 
 object = local_env.shared_library( 'opencorelib_cl', sources = sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.SharedObject( objc[ local_env[ 'PLATFORM' ] ], 
 									CXXFLAGS='-fobjc-gc' ), headers = cl_headers, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
