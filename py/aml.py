@@ -12,6 +12,9 @@ if platform.system( ) == 'Linux':
 		sys.setdlopenflags( dl.RTLD_NOW | dl.RTLD_GLOBAL )
 	except:
 		sys.setdlopenflags( 257 )
+elif platform.system( ) == 'Darwin':
+	from AppKit import NSApplicationLoad
+	NSApplicationLoad( )
 
 # Get the full path to the running instance of this file (note that if you happen to be 
 # in the site-packages dir, __file__ is reported as relative - hence the join here - however
