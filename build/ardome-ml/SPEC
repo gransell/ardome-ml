@@ -32,12 +32,12 @@ osx_BUILDSCRIPT2: build/ardome-ml/osx_build_zip.sh
 
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
-ubuntu64_POSTGRAB: build/ardome-ml/ubuntu_postgrab.sh
+ubuntu64_POSTGRAB: TARGETPLATFORM=ubuntu64 build/ardome-ml/ubuntu_postgrab.sh
 ubuntu64_BUILDSCRIPT: build/ardome-ml/ubuntu_build_step.sh
 ubuntu64_BUILDSCRIPT2: build/ardome-ml/ubuntu64_build_zip.sh
 
 ### Build for 32 bit system, using standard Makefile on Linux
 ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
-ubuntu32_POSTGRAB: build/ardome-ml/ubuntu_postgrab.sh
+ubuntu32_POSTGRAB: TARGETPLATFORM=ubuntu32 build/ardome-ml/ubuntu_postgrab.sh
 ubuntu32_BUILDSCRIPT: build/ardome-ml/ubuntu_build_step.sh
 ubuntu32_BUILDSCRIPT2: build/ardome-ml/ubuntu32_build_zip.sh
