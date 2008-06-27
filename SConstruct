@@ -168,7 +168,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 	def have_boost_python( self ):
 		clone = self.Clone( )
 		clone.prep_release( )
-		return clone.optional( 'boost_python' )[ 'have_boost_python' ]
+		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
+		if has_python:
+			clone.copy_files( self[ 'python_packages' ], os.path.join( 'py', 'aml.py' ) )
+		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 

@@ -544,6 +544,11 @@ ml::store_type_ptr load_store( const pl::opl_ptr& ptr, const std::string& path, 
 	return store;
 }
 
+ml::input_type_ptr create_input0( const pl::wstring &resource )
+{
+	return ml::create_input( resource );
+}
+
 ml::input_type_ptr create_input( const std::string &resource )
 {
 	return ml::create_input( pl::to_wstring( resource ) );
@@ -563,6 +568,7 @@ void py_plugin( )
 {
 	py::def( "load_input", &detail::load_input );
 	py::def( "load_store", &detail::load_store );
+	py::def( "create_input", &detail::create_input0 );
 	py::def( "create_input", &detail::create_input );
 	py::def( "create_store", &detail::create_store );
 	py::def( "create_filter", &detail::create_filter );

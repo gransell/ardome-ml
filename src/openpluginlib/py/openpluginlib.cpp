@@ -6,6 +6,7 @@
 // For more information, see http://www.openlibraries.org.
 
 #include <openpluginlib/pl/openpluginlib.hpp>
+#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
 
@@ -47,6 +48,8 @@ bool initlist1( const string_list& paths, const string& kernels_path, const stri
 
 void py_openpluginlib( )
 {
+	py::def( "to_wstring", &opl::to_wstring );
+
 	py::def( "init", &init0 );
 	py::def( "init", &init1 );
 	py::def( "init", &initlist );
