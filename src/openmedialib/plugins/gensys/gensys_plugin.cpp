@@ -549,6 +549,11 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 						}
 					}
 				}
+
+				// Force non background setting
+				opl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+				if ( prop.valid( ) && prop.value< int >( ) == 1 )
+					prop = 0;
 			}
 
 			if ( result->get_image( ) == 0 )
