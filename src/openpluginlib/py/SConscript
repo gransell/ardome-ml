@@ -12,6 +12,7 @@ prefix = sys.exec_prefix
 if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008':
 	local_env.Append( CPPPATH = [ '%s/include' % prefix ] )
 	local_env.Append( LIBPATH = [ '%s/libs' % prefix ] )
+	local_env.Append( LIBS = [ 'User32.lib', 'Oleaut32.lib', 'Winmm.lib', 'Gdi32.lib', 'shell32.lib' ,'ole32.lib' ] )
 else:
 	version = sys.version_info
 	local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )
@@ -22,6 +23,8 @@ local_env[ 'SHLIBPREFIX' ] = ''
 
 if local_env[ 'target' ] == 'osx':
 	local_env[ 'SHLIBSUFFIX' ] = '.so'
+elif local_env[ 'target' ] == 'win32':
+	local_env[ 'SHLIBSUFFIX' ] = '.pyd'
 
 object = local_env.shared_library( 'openpluginlib' + [ '', '_d' ][ int( local_env.debug ) ], [ 
 	'py.cpp', 

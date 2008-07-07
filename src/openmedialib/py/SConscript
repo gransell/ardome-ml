@@ -22,6 +22,8 @@ local_env[ 'SHLIBPREFIX' ] = ''
 
 if local_env[ 'target' ] == 'osx':
 	local_env[ 'SHLIBSUFFIX' ] = '.so'
+elif local_env[ 'target' ] == 'win32':
+	local_env[ 'SHLIBSUFFIX' ] = '.pyd'
 
 object = local_env.shared_library( 'openmedialib' + [ '', '_d' ][ int( local_env.debug ) ], [ 'ml.cpp', 'py.cpp' ] )
 
