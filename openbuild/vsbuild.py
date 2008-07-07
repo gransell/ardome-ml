@@ -143,8 +143,12 @@ class VsBuilder :
 		curr_cfg.compiler_options.include_directories = self.create_list('CPPPATH', env)
 		curr_cfg.compiler_options.preprocessor_flags = self.create_list('CPPDEFINES', env)
 
-		if config_name == 'Release|Win32' : curr_cfg.compiler_options.additional_options += "/O2"
-		
+		if config_name == 'Release|Win32' : 
+			curr_cfg.compiler_options.additional_options += "/O2 /Ob2"
+			curr_cfg.compiler_options.optimization = '2'
+		else:
+			curr_cfg.compiler_options.optimization = '0'
+
 		if extra_compiler_flags is not None:
 			curr_cfg.compiler_options.additional_options += ' ' + extra_compiler_flags
 		

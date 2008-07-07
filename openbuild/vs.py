@@ -110,6 +110,7 @@ class VS2003:
 		tool_str = """ <Tool
 					Name="VCCLCompilerTool"
 					AdditionalOptions="%s"
+					Optimization="%s"
 					AdditionalIncludeDirectories="%s"
 					PreprocessorDefinitions="%s"
 					RuntimeLibrary="%s"
@@ -121,6 +122,7 @@ class VS2003:
 					DebugInformationFormat="%s"/> """
 
 		return tool_str % ( options.additional_options,
+							options.optimization,
 							options.include_directories_as_string( project.root_dir),
 							options.preprocessor_flags_as_string(),
 							options.runtime_library( config.name ),
