@@ -300,6 +300,7 @@ class CompilerOptions:
 			if len(res) > 0  : res += ";"
 			lib = lib.replace("\\\\", "\\")
 			lib = lib.replace("#/", root_dir + "\\" )
+			lib = lib.replace("/", "\\" )
 			res += "&quot;" + lib + "&quot;"
 		return res
 		
@@ -366,6 +367,7 @@ class LinkerOptions:
 			if( len(res) > 0 ) : res += ";"
 			lib = lib.replace("\\\\", "\\")
 			lib = lib.replace("#/", root_dir + "\\" )
+			lib = lib.replace("/", "\\" )
 			res += "&quot;" + lib + "&quot;"
 		return res
 

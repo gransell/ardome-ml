@@ -118,7 +118,11 @@ class VsBuilder :
 			if not lib.endswith('.lib') : res.append( lib + '.lib')
 			else : res.append(lib)
 		return res
-			
+
+	def create_list( self, env_var_name, env) :
+		if not env.has_key(env_var_name) : return []
+		return [] + env[env_var_name]
+
 	def project( self, env, lib, sources, project_type, subsystem=None, headers=None, pre=None, nopre=None, extra_compiler_flags = None  ) :
 	
 		self.vs_solution.root = env.root
@@ -133,11 +137,12 @@ class VsBuilder :
 		if pre is not None : 
 			curr_cfg.compiler_options.precomp_headers = True, pre[1], pre[0]
 			sources.append( pre[0] )
-			
-		if env.has_key('LIBPATH') : curr_cfg.linker_options.additional_library_directories = env['LIBPATH']
-		if env.has_key('LIBS') : curr_cfg.linker_options.additional_dependencies = self.add_lib( env['LIBS'] )
-		if env.has_key('CPPPATH') : curr_cfg.compiler_options.include_directories = env['CPPPATH']
-		if env.has_key('CPPDEFINES') : curr_cfg.compiler_options.preprocessor_flags = env['CPPDEFINES']
+
+		curr_cfg.linker_options.additional_library_directories = self.create_list('LIBPATH', env)
+		curr_cfg.linker_options.additional_dependencies = self.add_lib( self.create_list('LIBS', env) )
+		curr_cfg.compiler_options.include_directories = self.create_list('CPPPATH', env)
+		curr_cfg.compiler_options.preprocessor_flags = self.create_list('CPPDEFINES', env)
+
 		if config_name == 'Release|Win32' : curr_cfg.compiler_options.additional_options += "/O2"
 		
 		if extra_compiler_flags is not None:
