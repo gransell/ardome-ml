@@ -88,7 +88,7 @@ namespace olib
             template< class T >
             void connect( const boost::shared_ptr<T>& registrant, void (T::*CbFunc)(const Sender&, const EventArgs& )  )
             {
-                ThreadLocker::lock lck( m_locker );
+                typename ThreadLocker::lock lck( m_locker );
                 // Don't save a shared_ptr in the function-object, since that will 
                 // destroy the automatic connection management. We store a weak-ptr to 
                 // the object and make sure that it is alive before we ever call on the bound object.
@@ -100,7 +100,7 @@ namespace olib
             /** When the returned object goes out of scope, the connection goes down automatically. */
             event_connection_ptr connect( callback_signature cb  )
             {
-                ThreadLocker::lock lck( m_locker );
+                typename ThreadLocker::lock lck( m_locker );
                 event_connection_ptr conn( new event_connection() );
                 m_callbacks.push_back( std::make_pair(conn, cb) );
                 return conn;
@@ -116,7 +116,7 @@ namespace olib
                 callback_collection copy_of_callbacks;
 
                 {
-                    ThreadLocker::lock lck( m_locker );
+                    typename ThreadLocker::lock lck( m_locker );
                     // Clean up dead references:
                     typename callback_collection::iterator it( m_callbacks.begin()), eit(m_callbacks.end());
                     for( ; it != eit; ++it )
