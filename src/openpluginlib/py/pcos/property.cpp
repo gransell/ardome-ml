@@ -52,6 +52,7 @@ pcos::int_list	   ( pcos::property::*value_int_list )( ) const = &pcos::property
 pcos::double_list  ( pcos::property::*value_double_list )( ) const = &pcos::property::value<pcos::double_list>;
 bool			   ( pcos::property::*value_bool )( ) const = &pcos::property::value<bool>;
 il::image_type_ptr ( pcos::property::*value_image_type_ptr )( ) const = &pcos::property::value<il::image_type_ptr>;
+std::vector< double > ( pcos::property::*value_double_vector )( ) const = &pcos::property::value< std::vector< double > >;
 
 bool			 ( pcos::property::*is_a_wstring )( ) const = &pcos::property::is_a<opl::wstring>;
 bool			 ( pcos::property::*is_a_string )( ) const = &pcos::property::is_a<opl::string>;
@@ -65,6 +66,7 @@ bool			 ( pcos::property::*is_a_int_list )( ) const = &pcos::property::is_a<pcos
 bool			 ( pcos::property::*is_a_double_list )( ) const = &pcos::property::is_a<pcos::double_list>;
 bool			 ( pcos::property::*is_a_bool )( ) const = &pcos::property::is_a<bool>;
 bool			 ( pcos::property::*is_a_image_type_ptr )( ) const = &pcos::property::is_a<il::image_type_ptr>;
+bool			 ( pcos::property::*is_a_double_vector )( ) const = &pcos::property::is_a< std::vector< double > >;
 
 template < typename T > struct PyConvertTrait
 {};
@@ -137,6 +139,8 @@ void py_pcos_property()
 	list_from_python_list< pcos::uint_list, PyConvertTrait< int > >();
 	py::to_python_converter< pcos::double_list, list_to_python_list< pcos::double_list, PyConvertTrait< double > > >( );	
 	list_from_python_list< pcos::double_list, PyConvertTrait< double > >();
+	py::to_python_converter< std::vector< double >, list_to_python_list< std::vector< double >, PyConvertTrait< double > > >( );	
+	list_from_python_list< std::vector< double >, PyConvertTrait< double > >();
 
 	py::class_< pcos::property, py::bases< pcos::isubject, pcos::iproperty_container >, boost::shared_ptr< pcos::property > >( "property", py::init< pcos::key >() )
 		.def( "get_key", &pcos::property::get_key )
@@ -164,6 +168,7 @@ void py_pcos_property()
 		.def( "value_as_double_list", value_double_list )
 		.def( "value_as_bool", value_bool )
 		.def( "value_as_image", value_image_type_ptr )
+		.def( "value_as_double_vector", value_double_vector )
 		.def( "is_a_wstring", is_a_wstring )
 		.def( "is_a_string", is_a_string )
 		.def( "is_a_wstring_list", is_a_wstring_list )
@@ -176,6 +181,7 @@ void py_pcos_property()
 		.def( "is_a_double_list", is_a_double_list )
 		.def( "is_a_bool", is_a_bool )
 		.def( "is_a_image", is_a_image_type_ptr )
+		.def( "is_a_double_vector", is_a_double_vector )
 		.def( "get_property", &pcos::property::get_property_with_string, py::return_value_policy< py::return_by_value >() )
 		.def( "get_property", &pcos::property::get_property_with_key, py::return_value_policy< py::return_by_value >() )
 		.def( "get_keys", &pcos::property::get_keys )
