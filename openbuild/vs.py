@@ -558,6 +558,9 @@ class VSProject :
 			ytmp = y
 			if isinstance(x, SourceFile) : xtmp = x.name
 			if isinstance(y, SourceFile) : ytmp = y.name
+			# Just sort on the actual file-name, not the full path.
+			xtmp = os.path.split(xtmp)[1]
+			ytmp = os.path.split(ytmp)[1]
 			return cmp(xtmp, ytmp)
 				
 		res_files.sort( cmp = comparer )
