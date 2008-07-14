@@ -311,8 +311,27 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			if ( oc_ )
 			{
+				// Finalize encode for video
+				if ( video_stream_ )
+				{
+					int out_size = 0;
+					do {
+						do_video_encode(true, &out_size);
+					} while(out_size > 0);
+				}
+
+				if ( audio_stream_ )
+				{
+					while( process_audio( ) ) ;
+					// FIXME: Unsure what to do with remainder (may extend duration?)
+					//std::cerr << "still have " << audio_block_used_ << " bytes" << std::endl;
+				}
+
 				// Write the trailer, if any
 				av_write_trailer( oc_ );
+
+				close_video_codec();
+				close_audio_codec();
 
 				// Free the streams
 				for( size_t i = 0; i < oc_->nb_streams; i++ )
@@ -440,6 +459,26 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 
 			return ret;
+		}
+
+		void close_video_codec( )
+		{
+			AVStream *stream = video_stream_;
+			if ( stream && stream->codec ) {
+				avcodec_close( stream->codec );
+				av_free( stream->codec );
+				stream->codec = NULL;
+			}
+		}
+
+		void close_audio_codec( )
+		{
+			AVStream *stream = audio_stream_;
+			if ( stream && stream->codec ) {
+				avcodec_close( stream->codec );
+				av_free( stream->codec );
+				stream->codec = NULL;
+			}
 		}
 
 		// Push a frame to the store
@@ -882,6 +921,49 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 		}
 
+		bool do_video_encode (bool finalize, int *out_size) 
+		{
+			bool ret;
+
+			AVCodecContext *c = video_stream_->codec;
+			AVFrame *image = &av_image_;
+			if(finalize)
+				image = NULL;
+
+			*out_size = avcodec_encode_video( c, video_outbuf_, video_outbuf_size_, image );
+
+			// If zero size, it means the image was buffered
+			if ( *out_size > 0 )
+			{
+				AVPacket pkt;
+				av_init_packet( &pkt );
+
+				if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
+					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
+				if( c->coded_frame && c->coded_frame->key_frame )
+					pkt.flags |= PKT_FLAG_KEY;
+				pkt.stream_index = video_stream_->index;
+				pkt.data = video_outbuf_;
+				pkt.size = *out_size;
+
+				if ( log_file_ && prop_pass_.value< int >( ) == 1 && c->stats_out )
+					fprintf( log_file_, "%s", c->stats_out );
+
+				// Write the compressed frame in the media file
+				int err = av_interleaved_write_frame( oc_, &pkt );
+				ret = err >= 0;
+
+				if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
+					fprintf( log_file_, "%s", c->stats_out );
+
+			}
+			else
+			{
+				ret = true;
+			}
+			return ret;
+		}
+
 		// Process and output an image
 		// Precondition: the video queue is not empty
 		bool process_video( )
@@ -950,57 +1032,34 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				av_image_.quality = int( video_stream_->quality );
 				av_image_.pict_type = 0;
 
- 				// Encode the image
- 				int out_size = avcodec_encode_video( c, video_outbuf_, video_outbuf_size_, &av_image_ );
-
-				// If zero size, it means the image was buffered
- 				if ( out_size > 0 )
-				{
-					AVPacket pkt;
-					av_init_packet( &pkt );
-
-					if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
-						pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
-					if( c->coded_frame && c->coded_frame->key_frame )
-						pkt.flags |= PKT_FLAG_KEY;
-					pkt.stream_index = video_stream_->index;
-					pkt.data = video_outbuf_;
-					pkt.size = out_size;
-
-					if ( log_file_ && prop_pass_.value< int >( ) == 1 && c->stats_out )
-						fprintf( log_file_, "%s", c->stats_out );
-
-					// Write the compressed frame in the media file
-					int err = av_interleaved_write_frame( oc_, &pkt );
-					ret = err >= 0;
-
-					if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
-						fprintf( log_file_, "%s", c->stats_out );
- 				}
-				else
-				{
-					ret = true;
-				}
+				int out_size;
+				ret = do_video_encode(false, &out_size);
 			}
 
 			return ret;
 		}
 
 		// Process and output a block of audio samples (see comments in queue above)
-		// Precondition: the audio queue is not empty
 		bool process_audio( )
 		{
 			bool ret = true;
 
-			audio_type_ptr audio = *( audio_queue_.begin( ) );
-			audio_queue_.pop_front( );
+			audio_type_ptr audio;
+			short *data = 0;
+
+			if ( audio_queue_.size( ) )
+			{
+				audio = *( audio_queue_.begin( ) );
+				audio_queue_.pop_front( );
+				data = ( short * )( audio->data( ) );
+			}
 
 			AVCodecContext *c = audio_stream_->codec;
 
 			AVPacket pkt;
 			av_init_packet( &pkt );
 
-			pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, ( short * )audio->data( ) );
+			pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, data );
 
 			// Write the compressed frame in the media file
 			if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
@@ -1011,8 +1070,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			pkt.data = audio_outbuf_;
 
 			if ( pkt.size )
-				if ( av_interleaved_write_frame( oc_, &pkt ) != 0 )
-					ret = false;
+				ret = av_interleaved_write_frame( oc_, &pkt ) == 0;
+			else if ( data == 0 )
+				ret = false;
 
 			return ret;
 		}
@@ -1282,52 +1342,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			std::string format = context_->iformat->name;
 
-			// This is a nasty bit of code to provide support for variable bit rate
+			// Determine the number of frames in the media
 			if ( prop_frames_.value< int >( ) != -1 )
-			{
 				frames_ = prop_frames_.value< int >( );
-			}
-			else if ( uint64_t( context_->duration ) == AV_NOPTS_VALUE || format == "mp2" || format == "mp3" || format == "ogg" || format == "mpeg" || format == "mpegts" )
-			{
-				if ( is_seekable_ )
-				{
-					AVStream *stream = get_video_stream( ) ? get_video_stream( ) : get_audio_stream( );
-					int max = 0;
-
-					frames_ = 1 << 29;
-					seek( frames_ );
-					while( frames_ > 1 )
-					{
-						seek_to_position( );
-						av_init_packet( &pkt_ );
-						av_read_frame( context_, &pkt_ );
-						int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 ) + 1;
-						av_free_packet( &pkt_ );
-						if ( result > 0 && result <= max ) break;
-						max = result;
-						frames_ /= 2;
-						seek( frames_ );
-					}
-
-					frames_ = max + 1;
-
-					if ( format != "mpeg" )
-					{
-						av_init_packet( &pkt_ );
-						while ( stream && av_read_frame( context_, &pkt_ ) >= 0 )
-						{
-							int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 ) + 1;
-							if ( result > max )
-								max = result;
-							av_free_packet( &pkt_ );
-						}
-					}
-
-					frames_ = max > 0 ? max : frames_;
-					seek( 0 );
-					av_seek_frame( context_, -1, 0, AVSEEK_FLAG_BYTE );
-				}
-			}
+			else if ( should_size_media( format ) )
+				frames_ = size_media( );
 
 			// Work around for inefficiencies on I frame only seeking
 			// - this should be covered by the AVStream discard and need_parsing values
@@ -1360,6 +1379,95 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 			}
+		}
+
+		bool should_size_media( std::string format )
+		{
+			bool result = is_seekable_ && prop_genpts_.value< int >( ) == 0;
+
+			if ( result && has_video( ) )
+			{
+				std::string vcodec( get_video_stream( )->codec->codec->name );
+				if ( format == "avi" && vcodec != "dvvideo" )
+					result = false;
+				else if ( format == "image2" )
+					result = false;
+				else if ( format == "dv" )
+					result = false;
+			}
+
+			if ( result && has_audio( ) )
+			{
+				result = format != "wav";
+			}
+
+			return result;
+		}
+
+		int size_media( )
+		{
+			std::string format = context_->iformat->name;
+
+			AVStream *stream = get_video_stream( ) ? get_video_stream( ) : get_audio_stream( );
+
+			frames_ = 1 << 29;
+			int last_lower = 0;
+			int max = 0;
+
+			seek( frames_ );
+			while( frames_ > 1 )
+			{
+				seek_to_position( );
+				av_init_packet( &pkt_ );
+
+				while ( av_read_frame( context_, &pkt_ ) >= 0 )
+				{
+					if ( pkt_.stream_index == 0 )
+					{
+						int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
+						av_free_packet( &pkt_ );
+						last_lower = result;
+						max = last_lower;
+						break;
+					}
+					else
+					{
+						av_free_packet( &pkt_ );
+					}
+				}
+
+				frames_ = last_lower + ( frames_ - last_lower ) / 2;
+				seek( frames_ );
+
+				if ( last_lower >= frames_ ) break;
+			}
+
+			frames_ = max;
+			seek( frames_ );
+			seek_to_position( );
+
+			av_init_packet( &pkt_ );
+			while ( stream && av_read_frame( context_, &pkt_ ) >= 0 )
+			{
+				if ( pkt_.stream_index == 0 )
+				{
+					int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
+					if ( result > max )
+						max = result;
+				}
+				av_free_packet( &pkt_ );
+			}
+
+			frames_ = max > 0 ? max : frames_;
+			seek( 0 );
+
+			// FIXME: Seeking to the first frame at this point is inaccurate in some cases
+			if ( context_->data_offset == 0 )
+				av_seek_frame( context_, -1, 0, AVSEEK_FLAG_BYTE );
+			else
+				seek_to_position( );
+
+			return frames_;
 		}
 
 		// Returns the current video stream
@@ -1449,7 +1557,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		}
 
 		// Decode the image
-		int decode_image( bool &got_picture )
+		int decode_image( bool &got_picture, AVPacket *packet )
 		{
 			AVCodecContext *codec_context = get_video_stream( )->codec;
 
@@ -1459,8 +1567,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			
 			// Derive the dts
 			double dts = 0;
-			if ( uint64_t( pkt_.dts ) != AV_NOPTS_VALUE )
-				dts = av_q2d( get_video_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
+			if ( packet && uint64_t( packet->dts ) != AV_NOPTS_VALUE )
+				dts = av_q2d( get_video_stream( )->time_base ) * ( packet->dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
 
 			// Approximate frame position
 			int position = int( dts * fps( ) + 0.5 );
@@ -1471,7 +1579,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			position += img_inc_;
 
-			if ( ( prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
+			if ( ( packet == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
 				position = images_[ images_.size( ) - 1 ]->position( ) + 1;
 
 			// Small optimisation - abandon packet now if we can (ie: we don't have to decode
@@ -1483,10 +1591,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// We have to continue processing until we get a dts >= to the requested position
-			if ( position >= get_position( ) + first_found_ )
-				avcodec_decode_video( codec_context, av_frame_, &got_pict, pkt_.data, pkt_.size );
+			if ( !packet )
+				avcodec_decode_video( codec_context, av_frame_, &got_pict, NULL, 0 );
+			else if ( position >= get_position( ) + first_found_ )
+				avcodec_decode_video( codec_context, av_frame_, &got_pict, packet->data, packet->size );
 			else if ( must_decode_ )
-				avcodec_decode_video( codec_context, av_frame_, &got_dummy, pkt_.data, pkt_.size );
+				avcodec_decode_video( codec_context, av_frame_, &got_dummy, packet->data, packet->size );
 
 			got_picture = got_pict != 0;
 
@@ -1940,7 +2050,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				error = av_read_frame( context_, &pkt_ );
 				if ( error >= 0 && video_indexes_.size( ) && prop_video_index_.value< int >( ) != -1 && pkt_.stream_index == video_indexes_[ prop_video_index_.value< int >( ) ] )
-					error = decode_image( got_picture );
+					error = decode_image( got_picture, &pkt_ );
 				else if ( error >= 0 && audio_indexes_.size( ) && prop_audio_index_.value< int >( ) != -1 && pkt_.stream_index == audio_indexes_[ prop_audio_index_.value< int >( ) ] )
 					error = decode_audio( got_audio );
 				else if ( error < 0 && !is_seekable_ )
@@ -1949,6 +2059,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					frames_ = get_position( );
 				av_free_packet( &pkt_ );
 			}
+
+			if ( frames_ != 1 && has_video( ) && !got_picture )
+				error = decode_image( got_picture, NULL );
 
 			// Hmmph
 			if ( has_video( ) )
@@ -1979,7 +2092,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
 				frames_ = expected_ + 1;
-					
+
 			return frame_type_ptr( result );
 		}
 
