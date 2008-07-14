@@ -441,6 +441,7 @@ void py_input( )
 		.def( "fetch", &ml::input_type::fetch )
 		.def( "fetch_callback", &ml::input_type::fetch_callback )
 		.def( "reuse", &ml::input_type::reuse )
+		.def( "fetch_slot", &ml::input_type::fetch_slot )
 	;
 }
 
