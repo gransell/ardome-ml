@@ -35,7 +35,7 @@ namespace olib
                 else if( folder_type == special_folder::local_data )
                     return get_module_path();
                 else if( folder_type == special_folder::plugins )
-                    return get( user_config, app_name ) / _T("Contents/Plugins");
+                    return mac::get_module_directory();
                 else if( folder_type == special_folder::user_config )
                     return olib::t_path( str_util::to_t_string(mac::get_home_dir()) ) / 
                         olib::t_path( _T("/Library/Application Data/") ) / 
