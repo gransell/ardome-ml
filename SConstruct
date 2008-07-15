@@ -58,16 +58,20 @@ class AMLEnvironment( openbuild.env.Environment ):
 			if self[ 'PLATFORM' ] == 'darwin':
 				self[ 'il_plugin' ] = ''
 				self[ 'ml_plugin' ] = ''
+				self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'Resources', 'schemas' )
+				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'Resources', 'examples' )
+				self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'lib' )
 			else:
 				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
 				self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
+				self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'schemas' )
+				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'examples' )
+				self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'plugins' )
+				
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
 			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
-			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'examples' )
-			self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'plugins' )
-			self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'schemas' )
 		else:
 			self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', 'lib' )
 			self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
