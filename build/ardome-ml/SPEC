@@ -30,6 +30,12 @@ osx_POSTGRAB: build/ardome-ml/osx_postgrab.sh
 osx_BUILDSCRIPT: build/ardome-ml/osx_build_step.sh
 osx_BUILDSCRIPT2: build/ardome-ml/osx_build_zip.sh
 
+### Build for 64 bit LSB 3.1 system
+lsb_3_1_64_TARGET: ardome-ml-lsb_3_1_64.tbz2
+lsb_3_1_64_POSTGRAB: build/ardome-ml/lsb_3_1_64_postgrab.sh
+lsb_3_1_64_BUILDSCRIPT: build/ardome-ml/lsb_3_1_64_build_step.sh
+lsb_3_1_64_BUILDSCRIPT2: build/ardome-ml/lsb_3_1_64_build_zip.sh
+
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
 ubuntu64_POSTGRAB: TARGETPLATFORM=ubuntu64 build/ardome-ml/ubuntu_postgrab.sh
