@@ -220,14 +220,14 @@ namespace olib
         
         void xerces_sax_traverser::error(const SAXParseException& exc)
         {
-            ARENFORCE(false)( to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
+            ARENFORCE_ERR(false, error::invalid_xml())( to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
                 (to_t_string(exc.getPublicId()))(to_t_string(exc.getSystemId()));
             throw exc;
         }
 
         void xerces_sax_traverser::fatalError(const SAXParseException& exc)
         {
-            ARENFORCE(false)( to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber());
+            ARENFORCE_ERR(false, error::invalid_xml())( to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber());
             throw exc;
         }
 
