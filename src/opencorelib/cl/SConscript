@@ -7,7 +7,7 @@ Import(['local_env'])
 local_env.packages( 'build_cl', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_signals', 'boost_regex', 'xerces', 'loki', 'uuid' )
 
 if local_env[ 'PLATFORM' ] == 'darwin':
-	local_env[ 'FRAMEWORKS' ] = [ 'ExceptionHandling', 'Foundation', 'CoreServices' ]
+	local_env[ 'FRAMEWORKS' ] = [ 'Foundation' ]
 
 local_env.Append( CPPDEFINES = [ 'PREFIX=\\\"' + local_env[ 'prefix' ] + '\\\"', 'AMF_VERSION=\\\"0.0.1\\\"' ] )
 
