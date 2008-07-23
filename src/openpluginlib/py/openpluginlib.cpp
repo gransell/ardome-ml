@@ -59,6 +59,7 @@ void py_openpluginlib( )
 	py::def( "init", &init2 );
 	py::def( "init", &initlist1 );
 #endif
+	py::def( "set_log_level", &opl::set_log_level );
 	
 	py::class_<detail::all_query_traits>( "all_query_traits", py::init<wstring, wstring, wstring, int>( ) )
 		.def( "libname", &detail::all_query_traits::libname )

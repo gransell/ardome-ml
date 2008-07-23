@@ -14,8 +14,6 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-namespace pcos = olib::openpluginlib::pcos;
-
 // Keyboard feedback interface implementations
 //
 // See notes below.
@@ -82,11 +80,11 @@ class ML_DECLSPEC store_type
 		{ }
 
 		// Property object
-		pcos::property_container properties( )
+		olib::openpluginlib::pcos::property_container properties( )
 		{ return properties_; }
 
 		// Convenience method
-		pcos::property property( const char *name ) const
+		olib::openpluginlib::pcos::property property( const char *name ) const
 		{ return properties_.get_property_with_string( name ); }
 
 		// Initialise method
@@ -114,7 +112,7 @@ class ML_DECLSPEC store_type
 		{ return false; }
 
 	private:
-		pcos::property_container properties_;
+		olib::openpluginlib::pcos::property_container properties_;
 };
 
 // The shared pointer type for a store

@@ -204,8 +204,9 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 			return 1; 
 		}
 
+	protected:
 		// Fetch method
-		virtual frame_type_ptr fetch( )
+		void fetch( frame_type_ptr &result )
 		{
 			producer_->seek( get_position( ) );
 			Mlt::Frame *mlt_native = producer_->get_frame( );
@@ -214,10 +215,9 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 				has_video_ = mlt_native->get_int( "test_image" ) == 0;
 				has_audio_ = mlt_native->get_int( "test_audio" ) == 0;
 			}
-			return frame_type_ptr( new mlt_frame( mlt_native, get_position( ), get_process_flags( ) ) );
+			result = frame_type_ptr( new mlt_frame( mlt_native, get_position( ), get_process_flags( ) ) );
 		}
 
-	protected:
 		virtual bool initialize( )
 		{
 			producer_ = new Mlt::Producer( ( char * )( opl::to_string( media_ ).c_str( ) ) );

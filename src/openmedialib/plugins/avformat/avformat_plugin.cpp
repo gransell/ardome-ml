@@ -9,14 +9,17 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #ifdef WIN32
-#include <windows.h>
-#endif // WIN32
-
-#ifndef INT64_C
-#define INT64_C(x)	x ## LL
-#endif // INT64_C
+#	include <windows.h>
+#	undef INT64_C
+#	define INT64_C(x)	x ## i64
+#else
+#	undef INT64_C
+#	define INT64_C(x)	x ## LL
+#endif
 
 #include <iostream>
 #include <cstdlib>
@@ -938,7 +941,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPacket pkt;
 				av_init_packet( &pkt );
 
-				if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
+				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
 				if( c->coded_frame && c->coded_frame->key_frame )
 					pkt.flags |= PKT_FLAG_KEY;
@@ -971,7 +974,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			bool ret = true;
 
 			// Obtain the next image
-			image_type_ptr image = *( video_queue_.begin( ) );
+			il::image_type_ptr image = *( video_queue_.begin( ) );
 			video_queue_.pop_front( );
 
 			AVCodecContext *c = video_stream_->codec;
@@ -1096,7 +1099,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int video_outbuf_size_;
 
 		// oml structures
-		std::deque< image_type_ptr > video_queue_;
+		std::deque< il::image_type_ptr > video_queue_;
 		std::deque< audio_type_ptr > audio_queue_;
 		audio_type_ptr audio_block_;
 		int audio_block_used_;
@@ -1652,7 +1655,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( dst_h & 1 ) dst_h += 1;
 
 			std::wstring format = avformat_to_oil( codec_context->pix_fmt );
-			image_type_ptr image;
+			il::image_type_ptr image;
 			if ( format == L"" )
 			{
 				image = il::allocate( L"yuv420p", dst_w, dst_h );
@@ -1888,16 +1891,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 		}
 
-		void find_image( frame_type *frame )
+		bool find_image( frame_type_ptr &frame )
 		{
+			bool exact = false;
 			int current = get_position( ) + first_found_;
 			int closest = 1 << 16;
-			std::deque< image_type_ptr >::iterator result = images_.end( );
-			std::deque< image_type_ptr >::iterator iter;
+			std::deque< il::image_type_ptr >::iterator result = images_.end( );
+			std::deque< il::image_type_ptr >::iterator iter;
 
 			for ( iter = images_.begin( ); iter != images_.end( ); iter ++ )
 			{
-				image_type_ptr img = *iter;
+				il::image_type_ptr img = *iter;
 				int diff = current - img->position( );
 				if ( std::abs( diff ) <= closest )
 				{
@@ -1911,11 +1915,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			if ( result != images_.end( ) )
+			{
 				frame->set_image( *result );
+				exact = ( *result )->position( ) == current;
+			}
+
+			return exact;
 		}
 
-		void find_audio( frame_type *frame )
+		bool find_audio( frame_type_ptr &frame )
 		{
+			bool exact = false;
 			int current = get_position( ) + first_found_;
 			int closest = 1 << 16;
 			std::deque< audio_type_ptr >::iterator result = audio_.end( );
@@ -1940,6 +1950,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				frame->set_audio( ml::audio_type_ptr( ( *result )->clone( ) ) );
 				frame->set_duration( double( ( *result )->samples( ) ) / double( ( *result )->frequency( ) ) );
+				exact = true;
 			}
 			else
 			{
@@ -1953,6 +1964,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				frame->set_audio( aud );
 				frame->set_duration( double( samples ) / double( frequency ) );
 			}
+
+			return exact;
 		}
 
 		// Basic information
@@ -1990,10 +2003,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			return true; 
 		}
 
+	protected:
+
 		// Fetch method
-		virtual frame_type_ptr fetch( )
+		void do_fetch( frame_type_ptr &result )
 		{
 			int process_flags = get_process_flags( );
+
+			// Create the output frame
+			result = frame_type_ptr( new frame_type( ) );
 
 			// Seek to the correct position if necessary
 			if ( get_position( ) != expected_ )
@@ -2072,19 +2090,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
 			}
 
-			// Create the output frame
-			frame_type *result = new frame_type( );
-
 			result->set_sar( sar_num_, sar_den_ );
 			result->set_fps( fps_num_, fps_den_ );
 			result->set_position( get_position( ) );
 			result->set_pts( expected_ * 1.0 / avformat_input::fps( ) );
 			result->set_duration( 1.0 / avformat_input::fps( ) );
 
+			bool exact_image = false;
+			bool exact_audio = false;
+
 			if ( ( process_flags & process_image ) && has_video( ) )
-				find_image( result );
+				exact_image = find_image( result );
 			if ( ( process_flags & process_audio ) && has_audio( ) )
-				find_audio( result );
+				exact_audio = find_audio( result );
 
 			// Update the next expected position
 			if ( got_picture || got_audio )
@@ -2093,10 +2111,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
 				frames_ = expected_ + 1;
 
-			return frame_type_ptr( result );
+			if ( has_audio( ) && has_video( ) )
+				ARENFORCE_MSG( exact_audio && exact_image, "Incomplete frame (audio or image missing)" );
+			else if ( has_audio( ) )
+				ARENFORCE_MSG( exact_audio, "Incomplete frame (audio missing)" );
+			else if ( has_audio( ) )
+				ARENFORCE_MSG( exact_image, "Incomplete frame (image missing)" );
 		}
-
-	protected:
 
 		virtual bool initialize( )
 		{
@@ -2231,7 +2252,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;
 		AVPacket pkt_;
-		std::deque < image_type_ptr > images_;
+		std::deque < il::image_type_ptr > images_;
 		std::deque < audio_type_ptr > audio_;
 		bool must_decode_;
 		bool must_reopen_;
@@ -2288,25 +2309,21 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 	
 		virtual const opl::wstring get_uri( ) const { return L"resampler"; }
 	
-		frame_type_ptr fetch()
+	protected:
+		void do_fetch( frame_type_ptr &current_frame )
 		{
-			// Get the filter input
-			input_type_ptr input = fetch_slot( );
-			if(!input)
-				return frame_type_ptr();
-			
 			// Cache a local copy of current position
 			int current_pos = get_position();
 		
 			// Ensure the cache is full
-			ml::frame_type_ptr current_frame = fetch_from_slot( 0 );
+			current_frame = fetch_from_slot( 0 );
 
 			if ( !current_frame )
-				return current_frame;
+				return;
 		
 			ml::audio_type_ptr current_audio = current_frame->get_audio();
 			if(!current_audio)
-				return current_frame;
+				return;
 			
 			//-----------------------------------------------------------------------------------
 			// Check there is a context to work with, if not create one
@@ -2331,7 +2348,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			// If the sample frequencies are the same save some effort
 			if(		(input_sample_freq_	== prop_output_sample_freq_.value<int>())
 				&&	(input_channels_	== prop_output_channels_.value<int>()) )
-				return current_frame;
+				return;
 	
 			if(dirty_)
 			{
@@ -2347,7 +2364,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 												input_sample_freq_ );
 				
 				if(!context_)
-					return frame_type_ptr();
+					return;
 				
 				dirty_ = false;
 			}
@@ -2391,7 +2408,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 																			prop_output_channels_.value<int>(), 
 																			output_samples) ) );
 			if(!output_audio)
-				return frame_type_ptr();
+				return;
 		
 			// Copy data from output buffer to audio object
 			memcpy(	(void*)output_audio->data(), 
@@ -2400,8 +2417,6 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 	
 			// Set current frame to have this new audio object, which now holds the resampled audio data
 			current_frame->set_audio(output_audio);
-		
-			return current_frame;
 		}
 	
 	private:

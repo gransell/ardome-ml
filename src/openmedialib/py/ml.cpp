@@ -9,12 +9,14 @@
 #include <openmedialib/ml/frame.hpp>
 #include <openmedialib/py/py.hpp>
 #include <boost/python/ptr.hpp>
+#include <boost/filesystem/path.hpp>
 #include <map>
 
 namespace fs  = boost::filesystem;
 namespace ml  = olib::openmedialib;
-namespace pl  = olib::openpluginlib;
 namespace py  = boost::python;
+namespace pl  = olib::openpluginlib;
+namespace pcos= olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -100,13 +102,6 @@ class input_delegate : public ml::input_type, public py::wrapper< ml::input_type
 			return input_type::get_position( ); 
 		}
 
-		virtual frame_type_ptr fetch( )
-		{
-			py::override method = get_override( "fetch" );
-			if ( method ) return method( ); 
-			return frame_type_ptr( ); 
-		}
-
 		virtual bool push( frame_type_ptr frame )
 		{
 			py::override method = get_override( "push" );
@@ -125,6 +120,14 @@ class input_delegate : public ml::input_type, public py::wrapper< ml::input_type
 		{
 			return false;
 		}
+
+	protected:
+		virtual void do_fetch( frame_type_ptr &result  )
+		{
+			py::override method = get_override( "fetch" );
+			if ( method ) method( result ); 
+		}
+
 };
 
 class filter_delegate : public ml::filter_type, public py::wrapper< ml::filter_type >
@@ -174,13 +177,6 @@ class filter_delegate : public ml::filter_type, public py::wrapper< ml::filter_t
 			return input_type::get_position( ); 
 		}
 
-		virtual frame_type_ptr fetch( )
-		{
-			py::override method = get_override( "fetch" );
-			if ( method ) return method( ); 
-			return frame_type_ptr( ); 
-		}
-
 		virtual void on_slot_change( input_type_ptr input, int slot )
 		{
 			py::override method = get_override( "on_slot_change" );
@@ -197,6 +193,13 @@ class filter_delegate : public ml::filter_type, public py::wrapper< ml::filter_t
 		virtual bool is_thread_safe( ) const
 		{
 			return false;
+		}
+
+	protected:
+		virtual void do_fetch( frame_type_ptr &result  )
+		{
+			py::override method = get_override( "fetch" );
+			if ( method ) method( result ); 
 		}
 };
 
@@ -374,6 +377,7 @@ void py_frame( )
 		.def( "get_fps_num", &ml::frame_type::get_fps_num )
 		.def( "get_fps_den", &ml::frame_type::get_fps_den )
 		.def( "aspect_ratio", &ml::frame_type::aspect_ratio )
+		.def( "in_error", &ml::frame_type::in_error )
 	;
 }
 
@@ -413,6 +417,7 @@ void py_input( )
 		.def( "fetch", &ml::input_delegate::fetch )
 		.def( "fetch_callback", &ml::input_delegate::fetch_callback )
 		.def( "reuse", &ml::input_delegate::reuse )
+		.def( "is_thread_safe", &ml::input_delegate::is_thread_safe )
 	;
 
 	py::register_ptr_to_python< boost::shared_ptr< input_delegate > >( );
@@ -442,6 +447,7 @@ void py_input( )
 		.def( "fetch_callback", &ml::input_type::fetch_callback )
 		.def( "reuse", &ml::input_type::reuse )
 		.def( "fetch_slot", &ml::input_type::fetch_slot )
+		.def( "is_thread_safe", &ml::input_type::is_thread_safe )
 	;
 }
 
@@ -517,34 +523,6 @@ void py_audio_reseat( )
 	;
 }
 
-ml::input_type_ptr load_input( const pl::opl_ptr& ptr, const std::string& path )
-{
-	boost::shared_ptr<ml::openmedialib_plugin> plug = boost::shared_dynamic_cast<ml::openmedialib_plugin>( ptr );
-	if( !plug )
-		return ml::input_type_ptr( );
-
-	ml::input_type_ptr input = plug->load( fs::path( path, fs::native ) );
-	if( !input )
-		return ml::input_type_ptr( );
-	
-	input->init( );
-
-	return input;
-}
-
-ml::store_type_ptr load_store( const pl::opl_ptr& ptr, const std::string& path, const ml::frame_type_ptr &frame )
-{
-	boost::shared_ptr<ml::openmedialib_plugin> plug = boost::shared_dynamic_cast<ml::openmedialib_plugin>( ptr );
-	if( !plug )
-		return ml::store_type_ptr( );
-
-	ml::store_type_ptr store = plug->store( pl::to_wstring( path ), frame );
-	if( !store )
-		return ml::store_type_ptr( );
-		
-	return store;
-}
-
 ml::input_type_ptr create_input0( const pl::wstring &resource )
 {
 	return ml::create_input( resource );
@@ -567,8 +545,6 @@ ml::filter_type_ptr create_filter( const std::string &resource )
 
 void py_plugin( )
 {
-	py::def( "load_input", &detail::load_input );
-	py::def( "load_store", &detail::load_store );
 	py::def( "create_input", &detail::create_input0 );
 	py::def( "create_input", &detail::create_input );
 	py::def( "create_store", &detail::create_store );

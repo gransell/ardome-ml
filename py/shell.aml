@@ -1,0 +1,75 @@
+
+# Include the core definitions
+core.aml
+
+# Define some basic transport controls
+
+: play 1 speed ;
+: pause 0 speed ;
+: rew -25 speed ;
+: ffwd 25 speed ;
+: reverse -1 speed ;
+
+# Step for a number for frames
+# <frames> step --
+
+: step 
+	position + 
+	seek 
+;
+
+# Toggle pause/play
+
+: toggle
+	speed?
+	0 = if
+		play
+	else
+		pause
+	then
+;
+
+# Step in a loop - current speed is saved on the return stack at the start,
+# playout is paused and original speed is recovered when the loop is complete
+
+# <speed> <frames> stepper --
+
+: stepper
+	dup 
+	speed? >r
+	pause
+	begin 
+		1- dup 0 > 
+	while 
+		2 pick step 
+	repeat 
+	drop drop drop
+	r> speed
+;
+
+# Schedule all media on the stack to the playlist
+
+# <input1> ... <inputN> schedule --
+
+: schedule
+
+	depth
+	begin
+		dup roll
+		add
+		1- 
+		dup 0 =
+	until
+	drop
+;
+
+: pitch
+	pitch_filter speed=%s
+	drop
+;
+
+: volume
+	volume_filter volume=%s
+	drop
+;
+

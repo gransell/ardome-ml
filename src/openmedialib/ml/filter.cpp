@@ -1,6 +1,11 @@
 
 #include <openpluginlib/pl/log.hpp>
+#include "input.hpp"
+#include "frame.hpp"
 #include "filter.hpp"
+
+namespace opl  = olib::openpluginlib;
+namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -97,7 +102,61 @@ filter_type::filter_type( )
 { 
 	slots_.push_back( input_type_ptr( ) ); 
 }
-	
+
+const size_t filter_type::slot_count( ) const 
+{ 
+	return 1; 
+}
+
+const openpluginlib::wstring filter_type::get_mime_type( ) const
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->get_mime_type( ) : L""; 
+}
+
+int filter_type::get_position( ) const 
+{
+	return position_; 
+}
+
+int filter_type::get_frames( ) const
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->get_frames( ) : 0; 
+}
+
+bool filter_type::is_seekable( ) const 
+{ 
+	return slots_[ 0 ] ? slots_[ 0 ]->is_seekable( ) : false; 
+}
+
+int filter_type::get_video_streams( ) const
+{ 
+	return slots_[ 0 ] ? slots_[ 0 ]->get_video_streams( ) : 0; 
+}
+
+int filter_type::get_audio_streams( ) const
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_streams( ) : 0; 
+}
+
+bool filter_type::set_video_stream( const int stream )
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->set_video_stream( stream ) : false; 
+}
+
+bool filter_type::set_audio_stream( const int stream )
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->set_audio_stream( stream ) : false; 
+}
+
+void filter_type::on_slot_change( input_type_ptr, int ) 
+{
+}
+
+input_type_ptr filter_type::fetch_slot( size_t slot ) const
+{
+	return slot < slots_.size( ) ? slots_[ slot ] : input_type_ptr( ); 
+}
+
 bool filter_type::connect( input_type_ptr input, size_t slot )
 {
 	if ( slots_.size( ) < slot_count( ) )

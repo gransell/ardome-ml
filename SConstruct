@@ -94,10 +94,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
 
 		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008':
-			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'site-packages' )
+			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'site-packages', 'aml' )
 		else:
 			version = sys.version_info
-			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
+			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages', 'aml' )
 
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
@@ -174,7 +174,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		clone.prep_release( )
 		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
 		if has_python:
-			clone.copy_files( self[ 'python_packages' ], os.path.join( 'py', 'aml.py' ) )
+			clone.copy_files( self[ 'python_packages' ], 'py' )
 		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
@@ -191,7 +191,7 @@ if env.check_externals( ):
 	
 	pl = env.build( 'src/openpluginlib/pl' )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
-	ml = env.build( 'src/openmedialib/ml', [ pl, il ] )
+	ml = env.build( 'src/openmedialib/ml', [ cl, pl, il ] )
 	
 	env.build( 'src/openmedialib/plugins/avformat', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )

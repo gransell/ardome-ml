@@ -36,8 +36,9 @@
 #include <AL/alc.h>
 #endif
 
-namespace opl = olib::openpluginlib;
-namespace plugin = olib::openmedialib::ml;
+namespace pl = olib::openpluginlib;
+namespace pcos = olib::openpluginlib::pcos;
+namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 
 #if !defined( GCC_VERSION ) && defined( __GNUC__ )
@@ -271,9 +272,9 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 		ALenum format_;
 
 #if defined WIN32 || ( GCC_VERSION >= 40000 && !defined __APPLE__ ) // GC - shouldn't this Apple thing be PPC?
-		typedef opl::rdtsc_default_timer default_timer;
+		typedef pl::rdtsc_default_timer default_timer;
 #else
-		typedef opl::gettimeofday_default_timer default_timer;
+		typedef pl::gettimeofday_default_timer default_timer;
 #endif
 		typedef default_timer::value_type value_type;
 		default_timer timer_;
@@ -287,12 +288,12 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 class ML_PLUGIN_DECLSPEC openal_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const opl::wstring & )
+	virtual input_type_ptr input(  const pl::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const opl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
 	{
 		return store_type_ptr( new openal_store( ) );
 	}
@@ -316,14 +317,14 @@ extern "C"
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, opl::openplugin** plug )
+	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new plugin::openal_plugin;
+		*plug = new ml::openal_plugin;
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( opl::openplugin* plug )
+	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< plugin::openal_plugin * >( plug ); 
+		delete static_cast< ml::openal_plugin * >( plug ); 
 	}
 }

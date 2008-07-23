@@ -8,12 +8,19 @@
 #ifndef OPENMEDIALIB_INPUT_INC_
 #define OPENMEDIALIB_INPUT_INC_
 
-#include <openpluginlib/pl/pcos/property_container.hpp>
+#include <openmedialib/ml/types.hpp>
 #include <openmedialib/ml/frame.hpp>
 
-namespace olib { namespace openmedialib { namespace ml {
+#include <openpluginlib/pl/pcos/property_container.hpp>
 
-namespace pcos = olib::openpluginlib::pcos;
+#ifdef OML_USE_CORELIB
+#	include <opencorelib/cl/core.hpp>
+#	include <opencorelib/cl/base_exception.hpp>
+#endif
+
+#include <boost/enable_shared_from_this.hpp>
+
+namespace olib { namespace openmedialib { namespace ml {
 
 // A callback can be registered with each input - the concept being that when a frame
 // is fetched via the fetch method, the application has a means to assign property values 
@@ -28,7 +35,7 @@ class ML_DECLSPEC input_callback
 {
 	public:
 		virtual ~input_callback( ) { }
-		virtual void assign( pcos::property_container, int ) = 0;
+		virtual void assign( olib::openpluginlib::pcos::property_container, int ) = 0;
 		virtual bool is_thread_safe( ) const { return false; }
 };
 
@@ -46,21 +53,17 @@ typedef enum
 }
 process_flags;
 
-// Forward declarations
-class ML_DECLSPEC input_type;
-typedef boost::shared_ptr< input_type > input_type_ptr;
-
 // The input abstract class - implementations will extend this class and (minimally)
 // provide the pure virtual methods.
 
-class ML_DECLSPEC input_type
+class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type >
 {
 	public:
 		// Constructor/destructor
 		explicit input_type( )
 			: properties_( )
 			, initialized_( false )
-			, prop_debug_( pcos::key::from_string( "debug" ) )
+			, prop_debug_( olib::openpluginlib::pcos::key::from_string( "debug" ) )
 			, position_( 0 )
 			, process_( process_image | process_audio )
 			, callback_( )
@@ -80,11 +83,11 @@ class ML_DECLSPEC input_type
 		virtual input_type_ptr fetch_slot( size_t = 0 ) const { return input_type_ptr( ); }
 
 		// Property object
-		pcos::property_container properties( ) const 
+		olib::openpluginlib::pcos::property_container properties( ) const 
 		{ return properties_; }
 
 		// Convenience method
-		pcos::property property( const char *name ) const
+		olib::openpluginlib::pcos::property property( const char *name ) const
 		{ return properties_.get_property_with_string( name ); }
 
 		// Virtual method for state reset
@@ -134,8 +137,35 @@ class ML_DECLSPEC input_type
 		// Query the current position
 		virtual int get_position( ) const { return position_; }
 
-		// Virtual frame fetch method
-		virtual frame_type_ptr fetch( ) = 0;
+		// frame fetch method
+		frame_type_ptr fetch( )
+		{
+			frame_type_ptr result;
+			exception_ptr exception;
+
+			try
+			{
+				do_fetch( result );
+			}
+#ifdef OML_USE_CORELIB
+			catch( olib::opencorelib::base_exception &be )
+			{
+				exception = exception_ptr( new olib::opencorelib::base_exception( be ) );
+			}
+#endif
+			catch( std::exception &be )
+			{
+				exception = exception_ptr( new std::exception( be ) );
+			}
+
+			if ( !result )
+				result = frame_type_ptr( new frame_type( ) );
+
+			if ( exception )
+				result->push_exception( exception, shared_from_this( ) );
+
+			return result;
+		}
 
 		// Virtual push method for a frame
 		virtual bool push( frame_type_ptr ) { return false; }
@@ -164,10 +194,13 @@ class ML_DECLSPEC input_type
 		// Virtual method for initialization
 		virtual bool initialize( ) { return true; }
 
+		// Pure virtual do_fetch
+		virtual void do_fetch( frame_type_ptr & ) = 0;
+
 	private:
-		pcos::property_container properties_;
+		olib::openpluginlib::pcos::property_container properties_;
 		bool initialized_;
-		pcos::property prop_debug_;
+		olib::openpluginlib::pcos::property prop_debug_;
 		int position_;
 		int process_;
 		input_callback_ptr callback_;

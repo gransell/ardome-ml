@@ -11,6 +11,7 @@
 #include <openpluginlib/pl/string.hpp>
 
 #include <openmedialib/ml/config.hpp>
+#include <openmedialib/ml/types.hpp>
 #include <openmedialib/ml/filter.hpp>
 #include <openmedialib/ml/frame.hpp>
 #include <openmedialib/ml/input.hpp>

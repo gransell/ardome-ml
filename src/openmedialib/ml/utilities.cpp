@@ -814,11 +814,11 @@ ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const openplugin
 
 	if ( result && result->get_image( ) )
 	{
-		image_type_ptr src = result->get_image( );
+		il::image_type_ptr src = result->get_image( );
 
 		if ( src && src->pf( ) != pf )
 		{
-			image_type_ptr alpha = il::extract_alpha( src );
+			il::image_type_ptr alpha = il::extract_alpha( src );
 			if ( alpha )
 				result->set_alpha( alpha );
 			result->set_image( il::convert( src, pf ) );

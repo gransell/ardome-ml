@@ -3,6 +3,9 @@
 #include "frame.hpp"
 #include <deque>
 
+namespace pcos = olib::openpluginlib::pcos;
+namespace il = olib::openimagelib::il;
+
 namespace olib { namespace openmedialib { namespace ml {
 
 frame_type::frame_type( ) 
@@ -49,6 +52,7 @@ frame_type_ptr frame_type::shallow_copy( const frame_type_ptr &other )
 		copy->fps_den_ = other->fps_den_;
 		for ( std::deque< ml::frame_type_ptr >::iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
 			copy->queue_.push_back( shallow_copy( *iter ) );
+		copy->exceptions_ = other->exceptions_;
 		result = frame_type_ptr( copy );
 	}
 	return result;
@@ -63,9 +67,9 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 		std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
 		copy->properties_ = *clone.get( );
 		if ( other->image_ )
-			copy->image_ = ml::image_type_ptr( other->image_->clone( ) );
+			copy->image_ = il::image_type_ptr( other->image_->clone( ) );
 		if ( other->alpha_ )
-			copy->alpha_ = ml::image_type_ptr( other->alpha_->clone( ) );
+			copy->alpha_ = il::image_type_ptr( other->alpha_->clone( ) );
 		if ( other->audio_ )
 		{
 			typedef audio< unsigned char, pcm16 > pcm16;
@@ -82,6 +86,7 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 		copy->fps_den_ = other->fps_den_;
 		for ( std::deque< ml::frame_type_ptr >::iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
 			copy->queue_.push_back( shallow_copy( *iter ) );
+		copy->exceptions_ = other->exceptions_;
 		result = frame_type_ptr( copy );
 	}
 	return result;
@@ -90,10 +95,10 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 pcos::property_container frame_type::properties( ) { return properties_; }
 pcos::property frame_type::property( const char *name ) const { return properties_.get_property_with_string( name ); }
 
-void frame_type::set_image( image_type_ptr image ) { image_ = image; }
-image_type_ptr frame_type::get_image( ) { return image_; }
-void frame_type::set_alpha( image_type_ptr image ) { alpha_ = image; }
-image_type_ptr frame_type::get_alpha( ) { return alpha_; }
+void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
+il::image_type_ptr frame_type::get_image( ) { return image_; }
+void frame_type::set_alpha( il::image_type_ptr image ) { alpha_ = image; }
+il::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
 void frame_type::set_audio( audio_type_ptr audio ) { audio_ = audio; }
 audio_type_ptr frame_type::get_audio( ) { return audio_; }
 void frame_type::set_pts( double pts ) { pts_ = pts; }
@@ -192,6 +197,21 @@ frame_type_ptr frame_type::fold( std::deque< frame_type_ptr > &queue )
 	}
 
 	return result;
+}
+
+void frame_type::push_exception( exception_ptr exception, input_type_ptr input )
+{ 
+	exceptions_.push_back( exception_item( exception, input ) ); 
+}
+
+exception_list frame_type::exceptions( ) const
+{ 
+	return exceptions_; 
+}
+
+const bool frame_type::in_error( ) const
+{ 
+	return exceptions_.size( ) != 0; 
 }
 
 } } }

@@ -9,6 +9,6 @@ local_env.packages( 'boost_thread', 'boost_filesystem', 'build_ml' )
 object = local_env.shared_library( 'openmedialib_ml', [ 'filter.cpp', 'frame.cpp', 'ml.cpp', 'openmedialib_plugin.cpp', 'utilities.cpp' ] )
 
 local_env.release( object )
-local_env.copy_project_files( local_env[ 'ml_include' ], [ 'audio.hpp', 'config.hpp', 'filter.hpp', 'frame.hpp', 'input.hpp', 'ml.hpp', 'openmedialib_plugin.hpp', 'store.hpp', 'utilities.hpp' ] )
+local_env.copy_project_files( local_env[ 'ml_include' ], [ 'audio.hpp', 'config.hpp', 'filter.hpp', 'frame.hpp', 'input.hpp', 'ml.hpp', 'openmedialib_plugin.hpp', 'store.hpp', 'types.hpp', 'utilities.hpp' ] )
 
 Return( 'object' )

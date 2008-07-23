@@ -37,14 +37,15 @@
 #	pragma warning ( disable: 4251 )
 #endif
 
-namespace opl = olib::openpluginlib;
-namespace plugin = olib::openmedialib::ml;
+namespace pl = olib::openpluginlib;
+namespace pcos = olib::openpluginlib::pcos;
+namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
 // Utility functionality common to the plugin
-inline void fill( image_type_ptr img, size_t plane, unsigned char val )
+inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 {
 	unsigned char *ptr = img->data( plane );
 	int width = img->width( plane );
@@ -60,7 +61,7 @@ inline void fill( image_type_ptr img, size_t plane, unsigned char val )
 	}
 }
 
-static opl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
+static pl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
 
 static bool has_image( frame_type_ptr &frame )
 {
@@ -70,7 +71,7 @@ static bool has_image( frame_type_ptr &frame )
 	{
 		if ( *iter && ( *iter )->get_image( ) )
 		{
-			opl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
+			pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
 			result = !prop.valid( ) || prop.value< int >( ) == 0;
 		}
 	}
@@ -113,7 +114,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
 		{
 			// Default to a black PAL video
-			properties( ).append( prop_colourspace_ = opl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
 			properties( ).append( prop_r_ = 0x00 );
 			properties( ).append( prop_g_ = 0x00 );
 			properties( ).append( prop_b_ = 0x00 );
@@ -131,8 +132,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		virtual ~colour_input( ) { }
 
 		// Basic information
-		virtual const opl::wstring get_uri( ) const { return L"colour:"; }
-		virtual const opl::wstring get_mime_type( ) const { return L""; }
+		virtual const pl::wstring get_uri( ) const { return L"colour:"; }
+		virtual const pl::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_out_.value< int >( ); }
@@ -166,19 +167,23 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		// Audio
 		virtual int get_audio_streams( ) const { return 0; }
 
+	protected:
 		// Fetch method
-		virtual frame_type_ptr fetch( )
+		void do_fetch( frame_type_ptr &result )
 		{
+			// Return a frame
+			result = frame_type_ptr( new frame_type( ) );
+
 			// Obtain property values
 			acquire_values( );
 
-			image_type_ptr image;
-			image_type_ptr alpha;
+			il::image_type_ptr image;
+			il::image_type_ptr alpha;
 
 			// Create and populate the image
 			if ( prop_deferred_.value< int >( ) == 0 )
 			{
-				image = il::allocate( prop_colourspace_.value< opl::wstring >( ).c_str(), get_width( ), get_height( ) );
+				image = il::allocate( prop_colourspace_.value< pl::wstring >( ).c_str(), get_width( ), get_height( ) );
 				if ( image )
 				{
 					image->set_writable( true );
@@ -199,7 +204,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			{
 				if ( deferred_image_ == 0 || deferred_image_->width( ) != get_width( ) || deferred_image_->height( ) != get_height( ) )
 				{
-					deferred_image_ = il::allocate( prop_colourspace_.value< opl::wstring >( ).c_str(), get_width( ), get_height( ) );
+					deferred_image_ = il::allocate( prop_colourspace_.value< pl::wstring >( ).c_str(), get_width( ), get_height( ) );
 					if ( deferred_image_ )
 					{
 						deferred_image_->set_writable( false );
@@ -222,28 +227,23 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			}
 
 			// Construct a frame and populate with basic information
-			frame_type *frame = new frame_type( );
-			frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
-			frame->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
-			frame->set_pts( get_position( ) * 1.0 / fps( ) );
-			frame->set_duration( 1.0 / fps( ) );
-			frame->set_position( get_position( ) );
+			result->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
+			result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
+			result->set_pts( get_position( ) * 1.0 / fps( ) );
+			result->set_duration( 1.0 / fps( ) );
+			result->set_position( get_position( ) );
 
 			// Set the image
-			frame->set_image( image );
-			frame->set_alpha( alpha );
+			result->set_image( image );
+			result->set_alpha( alpha );
 
 			// Identify image as a background
-			opl::pcos::property prop( key_background_ );
-			frame->properties( ).append( prop = 1 );
-
-			// Return a frame
-			return frame_type_ptr( frame );
+			pl::pcos::property prop( key_background_ );
+			result->properties( ).append( prop = 1 );
 		}
 
 		virtual bool reuse( ) { return false; }
 
-	protected:
 		void populate( il::image_type_ptr image )
 		{
 			if ( il::is_yuv_planar( image ) )
@@ -291,8 +291,8 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		virtual ~pusher_input( ) { }
 
 		// Basic information
-		virtual const opl::wstring get_uri( ) const { return L"pusher:"; }
-		virtual const opl::wstring get_mime_type( ) const { return L""; }
+		virtual const pl::wstring get_uri( ) const { return L"pusher:"; }
+		virtual const pl::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return int( queue_.size( ) ); }
@@ -308,29 +308,26 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		// Audio
 		virtual int get_audio_streams( ) const { return 1; }
 
-		// Fetch method
-		virtual frame_type_ptr fetch( )
-		{
-			// Obtain property values
-			acquire_values( );
-
-			// Acquire frame
-			frame_type_ptr frame;
-			if ( queue_.size( ) > 0 )
-			{
-				frame = *( queue_.begin( ) );
-				queue_.pop_front( );
-			}
-
-			// Return a frame
-			return frame;
-		}
-
 		// Push method
 		virtual bool push( frame_type_ptr frame )
 		{
 			queue_.push_back( frame );
 			return true;
+		}
+
+	protected:
+		// Fetch method
+		void do_fetch( frame_type_ptr &result )
+		{
+			// Obtain property values
+			acquire_values( );
+
+			// Acquire frame
+			if ( queue_.size( ) > 0 )
+			{
+				result = *( queue_.begin( ) );
+				queue_.pop_front( );
+			}
 		}
 
 	private:
@@ -364,19 +361,20 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_type
 			properties( ).append( prop_v_ = 128 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"chroma"; }
+		virtual const pl::wstring get_uri( ) const { return L"chroma"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
 					result = frame_convert( result, L"yuv420p" );
-				image_type_ptr img = result->get_image( );
+				il::image_type_ptr img = result->get_image( );
 				img = il::conform( img, il::writable );
 				if ( img )
 				{
@@ -385,8 +383,6 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_type
 				}
 				result->set_image( img );
 			}
-			
-			return result;
 		}
 
 	private:
@@ -432,17 +428,18 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_pf_ = opl::wstring( L"yuv420p" ) );
-			properties( ).append( prop_default_ = opl::wstring( L"" ) );
+			properties( ).append( prop_pf_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_default_ = pl::wstring( L"" ) );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"conform"; }
+		virtual const pl::wstring get_uri( ) const { return L"conform"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( result )
 			{
@@ -455,7 +452,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 				}
 				else if ( prop_image_.value< int >( ) == 0 )
 				{
-					result->set_image( image_type_ptr( ) );
+					result->set_image( il::image_type_ptr( ) );
 				}
 
 				if ( prop_audio_.value< int >( ) == 1 )
@@ -475,15 +472,13 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 					result->set_audio( audio_type_ptr( ) );
 				}
 			}
-			
-			return result;
 		}
 
 		void default_image( frame_type_ptr &result )
 		{
-			if ( prop_default_.value< opl::wstring >( ) != L"" )
+			if ( prop_default_.value< pl::wstring >( ) != L"" )
 			{
-				opl::wstring resource = prop_default_.value< opl::wstring >( );
+				pl::wstring resource = prop_default_.value< pl::wstring >( );
 
 				// Detect changes in default property
 				if ( resource != current_default_  )
@@ -496,7 +491,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 				// Create the input if we haven't done so before
 				if ( input_default_ == 0 )
 				{
-					if ( resource.substr( 0, 7 ) == opl::wstring( L"filter:" ) )
+					if ( resource.substr( 0, 7 ) == pl::wstring( L"filter:" ) )
 					{
 						ml::filter_type_ptr filter = create_filter( resource.substr( 7 ) );
 						if ( filter )
@@ -507,7 +502,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 						}
 						else
 						{
-							PL_LOG( opl::level::error, boost::format( "Unable to create requested filter: %s" ) % opl::to_string( resource ) );
+							PL_LOG( pl::level::error, boost::format( "Unable to create requested filter: %s" ) % pl::to_string( resource ) );
 						}
 					}
 					else
@@ -515,7 +510,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 						input_default_ = create_input( resource );
 						if ( input_default_ == 0 || input_default_->get_frames( ) <= 0 )
 						{
-							PL_LOG( opl::level::error, boost::format( "Unable to create requested input: %s" ) % opl::to_string( resource ) );
+							PL_LOG( pl::level::error, boost::format( "Unable to create requested input: %s" ) % pl::to_string( resource ) );
 							input_default_ = input_type_ptr( );
 						}
 					}
@@ -551,14 +546,14 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 				}
 
 				// Force non background setting
-				opl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+				pl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
 				if ( prop.valid( ) && prop.value< int >( ) == 1 )
 					prop = 0;
 			}
 
 			if ( result->get_image( ) == 0 )
 			{
-				image_type_ptr image = il::allocate( prop_pf_.value< opl::wstring >( ).c_str( ), 720, 576 );
+				il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ).c_str( ), 720, 576 );
 				fill( image, 0, ( unsigned char )16 );
 				fill( image, 1, ( unsigned char )128 );
 				fill( image, 2, ( unsigned char )128 );
@@ -576,7 +571,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 		pcos::property prop_default_;
 		input_type_ptr input_default_;
 		input_type_ptr input_pusher_;
-		opl::wstring current_default_;
+		pl::wstring current_default_;
 };
 
 // Crop filter
@@ -618,19 +613,20 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 			properties( ).append( prop_rh_ = 1.0 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"crop"; }
+		virtual const pl::wstring get_uri( ) const { return L"crop"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
 					result = frame_convert( result, L"yuv420p" );
-				image_type_ptr img = result->get_image( );
+				il::image_type_ptr img = result->get_image( );
 
 				// Ensure the image component is writable
 				img = il::conform( img, il::writable );
@@ -680,8 +676,6 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 					result = frame_crop( result, px, py, pw, ph );
 				}
 			}
-
-			return result;
 		}
 
 	private:
@@ -775,7 +769,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			, prop_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_mode_ = opl::wstring( L"fill" ) );
+			properties( ).append( prop_mode_ = pl::wstring( L"fill" ) );
 			properties( ).append( prop_swap_ = 0 );
 			properties( ).append( prop_pixel_ = 0 );
 			properties( ).append( prop_px_ = 0 );
@@ -787,13 +781,13 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			properties( ).append( prop_rw_ = 1.0 );
 			properties( ).append( prop_rh_ = 1.0 );
 			properties( ).append( prop_mix_ = 1.0 );
-			properties( ).append( prop_interp_ = opl::wstring( L"bilinear" ) );
+			properties( ).append( prop_interp_ = pl::wstring( L"bilinear" ) );
 			properties( ).append( prop_slot_ = 0 );
 			properties( ).append( prop_frame_rescale_cb_ = boost::uint64_t( 0 ) );
 			properties( ).append( prop_image_rescale_cb_ = boost::uint64_t( 0 ) );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"composite"; }
+		virtual const pl::wstring get_uri( ) const { return L"composite"; }
 
 		virtual const size_t slot_count( ) const { return 2; }
 
@@ -803,11 +797,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			return input ? input->get_frames( ) : 0;
 		}
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			frame_type_ptr overlay;
 
 			if ( prop_enable_.value< int >( ) == 0 )
@@ -822,8 +816,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			if ( result && overlay )
 			{
-				image_type_ptr dst = result->get_image( );
-				image_type_ptr src = overlay->get_image( );
+				il::image_type_ptr dst = result->get_image( );
+				il::image_type_ptr src = overlay->get_image( );
 
 				if ( dst && src )
 				{
@@ -831,7 +825,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result = composite( result, overlay, geom );
 
 					// If we've composited on to a background, it's no longer a background...
-					opl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+					pl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
 					if ( prop.valid( ) && prop.value< int >( ) == 1 )
 						prop = 0;
 				}
@@ -855,11 +849,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			if ( result )
 				result->set_position( get_position( ) );
-
-			return result;
 		}
 
-	protected:
 		struct geometry calculate_full( frame_type_ptr dst, frame_type_ptr src )
 		{
 			struct geometry result;
@@ -909,7 +900,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			int pillar_w = int( 0.5 + ( result.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
 
 			// Handle the requested mode
-			if ( prop_mode_.value< opl::wstring >( ) == L"fill" )
+			if ( prop_mode_.value< pl::wstring >( ) == L"fill" )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
@@ -920,7 +911,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result.h = letter_h;
 				}
 			}
-			else if ( prop_mode_.value< opl::wstring >( ) == L"smart" )
+			else if ( prop_mode_.value< pl::wstring >( ) == L"smart" )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
@@ -931,12 +922,12 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result.h = letter_h;
 				}
 			}
-			else if ( prop_mode_.value< opl::wstring >( ).find( L"letter" ) == 0 )
+			else if ( prop_mode_.value< pl::wstring >( ).find( L"letter" ) == 0 )
 			{
 				result.w = dst_w;
 				result.h = letter_h;
 			}
-			else if ( prop_mode_.value< opl::wstring >( ).find( L"pillar" ) == 0 )
+			else if ( prop_mode_.value< pl::wstring >( ).find( L"pillar" ) == 0 )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
@@ -989,9 +980,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			// Aquire requested rescaling algorithm
 			il::rescale_filter filter = il::BILINEAR_SAMPLING;
-			if ( prop_interp_.value< opl::wstring >( ) == L"point" )
+			if ( prop_interp_.value< pl::wstring >( ) == L"point" )
 				filter = il::POINT_SAMPLING;
-			else if ( prop_interp_.value< opl::wstring >( ) == L"bicubic" )
+			else if ( prop_interp_.value< pl::wstring >( ) == L"bicubic" )
 				filter = il::BICUBIC_SAMPLING;
 			foreground = f_rescale( foreground, geom.w, geom.h, filter );
 
@@ -1000,8 +991,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			background->set_alpha( il::conform( background->get_alpha( ), il::writable ) );
 
 			// Extract images
-			image_type_ptr dst = background->get_image( );
-			image_type_ptr src = foreground->get_image( );
+			il::image_type_ptr dst = background->get_image( );
+			il::image_type_ptr src = foreground->get_image( );
 
 			// Obtain the src and dst image dimensions
 			int src_width = src->width( );
@@ -1037,8 +1028,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				src_height -= ( dst_y + src_height - dst_height );
 
 			// Scale down the alphas to the size of the chroma planes 
-			image_type_ptr half_src_alpha; 
-			image_type_ptr half_dst_alpha;
+			il::image_type_ptr half_src_alpha; 
+			il::image_type_ptr half_dst_alpha;
 
 			if ( background->get_alpha( ) )
 				half_dst_alpha = i_rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
@@ -1082,7 +1073,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else if ( !background->get_alpha( ) && foreground->get_alpha( ) )
 					{
-						image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
+						il::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
@@ -1103,7 +1094,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else if ( background->get_alpha( ) && !foreground->get_alpha( ) )
 					{
-						image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
+						il::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
 						unsigned char *dst_alpha_ptr = dst_alpha->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
 						while ( temp_h -- )
@@ -1124,10 +1115,10 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else
 					{
-						image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
+						il::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
 						unsigned char *dst_alpha_ptr = dst_alpha->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
-						image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
+						il::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
@@ -1236,18 +1227,17 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_type
 			properties( ).append( prop_saturation_ = 1.0 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"correction"; }
+		virtual const pl::wstring get_uri( ) const { return L"correction"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( result && prop_enable_.value< int >( ) )
 				result = process_image( result );
-			
-			return result;
 		}
 
 	private:
@@ -1256,7 +1246,7 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_type
 			if ( !is_yuv_planar( result ) )
 				result = frame_convert( result, L"yuv420p" );
 			result->set_image( il::conform( result->get_image( ), il::writable ) );
-			image_type_ptr img = result->get_image( );
+			il::image_type_ptr img = result->get_image( );
 			if ( img )
 			{
 				// Interpret properties
@@ -1398,7 +1388,7 @@ class ML_PLUGIN_DECLSPEC threader_filter : public filter_type
 			prop_active_.set( 0 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"threader"; }
+		virtual const pl::wstring get_uri( ) const { return L"threader"; }
 
 		void update_active( )
 		{
@@ -1458,11 +1448,17 @@ class ML_PLUGIN_DECLSPEC threader_filter : public filter_type
 			}
 		}
 
-		virtual frame_type_ptr fetch( )
+		virtual void on_slot_change( input_type_ptr input, int )
+		{
+			if ( !input )
+				prop_active_.set( 0 );
+		}
+
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -1520,14 +1516,6 @@ class ML_PLUGIN_DECLSPEC threader_filter : public filter_type
 
 				result = frame_type::deep_copy( result );
 			}
-			
-			return result;
-		}
-
-		virtual void on_slot_change( input_type_ptr input, int )
-		{
-			if ( !input )
-				prop_active_.set( 0 );
 		}
 
 	private:
@@ -1578,7 +1566,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			return map_source_to_dest( src_frames_ );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"frame_rate"; }
+		virtual const pl::wstring get_uri( ) const { return L"frame_rate"; }
 
 		virtual void seek( const int position, const bool relative = false )
 		{
@@ -1604,11 +1592,32 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			return position_;
 		}
 
-		virtual frame_type_ptr fetch( )
+		virtual void on_slot_change( input_type_ptr input, int )
+		{
+			if ( input )
+			{
+				frame_type_ptr frame = input->fetch( );
+
+				src_frames_ = input->get_frames( );
+				src_fps_num_ = -1;
+				src_fps_den_ = -1;
+				src_frequency_ = 0;
+
+				if ( frame )
+				{
+					src_fps_num_ = frame->get_fps_num( );
+					src_fps_den_ = frame->get_fps_den( );
+					if ( frame->get_audio( ) )
+						src_frequency_ = frame->get_audio( )->frequency( );
+				}
+			}
+		}
+
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -1677,29 +1686,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					result->set_fps( fps_num, fps_den );
 				}
 			}
-
-			return result;
-		}
-
-		virtual void on_slot_change( input_type_ptr input, int )
-		{
-			if ( input )
-			{
-				frame_type_ptr frame = input->fetch( );
-
-				src_frames_ = input->get_frames( );
-				src_fps_num_ = -1;
-				src_fps_den_ = -1;
-				src_frequency_ = 0;
-
-				if ( frame )
-				{
-					src_fps_num_ = frame->get_fps_num( );
-					src_fps_den_ = frame->get_fps_den( );
-					if ( frame->get_audio( ) )
-						src_frequency_ = frame->get_audio( )->frequency( );
-				}
-			}
 		}
 
 	private:
@@ -1763,7 +1749,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			return frames < 0 ? - frames : frames;
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"clip"; }
+		virtual const pl::wstring get_uri( ) const { return L"clip"; }
 
 		virtual void seek( const int position, const bool relative = false )
 		{
@@ -1778,11 +1764,12 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			return position_;
 		}
 
-		virtual frame_type_ptr fetch( )
+	protected:
+
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -1803,8 +1790,6 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 				if ( result )
 					result->set_position( get_position( ) );
 			}
-			
-			return result;
 		}
 
 	private:
@@ -1862,13 +1847,14 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 			properties( ).append( prop_force_ = 0 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"deinterlace"; }
+		virtual const pl::wstring get_uri( ) const { return L"deinterlace"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
@@ -1877,8 +1863,6 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 					result->get_image( )->set_field_order( prop_force_.value< int >( ) == 2 ? il::bottom_field_first : il::top_field_first );
 				result->set_image( il::deinterlace( result->get_image( ) ) );
 			}
-			
-			return result;
 		}
 
 	private:
@@ -1902,13 +1886,13 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			properties( ).append( prop_out_ = -1 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"lerp"; }
+		virtual const pl::wstring get_uri( ) const { return L"lerp"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -1919,11 +1903,8 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 				for( pcos::key_vector::iterator it = props.begin( ); result && it != props.end( ); it ++ )
 					evaluate( result, *it );
 			}
-			
-			return result;
 		}
 
-	protected:
 		void correct_in_out( int &in, int &out )
 		{
 			if ( in < 0 )
@@ -1964,14 +1945,14 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			if ( name.substr( 0, 2 ) == "@@" && get_frames( ) )
 			{
 				pcos::property prop = properties( ).get_property_with_key( key );
-				opl::wstring value = prop.value< opl::wstring >( );
+				pl::wstring value = prop.value< pl::wstring >( );
 
 				double lower, upper, result;
 				int in = prop_in_.value< int >( );
 				int out = prop_out_.value< int >( );
 				int position = get_position( ) % get_frames( );
 
-				int count = sscanf( opl::to_string( value ).c_str( ), "%lf:%lf:%d:%d", &lower, &upper, &in, &out );
+				int count = sscanf( pl::to_string( value ).c_str( ), "%lf:%lf:%d:%d", &lower, &upper, &in, &out );
 
 				correct_in_out( in, out );
 
@@ -2003,7 +1984,7 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 {
 	public:
 		bezier_filter( ) : lerp_filter( ) { }
-		virtual const opl::wstring get_uri( ) const { return L"bezier"; }
+		virtual const pl::wstring get_uri( ) const { return L"bezier"; }
 
 	protected:
 		typedef struct
@@ -2044,13 +2025,13 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 			{
 				int position = get_position( ) % get_frames( );
 				pcos::property prop = properties( ).get_property_with_key( key );
-				opl::wstring value = prop.value< opl::wstring >( );
+				pl::wstring value = prop.value< pl::wstring >( );
 
 				point points[ 4 ];
 				int in = prop_in_.value< int >( );
 				int out = prop_out_.value< int >( );
 
-				int count = sscanf( opl::to_string( value ).c_str( ), "%lf,%lf:%lf,%lf:%lf,%lf:%lf,%lf:%d:%d", 
+				int count = sscanf( pl::to_string( value ).c_str( ), "%lf,%lf:%lf,%lf:%lf,%lf:%lf,%lf:%d:%d", 
 																	  &points[ 0 ].x, &points[ 0 ].y,
 																	  &points[ 1 ].x, &points[ 1 ].y,
 																	  &points[ 2 ].x, &points[ 2 ].y,
@@ -2127,16 +2108,17 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			properties( ).append( prop_sar_num_ = 1 );
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
-			properties( ).append( prop_colourspace_ = opl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"visualise"; }
+		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result = fetch_from_slot( );
+			result = fetch_from_slot( );
 
 			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
 				visualise( result );
@@ -2144,8 +2126,6 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 				result->set_image( previous_ );
 			else if ( result )
 				previous_ = result->get_image( );
-
-			return result;
 		}
 
 	private:
@@ -2154,10 +2134,10 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			if ( frame->get_audio( ) != 0 )
 			{
 				int type = prop_type_.value< int >( );
-				opl::wstring colourspace = prop_colourspace_.value< opl::wstring >( );
+				pl::wstring colourspace = prop_colourspace_.value< pl::wstring >( );
 				int width = prop_width_.value< int >( );
 				int height = prop_height_.value< int >( );
-				image_type_ptr image = frame->get_image( );
+				il::image_type_ptr image = frame->get_image( );
 
 				if ( image == 0 || prop_force_.value< int >( ) == 1 )
 				{
@@ -2201,7 +2181,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
 
 			audio_type_ptr audio = frame->get_audio( );
-			image_type_ptr image = frame->get_image( );
+			il::image_type_ptr image = frame->get_image( );
 
 			int width = image->width( );
 			int height = image->height( );
@@ -2264,7 +2244,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
 
 			audio_type_ptr audio = frame->get_audio( );
-			image_type_ptr image = frame->get_image( );
+			il::image_type_ptr image = frame->get_image( );
 			int width = image->width( );
 			int height = image->height( );
 
@@ -2308,7 +2288,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 		pcos::property prop_sar_den_;
 		pcos::property prop_type_;
 		pcos::property prop_colourspace_;
-		image_type_ptr previous_;
+		il::image_type_ptr previous_;
 };
 
 // Playlist filter
@@ -2338,7 +2318,7 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 
 		virtual const size_t slot_count( ) const { return size_t( prop_slots_.value< int >( ) ); }
 
-		virtual const opl::wstring get_uri( ) const { return L"playlist"; }
+		virtual const pl::wstring get_uri( ) const { return L"playlist"; }
 
 		virtual int get_frames( ) const 
 		{
@@ -2349,11 +2329,11 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 			return result;
 		}
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			size_t slot = slot_for_position( get_position( ) );
 			input_type_ptr input = fetch_slot( slot );
 
@@ -2364,8 +2344,6 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 				if ( result )
 					result->set_position( get_position( ) );
 			}
-			
-			return result;
 		}
 
 	private:
@@ -2406,7 +2384,7 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 class ML_PLUGIN_DECLSPEC gensys_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const opl::wstring &request )
+	virtual input_type_ptr input( const pl::wstring &request )
 	{
 		if ( request == L"pusher:" )
 			return input_type_ptr( new pusher_input( ) );
@@ -2414,7 +2392,7 @@ public:
 			return input_type_ptr( new colour_input( ) );
 	}
 
-	virtual filter_type_ptr filter( const opl::wstring &request )
+	virtual filter_type_ptr filter( const pl::wstring &request )
 	{
 		if ( request == L"chroma" )
 			return filter_type_ptr( new chroma_filter( ) );
@@ -2468,15 +2446,15 @@ extern "C"
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, opl::openplugin** plug )
+	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new plugin::gensys_plugin;
+		*plug = new ml::gensys_plugin;
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( opl::openplugin* plug )
+	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< plugin::gensys_plugin * >( plug ); 
+		delete static_cast< ml::gensys_plugin * >( plug ); 
 	}
 }
 

@@ -38,8 +38,9 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
-namespace opl = olib::openpluginlib;
-namespace plugin = olib::openmedialib::ml;
+namespace pl = olib::openpluginlib;
+namespace pcos = olib::openpluginlib::pcos;
+namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml { 
@@ -94,7 +95,7 @@ static bool sdl_init_audio( )
 class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 {
 	public:
-		sdl_video( const opl::wstring &, const frame_type_ptr & ) 
+		sdl_video( const pl::wstring &, const frame_type_ptr & ) 
 			: store_type( )
 			, prop_winid_( pcos::key::from_string( "winid" ) )
 			, prop_flags_( pcos::key::from_string( "flags" ) )
@@ -118,14 +119,14 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			properties( ).append( prop_height_ = default_height_ );
 			properties( ).append( prop_keydown_ = 0 );
 			properties( ).append( prop_keymod_ = 0 );
-			properties( ).append( prop_box_ = opl::wstring( L"fill" ) );
+			properties( ).append( prop_box_ = pl::wstring( L"fill" ) );
 			properties( ).append( prop_full_ = 0 );
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = opl::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = pl::wstring( L"yuv422" ) );
 #else
-			properties( ).append( prop_pf_ = opl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_pf_ = pl::wstring( L"yuv420p" ) );
 #endif
 		}
 
@@ -157,7 +158,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			if ( frame == 0 && last_frame_ == 0 )
 				return false;
 
-			image_type_ptr img;
+			il::image_type_ptr img;
 
 			// Obtain the current image or force previous frame
 			if ( frame )
@@ -181,7 +182,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			}
 
 			// Convert to requested colour space
-			img = il::convert( img, prop_pf_.value< opl::wstring >( ).c_str( ) );
+			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
 			last_image_ = img;
 
 			// TODO: Provide an alternative mechanism window event handling (via properties)
@@ -294,7 +295,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		// Fetch a configured overlay for the the image 
 		// TODO: Paramerise colour space
-		SDL_Overlay *fetch_overlay( frame_type_ptr frame, image_type_ptr &img )
+		SDL_Overlay *fetch_overlay( frame_type_ptr frame, il::image_type_ptr &img )
 		{
 			double this_aspect = double( prop_width_.value< int >( ) ) / double( prop_height_.value< int >( ) );
 			int cx = 0;
@@ -306,7 +307,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			sn = sn == 0 ? 1 : sn;
 			sd = sd == 0 ? 1 : sd;
 
-			if ( prop_box_.value< opl::wstring >( ) == L"letter" )
+			if ( prop_box_.value< pl::wstring >( ) == L"letter" )
 			{
 				ch = int( double( ( cw * sn ) / sd ) / this_aspect );
 
@@ -320,7 +321,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					cy = ( img->height( ) - ch ) / 2;
 				}
 			}
-			else if ( prop_box_.value< opl::wstring >( ) == L"pillar" )
+			else if ( prop_box_.value< pl::wstring >( ) == L"pillar" )
 			{
 				cw = int( double( ( ch * sd ) / sn ) * this_aspect );
 				if ( cw > img->width( ) )
@@ -427,14 +428,14 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		Uint32 get_format( )
 		{
-			std::wstring pf = prop_pf_.value< opl::wstring >( ).c_str( );
+			std::wstring pf = prop_pf_.value< pl::wstring >( ).c_str( );
 			if ( pf == L"yuv422" )
 				return SDL_YUY2_OVERLAY;
 			return SDL_YV12_OVERLAY;
 		}
 
 		frame_type_ptr last_frame_;
-		image_type_ptr last_image_;
+		il::image_type_ptr last_image_;
 		pcos::property prop_winid_;
 		pcos::property prop_flags_;
 		pcos::property prop_width_;
@@ -484,7 +485,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 	public:
         typedef fn_observer< sdl_audio > observer;
 
-		sdl_audio( const opl::wstring &, const frame_type_ptr & ) 
+		sdl_audio( const pl::wstring &, const frame_type_ptr & ) 
 			: store_type( )
 			, prop_buffer_( pcos::key::from_string( "buffer" ) )
 			, prop_preroll_( pcos::key::from_string( "preroll" ) )
@@ -748,12 +749,12 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 class ML_PLUGIN_DECLSPEC sdl_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const opl::wstring & )
+	virtual input_type_ptr input( const pl::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const opl::wstring &args, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const pl::wstring &args, const frame_type_ptr &frame )
 	{
 		if ( args == L"sdl_audio:" )
 			return store_type_ptr( new sdl_audio( args, frame ) );
@@ -780,15 +781,15 @@ extern "C"
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, opl::openplugin** plug )
+	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new plugin::sdl_plugin;
+		*plug = new ml::sdl_plugin;
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( opl::openplugin* plug )
+	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< plugin::sdl_plugin * >( plug ); 
+		delete static_cast< ml::sdl_plugin * >( plug ); 
 	}
 }
 

@@ -8,64 +8,136 @@
 #ifndef OPENMEDIALIB_FRAME_INC_
 #define OPENMEDIALIB_FRAME_INC_
 
+#include <openmedialib/ml/types.hpp>
 #include <openimagelib/il/il.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
 
 #include <deque>
+#include <vector>
+#include <utility>
 
 namespace olib { namespace openmedialib { namespace ml {
-
-namespace pcos = olib::openpluginlib::pcos;
-
-typedef ML_DECLSPEC olib::openimagelib::il::image_type image_type;
-typedef ML_DECLSPEC olib::openimagelib::il::image_type_ptr image_type_ptr;
-
-class ML_DECLSPEC frame_type;
-typedef ML_DECLSPEC boost::shared_ptr< frame_type > frame_type_ptr;
 
 class ML_DECLSPEC frame_type 
 {
 	public:
+		/// Constructor
 		explicit frame_type( );
+
+		/// Destructor
 		virtual ~frame_type( );
+
+		/// Provide a shallow copy of the frame (and all attached frames)
 		static frame_type_ptr shallow_copy( const frame_type_ptr &other );
+
+		/// Provide a deepy copy of the frame (and a shallow copy of all attached frames)
 		static frame_type_ptr deep_copy( const frame_type_ptr &other );
+
+		/// Obtains the queue of frames (when there are no attached frames, the queue
+		/// only contains a single frame, being the input).
 		static std::deque< frame_type_ptr > unfold( frame_type_ptr );
+
+		/// Convert a queue of frames to a single frame with the others attached (first 
+		/// frame in the queue is modified and returned).
 		static frame_type_ptr fold( std::deque< frame_type_ptr > & );
-		pcos::property_container properties( );
-		pcos::property property( const char *name ) const;
-		virtual void set_image( image_type_ptr image );
-		virtual image_type_ptr get_image( );
-		virtual void set_alpha( image_type_ptr image );
-		virtual image_type_ptr get_alpha( );
+
+		/// Return the properties associated to this frame.
+		olib::openpluginlib::pcos::property_container properties( );
+
+		/// Convenience method - returns the property by its name.
+		olib::openpluginlib::pcos::property property( const char *name ) const;
+
+		/// Set the image associated to the frame.
+		virtual void set_image( olib::openimagelib::il::image_type_ptr image );
+
+		/// Get the image associated to the frame.
+		virtual olib::openimagelib::il::image_type_ptr get_image( );
+
+		/// Set the alpha mask associated to the frame.
+		virtual void set_alpha( olib::openimagelib::il::image_type_ptr image );
+
+		/// Get the alpha mask associated to the frame.
+		virtual olib::openimagelib::il::image_type_ptr get_alpha( );
+
+		/// Set the audio associated to the frame.
 		virtual void set_audio( audio_type_ptr audio );
+
+		/// Get the audio associated to the frame.
 		virtual audio_type_ptr get_audio( );
+
+		/// Set the presentation time stamp.
 		virtual void set_pts( double pts );
+
+		/// Get the presentation time stamp.
 		virtual double get_pts( ) const;
+
+		/// Set the position of the frame.
 		virtual void set_position( int position );
+
+		/// Get the position of the frame.
 		virtual int get_position( ) const;
+
+		/// Set the duration of the frame.
 		virtual void set_duration( double duration );
+
+		/// Get the duration of the frame.
 		virtual double get_duration( ) const;
+
+		/// Set the sample aspect ratio of the frame
 		virtual void set_sar( int num, int den );
+
+		/// Get the sample aspect ratio of the frame
 		virtual void get_sar( int &num, int &den ) const;
+
+		/// Set the frames per specond ratio of the frame
 		virtual void set_fps( int num, int den );
+
+		/// Get the frames per specond ratio of the frame
 		virtual void get_fps( int &num, int &den ) const;
+
+		/// Convenience - return fps numerator
 		virtual int get_fps_num( );
+
+		/// Convenience - return fps denominator
 		virtual int get_fps_den( );
+
+		/// Convenience - return fps denominator
 		virtual int get_sar_num( );
+
+		/// Convenience - return fps denominator
 		virtual int get_sar_den( );
+
+		/// Convenience - return the full aspect ratio of the frame
 		virtual double aspect_ratio( );
+
+		/// Convenience - return the fps of the frame
 		virtual double fps( ) const;
+
+		/// Convenience - return the full aspect ratio of the frame
 		virtual double sar( ) const;
+
+		/// Attach a frame to this frame (for example, in deferred rendering mode, 
+		/// we would attach all foreground frames to the background).
 		void push( frame_type_ptr frame );
+
+		/// Pop the next frame associated to this one.
 		frame_type_ptr pop( );
 
+		/// Register an exception with the frame.
+		void push_exception( exception_ptr exception, input_type_ptr input );
+
+		/// Return the list of exceptions.
+		exception_list exceptions( ) const;
+
+		/// Convenience - check if the frame has any associated exceptions.
+		const bool in_error( ) const;
+
 	private:
-		pcos::property_container properties_;
-		image_type_ptr image_;
-		image_type_ptr alpha_;
+		olib::openpluginlib::pcos::property_container properties_;
+		olib::openimagelib::il::image_type_ptr image_;
+		olib::openimagelib::il::image_type_ptr alpha_;
 		audio_type_ptr audio_;
 		double pts_;
 		int position_;
@@ -75,6 +147,7 @@ class ML_DECLSPEC frame_type
 		int fps_num_;
 		int fps_den_;
 		std::deque< frame_type_ptr > queue_;
+		exception_list exceptions_;
 };
 
 } } }

@@ -96,7 +96,8 @@ quicktime_input::quicktime_input( opl::wstring resource, const opl::wstring mime
 
 //-----------------------------PUBLIC-----------------------------------------------------------------------
 
-	frame_type_ptr quicktime_input::fetch( )
+protected:
+	void quicktime_input::fetch( frame_type_ptr &result )
 	{
 		// we want to get the frame for this position (frame number)
 		int current = get_position();
@@ -183,6 +184,7 @@ quicktime_input::quicktime_input( opl::wstring resource, const opl::wstring mime
 			
 		// Create the output frame
 		frame_type *frame = new frame_type( );
+		result = frame_type_ptr( frame );
 
 		int num, den;
 		get_sar( num, den );
@@ -197,8 +199,6 @@ quicktime_input::quicktime_input( opl::wstring resource, const opl::wstring mime
 			find_image( frame );
 		if ( ( process_flags & process_audio ) && has_audio( ) )
 			find_audio( frame );
-
-		return frame_type_ptr( frame );
 	}
 
 

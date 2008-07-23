@@ -248,11 +248,10 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 			return den != 0 ? double( num ) / double( den ) : 1;
 		}
 
+	protected:
 		// Fetch method
-		virtual frame_type_ptr fetch( )
+		void do_fetch( frame_type_ptr &result )
 		{
-			frame_type_ptr result;
-
 			if ( get_frames( ) > 0 )
 			{
 				image_type_ptr image = get_image( );
@@ -275,8 +274,6 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 			result->set_fps( num, den );
 			result->set_pts( get_position( ) * 1.0 / fps( ) );
 			result->set_duration( 1.0 / fps( ) );
-
-			return result;
 		}
 
 		image_type_ptr get_image( )
@@ -336,8 +333,6 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
                 }
 			}
 		}
-
-	protected:
 
 		virtual bool initialize( )
 		{

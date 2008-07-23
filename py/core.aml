@@ -1,0 +1,137 @@
+: clear 
+	begin 
+		depth 0 > 
+	while 
+		drop 
+	repeat 
+;
+
+: render
+	filter:aml filename=- 
+	decap
+;
+
+: is
+	1 pick = if
+;
+
+: profile
+	0 is
+		: fps fps_num=25 fps_den=1 ;
+		: size width=720 height=576 ;
+		: sar sar_num=59 sar_den=54 ;
+	else
+	1 is
+		: fps fps_num=30000 fps_den=1001 ;
+		: size width=720 height=480 ;
+		: sar sar_num=10 sar_den=11 ;
+	else
+	2 is
+		: fps fps_num=25 fps_den=1 ;
+		: size width=720 height=576 ;
+		: sar sar_num=118 sar_den=81 ;
+	else
+	3 is
+		: fps fps_num=30000 fps_den=1001 ;
+		: size width=720 height=480 ;
+		: sar sar_num=40 sar_den=33 ;
+	then
+	drop
+;
+
+: pal_4:3 0 profile ;
+
+: ntsc_4:3 1 profile ;
+
+: pal_16:9 2 profile ;
+
+: ntsc_16:9 3 profile ;
+
+: visualise 
+	filter:visualise size sar
+;
+
+: background
+	colour: size fps sar
+;
+
+: normalise
+	filter:frame_rate fps
+	filter:resampler
+	filter:deinterlace
+;
+
+: normalise_all 
+	depth >r r@ 
+	begin 
+		r@ roll normalise 
+		swap 1- 
+		dup 0 = 
+	until 
+	rdrop drop 
+;
+
+: group
+	depth filter:playlist slots="%s"
+;
+
+: grid_calc
+
+	1 1 
+	begin
+		2dup *
+		3 pick < 
+	while
+		swap 2 *
+		swap 2 *
+	repeat
+
+	begin
+		2dup 1- * 
+		3 pick >=
+	while
+		swap 1- swap
+		dup 1- 2 pick *
+		3 pick >=
+		if 
+			1-
+		then
+	repeat
+;
+
+: mosaic
+
+	depth grid_calc
+
+	swap 1.0 swap /
+	swap 1.0 swap /
+	0.0 0.0
+
+	4 roll
+
+	begin
+		depth 1- roll
+		5 pick 5 pick 5 pick 5 pick 
+		filter:lerp @@x=%s @@y=%s @@w=%s @@h=%s 
+
+		normalise filter:loop
+		5 roll 5 roll 5 roll 2 pick + 5 roll 
+		1 pick 0.9999 >=
+		if
+			nip 0.0 swap
+			2 pick +
+		then
+		5 roll
+		1- dup 0 =
+	until
+
+	drop drop drop drop drop
+	
+	background filter:compositor slots=1
+	depth
+	swap
+	slots=%s
+;
+
+pal_4:3
+

@@ -18,9 +18,10 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
-namespace opl = olib::openpluginlib;
-namespace plugin = olib::openmedialib::ml;
+namespace pl = olib::openpluginlib;
+namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
+namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -32,8 +33,8 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		virtual ~template_input( ) { }
 
 		// Basic information
-		virtual const opl::wstring get_uri( ) const { return L"test:"; }
-		virtual const opl::wstring get_mime_type( ) const { return L""; }
+		virtual const pl::wstring get_uri( ) const { return L"test:"; }
+		virtual const pl::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return 250; }
@@ -49,13 +50,15 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		// Audio
 		virtual int get_audio_streams( ) const { return 0; }
 
+	protected:
 		// Fetch method
-		virtual frame_type_ptr fetch( )
+		void do_fetch( frame_type_ptr &result )
 		{
 			typedef il::image< unsigned char, il::r8g8b8 > r8g8b8_image_type;
 
 			// Construct a frame and populate with basic information
 			frame_type *frame = new frame_type( );
+			result = frame_type_ptr( frame );
 			int num, den;
 			get_sar( num, den );
 			frame->set_sar( num, den );
@@ -66,12 +69,9 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 			// Generate an image
 			int width = get_width( );
 			int height = get_height( );
-			image_type_ptr image = image_type_ptr( new image_type( r8g8b8_image_type( width, height, 1 ) ) );
+			il::image_type_ptr image = il::image_type_ptr( new il::image_type( r8g8b8_image_type( width, height, 1 ) ) );
 			memset( image->data( ), int( 255 * ( double( get_position( ) ) / double( get_frames( ) ) ) ), image->size( ) );
 			frame->set_image( image );
-
-			// Return a frame
-			return frame_type_ptr( frame );
 		}
 };
 
@@ -87,7 +87,7 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
-			image_type_ptr img = frame->get_image( );
+			il::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
 				img = il::convert( img, L"r8g8b8" );
@@ -119,9 +119,9 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 			properties( ).append( prop_v_ = 128 );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"template:"; }
+		virtual const pl::wstring get_uri( ) const { return L"template:"; }
 
-		inline void fill( image_type_ptr img, size_t plane, unsigned char val )
+		inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 		{
 			unsigned char *ptr = img->data( plane );
 			int width = img->width( plane );
@@ -137,11 +137,11 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 			}
 		}
 
-		virtual frame_type_ptr fetch( )
+	protected:
+		void do_fetch( frame_type_ptr &result )
 		{
 			acquire_values( );
 
-			frame_type_ptr result;
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -150,7 +150,7 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 				result = input->fetch( );
 				if ( result && result->get_image( ) )
 				{
-					image_type_ptr img = result->get_image( );
+					il::image_type_ptr img = result->get_image( );
 					if ( img )
 					{
 						img = il::convert( img, L"yuv420p" );
@@ -160,8 +160,6 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 					result->set_image( img );
 				}
 			}
-			
-			return result;
 		}
 
 	private:
@@ -176,17 +174,17 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 class ML_PLUGIN_DECLSPEC template_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const opl::wstring & )
+	virtual input_type_ptr input(  const pl::wstring & )
 	{
 		return input_type_ptr( new template_input( ) );
 	}
 
-	virtual store_type_ptr store( const opl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
 	{
 		return store_type_ptr( new template_store( ) );
 	}
 
-	virtual filter_type_ptr filter( const opl::wstring & )
+	virtual filter_type_ptr filter( const pl::wstring & )
 	{
 		return filter_type_ptr( new template_filter( ) );
 	}
@@ -239,14 +237,14 @@ extern "C"
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, opl::openplugin** plug )
+	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new plugin::template_plugin;
+		*plug = new ml::template_plugin;
 		return true;
 	}
 	
-	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( opl::openplugin* plug )
+	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< plugin::template_plugin * >( plug ); 
+		delete static_cast< ml::template_plugin * >( plug ); 
 	}
 }
