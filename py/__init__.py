@@ -66,7 +66,11 @@ class stack:
 			if token != '':
 				if token[ 0 ] == '\"' and token[ -1 ] == '\"':
 					token = token[ 1:-1 ]
-				token.replace( '\\ ', ' ' )
+				elif token[ 0 ] == '\'' and token[ -1 ] == '\'':
+					token = token[ 1:-1 ]
+				else:
+					token = token.replace( '\\', '' )
+					token = token.replace( '\"', '\'' )
 				self.push( token )
 				time.sleep( 0.0001 )
 
@@ -616,12 +620,6 @@ class thread_stack( stack, pl.observer ):
 		if input.is_thread_safe( ):
 			self.push( 'filter:threader', 'active=1' )
 
-		if frame.get_image( ) is None:
-			self.push( 'visualise' )
-
-		if frame.get_audio( ) is None:
-			self.push( 'filter:conform' )
-
 		self.push( 'filter:deinterlace' )
 		self.push( 'dot', 'recover' )
 		self.deinterlace_ = self.stack.fetch_slot( 0 )
@@ -633,6 +631,12 @@ class thread_stack( stack, pl.observer ):
 		self.push( 'filter:volume' )
 		self.push( 'dot', 'recover' )
 		self.volume_ = self.stack.fetch_slot( 0 )
+
+		if frame.get_image( ) is None:
+			self.push( 'visualise' )
+
+		if frame.get_audio( ) is None:
+			self.push( 'filter:conform' )
 
 		self.push( 'dot' )
 
