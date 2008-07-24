@@ -17,10 +17,6 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 
 #include <openimagelib/il/basic_image.hpp>
-//#include <openmedialib/ml/frame.hpp>
-//#include <openmedialib/ml/input.hpp>
-//#include <openmedialib/ml/store.hpp>
-#include <openimagelib/il/basic_image.hpp>
 
 #include <boost/cstdint.hpp>
 

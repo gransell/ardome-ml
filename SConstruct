@@ -189,18 +189,18 @@ if env.check_externals( ):
 	cl_unit_test = env.build('test/opencorelib/unit_tests/', [ cl ] )
 	cl_test_plugin = env.build( 'test/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
 	
-	pl = env.build( 'src/openpluginlib/pl' )
+	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
-	ml = env.build( 'src/openmedialib/ml', [ cl, pl, il ] )
+	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
 	
-	env.build( 'src/openmedialib/plugins/avformat', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
 	env.build( 'src/openmedialib/plugins/openal', [ pl, il, ml ] )
 
 	if env.have_boost_python( ):
-		env.build( 'src/openpluginlib/py', [ pl ] )
+		env.build( 'src/openpluginlib/py', [ pl, il, ml ] )
 		env.build( 'src/openimagelib/py', [ pl, il ] )
 		env.build( 'src/openmedialib/py', [ pl, il, ml ] )
 

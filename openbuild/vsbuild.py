@@ -153,7 +153,7 @@ class VsBuilder :
 			curr_cfg.compiler_options.additional_options += ' ' + extra_compiler_flags
 		
 		curr_cfg.set_vc_version(self.vs_version)
-		curr_cfg.output_directory = env.subst('$stage_bin')
+		curr_cfg.output_directory = env.subst('$win_target_path')
 		curr_cfg.intermediate_directory = self.temporary_output_path(env, sources, lib ) 
 		
 		curr_cfg.linker_options.target_type = project_type
@@ -177,10 +177,10 @@ class VsBuilder :
 			vcproj.file_name = lib + '.vcproj'
 			self.vs_solution.projects.append(vcproj)
 
-		dll_file = os.path.join( env['stage_bin'], lib + '.dll')
+		dll_file = os.path.join( env['win_target_path'], lib + '.dll')
 		lib_file = os.path.join( env['stage_libdir'], lib + '.lib')
 		exp_file = os.path.join( env['stage_libdir'], lib + '.exp')
-		pdb_file = os.path.join( env['stage_bin'], lib + '.pdb')
+		pdb_file = os.path.join( env['win_target_path'], lib + '.pdb')
 		
 		return [ dll_file, lib_file, exp_file, pdb_file]
 		

@@ -25,6 +25,8 @@ if local_env[ 'target' ] == 'osx':
 elif local_env[ 'target' ] == 'win32':
 	local_env[ 'SHLIBSUFFIX' ] = '.pyd'
 
+local_env[ 'win_target_path' ] = '$python_packages'
+
 object = local_env.shared_library( 'openmedialib' + [ '', '_d' ][ int( local_env.debug ) ], [ 'ml.cpp', 'py.cpp' ] )
 
 local_env.Install( local_env[ 'python_packages' ], object )

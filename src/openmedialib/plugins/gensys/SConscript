@@ -6,6 +6,8 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread' )
 
+local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+
 object = local_env.plugin( 'openmedialib_gensys', [ 'gensys_plugin.cpp' ] )
 
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'gensys_plugin.opl' ] )

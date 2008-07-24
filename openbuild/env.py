@@ -86,6 +86,8 @@ class Environment( BaseEnvironment ):
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
 
+		self[ 'win_target_path' ] = '$stage_bin'
+
 		self.Builder( action = '$RCCOM', suffix = '.rc' )
 
 		self.install_packages( )
