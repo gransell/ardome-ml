@@ -21,17 +21,11 @@ core.aml
 # Toggle pause/play
 
 : toggle
-	speed?
-	0 = if
-		play
-	else
-		pause
-	then
+	speed? 0 = speed
 ;
 
 # Step in a loop - current speed is saved on the return stack at the start,
 # playout is paused and original speed is recovered when the loop is complete
-
 # <speed> <frames> stepper --
 
 : stepper
@@ -48,7 +42,6 @@ core.aml
 ;
 
 # Schedule all media on the stack to the playlist
-
 # <input1> ... <inputN> schedule --
 
 : schedule
@@ -71,5 +64,23 @@ core.aml
 : volume
 	volume_filter volume=%s
 	drop
+;
+
+: sfwd 
+	10 pitch 
+	0 volume 
+	1 speed 
+;
+
+: srew 
+	10 pitch 
+	0 volume 
+	-1 speed 
+;
+
+: normal 
+	1 pitch 
+	1 volume 
+	1 speed 
 ;
 

@@ -1,3 +1,33 @@
+# Drop the item on the top of the return stack
+# R: <item> redrop -- R:
+
+: rdrop
+	r> drop
+;
+
+# Decrement the number at the top of the return stack
+
+: r1-
+	r> 1- >r
+;
+
+: r1-@
+	r1- r@
+;
+
+# Increment the number at the top of the return stack
+
+: r1+
+	r> 1+ >r
+;
+
+: r1+@
+	r1+ r@
+;
+
+# Clear all stack items
+# <item-1> ... clear --
+
 : clear 
 	begin 
 		depth 0 > 
@@ -6,14 +36,23 @@
 	repeat 
 ;
 
+# Display the top of stack as an aml filter graph
+# <graph> render -- <graph>
+
 : render
 	filter:aml filename=- 
 	decap
 ;
 
+# Conditional check
+# <value-1> <value-2> is -- <value-1> <value-1 == value-2>
+
 : is
 	1 pick = if
 ;
+
+# Define basic image traits associated to the profile
+# --
 
 : profile
 	0 is
@@ -39,21 +78,38 @@
 	drop
 ;
 
-: pal_4:3 0 profile ;
+: pal_4:3 
+	0 profile 
+;
 
-: ntsc_4:3 1 profile ;
+: ntsc_4:3 
+	1 profile 
+;
 
-: pal_16:9 2 profile ;
+: pal_16:9 
+	2 profile 
+;
 
-: ntsc_16:9 3 profile ;
+: ntsc_16:9 
+	3 profile 
+;
+
+# Convenience method for visualisation
+# <media> visualise -- <visualised-media>
 
 : visualise 
 	filter:visualise size sar
 ;
 
+# Generate a background according to the selected profile
+# -- <background>
+
 : background
 	colour: size fps sar
 ;
+
+# Attach normalising filters to the input at the top of the stack
+# <media> normalise -- <normalised-media>
 
 : normalise
 	filter:frame_rate fps
@@ -61,7 +117,10 @@
 	filter:deinterlace
 ;
 
-: normalise_all 
+# Normalise all media on the stack
+# <media-1> ... normalise! -- <normalised-media-1> ...
+
+: normalise! 
 	depth >r r@ 
 	begin 
 		r@ roll normalise 
@@ -71,8 +130,18 @@
 	rdrop drop 
 ;
 
+# Join items for consecutive playout
+# <media-1> ... <media-N> <N> group -- <media-1-to-N>
+
 : group
-	depth filter:playlist slots="%s"
+	filter:playlist slots="%s"
+;
+
+# Join all items on the stack for consecutive playout
+# <media-1> ... group! -- <media-1-to-...>
+
+: group!
+	depth group
 ;
 
 : grid_calc
@@ -98,6 +167,9 @@
 		then
 	repeat
 ;
+
+# Generate a mosaic of some items on the stack
+# <media-1> ... <media-N> <N> mosaic -- <mosaic-of-media>
 
 : mosaic
 
@@ -133,5 +205,44 @@
 	slots=%s
 ;
 
+# Create a montage
+# <input> <frames> montage -- <montage-showing-frames>
+
+: montage
+	>r
+	r@ 2 +
+	filter:extract frames=%s 
+	r> 1 +
+	filter:clip in=1 out=%s
+	filter:montage orient=2 lines=0
+;
+
+# Cut media into two parts
+# <media> <position> cut -- <media-to-position> <media-from-position>
+
+: cut
+	>r 
+	dup
+	r@ filter:clip out=%s
+	swap
+	r> filter:clip in=%s
+;
+
+# Render all items on the stack as an aml graph
+# <media-1> ... render! -- <media-1> ...
+
+: render!
+	depth >r 
+	begin
+		r1-@ 0 >= 
+	while
+		r@ pick 
+		render 
+		drop
+	repeat
+	rdrop
+;
+
+# Default profile selection
 pal_4:3
 
