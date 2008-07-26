@@ -28,7 +28,7 @@ core.aml
 # playout is paused and original speed is recovered when the loop is complete
 # <speed> <frames> stepper --
 
-: stepper
+: step*
 	dup 
 	speed? >r
 	pause
@@ -44,9 +44,8 @@ core.aml
 # Schedule all media on the stack to the playlist
 # <input1> ... <inputN> schedule --
 
-: schedule
+: add*
 
-	depth
 	begin
 		dup roll
 		add
@@ -56,9 +55,23 @@ core.aml
 	drop
 ;
 
+: add$
+	depth? add*
+;
+
+: pitch?
+	pitch_filter ? speed
+	nip
+;
+
 : pitch
 	pitch_filter speed=%s
 	drop
+;
+
+: volume?
+	volume_filter ? speed
+	nip
 ;
 
 : volume

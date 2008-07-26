@@ -1,39 +1,79 @@
-# Drop the item on the top of the return stack
-# R: <item> redrop -- R:
 
-: rdrop
-	r> drop
-;
+# In case of parse errors, uncomment this line to get a detailed trace
+# 2 trace
+
+: dup 0 pick ;
+: swap 1 roll ;
+: 2dup 1 pick 1 pick ;
+: over 1 pick ;
+: nip 1 roll drop ;
+: rot 2 roll ;
+: -rot rot rot ;
+: 2swap 3 roll 3 roll ;
+: tuck swap over ;
+: 1+ 1 + ;
+: 1- 1 - ;
+: max 2dup < roll drop ;
+: min 2dup > roll drop ;
+: neg 0 swap - ;
+: +! dup @ rot + swap ! ;
+: *! dup @ rot * swap ! ;
+: 0= 0 = ;
+: 0< 0 < ;
+: 0> 0 > ;
+: <> = 0= ;
+: ?dup dup 0 <> if dup then ;
+
+# post-decrement
+: !-- dup @ dup 1- rot ! ;
+: --! dup @ 1- dup rot ! ;
 
 # Decrement the number at the top of the return stack
+: r1- r> 1- >r ;
 
-: r1-
-	r> 1- >r
-;
-
-: r1-@
-	r1- r@
-;
+# Decrement the number at the top of the return stack and leave a copy
+: r1-@ r1- r@ ;
 
 # Increment the number at the top of the return stack
+: r1+ r> 1+ >r ;
 
-: r1+
-	r> 1+ >r
-;
-
-: r1+@
-	r1+ r@
-;
+# Increment the number at the top of the return stack and leave a copy
+: r1+@ r1+ r@ ;
 
 # Clear all stack items
 # <item-1> ... clear --
 
 : clear 
 	begin 
-		depth 0 > 
+		depth? 0> 
 	while 
 		drop 
 	repeat 
+;
+
+# Clear all return stack items
+# R: <item-1> ... clear -- R:
+
+: rclear 
+	begin 
+		rdepth? 0 > 
+	while 
+		rdrop 
+	repeat 
+;
+
+# Clear all stacks
+
+: clear!
+	clear
+	rclear
+;
+
+# Dump both stacks
+
+: dump!
+	dump
+	rdump
 ;
 
 # Display the top of stack as an aml filter graph
@@ -56,26 +96,30 @@
 
 : profile
 	0 is
-		: fps fps_num=25 fps_den=1 ;
-		: size width=720 height=576 ;
-		: sar sar_num=59 sar_den=54 ;
+		: @fps 25 1 ;
+		: @size 720 576 ;
+		: @sar 59 54 ;
 	else
 	1 is
-		: fps fps_num=30000 fps_den=1001 ;
-		: size width=720 height=480 ;
-		: sar sar_num=10 sar_den=11 ;
+		: @fps 30000 1001 ;
+		: @size 720 480 ;
+		: @sar 10 11 ;
 	else
 	2 is
-		: fps fps_num=25 fps_den=1 ;
-		: size width=720 height=576 ;
-		: sar sar_num=118 sar_den=81 ;
+		: @fps 25 1 ;
+		: @size 720 576 ;
+		: @sar 118 81 ;
 	else
 	3 is
-		: fps fps_num=30000 fps_den=1001 ;
-		: size width=720 height=480 ;
-		: sar sar_num=40 sar_den=33 ;
+		: @fps 30000 1001 ;
+		: @size 720 480 ;
+		: @sar 40 33 ;
 	then
 	drop
+
+	: fps @fps rot fps_den=%s fps_num=%s ;
+	: size @size rot height=%s width=%s ;
+	: sar @sar rot sar_den=%s sar_num=%s ;
 ;
 
 : pal_4:3 
@@ -121,7 +165,7 @@
 # <media-1> ... normalise! -- <normalised-media-1> ...
 
 : normalise! 
-	depth >r r@ 
+	depth? >r r@ 
 	begin 
 		r@ roll normalise 
 		swap 1- 
@@ -141,7 +185,7 @@
 # <media-1> ... group! -- <media-1-to-...>
 
 : group!
-	depth group
+	depth? group
 ;
 
 : grid_calc
@@ -173,7 +217,7 @@
 
 : mosaic
 
-	depth grid_calc
+	depth? grid_calc
 
 	swap 1.0 swap /
 	swap 1.0 swap /
@@ -182,7 +226,7 @@
 	4 roll
 
 	begin
-		depth 1- roll
+		depth? 1- roll
 		5 pick 5 pick 5 pick 5 pick 
 		filter:lerp @@x=%s @@y=%s @@w=%s @@h=%s 
 
@@ -200,7 +244,7 @@
 	drop drop drop drop drop
 	
 	background filter:compositor slots=1
-	depth
+	depth?
 	swap
 	slots=%s
 ;
@@ -232,7 +276,7 @@
 # <media-1> ... render! -- <media-1> ...
 
 : render!
-	depth >r 
+	depth? >r 
 	begin
 		r1-@ 0 >= 
 	while
