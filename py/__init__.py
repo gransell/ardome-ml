@@ -684,7 +684,7 @@ class thread_stack( stack, pl.observer ):
 		self.push( 'dot', 'recover' )
 		self.deinterlace_ = self.stack.fetch_slot( 0 )
 
-		self.push( 'filter:pitch' )
+		self.push( 'filter:pitch', 'speed=1' )
 		self.push( 'dot', 'recover' )
 		self.pitch_ = self.stack.fetch_slot( 0 )
 

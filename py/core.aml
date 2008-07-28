@@ -288,8 +288,8 @@
 # Render all items on the stack as an aml graph
 # <media-1> ... render! -- <media-1> ...
 
-: render!
-	depth? >r 
+: render*
+	>r 
 	begin
 		r1-@ 0 >= 
 	while
@@ -298,6 +298,10 @@
 		drop
 	repeat
 	rdrop
+;
+
+: render$
+	depth? render*
 ;
 
 # Default profile selection
