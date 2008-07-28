@@ -299,16 +299,18 @@ class thread_player( player, threading.Thread ):
 		"""Play next in list."""
 
 		self.cond.acquire( )
-		self.next_input = True
-		self.cond.notifyAll( )
+		if len( self.input ):
+			self.next_input = True
+			self.cond.notifyAll( )
 		self.cond.release( )
 
 	def prev( self ):
 		"""Play previous item."""
 
 		self.cond.acquire( )
-		self.prev_input = True
-		self.cond.notifyAll( )
+		if len( self.prev_inputs ):
+			self.prev_input = True
+			self.cond.notifyAll( )
 		self.cond.release( )
 
 	def set_speed( self, speed ):
@@ -380,7 +382,7 @@ class thread_player( player, threading.Thread ):
 		while self.active( ):
 			self.cond.acquire( )
 
-			while self.active( ) and len( self.input ) == 0:
+			while self.active( ) and len( self.input ) == 0 and not self.prev_input and not self.next_input:
 				self.cond.wait( )
 
 			if not self.active( ): 
@@ -394,6 +396,8 @@ class thread_player( player, threading.Thread ):
 					self.input = [ self.prev_inputs[ -1 ] ] + self.input
 					self.prev_inputs.pop( -1 )
 			elif self.next_input and self.current is not None:
+				self.prev_inputs += [ self.current ]
+			elif self.current is not None:
 				self.prev_inputs += [ self.current ]
 
 			# Previous input maintenance
@@ -491,6 +495,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'playlist' ] = self.playlist
 		self.commands[ 'position?' ] = self.position
 		self.commands[ 'prev' ] = self.prev
+		self.commands[ 'previous' ] = self.previous
 		self.commands[ 'props' ] = self.props
 		self.commands[ 'seek' ] = self.seek
 		self.commands[ 'speed' ] = self.speed
@@ -631,6 +636,15 @@ class thread_stack( stack, pl.observer ):
 			print
 		self.thread.cond.release( )
 
+	def previous( self ):
+		self.thread.cond.acquire( )
+		for input in self.thread.prev_inputs:
+			render = ml.create_filter( 'aml' )
+			render.property( 'filename' ).set( unicode( '-' ) )
+			render.connect( input, 0 )
+			print
+		self.thread.cond.release( )
+
 	def playing( self ):
 		"""Dump the current playing item to stdout."""
 
@@ -672,6 +686,8 @@ class thread_stack( stack, pl.observer ):
 			self.stack.property( "handled" ).set( 1 )
 
 	def normalise( self, input ):
+		self.thread.cond.acquire( )
+
 		self.stack.connect( input, 0 )
 		self.push( 'recover' )
 
@@ -700,5 +716,9 @@ class thread_stack( stack, pl.observer ):
 
 		self.push( 'dot' )
 
-		return self.stack.fetch_slot( 0 )
+		result = self.stack.fetch_slot( 0 )
+
+		self.thread.cond.release( )
+
+		return result
 
