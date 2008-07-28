@@ -40,6 +40,19 @@
 # Increment the number at the top of the return stack and leave a copy
 : r1+@ r1+ r@ ;
 
+# Move the top of stack to a specific place
+# ... <item> <position> move -- ... <item> ...
+
+: move 
+	dup variable! index 
+	variable! position 
+	begin 
+		index !-- 
+	while 
+		position @ roll 
+	repeat 
+;
+
 # Clear all stack items
 # <item-1> ... clear --
 

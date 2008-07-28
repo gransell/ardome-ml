@@ -14,7 +14,7 @@ core.aml
 # <frames> step --
 
 : step 
-	position + 
+	position? + 
 	seek 
 ;
 
