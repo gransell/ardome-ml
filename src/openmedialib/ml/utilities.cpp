@@ -464,7 +464,7 @@ ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 	scoped_lock lock( mutex_ );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"input" );
 	if ( plug == 0 )
-		PL_LOG( 0, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
 	return plug == 0 ? input_type_ptr( ) : plug->input( resource );
 }
 
@@ -492,7 +492,7 @@ ML_DECLSPEC store_type_ptr create_store( const pl::wstring &resource, frame_type
 	store_type_ptr result = store_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"output" );
 	if ( plug == 0 )
-		PL_LOG( 0, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
 	return plug == 0 ? result : plug->store( resource, frame );
 }
 
@@ -509,7 +509,7 @@ ML_DECLSPEC filter_type_ptr create_filter( const pl::wstring &resource )
 	filter_type_ptr result = filter_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"filter" );
 	if ( plug == 0 )
-		PL_LOG( 0, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
 	result = plug == 0 ? result : plug->filter( resource );
 	if ( result )
 		result->init( );
