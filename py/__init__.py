@@ -85,8 +85,10 @@ class stack:
 
 		for cmd in command:
 			if isinstance( cmd, str ):
+				if cmd.startswith( 'http://' ): cmd = 'aml:' + cmd
 				self.stack.property( "command" ).set( unicode( cmd ) )
 			elif isinstance( cmd, unicode ):
+				if cmd.startswith( 'http://' ): cmd = 'aml:' + cmd
 				self.stack.property( "command" ).set( cmd )
 			elif isinstance( cmd, list ):
 				for entry in cmd:
@@ -402,7 +404,7 @@ class thread_player( player, threading.Thread ):
 
 			# Previous input maintenance
 			while len( self.prev_inputs ) > self.prev_count:
-				self.prev_input.pop( 0 )
+				self.prev_inputs.pop( 0 )
 
 			# Schdule the first input for playout
 			self.current = self.input[ 0 ]
