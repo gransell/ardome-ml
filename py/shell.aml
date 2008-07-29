@@ -70,7 +70,7 @@ core.aml
 ;
 
 : volume?
-	volume_filter ? speed
+	volume_filter ? volume
 	nip
 ;
 

@@ -512,6 +512,9 @@ class thread_stack( stack, pl.observer ):
 		prop.attach( self )
 
 	def start( self ):
+		"""Start the shell as a thread. On OSX, GUI oriented stores (such as 
+		SDL) cannot be run as a background thread."""
+
 		self.thread.start( )
 
 	def dot( self ):
@@ -528,6 +531,8 @@ class thread_stack( stack, pl.observer ):
 			self.push( 'drop' )
 
 	def clone_node( self, node ):
+		"""Temporary - will migrate to C++ class."""
+
 		if node is not None:
 			i = 0
 			while i < node.slots( ):
@@ -541,6 +546,11 @@ class thread_stack( stack, pl.observer ):
 					self.push( '%s="%s"' % ( key, as_string( prop ) ) )
 
 	def clone( self ):
+		"""Clone the top of the stack - this is a necessary evil for general 
+		reuse of the same media in the same project (a dup isn't sufficient
+		for non-I-frame only media). Temporarily placed here, will move to
+		C++ primitives."""
+
 		self.push( 'dot' )
 		tos = self.stack.fetch_slot( 0 )
 		self.stack.connect( tos, 0 )
@@ -548,16 +558,25 @@ class thread_stack( stack, pl.observer ):
 		self.clone_node( tos )
 
 	def pitch( self ):
+		"""Place the pitch filter on the stack (temporary - these 'helper'
+		filters don't need specific words to obtain them)."""
+
 		if self.pitch_ is not None:
 			self.stack.connect( self.pitch_, 0 )
 			self.push( 'recover' )
 
 	def volume( self ):
+		"""Place the volume filter on the stack (temporary - these 'helper'
+		filters don't need specific words to obtain them)."""
+
 		if self.volume_ is not None:
 			self.stack.connect( self.volume_, 0 )
 			self.push( 'recover' )
 
 	def deinterlace( self ):
+		"""Place the deinterlace filter on the stack (temporary - these 'helper'
+		filters don't need specific words to obtain them)."""
+
 		if self.deinterlace_ is not None:
 			self.stack.connect( self.deinterlace_, 0 )
 			self.push( 'recover' )
@@ -601,6 +620,9 @@ class thread_stack( stack, pl.observer ):
 		self.push( str( self.thread.position( ) ) )
 
 	def props( self ):
+		"""Display properties of the top of stack object. Temporary, will migrate
+		to C++ primitives."""
+
 		self.push( 'dup', 'dot' )
 		input = self.stack.fetch_slot( 0 )
 		if input is not None:
@@ -639,6 +661,8 @@ class thread_stack( stack, pl.observer ):
 		self.thread.cond.release( )
 
 	def previous( self ):
+		"""Dump the previously played list to stdout."""
+
 		self.thread.cond.acquire( )
 		for input in self.thread.prev_inputs:
 			render = ml.create_filter( 'aml' )
@@ -688,6 +712,9 @@ class thread_stack( stack, pl.observer ):
 			self.stack.property( "handled" ).set( 1 )
 
 	def normalise( self, input ):
+		"""Normalise the input - ensures that helper filters are associated to all
+		playing media (visualisation, threader, pitch, volume, deinterlace)."""
+
 		self.thread.cond.acquire( )
 
 		self.stack.connect( input, 0 )
