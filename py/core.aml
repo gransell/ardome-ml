@@ -77,14 +77,14 @@
 
 # Clear all stacks
 
-: clear!
+: clear$
 	clear
 	rclear
 ;
 
 # Dump both stacks
 
-: dump!
+: dump$
 	dump
 	rdump
 ;
@@ -175,9 +175,9 @@
 ;
 
 # Normalise all media on the stack
-# <media-1> ... normalise! -- <normalised-media-1> ...
+# <media-1> ... normalise$ -- <normalised-media-1> ...
 
-: normalise! 
+: normalise$ 
 	depth? >r r@ 
 	begin 
 		r@ roll normalise 
@@ -195,9 +195,9 @@
 ;
 
 # Join all items on the stack for consecutive playout
-# <media-1> ... group! -- <media-1-to-...>
+# <media-1> ... group$ -- <media-1-to-...>
 
-: group!
+: group$
 	depth? group
 ;
 
@@ -286,7 +286,7 @@
 ;
 
 # Render all items on the stack as an aml graph
-# <media-1> ... render! -- <media-1> ...
+# <media-1> ... render$ -- <media-1> ...
 
 : render*
 	>r 

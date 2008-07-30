@@ -1,6 +1,4 @@
-from aml import ml, pl
-from aml.thread_player import thread_player
-from aml.stack import stack
+from aml import ml, pl, stack, thread_player
 
 import string
 import os
@@ -8,7 +6,7 @@ import os
 class thread_stack( stack, pl.observer ):
 	"""Combined stack and threaded player."""
 
-	def __init__( self ):
+	def __init__( self, player = None ):
 		"""Constructor - creates the threaded player and sets up the extended AML
 		command set (to allow more comprehensive tranport controls and player
 		aware functionality)."""
@@ -16,22 +14,22 @@ class thread_stack( stack, pl.observer ):
 		stack.__init__( self )
 		pl.observer.__init__( self )
 
-		self.thread = thread_player( )
-		self.thread.normalise = self.normalise
+		if player is None:
+			self.thread = thread_player( )
+		else:
+			self.thread = player
 
 		self.colon_count = 0
 		self.definition = [ ]
-
-		self.pitch_ = None
-		self.volume_ = None
-		self.deinterlace_ = None
 
 		self.commands = { }
 		self.commands[ '.' ] = self.dot
 		self.commands[ 'add' ] = self.add
 		self.commands[ 'clone' ] = self.clone
 		self.commands[ 'exit' ] = self.exit
+		self.commands[ 'grab' ] = self.grab
 		self.commands[ 'help' ] = self.help
+		self.commands[ 'insert' ] = self.insert
 		self.commands[ 'next' ] = self.next
 		self.commands[ 'playing' ] = self.playing
 		self.commands[ 'playlist' ] = self.playlist
@@ -101,25 +99,22 @@ class thread_stack( stack, pl.observer ):
 		"""Place the pitch filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		if self.pitch_ is not None:
-			self.stack.connect( self.pitch_, 0 )
-			self.push( 'recover' )
+		self.stack.connect( self.thread.get_instance( 'pitch' ), 0 )
+		self.push( 'recover' )
 
 	def volume( self ):
 		"""Place the volume filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		if self.volume_ is not None:
-			self.stack.connect( self.volume_, 0 )
-			self.push( 'recover' )
+		self.stack.connect( self.thread.get_instance( 'volume' ), 0 )
+		self.push( 'recover' )
 
 	def deinterlace( self ):
 		"""Place the deinterlace filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		if self.deinterlace_ is not None:
-			self.stack.connect( self.deinterlace_, 0 )
-			self.push( 'recover' )
+		self.stack.connect( self.thread.get_instance( 'deinterlace' ), 0 )
+		self.push( 'recover' )
 
 	def speed( self ):
 		"""Set the speed to the number at the top of the stack."""
@@ -236,6 +231,23 @@ class thread_stack( stack, pl.observer ):
 
 		os.system( "bash" )
 
+	def grab( self ):
+		"""Grab the input at the specified playlist index (<index> grab -- <input>)."""
+
+		self.push( 'dot' )
+		input = self.thread.grab( int( self.stack.fetch_slot( 0 ).get_uri( ) ) )
+		if input is not None:
+			self.push( input )
+
+	def insert( self ):
+		"""Insert the input at the specified playlist index (<input> <index> 
+		insert --)."""
+
+		self.push( 'dot' )
+		index = int( self.stack.fetch_slot( 0 ).get_uri( ) )
+		self.push( 'dot' )
+		self.thread.insert( index, self.stack.fetch_slot( 0 ) )
+
 	def updated( self, subject ):
 		"""Callback for query property - if the value of the query is found
 		in the stack commands, then execute that and set the handled value to
@@ -250,46 +262,6 @@ class thread_stack( stack, pl.observer ):
 			else:
 				cmd( )
 			self.stack.property( "handled" ).set( 1 )
-
-	def normalise( self, input ):
-		"""Normalise the input - ensures that helper filters are associated to all
-		playing media (visualisation, threader, pitch, volume, deinterlace)."""
-
-		self.thread.cond.acquire( )
-
-		self.stack.connect( input, 0 )
-		self.push( 'recover' )
-
-		frame = input.fetch( )
-
-		if input.is_thread_safe( ):
-			self.push( 'filter:threader', 'active=1' )
-
-		self.push( 'filter:deinterlace' )
-		self.push( 'dot', 'recover' )
-		self.deinterlace_ = self.stack.fetch_slot( 0 )
-
-		self.push( 'filter:pitch', 'speed=1' )
-		self.push( 'dot', 'recover' )
-		self.pitch_ = self.stack.fetch_slot( 0 )
-
-		self.push( 'filter:volume' )
-		self.push( 'dot', 'recover' )
-		self.volume_ = self.stack.fetch_slot( 0 )
-
-		if frame.get_image( ) is None:
-			self.push( 'visualise' )
-
-		if frame.get_audio( ) is None:
-			self.push( 'filter:conform' )
-
-		self.push( 'dot' )
-
-		result = self.stack.fetch_slot( 0 )
-
-		self.thread.cond.release( )
-
-		return result
 
 def convert_list_to_string( list, quote = False ):
 	result = ''

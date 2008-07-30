@@ -1,10 +1,21 @@
-import aml
+from aml import ml, stack
 
 class player:
 	def __init__( self ):
 		"""Constructor."""
 
-		self.normalise = None
+		self.stack = stack( )
+		self.stack.include( 'core.aml' )
+
+		self.filters = []
+		self.filters.append( [ 'thread_safe', 'threader', 'active=1' ] )
+		self.filters.append( [ 'always', 'deinterlace' ] )
+		self.filters.append( [ 'always', 'pitch', 'speed=1' ] )
+		self.filters.append( [ 'always', 'volume', 'volume=1' ] )
+		self.filters.append( [ 'has_no_image', 'visualise' ] )
+		self.filters.append( [ 'has_no_audio', 'conform' ] )
+
+		self.instances = {}
 
 	def ante( self, input, stores, frame ):
 		"""Method called before push to stores. Returns false if no error/
@@ -21,36 +32,54 @@ class player:
 			return False
 		return eof
 
+	def get_instance( self, key ):
+		"""Get an instance filter associated to the playing input."""
+
+		if key in self.instances.keys( ):
+			return self.instances[ key ]
+		return None
+
+	def register_rule( self, rule ):
+		"""Register a filter rule."""
+
+		self.stack.push( 'filter:' + rule[ 1 ] )
+		self.stack.push( rule[ 2: ] )
+		self.stack.push( 'dup' )
+		self.instances[ rule[ 1 ] ] = self.stack.pop( )
+
 	def check_input( self, input ):
 		"""Internal method: converts input to aml input object and associates
 		minimalist filters to ensure we have audio/image and active threaders."""
 
 		if isinstance( input, str ) or isinstance( input, unicode ):
-			input = aml.ml.create_input( input )
+			input = ml.create_input( input )
 		elif isinstance( input, list ):
-			input = aml.stack( input ).pop( )
+			stack.push( input )
+			input = self.stack.pop( )
 
-		if self.normalise is None:
+		if input is not None:
+
+			self.stack.push( input )
 			frame = input.fetch( )
+			self.instances = {}
 
-			if frame.get_image( ) is None:
-				filter = aml.ml.create_filter( 'visualise' )
-				filter.connect( input, 0 )
-				input = filter
+			for rule in self.filters:
+				if rule[ 0 ] == 'thread_safe':
+					if input.is_thread_safe( ):
+						self.register_rule( rule )
+				elif rule[ 0 ] == 'has_no_image':
+					if frame.get_image( ) is None:
+						self.register_rule( rule )
+				elif rule[ 0 ] == 'has_no_audio':
+					if frame.get_audio( ) is None:
+						self.register_rule( rule )
+				elif rule[ 0 ] == 'always':
+					self.register_rule( rule )
+				else:
+					print "Unknown rule", str( rule )
 
-			if frame.get_audio( ) is None:
-				filter = aml.ml.create_filter( 'conform' )
-				filter.connect( input, 0 )
-				input = filter
+			input = self.stack.pop( )
 
-			if input.is_thread_safe( ):
-				filter = aml.ml.create_filter( 'threader' )
-				filter.property( 'active' ).set( 1 )
-				filter.connect( input, 0 )
-				input = filter
-		else:
-			input = self.normalise( input )
-		
 		return input
 
 	def walk_and_assign( self, input, name, value ):
@@ -68,9 +97,9 @@ class player:
 		"""Internal method: initialises stores with aml input object."""
 
 		if stores is None or len( stores ) == 0:
-			stores = [ aml.ml.create_store( "preview:", input.fetch( ) ) ]
+			stores = [ ml.create_store( "preview:", input.fetch( ) ) ]
 		elif isinstance( stores, list ) and isinstance( stores[ 0 ], str ):
-			result = [ aml.ml.create_store( stores[ 0 ], input.fetch( ) ) ]
+			result = [ ml.create_store( stores[ 0 ], input.fetch( ) ) ]
 			for prop in stores[ 1: ]:
 				name, value = prop.split( '=', 1 )
 				result[ 0 ].property( name ).set_from_string( value )

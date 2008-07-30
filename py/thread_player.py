@@ -113,6 +113,26 @@ class thread_player( player, threading.Thread ):
 		self.cond.release( )
 		return is_active
 
+	def grab( self, index ):
+		"""Retrieve an input from the playlist (remove and return)."""
+
+		self.cond.acquire( )
+		result = None
+		if index >= 0 and index < len( self.input ):
+			result = self.input.pop( index )
+		self.cond.release( )
+		return result
+
+	def insert( self, index, input ):
+		"""Insert an input into the playlist."""
+
+		self.cond.acquire( )
+		if index >= 0 and index < len( self.input ):
+			self.input.insert( index, input )
+		else:
+			self.input.append( input )
+		self.cond.release( )
+
 	def post( self, input, stores, frame, eof = False ):
 		"""Method called after push to stores. Returns false if no error/
 		termination detected."""
@@ -128,6 +148,22 @@ class thread_player( player, threading.Thread ):
 		self.current_position = input.get_position( )
 		self.cond.release( )
 		return eof
+
+	def get_instance( self, key ):
+		"""Thread safe version - get the filter instance required."""
+
+		self.cond.acquire( )
+		result = player.get_instance( self, key )
+		self.cond.release( )
+		return result
+
+	def check_input( self, input ):
+		"""Thread safe version - check the input."""
+
+		self.cond.acquire( )
+		result = player.check_input( self, input )
+		self.cond.release( )
+		return result
 
 	def run( self ):
 		"""Thread execution loop."""

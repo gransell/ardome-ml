@@ -97,3 +97,8 @@ core.aml
 	1 speed 
 ;
 
+: remove
+	grab
+	drop
+;
+
