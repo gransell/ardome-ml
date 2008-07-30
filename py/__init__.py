@@ -41,4 +41,5 @@ from aml.stack import stack
 from aml.player import player
 from aml.thread_player import thread_player
 from aml.thread_stack import thread_stack
+from aml.thread_shell import thread_shell
 
