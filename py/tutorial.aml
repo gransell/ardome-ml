@@ -1,0 +1,183 @@
+: average
+	0 variable! total
+	dup variable! index
+	variable! count
+
+	begin
+		index !--
+	while
+		total +!
+	repeat
+
+	total @ count @ /
+;
+
+: average$
+	depth? average
+;
+
+: half
+	2 /
+;
+
+: square 
+	dup * 
+;
+
+: reciprocal 
+	1 swap /
+;
+
+: factorial
+	dup 0 > 
+	if
+		dup 1 - factorial *
+	else
+		drop 1
+	then
+;
+
+: factorial 
+	variable! count
+	1 variable! result
+	begin 	
+		count !-- ?dup
+	while 	
+		result *!
+	repeat
+	result @
+;
+
+: max*
+	1- variable! count
+	begin
+		count !--
+	while
+		max
+	repeat
+;
+
+: min*
+	1- variable! count
+	begin
+		count !--
+	while
+		min
+	repeat
+;
+
+: max$
+	depth? max*
+;
+
+: min$
+	depth? min*
+;
+
+: pi 
+	355 113 / 
+;
+
+: deg_to_rad 
+	pi 180 / * 
+;
+
+: rad_to_deg 
+	pi 180 / / 
+;
+
+: clip
+	over +
+	filter:clip out=%s in=%s
+;
+
+: cuts{ >r ;
+: rclone r@ clone nip ;
+: cut rclone -rot clip ;
+: }cuts rdrop ;
+
+: cuts{*
+	dup variable! count
+	variable! index
+	begin
+		index !--
+	while
+		>r
+	repeat
+	count @ >r
+;
+
+: *}cuts
+	r> variable! index
+	begin
+		index !--
+	while
+		rdrop
+	repeat
+;
+
+: rclone@
+	rpick clone nip
+;
+
+: cut@
+	rot 1+
+	rclone@
+	-rot clip
+;
+
+: { depth? cuts{* ;
+: , cut@ ;
+: } , *}cuts ;
+
+: fade_in_out
+	dup
+	filter:keyframe 
+	command="register mix double"
+	command="range mix lerp 0,%s 0,1"
+	command="range mix lerp -%s,-1 1,0"
+;
+
+: apply_offsets
+	0 variable! off
+	dup variable! index
+	variable! count
+	variable! frames
+
+	-1 count +!
+
+	begin
+		index !--
+	while
+		count @ roll
+		normalise
+		frames @ fade_in_out
+		off @ filter:offset in=%s
+		length? frames @ - off !
+	repeat
+;
+
+: transition
+	dup variable! index
+	variable! count
+	variable! frames
+
+	frames @ count @ apply_offsets
+	background count @ move
+	count @ 1+ filter:compositor slots=%s
+;
+
+: transition$
+	depth? 1- transition
+;
+
+: 1second @fps / ceil ;
+
+: seconds @fps / * floor ;
+
+: clips
+	aml:http://morpheus.local/Movies/Comedy/Harold%20and%20Kumar%20Go%20to%20White%20Castle%20%282004%29.avi 
+	aml:http://morpheus.local/Movies/Comedy/Hot.Fuzz.avi 
+	2 cuts{* 0 10100 500 , 1 20300 500 , 0 15000 1000 } 
+;
+
