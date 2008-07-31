@@ -30,6 +30,8 @@ class thread_shell( threading.Thread ):
 						print '\n' + str( e )
 		except EOFError:
 			print
+
+		if stack.active( ):
 			stack.push( "play" )
 			stack.push( "exit" )
 

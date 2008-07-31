@@ -1,4 +1,4 @@
-from aml import ml, pl, stack, thread_player
+from aml import ml, pl, stack, thread_player, server
 
 import string
 import os
@@ -6,7 +6,7 @@ import os
 class thread_stack( stack, pl.observer ):
 	"""Combined stack and threaded player."""
 
-	def __init__( self, player = None ):
+	def __init__( self, player = None, printer = None ):
 		"""Constructor - creates the threaded player and sets up the extended AML
 		command set (to allow more comprehensive tranport controls and player
 		aware functionality)."""
@@ -19,8 +19,8 @@ class thread_stack( stack, pl.observer ):
 		else:
 			self.thread = player
 
-		self.colon_count = 0
-		self.definition = [ ]
+		self.printer = printer
+		self.server = None
 
 		self.commands = { }
 		self.commands[ '.' ] = self.dot
@@ -30,6 +30,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'grab' ] = self.grab
 		self.commands[ 'help' ] = self.help
 		self.commands[ 'insert' ] = self.insert
+		self.commands[ 'log_level' ] = self.log_level
 		self.commands[ 'next' ] = self.next
 		self.commands[ 'playing' ] = self.playing
 		self.commands[ 'playlist' ] = self.playlist
@@ -40,6 +41,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'seek' ] = self.seek
 		self.commands[ 'speed' ] = self.speed
 		self.commands[ 'speed?' ] = self.speed_query
+		self.commands[ 'server' ] = self.start_server
 		self.commands[ 'system' ] = self.system
 
 		self.commands[ 'pitch_filter' ] = self.pitch
@@ -48,6 +50,21 @@ class thread_stack( stack, pl.observer ):
 
 		prop = self.stack.property( "query" )
 		prop.attach( self )
+
+	def output( self, string ):
+		if self.printer is None:
+			print string
+		else:
+			self.printer( string )
+
+	def start_server( self ):
+		if self.server is None:
+			self.push( 'dot' )
+			port = string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) )
+			self.server = server( self.thread, port )
+			self.server.start( )
+		else:
+			raise Exception, "Server is already started..."
 
 	def start( self ):
 		"""Start the shell as a thread. On OSX, GUI oriented stores (such as 
@@ -94,6 +111,11 @@ class thread_stack( stack, pl.observer ):
 		self.stack.connect( tos, 0 )
 		self.push( 'recover' )
 		self.clone_node( tos )
+
+	def log_level( self ):
+
+		self.push( 'dot' )
+		pl.set_log_level( string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) ) )
 
 	def pitch( self ):
 		"""Place the pitch filter on the stack (temporary - these 'helper'
@@ -162,18 +184,19 @@ class thread_stack( stack, pl.observer ):
 		input = self.stack.fetch_slot( 0 )
 		if input is not None:
 			properties = input.properties( )
+			result = ''
 			for key in properties.get_keys( ):
-				print key, 
-			print
+				result += str( key ) + ' '
+			self.output( result )
 
 	def help( self ):
 		"""Nasty help output."""
 
 		self.push( "dict" )
 
-		print
-		print "Shell Extensions:"
-		print
+		self.output( '' )
+		self.output( 'Shell Extensions:' )
+		self.output( '' )
 
 		output = ''
 		for cmd in sorted( self.commands ):
@@ -182,7 +205,7 @@ class thread_stack( stack, pl.observer ):
 			else:
 				output += ', ' + cmd 
 
-		print output
+		self.output( output )
 
 	def playlist( self ):
 		"""Dump the playlist to stdout."""
@@ -192,7 +215,7 @@ class thread_stack( stack, pl.observer ):
 			render = ml.create_filter( 'aml' )
 			render.property( 'filename' ).set( unicode( '-' ) )
 			render.connect( input, 0 )
-			print
+			self.output( '' )
 		self.thread.cond.release( )
 
 	def previous( self ):
@@ -203,7 +226,7 @@ class thread_stack( stack, pl.observer ):
 			render = ml.create_filter( 'aml' )
 			render.property( 'filename' ).set( unicode( '-' ) )
 			render.connect( input, 0 )
-			print
+			self.output( '' )
 		self.thread.cond.release( )
 
 	def playing( self ):
