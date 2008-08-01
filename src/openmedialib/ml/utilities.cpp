@@ -201,16 +201,7 @@ namespace
 			}
 			break;
 		case 2:
-			switch(channels_in)
-			{
-			case 1:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-				return true;
-			}
-			break;
+			return true;
 		case 4:
 			switch(channels_in)
 			{
@@ -355,6 +346,13 @@ namespace
 								+	float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
 				}
 				break;
+
+			default:
+				{
+					sum[ 0 ] = sum[ 1 ] = 0.0f;
+					for ( int i = 0; i < channels_in; i ++ )
+						sum[ i % 2 ] += float( input[ i ] );
+				}
 			}
 			break;
 		case 4:
