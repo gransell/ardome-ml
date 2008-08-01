@@ -54,7 +54,7 @@ class thread_stack( stack, pl.observer ):
 
 	def output( self, string ):
 		if self.printer is None:
-			if string.endswith( os.sep ) or string.endswith( '\r\n' ):
+			if string.endswith( '\n' ):
 				print string,
 			else:
 				print string
@@ -232,6 +232,7 @@ class thread_stack( stack, pl.observer ):
 			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( input, 0 )
 			self.output( render.property( 'stdout' ).value_as_string( ) )
+			self.output( '' )
 		self.thread.cond.release( )
 
 	def previous( self ):
@@ -243,6 +244,7 @@ class thread_stack( stack, pl.observer ):
 			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( input, 0 )
 			self.output( render.property( 'stdout' ).value_as_string( ) )
+			self.output( '' )
 		self.thread.cond.release( )
 
 	def playing( self ):
@@ -254,6 +256,7 @@ class thread_stack( stack, pl.observer ):
 			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( self.thread.current, 0 )
 			self.output( render.property( 'stdout' ).value_as_string( ) )
+			self.output( '' )
 		self.thread.cond.release( )
 
 	def exit( self ):
