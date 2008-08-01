@@ -94,7 +94,7 @@ class thread_stack( stack, pl.observer ):
 			self.push( 'filter:aml', 'filename=@' )
 			self.push( 'dot' )
 			item = self.stack.fetch_slot( 0 )
-			text = item.property( "text" ).value_as_string( )
+			text = item.property( 'stdout' ).value_as_string( )
 			self.output( text )
 
 	def clone_node( self, node ):
