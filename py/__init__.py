@@ -38,6 +38,7 @@ from aml.client import client
 from aml.thread_player import thread_player
 from aml.thread_stack import thread_stack
 from aml.thread_shell import thread_shell
+import aml.transport as transport
 
 pl.init( dir_path )
 pl.set_log_level( -1 )

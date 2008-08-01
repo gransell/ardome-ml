@@ -44,6 +44,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'speed?' ] = self.speed_query
 		self.commands[ 'server' ] = self.start_server
 		self.commands[ 'system' ] = self.system
+		self.commands[ 'transport' ] = self.transport
 
 		self.commands[ 'pitch_filter' ] = self.pitch
 		self.commands[ 'volume_filter' ] = self.volume
@@ -69,6 +70,12 @@ class thread_stack( stack, pl.observer ):
 			self.server.start( )
 		else:
 			raise Exception, "Server is already started..."
+
+	def transport( self ):
+		if self.server is not None:
+			os.spawnlp( os.P_NOWAIT, 'amltransport', 'amltransport', 'localhost', str( self.server.port ) )
+		else:
+			raise Exception, "Server is not started..."
 
 	def start( self ):
 		"""Start the shell as a thread. On OSX, GUI oriented stores (such as 
