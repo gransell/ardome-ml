@@ -175,7 +175,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
 		if has_python:
 			clone.copy_files( self[ 'python_packages' ], 'py' )
-			clone.copy_files( self[ 'stage_bin' ], 'scripts' )
+			clone.copy_files( self[ 'stage_bin' ], 'scripts', perms = 0755 )
 		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )

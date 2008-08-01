@@ -645,7 +645,7 @@ class Environment( BaseEnvironment ):
 					list.append( os.path.join( self.root, self.relative_path_to_sconscript, src ) )
 		self.copy_files( dst, list )
 
-	def copy_files( self, dst, srcs ):
+	def copy_files( self, dst, srcs, perms = None ):
 		""" Installs src to dst, walking through the src if needed and invoking 
 			the appropriate install action on every file found.
 
@@ -771,7 +771,10 @@ class Environment( BaseEnvironment ):
 			for src_file, dst_file in all_files:
 				if not os.path.exists( dst_file ) or os.path.getmtime( src_file ) > os.path.getmtime( dst_file ):
 					file_count += 1
-					if execute: shutil.copyfile( src_file, dst_file )
+					if execute: 
+						shutil.copyfile( src_file, dst_file )
+						if perms is not None:
+							os.chmod( dst_file, perms )
 			for dir, file, link in all_links:
 				full = os.path.join( dir, file )
 				if not os.path.exists( full ):
