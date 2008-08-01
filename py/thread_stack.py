@@ -54,7 +54,10 @@ class thread_stack( stack, pl.observer ):
 
 	def output( self, string ):
 		if self.printer is None:
-			print string
+			if string.endswith( os.sep ) or string.endswith( '\r\n' ):
+				print string,
+			else:
+				print string
 		else:
 			self.printer( string )
 
@@ -95,7 +98,8 @@ class thread_stack( stack, pl.observer ):
 			self.push( 'dot' )
 			item = self.stack.fetch_slot( 0 )
 			text = item.property( 'stdout' ).value_as_string( )
-			self.output( text )
+			if text != '':
+				self.output( text )
 
 	def clone_node( self, node ):
 		"""Temporary - will migrate to C++ class."""

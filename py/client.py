@@ -1,4 +1,5 @@
 import socket
+import os
 
 class client:
 	"""Simple blocking client for the aml server."""
@@ -60,7 +61,10 @@ class client:
 						self.send( input )
 						list = self.receive( )
 						for entry in list:
-							print entry
+							if entry.endswith( '\n' ):
+								print entry,
+							else:
+								print entry
 				except KeyboardInterrupt:
 					try:
 						self.send( "reset!" )

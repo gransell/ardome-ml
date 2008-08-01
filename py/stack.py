@@ -64,7 +64,9 @@ class stack:
 				self.stack.property( "command" ).set( unicode( cmd ) )
 
 			if self.printer is not None:
-				self.printer( self.stack.property( 'stdout' ).value_as_string( ) )
+				text = self.stack.property( 'stdout' ).value_as_string( )
+				if text != '':
+					self.printer( self.stack.property( 'stdout' ).value_as_string( ) )
 				self.stack.property( 'stdout' ).set_from_string( '' )
 
 			result = self.stack.property( "result" ).value_as_wstring( )

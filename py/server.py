@@ -50,20 +50,22 @@ class client_handler:
 		"""Send a single message back to the client."""
 
 		total = 0
+		message = message.replace( '\r\n', '\n' ).replace( '\n', '\r\n' )
+		if not message.endswith( '\n' ):
+			message += '\r\n'
 		while total < len( message ):
 			sent = self.socket.send( message[ total: ] )
 			if sent == 0:
-				return total
+				return False
 			total += sent
-		self.socket.send( '\r\n' )
-		return total
+		return True
 
 	def write( self ):
 		"""Send all pending data back to the client."""
 
 		while len( self.pending ):
 			for result in self.pending:
-				if self.send( result ) != len( result ):
+				if self.send( result ) == False:
 					self.parent.unregister_client( self.socket )
 					return
 			self.pending = [ ]
