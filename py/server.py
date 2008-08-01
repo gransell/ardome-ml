@@ -37,10 +37,12 @@ class client_handler:
 
 				for line in lines:
 					try:
-						self.stack.define( line )
-						self.pending += [ 'OK' ]
+						if line != '':
+							self.stack.define( line )
+							self.pending += [ 'OK' ]
 					except Exception, e:
 						self.pending += [ 'ERROR: ' + str( e ) ]
+
 				if len( self.pending ):
 					self.parent.register_writer( self.socket )
 

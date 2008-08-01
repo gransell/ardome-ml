@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import aml
+import sys
+
+aml.init( )
+
+player = aml.thread_player( )
+player.set_store( sys.argv[ 1: ] )
+
+shell = aml.thread_shell( player )
+shell.start( )
+
+player.run( )
+

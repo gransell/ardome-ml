@@ -12,9 +12,6 @@ if platform.system( ) == 'Linux':
 		sys.setdlopenflags( dl.RTLD_NOW | dl.RTLD_GLOBAL )
 	except:
 		sys.setdlopenflags( 257 )
-elif platform.system( ) == 'Darwin':
-	from AppKit import NSApplicationLoad
-	NSApplicationLoad( )
 
 # Get the full path to the running instance of this file (note that if you happen to be 
 # in the site-packages dir, __file__ is reported as relative - hence the join here - however
@@ -34,13 +31,20 @@ import openpluginlib as pl
 import openimagelib as il
 import openmedialib as ml
 
-pl.init( dir_path )
-pl.set_log_level( -1 )
-
 from aml.stack import stack
 from aml.player import player
 from aml.server import server
 from aml.thread_player import thread_player
 from aml.thread_stack import thread_stack
 from aml.thread_shell import thread_shell
+
+pl.init( dir_path )
+pl.set_log_level( -1 )
+
+def init( ):
+	"""Initialise the GUI usage - not required for non-preview use."""
+
+	if platform.system( ) == 'Darwin':
+		from AppKit import NSApplicationLoad
+		NSApplicationLoad( )
 
