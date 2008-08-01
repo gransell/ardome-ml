@@ -6,10 +6,13 @@ import time
 class stack:
 	"""Wrapper for the aml_stack c++ implementation."""
 
-	def __init__( self, command = None ):
+	def __init__( self, command = None, printer = None ):
 		"""Constructor creates the object"""
 
-		self.stack = ml.create_input( "aml_stack:" )
+		self.stack = ml.create_input( 'aml_stack:' )
+		self.printer = printer
+		if printer is not None:
+			self.stack.property( 'redirect' ).set( 1 )
 		if command is not None:
 			self.push( command )
 
@@ -59,7 +62,11 @@ class stack:
 				self.stack.property( "command" ).set( unicode( "recover" ) )
 			else:
 				self.stack.property( "command" ).set( unicode( cmd ) )
-				
+
+			if self.printer is not None:
+				self.printer( self.stack.property( 'stdout' ).value_as_string( ) )
+				self.stack.property( 'stdout' ).set_from_string( '' )
+
 			result = self.stack.property( "result" ).value_as_wstring( )
 			if result != "OK":
 				raise Exception( result + " (" + str( cmd ) + ")" )

@@ -18,10 +18,10 @@ class client_handler:
 		self.socket = client
 		self.socket.settimeout( 0 )
 		self.socket.setblocking( 0 )
-		self.stack = aml.thread_stack( parent.player, self.output )
-		self.stack.include( 'shell.aml' )
 		self.msg = ''
 		self.pending = [ ]
+		self.stack = aml.thread_stack( parent.player, self.output )
+		self.stack.include( 'shell.aml' )
 
 	def read( self ):
 		"""Read a chunk of data, parse complete lines and collect results."""

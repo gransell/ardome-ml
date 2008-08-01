@@ -11,7 +11,7 @@ class thread_stack( stack, pl.observer ):
 		command set (to allow more comprehensive tranport controls and player
 		aware functionality)."""
 
-		stack.__init__( self )
+		stack.__init__( self, printer = printer )
 		pl.observer.__init__( self )
 
 		if player is None:
@@ -78,7 +78,7 @@ class thread_stack( stack, pl.observer ):
 		self.push( 'filter:aml', 'filename=@' )
 		self.push( 'dot' )
 		item = self.stack.fetch_slot( 0 )
-		text = item.property( "text" ).value_as_string( )
+		text = item.property( 'stdout' ).value_as_string( )
 		self.output( text )
 
 	def dot( self ):
@@ -225,9 +225,9 @@ class thread_stack( stack, pl.observer ):
 		self.thread.cond.acquire( )
 		for input in self.thread.input:
 			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '-' ) )
+			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( input, 0 )
-			self.output( '' )
+			self.output( render.property( 'stdout' ).value_as_string( ) )
 		self.thread.cond.release( )
 
 	def previous( self ):
@@ -236,9 +236,9 @@ class thread_stack( stack, pl.observer ):
 		self.thread.cond.acquire( )
 		for input in self.thread.prev_inputs:
 			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '-' ) )
+			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( input, 0 )
-			self.output( '' )
+			self.output( render.property( 'stdout' ).value_as_string( ) )
 		self.thread.cond.release( )
 
 	def playing( self ):
@@ -247,8 +247,9 @@ class thread_stack( stack, pl.observer ):
 		self.thread.cond.acquire( )
 		if self.thread.current is not None:
 			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '-' ) )
+			render.property( 'filename' ).set( unicode( '@' ) )
 			render.connect( self.thread.current, 0 )
+			self.output( render.property( 'stdout' ).value_as_string( ) )
 		self.thread.cond.release( )
 
 	def exit( self ):
