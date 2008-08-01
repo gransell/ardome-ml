@@ -38,6 +38,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'prev' ] = self.prev
 		self.commands[ 'previous' ] = self.previous
 		self.commands[ 'props' ] = self.props
+		self.commands[ 'render' ] = self.render
 		self.commands[ 'seek' ] = self.seek
 		self.commands[ 'speed' ] = self.speed
 		self.commands[ 'speed?' ] = self.speed_query
@@ -72,6 +73,14 @@ class thread_stack( stack, pl.observer ):
 
 		self.thread.start( )
 
+	def render( self ):
+		self.push( 'dup' )
+		self.push( 'filter:aml', 'filename=@' )
+		self.push( 'dot' )
+		item = self.stack.fetch_slot( 0 )
+		text = item.property( "text" ).value_as_string( )
+		self.output( text )
+
 	def dot( self ):
 		"""Override the . to force play of the top of stack."""
 
@@ -82,8 +91,11 @@ class thread_stack( stack, pl.observer ):
 			self.push( 'dot' )
 			self.thread.set( self.stack.fetch_slot( 0 ) )
 		else:
-			self.push( 'render' )
-			self.push( 'drop' )
+			self.push( 'filter:aml', 'filename=@' )
+			self.push( 'dot' )
+			item = self.stack.fetch_slot( 0 )
+			text = item.property( "text" ).value_as_string( )
+			self.output( text )
 
 	def clone_node( self, node ):
 		"""Temporary - will migrate to C++ class."""
