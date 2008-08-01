@@ -34,6 +34,7 @@ import openmedialib as ml
 from aml.stack import stack
 from aml.player import player
 from aml.server import server
+from aml.client import client
 from aml.thread_player import thread_player
 from aml.thread_stack import thread_stack
 from aml.thread_shell import thread_shell

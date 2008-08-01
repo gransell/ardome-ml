@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 
-import aml.client
+import aml
 import sys
 
-client = aml.client.client( )
+server = 'localhost'
+port = 55378
+
+if len( sys.argv ) > 1:
+	entries = sys.argv[ 1 ].split( ':' )
+	server = entries[ 0 ]
+	if len( entries ) > 1:
+		port = int( entries[ 1 ] )
+
+client = aml.client( server, port )
 client.shell( )
 
