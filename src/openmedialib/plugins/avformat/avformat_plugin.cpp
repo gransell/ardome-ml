@@ -1376,6 +1376,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					prop_gop_size_ = 24;
 				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
+
+				if ( format == "mpegts" )
+					start_time_ = 0;
 			}
 			else
 			{
