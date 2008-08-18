@@ -1346,12 +1346,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			std::string format = context_->iformat->name;
 
-			// Determine the number of frames in the media
-			if ( prop_frames_.value< int >( ) != -1 )
-				frames_ = prop_frames_.value< int >( );
-			else if ( should_size_media( format ) )
-				frames_ = size_media( );
-
 			// Work around for inefficiencies on I frame only seeking
 			// - this should be covered by the AVStream discard and need_parsing values
 			//   but they're either wrong or poorly documented...
@@ -1379,17 +1373,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					prop_gop_size_ = 0;
 
 				if ( format == "mpegts" && codec == "h264" )
-				{
-					start_time_ = 0;
-					context_->data_offset = 0;
 					h264_hack_ = true;
-				}
 			}
 			else
 			{
 				if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 			}
+
+			// Determine the number of frames in the media
+			if ( prop_frames_.value< int >( ) != -1 )
+				frames_ = prop_frames_.value< int >( );
+			else if ( should_size_media( format ) )
+				frames_ = size_media( );
 		}
 
 		bool should_size_media( std::string format )
@@ -1472,11 +1468,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			frames_ = max > 0 ? max : frames_;
 			seek( 0 );
 
-			// FIXME: Seeking to the first frame at this point is inaccurate in some cases
-			if ( context_->data_offset == 0 )
-				av_seek_frame( context_, -1, 0, AVSEEK_FLAG_BYTE );
-			else
-				seek_to_position( );
+			seek_to_position( );
 
 			return frames_;
 		}
