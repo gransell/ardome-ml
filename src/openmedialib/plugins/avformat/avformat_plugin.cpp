@@ -1234,6 +1234,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, sync_diff_( 0 )
 			, start_time_( 0 )
 			, img_convert_( 0 )
+			, h264_hack_( false )
 		{
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
@@ -1377,8 +1378,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 
-				if ( format == "mpegts" )
+				if ( format == "mpegts" && codec == "h264" )
+				{
+					start_time_ = 0;
 					context_->data_offset = 0;
+					h264_hack_ = true;
+				}
 			}
 			else
 			{
@@ -1542,7 +1547,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( must_reopen_ )
 					reopen( );
 
-				int result = av_seek_frame( context_, -1, offset, AVSEEK_FLAG_BACKWARD );
+				std::string format = context_->iformat->name;
+				int result = -1;
+
+				if ( h264_hack_ && position < prop_gop_size_.value< int >( ) )
+					result = av_seek_frame( context_, -1, 0, AVSEEK_FLAG_BYTE );
+				else
+					result = av_seek_frame( context_, -1, offset, AVSEEK_FLAG_BACKWARD );
 				key_search_ = true;
 
 				aud_pos_ = img_pos_ = 0;
@@ -2272,6 +2283,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		int64_t start_time_;
 		struct SwsContext *img_convert_;
+		bool h264_hack_;
 };
 
 
