@@ -22,11 +22,14 @@ class client:
 		while sent != len( input ):
 			bytes = self.socket.send( input[ sent: ] )
 			if bytes == 0:
-				raise Exception, "Send failed"
+				raise Exception, 'Send failed'
 			sent += bytes
 
 	def receive( self ):
-		"""Receive the response to the previously sent line."""
+		"""Receive the response to the previously sent line. All responses are 
+		sent as cr/lf delimited strings ending with OK or ERROR: <Description>.
+		In the case of OK, the last line is removed. Any error indication is
+		left in place."""
 
 		list = [ ]
 		result = ''
@@ -34,7 +37,7 @@ class client:
 		while not finished:
 			chunk = self.socket.recv( 1024 )
 			if chunk == '':
-				raise Exception, "Recv failed"
+				raise Exception, 'Recv failed'
 			result += chunk
 			list += result.split( '\r\n' )
 			result = list.pop( -1 )
@@ -50,7 +53,7 @@ class client:
 		"""Really shouldn't be here (subclass of client_shell needed perhaps?)."""
 
 		import readline
-		readline.parse_and_bind("tab: complete")
+		readline.parse_and_bind( 'tab: complete' )
 		try:
 			while True:
 				try:
@@ -67,9 +70,22 @@ class client:
 								print entry
 				except KeyboardInterrupt:
 					try:
-						self.send( "reset!" )
+						self.send( 'reset!' )
 					except Exception, e:
 						print '\n' + str( e )
 		except EOFError:
 			print
+
+def parse( info = '' ):
+	"""Parse the [server[:port]] specification and return the server/
+	port requested."""
+
+	server = 'localhost'
+	port = 55378
+	if info != '':
+		entries = info.split( ':' )
+		server = entries[ 0 ]
+		if len( entries ) > 1:
+			port = int( entries[ 1 ] )
+	return server, port
 

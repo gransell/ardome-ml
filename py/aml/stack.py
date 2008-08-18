@@ -7,7 +7,7 @@ class stack:
 	"""Wrapper for the aml_stack c++ implementation."""
 
 	def __init__( self, command = None, printer = None ):
-		"""Constructor creates the object"""
+		"""Constructor creates the stack instance and sets up io redirection."""
 
 		self.stack = ml.create_input( 'aml_stack:' )
 		self.printer = printer

@@ -1,9 +1,17 @@
+"""Ardome Media Library Python Wrapper
+
+This module provides a high level wrapper to the core boost wrapper - as
+such it primarily focuses around media player functionality and the AML
+stack plugin.
+
+The stack plugin is used to provide the shell and server functionality."""
+
 import platform
 import sys
 import os
 
-# Necessary hacks for linux - ensures characters are read correctly and that the global
-# c++ namespace is used when loading plugins
+# Necessary hacks for linux - ensures characters are read correctly and that 
+# the global c++ namespace is used when loading plugins
 if platform.system( ) == 'Linux':
 	import locale
 	locale.setlocale( locale.LC_CTYPE, '' )
@@ -13,9 +21,10 @@ if platform.system( ) == 'Linux':
 	except:
 		sys.setdlopenflags( 257 )
 
-# Get the full path to the running instance of this file (note that if you happen to be 
-# in the site-packages dir, __file__ is reported as relative - hence the join here - however
-# if the __file__ is absolute, the getcwd is ignored)
+# Get the full path to the running instance of this file (note that if you 
+# happen to be in the site-packages dir, __file__ is reported as relative - 
+# hence the join here - however if the __file__ is absolute, the getcwd is 
+# ignored)
 full_path = os.path.join( os.getcwd( ), __file__ )
 
 # Determine the directory path to the plugins directory
@@ -34,11 +43,9 @@ import openmedialib as ml
 from aml.stack import stack
 from aml.player import player
 from aml.server import server
-from aml.client import client
 from aml.thread_player import thread_player
 from aml.thread_stack import thread_stack
 from aml.thread_shell import thread_shell
-import aml.transport as transport
 
 pl.init( dir_path )
 pl.set_log_level( -1 )

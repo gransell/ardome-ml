@@ -2,6 +2,7 @@ from aml import ml, pl, stack, thread_player, server
 
 import string
 import os
+import math
 
 class thread_stack( stack, pl.observer ):
 	"""Combined stack and threaded player."""
@@ -15,18 +16,23 @@ class thread_stack( stack, pl.observer ):
 		pl.observer.__init__( self )
 
 		if player is None:
-			self.thread = thread_player( )
+			self.player = thread_player( )
 		else:
-			self.thread = player
+			self.player = player
 
 		self.printer = printer
 		self.server = None
 
 		self.commands = { }
 		self.commands[ '.' ] = self.dot
+		self.commands[ '**' ] = self.pow
+		self.commands[ 'sin' ] = self.sin
+		self.commands[ 'cos' ] = self.cos
+		self.commands[ 'tan' ] = self.tan
 		self.commands[ 'add' ] = self.add
 		self.commands[ 'clone' ] = self.clone
 		self.commands[ 'exit' ] = self.exit
+		self.commands[ 'filters' ] = self.filters
 		self.commands[ 'grab' ] = self.grab
 		self.commands[ 'help' ] = self.help
 		self.commands[ 'insert' ] = self.insert
@@ -43,15 +49,41 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'speed' ] = self.speed
 		self.commands[ 'speed?' ] = self.speed_query
 		self.commands[ 'server' ] = self.start_server
+		self.commands[ 'status?' ] = self.status
 		self.commands[ 'system' ] = self.system
 		self.commands[ 'transport' ] = self.transport
+		self.commands[ 'store' ] = self.store
 
 		self.commands[ 'pitch_filter' ] = self.pitch
 		self.commands[ 'volume_filter' ] = self.volume
 		self.commands[ 'deinterlace_filter' ] = self.deinterlace
 
-		prop = self.stack.property( "query" )
-		prop.attach( self )
+		self.next_command = None
+		self.incoming = ''
+
+		self.aml = ml.create_filter( 'aml' )
+		self.aml.property( 'filename' ).set( u'@' )
+		self.aml_stdout = self.aml.property( 'stdout' )
+		self.aml_write = self.aml.property( 'write' )
+
+		self.handled = self.stack.property( "handled" )
+		self.query = self.stack.property( "query" )
+		self.query.attach( self )
+
+	def filters( self ):
+		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
+		filters = [ ]
+		for y in plugins:
+			if y.type( ) == "filter":
+				for f in y.extension( ):
+					filters += [ str( f ) ]
+		result = ''
+		for f in sorted( filters ):
+			if result == '':
+				result = f
+			else:
+				result += ', ' + f
+		self.output( result )
 
 	def output( self, string ):
 		if self.printer is None:
@@ -64,12 +96,16 @@ class thread_stack( stack, pl.observer ):
 
 	def start_server( self ):
 		if self.server is None:
-			self.push( 'dot' )
-			port = string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) )
-			self.server = server( self.thread, port )
-			self.server.start( )
+			port = string.atoi( self.pop( ).get_uri( ) )
+			try:
+				self.server = server( self.player, port, port + 1 )
+				self.server.start( )
+				print "Server is started on port %d." % self.server.port
+			except Exception, e:
+				self.server = None
+				raise Exception, "Server failed to start (%s)" % e
 		else:
-			raise Exception, "Server is already started..."
+			raise Exception, "Server is already running on port %d." % self.server.port
 
 	def transport( self ):
 		if self.server is not None:
@@ -81,32 +117,49 @@ class thread_stack( stack, pl.observer ):
 		"""Start the shell as a thread. On OSX, GUI oriented stores (such as 
 		SDL) cannot be run as a background thread."""
 
-		self.thread.start( )
+		self.player.start( )
 
 	def render( self ):
 		self.push( 'dup' )
-		self.push( 'filter:aml', 'filename=@' )
-		self.push( 'dot' )
-		item = self.stack.fetch_slot( 0 )
-		text = item.property( 'stdout' ).value_as_string( )
+		item = self.pop( )
+		self.aml.connect( item, 0 )
+		text = self.aml_stdout.value_as_string( )
 		self.output( text )
+		self.aml_write.set( 1 )
 
 	def dot( self ):
 		"""Override the . to force play of the top of stack."""
 
-		self.push( 'length?' )
-		self.push( 'dot' )
-		length = int( self.stack.fetch_slot( 0 ).get_uri( ) )
-		if length > 0:
-			self.push( 'dot' )
-			self.thread.set( self.stack.fetch_slot( 0 ) )
+		item = self.pop( )
+		if item.get_frames( ) > 0:
+			self.player.set( item )
 		else:
-			self.push( 'filter:aml', 'filename=@' )
-			self.push( 'dot' )
-			item = self.stack.fetch_slot( 0 )
-			text = item.property( 'stdout' ).value_as_string( )
+			self.aml.connect( item, 0 )
+			text = self.aml_stdout.value_as_string( )
+			self.aml_write.set( 1 )
 			if text != '':
 				self.output( text )
+
+	def pop( self ):
+		self.push( 'dot' )
+		return self.stack.fetch_slot( 0 )
+
+	def pow( self ):
+		y = float( self.pop( ).get_uri( ) )
+		x = float( self.pop( ).get_uri( ) )
+		self.push( math.pow( x, y ) )
+
+	def sin( self ):
+		x = float( self.pop( ).get_uri( ) )
+		self.push( math.sin( x ) )
+
+	def cos( self ):
+		x = float( self.pop( ).get_uri( ) )
+		self.push( math.cos( x ) )
+
+	def tan( self ):
+		x = float( self.pop( ).get_uri( ) )
+		self.push( math.tan( x ) )
 
 	def clone_node( self, node ):
 		"""Temporary - will migrate to C++ class."""
@@ -129,82 +182,77 @@ class thread_stack( stack, pl.observer ):
 		for non-I-frame only media). Temporarily placed here, will move to
 		C++ primitives."""
 
-		self.push( 'dot' )
-		tos = self.stack.fetch_slot( 0 )
+		tos = self.pop( )
 		self.stack.connect( tos, 0 )
 		self.push( 'recover' )
 		self.clone_node( tos )
 
 	def log_level( self ):
 
-		self.push( 'dot' )
-		pl.set_log_level( string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) ) )
+		pl.set_log_level( string.atoi( self.pop( ).get_uri( ) ) )
 
 	def pitch( self ):
 		"""Place the pitch filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		self.stack.connect( self.thread.get_instance( 'pitch' ), 0 )
+		self.stack.connect( self.player.get_instance( 'pitch' ), 0 )
 		self.push( 'recover' )
 
 	def volume( self ):
 		"""Place the volume filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		self.stack.connect( self.thread.get_instance( 'volume' ), 0 )
+		self.stack.connect( self.player.get_instance( 'volume' ), 0 )
 		self.push( 'recover' )
 
 	def deinterlace( self ):
 		"""Place the deinterlace filter on the stack (temporary - these 'helper'
 		filters don't need specific words to obtain them)."""
 
-		self.stack.connect( self.thread.get_instance( 'deinterlace' ), 0 )
+		self.stack.connect( self.player.get_instance( 'deinterlace' ), 0 )
 		self.push( 'recover' )
 
 	def speed( self ):
 		"""Set the speed to the number at the top of the stack."""
 
-		self.push( 'dot' )
-		self.thread.set_speed( string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) ) )
+		self.player.set_speed( string.atoi( self.pop( ).get_uri( ) ) )
 
 	def speed_query( self ):
 		""" Put the current playout speed on top of the stack."""
 
-		self.push( self.thread.get_speed( ) )
+		self.push( self.player.get_speed( ) )
 
 	def add( self ):
 		"""Add top of stack to playlist."""
 
-		self.push( 'dot' )
-		self.thread.add( self.stack.fetch_slot( 0 ) )
+		self.player.add( self.pop( ) )
 
 	def next( self ):
 		"""Move to next in playlist."""
 
-		self.thread.next( )
+		self.player.next( )
 
 	def prev( self ):
 		"""Move to prev in playlist."""
 
-		self.thread.prev( )
+		self.player.prev( )
 
 	def seek( self ):
 		"""Seek to the position at the top of the stack."""
 
-		self.push( 'dot' )
-		self.thread.seek( string.atoi( self.stack.fetch_slot( 0 ).get_uri( ) ) )
+		self.player.seek( string.atoi( self.pop( ).get_uri( ) ) )
 
 	def position( self ):
 		"""Place current position on the top of the stack."""
 
-		self.push( str( self.thread.position( ) ) )
+		self.push( str( self.player.position( ) ) )
 
 	def props( self ):
-		"""Display properties of the top of stack object. Temporary, will migrate
-		to C++ primitives."""
+		"""Display properties of the top of stack object. Temporary, will 
+		migrate to C++ primitives."""
 
-		self.push( 'dup', 'dot' )
-		input = self.stack.fetch_slot( 0 )
+		self.push( 'dup' )
+		input = self.pop( )
 		if input is not None:
 			properties = input.properties( )
 			result = ''
@@ -233,48 +281,71 @@ class thread_stack( stack, pl.observer ):
 	def playlist( self ):
 		"""Dump the playlist to stdout."""
 
-		self.thread.cond.acquire( )
-		for input in self.thread.input:
-			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '@' ) )
-			render.connect( input, 0 )
-			self.output( render.property( 'stdout' ).value_as_string( ) )
-			self.output( '' )
-		self.thread.cond.release( )
+		self.player.cond.acquire( )
+		try:
+			for input in self.player.input:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( input, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
 
 	def previous( self ):
 		"""Dump the previously played list to stdout."""
 
-		self.thread.cond.acquire( )
-		for input in self.thread.prev_inputs:
-			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '@' ) )
-			render.connect( input, 0 )
-			self.output( render.property( 'stdout' ).value_as_string( ) )
-			self.output( '' )
-		self.thread.cond.release( )
+		self.player.cond.acquire( )
+		try:
+			for input in self.player.prev_inputs:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( input, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
 
 	def playing( self ):
 		"""Dump the current playing item to stdout."""
 
-		self.thread.cond.acquire( )
-		if self.thread.current is not None:
-			render = ml.create_filter( 'aml' )
-			render.property( 'filename' ).set( unicode( '@' ) )
-			render.connect( self.thread.current, 0 )
-			self.output( render.property( 'stdout' ).value_as_string( ) )
-			self.output( '' )
-		self.thread.cond.release( )
+		self.player.cond.acquire( )
+		try:
+			if self.player.current is not None:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( self.player.current, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
 
+	def status( self ):
+		self.player.cond.acquire( )
+		try:
+			if self.player.current is not None:
+				self.push( self.player.current.get_frames( ) )
+				self.push( self.player.position( ) )
+				self.push( self.player.get_speed( ) )
+			else:
+				self.push( 0 )
+				self.push( 0 )
+				self.push( 0 )
+			self.dot( )
+			self.dot( )
+			self.dot( )
+		finally:
+			self.player.cond.release( )
+		
 	def exit( self ):
 		"""Exit the thread."""
 
-		self.thread.exit( )
+		self.player.exit( )
 
 	def active( self ):
 		"""Indicates if thread is still active or not."""
 
-		return self.thread.active( )
+		return self.player.active( )
 
 	def system( self ):
 		"""Fork off a shell."""
@@ -282,10 +353,10 @@ class thread_stack( stack, pl.observer ):
 		os.system( "bash" )
 
 	def grab( self ):
-		"""Grab the input at the specified playlist index (<index> grab -- <input>)."""
+		"""Grab the input at the specified playlist index (<index> grab -- 
+		<input>)."""
 
-		self.push( 'dot' )
-		input = self.thread.grab( int( self.stack.fetch_slot( 0 ).get_uri( ) ) )
+		input = self.player.grab( int( self.pop( ).get_uri( ) ) )
 		if input is not None:
 			self.push( input )
 
@@ -293,25 +364,56 @@ class thread_stack( stack, pl.observer ):
 		"""Insert the input at the specified playlist index (<input> <index> 
 		insert --)."""
 
-		self.push( 'dot' )
-		index = int( self.stack.fetch_slot( 0 ).get_uri( ) )
-		self.push( 'dot' )
-		self.thread.insert( index, self.stack.fetch_slot( 0 ) )
+		index = int( self.pop( ).get_uri( ) )
+		self.player.insert( index, self.pop( ) )
+
+	def store( self ):
+		if self.next_command is None:
+			self.next_command = self.store
+			self.store_props = [ ]
+		elif self.incoming != '.':
+			self.store_props += [ str( self.incoming ) ]
+		else:
+			self.player.cond.acquire( )
+			try:
+				self.next_command = None
+				if isinstance( self.player.stores, list ) and len( self.player.stores ) and isinstance( self.player.stores[0], str ):
+					self.player.store += self.store_props
+				else:
+					result = self.player.stores
+					for pair in self.store_props:
+						name, value = pair.split( '=', 1 )
+						prop = result[ 0 ].property( name )
+						if prop.valid( ):
+							prop.set_from_string( value )
+						elif name.startswith( '@' ):
+							key = pl.create_key_from_string( name )
+							prop = pl.property( key )
+							prop.set( unicode( value ) )
+							result[ 0 ].properties( ).append( prop )
+						else:
+							print 'Requested property %s not found found - ignoring.' % name
+			finally:
+				self.player.cond.release( )
 
 	def updated( self, subject ):
 		"""Callback for query property - if the value of the query is found
 		in the stack commands, then execute that and set the handled value to
 		1 to indicate to the base implementation not to process this word."""
 
-		command = self.stack.property( "query" ).value_as_wstring( )
-		if str( command ) in self.commands.keys( ):
+		command = self.query.value_as_wstring( )
+		if self.next_command is not None:
+			self.incoming = command
+			self.next_command( )
+			self.handled.set( 1 )
+		elif str( command ) in self.commands.keys( ):
 			cmd = self.commands[ command ]
 			if isinstance( cmd, list ):
 				for token in cmd:
 					self.push( token )
 			else:
 				cmd( )
-			self.stack.property( "handled" ).set( 1 )
+			self.handled.set( 1 )
 
 def convert_list_to_string( list, quote = False ):
 	result = ''

@@ -3,12 +3,20 @@ import threading
 import readline
 
 class thread_shell( threading.Thread ):
+	"""Provides an interactive shell which runs as a background thread to a
+	thread safe player instance."""
+
 	def __init__( self, player ):
+		"""Constructor - initialises the thread and stack and asscociates
+		itself with a player instance."""
+
 		threading.Thread.__init__( self )
 		self.player = player
 		self.stack = aml.thread_stack( player )
 
 	def run( self ):
+		"""Loops on stdin reading and submits all commands to the stack."""
+
 		stack = self.stack
 		stack.include( 'shell.aml' )
 		readline.parse_and_bind("tab: complete")

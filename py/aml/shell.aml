@@ -102,3 +102,7 @@ core.aml
 	drop
 ;
 
+: bless
+	55378 server
+;
+
