@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import amlx
+import amly
 import sys
 
 server = 'localhost'
@@ -12,5 +12,5 @@ if len( sys.argv ) > 1:
 if len( sys.argv ) > 2:
 	port = int( sys.argv[ 2 ] )
 
-amlx.transport.run( server, port )
+amly.tkplay.run( server, port )
 
