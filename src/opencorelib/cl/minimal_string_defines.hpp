@@ -49,6 +49,8 @@
 	#endif
 #endif
 
+#include <boost/format.hpp>
+
 namespace olib
 {
     /** @file minimal_string_defines.h 
@@ -80,6 +82,8 @@ namespace olib
     #define T_COUT std::wcout
     #define T_CERR std::wcerr
 
+	typedef boost::wformat t_format;
+
 #elif defined(OLIB_USE_UTF8)
 	typedef std::iostream t_iostream;
 	typedef std::string t_string;
@@ -99,6 +103,9 @@ namespace olib
 	
     #define T_COUT std::cout
     #define T_CERR std::cerr
+
+	typedef boost::format t_format;
+
 #else
     #error("Need to define unicode standard, OLIB_USE_UTF8 or OLIB_USE_UTF16")
 #endif

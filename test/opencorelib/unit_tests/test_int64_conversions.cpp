@@ -3,6 +3,8 @@
 
 #include "opencorelib/cl/machine_readable_errors.hpp"
 
+#include "opencorelib/cl/str_util.hpp"
+
 using namespace olib;
 using namespace olib::opencorelib;
 using namespace olib::opencorelib::str_util;

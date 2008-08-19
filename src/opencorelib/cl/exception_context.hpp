@@ -1,14 +1,14 @@
 #ifndef _CORE_EXCEPTIONCONTEXT_H_
 #define _CORE_EXCEPTIONCONTEXT_H_
 
-#include "str_util.hpp"
+#include "minimal_string_defines.hpp"
 #include "basic_enums.hpp"
 
 namespace olib
 {
 	namespace opencorelib
 	{
-		typedef std::vector< std::pair<t_string, t_string > >  name_value_container; 
+		typedef std::vector< std::pair<t_string, t_string > >  name_value_container;
 	
 		/// A class that stores information about the context where an assertion or exception occurred.
 		/** This class is used by the assertions and exceptions in amf.
@@ -72,19 +72,7 @@ namespace olib
 
 
             /// Add a string value to the context
-            void add_value( const char* exp, const t_string& val )
-            {
-                try
-                {
-                    t_string expression = str_util::to_t_string(exp);
-                    m_name_value_vec.push_back(std::make_pair(expression, val));
-                }
-                catch(...)
-                {
-                    // Don't do anything, just ignore.
-                }
-
-            }
+			void add_value( const char* exp, const t_string& val );
 
              /// Add a value to the message string
              /** Uses boost::format's % operator. 

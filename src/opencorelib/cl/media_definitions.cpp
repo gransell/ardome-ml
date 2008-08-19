@@ -2,6 +2,7 @@
 #include "./media_definitions.hpp"
 #include "./enforce_defines.hpp"
 #include "./enforce.hpp"
+#include "str_util.hpp"
 
 namespace olib
 {

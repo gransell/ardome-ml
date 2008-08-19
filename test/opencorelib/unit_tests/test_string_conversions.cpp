@@ -1,4 +1,5 @@
 #include "precompiled_headers.hpp"
+#include "opencorelib/cl/str_util.hpp"
 #include <boost/test/test_tools.hpp>
 
 using namespace olib::opencorelib;

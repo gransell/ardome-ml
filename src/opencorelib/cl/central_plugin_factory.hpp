@@ -4,6 +4,7 @@
 #include "./object.hpp"
 #include "./plugin_loader.hpp"
 #include "./enforce_defines.hpp"
+#include "./str_util.hpp"
 
 /** @file central_plugin_factory.h */
 

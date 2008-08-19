@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include "loghandler.hpp"
 #include "exception_context.hpp"
+#include "str_util.hpp"
 
 namespace olib
 {

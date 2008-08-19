@@ -5,6 +5,7 @@
 
 #include "opencorelib/cl/core.hpp"
 #include "opencorelib/cl/logtarget.hpp"
+#include "opencorelib/cl/str_util.hpp"
 
 // Forward declarations:
 void test_assert();

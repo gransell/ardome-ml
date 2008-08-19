@@ -2,6 +2,8 @@
 #define _CORE_ASSERT_PERSISTANCE_H_
 
 #include "assert.hpp"
+#include "str_util.hpp"
+
 #include <set>
 
 namespace olib

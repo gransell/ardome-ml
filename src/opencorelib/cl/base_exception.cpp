@@ -1,6 +1,7 @@
 #include "precompiled_headers.hpp"
 #include "base_exception.hpp"
 #include "exception_presenter.hpp"
+#include "str_util.hpp"
 
 #include <algorithm>
 #include <boost/bind.hpp>

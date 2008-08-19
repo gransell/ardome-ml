@@ -13,8 +13,6 @@
 		#pragma warning( disable: 4244 )
 #endif
 
-	#include <boost/format.hpp>
-
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
 	#pragma warning( pop )
 #endif

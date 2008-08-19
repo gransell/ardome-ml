@@ -11,7 +11,7 @@
 
 #include "exception_context.hpp"
 #include "utilities.hpp"
-
+#include "str_util.hpp"
 
 
 namespace olib
@@ -244,6 +244,19 @@ namespace olib
 			}
 
 		}
+		
+		void exception_context::add_value( const char* exp, const t_string& val )
+        {
+            try
+            {
+                t_string expression = str_util::to_t_string(exp);
+                m_name_value_vec.push_back(std::make_pair(expression, val));
+            }
+            catch(...)
+            {
+                // Don't do anything, just ignore.
+            }
+        }
 
 		void exception_context::call_stack( const t_string& str)
 		{

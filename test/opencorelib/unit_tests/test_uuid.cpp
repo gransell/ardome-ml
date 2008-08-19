@@ -3,6 +3,7 @@
 
 #include "opencorelib/cl/utilities.hpp"
 #include "opencorelib/cl/uuid_16b.hpp"
+#include "opencorelib/cl/str_util.hpp"
 
 #include <boost/test/test_tools.hpp> 
 
