@@ -13,10 +13,8 @@
 
 #include <openpluginlib/pl/pcos/property_container.hpp>
 
-#ifdef OML_USE_CORELIB
-#	include <opencorelib/cl/core.hpp>
-#	include <opencorelib/cl/base_exception.hpp>
-#endif
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/base_exception.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -147,12 +145,10 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			{
 				do_fetch( result );
 			}
-#ifdef OML_USE_CORELIB
 			catch( olib::opencorelib::base_exception &be )
 			{
 				exception = exception_ptr( new olib::opencorelib::base_exception( be ) );
 			}
-#endif
 			catch( std::exception &be )
 			{
 				exception = exception_ptr( new std::exception( be ) );
