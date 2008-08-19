@@ -43,6 +43,8 @@ class transport( Frame ):
 
 		self.scrub = Scale( frame, command = self.scrub, orient = HORIZONTAL, showvalue = False, from_ = 0, to_ = to_, variable = self.position, takefocus = 0 )
 		self.scrub.pack( fill = X )
+		self.scrub.bind( '<Button>', lambda event, self = self: self.scrub_down( event ) )
+		self.scrub.bind( '<ButtonRelease>', lambda event, self = self: self.scrub_up( event ) )
 
 		self.after( 100, self.timer )
 
@@ -83,17 +85,29 @@ class transport( Frame ):
 		for key in keys: self.bind_all( key, event_cb )
 		button.pack( side = LEFT )
 
+	def scrub_down( self, event ):
+		result = self.command( 'speed? .' )
+		if len( result ) == 1:
+			self.previous_speed = int( result[ 0 ] )
+		else:
+			raise Exception, "Invalid status response from server"
+
 	def scrub( self, value ):
 		if not self.ignore:
 			self.command( "pause %d seek" % int( value ) )
 		self.ignore = False
 
+	def scrub_up( self, event ):
+		result = self.command( '%d speed' % self.previous_speed )
+		if len( result ) != 0:
+			raise Exception, "Invalid status response from server"
+
 	def timer( self ):
 		speed_, position_, to_ = self.status( )
 		#self.state.set( [ '||', '>' ][ int( speed_ == 0 ) ]  )
 		current = self.scrub.cget( 'to' )
-		if not self.ignore:
-			self.ignore = current != to_
+		if current != to_:
+			self.ignore = True
 			self.scrub.config( to_ = to_ )
 		self.position.set( position_ )
 		self.after( 100, self.timer )

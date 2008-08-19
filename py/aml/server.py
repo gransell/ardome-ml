@@ -128,7 +128,6 @@ class http_client_handler:
 			if request.startswith( '/?src=' ):
 				media = request[ 6: ].split( '&' )
 				self.stack.push( media[ 0 ] )
-				print media
 				for arg in media[ 1: ]:
 					if arg.startswith( 'frames=' ):
 						self.stack.push( arg )
