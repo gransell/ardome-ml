@@ -37,29 +37,110 @@ namespace olib
 				return invoker_ptr( );
             #endif
         }
+
+        void invoker::report_success( const invoke_callback_function_ptr& result_cb ) const
+        {
+            if( result_cb ) 
+            {
+                std_exception_ptr no_exception;
+                (*result_cb)( invoke_result::success, no_exception );
+            }
+        }
+
+        void invoker::report_failure( const invoke_callback_function_ptr& result_cb, const std::exception& e) const
+        {
+            if( result_cb ) 
+            {
+                std_exception_ptr ex( new std::exception(e) );
+                (*result_cb)( invoke_result::failure, ex);
+            }
+        }
+
+        void invoker::report_failure( const invoke_callback_function_ptr& result_cb, const base_exception& e) const
+        {
+            if( result_cb ) 
+            {
+                std_exception_ptr ex( new base_exception(e) );
+                (*result_cb)( invoke_result::failure, ex);
+            }
+        }
+
+        void invoker::report_failure( const invoke_callback_function_ptr& result_cb ) const
+        {
+            if( result_cb ) 
+            {
+                std_exception_ptr ex( new std::runtime_error("non_blocking_invoke call failed. Unknown reason.") );
+                (*result_cb)( invoke_result::failure, ex);
+            }
+        }
+
+        void non_invoker::non_blocking_invoke(  const invokable_function& f, 
+                                                const invoke_callback_function_ptr& result_cb ) const 
+        {
+            try
+            {
+                f(); 
+                report_success( result_cb );   
+            }
+            catch( base_exception& be )
+            {
+                report_failure( result_cb, be );
+            }
+            catch( std::exception& e )
+            {
+                report_failure( result_cb, e);   
+            }
+            catch( ... )
+            {
+                report_failure( result_cb );
+            }
+        }
         
-        invoke_result::type explicit_step_invoker::invoke( const invokable_function& f ) const {
+        invoke_result::type explicit_step_invoker::invoke( const invokable_function& f ) const 
+        {
             boost::recursive_mutex::scoped_lock lck(m_mtx);
-            m_queue.push(f);
+            invoke_callback_function_ptr null_cb;
+            m_queue.push(std::make_pair( f, null_cb ) );
 			return invoke_result::success;
         }
         
-        bool explicit_step_invoker::need_invoke() const {
+        bool explicit_step_invoker::need_invoke() const 
+        {
             return true;
         }
         
-        void explicit_step_invoker::step() {
+        void explicit_step_invoker::step() 
+        {
             boost::recursive_mutex::scoped_lock lck(m_mtx);
-            while (!m_queue.empty()) {
-                TRY_BASEEXCEPTION {
-                    
-                    m_queue.front()();
-                    
-                } CATCH_BASEEXCEPTION();
+            while (!m_queue.empty()) 
+            {
+                try
+                {  
+                    m_queue.front().first();
+                    report_success( m_queue.front().second );
+                } 
+                catch( const base_exception& be )
+                {
+                    report_failure( m_queue.front().second, be );
+                }
+                catch( const std::exception& e )
+                {
+                    report_failure( m_queue.front().second, e );
+                }
+                catch( ... )
+                {
+                    report_failure( m_queue.front().second );
+                }
                 
                 m_queue.pop();
             }
         }
-        
+
+        void explicit_step_invoker::non_blocking_invoke(   const invokable_function& f, 
+                                                            const invoke_callback_function_ptr& result_cb ) const
+        {
+            boost::recursive_mutex::scoped_lock lck(m_mtx);
+            m_queue.push(std::make_pair( f, result_cb ) );
+        }
     }
 }

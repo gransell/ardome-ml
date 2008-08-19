@@ -30,6 +30,10 @@ namespace olib
                         };
         }
 
+        typedef boost::shared_ptr< std::exception > std_exception_ptr;
+        typedef boost::function< void ( invoke_result::type, std_exception_ptr ) > invoke_callback_function;
+        typedef boost::shared_ptr< invoke_callback_function > invoke_callback_function_ptr;
+
         /// Object that can run a function on a separate thread
         /** Depending on the calling thread, the invoker may or
             may not choose to run it directly or use some platform
@@ -41,13 +45,45 @@ namespace olib
         public:
             virtual ~invoker() {}
 
-            /// Will execute the passed function on the main-thread.
+            /// Will execute the passed function on the invoker-thread.
+            /** This call blocks until the thread that is attached to 
+                this invoker have processed the invokalbe_function.
+                If that is unacceptable, use non_blocking_invoke instead. */
             virtual invoke_result::type invoke( const invokable_function& f ) const = 0;
+
+
+            /// Will execute the passed function on the invoker-thread.
+            /** The call will return immediately, not waiting for
+                the invoker thread to process the call. The result will be
+                received in the callback function, if it is provided. 
+                If it is null, the result is just ignored. 
+
+                Make sure that the function object is not referring to any
+                stack-based variables, since theses will most certainly have 
+                gone out-of-scope when f is actually run.
+
+                @param f The function to run on the invoker-thread.
+                @param result_cb The call-back function to that the invoker will call 
+                        when f has been processed. */
+            virtual void non_blocking_invoke(   const invokable_function& f, 
+                                                const invoke_callback_function_ptr& result_cb ) const = 0;
 
             /// Checks whether a call to invoke would force a thread switch.
             /** @return true if a thread switch would occur during a call to invoke,
                             false if the correct thread is doing the call. */
             virtual bool need_invoke() const = 0;
+
+        protected:
+
+            /// Use these member to implement non_blocking_invoke.
+            mutable std::queue< std::pair< invokable_function, invoke_callback_function_ptr > > m_queue;
+            mutable boost::recursive_mutex m_mtx;
+
+            /// Call these in the implementation of non_blocking_invoke.
+            void report_success( const invoke_callback_function_ptr& result_cb ) const;
+            void report_failure( const invoke_callback_function_ptr& result_cb, const std::exception& e) const;
+            void report_failure( const invoke_callback_function_ptr& result_cb, const base_exception& e) const;
+            void report_failure( const invoke_callback_function_ptr& result_cb ) const;
         };
 
 
@@ -69,6 +105,9 @@ namespace olib
                 CATCH_BASEEXCEPTION_RETURN( invoke_result::failure );
             }
 
+            virtual void non_blocking_invoke(   const invokable_function& f, 
+                                                const invoke_callback_function_ptr& result_cb ) const;
+
             /// Invoke is never needed, could just as well run the function directly
             /** @return true if a thread switch is needed to run the function,
                     false otherwise. This implementation always returns false since
@@ -88,23 +127,21 @@ namespace olib
         
         /// A manually stepped invoker.
         /** A special-case invoker that runs the functions waiting to be invoked only on
-            an explicit call to a step() method.  This is mainly usefull for testing
-            programs, but may be usefull in other cases when the main loop is not managed
-            by a gui toolkit.
-        */
+            an explicit call to a step() method.  This is mainly useful for testing
+            programs, but may be useful in other cases when the main loop is not managed
+            by a GUI toolkit. */
         class CORE_API explicit_step_invoker : public invoker
         {
         public:
             invoke_result::type invoke( const invokable_function& f ) const;
+
+            void non_blocking_invoke(   const invokable_function& f, 
+                                        const invoke_callback_function_ptr& result_cb ) const;
             
             bool need_invoke() const;
             
             /// Call all waiting functions.
-            void step();
-            
-        private:
-            mutable std::queue<invokable_function> m_queue;
-            mutable boost::recursive_mutex m_mtx;
+            void step();            
         };
         
     }

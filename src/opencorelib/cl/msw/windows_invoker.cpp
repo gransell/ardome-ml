@@ -27,7 +27,15 @@ namespace olib
             {
                 static UINT unique_msg = 0;
                 if( unique_msg == 0)
-                    unique_msg = RegisterWindowMessage(_T("Ardendo::Common::Invoke::RequestMessage"));
+                    unique_msg = RegisterWindowMessage(_T("olib::opencorelib::windows_invoker::request_msg"));
+                return unique_msg;
+            }
+
+            UINT post_request_msg() const
+            {
+                static UINT unique_msg = 0;
+                if( unique_msg == 0)
+                    unique_msg = RegisterWindowMessage(_T("olib::opencorelib::windows_invoker::post_request_msg"));
                 return unique_msg;
             }
 
@@ -46,6 +54,14 @@ namespace olib
                 LRESULT res = ::SendMessage( get_hooked_wnd() , request_msg(), (WPARAM)&f, (LPARAM)0 );
                 if(res == success_msg() ) return invoke_result::success;
                 return invoke_result::failure;
+            }
+
+            virtual void non_blocking_invoke(   const invokable_function& f, 
+                                                const invoke_callback_function_ptr& result_cb ) const
+            {
+                 boost::recursive_mutex::scoped_lock lck(m_mtx);
+                 m_queue.push(std::make_pair( f, result_cb ) );
+                 ::PostMessage( get_hooked_wnd() , post_request_msg(), (WPARAM)0, (LPARAM)0 );
             }
 
             virtual bool need_invoke() const 
@@ -74,6 +90,34 @@ namespace olib
                         return (LRESULT)success_msg();
                     }
                     CATCH_BASEEXCEPTION_RETURN( failure_msg() );
+                }
+                else if( msg == post_request_msg() )
+                {
+                    boost::recursive_mutex::scoped_lock lck(m_mtx);
+                    while (!m_queue.empty()) 
+                    {
+                        try
+                        {  
+                            m_queue.front().first();
+                            report_success( m_queue.front().second );
+                        } 
+                        catch( const base_exception& be )
+                        {
+                            report_failure( m_queue.front().second, be );
+                        }
+                        catch( const std::exception& e )
+                        {
+                            report_failure( m_queue.front().second, e );
+                        }
+                        catch( ... )
+                        {
+                            report_failure( m_queue.front().second );
+                        }
+
+                        m_queue.pop();
+                    }
+
+                    return (LRESULT)success_msg();
                 }
 
                 return subclass_wnd::window_proc(msg, wParam, lParam );
