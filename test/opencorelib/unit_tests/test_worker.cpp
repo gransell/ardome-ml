@@ -74,7 +74,7 @@ void TestWorker2()
     worker aWorker;
 
     aWorker.start();
-    timer aTimer;
+    olib::opencorelib::utilities::timer aTimer;
 
     for(int i = 0; i < 10; ++i)
     {
@@ -99,7 +99,7 @@ void TestTerminateWorker()
     boost::thread::sleep(utilities::add_millsecs_from_now(50));
 	
     // Cancelling the job prematurely. Accept 500 ms delay
-    timer aTimer;
+    olib::opencorelib::utilities::timer aTimer;
     BOOST_CHECK( aWorker.cancel_current_job(500) );
     BOOST_CHECK( aTimer.elapsed_millisecs() < 500 );
 
@@ -134,9 +134,40 @@ void TestThreadPool()
     }
 
     // Starting to wait for 50 jobs (á 200 ms) to terminate (max 15 sec)
-    timer aTimer;
+    olib::opencorelib::utilities::timer aTimer;
     BOOST_CHECK( myPool.wait_for_all_jobs_completed(15000) );
     BOOST_CHECK( aTimer.elapsed_millisecs() < 15000 );
+}
+
+class my_reoccurring_job : public base_job
+{
+public:
+    my_reoccurring_job( const std::string& outp, int& counter ) : m_to_output(outp), m_counter(counter) {}
+    int do_work()
+    {
+        // T_CERR << m_to_output.c_str() << " " << time_value::now().get_seconds() << std::endl;
+        m_counter += 1;
+        return 1;
+    }
+private:
+    std::string m_to_output;
+    int& m_counter;
+};
+
+void test_reoccurring_job()
+{
+    worker aWorker;
+    aWorker.start();
+    int reoccur_counter(0), dummy(0);
+    boost::shared_ptr< my_reoccurring_job > aJob( new my_reoccurring_job("reoccurring every second", reoccur_counter) );
+    boost::shared_ptr< my_reoccurring_job > another_job( new my_reoccurring_job("occurs once, after 2,5 secs", dummy) );
+    aWorker.add_reoccurring_job(aJob, time_value(1,0));
+    aWorker.add_job(another_job, time_value(2,500000));
+    // Sleep on the main thread.
+    olib::opencorelib::thread_sleeper sleeper;
+    sleeper.current_thread_sleep( time_value(10,0) );
+    BOOST_CHECK( reoccur_counter >= 10 );
+    BOOST_CHECK_EQUAL( 1, dummy );
 }
 
 void test_worker()
@@ -146,5 +177,6 @@ void test_worker()
     TestTerminateWorker();
     TestThreadPool();
     TestWorkerError();
+    test_reoccurring_job();
 }
 

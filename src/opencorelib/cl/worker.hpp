@@ -4,6 +4,7 @@
 #include "typedefs.hpp"
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include "time_helpers.hpp"
 
 #undef add_job
 
@@ -19,8 +20,8 @@ namespace olib
 			the heap are sorted and executed according to priority.
 			Once a job has started it can not be interrupted. 
 
-			@sa olib::useful::thread_pool
-			@author Mats */
+			@sa olib::opencorelib::thread_pool
+			@author Mats Lindel&ouml;f*/
         class CORE_API worker : public boost::noncopyable
 		{
 		public:
@@ -38,7 +39,18 @@ namespace olib
 			/// Add a new job tho the job heap.
 			/** The priority of the job should not be 
 				altered after the insertion. */
-			void add_job( const base_job_ptr& p_job) ;
+			void add_job( const base_job_ptr& p_job ) ;
+
+            /// Adds a job to the worker that will be performed every run_interval period.
+            /** The job will be run as soon as possible (taking the priority of the
+                job into account) and then at the interval provided in this call. */
+            void add_reoccurring_job( const base_job_ptr& p_job, const time_value& run_interval ) ;
+
+            /// Removes a previously added job from the worker.
+            void remove_reoccurring_job( const base_job_ptr& p_job );
+
+            /// Adds a job to the worker that will start as close as possible to start_after_ms.
+            void add_job( const base_job_ptr& p_job, const time_value& start_after);
 
             /// Add a new job to the heap that will be given the highest priority.
             /** All existing jobs will be downgraded, this job will have prio 0 */
@@ -123,14 +135,13 @@ namespace olib
                     boost::shared_ptr<base_job> rhs );
 			};
 			
-			/// Define the job heap type.
-            //typedef priority_queue< boost::shared_ptr<base_job>, 
-            //                        job_compare_less, 
-            //                        job_compare_equal> job_heap;
-            typedef std::vector< base_job_ptr > job_heap;
+			typedef std::vector< base_job_ptr > jobcollection;
 
 			/// The internal job heap.
-			job_heap m_heap;
+			jobcollection m_heap;
+
+            /// Jobs that should be added to the heap after a certain amount of time
+            jobcollection m_timed_jobs;
 
             boost::condition m_thread_exit_success, m_thread_started, m_wake_thread;
             mutable boost::recursive_mutex m_thread_exit_mtx, m_thread_started_mtx, m_wake_thread_mtx;
@@ -154,6 +165,11 @@ namespace olib
 			/** After finishing, the worker thread waits for
 				new jobs to arrive. */
 			void do_work();
+
+            /// Will move timed jobs to the actual heap of jobs that will be performed.
+            void move_timed_jobs_to_heap();
+
+            time_value next_timed_job_start_time() const;
 
 			void reset_current_job();
 		};

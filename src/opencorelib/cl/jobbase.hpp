@@ -3,7 +3,8 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/signal.hpp>
+#include "./event_handler.hpp"
+#include "./time_helpers.hpp"
 
 namespace olib
 {
@@ -82,15 +83,16 @@ namespace olib
                     before the timeout value. */
             bool wait_for_job_done(long time_out );
 
-            typedef boost::signal<void (boost::shared_ptr<base_job>)> jobdone_signal;
+            /// The int parameter is just a dummy.
+            typedef event_handler< base_job_ptr, boost::int32_t > jobdone_signal;
 
             /// Register a callback that will be invoked once the job is done.
             /** @return The connection together with a bool saying if 
                         the job already was done or not. This is necessary
                         since the job can become completed just before this
                         function is called. */
-            boost::tuples::tuple< boost::signals::connection, bool > 
-            on_job_done( jobdone_signal::slot_function_type listener );
+            boost::tuples::tuple< event_connection_ptr, bool > 
+            on_job_done( jobdone_signal::callback_signature listener );
 
             /// Is set to true when the job is done
             bool get_is_job_done() const;
@@ -128,8 +130,10 @@ namespace olib
 
             mutable boost::recursive_mutex m_job_done_mtx, m_signal_mtx;
             boost::condition m_job_done_condition;
-            bool m_job_done, m_exception_thrown;
-            int m_result;
+            bool m_job_done, m_exception_thrown, m_run_more_than_once;
+            boost::int32_t m_result;
+            time_value m_reoccuring_interval, m_run_next_time;
+            time_value m_next_time_to_run;
 
             boost::shared_ptr< std::exception > m_std_exception;
             boost::shared_ptr< base_exception > m_base_exception;

@@ -1,5 +1,6 @@
 #include "precompiled_headers.hpp"
 #include <boost/bind.hpp>
+#include <limits>
 
 #include "worker.hpp"
 #include "jobbase.hpp"
@@ -16,6 +17,8 @@
 #include "log_defines.hpp"
 
 using namespace boost::posix_time;
+
+#undef max
 
 namespace olib
 {
@@ -66,6 +69,88 @@ namespace olib
             m_heap.push_back(job);
             std::make_heap( m_heap.begin(), m_heap.end(), job_compare_less() );
             m_wake_thread.notify_one();
+        }
+
+        void worker::add_reoccurring_job( const base_job_ptr& p_job, const time_value& run_interval ) 
+        {
+            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+            p_job->m_reoccuring_interval = run_interval;
+            p_job->m_run_more_than_once = true;
+            p_job->m_next_time_to_run = time_value::now() + run_interval;
+            m_timed_jobs.push_back( p_job );
+            add_job( p_job );
+        }
+
+        void worker::remove_reoccurring_job( const base_job_ptr& p_job )
+        {
+            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+            jobcollection::iterator it = std::find( m_timed_jobs.begin(), m_timed_jobs.end(), p_job );
+            if( it == m_timed_jobs.end() ) 
+            {
+                ARLOG_WARN( "Can not remove the specified job, not in this worker.");
+                return;
+            }
+            
+            m_timed_jobs.erase( it );
+        }
+
+        void worker::add_job( const base_job_ptr& p_job, const time_value& start_after )
+        {
+            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+            p_job->m_reoccuring_interval = start_after;
+            p_job->m_run_more_than_once = false;
+            p_job->m_next_time_to_run = time_value::now() + start_after;
+            m_timed_jobs.push_back( p_job );
+            m_wake_thread.notify_one();
+        }
+
+        void worker::move_timed_jobs_to_heap()
+        {
+            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+            time_value right_now( time_value::now() ); 
+            jobcollection::iterator it(m_timed_jobs.begin());
+            bool need_heapify(false);
+            while( it != m_timed_jobs.end() )
+            {
+                if( (*it)->m_next_time_to_run <= right_now )
+                {
+                    need_heapify = true;
+                    m_heap.push_back( (*it) );
+                    if( (*it)->m_run_more_than_once == false )
+                    {
+                        it = m_timed_jobs.erase(it);
+                    }
+                    else
+                    {
+                        (*it)->m_next_time_to_run = time_value::now() + (*it)->m_reoccuring_interval;
+                        it++;
+                    }
+                }
+                else
+                {
+                    it++;
+                }
+            }
+
+            if( need_heapify )
+            {
+                std::make_heap( m_heap.begin(), m_heap.end(), job_compare_less() );
+            }
+        }
+
+        time_value worker::next_timed_job_start_time() const
+        {
+            time_value start_value( std::numeric_limits<boost::int64_t>::max(), 0 );
+            jobcollection::const_iterator it(m_timed_jobs.begin()), eit(m_timed_jobs.end());
+            for( ; it != eit; ++it )
+            {
+                if( (*it)->m_next_time_to_run < start_value )
+                {
+                    start_value = (*it)->m_next_time_to_run;
+                }
+            }
+
+            return start_value;
         }
 
 		size_t worker::job_count() const 
@@ -127,7 +212,9 @@ namespace olib
             {
                 if( m_stop_thread ) return false;
                 if( !m_heap.empty()) return true;
-                wake_thread.wait(lock);
+                time_value tv = next_timed_job_start_time();
+                wake_thread.timed_wait(lock, tv);
+                move_timed_jobs_to_heap();
             }
         }
 
@@ -198,8 +285,6 @@ namespace olib
 
             ~done_counter()
             {
-                std::for_each(m_connections.begin(), m_connections.end(), 
-                    boost::bind(&boost::signals::connection::disconnect, _1));
             }
 
             void on_done( boost::shared_ptr<base_job> )
@@ -225,7 +310,7 @@ namespace olib
 
             void add_job( boost::shared_ptr< base_job > a_job )
             {
-                boost::tuples::tuple< boost::signals::connection, bool>
+                boost::tuples::tuple< event_connection_ptr, bool>
                     res = a_job->on_job_done(boost::bind(&done_counter::on_done, this, _1));
                 if( res.get<1>() ) m_nr_of_jobs_done++;
                 m_nr_of_jobs_to_wait_for += 1;
@@ -236,7 +321,7 @@ namespace olib
             int m_nr_of_jobs_to_wait_for;
             boost::recursive_mutex m_mtx;
             boost::condition m_all_complete;
-            std::vector< boost::signals::connection > m_connections;
+            std::vector< event_connection_ptr > m_connections;
         };
 
         bool worker::wait_for_all_jobs_completed( long time_out )
@@ -251,7 +336,7 @@ namespace olib
 
                 if( m_current_job ) 
                 {
-                    // Make sure the current job is prevented from terminate
+                    // Make sure the current job is prevented from terminating
                     // while we're adding it to the wait list.
                     curr_lck = m_current_job->prevent_job_from_terminating();
                     if(curr_lck) done_counter.add_job(m_current_job);
@@ -266,9 +351,9 @@ namespace olib
                 // terminate )
                 std::vector< boost::shared_ptr< boost::recursive_mutex::scoped_lock > > locks;
 
-                job_heap q = m_heap;
+                jobcollection q = m_heap;
                 // T_CERR << "Size of job heap: " << m_heap.size() << std::endl;
-                for( job_heap::iterator i = q.begin(); i != q.end(); ++i )
+                for( jobcollection::iterator i = q.begin(); i != q.end(); ++i )
                 {
                     boost::shared_ptr< boost::recursive_mutex::scoped_lock > lck;
                     lck = (*i)->prevent_job_from_terminating();

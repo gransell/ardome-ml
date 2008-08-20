@@ -12,14 +12,14 @@ namespace olib
         long base_job::s_dw_counter = 0;
         base_job::base_job() 
             :   m_prio(5), m_terminate_job(false), m_job_done(false), 
-                m_exception_thrown(false), m_result(0)
+                m_exception_thrown(false), m_run_more_than_once(false), m_result(0)
         {
             m_dw_number = s_dw_counter++;
         }
 
         base_job::base_job( boost::int32_t prio )
             :   m_prio(prio), m_terminate_job(false), m_job_done(false), 
-                m_exception_thrown(false), m_result(0)
+                m_exception_thrown(false), m_run_more_than_once(false), m_result(0)
         {
             m_dw_number = s_dw_counter++;
         }
@@ -97,11 +97,11 @@ namespace olib
             boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
             m_job_done = true;
             m_job_done_condition.notify_all();
-            m_job_done_signal(shared_from_this());
+            m_job_done_signal(shared_from_this(), 0);
         }
 
-        boost::tuples::tuple< boost::signals::connection, bool >
-        base_job::on_job_done( base_job::jobdone_signal::slot_function_type listener )
+        boost::tuples::tuple< event_connection_ptr, bool > 
+        base_job::on_job_done( jobdone_signal::callback_signature listener )
         {
              boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
              return boost::tuples::make_tuple(m_job_done_signal.connect(listener), m_job_done);
@@ -112,7 +112,6 @@ namespace olib
             boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
             return m_job_done; 
         }
-
 
         CORE_API bool operator<(base_job& lhs, base_job& rhs)
         {

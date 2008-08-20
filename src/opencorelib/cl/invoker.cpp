@@ -34,7 +34,7 @@ namespace olib
             #elif defined( OLIB_ON_MAC )
                 return create_invoker_mac();
             #else
-				return invoker_ptr( );
+				return invoker_ptr( new non_invoker() );
             #endif
         }
 
