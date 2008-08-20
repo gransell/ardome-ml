@@ -5,6 +5,7 @@ import threading
 import select
 import os
 import urllib
+import sys
 
 class client_handler:
 
@@ -23,13 +24,14 @@ class client_handler:
 		self.pending = [ ]
 		self.stack = aml.thread_stack( parent.player, self.output )
 		self.stack.include( 'shell.aml' )
+		self.parent.register_socket( client, self )
 
 	def read( self ):
 		"""Read a chunk of data, parse complete lines and collect results."""
 
 		chunk = self.socket.recv( 1024 )
 		if chunk == '':
-			self.parent.unregister_client( self.socket )
+			self.parent.unregister_socket( self.socket )
 		else:
 			self.msg += chunk
 			if self.msg.find( '\r\n' ) != -1:
@@ -67,7 +69,7 @@ class client_handler:
 		while len( self.pending ):
 			for result in self.pending:
 				if self.send( result ) == False:
-					self.parent.unregister_client( self.socket )
+					self.parent.unregister_socket( self.socket )
 					return
 			self.pending = [ ]
 		
@@ -93,11 +95,14 @@ class server_handler:
 		self.socket.setblocking( 0 )
 		self.socket.settimeout( 0 )
 
+	def __del__( self ):
+		self.socket = None
+
 	def read( self ):
 		"""Client connection available."""
 
 		client, address = self.socket.accept( )
-		self.parent.register_client( client, client_handler( self.parent, client ) )
+		client_handler( self.parent, client )
 
 	def write( self ):
 		"""We should never write to this socket..."""
@@ -117,8 +122,7 @@ class http_client_handler:
 		self.socket.setblocking( 0 )
 		self.msg = ''
 		self.pending = ''
-		self.stack = aml.thread_stack( parent.player, self.output )
-		self.stack.include( 'shell.aml' )
+		self.parent.register_socket( client, self )
 
 	def parse( self, chunk ):
 		lines = chunk.split( '\r\n' )
@@ -127,18 +131,20 @@ class http_client_handler:
 			request = urllib.unquote( tokens[ 1 ] )
 			if request.startswith( '/?src=' ):
 				media = request[ 6: ].split( '&' )
-				self.stack.push( media[ 0 ] )
+				stack = self.parent.stack_acquire( )
+				stack.push( media[ 0 ] )
 				for arg in media[ 1: ]:
 					if arg.startswith( 'frames=' ):
-						self.stack.push( arg )
-				self.stack.push( 'add' )
+						stack.push( arg )
+				stack.push( 'add' )
+				self.parent.stack_release( stack )
 
 	def read( self ):
 		"""Read a chunk of data, parse complete lines and collect results."""
 
 		chunk = self.socket.recv( 1024 )
 		if chunk == '':
-			self.parent.unregister_client( self.socket )
+			self.parent.unregister_socket( self.socket )
 		else:
 			self.msg += chunk
 			if self.msg.endswith( '\r\n\r\n' ):
@@ -156,7 +162,7 @@ class http_client_handler:
 				return False
 			total += sent
 		self.pending = ''
-		self.parent.unregister_writer( self.socket )
+		self.parent.unregister_socket( self.socket )
 		return True
 
 	def output( self, msg ):
@@ -176,11 +182,14 @@ class http_server_handler:
 		self.socket.setblocking( 0 )
 		self.socket.settimeout( 0 )
 
+	def __del__( self ):
+		self.socket = None
+
 	def read( self ):
 		"""Client connection available."""
 
 		client, address = self.socket.accept( )
-		self.parent.register_client( client, http_client_handler( self.parent, client ) )
+		http_client_handler( self.parent, client )
 
 	def write( self ):
 		"""We should never write to this socket..."""
@@ -201,26 +210,38 @@ class server( threading.Thread ):
 		self.sockets = { }
 		self.writer = { }
 		self.setDaemon( True )
+		self.pool = [ ]
 
 		self.server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-		self.sockets[ self.server ] = server_handler( self, self.server )
+		self.register_socket( self.server, server_handler( self, self.server ) )
 
 		if http_port != -1:
 			self.http_server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-			self.sockets[ self.http_server ] = http_server_handler( self, self.http_server )
+			self.register_socket( self.http_server, http_server_handler( self, self.http_server ) )
 
-	def register_client( self, client, handler ):
-		"""Register a new client."""
+	def stack_acquire( self ):
+		if len( self.pool ) == 0:
+			self.pool = [ aml.thread_stack( self.player ) ]
+			self.pool[ 0 ].include( 'shell.aml' )
+		return self.pool.pop( )
 
-		self.sockets[ client ] = handler
+	def stack_release( self, stack ):
+		self.pool.append( stack )
 
-	def unregister_client( self, client ):
-		"""Remove the client."""
+	def register_socket( self, socket, handler ):
+		"""Register a new socket."""
 
-		if client in self.sockets.keys( ):
-			self.sockets.pop( client )
-		if client in self.writer.keys( ):
-			self.writer.pop( client )
+		self.sockets[ socket ] = handler
+
+	def unregister_socket( self, sock ):
+		"""Remove the socket."""
+
+		if sock in self.sockets.keys( ):
+			self.sockets.pop( sock )
+		if sock in self.writer.keys( ):
+			self.writer.pop( sock )
+		sock.shutdown( socket.SHUT_RDWR )
+		sock.close( )
 
 	def register_writer( self, client ):
 		"""There is pending data associated to the client."""
@@ -241,20 +262,16 @@ class server( threading.Thread ):
 				readers, writers, errors = select.select( self.sockets.keys(), self.writer.keys(), [] , 60 )
 
 				for error in errors:
-					if error in self.sockets.keys( ):
-						self.sockets.pop( error )
-					if error in self.writer.keys( ):
-						self.writer.pop( error )
-	
+					self.unregister_socket( error )
+
 				for writer in writers:
 					if writer in self.writer.keys( ):
 						self.writer[ writer ].write( )
-	
+
 				for reader in readers:
 					if reader in self.sockets.keys( ):
 						self.sockets[ reader ].read( )
 
-		except Exception, e:
-			print e
-			self.server.close( )
+		except:
+			raise
 
