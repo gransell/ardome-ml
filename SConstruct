@@ -201,9 +201,9 @@ if env.check_externals( ):
 	env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] )
 
 	if env.have_boost_python( ):
-		env.build( 'src/openpluginlib/py', [ pl, il, ml ] )
-		env.build( 'src/openimagelib/py', [ pl, il ] )
-		env.build( 'src/openmedialib/py', [ pl, il, ml ] )
+		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
+		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
+		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
 
 	env.create_package( )
 	env.install_openbuild( )
