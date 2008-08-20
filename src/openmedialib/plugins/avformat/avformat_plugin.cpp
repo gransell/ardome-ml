@@ -37,7 +37,10 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
+
+#ifdef HAVE_SWSCALE
+#	include <libswscale/swscale.h>
+#endif
 }
 
 namespace oml = olib::openmedialib;
@@ -1006,6 +1009,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 			}
 			else
+#ifdef HAVE_SWSCALE
 			{
 				AVPicture input;
 				int width = image->width( );
@@ -1015,6 +1019,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
 			}
+#else
+			{
+				// Need an ffmpeg fallback here...
+				return false;
+			}
+#endif
 
 			if ( oc_->oformat->flags & AVFMT_RAWPICTURE )  
 			{
@@ -1424,32 +1434,35 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			seek( frames_ );
 			while( frames_ > 1 )
 			{
-				seek_to_position( );
-				av_init_packet( &pkt_ );
-
-				while ( av_read_frame( context_, &pkt_ ) >= 0 )
+				if ( seek_to_position( ) )
 				{
-					if ( pkt_.stream_index == 0 )
+					av_init_packet( &pkt_ );
+
+					while ( av_read_frame( context_, &pkt_ ) >= 0 )
 					{
-						int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
-						av_free_packet( &pkt_ );
-						last_lower = result;
-						max = last_lower;
-						break;
-					}
-					else
-					{
-						av_free_packet( &pkt_ );
+						if ( pkt_.stream_index == 0 )
+						{
+							int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
+							av_free_packet( &pkt_ );
+							last_lower = result;
+							max = std::max( last_lower, max );
+							break;
+						}
+						else
+						{
+							av_free_packet( &pkt_ );
+						}
 					}
 				}
 
-				frames_ = last_lower + ( frames_ - last_lower ) / 2;
+				frames_ = max + ( frames_ - max ) / 2;
 				seek( frames_ );
 
-				if ( last_lower >= frames_ ) break;
+				if ( last_lower < max ) break;
 			}
 
 			frames_ = max;
+
 			seek( frames_ );
 			seek_to_position( );
 
@@ -1662,6 +1675,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			std::wstring format = avformat_to_oil( codec_context->pix_fmt );
 			il::image_type_ptr image;
+
+#ifdef HAVE_SWSCALE
 			if ( format == L"" )
 			{
 				image = il::allocate( L"yuv420p", dst_w, dst_h );
@@ -1680,6 +1695,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, av_frame_->data, av_frame_->linesize, 0, height, output.data, output.linesize );
 			}
+#else
+ 			if ( format == L"" )
+ 			{
+ 				image = il::allocate( L"yuv420p", width, height );
+         		AVPicture output;
+         		avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, width, height );
+         		img_convert( &output, PIX_FMT_YUV420P, (AVPicture *)av_frame_, codec_context->pix_fmt, width, height );
+ 			}
+ 			else
+ 			{
+ 				image = il::allocate( format, width, height );
+ 				AVPicture output;
+ 				avpicture_fill( &output, image->data( ), codec_context->pix_fmt, width, height );
+ 				img_convert( &output, codec_context->pix_fmt, (AVPicture *)av_frame_, codec_context->pix_fmt, width, height );
+ 			}
+ #endif
 
 			if ( first_frame_ )
 			{
