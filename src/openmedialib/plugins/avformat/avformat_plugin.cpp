@@ -16,6 +16,7 @@
 #	include <windows.h>
 #	undef INT64_C
 #	define INT64_C(x)	x ## i64
+#   undef max
 #else
 #	undef INT64_C
 #	define INT64_C(x)	x ## LL
