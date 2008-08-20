@@ -140,7 +140,9 @@ namespace olib
 
         time_value worker::next_timed_job_start_time() const
         {
-            time_value start_value( std::numeric_limits<boost::int64_t>::max(), 0 );
+            static const boost::int64_t max_wait_time = ARMAKE_I64(1000);
+            time_value start_value( max_wait_time, 0 );
+            start_value += time_value::now();
             jobcollection::const_iterator it(m_timed_jobs.begin()), eit(m_timed_jobs.end());
             for( ; it != eit; ++it )
             {
