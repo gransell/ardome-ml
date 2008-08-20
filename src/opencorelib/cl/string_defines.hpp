@@ -46,7 +46,6 @@
 namespace olib
 {
 #ifdef OLIB_USE_UTF8
-	typedef boost::format t_format;
 	typedef boost::regex t_regex;
 	typedef boost::smatch t_smatch;
 	typedef boost::cmatch t_cmatch;
