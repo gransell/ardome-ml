@@ -195,10 +195,10 @@ if env.check_externals( ):
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
 	
 	env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/gensys', [ pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/template', [ pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/sdl', [ pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/openal', [ pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] )
+	env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] )
 
 	if env.have_boost_python( ):
 		env.build( 'src/openpluginlib/py', [ pl, il, ml ] )
