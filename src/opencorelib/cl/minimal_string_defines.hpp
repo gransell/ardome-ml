@@ -3,6 +3,7 @@
 
 #include "platform.hpp"
 #include "macro_definitions.hpp"
+#include "disabled_warnings.hpp"
 
 // Support for UNICODE strings	
 

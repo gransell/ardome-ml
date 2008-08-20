@@ -8,6 +8,7 @@
 
 #include "./platform.hpp"
 #include "./platform_defines.hpp"
+#include "./disabled_warnings.hpp"
 
 #ifdef OLIB_ON_WINDOWS
     // The DLL_EXPORT macro should only be used in plugins, since it always exports symbols.
