@@ -240,7 +240,6 @@ class server( threading.Thread ):
 			self.sockets.pop( sock )
 		if sock in self.writer.keys( ):
 			self.writer.pop( sock )
-		sock.shutdown( socket.SHUT_RDWR )
 		sock.close( )
 
 	def register_writer( self, client ):
