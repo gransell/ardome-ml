@@ -9,7 +9,7 @@ import os
 valid_vs_targets =['vs2003', 'vs2005', 'vs2008', '' ]
 valid_mac_targets = ['osx']
 valid_32bit_unix_targets = ['ubuntu32']
-valid_64bit_unix_targets = ['ubuntu64']
+valid_64bit_unix_targets = ['ubuntu64', 'lsb_3_1_64']
 
 def check_value( key, value, env, correct_values) :
 	if value in correct_values : return

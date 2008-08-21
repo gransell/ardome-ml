@@ -72,7 +72,8 @@ class Environment( BaseEnvironment ):
 
 		self[ 'debug_prefix' ] = os.path.join( 'build', 'debug', self[ 'target' ] )
 		self[ 'release_prefix' ] = os.path.join( 'build', 'release', self[ 'target' ] )
-		self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
+		#self[ 'libdir' ] = [ 'lib', 'lib64' ][ utils.arch( ) == 'x86_64' ]
+		self[ 'libdir' ] = 'lib'
 		self[ 'stage_include' ] = os.path.join( '$stage_prefix', 'include' )
 		self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', '$libdir' )
 		self[ 'stage_pkgconfig' ] = os.path.join( '$stage_libdir', 'pkgconfig' )

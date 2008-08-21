@@ -52,6 +52,22 @@ class AMLEnvironment( openbuild.env.Environment ):
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc', 'libswscale.pc' ]:
 					self.install_config( 'config/ubuntu64/' + package, 'bcomp/ffmpeg' )
+		elif self[ 'target' ] == 'lsb_3_1_64':
+			self.install_config( 'config/lsb_3_1_64/boost.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_date_time.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_filesystem.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_python.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_regex.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_signals.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_thread.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/boost_unit_test_framework.pc', 'bcomp/boost' )
+			self.install_config( 'config/lsb_3_1_64/loki.pc', 'bcomp/loki-0.1.6' )
+			self.install_config( 'config/lsb_3_1_64/xerces.pc', 'bcomp/xercesc' )
+			self.install_config( 'config/lsb_3_1_64/libavcodec.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/lsb_3_1_64/libavdevice.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/lsb_3_1_64/libavformat.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/lsb_3_1_64/libavutil.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/lsb_3_1_64/sdl.pc', 'bcomp/sdl' )
 
 	def configure_platform( self ):
 		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':

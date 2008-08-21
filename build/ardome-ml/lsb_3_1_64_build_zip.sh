@@ -2,11 +2,14 @@
 
 echo "Moving content from debug"
 mkdir -p aml/debug || exit 1
-mv build/debug/ubuntu64/bin build/debug/ubuntu64/include build/debug/ubuntu64/lib64 build/debug/ubuntu64/share aml/debug || exit 1
+mv build/debug/lsb_3_1_64/bin build/debug/lsb_3_1_64/include build/debug/lsb_3_1_64/lib build/debug/lsb_3_1_64/share aml/debug || exit 1
 
 echo "Moving content from release"
 mkdir -p aml/release || exit 1
-mv build/release/ubuntu64/bin build/release/ubuntu64/include build/release/ubuntu64/lib64 build/release/ubuntu64/share aml/release || exit 1
+mv build/release/lsb_3_1_64/bin build/release/lsb_3_1_64/include build/release/lsb_3_1_64/lib build/release/lsb_3_1_64/share aml/release || exit 1
+
+echo "Copying AML source"
+cp -r src aml || exit 1
 
 echo "Compressing result"
 tar -cjf $TARGET aml
