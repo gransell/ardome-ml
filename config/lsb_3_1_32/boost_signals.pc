@@ -1,0 +1,14 @@
+
+Name: boost_signals
+Description: boost signals lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+prefix=/usr
+libdir=${prefix}/lib
+
+Libs:	-lboost_signals-gcc40-mt${debug}-1_34_1
+
+install_libs=${libdir}/libboost_signals-gcc40-mt${debug}-1_34_1.so*

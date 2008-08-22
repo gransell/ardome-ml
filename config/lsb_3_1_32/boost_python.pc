@@ -1,0 +1,14 @@
+
+Name: boost_python
+Description: boost python lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+prefix=/usr
+libdir=${prefix}/lib
+
+Libs:	-lboost_python-gcc40-mt${debug}-1_34_1
+
+install_libs=${libdir}/libboost_python-gcc40-mt${debug}-1_34_1.so*
