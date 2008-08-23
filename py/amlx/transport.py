@@ -18,6 +18,8 @@ class transport( Frame ):
 
 		speed_, position_, to_, generation_ = self.status( )
 
+		self.generation = -1
+
 		frame = Frame( master )
 		frame.pack( )
 
@@ -104,6 +106,9 @@ class transport( Frame ):
 		if len( result ) != 0:
 			raise Exception, "Invalid status response from server"
 
+	def display( self, playlist ):
+		pass
+
 	def timer( self ):
 		speed_, position_, to_, generation_ = self.status( )
 		#self.state.set( [ '||', '>' ][ int( speed_ == 0 ) ]  )
@@ -112,13 +117,19 @@ class transport( Frame ):
 			self.ignore = True
 			self.scrub.config( to_ = to_ )
 		self.position.set( position_ )
+		if generation_ != self.generation:
+			self.generation = generation_
+			result = self.command( 'playing playlist' )
+			self.display( result )
 		self.after( 100, self.timer )
 
 def run( server = 'localhost', port = 55378 ):
 	client = amlx.client( server, port )
 	root = Tk( )
-	root.resizable( 0, 0 )
+	root.resizable( 0, 1 )
 	app = transport( root, client )
+	root.wm_minsize( root.winfo_reqwidth( ), root.winfo_reqheight( ) )
 	audio = amlx.audio.audio( root, client )
+	playlist = amlx.playlist.playlist( root, app )
 	root.mainloop( )
 
