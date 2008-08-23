@@ -60,22 +60,22 @@ core.aml
 ;
 
 : pitch?
-	pitch_filter ? speed
+	play_filter pitch ? speed
 	nip
 ;
 
 : pitch
-	pitch_filter speed=%s
+	play_filter pitch speed=%s
 	drop
 ;
 
 : volume?
-	volume_filter ? volume
+	play_filter volume ? volume
 	nip
 ;
 
 : volume
-	volume_filter volume=%s
+	play_filter volume volume=%s
 	drop
 ;
 

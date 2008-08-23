@@ -1,7 +1,9 @@
 import threading
 import time
+import os
+import string
 
-from aml.player import player, ml
+from aml.player import player, ml, pl
 
 class thread_player( player ):
 	"""Advanced playlist oriented threaded player."""
@@ -22,6 +24,10 @@ class thread_player( player ):
 		self.position_ = -1
 		self.current_position = -1
 		self.exiting = False
+		self.generation = 0
+
+	def register( self, stack ):
+		return player_stack( stack, self )
 
 	def set( self, input ):
 		"""Request immediate playout of input."""
@@ -31,6 +37,7 @@ class thread_player( player ):
 			self.input = [ input ]
 			self.speed = 1
 			self.next_input = True
+			self.generation += 1
 			self.cond.notifyAll( )
 		finally:
 			self.cond.release( )
@@ -41,6 +48,7 @@ class thread_player( player ):
 		self.cond.acquire( )
 		try:
 			self.input += [ input ]
+			self.generation += 1
 			self.cond.notifyAll( )
 		finally:
 			self.cond.release( )
@@ -125,6 +133,7 @@ class thread_player( player ):
 		result = None
 		if index >= 0 and index < len( self.input ):
 			result = self.input.pop( index )
+			self.generation += 1
 		self.cond.release( )
 		return result
 
@@ -136,6 +145,7 @@ class thread_player( player ):
 			self.input.insert( index, input )
 		else:
 			self.input.append( input )
+		self.generation += 1
 		self.cond.release( )
 
 	def post( self, input, stores, frame, eof = False ):
@@ -210,6 +220,7 @@ class thread_player( player ):
 			self.input.pop( 0 )
 			self.next_input = False
 			self.prev_input = False
+			self.generation += 1
 			self.cond.release( )
 
 			# Loop while playing current input
@@ -222,5 +233,189 @@ class thread_player( player ):
 					self.cond.wait( 1.0 )
 				self.cond.release( )
 				time.sleep( 0.0001 )
+
+class player_stack:
+
+	def __init__( self, stack, player ):
+
+		self.stack = stack
+		self.push = self.stack.push
+		self.pop = self.stack.pop
+		self.dot = self.stack.dot
+		self.output = self.stack.output
+
+		self.player = player
+
+		self.commands = { }
+		self.commands[ 'add' ] = self.add
+		self.commands[ 'grab' ] = self.grab
+		self.commands[ 'insert' ] = self.insert
+		self.commands[ 'next' ] = self.next
+		self.commands[ 'playing' ] = self.playing
+		self.commands[ 'playlist' ] = self.playlist
+		self.commands[ 'position?' ] = self.position
+		self.commands[ 'prev' ] = self.prev
+		self.commands[ 'previous' ] = self.previous
+		self.commands[ 'seek' ] = self.seek
+		self.commands[ 'speed' ] = self.speed
+		self.commands[ 'speed?' ] = self.speed_query
+		self.commands[ 'status?' ] = self.status
+		self.commands[ 'transport' ] = self.transport
+		self.commands[ 'store' ] = self.store
+		self.commands[ 'play_filter' ] = self.play_filter
+
+	def play_filter( self ):
+		if self.stack.next_command is None:
+			self.stack.next_command = self.play_filter
+		else:
+			self.stack.next_command = None
+			self.push( self.player.get_instance( self.stack.incoming ) )
+
+	def speed( self ):
+		"""Set the speed to the number at the top of the stack."""
+
+		self.player.set_speed( string.atoi( self.pop( ).get_uri( ) ) )
+
+	def speed_query( self ):
+		""" Put the current playout speed on top of the stack."""
+
+		self.push( self.player.get_speed( ) )
+
+	def add( self ):
+		"""Add top of stack to playlist."""
+
+		self.player.add( self.pop( ) )
+
+	def next( self ):
+		"""Move to next in playlist."""
+
+		self.player.next( )
+
+	def prev( self ):
+		"""Move to prev in playlist."""
+
+		self.player.prev( )
+
+	def seek( self ):
+		"""Seek to the position at the top of the stack."""
+
+		self.player.seek( string.atoi( self.pop( ).get_uri( ) ) )
+
+	def position( self ):
+		"""Place current position on the top of the stack."""
+
+		self.push( str( self.player.position( ) ) )
+
+	def playlist( self ):
+		"""Dump the playlist to stdout."""
+
+		self.player.cond.acquire( )
+		try:
+			for input in self.player.input:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( input, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
+
+	def previous( self ):
+		"""Dump the previously played list to stdout."""
+
+		self.player.cond.acquire( )
+		try:
+			for input in self.player.prev_inputs:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( input, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
+
+	def playing( self ):
+		"""Dump the current playing item to stdout."""
+
+		self.player.cond.acquire( )
+		try:
+			if self.player.current is not None:
+				render = ml.create_filter( 'aml' )
+				render.property( 'filename' ).set( unicode( '@' ) )
+				render.connect( self.player.current, 0 )
+				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.output( '' )
+		finally:
+			self.player.cond.release( )
+
+	def status( self ):
+		self.player.cond.acquire( )
+		try:
+			if self.player.current is not None:
+				self.push( self.player.generation )
+				self.push( self.player.current.get_frames( ) )
+				self.push( self.player.position( ) )
+				self.push( self.player.get_speed( ) )
+			else:
+				self.push( self.player.generation )
+				self.push( 0 )
+				self.push( 0 )
+				self.push( 0 )
+			self.dot( )
+			self.dot( )
+			self.dot( )
+			self.dot( )
+		finally:
+			self.player.cond.release( )
+
+	def grab( self ):
+		"""Grab the input at the specified playlist index (<index> grab -- 
+		<input>)."""
+
+		input = self.player.grab( int( self.pop( ).get_uri( ) ) )
+		if input is not None:
+			self.push( input )
+
+	def insert( self ):
+		"""Insert the input at the specified playlist index (<input> <index> 
+		insert --)."""
+
+		index = int( self.pop( ).get_uri( ) )
+		self.player.insert( index, self.pop( ) )
+
+	def store( self ):
+		if self.stack.next_command is None:
+			self.stack.next_command = self.store
+			self.store_props = [ ]
+		elif self.stack.incoming != '.':
+			self.store_props += [ str( self.stack.incoming ) ]
+		else:
+			self.player.cond.acquire( )
+			try:
+				self.stack.next_command = None
+				if isinstance( self.player.stores, list ) and len( self.player.stores ) and isinstance( self.player.stores[0], str ):
+					self.player.store += self.store_props
+				else:
+					result = self.player.stores
+					for pair in self.store_props:
+						name, value = pair.split( '=', 1 )
+						prop = result[ 0 ].property( name )
+						if prop.valid( ):
+							prop.set_from_string( value )
+						elif name.startswith( '@' ):
+							key = pl.create_key_from_string( name )
+							prop = pl.property( key )
+							prop.set( unicode( value ) )
+							result[ 0 ].properties( ).append( prop )
+						else:
+							print 'Requested property %s not found found - ignoring.' % name
+			finally:
+				self.player.cond.release( )
+
+	def transport( self ):
+		if self.stack.server is not None:
+			os.spawnlp( os.P_NOWAIT, 'amltransport', 'amltransport', 'localhost', str( self.stack.server.port ) )
+		else:
+			raise Exception, "Server is not started..."
 
 

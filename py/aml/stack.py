@@ -10,6 +10,8 @@ class stack:
 		"""Constructor creates the stack instance and sets up io redirection."""
 
 		self.stack = ml.create_input( 'aml_stack:' )
+		self.popper = '.'
+
 		self.printer = printer
 		if printer is not None:
 			self.stack.property( 'redirect' ).set( 1 )
@@ -41,8 +43,15 @@ class stack:
 	def include( self, command ):
 		"""Include an aml file from the aml site-packages directory."""
 
-		dir = full_path.rsplit( os.sep, 1 )[ 0 ]
-		self.push( os.path.join( dir, command ) )
+		if os.path.exists( command ):
+			self.push( command )
+		else:
+			dir = full_path.rsplit( os.sep, 1 )[ 0 ]
+			full = os.path.join( dir, command )
+			if os.path.exists( full ):
+				self.push( full )
+			else:
+				raise Exception( 'Unable to locate %s' % command )
 
 	def push( self, *command ):
 		"""Pushes commands on to the stack."""
@@ -76,6 +85,6 @@ class stack:
 	def pop( self ):
 		"""Returns the input object at the top of the stack"""
 
-		self.push( "." )
+		self.push( self.popper )
 		return self.stack.fetch_slot( 0 )
 

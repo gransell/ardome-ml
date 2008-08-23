@@ -15,6 +15,8 @@ class thread_stack( stack, pl.observer ):
 		stack.__init__( self, printer = printer )
 		pl.observer.__init__( self )
 
+		self.popper = 'dot'
+
 		if player is None:
 			self.player = thread_player( )
 		else:
@@ -25,38 +27,22 @@ class thread_stack( stack, pl.observer ):
 
 		self.commands = { }
 		self.commands[ '.' ] = self.dot
+
 		self.commands[ '**' ] = self.pow
 		self.commands[ 'sin' ] = self.sin
 		self.commands[ 'cos' ] = self.cos
 		self.commands[ 'tan' ] = self.tan
-		self.commands[ 'add' ] = self.add
+
 		self.commands[ 'clone' ] = self.clone
-		self.commands[ 'exit' ] = self.exit
 		self.commands[ 'filters' ] = self.filters
-		self.commands[ 'grab' ] = self.grab
-		self.commands[ 'help' ] = self.help
-		self.commands[ 'insert' ] = self.insert
-		self.commands[ 'log_level' ] = self.log_level
-		self.commands[ 'next' ] = self.next
-		self.commands[ 'playing' ] = self.playing
-		self.commands[ 'playlist' ] = self.playlist
-		self.commands[ 'position?' ] = self.position
-		self.commands[ 'prev' ] = self.prev
-		self.commands[ 'previous' ] = self.previous
 		self.commands[ 'props' ] = self.props
 		self.commands[ 'render' ] = self.render
-		self.commands[ 'seek' ] = self.seek
-		self.commands[ 'speed' ] = self.speed
-		self.commands[ 'speed?' ] = self.speed_query
-		self.commands[ 'server' ] = self.start_server
-		self.commands[ 'status?' ] = self.status
-		self.commands[ 'system' ] = self.system
-		self.commands[ 'transport' ] = self.transport
-		self.commands[ 'store' ] = self.store
+		self.commands[ 'include' ] = self.include_
 
-		self.commands[ 'pitch_filter' ] = self.pitch
-		self.commands[ 'volume_filter' ] = self.volume
-		self.commands[ 'deinterlace_filter' ] = self.deinterlace
+		self.commands[ 'system' ] = self.system
+		self.commands[ 'server' ] = self.start_server
+		self.commands[ 'exit' ] = self.exit
+		self.commands[ 'help' ] = self.help
 
 		self.next_command = None
 		self.incoming = ''
@@ -69,6 +55,9 @@ class thread_stack( stack, pl.observer ):
 		self.handled = self.stack.property( "handled" )
 		self.query = self.stack.property( "query" )
 		self.query.attach( self )
+
+		self.registration = self.player.register( self )
+		self.commands.update( self.registration.commands )
 
 	def filters( self ):
 		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
@@ -107,18 +96,6 @@ class thread_stack( stack, pl.observer ):
 		else:
 			raise Exception, "Server is already running on port %d." % self.server.port
 
-	def transport( self ):
-		if self.server is not None:
-			os.spawnlp( os.P_NOWAIT, 'amltransport', 'amltransport', 'localhost', str( self.server.port ) )
-		else:
-			raise Exception, "Server is not started..."
-
-	def start( self ):
-		"""Start the shell as a thread. On OSX, GUI oriented stores (such as 
-		SDL) cannot be run as a background thread."""
-
-		self.player.start( )
-
 	def render( self ):
 		self.push( 'dup' )
 		item = self.pop( )
@@ -139,10 +116,6 @@ class thread_stack( stack, pl.observer ):
 			self.aml_write.set( 1 )
 			if text != '':
 				self.output( text )
-
-	def pop( self ):
-		self.push( 'dot' )
-		return self.stack.fetch_slot( 0 )
 
 	def pow( self ):
 		y = float( self.pop( ).get_uri( ) )
@@ -182,70 +155,9 @@ class thread_stack( stack, pl.observer ):
 		for non-I-frame only media). Temporarily placed here, will move to
 		C++ primitives."""
 
+		self.push( 'dup' )
 		tos = self.pop( )
-		self.stack.connect( tos, 0 )
-		self.push( 'recover' )
 		self.clone_node( tos )
-
-	def log_level( self ):
-
-		pl.set_log_level( string.atoi( self.pop( ).get_uri( ) ) )
-
-	def pitch( self ):
-		"""Place the pitch filter on the stack (temporary - these 'helper'
-		filters don't need specific words to obtain them)."""
-
-		self.stack.connect( self.player.get_instance( 'pitch' ), 0 )
-		self.push( 'recover' )
-
-	def volume( self ):
-		"""Place the volume filter on the stack (temporary - these 'helper'
-		filters don't need specific words to obtain them)."""
-
-		self.stack.connect( self.player.get_instance( 'volume' ), 0 )
-		self.push( 'recover' )
-
-	def deinterlace( self ):
-		"""Place the deinterlace filter on the stack (temporary - these 'helper'
-		filters don't need specific words to obtain them)."""
-
-		self.stack.connect( self.player.get_instance( 'deinterlace' ), 0 )
-		self.push( 'recover' )
-
-	def speed( self ):
-		"""Set the speed to the number at the top of the stack."""
-
-		self.player.set_speed( string.atoi( self.pop( ).get_uri( ) ) )
-
-	def speed_query( self ):
-		""" Put the current playout speed on top of the stack."""
-
-		self.push( self.player.get_speed( ) )
-
-	def add( self ):
-		"""Add top of stack to playlist."""
-
-		self.player.add( self.pop( ) )
-
-	def next( self ):
-		"""Move to next in playlist."""
-
-		self.player.next( )
-
-	def prev( self ):
-		"""Move to prev in playlist."""
-
-		self.player.prev( )
-
-	def seek( self ):
-		"""Seek to the position at the top of the stack."""
-
-		self.player.seek( string.atoi( self.pop( ).get_uri( ) ) )
-
-	def position( self ):
-		"""Place current position on the top of the stack."""
-
-		self.push( str( self.player.position( ) ) )
 
 	def props( self ):
 		"""Display properties of the top of stack object. Temporary, will 
@@ -277,66 +189,7 @@ class thread_stack( stack, pl.observer ):
 				output += ', ' + cmd 
 
 		self.output( output )
-
-	def playlist( self ):
-		"""Dump the playlist to stdout."""
-
-		self.player.cond.acquire( )
-		try:
-			for input in self.player.input:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( input, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
-				self.output( '' )
-		finally:
-			self.player.cond.release( )
-
-	def previous( self ):
-		"""Dump the previously played list to stdout."""
-
-		self.player.cond.acquire( )
-		try:
-			for input in self.player.prev_inputs:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( input, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
-				self.output( '' )
-		finally:
-			self.player.cond.release( )
-
-	def playing( self ):
-		"""Dump the current playing item to stdout."""
-
-		self.player.cond.acquire( )
-		try:
-			if self.player.current is not None:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( self.player.current, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
-				self.output( '' )
-		finally:
-			self.player.cond.release( )
-
-	def status( self ):
-		self.player.cond.acquire( )
-		try:
-			if self.player.current is not None:
-				self.push( self.player.current.get_frames( ) )
-				self.push( self.player.position( ) )
-				self.push( self.player.get_speed( ) )
-			else:
-				self.push( 0 )
-				self.push( 0 )
-				self.push( 0 )
-			self.dot( )
-			self.dot( )
-			self.dot( )
-		finally:
-			self.player.cond.release( )
-		
+	
 	def exit( self ):
 		"""Exit the thread."""
 
@@ -352,49 +205,12 @@ class thread_stack( stack, pl.observer ):
 
 		os.system( "bash" )
 
-	def grab( self ):
-		"""Grab the input at the specified playlist index (<index> grab -- 
-		<input>)."""
-
-		input = self.player.grab( int( self.pop( ).get_uri( ) ) )
-		if input is not None:
-			self.push( input )
-
-	def insert( self ):
-		"""Insert the input at the specified playlist index (<input> <index> 
-		insert --)."""
-
-		index = int( self.pop( ).get_uri( ) )
-		self.player.insert( index, self.pop( ) )
-
-	def store( self ):
+	def include_( self ):
 		if self.next_command is None:
-			self.next_command = self.store
-			self.store_props = [ ]
-		elif self.incoming != '.':
-			self.store_props += [ str( self.incoming ) ]
+			self.next_command = self.include_
 		else:
-			self.player.cond.acquire( )
-			try:
-				self.next_command = None
-				if isinstance( self.player.stores, list ) and len( self.player.stores ) and isinstance( self.player.stores[0], str ):
-					self.player.store += self.store_props
-				else:
-					result = self.player.stores
-					for pair in self.store_props:
-						name, value = pair.split( '=', 1 )
-						prop = result[ 0 ].property( name )
-						if prop.valid( ):
-							prop.set_from_string( value )
-						elif name.startswith( '@' ):
-							key = pl.create_key_from_string( name )
-							prop = pl.property( key )
-							prop.set( unicode( value ) )
-							result[ 0 ].properties( ).append( prop )
-						else:
-							print 'Requested property %s not found found - ignoring.' % name
-			finally:
-				self.player.cond.release( )
+			self.next_command = None
+			self.include( self.incoming )
 
 	def updated( self, subject ):
 		"""Callback for query property - if the value of the query is found

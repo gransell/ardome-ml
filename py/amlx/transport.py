@@ -16,7 +16,7 @@ class transport( Frame ):
 
 		self.bind_all( '<KeyPress-Escape>', self.exit )
 
-		speed_, position_, to_ = self.status( )
+		speed_, position_, to_, generation_ = self.status( )
 
 		frame = Frame( master )
 		frame.pack( )
@@ -67,16 +67,18 @@ class transport( Frame ):
 		to_ = 0
 		speed_ = 0
 		position_ = 0
+		generation_ = 0
 
 		result = self.command( 'status?' )
-		if len( result ) == 3:
+		if len( result ) == 4:
 			speed_ = int( result[ 0 ] )
 			position_ = int( result[ 1 ] )
 			to_ = int( result[ 2 ] )
+			generation_ = int( result[ 3 ] )
 		else:
 			raise Exception, "Invalid status response from server"
 
-		return speed_, position_, to_
+		return speed_, position_, to_, generation_
 
 	def button( self, frame, text, cmd, keys = [ ], **kw ):
 		def press_cb( self = self, cmd = cmd ): self.command( cmd )
@@ -103,7 +105,7 @@ class transport( Frame ):
 			raise Exception, "Invalid status response from server"
 
 	def timer( self ):
-		speed_, position_, to_ = self.status( )
+		speed_, position_, to_, generation_ = self.status( )
 		#self.state.set( [ '||', '>' ][ int( speed_ == 0 ) ]  )
 		current = self.scrub.cget( 'to' )
 		if current != to_:
