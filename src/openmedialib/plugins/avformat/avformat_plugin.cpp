@@ -2149,12 +2149,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
 				frames_ = expected_ + 1;
 
+#if 0
+			// Temporarily commented out to avoid some false negatives (image repeat, small discrepancy
+			// during start of reverse play etc)
 			if ( has_audio( ) && has_video( ) )
 				ARENFORCE_MSG( exact_audio && exact_image, "Incomplete frame (audio or image missing)" );
 			else if ( has_audio( ) )
 				ARENFORCE_MSG( exact_audio, "Incomplete frame (audio missing)" );
 			else if ( has_audio( ) )
 				ARENFORCE_MSG( exact_image, "Incomplete frame (image missing)" );
+#endif
 		}
 
 		virtual bool initialize( )
