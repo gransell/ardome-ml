@@ -12,4 +12,4 @@ CFlags:	-I${includedir}
 Libs: -L${libdir} -lxerces-c
 
 install_libs=${libdir}/*.dylib*
-
+install_include=${includedir}/*
