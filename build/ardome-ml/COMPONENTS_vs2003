@@ -1,5 +1,5 @@
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-boost_1_34_1.B.tar.bz2
-tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/ffmpeg-win32-20080303.B.tar.bz2 
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/ffmpeg-win32-20080825.tbz2 
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/sdl-win32.B.tar.bz2
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-xerces-c-2_8_0.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/loki-0.1.6.zip

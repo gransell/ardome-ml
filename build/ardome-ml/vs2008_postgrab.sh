@@ -32,17 +32,24 @@ if [ ! -d xerces-c-2_8_0 ]; then
 fi
 
 cd ..
-cd ..
 
-if [ ! -d  bcomp/ffmpeg/include ]; then
+if [ ! -d common ] ; then
+	mkdir common
+fi
+
+cd common
+
+if [ ! -d  ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
-	unzip -oq bcomp/ffmpeg/ffmpeg-win32.zip -d bcomp/ 
-
+	tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2 
+	
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/ffmpeg/ffmpeg-win32.zip. Terminating."
+	  echo "Failed to run tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2. Terminating."
 	  exit
 	fi
 fi
+
+cd ../..
 
 if [ ! -d  bcomp/sdl/include ]; then
 
