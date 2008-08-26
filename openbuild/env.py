@@ -112,9 +112,8 @@ class Environment( BaseEnvironment ):
 				if src.endswith( '.pc' ): dst_dir = os.path.join( dst, self[ 'libdir' ], 'pkgconfig' )
 				if dst_dir is not None:
 					dst_file = os.path.join( dst_dir, src_file )
-					if not os.path.exists( dst_file ) or os.path.getmtime( src ) > os.path.getmtime( dst_file ):
-						if not os.path.exists( dst_dir ): os.makedirs( dst_dir )
-						shutil.copyfile( src, dst_file )
+					if not os.path.exists( dst_dir ): os.makedirs( dst_dir )
+					shutil.copyfile( src, dst_file )
 				else:
 					raise Exception, "Unable to identify %s as a win or pkg config file" % src
 			else:
