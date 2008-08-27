@@ -2099,7 +2099,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					got_audio = true;
 			}
 
-			if ( !prop_genpts_.value< int >( ) && got_picture && get_position( ) >= images_[ images_.size( ) - 1 ]->position( ) - 3 )
+			if ( has_video( ) && !prop_genpts_.value< int >( ) && got_picture && get_position( ) >= images_[ images_.size( ) - 1 ]->position( ) - 3 )
 				got_picture = false;
 
 			while( error >= 0 && ( !got_picture || !got_audio ) )
