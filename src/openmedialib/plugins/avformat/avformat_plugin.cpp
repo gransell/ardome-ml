@@ -2099,7 +2099,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					got_audio = true;
 			}
 
-			if ( !prop_genpts_.value< int >( ) && got_picture && get_position( ) == get_frames( ) - 1 )
+			if ( !prop_genpts_.value< int >( ) && got_picture && get_position( ) >= images_[ images_.size( ) - 1 ]->position( ) - 3 )
 				got_picture = false;
 
 			while( error >= 0 && ( !got_picture || !got_audio ) )
@@ -2334,11 +2334,11 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 		{
 			property_observer_ = boost::shared_ptr<pcos::observer>(new avformat_resampler_filter::property_observer(const_cast<avformat_resampler_filter*>(this)));
 		
-			properties( ).append( prop_output_channels_		= int(2)		);
-			properties( ).append( prop_output_sample_freq_	= int(48000)	);
+			properties( ).append( prop_output_channels_ = 2	);
+			properties( ).append( prop_output_sample_freq_ = 48000 );
 		
-			prop_output_channels_.attach(property_observer_);
-			prop_output_sample_freq_.attach(property_observer_);
+			prop_output_channels_.attach( property_observer_ );
+			prop_output_sample_freq_.attach( property_observer_ );
 		}
 	
 		virtual ~avformat_resampler_filter()
@@ -2351,7 +2351,16 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 		}
 	
 		virtual const opl::wstring get_uri( ) const { return L"resampler"; }
-	
+
+		virtual void on_slot_change( ml::input_type_ptr input, int )
+		{
+			if ( context_ )
+			{
+				audio_resample_close(context_);
+				context_ = NULL;
+			}
+		}
+
 	protected:
 		void do_fetch( frame_type_ptr &current_frame )
 		{
@@ -2368,26 +2377,31 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			if(!current_audio)
 				return;
 			
+			// since ffmpeg resampler will only accept 2 channels or less, force any input with more than 2 channels to conform
+			if(current_audio->channels() > 2)
+			{
+				current_audio = audio_channel_convert(current_audio, 2);
+				current_frame->set_audio( current_audio );
+			}
+
 			//-----------------------------------------------------------------------------------
 			// Check there is a context to work with, if not create one
 			//-----------------------------------------------------------------------------------
-			if(!context_)
+			if( !context_ )
 			{
 				current_frame->get_fps(fps_numerator_, fps_denominator_);
 				input_channels_		= current_audio->channels();
 				input_sample_freq_	= current_audio->frequency();
 				dirty_ = true;
 			}
-			
-			
-			// since ffmpeg resampler will only accept 2 channels or less, force any input with more than 2 channels to conform
-			if(current_audio->channels() > 2)
+			else 
 			{
-				input_channels_ = 2;
-				current_audio	= audio_channel_convert(current_audio, input_channels_);
-				current_frame->set_audio( current_audio );
+				dirty_ = fps_numerator_ != current_frame->get_fps_num( ) || 
+					  fps_denominator_ != current_frame->get_fps_den( ) ||
+					  input_channels_ != current_audio->channels( ) ||
+					  input_sample_freq_ != current_audio->frequency( );
 			}
-
+			
 			// If the sample frequencies are the same save some effort
 			if(		(input_sample_freq_	== prop_output_sample_freq_.value<int>())
 				&&	(input_channels_	== prop_output_channels_.value<int>()) )
