@@ -28,11 +28,6 @@ class thread_stack( stack, pl.observer ):
 		self.commands = { }
 		self.commands[ '.' ] = self.dot
 
-		self.commands[ '**' ] = self.pow
-		self.commands[ 'sin' ] = self.sin
-		self.commands[ 'cos' ] = self.cos
-		self.commands[ 'tan' ] = self.tan
-
 		self.commands[ 'clone' ] = self.clone
 		self.commands[ 'filters' ] = self.filters
 		self.commands[ 'props' ] = self.props
@@ -116,23 +111,6 @@ class thread_stack( stack, pl.observer ):
 			self.aml_write.set( 1 )
 			if text != '':
 				self.output( text )
-
-	def pow( self ):
-		y = float( self.pop( ).get_uri( ) )
-		x = float( self.pop( ).get_uri( ) )
-		self.push( math.pow( x, y ) )
-
-	def sin( self ):
-		x = float( self.pop( ).get_uri( ) )
-		self.push( math.sin( x ) )
-
-	def cos( self ):
-		x = float( self.pop( ).get_uri( ) )
-		self.push( math.cos( x ) )
-
-	def tan( self ):
-		x = float( self.pop( ).get_uri( ) )
-		self.push( math.tan( x ) )
 
 	def clone_node( self, node ):
 		"""Temporary - will migrate to C++ class."""

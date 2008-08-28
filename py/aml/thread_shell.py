@@ -13,33 +13,24 @@ class thread_shell( threading.Thread ):
 		threading.Thread.__init__( self )
 		self.player = player
 		self.stack = aml.thread_stack( player )
+		self.player.control_start( )
 
 	def run( self ):
 		"""Loops on stdin reading and submits all commands to the stack."""
 
-		stack = self.stack
-		stack.include( 'shell.aml' )
-		readline.parse_and_bind("tab: complete")
+		self.stack.include( 'shell.aml' )
+		readline.parse_and_bind( 'tab: complete' )
 		try:
-			while stack.active( ):
-				try:
-					input = raw_input( 'aml> ' ).strip( )
-					# Gack! drag and drop from nautilus...
-					input = input.replace( "\'", "\"" ).replace( "\"\\\"\"", "\'" )
-					if input != '':
-						try:
-							stack.define( input )
-						except Exception, e:
-							print e
-				except KeyboardInterrupt:
+			while self.player.active( ):
+				input = raw_input( 'aml> ' ).strip( )
+				# Gack! drag and drop from nautilus...
+				input = input.replace( "\'", "\"" ).replace( "\"\\\"\"", "\'" )
+				if input != '':
 					try:
-						stack.push( "reset!" )
+						self.stack.define( input )
 					except Exception, e:
-						print '\n' + str( e )
+						print e
 		except EOFError:
 			print
-
-		if stack.active( ):
-			stack.push( "play" )
-			stack.push( "exit" )
-
+		finally:
+			self.player.control_end( )

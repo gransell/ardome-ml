@@ -132,8 +132,7 @@ class http_client_handler:
 			if request.startswith( '/?src=' ):
 				media = request[ 6: ].split( '&' )
 				stack = self.parent.stack_acquire( )
-				stack.push( 'lazy_video:aml:' + media[ 0 ] )
-				stack.push( 'audio=0' )
+				stack.push( 'aml:' + media[ 0 ] )
 				for arg in media[ 1: ]:
 					if arg.startswith( 'frames=' ):
 						stack.push( arg )
@@ -214,10 +213,12 @@ class server( threading.Thread ):
 		self.pool = [ ]
 
 		self.server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+		self.server.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
 		self.register_socket( self.server, server_handler( self, self.server ) )
 
 		if http_port != -1:
 			self.http_server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+			self.http_server.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
 			self.register_socket( self.http_server, http_server_handler( self, self.http_server ) )
 
 	def stack_acquire( self ):
@@ -257,9 +258,9 @@ class server( threading.Thread ):
 	def run( self ):
 		"""The thread method."""
 
-		try:
-			while True:
-				readers, writers, errors = select.select( self.sockets.keys(), self.writer.keys(), [] , 60 )
+		while True:
+			try:
+				readers, writers, errors = select.select( self.sockets.keys( ), self.writer.keys( ), [ ], 60 )
 
 				for error in errors:
 					self.unregister_socket( error )
@@ -272,6 +273,11 @@ class server( threading.Thread ):
 					if reader in self.sockets.keys( ):
 						self.sockets[ reader ].read( )
 
-		except:
-			raise
+			except Exception, e:
+				print e
+
+				for sock in self.sockets.keys( ):
+					readers, writers, errors = select.select( [ sock ], [ ], [ ], 0 )
+					for error in errors:
+						error.close( )
 

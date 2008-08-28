@@ -134,6 +134,9 @@ class ML_DECLSPEC frame_type
 		/// Convenience - check if the frame has any associated exceptions.
 		const bool in_error( ) const;
 
+		/// Work around for weak_ptr failure in python
+		void clear_exceptions( );
+
 	private:
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openimagelib::il::image_type_ptr image_;

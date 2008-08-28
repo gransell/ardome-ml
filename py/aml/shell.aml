@@ -106,3 +106,15 @@ core.aml
 	55378 server
 ;
 
+: fullscreen
+	store @video.fullscreen=%s .
+;
+
+: audio_scrub
+	store audio_scrub=%s .
+;
+
+: goom
+	play_filter goom effect=%s drop
+;
+

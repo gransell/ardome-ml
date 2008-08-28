@@ -25,7 +25,7 @@ class audio( Frame ):
 		self.pitch.set( pitch_ )
 
 		Button( frame, text = 'Pitch', width = 10, command = lambda self = self: self.command( '1.0 pitch' ) ).pack( side = LEFT )
-		self.scrub = Scale( frame, command = self.scrub, orient = HORIZONTAL, showvalue = False, from_ = 0.25, to_ = 5.0, variable = self.pitch, digits = 3, resolution = 0.05, takefocus = 0 )
+		self.scrub = Scale( frame, command = self.scrub, orient = HORIZONTAL, showvalue = False, from_ = 0.25, to_ = 4.25, variable = self.pitch, digits = 3, resolution = 0.05, takefocus = 0 )
 		self.scrub.pack( fill = X )
 
 		frame = Frame( master )

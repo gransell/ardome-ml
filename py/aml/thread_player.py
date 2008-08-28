@@ -25,9 +25,21 @@ class thread_player( player ):
 		self.current_position = -1
 		self.exiting = False
 		self.generation = 0
+		self.client_count = 0
 
 	def register( self, stack ):
 		return player_stack( stack, self )
+
+	def control_start( self ):
+		self.cond.acquire( )
+		self.client_count += 1
+		self.cond.release( )
+
+	def control_end( self ):
+		self.cond.acquire( )
+		self.client_count -= 1
+		self.cond.notifyAll( )
+		self.cond.release( )
 
 	def set( self, input ):
 		"""Request immediate playout of input."""
@@ -122,7 +134,7 @@ class thread_player( player ):
 		"""Indicates if still active."""
 
 		self.cond.acquire( )
-		is_active = not self.exiting
+		is_active = self.client_count > 0
 		self.cond.release( )
 		return is_active
 
@@ -190,9 +202,8 @@ class thread_player( player ):
 		while self.active( ):
 			self.cond.acquire( )
 
-			while self.active( ) and len( self.input ) == 0 and not self.prev_input and not self.next_input:
-				self.cond.wait( )
-				self.cond.notifyAll( )
+			while self.active( ) and len( self.input ) == 0:
+				self.cond.wait( 0.1 )
 
 			if not self.active( ): 
 				self.cond.release( )
@@ -213,7 +224,7 @@ class thread_player( player ):
 			while len( self.prev_inputs ) > self.prev_count:
 				self.prev_inputs.pop( 0 )
 
-			# Schdule the first input for playout
+			# Schedule the first input for playout
 			self.current = self.input[ 0 ]
 			self.current.seek( 0, False )
 			iter = self.play( self.current )
@@ -229,8 +240,8 @@ class thread_player( player ):
 				self.cond.acquire( )
 				running = not self.next_input and not self.prev_input and iter.next( ) is not None
 				self.cond.notifyAll( )
-				if self.speed == 0:
-					self.cond.wait( 1.0 )
+				if running and self.speed == 0:
+					self.cond.wait( 0.1 )
 				self.cond.release( )
 				time.sleep( 0.0001 )
 
@@ -326,10 +337,10 @@ class player_stack:
 		self.player.cond.acquire( )
 		try:
 			for input in self.player.prev_inputs:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( input, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.stack.aml.connect( input, 0 )
+				text = self.stack.aml_stdout.value_as_string( )
+				self.output( text )
+				self.stack.aml_write.set( 1 )
 				self.output( '' )
 		finally:
 			self.player.cond.release( )
@@ -340,10 +351,10 @@ class player_stack:
 		self.player.cond.acquire( )
 		try:
 			if self.player.current is not None:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( self.player.current, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.stack.aml.connect( self.player.current, 0 )
+				text = self.stack.aml_stdout.value_as_string( )
+				self.output( text )
+				self.stack.aml_write.set( 1 )
 				self.output( '' )
 		finally:
 			self.player.cond.release( )
@@ -351,13 +362,12 @@ class player_stack:
 	def status( self ):
 		self.player.cond.acquire( )
 		try:
+			self.push( self.player.generation )
 			if self.player.current is not None:
-				self.push( self.player.generation )
 				self.push( self.player.current.get_frames( ) )
 				self.push( self.player.position( ) )
 				self.push( self.player.get_speed( ) )
 			else:
-				self.push( self.player.generation )
 				self.push( 0 )
 				self.push( 0 )
 				self.push( 0 )
@@ -400,6 +410,8 @@ class player_stack:
 					for pair in self.store_props:
 						name, value = pair.split( '=', 1 )
 						prop = result[ 0 ].property( name )
+						if value.find( '%s' ) != -1:
+							value = value % str( self.stack.pop( ).get_uri( ) )
 						if prop.valid( ):
 							prop.set_from_string( value )
 						elif name.startswith( '@' ):
@@ -409,6 +421,10 @@ class player_stack:
 							result[ 0 ].properties( ).append( prop )
 						else:
 							print 'Requested property %s not found found - ignoring.' % name
+
+					prop = result[ 0 ].property( 'sync' )
+					if prop.valid( ):
+						prop.set( 1 )
 			finally:
 				self.player.cond.release( )
 

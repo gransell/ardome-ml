@@ -65,6 +65,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			, position_( 0 )
 			, process_( process_image | process_audio )
 			, callback_( )
+			, report_exceptions_( true )
 		{
 			properties( ).append( prop_debug_ = 0 );
 		}
@@ -74,6 +75,13 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Provides a mechanism for defering initialisation from the ctor
 		bool init( ) { if ( !initialized_ ) initialized_ = initialize( ); return initialized_; }
 		const bool initialized( ) const { return initialized_; }
+
+		// Work around for bugs in python
+		void report_exceptions( bool value )
+		{ report_exceptions_ = value; }
+
+		bool reporting_exceptions( ) const
+		{ return report_exceptions_; }
 
 		// Filters reimplement these
 		virtual const size_t slot_count( ) const { return 0; }
@@ -157,8 +165,11 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			if ( !result )
 				result = frame_type_ptr( new frame_type( ) );
 
-			if ( exception )
+			if ( report_exceptions_ && exception )
 				result->push_exception( exception, shared_from_this( ) );
+
+			if ( !report_exceptions_ )
+				result->clear_exceptions( );
 
 			return result;
 		}
@@ -200,6 +211,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		int position_;
 		int process_;
 		input_callback_ptr callback_;
+		bool report_exceptions_;
 };
 
 } } }

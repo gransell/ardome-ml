@@ -6,7 +6,7 @@ video_filters.append( [ 'always', 'deinterlace' ] )
 video_filters.append( [ 'always', 'pitch', 'speed=1' ] )
 video_filters.append( [ 'always', 'volume', 'volume=1' ] )
 video_filters.append( [ 'always', 'resampler' ] )
-video_filters.append( [ 'has_no_image', 'visualise' ] )
+video_filters.append( [ 'always', 'visualise' ] )
 video_filters.append( [ 'has_no_audio', 'conform' ] )
 video_filters.append( [ 'always', 'correction', 'enable=0' ] )
 
@@ -170,10 +170,12 @@ class player:
 		input = self.check_input( input )
 
 		error = False
+		frame = None
 	
 		try:
 			while not error and input.get_position( ) < input.get_frames( ):
-				frame = input.fetch( )
+				if frame is None or frame.get_position( ) != input.get_position( ):
+					frame = input.fetch( )
 				error = self.ante( input, self.stores, frame )
 				if not error:
 					for store in self.stores:

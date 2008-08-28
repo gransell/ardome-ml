@@ -525,12 +525,18 @@ void py_audio_reseat( )
 
 ml::input_type_ptr create_input0( const pl::wstring &resource )
 {
-	return ml::create_input( resource );
+	ml::input_type_ptr input = ml::create_input( resource );
+	if ( input )
+		input->report_exceptions( false );
+	return input;
 }
 
 ml::input_type_ptr create_input( const std::string &resource )
 {
-	return ml::create_input( pl::to_wstring( resource ) );
+	ml::input_type_ptr input = ml::create_input( pl::to_wstring( resource ) );
+	if ( input )
+		input->report_exceptions( false );
+	return input;
 }
 
 ml::store_type_ptr create_store( const std::string &resource, const ml::frame_type_ptr &frame )
@@ -540,7 +546,10 @@ ml::store_type_ptr create_store( const std::string &resource, const ml::frame_ty
 
 ml::filter_type_ptr create_filter( const std::string &resource )
 {
-	return ml::create_filter( pl::to_wstring( resource ) );
+	ml::filter_type_ptr filter = ml::create_filter( pl::to_wstring( resource ) );
+	if ( filter )
+		filter->report_exceptions( false );
+	return filter;
 }
 
 void py_plugin( )

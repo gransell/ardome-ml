@@ -2,14 +2,29 @@
 
 import aml
 import sys
+import signal
+
+def stop_server( signl, frme ):
+	global player
+	player.control_end( )
+	return 0
+
+signal.signal( signal.SIGINT, stop_server )
 
 aml.init( )
 
 player = aml.thread_player( )
 player.create( sys.argv[ 1: ] )
 
-server = aml.server( player )
+player.control_start( )
+
+server = aml.server( player, http_port = 55379 )
 server.start( )
 
-player.run( )
+try:
+	player.run( )
+except KeyboardInterrupt:
+	sys.exit( 0 )
+finally:
+	player.control_end( )
 

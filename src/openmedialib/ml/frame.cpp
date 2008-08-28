@@ -214,4 +214,10 @@ const bool frame_type::in_error( ) const
 	return exceptions_.size( ) != 0; 
 }
 
+void frame_type::clear_exceptions( )
+{
+	if ( in_error( ) )
+		exceptions_.erase( exceptions_.begin( ), exceptions_.end( ) );
+}
+
 } } }
