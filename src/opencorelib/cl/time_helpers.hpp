@@ -1,13 +1,13 @@
 #ifndef _CORE_TIME_HELPERS_H_
 #define _CORE_TIME_HELPERS_H_
 
-#include "./core_enums.hpp"
-
 #include <iostream>
 #include <iomanip>
 
 #include <boost/operators.hpp>
 #include <boost/thread/xtime.hpp>
+
+#include "./core_enums.hpp"
 
 namespace olib
 {
