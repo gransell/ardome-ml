@@ -4,6 +4,7 @@
 #include "./core_enums.hpp"
 
 #include <iostream>
+#include <iomanip>
 
 #include <boost/operators.hpp>
 #include <boost/thread/xtime.hpp>
