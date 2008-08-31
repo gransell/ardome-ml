@@ -108,9 +108,16 @@ class thread_player( player ):
 		self.cond.acquire( )
 		try:
 			if self.current is not None:
-				self.position_ = position
+				if position >= 0:
+					self.position_ = position
+				else:
+					self.position_ = self.current.get_frames( ) + position
+				if self.position_ < 0:
+					self.position_ = 0
+				elif self.position_ >= self.current.get_frames( ):
+					self.position_ = self.current.get_frames( ) - 1
 				self.cond.notifyAll( )
-				self.cond.wait( 0.1 )
+				self.cond.wait( 0.25 )
 		finally:
 			self.cond.release( )
 
@@ -202,7 +209,7 @@ class thread_player( player ):
 		while self.active( ):
 			self.cond.acquire( )
 
-			while self.active( ) and len( self.input ) == 0:
+			while self.active( ) and len( self.input ) == 0 and not self.next_input and not self.prev_input:
 				self.cond.wait( 0.1 )
 
 			if not self.active( ): 

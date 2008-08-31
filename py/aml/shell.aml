@@ -15,6 +15,7 @@ core.aml
 
 : step 
 	position? + 
+	0 max
 	seek 
 ;
 
@@ -26,14 +27,14 @@ core.aml
 
 # Step in a loop - current speed is saved on the return stack at the start,
 # playout is paused and original speed is recovered when the loop is complete
-# <speed> <frames> stepper --
+# <speed> <frames> step* --
 
 : step*
 	dup 
 	speed? >r
 	pause
 	begin 
-		1- dup 0 > 
+		1- dup 0 >=
 	while 
 		2 pick step 
 	repeat 

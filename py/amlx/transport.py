@@ -62,7 +62,6 @@ class transport( Frame ):
 			self.client.send( cmd )
 			return self.client.receive( )
 		except Exception, e:
-			print 'Caught', e 
 			sys.exit( 1 )
 
 	def status( self ):

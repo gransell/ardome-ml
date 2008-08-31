@@ -3,11 +3,11 @@ from aml import ml, pl, stack
 video_filters = []
 video_filters.append( [ 'thread_safe', 'threader', 'active=1' ] )
 video_filters.append( [ 'always', 'deinterlace' ] )
+video_filters.append( [ 'always', 'resampler' ] )
 video_filters.append( [ 'always', 'pitch', 'speed=1' ] )
 video_filters.append( [ 'always', 'volume', 'volume=1' ] )
-video_filters.append( [ 'always', 'resampler' ] )
 video_filters.append( [ 'always', 'visualise' ] )
-video_filters.append( [ 'has_no_audio', 'conform' ] )
+video_filters.append( [ 'always', 'conform' ] )
 video_filters.append( [ 'always', 'correction', 'enable=0' ] )
 
 audio_filters = []
@@ -149,6 +149,8 @@ class player:
 			input = self.stack.pop( )
 
 		self.walk_and_assign( input, "deferred", int( self.deferrable ) )
+		self.walk_and_assign( input, "active", 2 )
+		self.walk_and_assign( input, "active", 1 )
 
 		return input
 

@@ -12,6 +12,9 @@ class thread_stack( stack, pl.observer ):
 		command set (to allow more comprehensive tranport controls and player
 		aware functionality)."""
 
+		if printer == None:
+			printer = self.output
+
 		stack.__init__( self, printer = printer )
 		pl.observer.__init__( self )
 
@@ -33,6 +36,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'props' ] = self.props
 		self.commands[ 'render' ] = self.render
 		self.commands[ 'include' ] = self.include_
+		self.commands[ 'save' ] = self.save
 
 		self.commands[ 'system' ] = self.system
 		self.commands[ 'server' ] = self.start_server
@@ -70,7 +74,7 @@ class thread_stack( stack, pl.observer ):
 		self.output( result )
 
 	def output( self, string ):
-		if self.printer is None:
+		if self.printer is None or self.printer == self.output:
 			if string.endswith( '\n' ):
 				print string,
 			else:
@@ -189,6 +193,23 @@ class thread_stack( stack, pl.observer ):
 		else:
 			self.next_command = None
 			self.include( self.incoming )
+
+	def save_print( self, message ):
+		self.save_print_fd.write( message )
+
+	def save( self ):
+		if self.next_command is None:
+			self.next_command = self.save
+		else:
+			self.next_command = None
+			filename = self.incoming
+			printer = self.printer
+			try:
+				self.printer = self.save_print
+				self.save_print_fd = open( filename, 'w' )
+				self.push( 'words' )
+			finally:
+				self.printer = printer
 
 	def updated( self, subject ):
 		"""Callback for query property - if the value of the query is found
