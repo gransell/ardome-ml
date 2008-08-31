@@ -1746,7 +1746,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 		virtual int get_frames( ) const
 		{
 			int frames = get_out( ) - get_in( );
-			return frames < 0 ? - frames : frames;
+			return ( frames <= 0 ? - frames : frames );
 		}
 
 		virtual const pl::wstring get_uri( ) const { return L"clip"; }
@@ -1800,7 +1800,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			if ( input )
 			{
 				if ( in >= input->get_frames() )
-					in = 0;
+					in = input->get_frames( ) - 1;
 				if ( in < 0 )
 					in = input->get_frames( ) + in;
 				if ( in < 0 )
@@ -1816,7 +1816,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			if ( input )
 			{
 				if ( out >= input->get_frames() )
-					out = input->get_frames()-1;
+					out = input->get_frames( ) - 1;
 				if ( out < 0 )
 					out = input->get_frames( ) + out + 1;
 				if ( out < 0 )
@@ -2112,6 +2112,11 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 		}
 
 		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
+
+		virtual void on_slot_change( ml::input_type_ptr input, int )
+		{
+			previous_ = il::image_type_ptr( );
+		}
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
