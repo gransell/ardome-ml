@@ -1269,15 +1269,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_free( av_frame_ );
 		}
 
+		// For now, all oml protocol handlers are consider unsafe for threading
 		virtual bool is_thread_safe( ) const
 		{
-			// For now, all oml protocol handlers are consider unsafe for threading
 			return uri_.find( L"oml:" ) != 0;
-		}
-
-		bool is_valid( )
-		{
-			return context_ != 0;
 		}
 
 		virtual double fps( ) const
@@ -1285,6 +1280,274 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			int num, den;
 			get_fps( num, den );
 			return den != 0 ? double( num ) / double( den ) : 1;
+		}
+
+		// Basic information
+		virtual const opl::wstring get_uri( ) const { return uri_; }
+		virtual const opl::wstring get_mime_type( ) const { return mime_type_; }
+		virtual bool has_video( ) const { return prop_video_index_.value< int >( ) != -1 && video_indexes_.size( ) > 0; }
+		virtual bool has_audio( ) const { return prop_audio_index_.value< int >( ) != -1 && audio_indexes_.size( ) > 0; }
+
+		// Audio/Visual
+		virtual int get_frames( ) const { return frames_; }
+		virtual bool is_seekable( ) const { return is_seekable_; }
+
+		// Visual
+		virtual void get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
+		virtual void get_sar( int &num, int &den ) const { num = sar_num_; den = sar_den_; }
+		virtual int get_video_streams( ) const { return video_indexes_.size( ); }
+		virtual int get_width( ) const { return width_; }
+		virtual int get_height( ) const { return height_; }
+
+		// Audio
+		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
+		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
+
+		virtual bool set_audio_stream( const int stream ) 
+		{
+			if ( stream < 0 || stream >= int( audio_indexes_.size( ) ) )
+			{
+				prop_audio_index_ = -1;
+			}
+			else if ( stream < int( audio_indexes_.size( ) ) )
+			{
+				prop_audio_index_ = stream;
+			}
+
+			return true; 
+		}
+
+	protected:
+		// Fetch method
+		void do_fetch( frame_type_ptr &result )
+		{
+			int process_flags = get_process_flags( );
+
+			// Create the output frame
+			result = frame_type_ptr( new frame_type( ) );
+
+			// Seek to the correct position if necessary
+			if ( get_position( ) != expected_ )
+			{
+				int current = get_position( ) + first_found_;
+				int valid = 0;
+				if ( images_.size( ) > 0 )
+					valid = images_[ 0 ]->position( );
+				else if ( audio_.size( ) > 0 )
+					valid = audio_[ 0 ]->position( );
+
+				if ( current >= valid && current < int( expected_ + 2 * fps( ) ) )
+				{
+				}
+				else if ( seek_to_position( ) )
+				{
+					clear_stores( true );
+				}
+				else
+				{
+					seek( expected_ );
+				}
+				expected_ = get_position( ) + first_found_;
+			}
+
+			// Clear the packet
+			av_init_packet( &pkt_ );
+
+			// Loop until an error or we have what we need
+			int error = 0;
+			bool got_picture = !has_video( );
+			bool got_audio = !has_audio( );
+			int current = get_position( ) + first_found_;
+
+			if ( ( process_flags & process_image ) != 0 && ( has_video( ) && images_.size( ) > 0 ) )
+			{
+				int first = images_[ 0 ]->position( );
+				int last = images_[ images_.size( ) - 1 ]->position( );
+				if ( current >= first && current <= last )
+					got_picture = true;
+			}
+
+			if ( ( process_flags & process_audio ) != 0 && ( has_audio( ) && audio_.size( ) > 0 ) )
+			{
+				int first = audio_[ 0 ]->position( );
+				int last = audio_[ audio_.size( ) - 1 ]->position( );
+				if ( current >= first && current <= last )
+					got_audio = true;
+			}
+
+			bool process_null = false;
+
+			while( error >= 0 && ( !got_picture || !got_audio ) )
+			{
+				error = av_read_frame( context_, &pkt_ );
+				if ( error >= 0 && video_indexes_.size( ) && prop_video_index_.value< int >( ) != -1 && pkt_.stream_index == video_indexes_[ prop_video_index_.value< int >( ) ] )
+					error = decode_image( got_picture, &pkt_ );
+				else if ( error >= 0 && audio_indexes_.size( ) && prop_audio_index_.value< int >( ) != -1 && pkt_.stream_index == audio_indexes_[ prop_audio_index_.value< int >( ) ] )
+					error = decode_audio( got_audio );
+				else if ( error < 0 && !is_seekable_ )
+					frames_ = get_position( );
+				else if ( prop_genpts_.value< int >( ) && error < 0 )
+					frames_ = get_position( );
+				else if ( error < 0 )
+					process_null = true;
+				av_free_packet( &pkt_ );
+			}
+
+			if ( frames_ != 1 && has_video( ) && process_null )
+			{
+				bool temp;
+				decode_image( temp, NULL );
+			}
+
+			// Hmmph
+			if ( has_video( ) )
+			{
+				sar_num_ = get_video_stream( )->codec->sample_aspect_ratio.num;
+				sar_den_ = get_video_stream( )->codec->sample_aspect_ratio.den;
+				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
+				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
+			}
+
+			result->set_sar( sar_num_, sar_den_ );
+			result->set_fps( fps_num_, fps_den_ );
+			result->set_position( get_position( ) );
+			result->set_pts( expected_ * 1.0 / avformat_input::fps( ) );
+			result->set_duration( 1.0 / avformat_input::fps( ) );
+
+			bool exact_image = false;
+			bool exact_audio = false;
+
+			if ( ( process_flags & process_image ) && has_video( ) )
+				exact_image = find_image( result );
+			if ( ( process_flags & process_audio ) && has_audio( ) )
+				exact_audio = find_audio( result );
+
+			// Update the next expected position
+			if ( exact_image || exact_audio )
+				expected_ ++;
+
+			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
+				frames_ = expected_ + 1;
+
+#if 0
+			// Temporarily commented out to avoid some false negatives (image repeat, small discrepancy
+			// during start of reverse play etc)
+			if ( has_audio( ) && has_video( ) )
+				ARENFORCE_MSG( exact_audio && exact_image, "Incomplete frame (audio or image missing)" );
+			else if ( has_audio( ) )
+				ARENFORCE_MSG( exact_audio, "Incomplete frame (audio missing)" );
+			else if ( has_audio( ) )
+				ARENFORCE_MSG( exact_image, "Incomplete frame (image missing)" );
+#endif
+		}
+
+		virtual bool initialize( )
+		{
+			opl::wstring resource = uri_;
+
+			// A mechanism to ensure that avformat can always be accessed
+			if ( resource.find( L"avformat:" ) == 0 )
+				resource = resource.substr( 9 );
+
+			// Convenience expansion for *nix based people
+			if ( resource.find( L"~" ) == 0 )
+				resource = opl::to_wstring( getenv( "HOME" ) ) + resource.substr( 1 );
+
+			// Ugly - looking to see if a dv1394 device has been specified
+			if ( resource.find( L"/dev/" ) == 0 && resource.find( L"1394" ) != opl::wstring::npos )
+			{
+				prop_format_ = opl::wstring( L"dv" );
+			}
+
+			// Allow dv on stdin
+			if ( resource == L"dv:-" )
+			{
+				prop_format_ = opl::wstring( L"dv" );
+				resource = L"pipe:";
+				is_seekable_ = false;
+			}
+
+			// Allow mpeg on stdin
+			if ( resource == L"mpeg:-" )
+			{
+				prop_format_ = opl::wstring( L"mpeg" );
+				resource = L"pipe:";
+				is_seekable_ = false;
+				key_search_ = true;
+			}
+
+			// Corrections for file formats
+			if ( resource.find( L".mpg" ) == resource.length( ) - 4 )
+				key_search_ = true;
+			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
+				prop_format_ = opl::wstring( L"dv" );
+
+			// Obtain format
+			if ( prop_format_.value< opl::wstring >( ) != L"" )
+				format_ = av_find_input_format( opl::to_string( prop_format_.value< opl::wstring >( ) ).c_str( ) );
+
+			// Attempt to open the resource
+			int error = av_open_input_file( &context_, opl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
+
+			// Check for streaming
+			if ( error == 0 && context_->pb && url_is_streamed( context_->pb ) )
+			{
+				is_seekable_ = false;
+				key_search_ = true;
+			}
+
+			// Get the stream info
+			if ( error == 0 )
+				error = av_find_stream_info( context_ ) < 0;
+			
+			// Populate the input properties
+			if ( error == 0 )
+				populate( );
+
+			// Allocate an av frame
+			av_frame_ = avcodec_alloc_frame( );
+
+			// If the stream is deemed seekable, then we don't need the first_found logic
+			first_frame_ = !is_seekable_;
+
+			if ( error == 0 )
+			{
+				av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
+				fetch( );
+
+				if ( images_.size( ) )
+					first_found_ = images_[ 0 ]->position( );
+
+				if ( is_seekable_ && prop_frames_.value< int >( ) == -1 && images_.size( ) )
+				{
+					seek( frames_ - 1 );
+					fetch( );
+					int last;
+					do
+					{
+						last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
+						if ( last >= frames_ )
+							frames_ = last + 2;
+						seek( last + 1 );
+						fetch( );
+					}
+					while( last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ );
+					frames_ = last + 1;
+				}
+				else if ( should_size_media( context_->iformat->name ) )
+				{
+					frames_ = size_media( );
+				}
+			}
+
+			return error == 0;
+		}
+
+
+	private:
+		bool is_valid( )
+		{
+			return context_ != 0;
 		}
 
 		// Analyse streams and set input values
@@ -1353,7 +1616,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
 				frames_ = int( ( avformat_input::fps( ) * ( context_->duration - start_time_ ) ) / ( double )AV_TIME_BASE );
 			else
-				frames_ = 1 << 29;
+				frames_ = 1 << 31;
 
 			std::string format = context_->iformat->name;
 
@@ -1383,7 +1646,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 
-				if ( format == "mpegts" && codec == "h264" )
+				if ( format == "mpeg" || ( format == "mpegts" && codec == "h264" ) )
 					h264_hack_ = true;
 			}
 			else
@@ -1395,8 +1658,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Determine the number of frames in the media
 			if ( prop_frames_.value< int >( ) != -1 )
 				frames_ = prop_frames_.value< int >( );
-			else if ( should_size_media( format ) )
-				frames_ = size_media( );
+			//else if ( should_size_media( format ) )
+				//frames_ = size_media( );
 		}
 
 		bool should_size_media( std::string format )
@@ -1428,7 +1691,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			AVStream *stream = get_video_stream( ) ? get_video_stream( ) : get_audio_stream( );
 
-			frames_ = 1 << 29;
+			frames_ = 1 << 31;
 			int last_lower = 0;
 			int max = 0;
 
@@ -1443,7 +1706,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					{
 						if ( pkt_.stream_index == 0 )
 						{
-							int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
+							int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) ) + 1;
 							av_free_packet( &pkt_ );
 							last_lower = result;
 							max = std::max( last_lower, max );
@@ -1472,7 +1735,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				if ( pkt_.stream_index == 0 )
 				{
-					int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) + 0.5 );
+					int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) ) + 1;
 					if ( result > max )
 						max = result;
 				}
@@ -1540,7 +1803,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		}
 
 		// Seek to the requested frame
-		inline bool seek_to_position( )
+		bool seek_to_position( )
 		{
 			if ( is_seekable_ )
 			{
@@ -1553,11 +1816,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( must_reopen_ )
 					reopen( );
 
+				if ( offset < start_time_ ) offset = start_time_;
+
 				std::string format = context_->iformat->name;
 				int result = -1;
 
 				if ( h264_hack_ && position < prop_gop_size_.value< int >( ) )
-					result = av_seek_frame( context_, -1, 0, AVSEEK_FLAG_BYTE );
+					result = av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				else
 					result = av_seek_frame( context_, -1, offset, AVSEEK_FLAG_BACKWARD );
 				key_search_ = true;
@@ -1591,20 +1856,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Derive the dts
 			double dts = 0;
 			if ( packet && uint64_t( packet->dts ) != AV_NOPTS_VALUE )
+			{
 				dts = av_q2d( get_video_stream( )->time_base ) * ( packet->dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
+			}
 
 			// Approximate frame position
 			int position = int( dts * fps( ) + 0.5 );
 
-			// Ignore packets before 0
 			if ( position < 0 )
 				return 0;
 
 			position += img_inc_;
 
-			if ( ( packet == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
+			if ( ( packet == 0 || position == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
 				position = images_[ images_.size( ) - 1 ]->position( ) + 1;
 
+			// Ignore packets before 0
 			// Small optimisation - abandon packet now if we can (ie: we don't have to decode
 			// and no image is requested for this frame)
 			if ( !must_decode_ && ( get_process_flags( ) & ml::process_image ) == 0 )
@@ -1655,9 +1922,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					img_inc_ += 1;
 				}
 			}
-
-			if ( position - first_found_ >= frames_ )
-				frames_ = position - first_found_ + 1;
+			//if ( position - first_found_ >= frames_ )
+				//frames_ = position - first_found_ + 1;
 
 			return ret;
 		}
@@ -1728,7 +1994,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				int first = images_[ 0 ]->position( );
 				int last = images_[ images_.size( ) - 1 ]->position( );
-				if ( position < last )
+				if ( position < first && position < last )
 					images_.clear( );
 				else if ( first < get_position( ) + first_found_ - prop_gop_cache_.value< int >( ) )
 					images_.erase( images_.begin( ) );
@@ -1857,8 +2123,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					if ( audio_buf_offset_ >= get_position( ) + first_found_ )
 						got_audio = 1;
 
-					if ( audio_buf_offset_ - first_found_ >= frames_ )
-						frames_ = audio_buf_offset_ - first_found_ + 1;
+					//if ( audio_buf_offset_ - first_found_ >= frames_ )
+						//frames_ = audio_buf_offset_ - first_found_ + 1;
 
 					audio_buf_offset_ += 1;
 				}
@@ -2006,242 +2272,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			return exact;
 		}
 
-		// Basic information
-		virtual const opl::wstring get_uri( ) const { return uri_; }
-		virtual const opl::wstring get_mime_type( ) const { return mime_type_; }
-		virtual bool has_video( ) const { return prop_video_index_.value< int >( ) != -1 && video_indexes_.size( ) > 0; }
-		virtual bool has_audio( ) const { return prop_audio_index_.value< int >( ) != -1 && audio_indexes_.size( ) > 0; }
-
-		// Audio/Visual
-		virtual int get_frames( ) const { return frames_; }
-		virtual bool is_seekable( ) const { return is_seekable_; }
-
-		// Visual
-		virtual void get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
-		virtual void get_sar( int &num, int &den ) const { num = sar_num_; den = sar_den_; }
-		virtual int get_video_streams( ) const { return video_indexes_.size( ); }
-		virtual int get_width( ) const { return width_; }
-		virtual int get_height( ) const { return height_; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
-		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
-
-		virtual bool set_audio_stream( const int stream ) 
-		{
-			if ( stream < 0 || stream >= int( audio_indexes_.size( ) ) )
-			{
-				prop_audio_index_ = -1;
-			}
-			else if ( stream < int( audio_indexes_.size( ) ) )
-			{
-				prop_audio_index_ = stream;
-			}
-
-			return true; 
-		}
-
-	protected:
-
-		// Fetch method
-		void do_fetch( frame_type_ptr &result )
-		{
-			int process_flags = get_process_flags( );
-
-			// Create the output frame
-			result = frame_type_ptr( new frame_type( ) );
-
-			// Seek to the correct position if necessary
-			if ( get_position( ) != expected_ )
-			{
-				int valid = 0;
-				if ( images_.size( ) > 0 )
-					valid = images_[ 0 ]->position( );
-				else if ( audio_.size( ) > 0 )
-					valid = audio_[ 0 ]->position( );
-
-				if ( get_position( ) + first_found_ >= valid && get_position( ) + first_found_ < int( expected_ + 2 * fps( ) ) )
-				{
-				}
-				else if ( seek_to_position( ) )
-				{
-					clear_stores( true );
-				}
-				else
-				{
-					seek( expected_ );
-				}
-				expected_ = get_position( ) + first_found_;
-			}
-
-			// Clear the packet
-			av_init_packet( &pkt_ );
-
-			// Loop until an error or we have what we need
-			int error = 0;
-			bool got_picture = !has_video( );
-			bool got_audio = !has_audio( );
-			int current = get_position( ) + first_found_;
-
-			if ( ( process_flags & process_image ) != 0 && ( has_video( ) && images_.size( ) > 0 ) )
-			{
-				int first = images_[ 0 ]->position( );
-				int last = images_[ images_.size( ) - 1 ]->position( );
-				if ( current >= first && current <= last )
-					got_picture = true;
-			}
-
-			if ( ( process_flags & process_audio ) != 0 && ( has_audio( ) && audio_.size( ) > 0 ) )
-			{
-				int first = audio_[ 0 ]->position( );
-				int last = audio_[ audio_.size( ) - 1 ]->position( );
-				if ( current >= first && current <= last )
-					got_audio = true;
-			}
-
-			if ( has_video( ) && !prop_genpts_.value< int >( ) && got_picture && get_position( ) >= images_[ images_.size( ) - 1 ]->position( ) - 3 )
-				got_picture = false;
-
-			while( error >= 0 && ( !got_picture || !got_audio ) )
-			{
-				error = av_read_frame( context_, &pkt_ );
-				if ( error >= 0 && video_indexes_.size( ) && prop_video_index_.value< int >( ) != -1 && pkt_.stream_index == video_indexes_[ prop_video_index_.value< int >( ) ] )
-					error = decode_image( got_picture, &pkt_ );
-				else if ( error >= 0 && audio_indexes_.size( ) && prop_audio_index_.value< int >( ) != -1 && pkt_.stream_index == audio_indexes_[ prop_audio_index_.value< int >( ) ] )
-					error = decode_audio( got_audio );
-				else if ( error < 0 && !is_seekable_ )
-					frames_ = get_position( );
-				else if ( prop_genpts_.value< int >( ) && error < 0 )
-					frames_ = get_position( );
-				av_free_packet( &pkt_ );
-			}
-
-			if ( frames_ != 1 && has_video( ) && !got_picture )
-				error = decode_image( got_picture, NULL );
-
-			// Hmmph
-			if ( has_video( ) )
-			{
-				sar_num_ = get_video_stream( )->codec->sample_aspect_ratio.num;
-				sar_den_ = get_video_stream( )->codec->sample_aspect_ratio.den;
-				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
-				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
-			}
-
-			result->set_sar( sar_num_, sar_den_ );
-			result->set_fps( fps_num_, fps_den_ );
-			result->set_position( get_position( ) );
-			result->set_pts( expected_ * 1.0 / avformat_input::fps( ) );
-			result->set_duration( 1.0 / avformat_input::fps( ) );
-
-			bool exact_image = false;
-			bool exact_audio = false;
-
-			if ( ( process_flags & process_image ) && has_video( ) )
-				exact_image = find_image( result );
-			if ( ( process_flags & process_audio ) && has_audio( ) )
-				exact_audio = find_audio( result );
-
-			// Update the next expected position
-			if ( got_picture || got_audio )
-				expected_ ++;
-
-			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
-				frames_ = expected_ + 1;
-
-#if 0
-			// Temporarily commented out to avoid some false negatives (image repeat, small discrepancy
-			// during start of reverse play etc)
-			if ( has_audio( ) && has_video( ) )
-				ARENFORCE_MSG( exact_audio && exact_image, "Incomplete frame (audio or image missing)" );
-			else if ( has_audio( ) )
-				ARENFORCE_MSG( exact_audio, "Incomplete frame (audio missing)" );
-			else if ( has_audio( ) )
-				ARENFORCE_MSG( exact_image, "Incomplete frame (image missing)" );
-#endif
-		}
-
-		virtual bool initialize( )
-		{
-			opl::wstring resource = uri_;
-
-			// A mechanism to ensure that avformat can always be accessed
-			if ( resource.find( L"avformat:" ) == 0 )
-				resource = resource.substr( 9 );
-
-			// Convenience expansion for *nix based people
-			if ( resource.find( L"~" ) == 0 )
-				resource = opl::to_wstring( getenv( "HOME" ) ) + resource.substr( 1 );
-
-			// Ugly - looking to see if a dv1394 device has been specified
-			if ( resource.find( L"/dev/" ) == 0 && resource.find( L"1394" ) != opl::wstring::npos )
-			{
-				prop_format_ = opl::wstring( L"dv" );
-			}
-
-			// Allow dv on stdin
-			if ( resource == L"dv:-" )
-			{
-				prop_format_ = opl::wstring( L"dv" );
-				resource = L"pipe:";
-				is_seekable_ = false;
-			}
-
-			// Allow mpeg on stdin
-			if ( resource == L"mpeg:-" )
-			{
-				prop_format_ = opl::wstring( L"mpeg" );
-				resource = L"pipe:";
-				is_seekable_ = false;
-				key_search_ = true;
-			}
-
-			// Corrections for file formats
-			if ( resource.find( L".mpg" ) == resource.length( ) - 4 )
-				key_search_ = true;
-			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
-				prop_format_ = opl::wstring( L"dv" );
-
-			// Obtain format
-			if ( prop_format_.value< opl::wstring >( ) != L"" )
-				format_ = av_find_input_format( opl::to_string( prop_format_.value< opl::wstring >( ) ).c_str( ) );
-
-			// Attempt to open the resource
-			int error = av_open_input_file( &context_, opl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
-
-			// Check for streaming
-			if ( error == 0 && context_->pb && url_is_streamed( context_->pb ) )
-			{
-				is_seekable_ = false;
-				key_search_ = true;
-			}
-
-			// Get the stream info
-			if ( error == 0 )
-				error = av_find_stream_info( context_ ) < 0;
-			
-			// Populate the input properties
-			if ( error == 0 )
-				populate( );
-
-			// Allocate an av frame
-			av_frame_ = avcodec_alloc_frame( );
-
-			// If the stream is deemed seekable, then we don't need the first_found logic
-			first_frame_ = !is_seekable_;
-
-			if ( error == 0 )
-			{
-				fetch( );
-				if ( images_.size( ) )
-					first_found_ = images_[ 0 ]->position( );
-			}
-
-			return error == 0;
-		}
-
-
-	private:
 		void reopen( )
 		{
 			if ( prop_video_index_.value< int >( ) >= 0 )
