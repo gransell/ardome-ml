@@ -2391,7 +2391,9 @@ class ML_PLUGIN_DECLSPEC gensys_plugin : public openmedialib_plugin
 public:
 	virtual input_type_ptr input( const pl::wstring &request )
 	{
-		if ( request == L"pusher:" )
+		if ( request == L"nothing:" )
+			return input_type_ptr( );
+		else if ( request == L"pusher:" )
 			return input_type_ptr( new pusher_input( ) );
 		else
 			return input_type_ptr( new colour_input( ) );
