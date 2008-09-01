@@ -1494,7 +1494,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// If the stream is deemed seekable, then we don't need the first_found logic
 			first_frame_ = !is_seekable_;
 
-			if ( error == 0 )
+			// Check if we need to do additional size checks
+			bool sizing = should_size_media( context_->iformat->name );
+
+			// Carry out the media sizing logic
+			if ( error == 0 && sizing )
 			{
 				av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				fetch( );
@@ -1502,27 +1506,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( images_.size( ) )
 					first_found_ = images_[ 0 ]->position( );
 
-				bool sizing = should_size_media( context_->iformat->name );
-
 				if ( sizing && images_.size( ) )
-				{
-					seek( frames_ - 1 );
-					fetch( );
-					int last;
-					do
-					{
-						last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
-						frames_ = last + 3;
-						seek( last + 2 );
-						fetch( );
-					}
-					while( last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ );
-					frames_ = last + 1;
-				}
+					frames_ = size_media_by_images( );
 				else if ( sizing )
-				{
-					frames_ = size_media( );
-				}
+					frames_ = size_media_by_packets( );
 			}
 
 			return error == 0;
@@ -1716,7 +1703,23 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			return result;
 		}
 
-		int size_media( )
+		int size_media_by_images( )
+		{
+			int last;
+			seek( frames_ - 1 );
+			fetch( );
+			do
+			{
+				last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
+				frames_ = last + 3;
+				seek( last + 2 );
+				fetch( );
+			}
+			while( last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ );
+			return last + 1;
+		}
+
+		int size_media_by_packets( )
 		{
 			std::string format = context_->iformat->name;
 
