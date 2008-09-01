@@ -1336,7 +1336,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( audio_.size( ) > 0 )
 					valid = audio_[ 0 ]->position( );
 
-				if ( current >= valid && current < int( expected_ + 2 * fps( ) ) )
+				if ( current >= valid - 5 && current < int( valid + 2 * fps( ) ) )
 				{
 				}
 				else if ( seek_to_position( ) )
@@ -1355,34 +1355,18 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Loop until an error or we have what we need
 			int error = 0;
-			bool got_picture = !has_video( );
-			bool got_audio = !has_audio( );
-			int current = get_position( ) + first_found_;
 
-			if ( ( process_flags & process_image ) != 0 && ( has_video( ) && images_.size( ) > 0 ) )
-			{
-				int first = images_[ 0 ]->position( );
-				int last = images_[ images_.size( ) - 1 ]->position( );
-				if ( current >= first && current <= last )
-					got_picture = true;
-			}
-
-			if ( ( process_flags & process_audio ) != 0 && ( has_audio( ) && audio_.size( ) > 0 ) )
-			{
-				int first = audio_[ 0 ]->position( );
-				int last = audio_[ audio_.size( ) - 1 ]->position( );
-				if ( current >= first && current <= last )
-					got_audio = true;
-			}
+			bool got_picture = has_video_for( get_position( ) );
+			bool got_audio = has_audio_for( get_position( ) );
 
 			bool process_null = false;
 
 			while( error >= 0 && ( !got_picture || !got_audio ) )
 			{
 				error = av_read_frame( context_, &pkt_ );
-				if ( error >= 0 && video_indexes_.size( ) && prop_video_index_.value< int >( ) != -1 && pkt_.stream_index == video_indexes_[ prop_video_index_.value< int >( ) ] )
+				if ( error >= 0 && is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
-				else if ( error >= 0 && audio_indexes_.size( ) && prop_audio_index_.value< int >( ) != -1 && pkt_.stream_index == audio_indexes_[ prop_audio_index_.value< int >( ) ] )
+				else if ( error >= 0 && is_audio_stream( pkt_.stream_index ) )
 					error = decode_audio( got_audio );
 				else if ( error < 0 && !is_seekable_ )
 					frames_ = get_position( );
@@ -1518,7 +1502,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( images_.size( ) )
 					first_found_ = images_[ 0 ]->position( );
 
-				if ( should_size_media( context_->iformat->name ) && is_seekable_ && prop_frames_.value< int >( ) == -1 && images_.size( ) )
+				bool sizing = should_size_media( context_->iformat->name );
+
+				if ( sizing && images_.size( ) )
 				{
 					seek( frames_ - 1 );
 					fetch( );
@@ -1526,15 +1512,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					do
 					{
 						last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
-						if ( last >= frames_ )
-							frames_ = last + 2;
-						seek( last + 1 );
+						frames_ = last + 3;
+						seek( last + 2 );
 						fetch( );
 					}
 					while( last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ );
 					frames_ = last + 1;
 				}
-				else if ( should_size_media( context_->iformat->name ) )
+				else if ( sizing )
 				{
 					frames_ = size_media( );
 				}
@@ -1545,6 +1530,52 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 
 	private:
+		bool is_video_stream( int index )
+		{
+			return has_video( ) && 
+				   prop_video_index_.value< int >( ) > -1 && 
+				   index == video_indexes_[ prop_video_index_.value< int >( ) ];
+		}
+
+		bool is_audio_stream( int index )
+		{
+			return has_audio( ) && 
+				   prop_audio_index_.value< int >( ) > -1 && 
+				   index == audio_indexes_[ prop_audio_index_.value< int >( ) ];
+		}
+
+		bool has_video_for( int position )
+		{
+			int process_flags = get_process_flags( );
+			bool got_video = !has_video( );
+			int current = position + first_found_;
+
+			if ( ( process_flags & process_image ) != 0 && ( !got_video && images_.size( ) > 0 ) )
+			{
+				int first = images_[ 0 ]->position( );
+				int last = images_[ images_.size( ) - 1 ]->position( );
+				got_video = current >= first && current <= last;
+			}
+
+			return got_video;
+		}
+
+		bool has_audio_for( int position )
+		{
+			int process_flags = get_process_flags( );
+			bool got_audio = !has_audio( );
+			int current = position + first_found_;
+
+			if ( ( process_flags & process_audio ) != 0 && ( !got_audio && audio_.size( ) > 0 ) )
+			{
+				int first = audio_[ 0 ]->position( );
+				int last = audio_[ audio_.size( ) - 1 ]->position( );
+				got_audio = current >= first && current <= last;
+			}
+
+			return got_audio;
+		}
+
 		bool is_valid( )
 		{
 			return context_ != 0;
@@ -1658,13 +1689,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Determine the number of frames in the media
 			if ( prop_frames_.value< int >( ) != -1 )
 				frames_ = prop_frames_.value< int >( );
-			//else if ( should_size_media( format ) )
-				//frames_ = size_media( );
 		}
 
 		bool should_size_media( std::string format )
 		{
-			bool result = is_seekable_ && prop_genpts_.value< int >( ) == 0;
+			bool result = is_seekable_ && 
+						  prop_genpts_.value< int >( ) == 0 &&
+						  prop_frames_.value< int >( ) == -1;
 
 			if ( result && has_video( ) )
 			{
