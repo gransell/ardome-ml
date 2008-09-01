@@ -1518,7 +1518,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( images_.size( ) )
 					first_found_ = images_[ 0 ]->position( );
 
-				if ( is_seekable_ && prop_frames_.value< int >( ) == -1 && images_.size( ) )
+				if ( should_size_media( context_->iformat->name ) && is_seekable_ && prop_frames_.value< int >( ) == -1 && images_.size( ) )
 				{
 					seek( frames_ - 1 );
 					fetch( );
