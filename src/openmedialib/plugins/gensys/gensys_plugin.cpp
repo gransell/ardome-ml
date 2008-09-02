@@ -1820,6 +1820,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		inline int get_out( ) const
 		{
+			int in = get_in( );
 			int out = prop_out_.value< int >( );
 			input_type_ptr input = fetch_slot( );
 			if ( input )
@@ -1830,6 +1831,8 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 					out = input->get_frames( ) + out + 1;
 				if ( out < 0 )
 					out = 0;
+				if ( out < in )
+					out --;
 			}
 			return out;
 		}
