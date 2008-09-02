@@ -52,8 +52,8 @@ static bool audio_init_ = false;
 
 static SDL_Overlay *sdl_overlay_ = NULL;
 static SDL_Rect sdl_rect_ = SDL_Rect( );
-static int default_width_ = 788;
-static int default_height_ = 576;
+static int default_width_ = 640;
+static int default_height_ = 480;
 static int default_full_ = 0;
 
 static void sdl_setenv( const std::string name, int value )
