@@ -81,6 +81,9 @@ class player:
 								  store.property( "deferrable" ).value_as_int( ) == 1
 		return self.initted
 
+	def close( self ):
+		self.stores = [ ]
+
 	def ante( self, input, stores, frame ):
 		"""Method called before push to stores. Returns true if termination 
 		required."""

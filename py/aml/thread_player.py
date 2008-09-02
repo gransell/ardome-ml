@@ -168,8 +168,8 @@ class thread_player( player ):
 		self.cond.release( )
 
 	def post( self, input, stores, frame, eof = False ):
-		"""Method called after push to stores. Returns false if no error/
-		termination detected."""
+		"""Method called after push to stores. Returns false if no error
+		detected."""
 
 		self.cond.acquire( )
 		if self.position_ >= 0:
@@ -181,7 +181,7 @@ class thread_player( player ):
 			eof = True
 		self.current_position = input.get_position( )
 		self.cond.release( )
-		return eof
+		return not self.active( ) and eof
 
 	def get_instance( self, key ):
 		"""Thread safe version - get the filter instance required."""
@@ -251,6 +251,8 @@ class thread_player( player ):
 					self.cond.wait( 0.1 )
 				self.cond.release( )
 				time.sleep( 0.0001 )
+
+		self.close( )
 
 class player_stack:
 
