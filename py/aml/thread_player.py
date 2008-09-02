@@ -172,7 +172,9 @@ class thread_player( player ):
 		detected."""
 
 		self.cond.acquire( )
-		if self.position_ >= 0:
+		if not self.active( ):
+			eof = True
+		elif self.position_ >= 0:
 			input.seek( self.position_, False )
 			self.position_ = -1
 		elif input.get_position( ) + self.speed < input.get_frames( ):
@@ -181,7 +183,7 @@ class thread_player( player ):
 			eof = True
 		self.current_position = input.get_position( )
 		self.cond.release( )
-		return not self.active( ) and eof
+		return eof
 
 	def get_instance( self, key ):
 		"""Thread safe version - get the filter instance required."""

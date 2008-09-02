@@ -89,14 +89,6 @@
 	rdump
 ;
 
-# Display the top of stack as an aml filter graph
-# <graph> render -- <graph>
-
-: render
-	filter:aml filename=- 
-	decap
-;
-
 # Conditional check
 # <value-1> <value-2> is -- <value-1> <value-1 == value-2>
 
@@ -286,23 +278,27 @@
 ;
 
 # Render all items on the stack as an aml graph
-# <media-1> ... render$ -- <media-1> ...
+# <media-1> ... describe* -- <media-1> ...
 
-: render*
+: describe*
 	>r 
 	begin
 		r1-@ 0 >= 
 	while
 		r@ pick 
-		render 
+		describe 
 		drop
 	repeat
 	rdrop
 ;
 
-: render$
-	depth? render*
-;
+: describe$ depth? describe* ;
+
+# Display the top of stack as an aml filter graph
+# <graph> render -- <graph>
+
+: render describe ;
+: render$ describe$ ;
 
 # Default profile selection
 pal_4:3

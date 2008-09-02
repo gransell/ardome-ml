@@ -34,7 +34,7 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ 'clone' ] = self.clone
 		self.commands[ 'filters' ] = self.filters
 		self.commands[ 'props' ] = self.props
-		self.commands[ 'render' ] = self.render
+		self.commands[ 'describe' ] = self.describe
 		self.commands[ 'include' ] = self.include_
 		self.commands[ 'save' ] = self.save
 
@@ -95,7 +95,7 @@ class thread_stack( stack, pl.observer ):
 		else:
 			raise Exception, "Server is already running on port %d." % self.server.port
 
-	def render( self ):
+	def describe( self ):
 		self.push( 'dup' )
 		item = self.pop( )
 		self.aml.connect( item, 0 )
