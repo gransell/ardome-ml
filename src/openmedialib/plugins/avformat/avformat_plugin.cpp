@@ -1495,7 +1495,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			first_frame_ = !is_seekable_;
 
 			// Check if we need to do additional size checks
-			bool sizing = should_size_media( context_->iformat->name );
+			bool sizing = error == 0 && should_size_media( context_->iformat->name );
 
 			// Carry out the media sizing logic
 			if ( error == 0 && sizing )
