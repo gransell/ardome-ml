@@ -1563,7 +1563,12 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 		virtual int get_frames( ) const
 		{
-			return map_source_to_dest( src_frames_ );
+			const int fps_num = prop_fps_num_.value< int >( );
+			const int fps_den = prop_fps_den_.value< int >( );
+			if ( fps_num > 0 && fps_den > 0 )
+				return map_source_to_dest( src_frames_ );
+			else
+				return src_frames_;
 		}
 
 		virtual const pl::wstring get_uri( ) const { return L"frame_rate"; }
@@ -1620,15 +1625,15 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			input_type_ptr input = fetch_slot( );
 
-			if ( input )
+			const int fps_num = prop_fps_num_.value< int >( );
+			const int fps_den = prop_fps_den_.value< int >( );
+
+			if ( input && fps_num > 0 && fps_den > 0 )
 			{
 				src_frames_ = input->get_frames( );
 
 				int requested = map_dest_to_source( position_ );
 				int next = requested;
-
-				const int fps_num = prop_fps_num_.value< int >( );
-				const int fps_den = prop_fps_den_.value< int >( );
 
 				if ( src_frequency_ == 0 || ( fps_num == src_fps_num_ && fps_den == src_fps_den_ ) )
 				{
@@ -1685,6 +1690,10 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					result->set_position( position_ );
 					result->set_fps( fps_num, fps_den );
 				}
+			}
+			else if ( input )
+			{
+				result = fetch_from_slot( );
 			}
 		}
 
