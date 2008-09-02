@@ -985,6 +985,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// Convert the image to the colour space required
 			const std::wstring pf = avformat_to_oil( c->pix_fmt );
+
 			if ( pf != L"" )
 			{
 				image = il::convert( image, pf );
@@ -1022,8 +1023,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 #else
 			{
-				// Need an ffmpeg fallback here...
-				return false;
+ 				AVPicture input;
+				int width = image->width( );
+				int height = image->height( );
+				avpicture_fill( &input, image->data( ), oil_to_avformat( image->pf( ) ), width, height );
+				img_convert( ( AVPicture * )&av_image_, c->pix_fmt, &input, oil_to_avformat( image->pf( ) ), width, height );
 			}
 #endif
 
