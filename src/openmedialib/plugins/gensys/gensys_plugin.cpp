@@ -1826,7 +1826,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			if ( input )
 			{
 				if ( out >= input->get_frames() )
-					out = input->get_frames( ) - 1;
+					out = input->get_frames( );
 				if ( out < 0 )
 					out = input->get_frames( ) + out + 1;
 				if ( out < 0 )
