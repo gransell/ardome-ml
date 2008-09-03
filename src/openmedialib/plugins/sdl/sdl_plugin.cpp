@@ -105,7 +105,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			, prop_keymod_( pcos::key::from_string( "keymod" ) )
 			, prop_box_( pcos::key::from_string( "box" ) )
 			, prop_pf_( pcos::key::from_string( "pf" ) )
-			, prop_full_( pcos::key::from_string( "full" ) )
+			, prop_full_( pcos::key::from_string( "fullscreen" ) )
 			, mutex_( )
 		{
 			// Allow the specification of a window id
