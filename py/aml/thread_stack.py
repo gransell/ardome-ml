@@ -30,7 +30,7 @@ class thread_stack( stack, pl.observer ):
 
 		self.commands = { }
 		
-		VOCAB_SHELL = 'Shell Graph Words'
+		VOCAB_SHELL = 'Shell Words'
 		SYSTEM_SHELL = 'System Words'
 		PLAYER_SHELL = 'Player Words'
 
