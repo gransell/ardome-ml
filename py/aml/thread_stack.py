@@ -7,7 +7,7 @@ import math
 class thread_stack( stack, pl.observer ):
 	"""Combined stack and threaded player."""
 
-	def __init__( self, player = None, printer = None ):
+	def __init__( self, player = None, printer = None, local = False ):
 		"""Constructor - creates the threaded player and sets up the extended AML
 		command set (to allow more comprehensive tranport controls and player
 		aware functionality)."""
@@ -29,19 +29,28 @@ class thread_stack( stack, pl.observer ):
 		self.server = None
 
 		self.commands = { }
-		self.commands[ '.' ] = self.dot
+		
+		VOCAB_SHELL = 'Shell Graph Words'
+		SYSTEM_SHELL = 'System Words'
+		PLAYER_SHELL = 'Player Words'
 
-		self.commands[ 'clone' ] = self.clone
-		self.commands[ 'filters' ] = self.filters
-		self.commands[ 'props' ] = self.props
-		self.commands[ 'describe' ] = self.describe
-		self.commands[ 'include' ] = self.include_
-		self.commands[ 'save' ] = self.save
+		self.commands[ VOCAB_SHELL ] = { }
 
-		self.commands[ 'system' ] = self.system
-		self.commands[ 'server' ] = self.start_server
-		self.commands[ 'exit' ] = self.exit
-		self.commands[ 'help' ] = self.help
+		self.commands[ VOCAB_SHELL ][ '.' ] = self.dot
+		self.commands[ VOCAB_SHELL ][ 'clone' ] = self.clone
+		self.commands[ VOCAB_SHELL ][ 'filters' ] = self.filters
+		self.commands[ VOCAB_SHELL ][ 'props' ] = self.props
+		self.commands[ VOCAB_SHELL ][ 'describe' ] = self.describe
+		self.commands[ VOCAB_SHELL ][ 'include' ] = self.include_
+		self.commands[ VOCAB_SHELL ][ 'help' ] = self.help
+
+		if local:
+			self.commands[ SYSTEM_SHELL ] = { }
+			self.commands[ SYSTEM_SHELL ][ 'save' ] = self.save
+			self.commands[ SYSTEM_SHELL ][ 'system' ] = self.system
+			self.commands[ SYSTEM_SHELL ][ 'server' ] = self.start_server
+			self.commands[ SYSTEM_SHELL ][ 'transport' ] = self.transport
+			self.commands[ SYSTEM_SHELL ][ 'exit' ] = self.exit
 
 		self.next_command = None
 		self.incoming = ''
@@ -56,7 +65,7 @@ class thread_stack( stack, pl.observer ):
 		self.query.attach( self )
 
 		self.registration = self.player.register( self )
-		self.commands.update( self.registration.commands )
+		self.commands[ PLAYER_SHELL ] = self.registration.commands
 
 	def filters( self ):
 		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
@@ -94,6 +103,12 @@ class thread_stack( stack, pl.observer ):
 				raise Exception, "Server failed to start (%s)" % e
 		else:
 			raise Exception, "Server is already running on port %d." % self.server.port
+
+	def transport( self ):
+		if self.server is not None:
+			os.spawnlp( os.P_NOWAIT, 'amltransport', 'amltransport', 'localhost', str( self.server.port ) )
+		else:
+			raise Exception, "Server is not started..."
 
 	def describe( self ):
 		self.push( 'dup' )
@@ -159,18 +174,17 @@ class thread_stack( stack, pl.observer ):
 
 		self.push( "dict" )
 
-		self.output( '' )
-		self.output( 'Shell Extensions:' )
-		self.output( '' )
-
-		output = ''
-		for cmd in sorted( self.commands ):
-			if output == '':
-				output += cmd 
-			else:
-				output += ', ' + cmd 
-
-		self.output( output )
+		for vocab in self.commands.keys( ):
+			output = ''
+			self.output( '' )
+			self.output( vocab + ':' )
+			self.output( '' )
+			for cmd in sorted( self.commands[ vocab ] ):
+				if output == '':
+					output += cmd 
+				else:
+					output += ', ' + cmd 
+			self.output( output )
 	
 	def exit( self ):
 		"""Exit the thread."""
@@ -221,14 +235,16 @@ class thread_stack( stack, pl.observer ):
 			self.incoming = command
 			self.next_command( )
 			self.handled.set( 1 )
-		elif str( command ) in self.commands.keys( ):
-			cmd = self.commands[ command ]
-			if isinstance( cmd, list ):
-				for token in cmd:
-					self.push( token )
-			else:
-				cmd( )
-			self.handled.set( 1 )
+		else:
+			for vocab in self.commands.keys( ):
+				if str( command ) in self.commands[ vocab ].keys( ):
+					cmd = self.commands[ vocab ][ command ]
+					if isinstance( cmd, list ):
+						for token in cmd:
+							self.push( token )
+					else:
+						cmd( )
+					self.handled.set( 1 )
 
 def convert_list_to_string( list, quote = False ):
 	result = ''

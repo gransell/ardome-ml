@@ -12,7 +12,7 @@ class thread_shell( threading.Thread ):
 
 		threading.Thread.__init__( self )
 		self.player = player
-		self.stack = aml.thread_stack( player )
+		self.stack = aml.thread_stack( player, local = True )
 		self.player.control_start( )
 
 	def run( self ):

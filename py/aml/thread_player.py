@@ -282,11 +282,12 @@ class player_stack:
 		self.commands[ 'speed' ] = self.speed
 		self.commands[ 'speed?' ] = self.speed_query
 		self.commands[ 'status?' ] = self.status
-		self.commands[ 'transport' ] = self.transport
 		self.commands[ 'store' ] = self.store
 		self.commands[ 'play_filter' ] = self.play_filter
 
 	def play_filter( self ):
+		"""Obtains the specified play filter and places it on the stack."""
+
 		if self.stack.next_command is None:
 			self.stack.next_command = self.play_filter
 		else:
@@ -371,6 +372,10 @@ class player_stack:
 			self.player.cond.release( )
 
 	def status( self ):
+		"""Unsure about this one... used by the transport client to obtain
+		playlist generation, frames in current played item, position and
+		speed."""
+
 		self.player.cond.acquire( )
 		try:
 			self.push( self.player.generation )
@@ -438,11 +443,4 @@ class player_stack:
 						prop.set( 1 )
 			finally:
 				self.player.cond.release( )
-
-	def transport( self ):
-		if self.stack.server is not None:
-			os.spawnlp( os.P_NOWAIT, 'amltransport', 'amltransport', 'localhost', str( self.stack.server.port ) )
-		else:
-			raise Exception, "Server is not started..."
-
 
