@@ -107,8 +107,13 @@ namespace olib
                
             }
 
-            thread_sleep::result current_thread_sleep( const time_value& val ) 
+            thread_sleep::result current_thread_sleep( const time_value& val, thread_sleep_activity::type sleep_activty ) 
             {
+                if( sleep_activty == thread_sleep_activity::handle_incomming_messages )
+                {
+                    ARLOG_ERR("This implementation does not take care of the handle_incomming_messages mode");
+                }
+                
                 boost::recursive_mutex::scoped_lock lock( m_mtx );
                 bool res = m_wait_condition.timed_wait(lock, time_value::now() + val);
                 if( !res ) return thread_sleep::interrupted;
@@ -233,7 +238,7 @@ namespace olib
                 if(m_event) CloseHandle(m_event);
             }
 
-            thread_sleep::result current_thread_sleep( const time_value& val ) 
+            thread_sleep::result current_thread_sleep( const time_value& val, thread_sleep_activity::type sleep_activty ) 
             {
                 {
                     boost::recursive_mutex::scoped_lock lck(m_mtx);
@@ -244,7 +249,22 @@ namespace olib
 
                 timer a_timer;
                 a_timer.start();
-                ::WaitForSingleObject(m_event, INFINITE);
+
+                if( sleep_activty == thread_sleep_activity::block)
+                {
+                    ::WaitForSingleObject(m_event, INFINITE);
+                }
+                else // thread_sleep_activity::handle_incomming_messages
+                {
+                    const HANDLE handles [] = { m_event };
+                    for(;;)
+                    {
+                        message_pump();
+                        DWORD waitResult = ::MsgWaitForMultipleObjects(1, handles ,FALSE, INFINITE, QS_ALLEVENTS);
+                        if( waitResult == WAIT_OBJECT_0 ) break; 
+                    }
+                }
+                
                 a_timer.stop();
                 time_value small_epsilon(0,10000);
                 if( a_timer.elapsed() >= ( val - small_epsilon )) return thread_sleep::slept_full_time;
@@ -258,6 +278,16 @@ namespace olib
             }
 
         private:
+
+            void message_pump()
+            {
+                MSG msg ; 
+                while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) 
+                { 
+                    ::DispatchMessage(&msg); 
+                }  
+            }
+
             HANDLE m_event;
             boost::recursive_mutex m_mtx;
         };
@@ -304,9 +334,10 @@ namespace olib
         {
         }
 
-        thread_sleep::result thread_sleeper::current_thread_sleep( const time_value& val ) 
+        thread_sleep::result thread_sleeper::current_thread_sleep( const time_value& val,
+                                                                    thread_sleep_activity::type sleep_activty ) 
         {
-            return m_pimpl->current_thread_sleep( val );
+            return m_pimpl->current_thread_sleep( val, sleep_activty );
         }
 
         void thread_sleeper::wake_sleeping_thread()

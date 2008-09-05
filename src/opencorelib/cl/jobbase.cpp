@@ -71,12 +71,23 @@ namespace olib
             }
         }
 
-        bool base_job::wait_for_job_done(long time_out )
+        bool base_job::wait_for_job_done(long time_out, thread_sleep_activity::type activity )
         {
             boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
             if( m_job_done ) return true;
+
             boost::xtime xt = utilities::add_millsecs_from_now(time_out);
-            return m_job_done_condition.timed_wait(lock, xt);
+            if( activity == thread_sleep_activity::block )
+            {
+                return m_job_done_condition.timed_wait(lock, xt);
+            }
+            else // thread_sleep_activity::handle_incomming_messages
+            {
+                if(! m_sleeper ) m_sleeper = thread_sleeper_ptr( new thread_sleeper() );
+                thread_sleep::result res = m_sleeper->current_thread_sleep( time_value(xt), activity );
+                if( res == thread_sleep::slept_full_time ) return false;
+                return true;
+            }
         }
 
         boost::shared_ptr< boost::recursive_mutex::scoped_lock >
@@ -96,6 +107,7 @@ namespace olib
         {
             boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
             m_job_done = true;
+            if( m_sleeper ) m_sleeper->wake_sleeping_thread();
             m_job_done_condition.notify_all();
             m_job_done_signal(shared_from_this(), 0);
         }

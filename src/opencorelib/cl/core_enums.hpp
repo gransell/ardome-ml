@@ -46,6 +46,15 @@ namespace olib
             };
         }
 
+        namespace thread_sleep_activity
+        {
+            enum type
+            {
+                block, 
+                handle_incomming_messages
+            };
+        }
+
 	}
 }
 

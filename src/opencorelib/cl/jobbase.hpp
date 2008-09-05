@@ -79,9 +79,12 @@ namespace olib
             void set_should_terminate_job( bool term );
 
             /// Wait for this job to terminate
-            /** @return false if the wait timed out. true if the job was done
+            /** @param time_out The time to wait (in milli seconds) for the job to complete.
+                @param activity The activity that should be performed by the calling thread during the wait.
+                @return false if the wait timed out. true if the job was done
                     before the timeout value. */
-            bool wait_for_job_done(long time_out );
+            bool wait_for_job_done( long time_out, 
+                                    thread_sleep_activity::type activity = thread_sleep_activity::block );
 
             /// The int parameter is just a dummy.
             typedef event_handler< base_job_ptr, boost::int32_t > jobdone_signal;
@@ -137,6 +140,7 @@ namespace olib
 
             boost::shared_ptr< std::exception > m_std_exception;
             boost::shared_ptr< base_exception > m_base_exception;
+            thread_sleeper_ptr m_sleeper;
 
             /// Signal that the job is done. 
             /** Will wake any thread locked in wait_for_job_done. */

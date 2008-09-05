@@ -34,6 +34,7 @@ namespace olib
         class cache_utilizer;
         class cached_resource_status;
         class cache_description;
+        class thread_sleeper;
         
         typedef boost::shared_ptr< base_job > base_job_ptr;
         typedef boost::shared_ptr< const base_job > const_base_job_ptr;
@@ -52,11 +53,13 @@ namespace olib
         typedef boost::shared_ptr< cache_utilizer > cache_utilizer_ptr;
         typedef boost::shared_ptr< cached_resource_status > cache_resource_status_ptr;
         typedef boost::shared_ptr< cache_description > cache_description_ptr;
+        typedef boost::shared_ptr< thread_sleeper > thread_sleeper_ptr;
 
         typedef boost::weak_ptr< object > weak_object_ptr;
       
         typedef boost::shared_ptr<invoker> invoker_ptr;
         typedef boost::function< void () > invokable_function;
+        
         typedef std::basic_string<boost::uint16_t> xerces_string;
 
         /// Represents a media time in an exact way.

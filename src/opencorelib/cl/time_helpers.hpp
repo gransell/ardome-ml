@@ -110,8 +110,12 @@ namespace olib
             ~thread_sleeper();
 
             /// Put the calling thread in a hibernated state for val time.
-            /** @return A status flag signalling if the thread slept the specified time or not.*/ 
-            thread_sleep::result current_thread_sleep( const time_value& val );
+            /** @param val The maximum amount of time the calling thread is prepared to sleep.
+                @param sleep_activity Should the calling thread just block or 
+                        or pump its message loop (useful for gui-threads).
+                @return A status flag signaling if the thread slept the specified time or not.*/ 
+            thread_sleep::result current_thread_sleep(  const time_value& val, 
+                                                        thread_sleep_activity::type sleep_activty = thread_sleep_activity::block );
 
             /// If another thread is sleeping using current_thread_sleep on this object ...
             /** use this function to wake it up. */
