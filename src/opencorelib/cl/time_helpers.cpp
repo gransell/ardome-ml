@@ -1,6 +1,8 @@
 #include "precompiled_headers.hpp"
 #include "./time_helpers.hpp"
 #include "./enforce_defines.hpp"
+#include "log_defines.hpp"
+#include "logger.hpp"
 
 namespace olib 
 { 
