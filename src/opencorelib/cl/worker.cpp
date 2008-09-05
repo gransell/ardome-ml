@@ -227,7 +227,12 @@ namespace olib
 
         void worker::start()
         {
+            // This might set m_stop_thread to true
             stop(5000);
+
+            // Make sure we really start the thread here if the worker is
+            // restarted for some kind of reason.
+            m_stop_thread = false;
 
             m_worker_thread = boost::shared_ptr< boost::thread>( 
                 new boost::thread(boost::bind( &worker::worker_thread_procedure, this)));
