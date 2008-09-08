@@ -166,7 +166,7 @@ void test_reoccurring_job()
     // Sleep on the main thread.
     olib::opencorelib::thread_sleeper sleeper;
     sleeper.current_thread_sleep( time_value(10,0) );
-    BOOST_CHECK( reoccur_counter >= 10 );
+    BOOST_CHECK( reoccur_counter >= 9 );
     BOOST_CHECK_EQUAL( 1, dummy );
 }
 
