@@ -5,10 +5,20 @@
 
 #include <boost/thread.hpp>
 
+#define LOKI_CLASS_LEVEL_THREADING
+#include <loki/Singleton.h>
+
 namespace olib
 {
    namespace opencorelib
     {
+        typedef Loki::SingletonHolder< main_invoker > the_internal_main_invoker;
+
+        main_invoker& the_main_invoker::instance()
+        {
+            return the_internal_main_invoker::Instance();
+        }
+
         #ifdef OLIB_ON_WINDOWS
 
         /// Creates an invoker using the wnd_proc attached to the passed wnd.
@@ -142,5 +152,7 @@ namespace olib
             boost::recursive_mutex::scoped_lock lck(m_mtx);
             m_queue.push(std::make_pair( f, result_cb ) );
         }
+
+        
     }
 }

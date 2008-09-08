@@ -143,6 +143,21 @@ namespace olib
             /// Call all waiting functions.
             void step();            
         };
+
+        class CORE_API main_invoker
+        {
+        public:
+            invoker_ptr get_global_invoker() const { return m_invoker; }
+            void set_global_invoker( const invoker_ptr& inv ) { m_invoker = inv; }
+        private:
+            invoker_ptr m_invoker;
+        };
+
+        class CORE_API the_main_invoker
+        {
+        public:
+            static main_invoker& instance();
+        };
         
     }
 }
