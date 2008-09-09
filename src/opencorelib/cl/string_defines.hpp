@@ -1,26 +1,10 @@
 #ifndef _CORE_STING_DEFINES_H_
 #define _CORE_STING_DEFINES_H_
 
-#include "platform.hpp"
-#include "macro_definitions.hpp"
-#include "./minimal_string_defines.hpp"
-
-#ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-	#pragma warning( push )
-		#pragma warning( disable: 4511 )
-		#pragma warning( disable: 4512 )
-		#pragma warning( disable: 4267 )
-		#pragma warning( disable: 4244 )
-#endif
-
-#ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-	#pragma warning( pop )
-#endif
-
-#ifndef BOOST_REGEX_DYN_LINK
-    #define BOOST_REGEX_DYN_LINK
-#endif
-#include <boost/regex.hpp>
+#include "opencorelib/cl/platform.hpp"
+#include "opencorelib/cl/macro_definitions.hpp"
+#include "opencorelib/cl/minimal_string_defines.hpp"
+#include "opencorelib/cl/boost_headers.hpp"
 
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning (push)
@@ -31,6 +15,7 @@
     #pragma warning (disable : 4512 )
     #pragma warning (disable : 4244 )
 #endif
+
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/date_time/posix_time/time_formatters.hpp>
@@ -38,7 +23,8 @@
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/gregorian/gregorian_io.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
-#include <boost/filesystem.hpp>
+
+
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning (pop)
 #endif
