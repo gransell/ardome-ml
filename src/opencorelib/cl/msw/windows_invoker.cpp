@@ -94,7 +94,7 @@ namespace olib
                 else if( msg == post_request_msg() )
                 {
                     boost::recursive_mutex::scoped_lock lck(m_mtx);
-                    while (!m_queue.empty()) 
+                    if(!m_queue.empty()) 
                     {
                         try
                         {  
