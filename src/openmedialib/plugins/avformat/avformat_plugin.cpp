@@ -644,6 +644,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_VIDEO;
+				c->reordered_opaque = AV_NOPTS_VALUE;
 
 				// Specify stream parameters
 				c->bit_rate = prop_video_bit_rate_.value< int >( );
@@ -767,6 +768,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_AUDIO;
+				c->reordered_opaque = AV_NOPTS_VALUE;
 
 				// Specify sample parameters
 				c->bit_rate = prop_audio_bit_rate_.value< int >( );
@@ -947,6 +949,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
+				if ( c->reordered_opaque != AV_NOPTS_VALUE)
+				{
+					pkt.dts = av_rescale_q(c->reordered_opaque, 
+							c->time_base, video_stream_->time_base );
+				}
 				if( c->coded_frame && c->coded_frame->key_frame )
 					pkt.flags |= PKT_FLAG_KEY;
 				pkt.stream_index = video_stream_->index;
