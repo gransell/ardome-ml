@@ -41,6 +41,8 @@ extern "C" {
 
 #ifdef HAVE_SWSCALE
 #	include <libswscale/swscale.h>
+#else
+	extern int img_convert(AVPicture *dst, int dst_pix_fmt, const AVPicture *src, int src_pix_fmt, int src_width, int src_height);
 #endif
 }
 
@@ -644,7 +646,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_VIDEO;
+#				ifdef WANT_MC_DTS
 				c->reordered_opaque = AV_NOPTS_VALUE;
+#				endif
 
 				// Specify stream parameters
 				c->bit_rate = prop_video_bit_rate_.value< int >( );
@@ -768,7 +772,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_AUDIO;
+#				ifdef WANT_MC_DTS
 				c->reordered_opaque = AV_NOPTS_VALUE;
+#				endif
 
 				// Specify sample parameters
 				c->bit_rate = prop_audio_bit_rate_.value< int >( );
@@ -949,11 +955,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
+#				ifdef WANT_MC_DTS
 				if ( c->reordered_opaque != AV_NOPTS_VALUE)
-				{
-					pkt.dts = av_rescale_q(c->reordered_opaque, 
-							c->time_base, video_stream_->time_base );
-				}
+					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
+#				endif
 				if( c->coded_frame && c->coded_frame->key_frame )
 					pkt.flags |= PKT_FLAG_KEY;
 				pkt.stream_index = video_stream_->index;
@@ -2451,7 +2456,16 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			ml::audio_type_ptr current_audio = current_frame->get_audio();
 			if(!current_audio)
 				return;
-			
+
+			// Small hack to allow resampler for channel conversion only
+			if(	prop_output_sample_freq_.value<int>( ) == -1 )
+			{
+				current_audio = audio_channel_convert( current_audio, prop_output_channels_.value<int>( ) );
+				if ( current_audio )
+					current_frame->set_audio( current_audio );
+				return;
+			}
+
 			// since ffmpeg resampler will only accept 2 channels or less, force any input with more than 2 channels to conform
 			if(current_audio->channels() > 2)
 			{
