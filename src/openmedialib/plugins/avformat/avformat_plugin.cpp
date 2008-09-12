@@ -38,6 +38,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 
 #ifdef HAVE_SWSCALE
 #	include <libswscale/swscale.h>
@@ -646,9 +647,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_VIDEO;
-#				ifdef WANT_MC_DTS
+#if LIBAVCODEC_VERSION_INT > ((51<<16)|(67 << 8))
 				c->reordered_opaque = AV_NOPTS_VALUE;
-#				endif
+#endif
 
 				// Specify stream parameters
 				c->bit_rate = prop_video_bit_rate_.value< int >( );
@@ -772,9 +773,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = st->codec;
 				c->codec_id = codec_id;
 				c->codec_type = CODEC_TYPE_AUDIO;
-#				ifdef WANT_MC_DTS
+#if LIBAVCODEC_VERSION_INT > ((51<<16)|(67 << 8))
 				c->reordered_opaque = AV_NOPTS_VALUE;
-#				endif
+#endif
 
 				// Specify sample parameters
 				c->bit_rate = prop_audio_bit_rate_.value< int >( );
@@ -955,10 +956,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
-#				ifdef WANT_MC_DTS
+#if LIBAVCODEC_VERSION_INT > ((51<<16)|(67 << 8))
 				if ( c->reordered_opaque != AV_NOPTS_VALUE)
 					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
-#				endif
+#endif
 				if( c->coded_frame && c->coded_frame->key_frame )
 					pkt.flags |= PKT_FLAG_KEY;
 				pkt.stream_index = video_stream_->index;
