@@ -57,6 +57,13 @@ namespace olib
             return *this;
         }
 
+        olib::t_string time_value::to_string() const
+        {
+            t_stringstream ss; 
+            ss << *this; 
+            return ss.str();
+        }
+
         #ifndef OLIB_ON_WINDOWS
 
         class timer::impl
@@ -348,5 +355,6 @@ namespace olib
         }
 
 
+        
     }
 }

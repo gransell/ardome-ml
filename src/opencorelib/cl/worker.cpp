@@ -78,6 +78,7 @@ namespace olib
             p_job->m_run_more_than_once = true;
             p_job->m_next_time_to_run = time_value::now() + run_interval;
             m_timed_jobs.push_back( p_job );
+			m_wake_thread.notify_one();
         }
 
         void worker::remove_reoccurring_job( const base_job_ptr& p_job )

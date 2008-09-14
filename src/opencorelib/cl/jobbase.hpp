@@ -5,6 +5,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include "./event_handler.hpp"
 #include "./time_helpers.hpp"
+#include "./typedefs.hpp"
 
 namespace olib
 {

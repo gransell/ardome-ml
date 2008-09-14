@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include <opencorelib/cl/minimal_string_defines.hpp>
+
 #include <boost/operators.hpp>
 #include <boost/thread/xtime.hpp>
 
@@ -52,6 +54,8 @@ namespace olib
             time_value operator+=(const time_value &tc);
             /// Enable time calculations
             time_value operator-=(const time_value &tc);
+
+            olib::t_string to_string() const;
 
             static time_value now() {
                 boost::xtime xt;
