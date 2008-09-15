@@ -211,6 +211,7 @@ def setup_standard_environment( env ):
 	SCons.Tool.SourceFileScanner.add_scanner('.rc', SCons.Defaults.CScan)
 	
 	env['BUILDERS']['SharedLibrary'].add_src_builder(res_builder)
+	env['BUILDERS']['Program'].add_src_builder(res_builder)
 	
 	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Zi") or ""}'])
 	env['CCPCHFLAGS'] = SCons.Util.CLVar(['${(PCH and "/Yu%s /Fp%s"%(PCHSTOP or "",File(PCH))) or ""}'])
