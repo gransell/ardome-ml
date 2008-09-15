@@ -2404,6 +2404,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			: filter_type()
 			, prop_output_channels_(pcos::key::from_string("channels"))
 			, prop_output_sample_freq_(pcos::key::from_string("frequency"))
+			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, input_channels_(2)
 			, input_sample_freq_(48000)
 			, fps_numerator_(25)
@@ -2417,6 +2418,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 		
 			properties( ).append( prop_output_channels_ = 2	);
 			properties( ).append( prop_output_sample_freq_ = 48000 );
+			properties( ).append( prop_enable_ = 1 );
 		
 			prop_output_channels_.attach( property_observer_ );
 			prop_output_sample_freq_.attach( property_observer_ );
@@ -2451,7 +2453,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			// Ensure the cache is full
 			current_frame = fetch_from_slot( 0 );
 
-			if ( !current_frame )
+			if ( prop_enable_.value< int >( ) == 0 || !current_frame )
 				return;
 		
 			ml::audio_type_ptr current_audio = current_frame->get_audio();
@@ -2586,8 +2588,9 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 	
 		boost::shared_ptr<pcos::observer> property_observer_;
 		
-		pcos::property	prop_output_channels_,
-						prop_output_sample_freq_;
+		pcos::property	prop_output_channels_;
+		pcos::property	prop_output_sample_freq_;
+		pcos::property	prop_enable_;
 	
 		int	input_channels_,
 			input_sample_freq_,
