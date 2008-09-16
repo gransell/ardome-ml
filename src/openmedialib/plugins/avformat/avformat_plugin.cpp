@@ -1703,9 +1703,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		bool should_size_media( std::string format )
 		{
-			bool result = is_seekable_ && 
-						  prop_genpts_.value< int >( ) == 0 &&
-						  prop_frames_.value< int >( ) == -1;
+			bool result = is_seekable_ && prop_genpts_.value< int >( ) == 0;
 
 			if ( result && has_video( ) )
 			{
