@@ -50,7 +50,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 					self.install_config( 'config/ubuntu32/' + package, 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'ubuntu64':
 			if os.path.exists( 'bcomp/ffmpeg' ):
-				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc', 'libswscale.pc' ]:
+				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc' ]:
 					self.install_config( 'config/ubuntu64/' + package, 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'lsb_3_1_32':
 			self.install_config( 'config/lsb_3_1_32/boost.pc', 'bcomp/boost' )
