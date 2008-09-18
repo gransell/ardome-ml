@@ -14,6 +14,7 @@
 namespace olib { namespace openmedialib { namespace ml {
 
 // Courtesy functions for quick input/output plugin look ups
+ML_DECLSPEC bool has_plugin_for( const openpluginlib::wstring &resource, const openpluginlib::wstring &type );
 ML_DECLSPEC input_type_ptr create_delayed_input( const openpluginlib::wstring & );
 ML_DECLSPEC input_type_ptr create_input( const openpluginlib::wstring & );
 ML_DECLSPEC input_type_ptr create_input( const openpluginlib::string & );

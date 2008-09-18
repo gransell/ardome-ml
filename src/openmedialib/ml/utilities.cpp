@@ -456,6 +456,14 @@ static openmedialib_plugin_ptr get_plug( const pl::wstring &resource, const pl::
 	return boost::shared_dynamic_cast<openmedialib_plugin>( i->create_plugin( "" ) );
 }
 
+// Check if a plugin is avaialble
+ML_DECLSPEC bool has_plugin_for( const pl::wstring &resource, const pl::wstring &type )
+{
+	scoped_lock lock( mutex_ );
+	openmedialib_plugin_ptr plug = get_plug( resource, type );
+	return plug != 0;
+}
+
 // Return the first matching input object
 ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 {
