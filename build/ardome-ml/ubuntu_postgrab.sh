@@ -24,9 +24,3 @@ if [ ! $? == 0 ]; then
   exit 1
 fi
 
-if [ "$TARGETPLATFORM" == "ubuntu64" ]
-then
-	cd ffmpeg
-	mv lib lib64
-fi
-
