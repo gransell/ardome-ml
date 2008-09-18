@@ -1342,6 +1342,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			int process_flags = get_process_flags( );
 
+			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
+			{
+				result = frame_type::shallow_copy( last_frame_ );
+				return;
+			}
+
 			// Create the output frame
 			result = frame_type_ptr( new frame_type( ) );
 
@@ -1350,12 +1356,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				int current = get_position( ) + first_found_;
 				int valid = 0;
+
 				if ( images_.size( ) > 0 )
 					valid = images_[ 0 ]->position( );
 				else if ( audio_.size( ) > 0 )
 					valid = audio_[ 0 ]->position( );
 
-				if ( current >= valid - 5 && current < int( valid + 2 * fps( ) ) )
+				if ( current >= valid && current < int( valid + 2 * fps( ) ) )
 				{
 				}
 				else if ( seek_to_position( ) )
@@ -1431,6 +1438,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( prop_genpts_.value< int >( ) && expected_ >= frames_ && error >= 0 && ( got_picture || got_audio ) )
 				frames_ = expected_ + 1;
+
+			last_frame_ = frame_type::shallow_copy( result );
 
 #if 0
 			// Temporarily commented out to avoid some false negatives (image repeat, small discrepancy
@@ -1708,7 +1717,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( result && has_video( ) )
 			{
 				std::string vcodec( get_video_stream( )->codec->codec->name );
-				if ( format == "avi" && vcodec != "dvvideo" )
+				if ( vcodec != "dvvideo" )
 					result = false;
 				else if ( format == "image2" )
 					result = false;
@@ -2398,6 +2407,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		int64_t start_time_;
 		struct SwsContext *img_convert_;
 		bool h264_hack_;
+		ml::frame_type_ptr last_frame_;
 };
 
 
