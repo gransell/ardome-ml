@@ -156,7 +156,7 @@ class thread_player( player ):
 		elif index == -1 and self.current is not None:
 			result = self.current
 		elif index < -1 and - ( index + 2 ) < len( self.prev_inputs ):
-			result = self.prev_inputs[ len( self.prev_inputs ) + index + 1 ]
+			result = self.prev_inputs.pop( len( self.prev_inputs ) + index + 1 )
 		self.cond.release( )
 		return result
 
