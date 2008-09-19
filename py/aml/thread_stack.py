@@ -123,7 +123,10 @@ class thread_stack( stack, pl.observer ):
 
 		item = self.pop( )
 		if item.get_frames( ) > 0:
-			self.player.set( item )
+			self.player.set_speed( 0 )
+			self.player.insert( 0, item )
+			self.player.next( )
+			self.player.set_speed( 1 )
 		else:
 			self.aml.connect( item, 0 )
 			text = self.aml_stdout.value_as_string( )

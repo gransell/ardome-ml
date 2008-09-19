@@ -288,6 +288,7 @@
 		r@ pick 
 		describe 
 		drop
+		str "#----" .
 	repeat
 	rdrop
 ;

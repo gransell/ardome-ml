@@ -153,6 +153,10 @@ class thread_player( player ):
 		if index >= 0 and index < len( self.input ):
 			result = self.input.pop( index )
 			self.generation += 1
+		elif index == -1 and self.current is not None:
+			result = self.current
+		elif index < -1 and - ( index + 2 ) < len( self.prev_inputs ):
+			result = self.prev_inputs[ len( self.prev_inputs ) + index + 1 ]
 		self.cond.release( )
 		return result
 
@@ -307,7 +311,9 @@ class player_stack:
 	def add( self ):
 		"""Add top of stack to playlist."""
 
-		self.player.add( self.pop( ) )
+		tos = self.pop( )
+		if tos.get_frames( ) > 0:
+			self.player.add( tos )
 
 	def next( self ):
 		"""Move to next in playlist."""
@@ -335,10 +341,10 @@ class player_stack:
 		self.player.cond.acquire( )
 		try:
 			for input in self.player.input:
-				render = ml.create_filter( 'aml' )
-				render.property( 'filename' ).set( unicode( '@' ) )
-				render.connect( input, 0 )
-				self.output( render.property( 'stdout' ).value_as_string( ) )
+				self.stack.aml.connect( input, 0 )
+				text = self.stack.aml_stdout.value_as_string( )
+				self.output( text )
+				self.stack.aml_write.set( 1 )
 				self.output( '' )
 		finally:
 			self.player.cond.release( )

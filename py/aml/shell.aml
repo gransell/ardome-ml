@@ -47,17 +47,30 @@ core.aml
 
 : add*
 
+	variable! count
 	begin
-		dup roll
+		count !--
+	while
 		add
-		1- 
-		dup 0 =
-	until
-	drop
+	repeat
 ;
 
 : add$
 	depth? add*
+;
+
+: grab*
+	variable! count
+	begin
+		count !--
+	while
+		0 grab
+	repeat
+;
+
+: switch
+	speed? 1 = if -1 else 1 then
+	speed
 ;
 
 : pitch?
@@ -117,5 +130,9 @@ core.aml
 
 : goom
 	play_filter goom effect=%s drop
+;
+
+: bt
+	bless transport
 ;
 
