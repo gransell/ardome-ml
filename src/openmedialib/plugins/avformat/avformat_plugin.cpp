@@ -1716,16 +1716,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( result && has_video( ) )
 			{
-				std::string vcodec( get_video_stream( )->codec->codec->name );
-				if ( vcodec != "dvvideo" )
+				if ( format == "avi" )
 					result = false;
 				else if ( format == "image2" )
 					result = false;
 				else if ( format == "dv" )
 					result = false;
 			}
-
-			if ( result && has_audio( ) )
+			else if ( result && has_audio( ) )
 			{
 				result = format != "wav";
 			}
