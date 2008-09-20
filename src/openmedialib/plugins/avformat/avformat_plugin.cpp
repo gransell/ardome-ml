@@ -1702,7 +1702,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			else
 			{
 				if ( prop_gop_size_.value< int >( ) == -1 )
-					prop_gop_size_ = 0;
+					prop_gop_size_ = 50;
 			}
 
 			// Determine the number of frames in the media
@@ -1733,7 +1733,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		int size_media_by_images( )
 		{
-			int last;
+			int last = 0;
 			seek( frames_ - 1 );
 			fetch( );
 			do
