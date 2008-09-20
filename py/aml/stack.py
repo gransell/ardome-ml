@@ -58,10 +58,8 @@ class stack:
 
 		for cmd in command:
 			if isinstance( cmd, str ):
-				if cmd.startswith( 'http://' ): cmd = 'aml:' + cmd
 				self.stack.property( "command" ).set( unicode( cmd ) )
 			elif isinstance( cmd, unicode ):
-				if cmd.startswith( 'http://' ): cmd = 'aml:' + cmd
 				self.stack.property( "command" ).set( cmd )
 			elif isinstance( cmd, list ):
 				for entry in cmd:

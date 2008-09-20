@@ -132,7 +132,7 @@ class http_client_handler:
 			if request.startswith( '/?src=' ):
 				media = request[ 6: ].split( '&' )
 				stack = self.parent.stack_acquire( )
-				if media[ 0 ].startswith( 'http://' ):
+				if media[ 0 ].startswith( 'http://' ) and not media[ 0 ].endswith( '.aml' ):
 					stack.push( 'lazy_video:aml:' + media[ 0 ] )
 					stack.push( 'audio=0' )
 				else:
