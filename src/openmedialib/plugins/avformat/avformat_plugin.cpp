@@ -1717,7 +1717,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( result && has_video( ) )
 			{
 				if ( format == "avi" )
-					result = false;
+					result = true;
 				else if ( format == "image2" )
 					result = false;
 				else if ( format == "dv" )
@@ -1738,12 +1738,28 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			fetch( );
 			do
 			{
-				last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
-				frames_ = last + 3;
-				seek( last + 2 );
+				while( images_.size( ) && !images_[ images_.size( ) - 1 ] )
+					images_.erase( images_.end( ) - 1 );
+
+				if ( images_.size( ) )
+				{
+					last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
+					frames_ = last + 3;
+					seek( last + 2 );
+				}
+				else
+				{
+					frames_ -= 25;
+					seek( frames_ - 1 );
+				}
+
 				fetch( );
 			}
-			while( last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ );
+			while( frames_ > 0 && ( images_.size( ) == 0 || last != images_[ images_.size( ) - 1 ]->position( ) - first_found_ ) );
+
+			if ( frames_ <= 0 )
+				last = -1;
+
 			return last + 1;
 		}
 
