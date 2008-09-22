@@ -1340,6 +1340,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Fetch method
 		void do_fetch( frame_type_ptr &result )
 		{
+			ARENFORCE_MSG( context_, "Invalid media" );
+
 			int process_flags = get_process_flags( );
 
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
@@ -1738,9 +1740,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			fetch( );
 			do
 			{
-				while( images_.size( ) && !images_[ images_.size( ) - 1 ] )
-					images_.erase( images_.end( ) - 1 );
-
 				if ( images_.size( ) )
 				{
 					last = images_[ images_.size( ) - 1 ]->position( ) - first_found_;
@@ -2081,8 +2080,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( av_frame_->interlaced_frame )
 				image->set_field_order( av_frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
 
-			image->set_writable( false );
-			images_.push_back( image );
+			if ( image )
+			{
+				image->set_writable( false );
+				images_.push_back( image );
+			}
 		}
 
 		inline int samples_for_frame( int frequency, int index )
@@ -2409,7 +2411,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool must_reopen_;
 		bool key_search_;
 
-		unsigned char audio_buf_[ ( AVCODEC_MAX_AUDIO_FRAME_SIZE * 3 ) / 2 ]; 
+		unsigned char audio_buf_[ ( AVCODEC_MAX_AUDIO_FRAME_SIZE * 3 ) ]; 
 		int audio_buf_used_;
 		int audio_buf_offset_;
 
