@@ -12,6 +12,8 @@
 #include <openmedialib/ml/frame.hpp>
 
 #include <openpluginlib/pl/pcos/property_container.hpp>
+#include <openpluginlib/pl/log.hpp>
+#include <openpluginlib/pl/utf8_utils.hpp>
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/base_exception.hpp>
@@ -73,7 +75,17 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual ~input_type( ) { }
 
 		// Provides a mechanism for defering initialisation from the ctor
-		bool init( ) { if ( !initialized_ ) initialized_ = initialize( ); return initialized_; }
+		bool init( ) 
+		{ 
+			if ( !initialized_ ) 
+			{
+				initialized_ = initialize( ); 
+				if ( !initialized_ )
+					PL_LOG( olib::openpluginlib::level::error, boost::format( "Initialisation of %1% failed" ) % olib::openpluginlib::to_string( get_uri( ) ) );
+			}
+			return initialized_; 
+		}
+
 		const bool initialized( ) const { return initialized_; }
 
 		// Work around for bugs in python
