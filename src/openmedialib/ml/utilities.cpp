@@ -468,6 +468,7 @@ ML_DECLSPEC bool has_plugin_for( const pl::wstring &resource, const pl::wstring 
 ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 {
 	scoped_lock lock( mutex_ );
+	PL_LOG( pl::level::info, boost::format( "Looking for a plugin for: %1%" ) % opl::to_string( resource ) );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"input" );
 	if ( plug == 0 )
 		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
