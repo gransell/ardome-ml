@@ -28,11 +28,11 @@ namespace olib {
 			
 			std::string get_temporary_dir()
 			{
-				NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-				const char *tmp = [NSTemporaryDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
-                std::string ret(tmp);
-				[pool release];
-				return std::string(tmp); 
+//				NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+//				const char *tmp = [NSTemporaryDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
+//                std::string ret(tmp);
+//				[pool release];
+				return std::string(_T("/tmp/")); 
 			}
             
             std::string get_module_directory()
