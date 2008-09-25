@@ -1544,10 +1544,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Report the file size via the file_size and frames properties
 			if ( error == 0 )
-			{
 				prop_file_size_ = boost::int64_t( context_->file_size );
-				prop_frames_ = frames_;
-			}
 
 			return error == 0;
 		}
@@ -1709,6 +1706,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 50;
 			}
+
+			// Determine the number of frames in the media
+			if ( prop_frames_.value< int >( ) != -1 )
+				frames_ = prop_frames_.value< int >( );
 		}
 
 		bool should_size_media( std::string format )
