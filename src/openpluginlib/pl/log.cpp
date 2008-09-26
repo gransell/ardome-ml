@@ -12,7 +12,7 @@ static void default_log( const char *filename, long linenr, const char *funcname
 }
 
 // Static variables to hold logging configuration
-static int log_level_ = level::info;
+static int log_level_ = level::warning;
 static logger callback_ = default_log;
 
 // Set the log callback

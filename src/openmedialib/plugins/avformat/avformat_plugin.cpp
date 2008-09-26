@@ -1715,11 +1715,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool should_size_media( std::string format )
 		{
 			bool result = is_seekable_ && prop_genpts_.value< int >( ) == 0;
+			std::string codec( get_video_stream( )->codec->codec->name );
 
 			if ( result && has_video( ) )
 			{
 				if ( format == "avi" )
-					result = true;
+					result = codec == "dvvideo";
 				else if ( format == "image2" )
 					result = false;
 				else if ( format == "dv" )
