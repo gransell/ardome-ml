@@ -1,6 +1,7 @@
 #ifndef _CORE_ENFORCE_DEFINES_H_
 #define _CORE_ENFORCE_DEFINES_H_
 
+#include "./utilities.hpp"
 #include "./exception_context.hpp"
 
 /// @file Enforce_defines.h
@@ -95,10 +96,9 @@
                  .hr(expr).msg((the_msg)).ARENFORCE_A
 
 	#define CREATE_ARENFORCE_WINAPI( expr, the_msg ) \
-		::SetLastError(TRUE); \
 		if( (expr) ); \
 		else olib::opencorelib::make_enforcer().add_context(__FILE__, __LINE__, __FUNCDNAME__, #expr ) \
-                 .hr( ::GetLastError() ).msg((the_msg)).ARENFORCE_A
+			.hr( olib::opencorelib::utilities::get_last_error_from_os() ).msg((the_msg)).ARENFORCE_A
 
 #endif //OLIB_COMPILED_WITH_VISUAL_STUDIO
 

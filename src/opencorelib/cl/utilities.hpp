@@ -17,7 +17,7 @@ namespace olib
 		namespace utilities
 		{
 			#ifdef OLIB_ON_WINDOWS
-			/// Handles Win32 errors by calling ::get_last_error 
+			/// Handles Win32 errors by calling ::GetLastError 
 			/** The function tries to convert the error id to a readable 
 				string, which is returned and showed in a message box
 				if the passed parameter is set to true. */
@@ -25,6 +25,8 @@ namespace olib
 
 			/// Converts a windows HRESULT to a string using ::format_message.
 			CORE_API t_string hresult_to_string( long hr );
+
+			CORE_API boost::int32_t get_last_error_from_os();
 
 			#endif
             

@@ -115,6 +115,12 @@ namespace olib
 				return l_ret_val;
 			}
 
+			boost::int32_t get_last_error_from_os()
+			{
+				boost::int32_t error_nr = ::GetLastError();
+				return error_nr;
+			}
+
 			t_string hresult_to_string( long hr )
 			{
 				LPVOID lp_msg_buf;
