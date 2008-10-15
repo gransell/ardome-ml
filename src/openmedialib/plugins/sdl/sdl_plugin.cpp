@@ -535,11 +535,8 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
             int should_pause = prop_pause_.value< int >();
             if( should_pause != 0 )
             {
-                boost::recursive_mutex::scoped_lock lock( mutex_ );
-                is_paused_ = true;
-                cond_.notify_all();
-                position_ = 0;
-                used_ = 0;
+				is_paused_ = true;
+				complete();
             }
         }
 
