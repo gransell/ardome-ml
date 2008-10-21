@@ -55,6 +55,8 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
+extern void ML_PLUGIN_DECLSPEC register_dv_decoder( );
+
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 
@@ -62,7 +64,7 @@ static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 AVCodecContext *avctx_opts[ CODEC_TYPE_NB ];
 AVFormatContext *avformat_opts;
 
-static const std::wstring avformat_to_oil( int fmt )
+const std::wstring avformat_to_oil( int fmt )
 {
 	if ( fmt == PIX_FMT_YUV420P )
 		return L"yuv420p";
@@ -87,7 +89,7 @@ static const std::wstring avformat_to_oil( int fmt )
 	return L"";
 }
 
-static const int oil_to_avformat( const std::wstring &fmt )
+const int oil_to_avformat( const std::wstring &fmt )
 {
 	if ( fmt == L"yuv420p" )
 		return PIX_FMT_YUV420P;
@@ -672,7 +674,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				// Specifiy miscellaneous properties
 	 			c->mb_decision = prop_mb_decision_.value< int >( );
-				c->sample_aspect_ratio = av_d2q( prop_aspect_ratio_.value< double >( ) * c->height / c->width, 255 );
+				st->sample_aspect_ratio = c->sample_aspect_ratio = av_d2q( prop_aspect_ratio_.value< double >( ) * c->height / c->width, 255 );
 				c->mb_cmp = prop_mb_cmp_.value< int >( );
 				c->ildct_cmp = prop_ildct_cmp_.value< int >( );
 				c->me_sub_cmp = prop_sub_cmp_.value< int >( );
@@ -957,7 +959,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
 #if LIBAVCODEC_VERSION_INT > ((51<<16)|(67 << 8))
-				if ( c->reordered_opaque != AV_NOPTS_VALUE)
+				if ( boost::uint64_t( c->reordered_opaque ) != AV_NOPTS_VALUE)
 					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
 #endif
 				if( c->coded_frame && c->coded_frame->key_frame )
@@ -1288,6 +1290,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_free( av_frame_ );
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
+
 		// For now, all oml protocol handlers are consider unsafe for threading
 		virtual bool is_thread_safe( ) const
 		{
@@ -1528,7 +1533,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			bool sizing = error == 0 && should_size_media( context_->iformat->name );
 
 			// Carry out the media sizing logic
-			if ( error == 0 && sizing )
+			if ( error == 0 )
 			{
 				av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				fetch( );
@@ -1725,6 +1730,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( format == "image2" )
 					result = false;
 				else if ( format == "dv" )
+					result = false;
+				else if ( format == "mxf" )
+					result = false;
+				else if ( format == "mkv" )
+					result = false;
+				else if ( format == "flv" )
+					result = false;
+				else if ( format == "divx" )
 					result = false;
 			}
 			else if ( result && has_audio( ) )
@@ -2413,7 +2426,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool must_reopen_;
 		bool key_search_;
 
-		unsigned char audio_buf_[ ( AVCODEC_MAX_AUDIO_FRAME_SIZE * 3 ) ]; 
+		DECLARE_ALIGNED( 32, boost::uint8_t, audio_buf_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) ] );
 		int audio_buf_used_;
 		int audio_buf_offset_;
 
@@ -2467,6 +2480,9 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 		}
 	
 		virtual const opl::wstring get_uri( ) const { return L"resampler"; }
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
 
 		virtual void on_slot_change( ml::input_type_ptr input, int )
 		{
@@ -2665,89 +2681,6 @@ public:
 
 } } }
 
-extern "C" 
-{
-	typedef struct 
-	{
-		plugin::stream_handler_ptr ptr;
-	}
-	priv_stream_handler;
-
-	static int oml_open( URLContext *h, const char *filename, int flags )
-	{
-		int result = 0;
-		priv_stream_handler *priv = new priv_stream_handler;
-		priv->ptr = plugin::stream_handler_fetch( opl::to_wstring( filename ), flags );
-		h->priv_data = ( void * )priv;
-		if ( priv && priv->ptr )
-		{
-			result = priv->ptr->open( opl::to_wstring( filename ), flags ) ? 0 : -1;
-			h->is_streamed = priv->ptr->is_stream( ) ? 1 : 0;
-		}
-		else
-		{
-			result = -1;
-		}
-		return result;
-	}
-
-	static int oml_read( URLContext *h, unsigned char *buf, int size )
-	{
-		priv_stream_handler *priv = static_cast< priv_stream_handler * >( h->priv_data );
-		if ( priv && priv->ptr )
-		{
-			opl::string result = priv->ptr->read( size );
-			size_t size = result.size( );
-			for ( size_t i = 0; i < size; i ++ )
-				*buf ++ = result[ i ];
-			return size;
-		}
-		return -1;
-	}
-
-	static int oml_write( URLContext *h, unsigned char *buf, int size )
-	{
-		priv_stream_handler *priv = static_cast< priv_stream_handler * >( h->priv_data );
-		opl::string data( ( char * )buf, size );
-		if ( priv && priv->ptr )
-			return priv->ptr->write( data );
-		return -1;
-	}
-
-	static offset_t oml_seek( URLContext *h, offset_t pos, int whence )
-	{
-		priv_stream_handler *priv = static_cast< priv_stream_handler * >( h->priv_data );
-		if ( priv && priv->ptr )
-			return priv->ptr->seek( long( pos ), whence );
-		return offset_t( -1 );
-	}
-
-	static int oml_close( URLContext *h )
-	{
-		priv_stream_handler *priv = static_cast< priv_stream_handler * >( h->priv_data );
-		if ( priv && priv->ptr )
-		{
-			priv->ptr->close( );
-			priv->ptr = plugin::stream_handler_ptr( );
-		}
-		if ( priv )
-		{
-			delete priv;
-		}
-		h->priv_data = ( void * )0;
-		return 0;
-	}
-
-	URLProtocol oml_protocol = {
-		"oml",
-		oml_open,
-		oml_read,
-		oml_write,
-		oml_seek,
-		oml_close,
-	};
-}
-
 //
 // Library initialisation mechanism
 //
@@ -2762,9 +2695,13 @@ namespace
 		
 		if( init > 0 && ++refs == 1)
 		{
+    		avcodec_register_all();
 			av_register_all( );
-			register_protocol( &oml_protocol );
+    		for( int i = 0; i < CODEC_TYPE_NB; i ++ )
+        		oml::ml::avctx_opts[ i ]= avcodec_alloc_context2( CodecType( i ) );
+			oml::ml::avformat_opts = av_alloc_format_context( );
 			av_log_set_level( -1 );
+			oml::ml::register_dv_decoder( );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

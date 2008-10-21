@@ -88,6 +88,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		const bool initialized( ) const { return initialized_; }
 
+		// Indicates if the input or filter will enforce an packet decode
+		virtual bool requires_image( ) const = 0;
+
 		// Work around for bugs in python
 		void report_exceptions( bool value )
 		{ report_exceptions_ = value; }

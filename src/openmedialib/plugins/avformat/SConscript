@@ -9,7 +9,7 @@ options = local_env.optional( 'libswscale' )
 
 if options[ 'have_libswscale' ]: local_env.Append( CPPDEFINES = [ 'HAVE_SWSCALE' ] )
 
-object = local_env.plugin( 'openmedialib_avformat', [ 'avformat_plugin.cpp' ] )
+object = local_env.plugin( 'openmedialib_avformat', [ 'avformat_plugin.cpp', 'avformat_dv.cpp' ] )
 
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'avformat_plugin.opl' ] )
 

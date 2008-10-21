@@ -26,6 +26,9 @@ class input_delegate : public ml::input_type, public py::wrapper< ml::input_type
 		input_delegate( ) : input_type( ) { }
 		virtual ~input_delegate( ) { }
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
+
 		virtual void reset( )
 		{
 			py::override method = get_override( "reset" );
@@ -135,6 +138,9 @@ class filter_delegate : public ml::filter_type, public py::wrapper< ml::filter_t
 	public:
 		filter_delegate( ) : filter_type( ) { }
 		virtual ~filter_delegate( ) { }
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
 
 		virtual void reset( )
 		{

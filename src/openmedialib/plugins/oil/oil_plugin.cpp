@@ -98,6 +98,9 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 		{ 
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
+
 		inline bool matches( const pl::string &file, const pl::string &wild )
 		{
 			size_type f = 0;

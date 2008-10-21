@@ -41,6 +41,9 @@ class ML_PLUGIN_DECLSPEC mlt_frame : public frame_type
 			delete frame_;
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
+
 		void render_image( )
 		{
 			if ( frame_ && frame_->get_int( "test_image" ) == 0 )

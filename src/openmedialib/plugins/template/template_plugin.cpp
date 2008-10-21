@@ -6,6 +6,7 @@
 // For more information, see http://www.openlibraries.org.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/packet.hpp>
 
 #ifdef WIN32
 #include <windows.h>
@@ -31,6 +32,9 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		// Constructor and destructor
 		template_input( ) : input_type( ) { }
 		virtual ~template_input( ) { }
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
 
 		// Basic information
 		virtual const pl::wstring get_uri( ) const { return L"test:"; }
@@ -107,6 +111,50 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 		{ }
 };
 
+class ML_PLUGIN_DECLSPEC packets_store : public store_type
+{
+	public:
+		packets_store( const pl::wstring &name, const frame_type_ptr &frame ) 
+			: store_type( )
+			, name_( name )
+			, output_( NULL )
+		{
+			if ( frame && frame->get_packet( ) )
+			{
+				if ( name_.find( L"packets:" ) == 0 )
+					name_ = name_.substr( 8 );
+				output_ = fopen( pl::to_string( name_ ).c_str( ), "wb" );
+			}
+		}
+
+		virtual ~packets_store( )
+		{
+			if ( output_ )
+				fclose( output_ );
+		}
+
+		virtual bool push( frame_type_ptr frame )
+		{
+			bool result = false;
+			if ( output_ && frame->get_packet( ) )
+			{
+				packet_type_ptr pkt = frame->get_packet( );
+				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
+			}
+			return result;
+		}
+
+		virtual frame_type_ptr flush( )
+		{ return frame_type_ptr( ); }
+
+		virtual void complete( )
+		{ }
+
+	private:
+		pl::wstring name_;
+		FILE *output_;
+};
+
 class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 {
 	public:
@@ -118,6 +166,9 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 			properties( ).append( prop_u_ = 128 );
 			properties( ).append( prop_v_ = 128 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
 
 		virtual const pl::wstring get_uri( ) const { return L"template:"; }
 
@@ -179,8 +230,10 @@ public:
 		return input_type_ptr( new template_input( ) );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const pl::wstring &name, const frame_type_ptr &frame )
 	{
+		if ( name.find( L"packets:" ) == 0 )
+			return store_type_ptr( new packets_store( name, frame ) );
 		return store_type_ptr( new template_store( ) );
 	}
 

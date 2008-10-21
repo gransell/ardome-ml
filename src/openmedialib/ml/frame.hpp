@@ -49,8 +49,20 @@ class ML_DECLSPEC frame_type
 		/// Convenience method - returns the property by its name.
 		olib::openpluginlib::pcos::property property( const char *name ) const;
 
+		/// Indicates if the frame has an image
+		virtual bool has_image( );
+
+		/// Indicates if the frame has audio
+		virtual bool has_audio( );
+
 		/// Set the image associated to the frame.
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image );
+
+		/// Set the packet associated to the frame.
+		virtual void set_packet( olib::openmedialib::ml::packet_type_ptr );
+
+		/// Get the packet associated to the frame.
+		virtual olib::openmedialib::ml::packet_type_ptr get_packet( );
 
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( );
@@ -139,6 +151,7 @@ class ML_DECLSPEC frame_type
 
 	private:
 		olib::openpluginlib::pcos::property_container properties_;
+		olib::openmedialib::ml::packet_type_ptr packet_;
 		olib::openimagelib::il::image_type_ptr image_;
 		olib::openimagelib::il::image_type_ptr alpha_;
 		audio_type_ptr audio_;

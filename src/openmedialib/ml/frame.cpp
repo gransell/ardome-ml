@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include "frame.hpp"
+#include "packet.hpp"
 #include <deque>
 
 namespace pcos = olib::openpluginlib::pcos;
@@ -10,6 +11,7 @@ namespace olib { namespace openmedialib { namespace ml {
 
 frame_type::frame_type( ) 
 	: properties_( )
+	, packet_( )
 	, image_( )
 	, alpha_( )
 	, audio_( )
@@ -34,6 +36,7 @@ frame_type_ptr frame_type::shallow_copy( const frame_type_ptr &other )
 		frame_type *copy = new frame_type( );
 		std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
 		copy->properties_ = *clone.get( );
+		copy->packet_ = other->packet_;
 		copy->image_ = other->image_;
 		copy->alpha_ = other->alpha_;
 		if ( other->audio_ )
@@ -95,8 +98,30 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 pcos::property_container frame_type::properties( ) { return properties_; }
 pcos::property frame_type::property( const char *name ) const { return properties_.get_property_with_string( name ); }
 
+bool frame_type::has_image( )
+{
+	return image_ != il::image_type_ptr( ) || packet_ != ml::packet_type_ptr( );
+}
+
+bool frame_type::has_audio( )
+{
+	return audio_ != audio_type_ptr( );
+}
+
+void set_image( olib::openimagelib::il::image_type_ptr image );
+
+
+void frame_type::set_packet( packet_type_ptr packet ) { packet_ = packet; }
+packet_type_ptr frame_type::get_packet( ) { return packet_; }
 void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
-il::image_type_ptr frame_type::get_image( ) { return image_; }
+
+il::image_type_ptr frame_type::get_image( ) 
+{ 
+	if ( !image_ && packet_ )
+		set_image( packet_decode( get_packet( ) ) );
+	return image_; 
+}
+
 void frame_type::set_alpha( il::image_type_ptr image ) { alpha_ = image; }
 il::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
 void frame_type::set_audio( audio_type_ptr audio ) { audio_ = audio; }

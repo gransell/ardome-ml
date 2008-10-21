@@ -69,7 +69,7 @@ static bool has_image( frame_type_ptr &frame )
 	std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
 	for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
 	{
-		if ( *iter && ( *iter )->get_image( ) )
+		if ( *iter && ( *iter )->has_image( ) )
 		{
 			pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
 			result = !prop.valid( ) || prop.value< int >( ) == 0;
@@ -130,6 +130,9 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		}
 
 		virtual ~colour_input( ) { }
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_deferred_.value< int >( ) == 0; }
 
 		// Basic information
 		virtual const pl::wstring get_uri( ) const { return L"colour:"; }
@@ -290,6 +293,9 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		pusher_input( ) : input_type( ) { }
 		virtual ~pusher_input( ) { }
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
+
 		// Basic information
 		virtual const pl::wstring get_uri( ) const { return L"pusher:"; }
 		virtual const pl::wstring get_mime_type( ) const { return L""; }
@@ -361,6 +367,9 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_type
 			properties( ).append( prop_v_ = 128 );
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
+
 		virtual const pl::wstring get_uri( ) const { return L"chroma"; }
 
 	protected:
@@ -431,6 +440,9 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 			properties( ).append( prop_pf_ = pl::wstring( L"yuv420p" ) );
 			properties( ).append( prop_default_ = pl::wstring( L"" ) );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
 
 		virtual const pl::wstring get_uri( ) const { return L"conform"; }
 
@@ -536,7 +548,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 						// Fetch the frame
 						frame_type_ptr frame = input_default_->fetch( );
 
-						if ( frame && frame->get_image( ) )
+						if ( frame && frame->has_image( ) )
 						{
 							// Set image and sar
 							result->set_image( frame->get_image( ) );
@@ -551,7 +563,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 					prop = 0;
 			}
 
-			if ( result->get_image( ) == 0 )
+			if ( !result->has_image( ) )
 			{
 				il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ).c_str( ), 720, 576 );
 				fill( image, 0, ( unsigned char )16 );
@@ -612,6 +624,9 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 			properties( ).append( prop_rw_ = 1.0 );
 			properties( ).append( prop_rh_ = 1.0 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		virtual const pl::wstring get_uri( ) const { return L"crop"; }
 
@@ -786,6 +801,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			properties( ).append( prop_frame_rescale_cb_ = boost::uint64_t( 0 ) );
 			properties( ).append( prop_image_rescale_cb_ = boost::uint64_t( 0 ) );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		virtual const pl::wstring get_uri( ) const { return L"composite"; }
 
@@ -1227,6 +1245,9 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_type
 			properties( ).append( prop_saturation_ = 1.0 );
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
+
 		virtual const pl::wstring get_uri( ) const { return L"correction"; }
 
 	protected:
@@ -1387,6 +1408,9 @@ class ML_PLUGIN_DECLSPEC threader_filter : public filter_type
 		{
 			prop_active_.set( 0 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_active_.value< int >( ) != 0; }
 
 		virtual const pl::wstring get_uri( ) const { return L"threader"; }
 
@@ -1551,6 +1575,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			, src_frequency_( 0 )
 			, src_fps_num_( -1 )
 			, src_fps_den_( -1 )
+			, src_has_image_( false )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, reseat_( )
@@ -1560,6 +1585,10 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			properties( ).append( prop_fps_den_ = 1 );
 			reseat_ = create_audio_reseat( );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const 
+		{ return src_has_image_ && !( prop_fps_num_.value< int >( ) == src_fps_num_ && prop_fps_den_.value< int >( ) == src_fps_den_ ); }
 
 		virtual int get_frames( ) const
 		{
@@ -1612,6 +1641,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				{
 					src_fps_num_ = frame->get_fps_num( );
 					src_fps_den_ = frame->get_fps_den( );
+					src_has_image_ = frame->has_image( );
 					if ( frame->get_audio( ) )
 						src_frequency_ = frame->get_audio( )->frequency( );
 				}
@@ -1713,6 +1743,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		int src_frequency_;
 		int src_fps_num_;
 		int src_fps_den_;
+		bool src_has_image_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		audio_reseat_ptr reseat_;
@@ -1751,6 +1782,9 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_out_ = -1 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
 
 		virtual int get_frames( ) const
 		{
@@ -1859,6 +1893,9 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 			properties( ).append( prop_force_ = 0 );
 		}
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
+
 		virtual const pl::wstring get_uri( ) const { return L"deinterlace"; }
 
 	protected:
@@ -1897,6 +1934,9 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_out_ = -1 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
 
 		virtual const pl::wstring get_uri( ) const { return L"lerp"; }
 
@@ -2125,6 +2165,9 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 
 		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
 
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return prop_force_.value< int >( ) == 1; }
+
 		virtual void on_slot_change( ml::input_type_ptr input, int )
 		{
 			previous_ = il::image_type_ptr( );
@@ -2139,7 +2182,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 
 			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
 				visualise( result );
-			else if ( result && result->get_image( ) == 0 )
+			else if ( result && !result->has_image( ) )
 				result->set_image( previous_ );
 			else if ( result )
 				previous_ = result->get_image( );
@@ -2332,6 +2375,9 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 		{
 			properties( ).append( prop_slots_ = 2 );
 		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
 
 		virtual const size_t slot_count( ) const { return size_t( prop_slots_.value< int >( ) ); }
 
