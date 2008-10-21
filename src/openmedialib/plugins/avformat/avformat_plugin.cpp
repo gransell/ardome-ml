@@ -674,7 +674,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				// Specifiy miscellaneous properties
 	 			c->mb_decision = prop_mb_decision_.value< int >( );
+
+#if LIBAVCODEC_VERSION_INT > ((51<<16)|(67 << 8))
 				st->sample_aspect_ratio = c->sample_aspect_ratio = av_d2q( prop_aspect_ratio_.value< double >( ) * c->height / c->width, 255 );
+#endif
+
 				c->mb_cmp = prop_mb_cmp_.value< int >( );
 				c->ildct_cmp = prop_ildct_cmp_.value< int >( );
 				c->me_sub_cmp = prop_sub_cmp_.value< int >( );
