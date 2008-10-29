@@ -1926,9 +1926,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				aud_pos_ = img_pos_ = 0;
 				img_inc_ = 0;
 				audio_buf_used_ = 0;
+				audio_buf_offset_ = 0;
 
 				if ( get_audio_stream( ) )
+				{
 					avcodec_flush_buffers( get_audio_stream( )->codec );
+					close_audio_codec( );
+					open_audio_codec( );
+				}
+
 				if ( get_video_stream( ) )
 					avcodec_flush_buffers( get_video_stream( )->codec );
 
@@ -2430,7 +2436,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool must_reopen_;
 		bool key_search_;
 
-		DECLARE_ALIGNED( 32, boost::uint8_t, audio_buf_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) ] );
+		DECLARE_ALIGNED( 16, boost::uint8_t, audio_buf_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2 ] );
 		int audio_buf_used_;
 		int audio_buf_offset_;
 
