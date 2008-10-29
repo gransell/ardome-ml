@@ -50,6 +50,7 @@ string			   ( pcos::property::*value_string )( ) const = &pcos::property::value<
 wstring_list	   ( pcos::property::*value_wstring_list )( ) const = &pcos::property::value<wstring_list>;
 string_list		   ( pcos::property::*value_string_list )( ) const = &pcos::property::value<string_list>;
 int				   ( pcos::property::*value_int )( ) const = &pcos::property::value<int>;
+boost::int64_t	   ( pcos::property::*value_int64 )( ) const = &pcos::property::value<boost::int64_t>;
 double			   ( pcos::property::*value_double )( ) const = &pcos::property::value<double>;
 pcos::int_list	   ( pcos::property::*value_int_list )( ) const = &pcos::property::value<pcos::int_list>;
 pcos::double_list  ( pcos::property::*value_double_list )( ) const = &pcos::property::value<pcos::double_list>;
@@ -169,6 +170,7 @@ void py_pcos_property()
 		.def( "value_as_wstring_list", value_wstring_list )
 		.def( "value_as_string_list", value_string_list )
 		.def( "value_as_int", value_int )
+		.def( "value_as_int64", value_int64 )
 		.def( "value_as_double", value_double )
 		.def( "value_as_int_list", value_int_list )
 		.def( "value_as_double_list", value_double_list )
