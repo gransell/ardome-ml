@@ -137,17 +137,10 @@ class thread_stack( stack, pl.observer ):
 	def clone_node( self, node ):
 		"""Temporary - will migrate to C++ class."""
 
-		if node is not None:
-			i = 0
-			while i < node.slots( ):
-				self.clone_node( node.fetch_slot( i ) )
-				i += 1
-			self.push( node.get_uri( ) )
-			for key in node.properties( ).get_keys( ):
-				prop = node.properties( ).get_property( key )
-				value = as_string( prop )
-				if value is not None:
-					self.push( '%s="%s"' % ( key, as_string( prop ) ) )
+		self.aml.connect( node, 0 )
+		text = self.aml_stdout.value_as_string( )
+		for line in text.split( "\n" ):
+			self.define( line )
 
 	def clone( self ):
 		"""Clone the top of the stack - this is a necessary evil for general 

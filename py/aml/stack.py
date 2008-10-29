@@ -36,7 +36,7 @@ class stack:
 					token = token[ 1:-1 ]
 				else:
 					token = token.replace( '\\', '' )
-					token = token.replace( '\"', '\'' )
+					#token = token.replace( '\"', '\'' )
 				self.push( token )
 				time.sleep( 0.0001 )
 
