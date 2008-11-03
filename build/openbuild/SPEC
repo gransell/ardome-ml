@@ -6,7 +6,7 @@ PRODGROUP: ardome-ml
 MAILTO: mats@ardendo.se, gransell@ardendo.se, bga@ardendo.se
 
 POSTGRAB: build/openbuild/postgrab.sh
-TARGET: openbuild.tar.bz2
+TARGET: openbuild.tbz2
 BUILDSCRIPT: build/openbuild/build_step.sh
 BUILDSCRIPT2: build/openbuild/build_tar.sh
 

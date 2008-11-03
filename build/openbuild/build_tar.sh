@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Trying to build openbuild.tar.bz2 target, creating directory named TMPZIP..."
+echo "Trying to build openbuild.tbz2 target, creating directory named TMPZIP..."
 rm -rf TMPZIP
 
 mkdir TMPZIP || exit 1
@@ -18,9 +18,9 @@ find TMPZIP -name \.svn -type d -prune -print0 | xargs -0 rm -rf
 echo "Purging .pyc files"
 find TMPZIP -name \*.pyc -type f -prune -print0 | xargs -0 rm -rf
 
-echo "Building tar-file openbuild.tar.bz2 ..."
+echo "Building tar-file openbuild.tbz2 ..."
 cd TMPZIP 
-tar -jcf openbuild.tar.bz2 *
+tar -jcf openbuild.tbz2 *
 
 if [ ! $? == 0 ]; then
 	echo "Failed to execture: tar -jcf openbuild.tar.bz2 *"
@@ -28,10 +28,10 @@ if [ ! $? == 0 ]; then
 fi
 	
 cd ..	
-echo "Copying openbuild.tar.bz2 to folder where prod was issued..."
-mv TMPZIP/openbuild.tar.bz2 ./ 
+echo "Copying openbuild.tbz2 to folder where prod was issued..."
+mv TMPZIP/openbuild.tbz2 ./ 
 
 echo "Removing temporary folder, almost done..."
 rm -rf TMPZIP
 
-echo "Product openbuild.tar.bz2 created successfully!"
+echo "Product openbuild.tbz2 created successfully!"
