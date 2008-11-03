@@ -233,7 +233,9 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 	// below which should be a real handle... so this is what we use
 	const HANDLE hProcess = ::GetCurrentProcess();
 
-	if ( !wxDbgHelpDLL::SymInitialize
+	static bool done_once = false;
+
+	if ( !done_once && !wxDbgHelpDLL::SymInitialize
 		(
 		hProcess,
 		NULL,   // use default symbol search path
@@ -244,6 +246,8 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 
 		return;
 	}
+
+	done_once = true;
 
 	CONTEXT ctx = *pCtx; // will be modified by StackWalk()
 
