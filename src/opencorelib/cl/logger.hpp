@@ -159,6 +159,24 @@ namespace olib
 			void handle_log();
 			log_level::severity mlog_level;
             log_target::hint m_log_hint;
+			friend class trace_logger;
+		};
+
+		/// Class used to trace function calls.
+		class CORE_API trace_logger
+		{
+		public:
+			inline trace_logger( ) {}
+			~trace_logger()
+			{
+				if( m_logger ) m_logger->msg( _T("trace exit:") + m_msg );
+			}
+
+			trace_logger& set_logger( const logger& log );
+
+		private:
+			olib::t_string m_msg;
+			boost::shared_ptr< logger > m_logger;
 		};
 	}
 }

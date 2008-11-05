@@ -130,5 +130,16 @@ namespace olib
             if( !m_context ) return;
             m_context->pretty_print_one_line(ostrm, print_option);
         }
+
+		trace_logger& trace_logger::set_logger( const logger& log )
+		{
+			m_logger = boost::shared_ptr< logger >( new logger( log ) );
+			m_msg = m_logger->m_context->message();
+			log.m_ignore_this_log = true;
+			const_cast<logger&>(log).msg( _T("trace enter:") + m_msg  );
+			m_logger->m_ignore_this_log = false;
+			return *this;
+		}
+
     }
 }

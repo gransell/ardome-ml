@@ -44,6 +44,13 @@
     olib::opencorelib::logger::make_logger() \
     .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME).msg(the_msg).ARLOG_A
 
+// ARTRACELOG()()()()();
+#define ARTRACELOG( the_msg, lvl ) \
+	olib::opencorelib::trace_logger generated_trace_log_; \
+	if( ARCOND_LEVEL(lvl) ) \
+		generated_trace_log_.set_logger( olib::opencorelib::logger::make_logger() \
+			.add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME).msg(the_msg) )
+
 /// Convenience macro for filtering and logging at the emergency level
 #define ARLOG_EMERGENCY(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::emergency, the_msg )
 /// Convenience macro for filtering and logging at the alert level
