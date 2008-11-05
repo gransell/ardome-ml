@@ -139,6 +139,7 @@ class thread_stack( stack, pl.observer ):
 
 		self.aml.connect( node, 0 )
 		text = self.aml_stdout.value_as_string( )
+		self.aml_write.set( 1 )
 		for line in text.split( "\n" ):
 			self.define( line )
 
