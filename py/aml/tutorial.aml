@@ -127,15 +127,26 @@
 ;
 
 : { depth? cuts{* ;
+
+: {* cuts{* ;
+
 : , cut@ ;
-: } , *}cuts ;
+
+: } *}cuts ;
+
+: _
+	rot 1+
+	rclone@
+	-rot 
+	filter:clip out=%s in=%s
+;
 
 : fade_in_out
 	dup
 	filter:keyframe 
 	command="register mix double"
-	command="range mix lerp 0,%s 0,1"
-	command="range mix lerp -%s,-1 1,0"
+	command="range mix lerp 0,%s 0,1" # %%%
+	command="range mix lerp -%s,-1 1,0" # %%%
 ;
 
 : apply_offsets
@@ -152,7 +163,7 @@
 		count @ roll
 		normalise
 		frames @ fade_in_out
-		off @ filter:offset in=%s
+		off @ filter:offset in=%s # %%%
 		length? frames @ - off !
 	repeat
 ;
@@ -164,20 +175,61 @@
 
 	frames @ count @ apply_offsets
 	background count @ move
-	count @ 1+ filter:compositor slots=%s
+	count @ 1+ filter:compositor slots=%s # %%%
 ;
 
 : transition$
 	depth? 1- transition
 ;
 
+: munge_in
+	filter:keyframe 
+	command="register mix double"
+	command="range mix lerp 0,%s 0,1" # %%%
+;
+
+: munge_out
+	filter:keyframe 
+	command="register mix double"
+	command="range mix lerp -%s,-1 1,0" # %%%
+;
+
+: munge_offset1
+	variable! frames
+	swap frames @ munge_out
+	swap frames @ munge_in
+	swap length? frames @ - rot swap filter:offset in=%s # %%%
+;
+
+: munge_offset2
+	variable! frames
+	variable! length
+	swap frames @ munge_out
+	swap frames @ munge_in
+	swap length @ frames @ - rot swap filter:offset in=%s # %%%
+;
+
+: xfade
+	variable! frames
+	frames @ munge_offset1
+	swap filter:offset in=0 swap
+	background 2 move
+	filter:compositor slots=3
+;
+
+: xfade+
+	variable! frames
+	swap 
+	slots? variable! slots
+	length? variable! length
+	decap
+	slots @ roll
+	length @ frames @ munge_offset2
+	slots @ 1+ filter:compositor slots=%s
+;
+
 : 1second @fps / ceil ;
 
 : seconds @fps / * floor ;
 
-: clips
-	aml:http://morpheus.local/Movies/Comedy/Harold%20and%20Kumar%20Go%20to%20White%20Castle%20%282004%29.avi 
-	aml:http://morpheus.local/Movies/Comedy/Hot.Fuzz.avi 
-	2 cuts{* 0 10100 500 , 1 20300 500 , 0 15000 1000 } 
-;
 
