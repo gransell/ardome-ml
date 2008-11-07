@@ -160,19 +160,19 @@ namespace olib
 			void handle_log();
 			log_level::severity mlog_level;
             log_target::hint m_log_hint;
-			friend class trace_logger;
+			friend class scope_logger;
             logger( boost::shared_ptr<exception_context> ctx, log_level::severity lvl );
 		};
 
 		/// Class used to trace function calls.
-		class CORE_API trace_logger
+		class CORE_API scope_logger
 		{
 		public:
-            trace_logger(    const char* msg, log_level::severity level, 
+            scope_logger(    const char* msg, log_level::severity level, 
                             const char* filename, long linenr, 
                             const char* funcdname, const char* funcname );
 
-			~trace_logger();
+			~scope_logger();
 
 		private:
             timer m_timer;
