@@ -312,10 +312,10 @@ namespace
 			case 5:
 				{
 					const unsigned char CHANNEL_IDX_LEFT 			= 0;
-					const unsigned char CHANNEL_IDX_CENTRE	        = 1;
-					const unsigned char CHANNEL_IDX_RIGHT			= 2;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND	= 3;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND	= 4;
+					const unsigned char CHANNEL_IDX_RIGHT			= 1;
+					const unsigned char CHANNEL_IDX_LEFT_SURROUND	= 2;
+					const unsigned char CHANNEL_IDX_RIGHT_SURROUND	= 3;
+					const unsigned char CHANNEL_IDX_CENTRE	        = 4;
 
 					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
 								+ 	float(input[ CHANNEL_IDX_LEFT_SURROUND ])
