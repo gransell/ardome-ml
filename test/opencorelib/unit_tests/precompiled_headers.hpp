@@ -22,6 +22,7 @@
 #include "opencorelib/cl/log_defines.hpp"
 #include "opencorelib/cl/enforce_defines.hpp"
 #include "opencorelib/cl/base_exception.hpp"
+#include "opencorelib/cl/logger.hpp"
 
 #ifdef _DEBUG
 	#ifdef OLIB_ON_WINDOWS

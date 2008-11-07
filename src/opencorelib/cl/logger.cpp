@@ -54,7 +54,7 @@ namespace olib
             
         logger::~logger(void)
         {
-            handle_log();
+            if( !m_ignore_this_log ) handle_log();
         }
 
         void logger::handle_log()
@@ -144,14 +144,14 @@ namespace olib
 
       
 
-        trace_logger::trace_logger(    const char* msg, log_level::severity level, 
+        scope_logger::scope_logger(    const char* msg, log_level::severity level, 
             const char* filename, long linenr, 
             const char* funcdname, const char* funcname  ) 
             : m_funcname( str_util::to_t_string(funcname) ), m_msg( str_util::to_t_string(msg) ),
                 m_level(level)
         {
             m_context = boost::shared_ptr<exception_context>( new exception_context() );
-            m_context->add_context( filename, linenr, funcdname, "trace_logger");
+            m_context->add_context( filename, linenr, funcdname, "");
             
             olib::t_stringstream ss_msg;
             ss_msg << _T(" --> ") << m_funcname << _T(" ") << m_msg;
@@ -164,12 +164,12 @@ namespace olib
             m_timer.start();
         }
 
-        trace_logger::~trace_logger()
+        scope_logger::~scope_logger()
         {
             m_timer.stop();
             
             olib::t_stringstream ss_msg;
-            ss_msg << _T(" <-- (") << m_timer.elapsed() << _T(") ") << m_funcname << _T(" ") << m_msg;
+            ss_msg << _T(" <-- ") << m_funcname << _T(" (") << m_timer.elapsed() << _T(") ")  << m_msg;
             m_context->message( ss_msg.str() );
 
             olib::t_stringstream ss;

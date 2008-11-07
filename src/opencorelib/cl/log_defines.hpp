@@ -44,12 +44,35 @@
     olib::opencorelib::logger::make_logger() \
     .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME).msg(the_msg).ARLOG_A
 
-// ARTRACELOG()()()()();
-#define ARTRACELOG( the_msg, lvl ) \
-	olib::opencorelib::trace_logger generated_trace_log_; \
+#define ARSCOPELOG_MAKER( trace_id, msg, lvl ) \
+    boost::shared_ptr< olib::opencorelib::scope_logger> trace_id; \
 	if( ARCOND_LEVEL(lvl) ) \
-		generated_trace_log_.set_logger( olib::opencorelib::logger::make_logger() \
-			.add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME).msg(the_msg) )
+        trace_id = boost::shared_ptr<olib::opencorelib::scope_logger> \
+        ( new olib::opencorelib::scope_logger( msg, lvl, __FILE__, __LINE__,  OLIB_CURRENT_FUNC_NAME, __FUNCTION__ ) )\
+
+#define ARSCOPELOG_LEVEL( lvl ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", lvl )
+
+#define ARSCOPELOG_MSG_LEVEL( msg, lvl ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, lvl )
+
+#define ARSCOPELOG_MSG_INFO( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::info );
+#define ARSCOPELOG_MSG_DEBUG( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug1 );
+#define ARSCOPELOG_MSG_DEBUG2( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug2 );
+#define ARSCOPELOG_MSG_DEBUG3( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug3 );
+#define ARSCOPELOG_MSG_DEBUG4( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug4 );
+#define ARSCOPELOG_MSG_DEBUG5( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug5 );
+#define ARSCOPELOG_MSG_DEBUG6( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug6 );
+#define ARSCOPELOG_MSG_DEBUG7( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug7 );
+#define ARSCOPELOG_MSG_DEBUG8( msg ) ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), msg, olib::opencorelib::log_level::debug8 );
+
+#define ARSCOPELOG_INFO() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::info )
+#define ARSCOPELOG_DEBUG() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug1 )
+#define ARSCOPELOG_DEBUG2() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug2 )
+#define ARSCOPELOG_DEBUG3() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug3 )
+#define ARSCOPELOG_DEBUG4() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug4 )
+#define ARSCOPELOG_DEBUG5() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug5 )
+#define ARSCOPELOG_DEBUG6() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug6 )
+#define ARSCOPELOG_DEBUG7() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug7 )
+#define ARSCOPELOG_DEBUG8() ARSCOPELOG_MAKER( ARMAKE_UNIQUE_NAME(trace_log), "", olib::opencorelib::log_level::debug8 )
 
 /// Convenience macro for filtering and logging at the emergency level
 #define ARLOG_EMERGENCY(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::emergency, the_msg )
