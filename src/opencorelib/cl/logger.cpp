@@ -37,6 +37,17 @@ namespace olib
             o.m_ignore_this_log = true;
         }
 
+        // This constructor is only used by the trace_logger class.
+        logger::logger( boost::shared_ptr<exception_context> ctx, log_level::severity lvl )
+            :   ARLOG_A(*this), 
+            ARLOG_B(*this )
+        {
+            m_ignore_this_log = true;
+            m_context = ctx;
+            mlog_level = lvl;
+            m_log_hint = log_target::trace;
+        }
+
         #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
         #pragma warning(pop)
         #endif
@@ -131,15 +142,42 @@ namespace olib
             m_context->pretty_print_one_line(ostrm, print_option);
         }
 
-		trace_logger& trace_logger::set_logger( const logger& log )
-		{
-			m_logger = boost::shared_ptr< logger >( new logger( log ) );
-			m_msg = m_logger->m_context->message();
-			log.m_ignore_this_log = true;
-			const_cast<logger&>(log).msg( _T("trace enter:") + m_msg  );
-			m_logger->m_ignore_this_log = false;
-			return *this;
-		}
+      
+
+        trace_logger::trace_logger(    const char* msg, log_level::severity level, 
+            const char* filename, long linenr, 
+            const char* funcdname, const char* funcname  ) 
+            : m_funcname( str_util::to_t_string(funcname) ), m_msg( str_util::to_t_string(msg) ),
+                m_level(level)
+        {
+            m_context = boost::shared_ptr<exception_context>( new exception_context() );
+            m_context->add_context( filename, linenr, funcdname, "trace_logger");
+            
+            olib::t_stringstream ss_msg;
+            ss_msg << _T(" --> ") << m_funcname << _T(" ") << m_msg;
+            m_context->message( ss_msg.str() );
+            
+            olib::t_stringstream ss;
+            ss << m_context->source() << _T("::") << m_context->target_site();
+            logger to_log(m_context, m_level );
+            olib::opencorelib::the_log_handler::instance().log( to_log , ss.str().c_str());
+            m_timer.start();
+        }
+
+        trace_logger::~trace_logger()
+        {
+            m_timer.stop();
+            
+            olib::t_stringstream ss_msg;
+            ss_msg << _T(" <-- (") << m_timer.elapsed() << _T(") ") << m_funcname << _T(" ") << m_msg;
+            m_context->message( ss_msg.str() );
+
+            olib::t_stringstream ss;
+            ss << m_context->source() << _T("::") << m_context->target_site();
+
+            logger to_log(m_context, m_level);
+            olib::opencorelib::the_log_handler::instance().log( to_log, ss.str().c_str());
+        }
 
     }
 }

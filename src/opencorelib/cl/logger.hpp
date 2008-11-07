@@ -2,6 +2,7 @@
 #define _CORE_LOGGER_H_
 
 #include "basic_enums.hpp"
+#include "time_helpers.hpp"
 
 namespace olib
 {
@@ -160,23 +161,25 @@ namespace olib
 			log_level::severity mlog_level;
             log_target::hint m_log_hint;
 			friend class trace_logger;
+            logger( boost::shared_ptr<exception_context> ctx, log_level::severity lvl );
 		};
 
 		/// Class used to trace function calls.
 		class CORE_API trace_logger
 		{
 		public:
-			inline trace_logger( ) {}
-			~trace_logger()
-			{
-				if( m_logger ) m_logger->msg( _T("trace exit:") + m_msg );
-			}
+            trace_logger(    const char* msg, log_level::severity level, 
+                            const char* filename, long linenr, 
+                            const char* funcdname, const char* funcname );
 
-			trace_logger& set_logger( const logger& log );
+			~trace_logger();
 
 		private:
-			olib::t_string m_msg;
-			boost::shared_ptr< logger > m_logger;
+            timer m_timer;
+            t_string m_funcname;
+            t_string m_msg;
+            log_level::severity m_level;
+			boost::shared_ptr<exception_context> m_context ;
 		};
 	}
 }
