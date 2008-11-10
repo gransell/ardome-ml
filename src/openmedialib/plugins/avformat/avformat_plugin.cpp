@@ -1539,7 +1539,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Carry out the media sizing logic
 			if ( error == 0 )
 			{
-				av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
+				if ( sizing )
+					av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				fetch( );
 
 				if ( images_.size( ) )
@@ -1983,12 +1984,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// We have to continue processing until we get a dts >= to the requested position
+			int error = 0;
 			if ( !packet )
-				avcodec_decode_video( codec_context, av_frame_, &got_pict, NULL, 0 );
+				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, NULL, 0 );
 			else if ( position >= get_position( ) + first_found_ )
-				avcodec_decode_video( codec_context, av_frame_, &got_pict, packet->data, packet->size );
+				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, packet->data, packet->size );
 			else if ( must_decode_ )
-				avcodec_decode_video( codec_context, av_frame_, &got_dummy, packet->data, packet->size );
+				error = avcodec_decode_video( codec_context, av_frame_, &got_dummy, packet->data, packet->size );
 
 			got_picture = got_pict != 0;
 
@@ -2067,17 +2069,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 #else
  			if ( format == L"" )
  			{
- 				image = il::allocate( L"yuv420p", width, height );
+ 				image = il::allocate( L"yuv420p", dst_w, dst_h );
          		AVPicture output;
-         		avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, width, height );
-         		img_convert( &output, PIX_FMT_YUV420P, (AVPicture *)av_frame_, codec_context->pix_fmt, width, height );
+         		avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, dst_w, dst_h );
+         		img_convert( &output, PIX_FMT_YUV420P, (AVPicture *)av_frame_, codec_context->pix_fmt, dst_w, dst_h );
  			}
  			else
  			{
- 				image = il::allocate( format, width, height );
+ 				image = il::allocate( format, dst_w, dst_h );
  				AVPicture output;
- 				avpicture_fill( &output, image->data( ), codec_context->pix_fmt, width, height );
- 				img_convert( &output, codec_context->pix_fmt, (AVPicture *)av_frame_, codec_context->pix_fmt, width, height );
+ 				avpicture_fill( &output, image->data( ), codec_context->pix_fmt, dst_w, dst_h );
+ 				img_convert( &output, codec_context->pix_fmt, (AVPicture *)av_frame_, codec_context->pix_fmt, dst_w, dst_h );
  			}
  #endif
 
