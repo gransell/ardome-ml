@@ -46,8 +46,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'ubuntu32':
 			if os.path.exists( 'bcomp/ffmpeg' ):
-				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc' ]:
-					self.install_config( 'config/ubuntu32/' + package, 'bcomp/ffmpeg' )
+				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'ubuntu64':
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc' ]:

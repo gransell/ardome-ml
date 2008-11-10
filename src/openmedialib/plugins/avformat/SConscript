@@ -5,6 +5,7 @@
 Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'libavformat', 'boost_date_time' )
+local_env.optional( 'ffmpeg' )
 options = local_env.optional( 'libswscale' )
 
 if options[ 'have_libswscale' ]: local_env.Append( CPPDEFINES = [ 'HAVE_SWSCALE' ] )
