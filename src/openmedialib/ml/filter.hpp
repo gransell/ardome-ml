@@ -18,7 +18,7 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-typedef enum location { from_default, from_frame, from_filter };
+typedef enum location { from_default, from_frame, from_filter } location;
 
 class ML_DECLSPEC filter_key 
 {

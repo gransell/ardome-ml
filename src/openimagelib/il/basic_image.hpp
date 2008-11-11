@@ -13,6 +13,7 @@
 #include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pool.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cstring>
 
 namespace opl = olib::openpluginlib;
 

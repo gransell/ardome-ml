@@ -7,6 +7,7 @@
 
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/content_handler_libxml.hpp>
+#include <cstring>
 
 namespace
 {
