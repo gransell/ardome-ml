@@ -4,6 +4,7 @@
 
 #ifdef OLIB_ON_WINDOWS
 	#include <wtypes.h>
+	#include "msw/enum_process_modules.hpp"
 #endif
 
 #include "base_exception.hpp"
@@ -38,8 +39,70 @@ namespace olib
 {
 	namespace opencorelib
 	{
+		library_info::library_info( const t_path& fn) 
+			: m_filename(fn)
+		{
+		}
 
-#ifndef OLIB_ON_LINUX
+		const t_path& library_info::get_filename() const
+		{
+			return m_filename;
+		}
+
+		void library_info::set_filename( const t_path& fn )
+		{
+			m_filename = fn;
+		}
+
+		const t_string& library_info::get_version() const
+		{
+			return m_version;
+		}
+
+		void library_info::set_version( const t_string& ver )
+		{
+			m_version = ver;
+		}
+
+		const t_string& library_info::get_company() const
+		{
+			return m_company;
+		}
+
+		void library_info::set_company( const t_string& comp )
+		{
+			m_company = comp;
+		}
+
+		const t_string& library_info::get_product() const
+		{
+			return m_product;
+		}
+
+		void library_info::set_product( const t_string& prod )
+		{
+			m_product = prod;
+		}
+
+		const t_string& library_info::get_build_number() const
+		{
+			return m_build_nr;
+		}
+
+		void library_info::set_build_number( const t_string& build_nr )
+		{
+			m_build_nr = build_nr;
+		}
+
+		CORE_API t_ostream& operator<<( t_ostream& os, const library_info& info )
+		{
+			os << info.m_version << _T("\t") << info.m_build_nr << _T("\t") 
+				<< info.m_filename << _T("\t") << info.m_company << _T("\t") << info.m_product;
+			return os;
+		}
+
+
+		#ifndef OLIB_ON_LINUX
         class stack_dump : public olib::opencorelib::stack_walker
         {
         public:
@@ -78,7 +141,7 @@ namespace olib
             stack_dump& operator=( const stack_dump& );
             t_stringstream m_stack_trace;
         };
-#endif
+		#endif
 
 		namespace utilities
 		{
@@ -284,6 +347,19 @@ namespace olib
             {
                 os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
             }
+
+			
+			CORE_API std::vector< library_info_ptr > get_loaded_libraries()
+			{
+				#ifdef OLIB_ON_WINDOWS
+					return win::enum_process_modules();
+				#else
+					return std::vector< library_info_ptr >();
+				#endif
+
+			}
+
+			
 		}
 	}
 }

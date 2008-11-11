@@ -86,7 +86,11 @@ win32_sources = [
 	'msw/special_folders.cpp',
 	#'msw/icon2.ico',
 	'msw/stack_walker.cpp',
-	'msw/windows_invoker.cpp' ]
+	'msw/windows_invoker.cpp',
+	'msw/enum_process_modules.cpp']
+
+if local_env[ 'PLATFORM' ] == 'win32' :
+	local_env.Append( LIBS = ['version.lib', 'psapi.lib'] )
     
 extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sources }
 objc = { 'posix' : [ ], 'darwin' : mac_objc, 'win32' : [ ] }

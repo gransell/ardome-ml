@@ -8,11 +8,61 @@
 #include "./minimal_string_defines.hpp"
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/thread/xtime.hpp>
+#include "opencorelib/cl/typedefs.hpp"
 
 namespace olib
 {
 	namespace opencorelib
 	{
+		/// Describes a l.so or .dll that is loaded into a process.
+		class CORE_API library_info
+		{
+		public:
+			/// Constructor that takes the full path and file name, plus the version of the library
+			library_info( const t_path& fn );
+
+			/// Get the full path to the library.
+			const t_path& get_filename() const;
+
+			/// Set the full path to the library.
+			void set_filename( const t_path& fn );
+
+			/// Get the version of the library.
+			const t_string& get_version() const;
+
+			/// Set the version of the library.
+			void set_version( const t_string& ver );
+
+			/// Get the name of the company that created the library.
+			const t_string& get_company() const;
+
+			/// Set the name of the company that created the library.
+			void set_company( const t_string& comp );
+
+			/// Get the name of the product
+			const t_string& get_product() const;
+
+			/// Set the name of the product
+			void set_product( const t_string& prod );
+
+			/// Get the build number of the product
+			const t_string& get_build_number() const;
+
+			/// Set the build number of the product
+			void set_build_number( const t_string& build_nr );
+
+			CORE_API friend t_ostream& operator<<( t_ostream& os, const library_info& info );
+
+		private:
+			t_path m_filename;
+			t_string m_company;
+			t_string m_product;
+			t_string m_version;
+			t_string m_build_nr;
+		};
+
+		CORE_API t_ostream& operator<<( t_ostream& os, const library_info& info );
+
 		/// Provider of common utilities used throughout the useful_boost project.
 		namespace utilities
 		{
@@ -115,6 +165,10 @@ namespace olib
             private:
                 boost::posix_time::ptime m_Start;
             };
+
+			/// Get information about all currently loaded .so or .dll files.
+			/** @return A list of information about each file. */
+			CORE_API std::vector< library_info_ptr > get_loaded_libraries();
 		}
 	}
 }

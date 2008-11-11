@@ -38,4 +38,11 @@ void test_utilities()
 
     olib::t_path wp = special_folder::get( special_folder::amf_resources );
     BOOST_CHECK( !wp.empty() );
+
+	std::vector< olib::opencorelib::library_info_ptr > infos = olib::opencorelib::utilities::get_loaded_libraries();
+
+	/*for(size_t i = 0; i < infos.size(); ++i  )
+	{
+		T_COUT << *(infos[i]) << std::endl;
+	}*/
 }
