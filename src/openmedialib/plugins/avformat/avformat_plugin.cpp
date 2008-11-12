@@ -1547,8 +1547,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					first_found_ = images_[ 0 ]->position( );
 
 				if ( sizing && images_.size( ) )
-					frames_ = size_media_by_images( );
-				else if ( sizing )
 					frames_ = size_media_by_packets( );
 			}
 
@@ -1798,7 +1796,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				if ( pkt_.stream_index == 0 )
 				{
-					int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) ) + 1;
+					double dts = av_q2d( get_video_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
+					int result = int( dts * fps( ) + 0.5 ) + 1;
 					if ( result > max )
 						max = result;
 				}
