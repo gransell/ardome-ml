@@ -97,6 +97,11 @@
 /// Convenience macro for filtering and logging at the debug4 level
 #define ARLOG_DEBUG4(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::debug4, the_msg )
 
+#define ARLOG_DEBUG5(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::debug5, the_msg )
+#define ARLOG_DEBUG6(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::debug6, the_msg )
+#define ARLOG_DEBUG7(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::debug7, the_msg )
+#define ARLOG_DEBUG8(the_msg) ARLOG_IF_LEVEL( olib::opencorelib::log_level::debug8, the_msg )
+
 /// Convenience conditional to check log filtering for the emergency level
 #define ARCOND_EMERGENCY() ARCOND_LEVEL( olib::opencorelib::log_level::emergency )
 /// Convenience conditional to check log filtering for the alert level
@@ -119,6 +124,10 @@
 #define ARCOND_DEBUG3() ARCOND_LEVEL( olib::opencorelib::log_level::debug3 )
 /// Convenience conditional to check log filtering for the debug4 level
 #define ARCOND_DEBUG4() ARCOND_LEVEL( olib::opencorelib::log_level::debug4 )
+#define ARCOND_DEBUG5() ARCOND_LEVEL( olib::opencorelib::log_level::debug5 )
+#define ARCOND_DEBUG6() ARCOND_LEVEL( olib::opencorelib::log_level::debug6 )
+#define ARCOND_DEBUG7() ARCOND_LEVEL( olib::opencorelib::log_level::debug7 )
+#define ARCOND_DEBUG8() ARCOND_LEVEL( olib::opencorelib::log_level::debug8 )
 
 #define CREATE_LOGGER( expr, the_msg ) \
 	if( !(expr) ); \
