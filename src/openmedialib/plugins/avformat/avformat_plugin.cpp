@@ -1788,41 +1788,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			AVStream *stream = get_video_stream( ) ? get_video_stream( ) : get_audio_stream( );
 
-			frames_ = 1 << 31;
-			int last_lower = 0;
-			int max = 0;
-
-			seek( frames_ );
-			while( frames_ > 1 )
-			{
-				if ( seek_to_position( ) )
-				{
-					av_init_packet( &pkt_ );
-
-					while ( av_read_frame( context_, &pkt_ ) >= 0 )
-					{
-						if ( pkt_.stream_index == 0 )
-						{
-							int result = int( av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) * fps( ) ) + 1;
-							av_free_packet( &pkt_ );
-							last_lower = result;
-							max = std::max( last_lower, max );
-							break;
-						}
-						else
-						{
-							av_free_packet( &pkt_ );
-						}
-					}
-				}
-
-				frames_ = max + ( frames_ - max ) / 2;
-				seek( frames_ );
-
-				if ( last_lower < max ) break;
-			}
-
-			frames_ = max;
+			int max = frames_;
 
 			seek( frames_ );
 			seek_to_position( );
