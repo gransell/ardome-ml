@@ -1251,6 +1251,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_genpts_( pcos::key::from_string( "genpts" ) )
 			, prop_frames_( pcos::key::from_string( "frames" ) )
 			, prop_file_size_( pcos::key::from_string( "file_size" ) )
+			, prop_estimate_( pcos::key::from_string( "estimate" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -1281,6 +1282,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_genpts_ = 0 );
 			properties( ).append( prop_frames_ = -1 );
 			properties( ).append( prop_file_size_ = boost::int64_t( 0 ) );
+			properties( ).append( prop_estimate_ = 0 );
 		}
 
 		virtual ~avformat_input( ) 
@@ -1547,7 +1549,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					first_found_ = images_[ 0 ]->position( );
 
 				if ( sizing && images_.size( ) )
-					frames_ = size_media_by_packets( );
+				{
+					switch( prop_estimate_.value< int >( ) )
+					{
+						case 0:
+							frames_ = size_media_by_images( );
+							break;
+						case 1:
+							frames_ = size_media_by_packets( );
+							break;
+						default:
+							break;
+					}
+				}
 			}
 
 			// Report the file size via the file_size and frames properties
@@ -2390,6 +2404,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_genpts_;
 		pcos::property prop_frames_;
 		pcos::property prop_file_size_;
+		pcos::property prop_estimate_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
