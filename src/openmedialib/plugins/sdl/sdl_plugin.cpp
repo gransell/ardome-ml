@@ -708,7 +708,14 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
             }
 
          	if( chunks_.size( ) == 0 )
-				cond_.wait( lock );
+			{
+				#ifndef WIN32
+					cond_.wait( lock );
+				#else
+					memset( buffer, 0, len);
+					return;
+				#endif
+			}
          
 			if ( chunks_.size( ) > 0 && !is_paused_ )
 			{
