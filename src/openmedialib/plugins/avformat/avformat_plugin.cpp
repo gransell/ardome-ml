@@ -1562,6 +1562,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 							break;
 					}
 				}
+				else if( sizing )
+				{
+					frames_ = size_media_by_packets();
+				}
 			}
 
 			// Report the file size via the file_size and frames properties
