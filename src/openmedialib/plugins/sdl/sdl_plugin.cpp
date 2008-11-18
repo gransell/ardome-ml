@@ -16,6 +16,10 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
+#include <opencorelib/cl/minimal_string_defines.hpp>
+#include <opencorelib/cl/boost_link_defines.hpp>
+#include <opencorelib/cl/utilities.hpp>
+
 #ifdef WIN32
     #include <windows.h>
     #include <winbase.h>
@@ -501,6 +505,8 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			, cond_( )
             , obs_pause_( new observer( const_cast<sdl_audio *>(this),&sdl_audio::update_pause ) ) 
             , is_paused_(true)
+			, frame_duration_(40)
+
 		{
 			properties( ).append( prop_buffer_ = 1024 );
 			properties( ).append( prop_preroll_ = 8 );
@@ -521,6 +527,9 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
+			if( frame )
+				frame_duration_ = static_cast<int>((1.0 / frame->fps()) * 1000);
+
         	bool result = frame && frame->get_audio( );
 			if ( result )
 				result = queue_audio( frame->get_audio( ) );
@@ -707,16 +716,13 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
                 return;
             }
 
-         	if( chunks_.size( ) == 0 )
+			if( chunks_.size( ) == 0 )
 			{
-				#ifndef WIN32
-					cond_.wait( lock );
-				#else
-					memset( buffer, 0, len);
-					return;
-				#endif
+				// Never wait longer than the duration of one frame.
+				cond_.timed_wait( lock, 
+					olib::opencorelib::utilities::add_millsecs_from_now( frame_duration_ ) );
 			}
-         
+			
 			if ( chunks_.size( ) > 0 && !is_paused_ )
 			{
         		chunk_type_ptr chunk = chunks_[ 0 ];
@@ -745,6 +751,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 		boost::condition cond_;
         boost::shared_ptr< pcos::observer > obs_pause_;
         bool is_paused_;
+		int frame_duration_;
 };
 
 //
