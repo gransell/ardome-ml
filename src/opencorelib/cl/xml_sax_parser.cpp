@@ -19,6 +19,7 @@
     #pragma warning( pop )
 #endif
 
+#include "./string_defines.hpp"
 #include "./xml_sax_parser.hpp"
 #include "./str_util.hpp"
 #include "./string_conversions.hpp"

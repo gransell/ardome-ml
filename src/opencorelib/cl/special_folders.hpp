@@ -2,6 +2,7 @@
 #define _CORE_SPECIAL_FOLDERS_H_
 
 #include <boost/filesystem/path.hpp>
+#include "./minimal_string_defines.hpp"
 
 namespace olib
 {

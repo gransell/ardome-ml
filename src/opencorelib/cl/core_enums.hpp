@@ -1,6 +1,8 @@
 #ifndef _CORE_ENUMS_H_
 #define _CORE_ENUMS_H_
 
+#include "./minimal_string_defines.hpp"
+
 namespace olib
 {
 	namespace opencorelib

@@ -2,6 +2,7 @@
 #define _CORE_PROPERTY_BAG_H_
 
 #include <boost/any.hpp>
+#include "./minimal_string_defines.hpp"
 
 namespace olib
 {

@@ -17,13 +17,5 @@
 #include "macro_definitions.hpp"
 
 
-// Defines the CORE_API macro used to export classes.
-//#include "core.hpp" 
-
-/*	Defines t_ types that abstracts if the underlying string is 
-in unicode or ansi. */
-#include "string_defines.hpp"
-
-
 
  

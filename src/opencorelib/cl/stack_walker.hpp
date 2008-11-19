@@ -19,6 +19,7 @@
 	// Licence:     wxWindows licence
 	///////////////////////////////////////////////////////////////////////////////
 */
+#include "./minimal_string_defines.hpp"
 	
 namespace olib
 {

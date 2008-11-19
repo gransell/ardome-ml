@@ -3,6 +3,7 @@
 
 /// @file string_conversions.h
 /** Functions to convert between ansi and unicode. */
+#include "./minimal_string_defines.hpp"
 
 namespace olib
 {

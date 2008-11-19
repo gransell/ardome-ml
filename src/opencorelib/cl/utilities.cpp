@@ -1,5 +1,11 @@
 #include "precompiled_headers.hpp"
 
+#include "string_defines.hpp"
+
+#include "utilities.hpp"
+#include "str_util.hpp"
+
+
 #include <cctype>
 
 #ifdef OLIB_ON_WINDOWS
@@ -8,8 +14,6 @@
 #endif
 
 #include "base_exception.hpp"
-#include "utilities.hpp"
-#include "str_util.hpp"
 #include "enforce.hpp"
 #include "enforce_defines.hpp"
 #include "assert.hpp"
@@ -29,7 +33,7 @@
 	#pragma warning ( disable:4311 ) // 'type cast' : pointer truncation from 'void *' to 'unsigned long'
 #endif
 
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 
 #ifdef OLIB_ON_MAC
 	#include "mac/stack_dump.hpp"
@@ -329,8 +333,8 @@ namespace olib
                 if( !port.empty() ) res += _T(":") + port;
                 res += t_string(_T("/")) + base_url + t_string(_T("/")) + file_name;
 
-                t_regex rex(_T("/+"));
-                t_string replace_with(_T("/"));
+				t_regex rex(_T("/+"));
+				t_string replace_with(_T("/"));
 
                 boost::replace_all(res, _T("\\"), _T("/")); // backward slash to forward
                 res = boost::regex_replace( res, rex, replace_with ); // no double slashes

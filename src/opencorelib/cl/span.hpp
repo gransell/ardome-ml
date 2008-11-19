@@ -7,6 +7,11 @@
 /** @file span.h
     Defines useful functions related to the span class. */
 
+#include <algorithm>
+#include <boost/operators.hpp>
+#include "./minimal_string_defines.hpp"
+#include "boost_headers.hpp"
+
 namespace olib
 {
    namespace opencorelib

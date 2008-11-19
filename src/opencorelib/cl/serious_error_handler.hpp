@@ -2,6 +2,7 @@
 #define _CORE_SERIOUS_ERROR_HANDLER_H_
 
 #include <signal.h>
+#include "./minimal_string_defines.hpp"
 
 namespace olib
 {

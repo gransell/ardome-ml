@@ -86,24 +86,7 @@
 #pragma warning (pop)
 #endif
 
-
-#ifndef NO_BOOST_WINDOWS_H_INCLUDES
-    #ifndef BOOST_REGEX_DYN_LINK 
-	    #define BOOST_REGEX_DYN_LINK 
-    #endif
-	#include <boost/regex.hpp>
-
-    #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-	    #pragma warning( push )
-	    #pragma warning( disable: 4512 )
-    #endif
-		#include <boost/algorithm/string.hpp>
-		#include <boost/algorithm/string_regex.hpp>
-    #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-	    #pragma warning (pop) 
-    #endif
-
-#endif // NO_BOOST_WINDOWS_H_INCLUDES
+#include <boost/scoped_array.hpp>
 
 #endif // _CORE_BOOST_HEADERS_H_
 

@@ -8,6 +8,7 @@
 #include "./enforce.hpp"
 #include "./assert_defines.hpp"
 #include "./assert.hpp"
+#include "./string_defines.hpp"
 #include "./str_util.hpp"
 #include "./string_conversions.hpp"
 #include "./log_defines.hpp"

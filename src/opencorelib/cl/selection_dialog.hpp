@@ -1,7 +1,7 @@
 #ifndef _CORE_SELECTIONDIALOG_H_
 #define _CORE_SELECTIONDIALOG_H_
 
-
+#include "./minimal_string_defines.hpp"
 
 namespace olib
 {

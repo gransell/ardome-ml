@@ -9,6 +9,8 @@
 #define LOKI_CLASS_LEVEL_THREADING
 #include <loki/Singleton.h>
 
+#include <iostream>
+
 using namespace XERCES_CPP_NAMESPACE;
 
 namespace olib

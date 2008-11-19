@@ -1,6 +1,8 @@
 #ifndef _CORE_EXCEPTION_PRESENTER_H_
 #define _CORE_EXCEPTION_PRESENTER_H_
 
+#include "./minimal_string_defines.hpp"
+
 namespace olib
 {
 	namespace opencorelib

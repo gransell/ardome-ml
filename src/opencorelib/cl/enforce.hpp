@@ -7,6 +7,8 @@
 	#pragma warning( disable : 4355 )
 #endif
 
+#include "./minimal_string_defines.hpp"
+
 namespace olib
 {
 	namespace opencorelib

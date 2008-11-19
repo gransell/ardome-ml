@@ -20,6 +20,8 @@
 #ifndef _CORE_DYNLIB_H__
 #define _CORE_DYNLIB_H__
 
+#include "./minimal_string_defines.hpp"
+
 class wxDynamicLibraryDetailsCreator;
 
 // ----------------------------------------------------------------------------
