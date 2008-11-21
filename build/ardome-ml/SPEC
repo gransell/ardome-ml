@@ -3,7 +3,7 @@ MAJORVER: 1
 MINORVER: 0
 # PRODGROUP: amf
 
-# Replaces the string $ARDENDO$ with a version string based on the major and minor version 
+# Replaces the string $ARDENDO: ardome-ml 1.0 20 ardome-ml-1_0 2008-11-21 13:04:49 gransell build/ardome-ml/SPEC $ with a version string based on the major and minor version 
 # along with user that prodded and product name
 # ARDENDOTAGFILES: CMakeLists.txt
 
