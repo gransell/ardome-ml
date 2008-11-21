@@ -59,8 +59,10 @@ namespace olib
             virtual void non_blocking_invoke(   const invokable_function& f, 
                                                 const invoke_callback_function_ptr& result_cb ) const
             {
-                 boost::recursive_mutex::scoped_lock lck(m_mtx);
-                 m_queue.push(std::make_pair( f, result_cb ) );
+				{
+					boost::recursive_mutex::scoped_lock lck(m_mtx);
+					m_queue.push(std::make_pair( f, result_cb ) );
+				}
                  ::PostMessage( get_hooked_wnd() , post_request_msg(), (WPARAM)0, (LPARAM)0 );
             }
 
@@ -93,28 +95,38 @@ namespace olib
                 }
                 else if( msg == post_request_msg() )
                 {
-                    boost::recursive_mutex::scoped_lock lck(m_mtx);
-                    if(!m_queue.empty()) 
-                    {
+					typedef std::vector< std::pair< invokable_function, invoke_callback_function_ptr > > local_invokes_vector;
+					local_invokes_vector local_invokes;
+					// Create a local copy of all the invokes so that we dont hold the mutex during callbacks
+					{
+						boost::recursive_mutex::scoped_lock lck(m_mtx);
+						while( !m_queue.empty() )
+						{
+							local_invokes.push_back(m_queue.front());
+							m_queue.pop();
+						}
+					}
+					
+					local_invokes_vector::const_iterator it(local_invokes.begin());
+					for( ; it != local_invokes.end(); ++it )
+					{
                         try
                         {  
-                            m_queue.front().first();
-                            report_success( m_queue.front().second );
+                            it->first();
+                            report_success( it->second );
                         } 
                         catch( const base_exception& be )
                         {
-                            report_failure( m_queue.front().second, be );
+                            report_failure( it->second, be );
                         }
                         catch( const std::exception& e )
                         {
-                            report_failure( m_queue.front().second, e );
+                            report_failure( it->second, e );
                         }
                         catch( ... )
                         {
-                            report_failure( m_queue.front().second );
+                            report_failure( it->second );
                         }
-
-                        m_queue.pop();
                     }
 
                     return (LRESULT)success_msg();
