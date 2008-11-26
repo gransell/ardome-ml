@@ -34,7 +34,7 @@ files = header_files( headers, defines, [] )
 sample_assembly = assembly( 'core', files, dep_asses )
 
 objc_wrapper = owl.wrapper.objc.objc()
-objc_options = crap.sample_bind_options.objc_sample_options()
+objc_options = owl.wrapper.objc.objc_bind_options()
 wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objc_source' )
 obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
         
