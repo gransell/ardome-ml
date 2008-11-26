@@ -211,11 +211,16 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
+# Add bcomp to the python path so that we can use owl
+sys.path.append( os.path.join( os.getcwd( ), 'bcomp' ) )
+
 env = AMLEnvironment( opts )
 
 if env.check_externals( ):
 
 	cl = env.build( 'src/opencorelib/cl' )
+	
+	cl_wrappers = env.build( 'wrappers' )
 	
 	# Build to test opencorelib:
 	cl_unit_test = env.build('test/opencorelib/unit_tests/', [ cl ] )
