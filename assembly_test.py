@@ -1,48 +1,32 @@
-
 import owl.wrapper.c_sharp
 import owl.wrapper.objc
 from owl.reflection import header_file, header_files, assembly
+from owl.utility import dump_source
 
 import os
 
-Import(['local_env'])
-local_env.packages( 'boost' )
-
-
 dep_asses = []
-dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ) ]
+dep_headers = [ os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'wrappers', 'built_in_types.hpp' ) ]
 dep_hfs = []
 for dh in dep_headers :
 	dep_hfs.append(header_file(str(dh)))
 dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
 
 defines = [('CORE_API', ''), ]
-if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
-	defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
-elif local_env['PLATFORM'] == 'win32' :
-	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
+defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
 
 headers = [ header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'typedefs.hpp') ),
 			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'media_definitions.hpp') ),
 			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'time_code.hpp') ),
 			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'media_time.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'span.hpp') ),]
+			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'span.hpp') ),
+			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'frames.hpp') ),]
 
 files = header_files( headers, defines, [] )
 
 sample_assembly = assembly( 'core', files, dep_asses )
 
-objc_wrapper = owl.wrapper.objc.objc()
-objc_options = owl.wrapper.objc.objc_bind_options()
-wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objc_source' )
-obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
-        
-# wrapper_files = c_sharp_wrapper.bind( sample_assembly, options, 'cppcli' )
-# #               
-# 
-# local_env.Append( CCFLAGS = '/EHa /clr' ) 
-# obj = local_env.shared_library( 'sample_wrappers', wrapper_files['cpp_files'] )
-# 
-# Return( 'obj' )
+fd = open( 'assembly.xml', "w" )
+fd.write( sample_assembly.xml_str() )
 
