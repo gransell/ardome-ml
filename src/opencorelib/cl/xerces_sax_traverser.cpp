@@ -57,7 +57,7 @@ namespace olib
             t_smatch xmatch;
             t_regex re(_T("([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})") _T("T")
                 _T("([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})"));
-            t_string str = to_t_string( (boost::uint16_t*)chars, length);
+            t_string str = to_t_string(chars, length);
             ARENFORCE_MSG( boost::regex_search( str, xmatch, re ), 
                 "The passed string is not on the form: CCYY-MM-DDThh:mm:ss" )( to_string(str));
 
@@ -183,7 +183,8 @@ namespace olib
 
             try
             {
-                boost::uint16_t const * xml_doc_path_ptr(0);
+//                boost::uint16_t const * xml_doc_path_ptr(0);
+                wchar_t const * xml_doc_path_ptr(0);
                 #if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
                 std::vector<boost::uint16_t> packed;
                 if( xml_doc_path) 

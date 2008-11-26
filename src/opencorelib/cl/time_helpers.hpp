@@ -41,6 +41,11 @@ namespace olib
             /// Set the number of seconds.
             void set_seconds( boost::int64_t t ) { m_secs = t; }
 
+			boost::int64_t total_milliseconds() const
+			{
+				return (m_secs*1000+m_micro_secs/1000);
+			}
+
             /// Get the number of micro seconds.
             boost::int64_t get_micro_seconds() const { return m_micro_secs; }
             /// Set the number of micro seconds.

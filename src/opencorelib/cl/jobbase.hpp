@@ -132,8 +132,11 @@ namespace olib
             // Makes it possible to add some bookkeeping code around the real job function do_work.
             void do_work_bootstrapper();
 
-            mutable boost::recursive_mutex m_job_done_mtx, m_signal_mtx;
-            boost::condition m_job_done_condition;
+            mutable boost::recursive_mutex m_signal_mtx;
+//			mutable boost::recursive_mutex m_job_done_mtx;
+			mutable boost::mutex m_job_done_mtx;
+
+			boost::condition_variable m_job_done_condition;
             bool m_job_done, m_exception_thrown, m_run_more_than_once;
             boost::int32_t m_result;
             time_value m_reoccuring_interval, m_run_next_time;
@@ -149,7 +152,8 @@ namespace olib
 
             jobdone_signal m_job_done_signal;
 
-            boost::shared_ptr< boost::recursive_mutex::scoped_lock >
+//            boost::shared_ptr< boost::recursive_mutex::scoped_lock >
+			boost::shared_ptr< boost::lock_guard<boost::mutex> >
             prevent_job_from_terminating();
             
             friend class worker;

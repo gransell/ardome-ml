@@ -62,7 +62,7 @@ namespace olib
         typedef boost::shared_ptr<invoker> invoker_ptr;
         typedef boost::function< void () > invokable_function;
         
-        typedef std::basic_string<boost::uint16_t> xerces_string;
+        typedef std::basic_string<wchar_t> xerces_string;
 
         /// Represents a media time in an exact way.
         typedef boost::rational< boost::int64_t > rational_time;

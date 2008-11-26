@@ -83,10 +83,10 @@ namespace olib
             /** On mac this means converting either to utf-8 (if TCHAR = char ) 
                 or utf-32 (TCHAR=wchar_t). On windows or unix it means a no-conversion
                 (if TCHAR=wchar_t) or an utf-8 conversion */
-		    CORE_API t_string to_t_string( const boost::uint16_t* const source, size_t length );
+		    CORE_API t_string to_t_string( const wchar_t* const source, size_t length );
             
             /// Converts a short array to a t_string. The sequence must be null-terminated. 
-            CORE_API t_string to_t_string( const boost::uint16_t* source );
+            CORE_API t_string to_t_string( const wchar_t* source );
 			
 			/// Convert a char* to a t_string
 			CORE_API t_string to_t_string( const char* source);

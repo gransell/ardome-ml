@@ -73,12 +73,13 @@ namespace olib
 
         bool base_job::wait_for_job_done(long time_out, thread_sleep_activity::type activity )
         {
-            boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
+			boost::unique_lock<boost::mutex> lock(m_job_done_mtx);
             if( m_job_done ) return true;
 
             boost::xtime xt = utilities::add_millsecs_from_now(time_out);
             if( activity == thread_sleep_activity::block )
             {
+				return false;
                 return m_job_done_condition.timed_wait(lock, xt);
             }
             else // thread_sleep_activity::handle_incomming_messages
@@ -90,22 +91,24 @@ namespace olib
             }
         }
 
-        boost::shared_ptr< boost::recursive_mutex::scoped_lock >
+        boost::shared_ptr< boost::lock_guard<boost::mutex> >
         base_job::prevent_job_from_terminating()
         {
-            boost::shared_ptr< boost::recursive_mutex::scoped_lock >
-                lck( new boost::recursive_mutex::scoped_lock(m_job_done_mtx ) );
+//			boost::lock_guard<boost::mutex> lock(m_job_done_mtx);
+
+            boost::shared_ptr< boost::lock_guard<boost::mutex> >
+                lck( new boost::lock_guard<boost::mutex>(m_job_done_mtx ) );
 
             if( m_job_done ) 
             {
-                return boost::shared_ptr< boost::recursive_mutex::scoped_lock >();
+                return boost::shared_ptr< boost::lock_guard<boost::mutex> >();
             }
             return lck;
         }
 
         void base_job::signal_job_done()
         {
-            boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
+			boost::lock_guard<boost::mutex> lock(m_job_done_mtx);
             m_job_done = true;
             if( m_sleeper ) m_sleeper->wake_sleeping_thread();
             m_job_done_condition.notify_all();
@@ -115,13 +118,13 @@ namespace olib
         boost::tuples::tuple< event_connection_ptr, bool > 
         base_job::on_job_done( jobdone_signal::callback_signature listener )
         {
-             boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
+			boost::lock_guard<boost::mutex> lock(m_job_done_mtx);
              return boost::tuples::make_tuple(m_job_done_signal.connect(listener), m_job_done);
         }
 
         bool base_job::get_is_job_done() const
         {
-            boost::recursive_mutex::scoped_lock lock( m_job_done_mtx );
+			boost::lock_guard<boost::mutex> lock(m_job_done_mtx);
             return m_job_done; 
         }
 

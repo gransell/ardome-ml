@@ -228,18 +228,15 @@ namespace olib
 		try
 		{
                 	if (ph.empty() || boost::filesystem::exists(ph)) return; 
-                	make_sure_path_exists(ph.branch_path()); 
+                	make_sure_path_exists(ph.parent_path()); 
                 	boost::filesystem::create_directory(ph); 
 		}
-		catch( boost::filesystem::filesystem_wpath_error &exception )
+		catch( boost::filesystem::basic_filesystem_error<olib::t_path> &exception)
 		{
 			std::wcerr << "exists exits: " << exception.what( ) << std::endl;
 		}
-		catch( boost::filesystem::filesystem_path_error &exception )
-		{
-			std::wcerr << "exists exits: " << exception.what( ) << std::endl;
-		}
-            }
+
+			}
 
 			t_string get_stack_trace( int skip_levels )
 			{

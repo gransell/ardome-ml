@@ -55,7 +55,7 @@ namespace olib
 
 		void worker::add_job(const base_job_ptr& job) 
 		{
-			boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			m_heap.push_back(job);
             std::make_heap( m_heap.begin(), m_heap.end(), job_compare_less() );
 			m_wake_thread.notify_one();
@@ -63,7 +63,7 @@ namespace olib
 
         void worker::add_job_with_highest_priority( const base_job_ptr& job) 
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             std::for_each( m_heap.begin(), m_heap.end(),  &increase_priority );
             job->set_priority(0);
             m_heap.push_back(job);
@@ -73,7 +73,7 @@ namespace olib
 
         void worker::add_reoccurring_job( const base_job_ptr& p_job, const time_value& run_interval ) 
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             p_job->m_reoccuring_interval = run_interval;
             p_job->m_run_more_than_once = true;
             p_job->m_next_time_to_run = time_value::now() + run_interval;
@@ -83,7 +83,7 @@ namespace olib
 
         void worker::remove_reoccurring_job( const base_job_ptr& p_job )
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             jobcollection::iterator it = std::find( m_timed_jobs.begin(), m_timed_jobs.end(), p_job );
             if( it == m_timed_jobs.end() ) 
             {
@@ -96,7 +96,7 @@ namespace olib
 
         void worker::add_job( const base_job_ptr& p_job, const time_value& start_after )
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             p_job->m_reoccuring_interval = start_after;
             p_job->m_run_more_than_once = false;
             p_job->m_next_time_to_run = time_value::now() + start_after;
@@ -106,7 +106,7 @@ namespace olib
 
         void worker::move_timed_jobs_to_heap()
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             time_value right_now( time_value::now() ); 
             jobcollection::iterator it(m_timed_jobs.begin());
             bool need_heapify(false);
@@ -157,7 +157,7 @@ namespace olib
 
 		size_t worker::job_count() const 
 		{
-			boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			if( m_current_job ) return 1 + m_heap.size();
 			return m_heap.size();
 		}
@@ -169,7 +169,7 @@ namespace olib
                 cancel_and_clear_jobs();
 
                 {
-                    boost::recursive_mutex::scoped_lock mtx(m_wake_thread_mtx);                    
+					boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
                     m_stop_thread = true;
                     m_wake_thread.notify_one();
                 }
@@ -177,8 +177,9 @@ namespace olib
                 utilities::timer a_timer;                  
                 for(;;)
                 {
-                    boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx); 
-                    if(!m_thread_running) break;
+					boost::unique_lock<boost::mutex> mtx(m_thread_exit_mtx);
+
+					if(!m_thread_running) break;
                     boost::xtime wt = 
                         utilities::add_millsecs_from_now(time_out - a_timer.elapsed_millisecs());
                     if( m_thread_exit_success.timed_wait(mtx, wt))
@@ -206,10 +207,11 @@ namespace olib
         {
         }
 
-        bool worker::on_idle(   boost::condition& wake_thread,
-                                boost::recursive_mutex& wake_thread_mtx  )
+        bool worker::on_idle(   boost::condition_variable& wake_thread,
+                                boost::mutex& wake_thread_mtx  )
         {
-            boost::recursive_mutex::scoped_lock lock(wake_thread_mtx);
+			boost::unique_lock<boost::mutex> lock(wake_thread_mtx);
+//            boost::recursive_mutex::scoped_lock lock(wake_thread_mtx);
             for(;;)
             {
                 if( m_stop_thread ) return false;
@@ -240,7 +242,8 @@ namespace olib
             // Give the worker a chance to start.
             boost::thread::yield();
 
-            boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
+//            boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
+			boost::unique_lock<boost::mutex> mtx(m_thread_started_mtx);
             if( m_thread_running ) return;
             boost::xtime wt = utilities::add_millsecs_from_now(5000); 
             ARENFORCE( m_thread_started.timed_wait(mtx, wt) );
@@ -254,7 +257,8 @@ namespace olib
                 on_thread_started();
                 
                 {
-                    boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
+					boost::lock_guard<boost::mutex> mtx(m_thread_started_mtx);
+//                    boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
                     m_thread_running = true;
                     m_thread_started.notify_all();
                 }
@@ -274,14 +278,15 @@ namespace olib
 				// maintaining state.
 			}
 			
-            boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
-            m_thread_running = false;
+			boost::lock_guard<boost::mutex> mtx(m_thread_exit_mtx);
+
+			m_thread_running = false;
             m_thread_exit_success.notify_all();
 		}
 
 		void worker::reset_current_job()
 		{
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			m_current_job.reset();
 		}
 
@@ -296,7 +301,7 @@ namespace olib
 
             void on_done( boost::shared_ptr<base_job> )
             {
-                boost::recursive_mutex::scoped_lock lck(m_mtx);
+				boost::lock_guard<boost::mutex> lck(m_mtx);
                 m_nr_of_jobs_done++;
                 if( m_nr_of_jobs_done >= m_nr_of_jobs_to_wait_for )
                 {
@@ -306,7 +311,7 @@ namespace olib
 
             bool wait_for_all_jobs_completed(long time_out )
             {
-                boost::recursive_mutex::scoped_lock lck(m_mtx);
+				boost::unique_lock<boost::mutex> lck(m_mtx);
                 if( m_nr_of_jobs_done >= m_nr_of_jobs_to_wait_for) return true;
                 boost::xtime wt = utilities::add_millsecs_from_now(time_out);
                 m_all_complete.timed_wait(lck, wt);
@@ -326,8 +331,9 @@ namespace olib
 
             int m_nr_of_jobs_done;
             int m_nr_of_jobs_to_wait_for;
-            boost::recursive_mutex m_mtx;
-            boost::condition m_all_complete;
+
+			boost::mutex m_mtx;
+            boost::condition_variable m_all_complete;
             std::vector< event_connection_ptr > m_connections;
         };
 
@@ -337,9 +343,10 @@ namespace olib
 
             {
                 // Prevent new jobs from being added to this worker:
-                boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+				boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 
-                boost::shared_ptr< boost::recursive_mutex::scoped_lock > curr_lck; 
+				boost::shared_ptr< boost::lock_guard<boost::mutex> > curr_lck;
+//                boost::shared_ptr< boost::recursive_mutex::scoped_lock > curr_lck; 
 
                 if( m_current_job ) 
                 {
@@ -356,13 +363,15 @@ namespace olib
                 // These locks will prevent the jobs from reporting termination
                 // before this scope is ended (when we will wait for them to 
                 // terminate )
-                std::vector< boost::shared_ptr< boost::recursive_mutex::scoped_lock > > locks;
+//                std::vector< boost::shared_ptr< boost::recursive_mutex::scoped_lock > > locks;
+                std::vector< boost::shared_ptr< boost::lock_guard<boost::mutex> > > locks;
 
                 jobcollection q = m_heap;
                 // T_CERR << "Size of job heap: " << m_heap.size() << std::endl;
                 for( jobcollection::iterator i = q.begin(); i != q.end(); ++i )
                 {
-                    boost::shared_ptr< boost::recursive_mutex::scoped_lock > lck;
+					boost::shared_ptr< boost::lock_guard<boost::mutex> > lck;
+//                    boost::shared_ptr< boost::recursive_mutex::scoped_lock > lck;
                     lck = (*i)->prevent_job_from_terminating();
                     if( !lck ) continue; // This job was already terminated
                     done_counter.add_job( *i );
@@ -382,7 +391,7 @@ namespace olib
 			for(;;) 
 			{
 				{
-                    boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+					boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
                     if( m_heap.empty())
                     {
                         on_empty_heap();
@@ -418,20 +427,20 @@ namespace olib
 
 		bool worker::get_is_running_job() const 
 		{
-			boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			return (m_current_job != 0);
 		}
 
 		void worker::cancel_current_job() 
 		{
-			boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			if( !m_current_job) return;
 			m_current_job->set_should_terminate_job(true);
 		}
 
         bool worker::cancel_current_job(long time_out) 
         {
-            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
             if( !m_current_job) return true;
             m_current_job->set_should_terminate_job(true);
             return m_current_job->wait_for_job_done(time_out);
@@ -439,7 +448,7 @@ namespace olib
 
 		void worker::cancel_and_clear_jobs() 
 		{
-			boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+			boost::lock_guard<boost::mutex> lock(m_wake_thread_mtx);
 			cancel_current_job();
 			while(!m_heap.empty())
 			{

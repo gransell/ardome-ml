@@ -136,7 +136,7 @@ namespace olib
             }
 
         private:
-            boost::condition m_wait_condition;
+            boost::condition_variable m_wait_condition;
             boost::recursive_mutex m_mtx;
             
         };

@@ -111,8 +111,8 @@ namespace olib
                 you MUST do the later if you have created any HWND's.
                 If you sleep, you must wake up when the passed condition
                 is signalled. */
-            virtual bool on_idle(    boost::condition& wake_thread, 
-                                    boost::recursive_mutex& wake_thread_mtx );
+            virtual bool on_idle(    boost::condition_variable& wake_thread, 
+                                    boost::mutex& wake_thread_mtx );
 
             /// Invoked when a new job is about to be executed
 			/** Inherit from this class and override to do 
@@ -143,8 +143,10 @@ namespace olib
             /// Jobs that should be added to the heap after a certain amount of time
             jobcollection m_timed_jobs;
 
-            boost::condition m_thread_exit_success, m_thread_started, m_wake_thread;
-            mutable boost::recursive_mutex m_thread_exit_mtx, m_thread_started_mtx, m_wake_thread_mtx;
+            boost::condition_variable m_thread_exit_success, m_thread_started, m_wake_thread;
+            mutable boost::mutex m_wake_thread_mtx;
+			mutable boost::mutex m_thread_started_mtx;
+            mutable boost::mutex m_thread_exit_mtx;
 
 			/// Flag to keep track of if the worker is running a job_base or not.
 			bool m_thread_running;

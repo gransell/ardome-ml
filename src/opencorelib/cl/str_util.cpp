@@ -249,7 +249,7 @@ namespace olib
 			#endif
 		}
 
-		t_string str_util::to_t_string( const boost::uint16_t* const source, size_t length )
+		t_string str_util::to_t_string( const wchar_t* const source, size_t length )
 		{
             #ifdef OLIB_ON_WINDOWS
                 if( ! source ) return t_string();
@@ -261,7 +261,7 @@ namespace olib
             #endif
 		}
 
-		t_string str_util::to_t_string( const boost::uint16_t* source )
+		t_string str_util::to_t_string( const wchar_t* source )
 		{
             #ifdef OLIB_ON_WINDOWS
                 if( ! source ) return t_string();
