@@ -74,7 +74,7 @@ namespace olib
             CORE_API bool uses_drop_frame( type ft);
 
             /// Convert to a frame_rate::type from a fps and drop frame flag.
-            CORE_API frame_rate::type get_type( const opencorelib::rational_time& rt, 
+            CORE_API frame_rate::type get_type( const rational_time& rt, 
                                                 bool drop_frame  );
 
             /// Convert the enum to a human readable string.
