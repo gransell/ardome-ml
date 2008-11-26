@@ -1,7 +1,0 @@
-
-#
-#
-#
-
-SUBDIRS = 	\
-	png_storer
