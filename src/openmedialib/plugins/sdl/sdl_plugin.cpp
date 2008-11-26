@@ -101,6 +101,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 	public:
 		sdl_video( const pl::wstring &, const frame_type_ptr & ) 
 			: store_type( )
+			, last_sar_num_( 1 )
+			, last_sar_den_( 1 )
 			, prop_winid_( pcos::key::from_string( "winid" ) )
 			, prop_flags_( pcos::key::from_string( "flags" ) )
 			, prop_width_( pcos::key::from_string( "width" ) )
@@ -172,7 +174,10 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// Use the previously converted image if current frame has no image or we're repeating
 			if ( img == 0 )
+			{
 				img = last_image_;
+				frame->set_sar( last_sar_num_, last_sar_den_ );
+			}
 
 			// If we still don't have an image, bail now
 			if ( img == 0 )
@@ -188,6 +193,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			// Convert to requested colour space
 			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
 			last_image_ = img;
+			frame->get_sar( last_sar_num_, last_sar_den_ );
 
 			// TODO: Provide an alternative mechanism window event handling (via properties)
 			SDL_Event event;
@@ -264,6 +270,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					SDL_UnlockYUVOverlay( overlay );
 					SDL_DisplayYUVOverlay( overlay, &screen->clip_rect );
 				}
+
+				img->crop_clear( );
 			}
 
 			unlock_display( );
@@ -440,6 +448,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		frame_type_ptr last_frame_;
 		il::image_type_ptr last_image_;
+		int last_sar_num_;
+		int last_sar_den_;
 		pcos::property prop_winid_;
 		pcos::property prop_flags_;
 		pcos::property prop_width_;
@@ -719,8 +729,11 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			if( chunks_.size( ) == 0 )
 			{
 				// Never wait longer than the duration of one frame.
-				cond_.timed_wait( lock, 
-					olib::opencorelib::utilities::add_millsecs_from_now( frame_duration_ ) );
+#ifdef WIN32
+				cond_.timed_wait( lock, olib::opencorelib::utilities::add_millsecs_from_now( prop_preroll_.value< int >( ) * frame_duration_ ) );
+#else
+				cond_.wait( lock );
+#endif
 			}
 			
 			if ( chunks_.size( ) > 0 && !is_paused_ )
