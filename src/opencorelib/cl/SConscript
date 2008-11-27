@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'build_cl', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_signals', 'boost_regex', 'xerces', 'loki', 'uuid' )
+local_env.packages( 'build_cl', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'boost_signals', 'boost_regex', 'xerces', 'loki', 'uuid' )
 
 if local_env[ 'PLATFORM' ] == 'darwin':
 	local_env[ 'FRAMEWORKS' ] = [ 'Foundation' ]

@@ -249,7 +249,8 @@ namespace olib
 			#endif
 		}
 
-		t_string str_util::to_t_string( const wchar_t* const source, size_t length )
+
+		t_string str_util::to_t_string( const wchar_t* source, size_t length )
 		{
             #ifdef OLIB_ON_WINDOWS
                 if( ! source ) return t_string();
@@ -267,9 +268,8 @@ namespace olib
                 if( ! source ) return t_string();
                 return to_t_string( std::wstring(source) );
             #else
-			    using namespace XERCES_CPP_NAMESPACE;
 			    std::vector<wchar_t> wide_chars = string_conversions::
-                    unpack_packed_wide_string( source, XMLString::stringLen( (const XMLCh*)(source) ) );
+					unpack_packed_wide_string( source, wcslen(source) ) );
 			    return to_t_string( std::wstring(&wide_chars[0], wide_chars.size() - 1) );
             #endif
 		}
@@ -279,32 +279,14 @@ namespace olib
 			return to_t_string(std::string(source));
 		}
 
-        t_string str_util::to_t_string( const boost::uint32_t* source)
+        std::wstring str_util::to_wstring( const wchar_t* source, size_t length )
 		{
-            #if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
-                return to_t_string(std::wstring(reinterpret_cast<const wchar_t*>(source)));
-            #else 
-                ARENFORCE_MSG(false, "This code should never be called on windows.");
-                return t_string();
-            #endif
+			return std::wstring(source, length);
 		}
 
-        std::wstring str_util::to_wstring( const boost::uint16_t* const source, size_t length )
+		std::wstring str_util::to_wstring( const wchar_t* source )
 		{
-			if( sizeof(wchar_t) == sizeof(boost::uint16_t) ) return std::wstring((const wchar_t*)source, length);
-			std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source,
-																							 length );
-			return std::wstring( &wide_chars[0], length );
-		}
-
-		std::wstring str_util::to_wstring( const boost::uint16_t* source )
-		{
-			if( sizeof(wchar_t) == sizeof(boost::uint16_t) ) return std::wstring((const wchar_t*)source);
-
-			using namespace XERCES_CPP_NAMESPACE;
-			std::vector<wchar_t> wide_chars = string_conversions::
-                unpack_packed_wide_string( source, XMLString::stringLen( (const XMLCh*)(source) ) );
-			return std::wstring( &wide_chars[0], wide_chars.size() );
+			return std::wstring(source);
 		}
 
 		std::wstring str_util::to_wstring(const std::string& source)
@@ -329,17 +311,14 @@ namespace olib
 			return source;
 		}
 
-        std::string str_util::to_string( const boost::uint16_t* source, size_t length )
+        std::string str_util::to_string( const wchar_t* source, size_t length )
 		{
-			return string_conversions::from_2b_utf16_to_utf8( source,
-															  length );
+			return string_conversions::from_utf16_to_utf8( source, length );
 		}
 
-		std::string str_util::to_string( const boost::uint16_t* source )
+		std::string str_util::to_string( const wchar_t* source )
 		{
-			using namespace XERCES_CPP_NAMESPACE;
-			return string_conversions::from_2b_utf16_to_utf8( source,
-															  XMLString::stringLen( (const XMLCh*)(source) ) );
+			return string_conversions::from_utf16_to_utf8( source, wcslen(source) );
 		}
 
 		t_ostream& str_util::any_to_t_string(t_ostream& os, const boost::any& v)

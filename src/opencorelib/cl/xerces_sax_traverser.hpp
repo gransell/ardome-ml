@@ -39,6 +39,16 @@ namespace olib
 {
    namespace opencorelib
     {
+
+		typedef std::basic_string<XMLCh> xerces_string;
+
+		std::wstring x_to_wstring(const XMLCh *source, unsigned int length);
+		std::wstring x_to_wstring(const XMLCh *source);
+		t_string x_to_t_string(const XMLCh *source, unsigned int length);
+		t_string x_to_t_string(const XMLCh *source);
+		std::string x_to_string(const XMLCh *source, unsigned int length);
+		std::string x_to_string(const XMLCh *source);
+
         /// An array of unsigned shorts, or XMLCh as it is called by xerces. 
         typedef boost::scoped_array<XMLCh> xerces_array;
 
