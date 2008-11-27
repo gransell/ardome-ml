@@ -1,8 +1,0 @@
-
-#
-#
-#
-
-SUBDIRS = 			\
-	GL				\
-	Serialization

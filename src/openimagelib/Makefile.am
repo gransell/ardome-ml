@@ -1,9 +1,0 @@
-
-#
-#
-#
-
-SUBDIRS = 	\
-	il		\
-	plugins	\
-	py
