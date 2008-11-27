@@ -9,6 +9,7 @@ Import(['local_env'])
 local_env.packages( 'boost' )
 
 
+
 dep_asses = []
 dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ) ]
 dep_hfs = []
@@ -22,12 +23,12 @@ if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 elif local_env['PLATFORM'] == 'win32' :
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 
-headers = [ header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'typedefs.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'minimal_string_defines.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'media_definitions.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'time_code.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'media_time.hpp') ),
-			header_file( os.path.join( '/Users/gransell/Documents/src/ardome-ml/owl_additions', 'src', 'opencorelib', 'cl', 'span.hpp') ),]
+headers = [ header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'typedefs.hpp') ),
+			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'minimal_string_defines.hpp') ),
+			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'media_definitions.hpp') ),
+			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'time_code.hpp') ),
+			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'media_time.hpp') ),
+			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'span.hpp') ),]
 
 files = header_files( headers, defines, [] )
 
