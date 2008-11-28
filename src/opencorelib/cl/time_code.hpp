@@ -53,7 +53,7 @@ namespace olib
                         boost::uint32_t minutes, 
                         boost::uint32_t seconds, 
                         boost::uint32_t frames)
-                : m_i_hours(h), m_i_min(m), m_i_sec(s), m_i_frames(f)
+                : m_i_hours(hours), m_i_min(minutes), m_i_sec(seconds), m_i_frames(frames)
             {
                 check_valid();
             }
