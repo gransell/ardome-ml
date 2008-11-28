@@ -23,12 +23,17 @@ if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 elif local_env['PLATFORM'] == 'win32' :
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 
-headers = [ header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'typedefs.hpp') ),
-			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'minimal_string_defines.hpp') ),
-			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'media_definitions.hpp') ),
-			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'time_code.hpp') ),
-			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'media_time.hpp') ),
-			header_file( os.path.join( local_env.root, 'src', 'opencorelib', 'cl', 'span.hpp') ),]
+cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
+
+headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
+			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'point.hpp') )]
 
 files = header_files( headers, defines, [] )
 
