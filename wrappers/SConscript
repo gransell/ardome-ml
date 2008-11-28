@@ -11,7 +11,7 @@ local_env.packages( 'boost' )
 
 
 dep_asses = []
-dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ) ]
+dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
 dep_hfs = []
 for dh in dep_headers :
 	dep_hfs.append(header_file(str(dh)))
@@ -25,7 +25,7 @@ elif local_env['PLATFORM'] == 'win32' :
 
 cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
 
-headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedefs.hpp' ) ),
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
