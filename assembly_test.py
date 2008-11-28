@@ -15,15 +15,17 @@ dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
 defines = [('CORE_API', ''), ]
 defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
 
-headers = [ header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'typedefs.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'minimal_string_defines.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'media_definitions.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'time_code.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'media_time.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'span.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'frames.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'core_enums.hpp') ),
-			header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'point.hpp') )]
+cl_src_dir =  os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl' )
+
+headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'point.hpp') )]
 			# header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'jobbase.hpp') ),]
 
 files = header_files( headers, defines, [] )

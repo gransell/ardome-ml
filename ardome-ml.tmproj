@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>wrappers/SConscript</string>
+	<string>bcomp/owl/wrapper/objc/objc_bind_options.py</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -27,8 +27,6 @@
 			<string>openbuild</string>
 		</dict>
 		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>src</string>
 			<key>regexFolderFilter</key>
@@ -40,7 +38,7 @@
 			<key>filename</key>
 			<string>SConstruct</string>
 			<key>lastUsed</key>
-			<date>2008-11-25T16:20:53Z</date>
+			<date>2008-11-27T10:38:07Z</date>
 		</dict>
 		<dict>
 			<key>expanded</key>
@@ -52,24 +50,30 @@
 			<key>sourceDirectory</key>
 			<string>wrappers</string>
 		</dict>
+		<dict>
+			<key>filename</key>
+			<string>assembly_test.py</string>
+			<key>lastUsed</key>
+			<date>2008-11-27T10:30:29Z</date>
+		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
 	<integer>366</integer>
 	<key>metaData</key>
 	<dict>
-		<key>SConstruct</key>
+		<key>bcomp/owl/wrapper/bind_options.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>37</integer>
+				<integer>1</integer>
 				<key>line</key>
-				<integer>222</integer>
+				<integer>12</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>185</integer>
+			<integer>0</integer>
 		</dict>
 		<key>bcomp/owl/wrapper/objc/objc.py</key>
 		<dict>
@@ -85,42 +89,42 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>src/opencorelib/cl/basic_enums.hpp</key>
+		<key>bcomp/owl/wrapper/objc/objc_bind_options.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>30</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>31</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>src/opencorelib/cl/color.hpp</key>
+		<key>bcomp/owl/wrapper/objc/templates/type_header_template.txt</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>4</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>5</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>src/opencorelib/cl/frames.hpp</key>
+		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>49</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>4</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -132,43 +136,44 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>88</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>24</integer>
+				<integer>36</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
-		</dict>
-		<key>wrappers/built_in_types.hpp</key>
-		<dict>
-			<key>caret</key>
+			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>31</integer>
 			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>36</integer>
+			</dict>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>SConstruct</string>
-		<string>src/opencorelib/cl/basic_enums.hpp</string>
-		<string>src/opencorelib/cl/color.hpp</string>
-		<string>src/opencorelib/cl/frames.hpp</string>
 		<string>bcomp/owl/wrapper/objc/objc.py</string>
+		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
+		<string>bcomp/owl/wrapper/objc/templates/type_header_template.txt</string>
 		<string>wrappers/SConscript</string>
-		<string>wrappers/built_in_types.hpp</string>
+		<string>bcomp/owl/wrapper/bind_options.py</string>
+		<string>bcomp/owl/wrapper/objc/objc_bind_options.py</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{0, 64}, {1008, 964}}</string>
+	<string>{{1, 62}, {1008, 964}}</string>
 </dict>
 </plist>
