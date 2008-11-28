@@ -44,15 +44,15 @@ namespace olib
             time_code() : m_i_hours(0), m_i_min(0), m_i_sec(0), m_i_frames(0) {}
             
             /// Creates a time code with the given values.
-            /** @param h The number of hours of media (< 24)
-                @param m The number of min of media (<60)
-                @param s The number of sec of media (<60)
-                @param f The number of frames of media (<25 for PAL, <30 for NTSC) 
+            /** @param hours The number of hours of media (< 24)
+                @param minutes The number of min of media (<60)
+                @param seconds The number of sec of media (<60)
+                @param frames The number of frames of media (<25 for PAL, <30 for NTSC) 
                 @throw CBase_exception if the values are out of range. */
-            time_code(  boost::uint32_t h, 
-                        boost::uint32_t m, 
-                        boost::uint32_t s, 
-                        boost::uint32_t f)
+            time_code(  boost::uint32_t hours, 
+                        boost::uint32_t minutes, 
+                        boost::uint32_t seconds, 
+                        boost::uint32_t frames)
                 : m_i_hours(h), m_i_min(m), m_i_sec(s), m_i_frames(f)
             {
                 check_valid();
