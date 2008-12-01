@@ -25,9 +25,36 @@ namespace olib
    namespace opencorelib
     {
 
+		xerces_string to_x_string(const char *source, unsigned int length)
+		{
+			return to_x_string(std::string(source, length));
+		}
+
+		xerces_string to_x_string(const std::string &source)
+		{
+			return to_x_string(str_util::to_wstring(source));
+		}
+
+		xerces_string to_x_string(const wchar_t *source, unsigned int length)
+		{
+			return to_x_string(std::wstring(source, length));
+		}
+
+		xerces_string to_x_string(const std::wstring &source)
+		{
+#if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
+			// XMLCh is supposed to be 16 bit and wchar_t 32 bit
+			std::vector<XMLCh> packed = string_conversions::pack_wide_string( 
+				reinterpret_cast<const wchar_t *>( source.c_str()), source.size() );
+			return xerces_string(&packed[0]);
+#else
+			return xerces_string(source);
+#endif
+		}
+
 		std::wstring x_to_wstring(const XMLCh *source, unsigned int length)
 		{
-#if defined (OLIB_ON_MAC)
+#if defined (OLIB_ON_MAC) || defined( OLIB_ON_LINUX )
 			using namespace XERCES_CPP_NAMESPACE;
 			std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string(source, length);
 			return std::wstring(&wide_chars[0], wide_chars.size()-1);
@@ -49,11 +76,6 @@ namespace olib
 		t_string x_to_t_string(const XMLCh *source)
 		{
 			return str_util::to_t_string(x_to_wstring(source));
-		}
-
-		std::string x_to_string(const XMLCh *source, unsigned int length)
-		{
-			return str_util::to_string(x_to_wstring(source, length));
 		}
 
 		std::string x_to_string(const XMLCh *source)
@@ -83,7 +105,6 @@ namespace olib
         bool equal( const xerces_string& lhs, const xerces_string& rhs )
         {
 			return XMLString::equals(lhs.c_str(), rhs.c_str());
-//            return to_t_string(lhs.c_str()) == to_t_string(rhs.c_str());
         }
 
         boost::posix_time::ptime parse_ptime( const XMLCh* chars, unsigned int length )
@@ -119,7 +140,7 @@ namespace olib
 		
 		bool parse_bool( const XMLCh* const chars )
 		{
-			t_string str = x_to_t_string(chars, XMLString::stringLen(chars));
+			t_string str = x_to_t_string(chars);
 			boost::algorithm::to_lower(str);
 			return str == _T("true") || str == _T("1");
 		}
@@ -129,24 +150,24 @@ namespace olib
         {
             ARENFORCE_ERR(att, error::null_pointer());
             const XMLCh* att_val = att->getValue( L2(att_name).c_str() );
-            return x_to_t_string( att_val, XMLString::stringLen(att_val));
+            return x_to_t_string( att_val );
         }
 
 		boost::any string_to_boost_any( const XMLCh *const chars, type_hint::type th )
 		{
 			if( th  == type_hint::th_int )
 			{
-				int v = boost::lexical_cast<int>((x_to_t_string(chars, XMLString::stringLen(chars))));
+				int v = boost::lexical_cast<int>(x_to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_float )
 			{
-				float v = boost::lexical_cast<float>((x_to_t_string(chars, XMLString::stringLen(chars))));
+				float v = boost::lexical_cast<float>(x_to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_double )
 			{
-				double v = boost::lexical_cast<double>((x_to_t_string(chars, XMLString::stringLen(chars))));
+				double v = boost::lexical_cast<double>(x_to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_bool )
@@ -157,12 +178,12 @@ namespace olib
 			else if( th == type_hint::th_string ||
 				th == type_hint::th_any )
 			{
-				t_string v = to_t_string(chars);
+				t_string v = x_to_t_string(chars);
 				return boost::any(v);
 			}
 			else
 			{
-				ARLOG_ERR("Invalid type_hint: %i (%s)")(th)(x_to_t_string(chars, XMLString::stringLen(chars)));
+				ARLOG_ERR("Invalid type_hint: %i (%s)")(th)(x_to_t_string(chars));
 				return boost::any();
 			}
 		}
@@ -221,6 +242,20 @@ namespace olib
 
             try
             {
+				if( xml_doc_path)
+				{
+					xerces_string path = to_x_string(xml_doc_path->string());
+					m_traverser->parse(path.c_str());
+				}
+				else if (bin_data)
+				{
+					m_traverser->parse( *bin_data );
+				}
+				else
+				{
+					ARASSERT_MSG(false, "One of xml_doc_path and bin_data should be non-null!");
+				}
+#if 0
 //                boost::uint16_t const * xml_doc_path_ptr(0);
                 wchar_t const * xml_doc_path_ptr(0);
                 #if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
@@ -240,17 +275,19 @@ namespace olib
                 if(xml_doc_path_ptr) m_traverser->parse(xml_doc_path_ptr);
                 else if(bin_data) m_traverser->parse( *bin_data );
                 else ARASSERT_MSG(false, "One of xml_doc_path and bin_data should be non-null!");
-                m_parser->parsing_done();
+#endif
+
+				m_parser->parsing_done();
                 return m_parser->get_result();
             }
             catch( SAXException& e)
             {
-                ARLOG_ERR("Failed to parse. Message: %s")(to_t_string( e.getMessage()));
+                ARLOG_ERR("Failed to parse. Message: %s")(x_to_t_string( e.getMessage()));
                 return object_ptr();
             }
             catch( XMLException& e)
             {
-                ARLOG_ERR("Failed to parse. Message: %s")(to_t_string( e.getMessage()));
+                ARLOG_ERR("Failed to parse. Message: %s")(x_to_t_string( e.getMessage()));
                 return object_ptr();
             }
 
@@ -260,8 +297,8 @@ namespace olib
         
         void xerces_sax_traverser::error(const SAXParseException& exc)
         {
-            ARENFORCE_ERR(false, error::invalid_xml())( to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
-                (x_to_t_string(exc.getPublicId()))(to_t_string(exc.getSystemId()));
+            ARENFORCE_ERR(false, error::invalid_xml())( x_to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
+                (x_to_t_string(exc.getPublicId()))(x_to_t_string(exc.getSystemId()));
             throw exc;
         }
 
@@ -340,13 +377,13 @@ namespace olib
         void xerces_sax_traverser::stream_xml_start_tag( const XMLCh* const elem_name,
                                                             AttributeList* attributes )
         {
-            m_xml_data << _T("<") <<  to_t_string(elem_name);
+            m_xml_data << _T("<") <<  x_to_t_string(elem_name);
             boost::uint32_t att_len = attributes->getLength();
             for( boost::uint32_t i = 0; i < att_len ; ++i)
             {
                 m_xml_data << _T(" ")
-                           << to_t_string(attributes->getName(i)) << _T("=\"")
-                           << to_t_string(attributes->getValue(i)) << _T("\"");
+                           << x_to_t_string(attributes->getName(i)) << _T("=\"")
+                           << x_to_t_string(attributes->getValue(i)) << _T("\"");
             }
             
             m_xml_data << _T(">");
@@ -355,12 +392,12 @@ namespace olib
         void xerces_sax_traverser::stream_xml_content(   const XMLCh* const chars,
                                                             const unsigned int length)
         {
-            m_xml_data << to_t_string(chars) ;
+            m_xml_data << x_to_t_string(chars) ;
         }
 
         void xerces_sax_traverser::stream_xml_end_tag( const XMLCh* const elem_name )
         {
-            m_xml_data << _T("</") << to_t_string(elem_name) << _T(">");
+            m_xml_data << _T("</") << x_to_t_string(elem_name) << _T(">");
         }
 
         namespace
