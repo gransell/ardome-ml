@@ -28,16 +28,14 @@
     return (double)_numerator / (double)_denominator;
 }
 
-- (AMFRational *)increaseWithValue:(double)toAdd
+- (void)increaseWithValue:(double)toAdd
 {
     _numerator += toAdd * _denominator;
-    return self;
 }
 
-- (AMFRational *)decreaseWithValue:(double)toSubtract
+- (void)decreaseWithValue:(double)toSubtract
 {
     _numerator -= toSubtract * _denominator;
-    return self;
 }
 
 @end

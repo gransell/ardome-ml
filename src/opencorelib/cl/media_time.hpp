@@ -18,7 +18,7 @@ namespace olib
         The internal representation stores the number of seconds of media
         that has been passed. It uses a rational number which makes it possible
         to exactly represent positions even in NTSC (where a frame is 1001/30000 sec long).
-        Depending on frame_rate::type the time should be displayed 
+        Depending onolib::opencorelib::frame_rate::type the time should be displayed 
         differently as time_codes. The to_time_code member takes care of this conversion
         properly.
 
@@ -63,15 +63,15 @@ namespace olib
             CORE_API friend bool operator<(const media_time& lhs, const media_time& rhs);
 
             /// Convert the current time to a time_code.
-            /** @param ft The currently used frame_rate::type. */
-            time_code to_time_code( frame_rate::type ft ) const;
+            /** @param ft The currently usedolib::opencorelib::frame_rate::type. */
+            time_code to_time_code(olib::opencorelib::frame_rate::type ft ) const;
 
             /// Converts the current time to a discreet frame number.
-            boost::int32_t to_frame_nr( frame_rate::type ft ) const;
+            boost::int32_t to_frame_nr(olib::opencorelib::frame_rate::type ft ) const;
 
-            CORE_API friend media_time from_time_code( frame_rate::type ft, const time_code& time_code );
+            CORE_API friend media_time from_time_code(olib::opencorelib::frame_rate::type ft, const time_code& time_code );
 
-            CORE_API friend media_time from_frame_number( frame_rate::type ft, boost::int64_t fr_nr );
+            CORE_API friend media_time from_frame_number(olib::opencorelib::frame_rate::type ft, boost::int64_t fr_nr );
 
             /// Adds (or subtracts if nr_of_frames is negative) the given number of frames to the time.
             /** Equivalent to:
@@ -84,7 +84,7 @@ namespace olib
             mt.add_frames(ft, nr_of_frames);
 
             </pre> */
-            void add_frames( frame_rate::type ft , boost::int64_t nr_of_frames );
+            void add_frames(olib::opencorelib::frame_rate::type ft , boost::int64_t nr_of_frames );
 
             /// Get the stored time of this object.
             rational_time get_raw_time() const { return m_time; }
@@ -94,15 +94,15 @@ namespace olib
 
         private:
             // Current time in seconds
-            media_time& from_frame_number( frame_rate::type ft,  const rational_time& fr_nr );
+            media_time& from_frame_number(olib::opencorelib::frame_rate::type ft,  const rational_time& fr_nr );
             rational_time m_time;
         };
 		
-        /// Create a media_time from a frame_rate::type and a frame number.
-        CORE_API media_time from_time_code( frame_rate::type ft, const time_code& time_code );
+        /// Create a media_time from aolib::opencorelib::frame_rate::type and a frame number.
+        CORE_API media_time from_time_code(olib::opencorelib::frame_rate::type ft, const time_code& time_code );
         
-        /// Create a media_time from a frame_rate::type and a frame number.
-        CORE_API media_time from_frame_number( frame_rate::type ft, boost::int64_t fr_nr );
+        /// Create a media_time from aolib::opencorelib::frame_rate::type and a frame number.
+        CORE_API media_time from_frame_number(olib::opencorelib::frame_rate::type ft, boost::int64_t fr_nr );
         
         typedef span< media_time > time_span;
     }

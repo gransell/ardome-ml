@@ -32,9 +32,9 @@
  * Increase the value of this rational with the specified valu.
  * @returns Poiner to self.
  */
-- (AMFRational *)increaseWithValue:(double)toAdd;
+- (void)increaseWithValue:(double)toAdd;
 
-- (AMFRational *)decreaseWithValue:(double)toSubtract;
+- (void)decreaseWithValue:(double)toSubtract;
 
 @end
 

@@ -71,7 +71,6 @@ namespace olib
 
         typedef boost::signal< void ( const cache_utilizer_ptr&, 
                                         const cache_resource_status_ptr& ) > cache_resource_updated_signal; 
-
     }
 }
 

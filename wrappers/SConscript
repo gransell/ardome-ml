@@ -1,14 +1,15 @@
+import os
 
 import owl.wrapper.c_sharp
 import owl.wrapper.objc
 from owl.reflection import header_file, header_files, assembly
 
-import os
+from wrappers.objective_c import core_objc_bind_options
 
 Import(['local_env'])
 local_env.packages( 'boost' )
-
-
+# Add core to the include path
+local_env.Append( CPPPATH = '#src/')
 
 dep_asses = []
 dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
@@ -26,22 +27,26 @@ elif local_env['PLATFORM'] == 'win32' :
 cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
 
 headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedefs.hpp' ) ),
+			header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'span.hpp') ), ]
 			# header_file( os.path.join( cl_src_dir, 'point.hpp') )]
 
 files = header_files( headers, defines, [] )
 
 sample_assembly = assembly( 'core', files, dep_asses )
 
+fd = open( 'assembly.xml', "w" )
+fd.write( sample_assembly.xml_str() )
+
 objc_wrapper = owl.wrapper.objc.objc()
-objc_options = owl.wrapper.objc.objc_bind_options()
-wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objc_source' )
+objc_options = core_objc_bind_options( os.path.join( local_env.root, 'bcomp' ), [sample_assembly] )
+
+wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objective_c/src' )
 obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
         
 # wrapper_files = c_sharp_wrapper.bind( sample_assembly, options, 'cppcli' )
