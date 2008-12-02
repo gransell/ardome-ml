@@ -1,3 +1,4 @@
+
 #ifndef _CORE_ENUMS_H_
 #define _CORE_ENUMS_H_
 
@@ -55,8 +56,7 @@ namespace olib
                 block, 
                 handle_incomming_messages
             };
-        }
-
+        }        
 	}
 }
 
