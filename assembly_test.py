@@ -17,16 +17,10 @@ defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
 
 cl_src_dir =  os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl' )
 
-headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+headers = [ header_file( os.path.join( os.getcwd(), 'wrappers', 'bind_typedefs.hpp' ) ),
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'point.hpp') )]
-			# header_file( os.path.join( os.getcwd(), 'src', 'opencorelib', 'cl', 'jobbase.hpp') ),]
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
 
 files = header_files( headers, defines, [] )
 

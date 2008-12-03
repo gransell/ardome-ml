@@ -63,10 +63,15 @@ namespace olib
         // typedef boost::function< void () > invokable_function;
         
         typedef std::basic_string<boost::uint16_t> xerces_string;
-
+        
         /// Represents a media time in an exact way.
+        /** 
+            <bindgen>
+        		<attribute name="convert" value="yes"></attribute>
+        	</bindgen>
+        */
         typedef boost::rational< long > rational_time;
-
+        
         typedef std::map< t_string, olib::t_path > schema_map;
 
         // typedef boost::signal< void ( const cache_utilizer_ptr&, 

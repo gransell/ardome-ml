@@ -58,11 +58,11 @@ namespace olib
             boost::int32_t m_frames;
             
         };
-	
-		/// A span of frames, used throughout amf.
+
+        /// A span of frames, used throughout amf.
         typedef span< frames > frame_span;
 
-        /// Convert from one frame_rate::type to another
+        /// Convert from one olib::opencorelib::frame_rate::type to another
         /** Let's say you have 25 frames in frame_rate::pal, that is 1 second of media.
             You want to convert that to the corresponding number of frames in frame_rate::ntsc,
             then you call this function and get 30 frames back (~29.97 rounded up), 
@@ -71,19 +71,19 @@ namespace olib
             @param from_fr The coordinate system f lives in.
             @param to_fr The coordinate system to convert to
             @return The number of frames f corresponds to in to_fr. */
-        CORE_API frames convert( const frames& f, frame_rate::type from_fr, frame_rate::type to_fr );
+        CORE_API frames convert( const frames& f, olib::opencorelib::frame_rate::type from_fr, olib::opencorelib::frame_rate::type to_fr );
 
         /// Convert a number of frames in one coordinate system to an absolute media_time.
         /** @param f The number of frames to convert.
             @param fr The frame_rate that the frames are given in.
         	@return  The media_time corresponding to the frames in the given coordinate system.*/
-        CORE_API media_time to_time( const frames& f, frame_rate::type fr );
+        CORE_API media_time to_time( const frames& f, olib::opencorelib::frame_rate::type fr );
 
-        /// Convert a media_time (the global reference system) to a number fo fames in a frame_rate::type.
+        /// Convert a media_time (the global reference system) to a number fo fames in aolib::opencorelib::frame_rate::type.
         /** @param mt The media_time to convert.
             @param fr The coordinate system the returned frames live in.
             @return The corresponding number of frames in the target coordinate system. */
-        CORE_API frames from_time( const media_time& mt, frame_rate::type fr );
+        CORE_API frames from_time( const media_time& mt, olib::opencorelib::frame_rate::type fr );
         
     }
 }

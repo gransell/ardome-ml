@@ -56,18 +56,18 @@ namespace olib
             return os;
 		}
 
-        CORE_API frames convert( const frames& f, frame_rate::type from_fr, frame_rate::type to_fr )
+        CORE_API frames convert( const frames& f, olib::opencorelib::frame_rate::type from_fr, olib::opencorelib::frame_rate::type to_fr )
         {
             media_time mt = to_time(f, from_fr);
             return from_time(mt, to_fr);
         }
 
-        CORE_API media_time to_time( const frames& f, frame_rate::type fr )
+        CORE_API media_time to_time( const frames& f, olib::opencorelib::frame_rate::type fr )
         {
             return from_frame_number(fr, f.get_frames() );
         }
 
-        CORE_API frames from_time( const media_time& mt, frame_rate::type fr )
+        CORE_API frames from_time( const media_time& mt, olib::opencorelib::frame_rate::type fr )
         {
             return frames( mt.to_frame_nr(fr) );
         }
