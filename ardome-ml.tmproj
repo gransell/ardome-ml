@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>src/opencorelib/cl/core_enums.hpp</string>
+	<string>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -58,7 +58,7 @@
 		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
-	<integer>235</integer>
+	<integer>307</integer>
 	<key>metaData</key>
 	<dict>
 		<key>bcomp/owl/reflection/doxygen_ast.py</key>
@@ -70,66 +70,40 @@
 				<key>line</key>
 				<integer>59</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>13</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>26</integer>
+				<key>line</key>
+				<integer>59</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>46</integer>
+				<key>line</key>
+				<integer>59</integer>
+			</dict>
 		</dict>
 		<key>bcomp/owl/reflection/doxygen_xml_parse.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>42</integer>
 				<key>line</key>
-				<integer>81</integer>
+				<integer>256</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>50</integer>
-		</dict>
-		<key>bcomp/owl/reflection/type.py</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>47</integer>
-				<key>line</key>
-				<integer>83</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>45</integer>
-		</dict>
-		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>48</integer>
-				<key>line</key>
-				<integer>74</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>38</integer>
-		</dict>
-		<key>src/opencorelib/cl/core_enums.hpp</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>1</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>226</integer>
 		</dict>
 		<key>src/opencorelib/cl/frames.hpp</key>
 		<dict>
@@ -233,49 +207,46 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
+		<key>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>44</integer>
+				<key>line</key>
+				<integer>24</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>33</integer>
+				<key>line</key>
+				<integer>21</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
 		<string>wrappers/SConscript</string>
-		<string>bcomp/owl/reflection/doxygen_xml_parse.py</string>
+		<string>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</string>
 		<string>bcomp/owl/reflection/doxygen_ast.py</string>
-		<string>src/opencorelib/cl/media_time.hpp</string>
-		<string>src/opencorelib/cl/media_definitions.hpp</string>
-		<string>src/opencorelib/cl/core_enums.hpp</string>
-		<string>src/opencorelib/cl/time_code.hpp</string>
-		<string>src/opencorelib/cl/frames.hpp</string>
-		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
-		<string>bcomp/owl/reflection/type.py</string>
+		<string>bcomp/owl/reflection/doxygen_xml_parse.py</string>
+		<string>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
-	<false/>
-	<key>showFileHierarchyPanel</key>
 	<true/>
-	<key>treeState</key>
-	<dict>
-		<key>owl</key>
-		<dict>
-			<key>isExpanded</key>
-			<true/>
-			<key>subItems</key>
-			<dict/>
-		</dict>
-		<key>src</key>
-		<dict>
-			<key>isExpanded</key>
-			<true/>
-			<key>subItems</key>
-			<dict/>
-		</dict>
-		<key>wrappers</key>
-		<dict>
-			<key>isExpanded</key>
-			<true/>
-			<key>subItems</key>
-			<dict/>
-		</dict>
-	</dict>
 	<key>windowFrame</key>
-	<string>{{10, 60}, {960, 818}}</string>
+	<string>{{0, 57}, {1358, 971}}</string>
 </dict>
 </plist>

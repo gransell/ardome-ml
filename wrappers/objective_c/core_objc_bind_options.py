@@ -4,7 +4,8 @@ import owl.wrapper.objc.objc_bind_options
 
 conversion_dict = {'olib::opencorelib::frames' : 'NSUInteger',
  					'olib::opencorelib::rational_time' : 'OlibOpencorelibRationalTime',
-					'boost::rational<long>' : 'OlibOpencorelibRationalTime',}
+					'boost::rational<long>' : 'OlibOpencorelibRationalTime',
+					'olib::opencorelib::point' : 'NSPoint' }
 
 class core_objc_bind_options( owl.wrapper.objc.objc_bind_options ):
 	"""docstring for core_objc_bind_options"""
@@ -27,9 +28,9 @@ class core_objc_bind_options( owl.wrapper.objc.objc_bind_options ):
 		ret.extend(['objective_c/src/CoreConverts.mm'])
 		return ret
 		
-	def get_conversion_dictionary( self, type_instance ):
+	def get_conversion_dictionary( self ):
 		"""docstring for get_conversion_dictionary"""
-		ret = super(core_objc_bind_options, self).get_conversion_dictionary( type_instance )
+		ret = super(core_objc_bind_options, self).get_conversion_dictionary( )
 		for k in conversion_dict.keys() :
 			ret[k] = conversion_dict[k]
 		return ret
