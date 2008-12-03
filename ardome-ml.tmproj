@@ -58,7 +58,7 @@
 		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
-	<integer>467</integer>
+	<integer>235</integer>
 	<key>metaData</key>
 	<dict>
 		<key>bcomp/owl/reflection/doxygen_ast.py</key>
@@ -102,20 +102,6 @@
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>45</integer>
-		</dict>
-		<key>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>50</integer>
-				<key>line</key>
-				<integer>15</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
 		</dict>
 		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
 		<dict>
@@ -247,53 +233,10 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>wrappers/objective_c/src/OlibOpencorelibFrameSpan.h</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>0</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
-		<key>wrappers/objective_c/src/OlibOpencorelibFrameSpan.mm</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>0</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>6</integer>
-		</dict>
-		<key>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>30</integer>
-				<key>line</key>
-				<integer>88</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
 		<string>wrappers/SConscript</string>
-		<string>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</string>
 		<string>bcomp/owl/reflection/doxygen_xml_parse.py</string>
 		<string>bcomp/owl/reflection/doxygen_ast.py</string>
 		<string>src/opencorelib/cl/media_time.hpp</string>
@@ -301,15 +244,38 @@
 		<string>src/opencorelib/cl/core_enums.hpp</string>
 		<string>src/opencorelib/cl/time_code.hpp</string>
 		<string>src/opencorelib/cl/frames.hpp</string>
-		<string>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</string>
 		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
 		<string>bcomp/owl/reflection/type.py</string>
-		<string>wrappers/objective_c/src/OlibOpencorelibFrameSpan.h</string>
-		<string>wrappers/objective_c/src/OlibOpencorelibFrameSpan.mm</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
+	<false/>
+	<key>showFileHierarchyPanel</key>
 	<true/>
+	<key>treeState</key>
+	<dict>
+		<key>owl</key>
+		<dict>
+			<key>isExpanded</key>
+			<true/>
+			<key>subItems</key>
+			<dict/>
+		</dict>
+		<key>src</key>
+		<dict>
+			<key>isExpanded</key>
+			<true/>
+			<key>subItems</key>
+			<dict/>
+		</dict>
+		<key>wrappers</key>
+		<dict>
+			<key>isExpanded</key>
+			<true/>
+			<key>subItems</key>
+			<dict/>
+		</dict>
+	</dict>
 	<key>windowFrame</key>
-	<string>{{1, 57}, {1107, 971}}</string>
+	<string>{{10, 60}, {960, 818}}</string>
 </dict>
 </plist>

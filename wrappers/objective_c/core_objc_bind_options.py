@@ -26,6 +26,13 @@ class core_objc_bind_options( owl.wrapper.objc.objc_bind_options ):
 		ret = super(core_objc_bind_options, self).get_standard_source_files()
 		ret.extend(['objective_c/src/CoreConverts.mm'])
 		return ret
+		
+	def get_conversion_dictionary( self, type_instance ):
+		"""docstring for get_conversion_dictionary"""
+		ret = super(core_objc_bind_options, self).get_conversion_dictionary( type_instance )
+		for k in conversion_dict.keys() :
+			ret[k] = conversion_dict[k]
+		return ret
 	
 	def get_converted_type_string( self, type_instance ):
 		"""docstring for get_converted_type"""
