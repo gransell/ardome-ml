@@ -6,43 +6,45 @@ from owl.reflection import header_file, header_files, assembly
 import os
 
 Import(['local_env'])
+
 local_env.packages( 'boost' )
 
 
 
-dep_asses = []
-dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
-dep_hfs = []
-for dh in dep_headers :
-	dep_hfs.append(header_file(str(dh)))
-dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
-
-defines = [('CORE_API', ''), ]
-if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
-	defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
-elif local_env['PLATFORM'] == 'win32' :
-	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
-
-cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
-
-headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedefs.hpp' ) ),
-			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'point.hpp') )]
-
-files = header_files( headers, defines, [] )
-
-sample_assembly = assembly( 'core', files, dep_asses )
-
-objc_wrapper = owl.wrapper.objc.objc()
-objc_options = owl.wrapper.objc.objc_bind_options()
-wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objc_source' )
-obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
+#dep_asses = []
+#dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
+#dep_hfs = []
+#for dh in dep_headers :
+#	dep_hfs.append(header_file(str(dh)))
+#dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
+#
+#defines = [('CORE_API', ''), ]
+#if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
+#	defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
+#elif local_env['PLATFORM'] == 'win32' :
+#	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
+#
+#cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
+#
+#headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedefs.hpp' ) ),
+#			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+#			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
+#			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),]
+#			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+#			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+#			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+#			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+#			# header_file( os.path.join( cl_src_dir, 'point.hpp') )]
+#
+#files = header_files( headers, defines, [] )
+#
+#sample_assembly = assembly( 'core', files, dep_asses )
+#
+#objc_wrapper = owl.wrapper.objc.objc()
+#objc_options = owl.wrapper.objc.objc_bind_options()
+#wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objc_source' )
+#obj = local_env.framework( 'Core', wrapper_files['source_files'] )
+obj = local_env.framework( 'AML' )
         
 # wrapper_files = c_sharp_wrapper.bind( sample_assembly, options, 'cppcli' )
 # #               
@@ -50,5 +52,5 @@ obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
 # local_env.Append( CCFLAGS = '/EHa /clr' ) 
 # obj = local_env.shared_library( 'sample_wrappers', wrapper_files['cpp_files'] )
 # 
-# Return( 'obj' )
+Return( 'obj' )
 

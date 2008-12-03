@@ -26,4 +26,5 @@ Cflags: -I${includedir}/ardome-ml -I${libdir}/ardome-ml/include @OLIB_CORE_CXXFL
 install_libs=${libdir}
 install_include=${includedir}
 install_share=${prefix}/share
+install_resources=${prefix}/Resources
 
