@@ -7,6 +7,9 @@ from owl.reflection import header_file, header_files, assembly
 from wrappers.objective_c import core_objc_bind_options
 
 Import(['local_env'])
+
+print "BCOMP = ", os.path.join( local_env.root, 'bcomp' )
+
 local_env.packages( 'boost' )
 # Add core to the include path
 local_env.Append( CPPPATH = '#src/')
@@ -24,6 +27,8 @@ if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 elif local_env['PLATFORM'] == 'win32' :
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 
+local_env.Append( CPPPATH = [ '#/wrappers/objective_c/src' ] )
+
 cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
 
 headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedefs.hpp' ) ),
@@ -35,8 +40,8 @@ headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'point.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'point.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),]
 			# header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),]
 
 files = header_files( headers, defines, [] )
@@ -50,7 +55,7 @@ objc_wrapper = owl.wrapper.objc.objc()
 objc_options = core_objc_bind_options( os.path.join( local_env.root, 'bcomp' ), [sample_assembly] )
 
 wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objective_c/src' )
-obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
+obj = local_env.framework( 'AML', wrapper_files['source_files'] )
         
 # wrapper_files = c_sharp_wrapper.bind( sample_assembly, options, 'cppcli' )
 # #               
@@ -58,5 +63,5 @@ obj = local_env.shared_library( 'Core', wrapper_files['source_files'] )
 # local_env.Append( CCFLAGS = '/EHa /clr' ) 
 # obj = local_env.shared_library( 'sample_wrappers', wrapper_files['cpp_files'] )
 # 
-# Return( 'obj' )
+Return( 'obj' )
 

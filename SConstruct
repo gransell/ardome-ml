@@ -36,10 +36,11 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/osx/boost_signals.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/boost_thread.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/boost_unit_test_framework.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavutil.pc', 'bcomp/ffmpeg' )
+			if os.path.exists( 'bcomp/ffmpeg' ):
+				self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
+				self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
+				self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
+				self.install_config( 'config/osx/libavutil.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
 			if os.path.exists( 'bcomp/SDL' ):
 				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
@@ -220,8 +221,6 @@ if env.check_externals( ):
 
 	cl = env.build( 'src/opencorelib/cl' )
 	
-	cl_wrappers = env.build( 'wrappers' )
-	
 	# Build to test opencorelib:
 	cl_unit_test = env.build('test/opencorelib/unit_tests/', [ cl ] )
 	cl_test_plugin = env.build( 'test/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
@@ -229,12 +228,13 @@ if env.check_externals( ):
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
-	
-	env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] )
+
+	plugins = []
+	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 
 	if env.have_boost_python( ):
 		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
@@ -246,6 +246,10 @@ if env.check_externals( ):
 
 	env.package_install( )
 
+	print [ cl, pl, il, ml ] + plugins
+
+	env.build( 'wrappers', [ cl, pl, il, ml ] + plugins )
+	
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 
 		exit()

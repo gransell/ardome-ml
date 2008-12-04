@@ -219,6 +219,14 @@ namespace std
     */
     template< class K, class V >
     class map {};
+
+    /** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */    
+    template< class T, class U >
+    class pair {};
     
     
     /** 
