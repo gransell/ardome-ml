@@ -25,7 +25,7 @@ namespace olib
         /** Use this class to present media times to the user. It represents a time code
             of the form HH:MM:SS:FF (hours:minutes:seconds:frames). 
             
-            Depending on how the time_code object was created (which frame_rate::type that was 
+            Depending on how the time_code object was created (whicholib::opencorelib::frame_rate::type that was 
             specified) the maximum frame count is different (max for PAL is 24, max
             for NTSC is 29).
 

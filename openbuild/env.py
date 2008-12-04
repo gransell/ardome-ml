@@ -453,7 +453,7 @@ class Environment( BaseEnvironment ):
 					libs += [ [ '', file ] ]
 
 		if sources is not None:
-			libs.append( self.LoadableModule( lib, sources, *keywords ) )
+			libs.append( [ '', self.LoadableModule( lib, sources, *keywords ) ] )
 
 		return self.MakeBundle( lib, libs, '', resources=resources, *keywords )
 

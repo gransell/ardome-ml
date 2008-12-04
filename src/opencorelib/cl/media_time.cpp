@@ -53,7 +53,7 @@ namespace olib
             return *this;
         }
 
-        time_code media_time::to_time_code( frame_rate::type ft ) const
+        time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft ) const
         {
             ARENFORCE_MSG( m_time >= 0, "Can not convert negative values to time codes.")(*this);
             time_code tc;  
@@ -112,7 +112,7 @@ namespace olib
         }
 
 
-        CORE_API media_time from_time_code( frame_rate::type ft, const time_code& tc )
+        CORE_API media_time from_time_code(olib::opencorelib::frame_rate::type ft, const time_code& tc )
         {
             media_time mt;
             rational_time fps(frame_rate::get_fps(ft));
@@ -138,27 +138,27 @@ namespace olib
             return os;
         }
 
-        CORE_API media_time from_frame_number( frame_rate::type ft, boost::int64_t fr_nr )
+        CORE_API media_time from_frame_number(olib::opencorelib::frame_rate::type ft, boost::int64_t fr_nr )
         {
             media_time mt;
             return mt.from_frame_number(ft, fr_nr);
         }
 
-        media_time& media_time::from_frame_number( frame_rate::type ft,  const rational_time& fr_nr )
+        media_time& media_time::from_frame_number(olib::opencorelib::frame_rate::type ft,  const rational_time& fr_nr )
         {
             rational_time fps(frame_rate::get_fps(ft));
             m_time = fr_nr * (1 / fps);
             return *this;
         }
 
-        boost::int32_t media_time::to_frame_nr( frame_rate::type ft ) const
+        boost::int32_t media_time::to_frame_nr(olib::opencorelib::frame_rate::type ft ) const
         {
             rational_time fps(frame_rate::get_fps(ft));
             rational_time frm_count = m_time * fps;
             return static_cast<boost::int32_t>( frm_count.numerator() / frm_count.denominator() );
         }
 
-        void media_time::add_frames( frame_rate::type ft , boost::int64_t nr_of_frames )
+        void media_time::add_frames(olib::opencorelib::frame_rate::type ft , boost::int64_t nr_of_frames )
         {
             rational_time fps(frame_rate::get_fps(ft));
             m_time += nr_of_frames * (1/fps);

@@ -16,7 +16,7 @@ namespace olib
                 else if( ft == movie ) return rational_time(24000,1001);
                 else if (   ft == ntsc || 
                             ft == ntsc_drop_frame) return rational_time(30000,1001);
-                ARENFORCE_MSG( false, "Unknown frame_rate::type %i")(ft);
+                ARENFORCE_MSG( false, "Unknown olib::opencorelib::frame_rate::type %i")(ft);
                 return rational_time(0,0);
             }
 

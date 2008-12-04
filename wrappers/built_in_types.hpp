@@ -1,4 +1,7 @@
 
+#ifndef _BUILT_IN_TYPES_H_
+#define _BUILT_IN_TYPES_H_
+
 namespace boost
 {
     
@@ -26,6 +29,14 @@ namespace boost
     template< class T >
 	class equality_comparable {};
 	
+	/** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */
+    template< class T >
+	class less_than_comparable {};
+    
     /** 
         <bindgen>
     		<attribute name="visibility" value="private"></attribute>
@@ -45,6 +56,7 @@ namespace boost
 	/** 
         <bindgen>
     		<attribute name="visibility" value="private"></attribute>
+    		<attribute name="convert" value="yes"></attribute>
     	</bindgen>
     */
     template< class T >
@@ -335,3 +347,5 @@ namespace std
     */
     class wistream {};    
 }
+
+#endif // _BUILT_IN_TYPES_H_
