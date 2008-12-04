@@ -24,6 +24,8 @@ class Environment( BaseEnvironment ):
 	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
 	
 	already_installed = {}
+	bundle_libraries = [ [], [] ]
+	bundle_resources = [ [], [] ]
 	
 	def __init__( self, opts, bmgr = None , **kw ):
 		"""	Constructor. The Options object is added to the environment, and all 
@@ -80,6 +82,7 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
 		self[ 'stage_frameworks' ] = os.path.join( '$stage_prefix', 'Frameworks' )
 		self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'share' )
+		self[ 'stage_resources' ] = os.path.join( '$stage_prefix', 'Resources' )
 
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
@@ -220,6 +223,7 @@ class Environment( BaseEnvironment ):
 								( 'stage_libdir', 'install_libs' ), 
 								( 'stage_frameworks', 'install_frameworks' ),
 								( 'stage_bin', 'install_bin' ),
+								( 'stage_resources', 'install_resources' ),
 								( 'stage_share', 'install_share' ) ]:
 				list = env.package_manager.package_install_list( env, rule )
 				for key in list.keys( ):
@@ -259,7 +263,8 @@ class Environment( BaseEnvironment ):
 	def add_dependencies( self, result, dep , build_type) :
 		"""	MATS: Unsure about this method - windows only? (dll and bash slash hard coding)."""
 		
-		if result[build_type] == None : return
+		if result[build_type] is None : return
+		if dep[build_type] == None : return
 		res_min = str(result[ build_type ][ 0 ])
 		dep_min = str(dep[ build_type ][ 0 ]) 
 		
@@ -305,6 +310,8 @@ class Environment( BaseEnvironment ):
 		if "build" in dir(self.build_manager) : 
 			return self.build_manager.build( self, path, deps )
 		
+		self.build_deps = deps
+
 		# Keep this path in the environment, is used by for instance vsbuild.
 		self.relative_path_to_sconscript = path
 		
@@ -322,7 +329,7 @@ class Environment( BaseEnvironment ):
 															duplicate=0, exports=[ 'local_env' ] )
 
 			for dep in deps:
-				if dep is not None:
+				if dep is not None and dep[ build_type ] is not None:
 					self.add_dependencies(result, dep, build_type)
 						
 					self.Depends( result[ build_type ], dep[ build_type ] )
@@ -390,46 +397,66 @@ class Environment( BaseEnvironment ):
 	
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
+
+		new_lib = self.SharedLibrary( lib, sources, *keywords )
+		return new_lib
 		
-		return self.SharedLibrary( lib, sources, *keywords )
-		
-	def framework( self, fmwk, sources, headers=None, public_headers=None, resources=None, pre=None, nopre=None, *keywords):
-		"""	Build a Framework (darwin only)
-			
-			Keyword arguments:
-			fmwk -- The name of the framework to build
-			sources -- A list of source files
-			headers -- A list of header files, not needed for the build, but could be used 
-						by certain build_managers that create IDE files.
-			public_headers -- Alist of header files that will be public in the framework
-			resources -- A list of resources that will be included in the framework
-			pre -- A tuple with two elements, the first is the name of the header file that is 
-					included in all source-files using precompiled headers, the second is the
-					name of the actual source file creating the precompiled header file itself.
-			nopre -- If pre is set, this parameter contains a list of source files (that should
-						be present in sources) that will not use precompiled headers. These files
-						do not include the header file in pre[0].
-			keywords -- All other parameters passed with keyword assignment.
-		"""
+#	def framework( self, fmwk, sources, headers=None, public_headers=None, resources=None, pre=None, nopre=None, *keywords):
+#		"""	Build a Framework (darwin only)
+#			
+#			Keyword arguments:
+#			fmwk -- The name of the framework to build
+#			sources -- A list of source files
+#			headers -- A list of header files, not needed for the build, but could be used 
+#						by certain build_managers that create IDE files.
+#			public_headers -- Alist of header files that will be public in the framework
+#			resources -- A list of resources that will be included in the framework
+#			pre -- A tuple with two elements, the first is the name of the header file that is 
+#					included in all source-files using precompiled headers, the second is the
+#					name of the actual source file creating the precompiled header file itself.
+#			nopre -- If pre is set, this parameter contains a list of source files (that should
+#						be present in sources) that will not use precompiled headers. These files
+#						do not include the header file in pre[0].
+#			keywords -- All other parameters passed with keyword assignment.
+#		"""
+#
+#		if self['PLATFORM'] != 'darwin':
+#			raise Exception, "Framwork builds only supported on darwin."
+#        
+#		framework_name = '%s.framework' % fmwk
+#		
+#		if "shared_library" in dir(self.build_manager) :
+#			return self.build_manager.framework( self, fmwk, sources, headers, public_headers, resources, pre, nopre, *keywords )
+#
+#		# self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/%s/Versions/A/%s' % ( self[ 'install_name' ], framework_name, fmwk, fmwk ) ] )
+#
+#		self.setup_precompiled_headers( sources, pre, nopre )
+#
+#		loadable_module_obj = self.LoadableModule( target = fmwk, source = sources )
+#
+#		self.Install( framework_name + '/Versions/A', loadable_module_obj )
+#		self.Install( framework_name +'/Versions/A/Headers', public_headers )
+#		self.Install( framework_name +'/Versions/A/Resources', resources )
 
-		if self['PLATFORM'] != 'darwin':
-			raise Exception, "Framwork builds only supported on darwin."
-        
-		framework_name = '%s.framework' % fmwk
-		
-		if "shared_library" in dir(self.build_manager) :
-			return self.build_manager.framework( self, fmwk, sources, headers, public_headers, resources, pre, nopre, *keywords )
 
-		# self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%s/%s/Versions/A/%s' % ( self[ 'install_name' ], framework_name, fmwk, fmwk ) ] )
+	def framework( self, lib, sources=None, headers=None, pre=None, nopre=None, *keywords ):
+		import openbuild.Tools.mac
+		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
-		self.setup_precompiled_headers( sources, pre, nopre )
+		libs = Environment.bundle_libraries[ int( self.debug ) ]
+		resources = Environment.bundle_resources[ int( self.debug ) ]
+		build = [ Environment.prep_release, Environment.prep_debug ][ int( self.debug ) ]
 
-		loadable_module_obj = self.LoadableModule( target = fmwk, source = sources )
+		for item in self.build_deps:
+			if item[ build ] is not None:
+				for file in item[ build ]:
+					libs += [ [ '', file ] ]
 
-		self.Install( framework_name + '/Versions/A', loadable_module_obj )
-		self.Install( framework_name +'/Versions/A/Headers', public_headers )
-		self.Install( framework_name +'/Versions/A/Resources', resources )
-		
+		if sources is not None:
+			libs.append( [ '', self.LoadableModule( lib, sources, *keywords ) ] )
+
+		return self.MakeBundle( lib, libs, '', resources=resources, *keywords )
+
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
 		
@@ -441,7 +468,8 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
 
-		return self.SharedLibrary( lib, sources, *keywords )
+		new_lib = self.SharedLibrary( lib, sources, *keywords )
+		return new_lib
 
 	def program( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a program. See shared_library in this class for a detailed description. """
@@ -643,7 +671,30 @@ class Environment( BaseEnvironment ):
 						list.append( os.path.join( self.root, src.path ) )
 				else:
 					list.append( os.path.join( self.root, self.relative_path_to_sconscript, src ) )
+
 		self.copy_files( dst, list )
+
+	def filter_framework( self, src, dst ):
+		dst_dir = dst
+		if dst_dir.find( '/' ) != -1:
+			if dst_dir[ dst_dir.rfind( '/' ) : ] == src[ src.rfind( '/' ) : ]:
+				dst_dir = dst_dir[ 0 : dst_dir.rfind( '/' ) ]
+
+		source = self.subst( utils.clean_path( dst ) )
+		target = self.subst( utils.clean_path( self[ 'stage_libdir' ] ) )
+		resources = self.subst( utils.clean_path( self[ 'stage_resources' ] ) )
+		if source.endswith( '/' ): source = source[ 0:-1 ]
+		if target.endswith( '/' ): target = target[ 0:-1 ]
+		if resources.endswith( '/' ): resources = resources[ 0:-1 ]
+		if dst.startswith( target ):
+			sub_dir = dst_dir[ len( target ) : ]
+			if not sub_dir.startswith( '/pkgconfig' ) and not sub_dir.startswith( '/python' ):
+				if not src.endswith( '.pc' ) and not src.endswith( '.a' ) and not src.endswith( '.py' ) and not src.endswith( '.pyc' ) and not src.endswith( '.aml' ) and not src.endswith( '.so' ):
+					Environment.bundle_libraries[ int( self.debug ) ] += [ [ dst_dir[ len( target ) : ], source ] ]
+		if dst.startswith( resources ):
+			sub_dir = dst_dir[ len( resources ) : ]
+			if sub_dir not in [ '/examples' ]:
+				Environment.bundle_resources[ int( self.debug ) ] += [ [ sub_dir, source ] ]
 
 	def copy_files( self, dst, srcs, perms = None ):
 		""" Installs src to dst, walking through the src if needed and invoking 
@@ -769,6 +820,7 @@ class Environment( BaseEnvironment ):
 				if not os.path.exists( dir ):
 					if execute: os.makedirs( dir )
 			for src_file, dst_file in all_files:
+				self.filter_framework( src_file, dst_file )
 				if not os.path.exists( dst_file ) or os.path.getmtime( src_file ) > os.path.getmtime( dst_file ):
 					file_count += 1
 					if execute: 
