@@ -35,8 +35,8 @@ headers = [ header_file( os.path.join( local_env.root, 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'point.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'point.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),]
 			# header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),]
 
 files = header_files( headers, defines, [] )
