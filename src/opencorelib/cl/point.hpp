@@ -4,6 +4,7 @@
 #include <boost/operators.hpp>
 #include "./minimal_string_defines.hpp"
 
+
 namespace olib
 {
    namespace opencorelib
