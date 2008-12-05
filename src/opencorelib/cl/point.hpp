@@ -57,4 +57,5 @@ namespace olib
     }
 }
 
+
 #endif // _CORE_POINT_H_
