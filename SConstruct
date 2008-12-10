@@ -246,8 +246,6 @@ if env.check_externals( ):
 
 	env.package_install( )
 
-	print [ cl, pl, il, ml ] + plugins
-
 	env.build( 'wrappers', [ cl, pl, il, ml ] + plugins )
 	
 	# Makes it possible for the visual studio builder to terminate scons.
