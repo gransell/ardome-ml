@@ -42,25 +42,25 @@ namespace olib
 
 		xerces_string to_x_string(const std::wstring &source)
 		{
-#if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
-			// XMLCh is supposed to be 16 bit and wchar_t 32 bit
-			std::vector<XMLCh> packed = string_conversions::pack_wide_string( 
-				reinterpret_cast<const wchar_t *>( source.c_str()), source.size() );
-			return xerces_string(&packed[0]);
-#else
-			return xerces_string(source);
-#endif
+			#if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
+				// XMLCh is supposed to be 16 bit and wchar_t 32 bit
+				std::vector<XMLCh> packed = string_conversions::pack_wide_string( 
+					reinterpret_cast<const wchar_t *>( source.c_str()), source.size() );
+				return xerces_string(&packed[0]);
+			#else
+				return xerces_string(source);
+			#endif
 		}
 
 		std::wstring x_to_wstring(const XMLCh *source, unsigned int length)
 		{
-#if defined (OLIB_ON_MAC) || defined( OLIB_ON_LINUX )
-			using namespace XERCES_CPP_NAMESPACE;
-			std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string(source, length);
-			return std::wstring(&wide_chars[0], wide_chars.size()-1);
-#else
-			return std::wstring(source, length);
-#endif
+			#if defined (OLIB_ON_MAC) || defined( OLIB_ON_LINUX )
+				using namespace XERCES_CPP_NAMESPACE;
+				std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string(source, length);
+				return std::wstring(&wide_chars[0], wide_chars.size()-1);
+			#else
+				return std::wstring(source, length);
+			#endif
 		}
 
 		std::wstring x_to_wstring(const XMLCh *source)

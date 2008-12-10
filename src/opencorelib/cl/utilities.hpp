@@ -143,15 +143,7 @@ namespace olib
 								should be discarded in the result. Must be 1 or higher.*/
 			CORE_API t_string get_stack_trace( int skip_levels );
 
-            /// Takes the current time and adds milli_sec to it, and returns the result as an xtime.
-            /** This function is useful when dealing with the boost::thread
-                library. Example:
-                <pre>
-                    // Sleep for 5 seconds.
-                    boost::thread::sleep(add_millsecs_from_now(5000));
-                </pre> */
-            CORE_API boost::xtime add_millsecs_from_now( long milli_sec );
-
+            
             /// Small helper class that measures time in ms from creation to measuring call.
             class CORE_API timer
             {
@@ -161,9 +153,10 @@ namespace olib
                 timer();
 
                 /// Get the time in milliseconds since this time instance was created.
-                long elapsed_millisecs();
+                boost::posix_time::time_duration elapsed();
+
             private:
-                boost::posix_time::ptime m_Start;
+                boost::system_time m_start;
             };
 
 			/// Get information about all currently loaded .so or .dll files.

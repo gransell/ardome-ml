@@ -90,6 +90,7 @@ win32_sources = [
 	'msw/enum_process_modules.cpp']
 
 if local_env[ 'PLATFORM' ] == 'win32' :
+	local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS' ] )
 	local_env.Append( LIBS = ['version.lib', 'psapi.lib'] )
     
 extras = { 'posix' : linux_sources, 'darwin' : mac_sources, 'win32' : win32_sources }

@@ -73,9 +73,8 @@ namespace olib
             virtual bool dispatch_next_message();
         
         private:
-			boost::mutex m_queue_mtx;
-//            boost::recursive_mutex m_queue_mtx;
-            boost::condition_variable m_message_dispatched;
+			boost::recursive_mutex m_queue_mtx;
+            boost::condition_variable_any m_message_dispatched;
 
             typedef std::pair< boost::shared_ptr< message >, post_callback > message_pair;
             typedef std::queue< message_pair > message_container;

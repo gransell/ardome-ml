@@ -34,7 +34,7 @@ namespace olib
 			void start();
 
 			/// Stop the worker thread, empties the job heap.
-			void stop( long time_out);
+            void stop( boost::posix_time::time_duration time_out);
 
 			/// Add a new job tho the job heap.
 			/** The priority of the job should not be 
@@ -44,13 +44,13 @@ namespace olib
             /// Adds a job to the worker that will be performed every run_interval period.
             /** The job will be run as soon as possible (taking the priority of the
                 job into account) and then at the interval provided in this call. */
-            void add_reoccurring_job( const base_job_ptr& p_job, const time_value& run_interval ) ;
+            void add_reoccurring_job( const base_job_ptr& p_job, const boost::posix_time::time_duration& run_interval ) ;
 
             /// Removes a previously added job from the worker.
             void remove_reoccurring_job( const base_job_ptr& p_job );
 
             /// Adds a job to the worker that will start as close as possible to start_after_ms.
-            void add_job( const base_job_ptr& p_job, const time_value& start_after);
+            void add_job( const base_job_ptr& p_job, const boost::posix_time::time_duration& start_after);
 
             /// Add a new job to the heap that will be given the highest priority.
             /** All existing jobs will be downgraded, this job will have prio 0 */
@@ -68,9 +68,9 @@ namespace olib
             /// Same as cancel_current_job but the function blocks until the job is terminated
             /** @param time_out If the job hasn't terminated within time_out ms, the
                         function returns false.
-                @return true if the job was cancelled within the given timeout,
+                @return true if the job was canceled within the given timeout,
                         false otherwise. */
-            bool cancel_current_job(long time_out) ;
+            bool cancel_current_job( const boost::posix_time::time_duration& time_out) ;
 
 			/// Remove all added jobs, will set job_base::set_should_terminate_job to true.
 			/** This function is called automatically by the Stop function. */
@@ -87,7 +87,7 @@ namespace olib
                         the function will return false.
                 @return true if all jobs were completed within the 
                         given time out value, false otherwise. */
-            bool wait_for_all_jobs_completed( long time_out );
+            bool wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out );
 
 		protected:
 
@@ -110,9 +110,9 @@ namespace olib
             /** Either sleep or pump the message loop. In windows
                 you MUST do the later if you have created any HWND's.
                 If you sleep, you must wake up when the passed condition
-                is signalled. */
-            virtual bool on_idle(    boost::condition_variable& wake_thread, 
-                                    boost::mutex& wake_thread_mtx );
+                is signaled. */
+            virtual bool on_idle(	boost::condition_variable_any& wake_thread, 
+                                    boost::recursive_mutex& wake_thread_mtx );
 
             /// Invoked when a new job is about to be executed
 			/** Inherit from this class and override to do 
@@ -143,10 +143,10 @@ namespace olib
             /// Jobs that should be added to the heap after a certain amount of time
             jobcollection m_timed_jobs;
 
-            boost::condition_variable m_thread_exit_success, m_thread_started, m_wake_thread;
-            mutable boost::mutex m_wake_thread_mtx;
-			mutable boost::mutex m_thread_started_mtx;
-            mutable boost::mutex m_thread_exit_mtx;
+            boost::condition_variable_any m_thread_exit_success, m_thread_started, m_wake_thread;
+            mutable boost::recursive_mutex m_wake_thread_mtx;
+			mutable boost::recursive_mutex m_thread_started_mtx;
+            mutable boost::recursive_mutex m_thread_exit_mtx;
 
 			/// Flag to keep track of if the worker is running a job_base or not.
 			bool m_thread_running;
@@ -171,7 +171,7 @@ namespace olib
             /// Will move timed jobs to the actual heap of jobs that will be performed.
             void move_timed_jobs_to_heap();
 
-            time_value next_timed_job_start_time() const;
+            boost::system_time next_timed_job_start_time() const;
 
 			void reset_current_job();
 		};

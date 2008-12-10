@@ -13,9 +13,9 @@ namespace olib
         boost::shared_ptr<message_response> 
         basic_message_queue::push_and_wait( boost::shared_ptr<message> new_msg )
         {
-			boost::unique_lock<boost::mutex> lck(m_queue_mtx);
-//            boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
-            post_callback cb( boost::bind(&basic_message_queue::on_message_dispatched, this, _1 ));
+			//boost::unique_lock<boost::mutex> lck(m_queue_mtx);
+			boost::recursive_mutex::scoped_lock lck( m_queue_mtx );
+			post_callback cb( boost::bind(&basic_message_queue::on_message_dispatched, this, _1 ));
             boost::shared_ptr<message_response> empty_response;
             new_msg->set_response(empty_response);
             new_msg->set_message_processed(false);
@@ -32,8 +32,8 @@ namespace olib
 
         void basic_message_queue::push( boost::shared_ptr<message> new_msg, post_callback pc )
         {
-			boost::lock_guard<boost::mutex> lck(m_queue_mtx);
-//            boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
+			
+			boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
             boost::shared_ptr<message_response> empty_result;
             new_msg->set_response(empty_result);
             new_msg->set_message_processed(false);
@@ -42,8 +42,7 @@ namespace olib
 
         void basic_message_queue::push( boost::shared_ptr<message> new_msg )
         {
-			boost::lock_guard<boost::mutex> lck(m_queue_mtx);
-//            boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
+			boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
             boost::shared_ptr<message_response> empty_result;
             new_msg->set_response(empty_result);
             new_msg->set_message_processed(false);
@@ -55,8 +54,7 @@ namespace olib
             message_pair to_dispatch;
             
             {
-				boost::lock_guard<boost::mutex> lck(m_queue_mtx);
-//                boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
+				boost::recursive_mutex::scoped_lock lck(m_queue_mtx);
                 if( m_messages.empty() ) return false;
                 to_dispatch = m_messages.back();
                 m_messages.pop();

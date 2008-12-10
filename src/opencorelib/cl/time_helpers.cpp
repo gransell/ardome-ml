@@ -7,63 +7,7 @@
 namespace olib 
 { 
    namespace opencorelib 
-    {
-        CORE_API bool operator==(const time_value& lhs, const time_value& rhs)
-        {
-            return lhs.m_micro_secs == rhs.m_micro_secs &&
-                lhs.m_secs == rhs.m_secs;
-        }
-
-        CORE_API bool operator<(const time_value& lhs, const time_value& rhs)
-        {
-            if( lhs.m_secs < rhs.m_secs ) return true;
-            if( lhs.m_secs > rhs.m_secs ) return false;
-            
-            // Seconds are equal, check micro-secs:
-            if( lhs.m_micro_secs < rhs.m_micro_secs ) return true;
-            if( lhs.m_micro_secs > rhs.m_micro_secs ) return false;
-
-            // Values are equal 
-            return false;
-        }
-
-        time_value::operator boost::xtime () const
-        {
-            boost::xtime result;
-            result.sec = m_secs;
-            result.nsec = static_cast<boost::xtime::xtime_nsec_t>( m_micro_secs * 1000 );
-            return result;
-        }
-
-        time_value time_value::operator+=(const time_value &tc)
-        {
-            boost::int64_t mic_secs = m_micro_secs + tc.m_micro_secs;
-            m_secs = tc.m_secs + m_secs + (mic_secs / 1000000);
-            m_micro_secs = mic_secs % 1000000;
-            return *this;
-        }
-
-        time_value time_value::operator-=(const time_value &tc)
-        {
-            m_micro_secs = m_micro_secs - tc.m_micro_secs;
-            m_secs = m_secs - tc.m_secs;
-
-            if(m_micro_secs < 0)
-            {
-                m_secs -= 1;
-                m_micro_secs += 1000000;
-            }
-
-            return *this;
-        }
-
-        olib::t_string time_value::to_string() const
-        {
-            t_stringstream ss; 
-            ss << *this; 
-            return ss.str();
-        }
-
+    {      
         #ifndef OLIB_ON_WINDOWS
 
         class timer::impl
@@ -79,9 +23,9 @@ namespace olib
 
             void start() 
             {
-                m_start_time = time_value::now();
+                m_start_time = boost::get_system_time();
                 m_running = true;
-                m_duration = time_value(0,0);
+                m_duration = boost::posix_time::seconds(0);
             }
 
             void stop()
@@ -92,15 +36,16 @@ namespace olib
 
             bool is_running() const { return m_running; }
 
-            time_value elapsed() const
+            boost::posix_time::time_duration elapsed() const
             {
                 if( !m_running ) return m_duration;
-                return time_value::now() - m_start_time;
+                return boost::get_system_time() - m_start_time;
             }
 
         private:
             bool m_running;
-            time_value m_start_time, m_duration;
+            boost::system_time m_start_time;
+            boost::posix_time::time_duration m_duration;
         };
 
         class thread_sleeper::impl
@@ -116,7 +61,7 @@ namespace olib
                
             }
 
-            thread_sleep::result current_thread_sleep( const time_value& val, thread_sleep_activity::type sleep_activty ) 
+            thread_sleep::result current_thread_sleep( const boost::posix_time::time_duration& val, thread_sleep_activity::type sleep_activty ) 
             {
                 if( sleep_activty == thread_sleep_activity::handle_incomming_messages )
                 {
@@ -124,7 +69,7 @@ namespace olib
                 }
                 
                 boost::recursive_mutex::scoped_lock lock( m_mtx );
-                bool res = m_wait_condition.timed_wait(lock, time_value::now() + val);
+                bool res = m_wait_condition.timed_wait(lock, boost::get_system_time() + val);
                 if( !res ) return thread_sleep::interrupted;
                 return thread_sleep::slept_full_time;
             }
@@ -136,58 +81,17 @@ namespace olib
             }
 
         private:
-            boost::condition_variable m_wait_condition;
+            boost::condition_variable_any m_wait_condition;
             boost::recursive_mutex m_mtx;
             
         };
-
-
-        // Possible implementation of current_thread_sleep
-        //struct timespec s_time;
-        //struct timespec rem_time;
-
-        //s_time.tv_sec = val.get_seconds();
-        //s_time.tv_nsec = val.get_micro_seconds() * 1000;
-
-        //for(;;)
-        //{
-        //    int res = nanosleep( &s_time, &rem_time );
-        //    if( res == 0 || m_should_wake ) break;
-        //    /// Check if we were interrupted, if not, something else is wrong. Bail out.
-        //    if( res == -1 && errno != EINTR ) break;
-
-        //    /// We were interrupted but we shouldn't care about it.
-        //    // Continue to sleep the remaining time.
-        //    s_time = rem_time;
-        //}
-
-        // Possible implementation of wake_sleeping_thread
-        //m_should_wake = true;
-        //// Wake up any nanosleeping threads
-        //// They will check their m_should_wake flags and contiue to sleep
-        //// if they weren't the intended target.
-        //kill(0, SIGUSR1 );
-
-
-
-        //typedef rdtsc_default_timer::value_type value_type;
-        /*private:
-        #if GCC_VERSION >= 40000 && !defined( OLIB_ON_MAC )
-        typedef rdtsc_default_timer::value_type value_type;
-        rdtsc_default_timer m_timer;
-        #else
-        typedef gettimeofday_default_timer::value_type value_type;
-        gettimeofday_default_timer m_timer;
-        #endif
-        };*/
-
 
         #else // OLIB_ON_WINDOWS
 
         class timer::impl
         {
         public:
-            impl() : m_start_time(0), m_duration(0,0), m_running(false)
+            impl() : m_start_time(0), m_running(false)
             {
             }
 
@@ -199,7 +103,7 @@ namespace olib
             void start() 
             {
                 m_running = true;
-                m_duration = time_value(0,0);
+                m_duration = boost::posix_time::seconds(0);
                 ARENFORCE_WIN_MSG( timeBeginPeriod(1) == TIMERR_NOERROR, "Could not set timer resolution to 5 ms" );
                 m_start_time = timeGetTime();
                 timeEndPeriod(1);
@@ -213,7 +117,7 @@ namespace olib
 
             bool is_running() const { return m_running; }
 
-            time_value elapsed() const
+            boost::posix_time::time_duration elapsed() const
             {
                 if(!m_running) return m_duration;
                 
@@ -221,16 +125,14 @@ namespace olib
                 DWORD duration = timeGetTime() - m_start_time;
                 timeEndPeriod(1);
 
-                time_value vt(0,0);
-                vt.set_seconds( duration / 1000);
-                vt.set_micro_seconds(( duration - (vt.get_seconds() * 1000) )* 1000 );
+                boost::posix_time::time_duration vt = boost::posix_time::milliseconds(duration);
                 return vt;
             }
 
         private:
             bool m_running;
             DWORD m_start_time;
-            time_value m_duration;
+            boost::posix_time::time_duration m_duration;
         };
 
 
@@ -247,11 +149,11 @@ namespace olib
                 if(m_event) CloseHandle(m_event);
             }
 
-            thread_sleep::result current_thread_sleep( const time_value& val, thread_sleep_activity::type sleep_activty ) 
+            thread_sleep::result current_thread_sleep( const boost::posix_time::time_duration& val, thread_sleep_activity::type sleep_activty ) 
             {
                 {
                     boost::recursive_mutex::scoped_lock lck(m_mtx);
-                    DWORD to_wait = static_cast<DWORD>( val.get_seconds() * 1000 + val.get_micro_seconds() / 1000 );
+                    DWORD to_wait = static_cast<DWORD>( val.total_milliseconds());
                     if( to_wait <= 0 ) return thread_sleep::slept_full_time;
                     timeSetEvent( to_wait , 0, (LPTIMECALLBACK)m_event, 0, TIME_CALLBACK_EVENT_SET );
                 }
@@ -275,7 +177,7 @@ namespace olib
                 }
                 
                 a_timer.stop();
-                time_value small_epsilon(0,10000);
+                boost::posix_time::time_duration small_epsilon = boost::posix_time::milliseconds(10);
                 if( a_timer.elapsed() >= ( val - small_epsilon )) return thread_sleep::slept_full_time;
                 return thread_sleep::interrupted;
             }
@@ -324,7 +226,7 @@ namespace olib
             m_pimpl->stop();
         }
 
-        time_value timer::elapsed() const
+        boost::posix_time::time_duration timer::elapsed() const
         {
             return m_pimpl->elapsed();
         }
@@ -343,7 +245,7 @@ namespace olib
         {
         }
 
-        thread_sleep::result thread_sleeper::current_thread_sleep( const time_value& val,
+        thread_sleep::result thread_sleeper::current_thread_sleep( const boost::posix_time::time_duration& val,
                                                                     thread_sleep_activity::type sleep_activty ) 
         {
             return m_pimpl->current_thread_sleep( val, sleep_activty );

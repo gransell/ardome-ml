@@ -1,4 +1,4 @@
-tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/xerces-c-3.0.0-x86-windows-vc-9.0.zip -> xerces.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/xerces-c-src_2_8_0.zip -> xerces.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/loki-0.1.6.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/vc90-boost_1_37-wchar_t-on.tar.bz2 -> boost.tar.bz2
 

@@ -13,6 +13,8 @@ using namespace olib::opencorelib;
 using namespace olib::opencorelib::utilities;
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/time_formatters.hpp>
+
 using namespace boost::posix_time;
 
 class MyJobClass : public base_job
@@ -27,7 +29,7 @@ public:
         for(int i = 0; i < (m_NrOfMSToRun / 50) ; ++i )
         {   
 			
-            boost::thread::sleep(utilities::add_millsecs_from_now(50));
+            boost::thread::sleep( boost::get_system_time() + boost::posix_time::milliseconds(50) );
 			
             if( get_should_terminate_job() )
             {
@@ -50,6 +52,7 @@ public:
     int do_work()
     {
         ARENFORCE(false).msg("The work function crashed");
+        //throw std::exception("The work function crashed");
         return 1;
     }
 };
@@ -65,8 +68,8 @@ void TestWorker()
     aWorker.start();
     aWorker.add_job(aJob);
 
-    BOOST_CHECK(aJob->wait_for_job_done(1000));
-    aWorker.stop(1000);
+    BOOST_CHECK(aJob->wait_for_job_done( boost::posix_time::seconds(1)));
+    aWorker.stop( boost::posix_time::seconds(1) );
 }
 
 void TestWorker2()
@@ -83,8 +86,8 @@ void TestWorker2()
     }
 
     // Starting to wait for completion 
-    BOOST_CHECK( aWorker.wait_for_all_jobs_completed(5000) );
-    BOOST_CHECK( aTimer.elapsed_millisecs() < 5000 );
+    BOOST_CHECK( aWorker.wait_for_all_jobs_completed(boost::posix_time::seconds(5)) );
+    BOOST_CHECK( aTimer.elapsed() < boost::posix_time::seconds(5) );
 }
 
 void TestTerminateWorker()
@@ -96,12 +99,12 @@ void TestTerminateWorker()
     aWorker.add_job(aJob);
 	
 	// Sleep so that the job has time to start
-    boost::thread::sleep(utilities::add_millsecs_from_now(50));
+    boost::thread::sleep( boost::get_system_time() + boost::posix_time::milliseconds(50));
 	
     // Cancelling the job prematurely. Accept 500 ms delay
     olib::opencorelib::utilities::timer aTimer;
-    BOOST_CHECK( aWorker.cancel_current_job(500) );
-    BOOST_CHECK( aTimer.elapsed_millisecs() < 500 );
+    BOOST_CHECK( aWorker.cancel_current_job( boost::posix_time::milliseconds(500) ) );
+    BOOST_CHECK( aTimer.elapsed() < boost::posix_time::milliseconds(500) );
 
     // If thread terminated, the return value is -100.
     BOOST_CHECK( aJob->get_result() == -100 );
@@ -113,7 +116,7 @@ void TestWorkerError()
     aWorker.start();
     boost::shared_ptr< MyErrorJob > aJob( new MyErrorJob() );
     aWorker.add_job(aJob);
-    BOOST_CHECK( aJob->wait_for_job_done(1000) );
+    BOOST_CHECK( aJob->wait_for_job_done( boost::posix_time::seconds(1) ) );
     BOOST_CHECK( aJob->get_result() == -1 );
     BOOST_CHECK( aJob->get_base_exception() );
 
@@ -126,7 +129,7 @@ void TestWorkerError()
 
 void TestThreadPool()
 {
-    thread_pool myPool(10, 5000);
+    thread_pool myPool(10, boost::posix_time::seconds(5) );
     for(int i = 0; i < 50; ++i)
     {
         boost::shared_ptr< MyJobClass > aJob( new MyJobClass(200) );
@@ -135,8 +138,8 @@ void TestThreadPool()
 
     // Starting to wait for 50 jobs (á 200 ms) to terminate (max 15 sec)
     olib::opencorelib::utilities::timer aTimer;
-    BOOST_CHECK( myPool.wait_for_all_jobs_completed(15000) );
-    BOOST_CHECK( aTimer.elapsed_millisecs() < 15000 );
+    BOOST_CHECK( myPool.wait_for_all_jobs_completed( boost::posix_time::seconds(15) ) );
+    BOOST_CHECK( aTimer.elapsed() < boost::posix_time::seconds(15) );
 }
 
 class my_reoccurring_job : public base_job
@@ -145,7 +148,7 @@ public:
     my_reoccurring_job( const std::string& outp, int& counter ) : m_to_output(outp), m_counter(counter) {}
     int do_work()
     {
-        // T_CERR << m_to_output.c_str() << " " << time_value::now().get_seconds() << std::endl;
+        std::cerr << m_to_output.c_str() << " " << boost::posix_time::to_simple_string( boost::get_system_time()) << std::endl;
         m_counter += 1;
         return 1;
     }
@@ -161,11 +164,19 @@ void test_reoccurring_job()
     int reoccur_counter(0), dummy(0);
     boost::shared_ptr< my_reoccurring_job > aJob( new my_reoccurring_job("reoccurring every second", reoccur_counter) );
     boost::shared_ptr< my_reoccurring_job > another_job( new my_reoccurring_job("occurs once, after 2,5 secs", dummy) );
-    aWorker.add_reoccurring_job(aJob, time_value(1,0));
-    aWorker.add_job(another_job, time_value(2,500000));
+    aWorker.add_reoccurring_job(aJob, boost::posix_time::seconds(1));
+    aWorker.add_job(another_job, boost::posix_time::milliseconds(2500));
     // Sleep on the main thread.
     olib::opencorelib::thread_sleeper sleeper;
-    sleeper.current_thread_sleep( time_value(10,0) );
+
+    /*boost::recursive_mutex m_mtx;
+    boost::condition_variable_any m_wait_condition;
+
+    boost::recursive_mutex::scoped_lock lock( m_mtx );
+    bool res = m_wait_condition.timed_wait(lock, boost::get_system_time() + boost::posix_time::seconds(10));*/
+
+    sleeper.current_thread_sleep( boost::posix_time::seconds(10) );
+	// T_COUT << _T("reoccur_counter=") << reoccur_counter << std::endl;
     BOOST_CHECK( reoccur_counter >= 9 );
     BOOST_CHECK_EQUAL( 1, dummy );
 }

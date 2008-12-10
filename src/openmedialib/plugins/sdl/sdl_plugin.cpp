@@ -719,8 +719,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			if( chunks_.size( ) == 0 )
 			{
 				// Never wait longer than the duration of one frame.
-				cond_.timed_wait( lock, 
-					olib::opencorelib::utilities::add_millsecs_from_now( frame_duration_ ) );
+                cond_.timed_wait( lock, boost::posix_time::milliseconds(frame_duration_) );
 			}
 			
 			if ( chunks_.size( ) > 0 && !is_paused_ )

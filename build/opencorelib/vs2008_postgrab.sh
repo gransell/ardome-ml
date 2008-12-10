@@ -23,7 +23,7 @@ if [ ! -d boost ]; then
 	fi
 fi
 
-if [ ! -d xerces-c-3.0.0-x86-windows-vc-9.0 ]; then
+if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
 
