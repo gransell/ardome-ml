@@ -15,7 +15,6 @@ from SCons.Script.SConscript import SConsEnvironment
 
 def TOOL_WRITE_VAL(env):
 	#if tools_verbose:
-	print "running tool: TOOL_WRITE_VAL"
 	env.Append(TOOLS = 'WRITE_VAL')
 	def write_val(target, source, env):
 		"""Write the contents of the first source into the target.
@@ -56,21 +55,21 @@ def TOOL_BUNDLE(env):
 
 	if 'BUNDLE' in env['TOOLS']: return
 	if sys.platform == 'darwin': # not much point in doing this anywhere else
-		print "running tool: TOOL_BUNDLE"
 		env.Append(TOOLS = 'BUNDLE')
 		# env['BUNDLEDIRSUFFIX'] = '.bundle'
 		# This requires another tool (defined in this file):
 		TOOL_WRITE_VAL(env)
 		# Type codes are BNDL for generic bundle and APPL for application.
 		def MakeBundle(env,
-					   bundledir,
-					   libs,
-					   info_plist,
-					   icon_file='',
-					   signature='????',
-					   #key,
-					   #subst_dict=None,
-					   resources=[]):
+				bundledir,
+				libs,
+				info_plist,
+				public_headers = [],	
+				icon_file='',
+				signature='????',
+				#key,
+				#subst_dict=None,
+				resources=[]):
 			"""Install a bundle into its dir, in the proper format"""
 
 			# add (and check) the extension to the bundle:
@@ -79,12 +78,11 @@ def TOOL_BUNDLE(env):
 
 			# Set up the directory structure
 			for item in libs:
-				print item
-				env.Install( bundledir+'/Contents/MacOS/' + item[ 0 ], item[ 1 ] )
+				env.Install( bundledir+'/Versions/A/' + item[ 0 ], item[ 1 ] )
 			for item in resources:
-				print item
-				env.Install( bundledir+'/Resources/' + item[ 0 ], item[ 1 ] )
-			#env.Install(bundledir+'/Contents/', info_plist)
+				env.Install( bundledir+'/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
+			env.Install( bundledir+'/Versions/A/Headers/', source = public_headers )
+			env.Install(bundledir+'/Versiosn/A/Resources/', info_plist)
 			#env.WriteVal(target=bundledir+'/Contents/PkgInfo', source=SCons.Node.Python.Value(typecode+signature))
 
 			# install the resources

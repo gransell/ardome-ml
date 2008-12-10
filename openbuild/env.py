@@ -341,14 +341,16 @@ class Environment( BaseEnvironment ):
 					local_env.Append( LIBS = [lib] )
 
 			switch = [ '/I', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
-			paths = local_env[ 'CPPPATH' ]
-			local_env.Append( CPPFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
-			local_env.Replace( CPPPATH = paths )
+			if local_env.has_key('CPPPATH') :
+				paths = local_env[ 'CPPPATH' ]
+				local_env.Append( CPPFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
+				local_env.Replace( CPPPATH = paths )
 
 			switch = [ '/LIBPATH:', '-L' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
-			paths = local_env[ 'LIBPATH' ]
-			local_env.Append( LINKFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
-			local_env.Replace( LIBPATH = paths )
+			if local_env.has_key('LIBPATH') :
+				paths = local_env[ 'LIBPATH' ]
+				local_env.Append( LINKFLAGS = local_env.move_from_path_to_flags( paths, switch ) )
+				local_env.Replace( LIBPATH = paths )
 
 		return result
 		
