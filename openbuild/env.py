@@ -441,7 +441,7 @@ class Environment( BaseEnvironment ):
 #		self.Install( framework_name +'/Versions/A/Resources', resources )
 
 
-	def framework( self, lib, sources=None, headers=None, pre=None, nopre=None, *keywords ):
+	def framework( self, lib, sources=None, headers=None, info_plist = None, pre=None, nopre=None, *keywords ):
 		import openbuild.Tools.mac
 		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
@@ -457,7 +457,7 @@ class Environment( BaseEnvironment ):
 		if sources is not None:
 			libs.append( [ '', self.LoadableModule( lib, sources, *keywords ) ] )
 
-		return self.MakeBundle( lib, libs, '', resources=resources, *keywords )
+		return self.MakeBundle( lib, libs, headers, info_plist, resources=resources, *keywords )
 
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """

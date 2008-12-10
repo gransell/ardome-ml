@@ -63,8 +63,8 @@ def TOOL_BUNDLE(env):
 		def MakeBundle(env,
 				bundledir,
 				libs,
-				info_plist,
 				public_headers = [],	
+				info_plist = None,
 				icon_file='',
 				signature='????',
 				#key,
@@ -81,8 +81,12 @@ def TOOL_BUNDLE(env):
 				env.Install( bundledir+'/Versions/A/' + item[ 0 ], item[ 1 ] )
 			for item in resources:
 				env.Install( bundledir+'/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
-			env.Install( bundledir+'/Versions/A/Headers/', source = public_headers )
-			env.Install(bundledir+'/Versiosn/A/Resources/', info_plist)
+			#env.Install( bundledir+'/Versions/A/Headers/', source = public_headers )
+			if len(public_headers) != 0 :
+				print public_headers
+				env.Install( bundledir+'/Versions/A/Headers', sources = public_headers )
+			if info_plist is not None :
+				env.Install(bundledir+'/Versions/A/Resources/', info_plist)
 			#env.WriteVal(target=bundledir+'/Contents/PkgInfo', source=SCons.Node.Python.Value(typecode+signature))
 
 			# install the resources
