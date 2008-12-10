@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</string>
+	<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -38,7 +38,7 @@
 			<key>filename</key>
 			<string>SConstruct</string>
 			<key>lastUsed</key>
-			<date>2008-12-02T16:00:12Z</date>
+			<date>2008-12-04T13:13:31Z</date>
 		</dict>
 		<dict>
 			<key>expanded</key>
@@ -58,52 +58,36 @@
 		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
-	<integer>307</integer>
+	<integer>294</integer>
 	<key>metaData</key>
 	<dict>
-		<key>bcomp/owl/reflection/doxygen_ast.py</key>
+		<key>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>32</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>59</integer>
+				<integer>0</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>13</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>26</integer>
-				<key>line</key>
-				<integer>59</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>46</integer>
-				<key>line</key>
-				<integer>59</integer>
-			</dict>
+			<integer>0</integer>
 		</dict>
-		<key>bcomp/owl/reflection/doxygen_xml_parse.py</key>
+		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>42</integer>
+				<integer>18</integer>
 				<key>line</key>
-				<integer>256</integer>
+				<integer>86</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>226</integer>
+			<integer>66</integer>
 		</dict>
 		<key>src/opencorelib/cl/frames.hpp</key>
 		<dict>
@@ -193,42 +177,58 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>wrappers/SConscript</key>
+		<key>src/openpluginlib/pl/pcos/observer.hpp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>61</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>29</integer>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
-		<key>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</key>
+		<key>src/openpluginlib/pl/pcos/property.hpp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
+				<integer>17</integer>
+				<key>line</key>
 				<integer>44</integer>
-				<key>line</key>
-				<integer>24</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>16</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>46</integer>
+				<key>line</key>
+				<integer>44</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>17</integer>
+				<key>line</key>
+				<integer>44</integer>
+			</dict>
 		</dict>
-		<key>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</key>
+		<key>src/openpluginlib/pl/pcos/visitor.hpp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>33</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>21</integer>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -238,15 +238,15 @@
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>wrappers/SConscript</string>
-		<string>wrappers/output/xml/namespaceolib_1_1opencorelib.xml</string>
-		<string>bcomp/owl/reflection/doxygen_ast.py</string>
-		<string>bcomp/owl/reflection/doxygen_xml_parse.py</string>
-		<string>wrappers/output/xml/classolib_1_1opencorelib_1_1media__time.xml</string>
+		<string>src/openpluginlib/pl/pcos/visitor.hpp</string>
+		<string>src/openpluginlib/pl/pcos/property.hpp</string>
+		<string>src/openpluginlib/pl/pcos/observer.hpp</string>
+		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
+		<string>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{0, 57}, {1358, 971}}</string>
+	<string>{{10, 57}, {1358, 971}}</string>
 </dict>
 </plist>
