@@ -9,6 +9,7 @@ http://www.scons.org/wiki/MacOSX
 
 """
 import sys
+import os
 
 import SCons
 from SCons.Script.SConscript import SConsEnvironment
@@ -62,6 +63,7 @@ def TOOL_BUNDLE(env):
 		# Type codes are BNDL for generic bundle and APPL for application.
 		def MakeBundle(env,
 				bundledir,
+				bundle,
 				libs,
 				public_headers = [],	
 				info_plist = None,
@@ -75,16 +77,33 @@ def TOOL_BUNDLE(env):
 			# add (and check) the extension to the bundle:
 			if not bundledir.split(".")[-1] == 'framework':
 				bundledir += '.framework'
-
+			
+			bundle_name = str(bundle[0])
+			
 			# Set up the directory structure
+			abs_bundle_path = os.path.join( env.temporary_build_path( [ 'release', 'debug' ][int( env.debug ) ] ), bundledir )
+			if not os.path.exists(abs_bundle_path):
+				os.makedirs( abs_bundle_path )
+			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions') ):
+				os.makedirs( os.path.join(abs_bundle_path, 'Versions') )
+			
+			# Set up links
+			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions', 'Current')):
+				os.symlink( 'A', os.path.join(abs_bundle_path, 'Versions', 'Current') )			
+			if not os.path.islink(os.path.join(abs_bundle_path, bundle_name)):
+				os.symlink( os.path.join('Versions/Current/', bundle_name), os.path.join(abs_bundle_path, bundle_name) )
+			if not os.path.islink(os.path.join(abs_bundle_path, 'Headers')):
+				os.symlink( 'Versions/Current/Headers', os.path.join(abs_bundle_path, 'Headers') )
+			if not os.path.islink(os.path.join(abs_bundle_path, 'Resources')):
+				os.symlink( 'Versions/Current/Resources', os.path.join(abs_bundle_path, 'Resources') )
+			
+			env.Install( bundledir+'/Versions/A/', bundle )
 			for item in libs:
-				env.Install( bundledir+'/Versions/A/' + item[ 0 ], item[ 1 ] )
+				env.Install( bundledir+'/Versions/lib/' + item[ 0 ], item[ 1 ] )
 			for item in resources:
 				env.Install( bundledir+'/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
-			#env.Install( bundledir+'/Versions/A/Headers/', source = public_headers )
 			if len(public_headers) != 0 :
-				print public_headers
-				env.Install( bundledir+'/Versions/A/Headers', sources = public_headers )
+				env.Install( bundledir+'/Versions/A/Headers', public_headers )
 			if info_plist is not None :
 				env.Install(bundledir+'/Versions/A/Resources/', info_plist)
 			#env.WriteVal(target=bundledir+'/Contents/PkgInfo', source=SCons.Node.Python.Value(typecode+signature))
