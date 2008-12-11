@@ -33,10 +33,10 @@ if [ ! -d xerces-c_2_8_0-x86-windows-vc_7_1 ]; then
 
 	echo "Extracting xerces for c++ [~21 MB]..."
 
-	unzip -oq ../tmp/xerces-c_2_8_0-x86-windows-vc_7_1.zip 
+	unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip 
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: unzip -oq ../tmp/xerces-c_2_8_0-x86-windows-vc_7_1.zip. Terminating."
+	  echo "Failed to run: unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip. Terminating."
 	  exit 1
 	fi
 fi

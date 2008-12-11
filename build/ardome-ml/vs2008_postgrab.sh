@@ -9,7 +9,7 @@ fi
 cd vs2008
 
 if [ ! -d boost ]; then
-	echo "Extracting boost [~150 MB]..."
+	echo "Extracting boost [~90 MB on disk]..."
 	tar -jxf ../tmp/boost.tar.bz2
 	if [ ! $? == 0 ]; then
 		echo "Failed to run: tar -jxf ../tmp/boost.tar.bz2. Terminating."
