@@ -60,13 +60,13 @@ if [ ! -d  bcomp/sdl/include ]; then
 	fi
 fi
 
-if [ ! -d  bcomp/loki-0.1.6/include ]; then
+if [ ! -d  loki-0.1.6/include ]; then
 
 	echo "Extracting Loki [~11 MB]..."
-	unzip -oq bcomp/loki/loki-0.1.6.zip -d bcomp/ 
+	unzip -oq ../tmp/loki-0.1.6.zip  
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/loki/loki-0.1.6.zip. Terminating."
+	  echo "Failed to run unzip -oq ../tmp/loki-0.1.6.zip. Terminating."
 	  exit
 	fi
 fi
