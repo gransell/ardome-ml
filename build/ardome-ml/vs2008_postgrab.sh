@@ -47,8 +47,6 @@ if [ ! -d ffmpeg/include ]; then
 	fi
 fi
 
-cd ../..
-
 if [ ! -d  sdl/include ]; then
 
 	echo "Extracting sdl [~1 MB]..."
