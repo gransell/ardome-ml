@@ -558,6 +558,11 @@ ml::filter_type_ptr create_filter( const std::string &resource )
 	return filter;
 }
 
+bool is( ml::input_type_ptr a, ml::input_type_ptr b )
+{
+	return a == b;
+}
+
 void py_plugin( )
 {
 	py::def( "create_input", &detail::create_input0 );
@@ -575,6 +580,7 @@ void py_plugin( )
 	py::def( "frame_crop_clear", &ml::frame_crop_clear );
 	py::def( "frame_crop", &ml::frame_crop );
 	py::def( "frame_volume", &ml::frame_volume );
+	py::def( "equals", &detail::is );
 }
 
 PyObject *stream_handler_object = 0;
