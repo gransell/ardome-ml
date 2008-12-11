@@ -8,25 +8,23 @@ fi
 
 cd vs2008
 
-if [ ! -d boost-1_34_1 ]; then
-
+if [ ! -d boost ]; then
 	echo "Extracting boost [~150 MB]..."
-	tar -zxf ../vs2008_boost/boost-1.34.1.tar.gz  
-
+	tar -jxf ../tmp/boost.tar.bz2
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -zxf ../vs2008_boost/boost-1.34.1.tar.gz. Terminating."
+		echo "Failed to run: tar -jxf ../tmp/boost.tar.bz2. Terminating."
 		exit
 	fi
 fi
 
-if [ ! -d xerces-c-2_8_0 ]; then
+if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
 
-	tar -zxf ../vs2008_xerces/xerces-c-2_8_0.tar.gz 
+	unzip -oq ../tmp/xerces.zip 
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: tar -zxf ../vs2008_xerces/xerces-c-2_8_0.tar.gz. Terminating."
+	  echo "Failed to run: unzip -oq ../tmp/xerces.zip. Terminating."
 	  exit 1
 	fi
 fi
@@ -39,9 +37,9 @@ fi
 
 cd common
 
-if [ ! -d  ffmpeg/include ]; then
+if [ ! -d ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
-	tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2 
+	tar -jxf ../tmp/ffmpeg.tbz2 
 	
 	if [ ! $? == 0 ]; then
 	  echo "Failed to run tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2. Terminating."

@@ -114,6 +114,7 @@ class VS2003:
 					AdditionalIncludeDirectories="%s"
 					PreprocessorDefinitions="%s"
 					RuntimeLibrary="%s"
+					TreatWChar_tAsBuiltInType="%s"
 					RuntimeTypeInfo="%s"
 					UsePrecompiledHeader="%s"
 					PrecompiledHeaderThrough="%s"
@@ -127,6 +128,7 @@ class VS2003:
 							options.preprocessor_flags_as_string(),
 							options.runtime_library( config.name ),
 							options.runtime_type_info_as_string(),
+							options.wchar_t_built_in_as_string(),
 							options.use_precompiled_headers(),
 							options.precompiled_header_file(),
 							options.warning_level,
@@ -213,7 +215,6 @@ class CompilerOptions:
 									
 		self.preprocessor_flags = ""
 		self.include_directories = []
-		self.wchar_t_is_built_in = False
 		self.runtime_type_info = True
 		self.precomp_headers = False, "", ""
 		self.sources_not_using_precomp = []
@@ -249,6 +250,13 @@ class CompilerOptions:
 		""" Returns the string 'TRUE' if runtime type info is going to be used, otherwise 'FALSE'"""
 		if self.runtime_type_info  : return "TRUE"
 		return "FALSE"
+		
+	def wchar_t_built_in_as_string( self ) :
+		print self.additional_options
+		if self.additional_options.find('/Zc:wchar_t') != -1 :
+			return "TRUE"
+		else : 
+			return "FALSE"
 
 	def use_precompiled_headers( self ) :
 		""" Returns a number as a string that tells Visual Studio if precompiled headers are going to be used.

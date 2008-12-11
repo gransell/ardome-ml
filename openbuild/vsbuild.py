@@ -122,6 +122,13 @@ class VsBuilder :
 	def create_list( self, env_var_name, env) :
 		if not env.has_key(env_var_name) : return []
 		return [] + env[env_var_name]
+		
+	def create_string( self, env_var_name, env) :
+		if not env.has_key(env_var_name) : return ""
+		res = ''
+		for p in env[env_var_name] :
+			res += p + ' ' 
+		return res
 
 	def project( self, env, lib, sources, project_type, subsystem=None, headers=None, pre=None, nopre=None, extra_compiler_flags = None  ) :
 	
@@ -151,6 +158,8 @@ class VsBuilder :
 
 		if extra_compiler_flags is not None:
 			curr_cfg.compiler_options.additional_options += ' ' + extra_compiler_flags
+		
+		curr_cfg.compiler_options.additional_options = self.create_string('CPPFLAGS', env)
 		
 		curr_cfg.set_vc_version(self.vs_version)
 		curr_cfg.output_directory = env.subst('$win_target_path')
