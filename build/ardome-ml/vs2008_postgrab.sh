@@ -49,13 +49,13 @@ fi
 
 cd ../..
 
-if [ ! -d  bcomp/sdl/include ]; then
+if [ ! -d  sdl/include ]; then
 
 	echo "Extracting sdl [~1 MB]..."
-	unzip -oq bcomp/sdl/sdl-win32.zip -d bcomp/ 
+	tar -jxf ../tmp/sdl-win32.B.tar.bz2
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/sdl/sdl-win32.zip. Terminating."
+	  echo "Failed to run tar -jxf ../tmp/sdl-win32.B.tar.bz2. Terminating."
 	  exit
 	fi
 fi
