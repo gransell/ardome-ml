@@ -22,21 +22,21 @@ if [ ! -d boost_1_37_0 ]; then
 	tar -jxf ../../tmp/vc71-boost_1_37-wchar_t_on-python25.tar.bz2
 	
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -jxf ../tmp/vc71-boost_1_34_1.B.tar.bz2. Terminating."
+		echo "Failed to run: tar -jxf ../../tmp/vc71-boost_1_37-wchar_t_on-python25.tar.bz2. Terminating."
 		exit
 	fi
 	
 	cd ..
 fi
 
-if [ ! -d xerces-c_2_8_0-x86-windows-vc_7_1 ]; then
+if [ ! -d xerces-c-2.8.0 ]; then
 
 	echo "Extracting xerces for c++ [~21 MB]..."
 
-	unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip 
+	tar -xjf ../tmp/vc71-xerces-c-2.8.0-wchar_t-on.tar.bz2
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: unzip -oq ../tmp/vc71-xerces-c-2_8_0.zip. Terminating."
+	  echo "Failed to run: tar -xjf ../tmp/vc71-xerces-c-2.8.0-wchar_t-on.tar.bz2. Terminating."
 	  exit 1
 	fi
 fi

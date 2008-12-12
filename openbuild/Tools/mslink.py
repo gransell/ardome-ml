@@ -63,9 +63,10 @@ def windowsLibEmitter(target, source, env):
 							"SHLIBPREFIX", "SHLIBSUFFIX",
 							"WINDOWSDEFPREFIX", "WINDOWSDEFSUFFIX"))
 
-	# version_num, suite = SCons.Tool.msvs.msvs_parse_version(env.get('MSVS_VERSION', '6.0'))
-	# if version_num >= 8.0 and env.get('WINDOWS_INSERT_MANIFEST', 0):
-		# # MSVC 8 automatically generates .manifest files that must be installed
+	version_num, suite = SCons.Tool.msvs.msvs_parse_version(env.get('MSVS_VERSION', '6.0'))
+	# if version_num >= 8.0 : # and env.get('WINDOWS_INSERT_MANIFEST', 0):
+		# #print "Will add MANIFEST"
+		# # # MSVC 8 automatically generates .manifest files that must be installed
 		# extratargets.append(
 			# env.ReplaceIxes(dll,
 							# "SHLIBPREFIX", "SHLIBSUFFIX",
@@ -101,12 +102,13 @@ def prog_emitter(target, source, env):
 		raise SCons.Errors.UserError, "An executable should have exactly one target with the suffix: %s" % env.subst("$PROGSUFFIX")
 
 	# version_num, suite = SCons.Tool.msvs.msvs_parse_version(env.get('MSVS_VERSION', '6.0'))
-	# if version_num >= 8.0 and env.get('WINDOWS_INSERT_MANIFEST', 0):
-		# # MSVC 8 automatically generates .manifest files that have to be installed
+	# if version_num >= 8.0 : # and env.get('WINDOWS_INSERT_MANIFEST', 0):
+		# # print "Will add manifest"
+		# # # MSVC 8 automatically generates .manifest files that have to be installed
 		# extratargets.append(
 			# env.ReplaceIxes(exe,
 							# "PROGPREFIX", "PROGSUFFIX",
-							# "WINDOWSPROGMANIFESTPREFIX", "WINDOWSPROGMANIFESTSUFFIX"))
+							 # "WINDOWSPROGMANIFESTPREFIX", "WINDOWSPROGMANIFESTSUFFIX"))
 
 	if env.has_key('PDB') and env['PDB']:
 		pdb = env.arg2nodes('$PDB', target=target, source=source)[0]
@@ -127,8 +129,21 @@ def RegServerFunc(target, source, env):
 
 regServerAction = SCons.Action.Action("$REGSVRCOM", "$REGSVRCOMSTR")
 regServerCheck = SCons.Action.Action(RegServerFunc, None)
+
+mergeManifestActionProg = SCons.Action.Action('mt.exe -manifest ${TARGET}.manifest -outputresource:${TARGET};1')
+mergeManifestActionDll = SCons.Action.Action('mt.exe -manifest ${TARGET}.manifest -outputresource:${TARGET};2')
+
 shlibLinkAction = SCons.Action.Action('${TEMPFILE("$SHLINK $SHLINKFLAGS $_SHLINK_TARGETS $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $_SHLINK_SOURCES")}')
+progLinkAction = SCons.Action.Action('${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}')
+
 compositeLinkAction = shlibLinkAction + regServerCheck
+compositeProgLinkAction = progLinkAction 
+
+shlibLinkActionManifest = SCons.Action.Action('${TEMPFILE("$SHLINK $SHLINKFLAGS /MANIFEST $_SHLINK_TARGETS $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $_SHLINK_SOURCES")}')
+progLinkActionManifest = SCons.Action.Action('${TEMPFILE("$LINK $LINKFLAGS /MANIFEST /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}')
+
+compositeLinkActionMergeManifest = shlibLinkActionManifest + mergeManifestActionDll + regServerCheck
+compositeProgLinkActionMergeManifest = progLinkActionManifest + mergeManifestActionProg
 
 def exists(env):
 	return msvc.exists(env)
@@ -137,19 +152,28 @@ def generate(env):
 	SCons.Tool.createSharedLibBuilder(env)
 	SCons.Tool.createProgBuilder(env)
 	
-	msvc.run_vcvars_bat( env, msvc.current_vc_version( env ) )
-
+	current_visual_studio_version = msvc.current_vc_version( env ) 
+	msvc.run_vcvars_bat( env, current_visual_studio_version )
+	
 	env['SHLINKFLAGS'] = SCons.Util.CLVar('$LINKFLAGS /dll')
+	env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
+	
+	if current_visual_studio_version.version > 'vs2003' :
+		env['SHLINKCOM']  =  compositeLinkActionMergeManifest
+		env['LINKCOM'] = compositeProgLinkActionMergeManifest
+	else:
+		env['SHLINKCOM']  =  compositeLinkAction
+		env['LINKCOM'] = compositeProgLinkAction
+		
 	env['_SHLINK_TARGETS'] = windowsShlinkTargets
 	env['_SHLINK_SOURCES'] = windowsShlinkSources
-	env['SHLINKCOM']  =  compositeLinkAction
+	
 	env.Append(SHLIBEMITTER = [windowsLibEmitter])
 	env['LINK']	= 'link'
 	env['SHLINK']	= 'link'
-	env['LINKFLAGS']   = SCons.Util.CLVar('/nologo')
 	env['_PDB'] = pdbGenerator
 	# This command is run when building a program or a static library,, see shlibLinkAction above for the command used for linking shared libraries.
-	env['LINKCOM'] = '${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}'
+	
 	env.Append(PROGEMITTER = [prog_emitter])
 	env['LIBDIRPREFIX']='/LIBPATH:'
 	env['LIBDIRSUFFIX']=''

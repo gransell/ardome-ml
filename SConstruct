@@ -23,7 +23,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
 			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
 			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
-			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c_2_8_0-x86-windows-vc_7_1' )
+			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c-2.8.0' )
 			# for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
 			#				 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
 			#	self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_37_0' )
