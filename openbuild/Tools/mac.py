@@ -9,9 +9,21 @@ http://www.scons.org/wiki/MacOSX
 
 """
 import sys
+import os
 
 import SCons
 from SCons.Script.SConscript import SConsEnvironment
+
+def collect_sym_links( links, item ):
+	if item[ 0 ] == '':
+		stem = str( item[ 1 ] ).split( '.' )[ 0 ]
+		dir, base = stem.rsplit( '/', 1 )
+		if base.startswith( 'lib' ):
+			for r, dirs, files in os.walk( dir ):
+				for f in files:
+					full = os.path.join( r, f )
+					if f.startswith( base ) and os.path.islink( full ):
+						links[ full ] = f
 
 def TOOL_WRITE_VAL(env):
 	#if tools_verbose:
@@ -54,10 +66,10 @@ def TOOL_BUNDLE(env):
 	"""
 
 	if 'BUNDLE' in env['TOOLS']: return
+
 	if sys.platform == 'darwin': # not much point in doing this anywhere else
 		env.Append(TOOLS = 'BUNDLE')
-		# env['BUNDLEDIRSUFFIX'] = '.bundle'
-		# This requires another tool (defined in this file):
+
 		TOOL_WRITE_VAL(env)
 		# Type codes are BNDL for generic bundle and APPL for application.
 		def MakeBundle(env,
@@ -79,6 +91,19 @@ def TOOL_BUNDLE(env):
 			# Set up the directory structure
 			for item in libs:
 				env.Install( bundledir+'/Versions/A/' + item[ 0 ], item[ 1 ] )
+
+			links = {}
+			for item in libs:
+				try:
+					collect_sym_links( links, item )
+				except Exception, e:
+					continue
+
+			for link in links.keys( ):
+				full = bundledir+'/Versions/A/' + links[ link ]
+				if not os.path.islink( full ):
+					os.symlink( os.readlink( link ), full )
+
 			for item in resources:
 				env.Install( bundledir+'/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
 			#env.Install( bundledir+'/Versions/A/Headers/', source = public_headers )
