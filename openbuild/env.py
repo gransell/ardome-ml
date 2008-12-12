@@ -450,7 +450,7 @@ class Environment( BaseEnvironment ):
 #		self.Install( framework_name +'/Versions/A/Resources', resources )
 
 
-	def framework( self, lib, sources=None, headers=None, info_plist = None, pre=None, nopre=None, *keywords ):
+	def framework( self, lib, sources=None, headers=[], info_plist = None, pre=None, nopre=None, *keywords ):
 		import openbuild.Tools.mac
 		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
