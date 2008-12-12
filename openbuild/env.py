@@ -293,7 +293,7 @@ class Environment( BaseEnvironment ):
 				paths.remove( incdir )
 		return result
 
-	def build( self, path, deps = [], tools = [] ):
+	def build( self, path, deps = [], tools = [], externals = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
 			
@@ -311,6 +311,7 @@ class Environment( BaseEnvironment ):
 			return self.build_manager.build( self, path, deps )
 		
 		self.build_deps = deps
+		self.build_exts = externals
 
 		# Keep this path in the environment, is used by for instance vsbuild.
 		self.relative_path_to_sconscript = path
@@ -324,8 +325,11 @@ class Environment( BaseEnvironment ):
 			
 			build_type( local_env )
 
+			build_dir = os.path.join( self.root, local_env.subst( local_env[ 'build_prefix' ] ), 'tmp', path )
+			if not os.path.exists( build_dir ): os.makedirs( build_dir )
+
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
-															build_dir=os.path.join( local_env[ 'build_prefix' ], 'tmp', path ), 
+															build_dir=build_dir, 
 															duplicate=0, exports=[ 'local_env' ] )
 
 			for dep in deps:
@@ -339,6 +343,11 @@ class Environment( BaseEnvironment ):
 					lib = lib.rsplit( '.', 1 )[ 0 ]
 					local_env.Append( LIBPATH = [libpath] )
 					local_env.Append( LIBS = [lib] )
+
+			for dep in externals:
+				if dep is not None and dep[ build_type ] is not None:
+					self.add_dependencies(result, dep, build_type)
+					self.Depends( result[ build_type ], dep[ build_type ] )
 
 			switch = [ '/I', '-I' ][ int( self[ 'PLATFORM' ] != 'win32' ) ]
 			if local_env.has_key('CPPPATH') :
@@ -453,10 +462,15 @@ class Environment( BaseEnvironment ):
 			if item[ build ] is not None:
 				for file in item[ build ]:
 					libs += [ [ '', file ] ]
+		if sources is not None:
+			libs.append( [ '', self.LoadableModule( lib, sources, *keywords ) ] )
 
-		bundle = self.LoadableModule( lib, sources, *keywords )
-		
-		return self.MakeBundle( lib, bundle, libs, headers, info_plist, resources=resources, *keywords )
+		for item in self.build_exts:
+			if item[ build ] is not None:
+				for file in item[ build ]:
+					libs += [ [ '', file ] ]
+
+		return self.MakeBundle( lib, libs, headers, info_plist, resources=resources, *keywords )
 
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
