@@ -14,6 +14,9 @@ namespace olib
                                 public boost::subtractable< point >
         {
         public:
+			
+			point() : m_x(0.0), m_y(0.0) {}
+			
             point( double x, double y) 
                 : m_x(x), m_y(y) {}
 
