@@ -34,12 +34,6 @@ class core_objc_bind_options( owl.wrapper.objc.objc_bind_options ):
 		for k in conversion_dict.keys() :
 			ret[k] = conversion_dict[k]
 		return ret
-	
-	def get_converted_type_string( self, type_instance ):
-		"""docstring for get_converted_type"""
-		if not conversion_dict.has_key( type_instance.get_name() ) :
-			return super(core_objc_bind_options, self).get_converted_type_string( type_instance )
-		return conversion_dict[type_instance.get_name()]
 		
 	def get_standard_source_includes(self, type_instance):
 		"""docstring for get_standard_source_includes"""
