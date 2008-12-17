@@ -23,6 +23,10 @@ class CompilerTool:
 				AdditionalOptions="%s"/> """
 				
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
+		
+		if vsver == 'vs2008':
+			if precomp_flag == 3 : precomp_flag = 2
+		
 		return toolstr % ( precomp_flag, precomp_file, the_file.get_additional_cl_flags(config.name) ) 
 		
 class QtMocTool :
@@ -176,22 +180,13 @@ class VS2008 :
 							options.debug_information_format( config.name) )
 										
 	def file_configuration( self, config, the_file, filetype ) :
-		if filetype == "source":
-			config_element = """<FileConfiguration Name="%s">
-			<Tool
-				Name="VCCLCompilerTool"
-				UsePrecompiledHeader="%d"
-				CompileAsManaged="0" />
-			</FileConfiguration>"""
-			
-			precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
-			# Changed numbers in vs2008
-			if precomp_flag == 3 : precomp_flag = 2
-			return  config_element % ( config.name, precomp_flag ) 
-		elif filetype == "header":
-			return ""
-		else : return ""
-			
+		if filetype == "source" or filetype == "header" or filetype == "resource":
+			res = "<FileConfiguration Name=\"" + config.name + "\">"
+			for tool in the_file.get_tools(config) :
+				res += tool.to_tool_xml( the_file, config, "vs2008" )
+			res += "</FileConfiguration>\n"
+			return res		
+		else : return ""	
 		
 	def solution_file_header( self ) :
 		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
