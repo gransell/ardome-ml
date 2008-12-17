@@ -31,7 +31,7 @@ namespace olib
         }
 
         typedef boost::shared_ptr< std::exception > std_exception_ptr;
-        typedef boost::function< void ( invoke_result::type, std_exception_ptr ) > invoke_callback_function;
+        typedef boost::function< void ( olib::opencorelib::invoke_result::type, std_exception_ptr ) > invoke_callback_function;
         typedef boost::shared_ptr< invoke_callback_function > invoke_callback_function_ptr;
 
         /// Object that can run a function on a separate thread
@@ -39,7 +39,11 @@ namespace olib
             may not choose to run it directly or use some platform
             specific technique to make the gui-thread or main-thread
             run a function on the calling thread's behalf. 
-            @author Mats Lindel&ouml;f */
+            @author Mats Lindel&ouml;f
+            <bindgen>
+        		<attribute name="ref-counted" value="yes"></attribute>
+        	</bindgen>
+        	*/
         class CORE_API invoker
         {
         public:
@@ -49,7 +53,7 @@ namespace olib
             /** This call blocks until the thread that is attached to 
                 this invoker have processed the invokalbe_function.
                 If that is unacceptable, use non_blocking_invoke instead. */
-            virtual invoke_result::type invoke( const invokable_function& f ) const = 0;
+            virtual olib::opencorelib::invoke_result::type invoke( const invokable_function& f ) const = 0;
 
 
             /// Will execute the passed function on the invoker-thread.
@@ -95,7 +99,7 @@ namespace olib
             /// Just runs the function on the calling thread, adding exception guards.
             /** @param f The function to run.
                 @return invoke_result::success on success, otherwise invoke_result::failure */
-            virtual invoke_result::type invoke( const invokable_function& f ) const 
+            virtual olib::opencorelib::invoke_result::type invoke( const invokable_function& f ) const 
             {
                 TRY_BASEEXCEPTION
                 {
@@ -133,7 +137,7 @@ namespace olib
         class CORE_API explicit_step_invoker : public invoker
         {
         public:
-            invoke_result::type invoke( const invokable_function& f ) const;
+            olib::opencorelib::invoke_result::type invoke( const invokable_function& f ) const;
 
             void non_blocking_invoke(   const invokable_function& f, 
                                         const invoke_callback_function_ptr& result_cb ) const;

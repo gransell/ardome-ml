@@ -77,6 +77,11 @@ namespace olib
     typedef boost::filesystem::wofstream fs_t_ofstream;
     typedef boost::filesystem::wfstream fs_t_fstream;
     typedef boost::filesystem::wifstream fs_t_ifstream;
+	/**  
+            <bindgen>
+                <attribute name="convert" value="yes"></attribute>
+            </bindgen>
+            */
 	typedef boost::filesystem::wpath t_path;
 	typedef boost::filesystem::wdirectory_iterator t_directory_iterator;
 
@@ -99,6 +104,11 @@ namespace olib
     typedef boost::filesystem::ofstream fs_t_ofstream;
     typedef boost::filesystem::fstream fs_t_fstream;
     typedef boost::filesystem::ifstream fs_t_ifstream;
+	/**  
+            <bindgen>
+                <attribute name="convert" value="yes"></attribute>
+            </bindgen>
+            */
 	typedef boost::filesystem::path t_path;
 	typedef boost::filesystem::directory_iterator t_directory_iterator;
 	
