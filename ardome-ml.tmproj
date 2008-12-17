@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
+	<string>openbuild/Tools/mac.py</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -17,6 +17,8 @@
 			<string>bcomp/owl</string>
 		</dict>
 		<dict>
+			<key>expanded</key>
+			<true/>
 			<key>name</key>
 			<string>openbuild</string>
 			<key>regexFolderFilter</key>
@@ -38,7 +40,7 @@
 			<key>filename</key>
 			<string>SConstruct</string>
 			<key>lastUsed</key>
-			<date>2008-12-04T13:13:31Z</date>
+			<date>2008-12-12T08:34:40Z</date>
 		</dict>
 		<dict>
 			<key>expanded</key>
@@ -61,19 +63,47 @@
 	<integer>294</integer>
 	<key>metaData</key>
 	<dict>
-		<key>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</key>
+		<key>SConstruct</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>248</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
+			<integer>195</integer>
+		</dict>
+		<key>bcomp/owl/wrapper/objc/objc.py</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>65</integer>
+				<key>line</key>
+				<integer>78</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
 			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>19</integer>
+		</dict>
+		<key>bcomp/owl/wrapper/objc/objc_bind_options.py</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>12</integer>
+				<key>line</key>
+				<integer>36</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>7</integer>
 		</dict>
 		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
 		<dict>
@@ -87,37 +117,35 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>66</integer>
+			<integer>0</integer>
 		</dict>
-		<key>src/opencorelib/cl/frames.hpp</key>
+		<key>openbuild/Tools/mac.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>32</integer>
+				<integer>14</integer>
 				<key>line</key>
-				<integer>73</integer>
+				<integer>75</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>31</integer>
-			<key>selectFrom</key>
+			<integer>65</integer>
+		</dict>
+		<key>openbuild/env.py</key>
+		<dict>
+			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>24</integer>
+				<integer>3</integer>
 				<key>line</key>
-				<integer>73</integer>
+				<integer>468</integer>
 			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>32</integer>
-				<key>line</key>
-				<integer>73</integer>
-			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>436</integer>
 		</dict>
 		<key>src/opencorelib/cl/media_definitions.hpp</key>
 		<dict>
@@ -235,18 +263,110 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
+		<key>wrappers/SConscript</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>0</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>3</integer>
+		</dict>
+		<key>wrappers/objective_c/core_objc_bind_options.py</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>47</integer>
+				<key>line</key>
+				<integer>27</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>wrappers/objective_c/src/CoreConverts.h</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>44</integer>
+				<key>line</key>
+				<integer>20</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>wrappers/objective_c/src/CoreConverts.mm</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>48</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>4</integer>
+		</dict>
+		<key>wrappers/objective_c/src/OlibOpencorelibAssertLevelFunctions.mm</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>3</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>9</integer>
+				<key>line</key>
+				<integer>22</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>3</integer>
+			</dict>
+		</dict>
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>src/openpluginlib/pl/pcos/visitor.hpp</string>
-		<string>src/openpluginlib/pl/pcos/property.hpp</string>
-		<string>src/openpluginlib/pl/pcos/observer.hpp</string>
+		<string>wrappers/SConscript</string>
+		<string>openbuild/Tools/mac.py</string>
+		<string>openbuild/env.py</string>
+		<string>SConstruct</string>
+		<string>bcomp/owl/wrapper/objc/objc.py</string>
+		<string>bcomp/owl/wrapper/objc/objc_bind_options.py</string>
+		<string>wrappers/objective_c/src/CoreConverts.mm</string>
 		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
-		<string>bcomp/owl/wrapper/objc/templates/type_header_private_template.txt</string>
+		<string>wrappers/objective_c/src/OlibOpencorelibAssertLevelFunctions.mm</string>
+		<string>wrappers/objective_c/core_objc_bind_options.py</string>
+		<string>wrappers/objective_c/src/CoreConverts.h</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{10, 57}, {1358, 971}}</string>
+	<string>{{2, 57}, {1358, 971}}</string>
 </dict>
 </plist>
