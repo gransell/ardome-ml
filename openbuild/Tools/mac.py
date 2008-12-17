@@ -116,9 +116,9 @@ def TOOL_BUNDLE(env):
 					collect_sym_links( links, item )
 				except Exception, e:
 					continue
-			print links
+			
 			# for link in links.keys( ):
-			# 	full = bundledir+'/Versions/lib/' + links[ link ]
+			# 	full = abs_bundle_path+'/Versions/lib/' + links[ link ]
 			# 	if not os.path.islink( full ):
 			# 		print full
 			# 		os.symlink( os.readlink( link ), full )
