@@ -450,7 +450,7 @@ class Environment( BaseEnvironment ):
 #		self.Install( framework_name +'/Versions/A/Resources', resources )
 
 
-	def framework( self, lib, sources=None, headers=[], info_plist = None, pre=None, nopre=None, *keywords ):
+	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, pre=None, nopre=None, *keywords ):
 		import openbuild.Tools.mac
 		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
@@ -458,19 +458,22 @@ class Environment( BaseEnvironment ):
 		resources = Environment.bundle_resources[ int( self.debug ) ]
 		build = [ Environment.prep_release, Environment.prep_debug ][ int( self.debug ) ]
 
+		lib = None
 		for item in self.build_deps:
 			if item[ build ] is not None:
 				for file in item[ build ]:
 					libs += [ [ '', file ] ]
 		if sources is not None:
-			libs.append( [ '', self.LoadableModule( lib, sources, *keywords ) ] )
-
+			self[ 'SHLIBPREFIX' ] = ''
+			self[ 'SHLIBSUFFIX' ] = ''
+			lib = self.SharedLibrary( fmwk_name, sources, *keywords )[0]
+			
 		for item in self.build_exts:
 			if item[ build ] is not None:
 				for file in item[ build ]:
 					libs += [ [ '', file ] ]
 
-		return self.MakeBundle( lib, libs, headers, info_plist, resources=resources, *keywords )
+		return self.MakeBundle( fmwk_name, lib, libs, headers, info_plist, resources=resources, *keywords )
 
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
