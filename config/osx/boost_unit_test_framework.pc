@@ -9,7 +9,7 @@ libdir=${prefix}/lib
 
 CFlags: 
 
-Libs:	${libdir}/libboost_unit_test_framework-mt.a
+Libs:	${libdir}/libboost_unit_test_framework-xgcc40-mt-1_37.a
 
-install_libs=${libdir}/libboost_unit_test_framework-mt.a*
+install_libs=${libdir}/libboost_unit_test_framework-xgcc40-mt-1_37.a*
 
