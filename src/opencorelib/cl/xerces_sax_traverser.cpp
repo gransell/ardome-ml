@@ -44,9 +44,8 @@ namespace olib
 		{
 			#if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
 				// XMLCh is supposed to be 16 bit and wchar_t 32 bit
-				std::vector<XMLCh> packed = string_conversions::pack_wide_string( 
-					reinterpret_cast<const wchar_t *>( source.c_str()), source.size() );
-				return xerces_string(&packed[0]);
+				std::vector<boost::uint16_t> packed = string_conversions::pack_wide_string( reinterpret_cast< const boost::uint32_t * >( source.c_str() ), source.size() );
+				return xerces_string(&packed[0] );
 			#else
 				return xerces_string(source);
 			#endif

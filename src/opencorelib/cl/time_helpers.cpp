@@ -13,7 +13,7 @@ namespace olib
         class timer::impl
         {
         public:
-            impl() : m_running(false), m_start_time(0,0), m_duration(0,0)
+            impl() : m_running(false), m_start_time(), m_duration()
             {
             }
 

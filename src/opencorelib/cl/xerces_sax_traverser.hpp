@@ -64,11 +64,14 @@ namespace olib
 		/// Convert a Xerces string to olib::t_string
 		t_string x_to_t_string(const XMLCh *source);
 
+		/// Convert a Xerces string to olib::t_string
+		t_string x_to_t_string(const XMLCh *source, unsigned int length);
+
 		/// Convert a Xerces string to std::string
 		/** Uses str_util::to_string */ 
 		std::string x_to_string(const XMLCh *source);
 
-        /// An array of unsigned shorts, or XMLCh as it is called by xerces. 
+     /// An array of unsigned shorts, or XMLCh as it is called by xerces. 
         typedef boost::scoped_array<XMLCh> xerces_array;
 
         /// A SAXParser, wrapped by a shared_ptr.

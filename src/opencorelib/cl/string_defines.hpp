@@ -39,10 +39,9 @@
 #include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/date_time/posix_time/time_formatters.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/gregorian/gregorian_io.hpp>
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
-
 
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning (pop)
