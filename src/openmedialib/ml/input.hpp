@@ -138,8 +138,8 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Provides a hint to the input implementation - allows the user to say 
 		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch
 		// NB: usage is not enforced - up to the implementation to decide whether they do it or not
-		void set_process_flags( int flags ) { process_ = flags; }
-		int get_process_flags( ) { return process_; }
+		virtual void set_process_flags( int flags ) { process_ = flags; }
+		virtual int get_process_flags( ) { return process_; }
 
 		// Default seek functionality
 		virtual void seek( const int position, const bool relative = false )

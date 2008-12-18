@@ -99,6 +99,11 @@ class ML_DECLSPEC filter_type : public input_type
 		/// DEPRECATE?
 		virtual const openpluginlib::wstring get_mime_type( ) const;
 
+		// Provides a hint to the input implementation - allows the user to say 
+		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch
+		// NB: usage is not enforced - up to the implementation to decide whether they do it or not
+		virtual void set_process_flags( int flags );
+
 		/// Invoke the callback associated to this input
 		/// DEPRECATE?
 		virtual void acquire_values( );
