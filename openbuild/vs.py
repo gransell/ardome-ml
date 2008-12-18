@@ -247,7 +247,7 @@ class CompilerOptions:
 		return "FALSE"
 		
 	def wchar_t_built_in_as_string( self ) :
-		print self.additional_options
+		# print self.additional_options
 		if self.additional_options.find('/Zc:wchar_t') != -1 :
 			return "TRUE"
 		else : 
