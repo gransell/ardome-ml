@@ -136,11 +136,11 @@ class VsBuilder :
 		
 		# Make sure there is enough heap space for the PCH generation.
 		if self.vs_version == 'vs2003':
-			if extra_compiler_flags is None : extra_compiler_flags = '/Zm800'
-			else: extra_compiler_flags += ' /Zm800'
+			if extra_compiler_flags is None : extra_compiler_flags = '/Zm800 '
+			else: extra_compiler_flags += ' /Zm800 '
 		else:
-			if extra_compiler_flags is None : extra_compiler_flags = '/Zm200'
-			else: extra_compiler_flags += ' /Zm200'
+			if extra_compiler_flags is None : extra_compiler_flags = '/Zm200 '
+			else: extra_compiler_flags += ' /Zm200 '
 		
 		if env['debug'] == '1': config_name = 'Debug|Win32'
 		else : config_name = 'Release|Win32'
