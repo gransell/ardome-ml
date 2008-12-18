@@ -37,14 +37,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc', 'boost_system.wc']:
 				self.install_config( 'config/vs2008/' + package, 'bcomp/vs2008/boost' )
 		elif self[ 'target' ] == 'osx':
-			self.install_config( 'config/osx/boost.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_date_time.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_filesystem.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_python.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_regex.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_signals.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_thread.pc', 'bcomp/boost' )
-			self.install_config( 'config/osx/boost_unit_test_framework.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
