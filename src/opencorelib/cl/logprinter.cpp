@@ -87,7 +87,7 @@ namespace olib
                     if ( !fs::is_directory( *dir_itr ) )
                     {
                         olib::t_smatch what; 
-                        olib::t_string file_name = dir_itr->path().leaf();
+                        olib::t_string file_name = dir_itr->path().filename();
                         if( boost::regex_match(file_name, what , wildcard ) )
                         {
                             std::time_t last_write = fs::last_write_time(*dir_itr);
@@ -128,7 +128,7 @@ namespace olib
 
         boost::shared_ptr< t_ofstream > log_utilities::get_default_log_stream(const olib::t_path& log_file_path)
         {
-            utilities::make_sure_path_exists( log_file_path.branch_path() );
+            utilities::make_sure_path_exists( log_file_path.parent_path() );
             
             if( fs::exists( log_file_path ))
                 return boost::shared_ptr< t_ofstream >( new fs_t_ofstream(log_file_path, std::ios_base::app ));

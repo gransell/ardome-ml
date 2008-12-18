@@ -7,29 +7,13 @@
 
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
+#include <boost/date_time/posix_time/time_formatters.hpp>
 
 using namespace olib;
 using namespace olib::opencorelib;
 
-void test_time_value_arithmetic()
-{
-    time_value a1(7, 800000), b1(0, 300000), c1(8, 100000);
-    BOOST_CHECK_EQUAL(c1, a1 + b1);
-    BOOST_CHECK_EQUAL(a1, c1 - b1);
-    BOOST_CHECK_EQUAL(b1, c1 - a1);
-    BOOST_CHECK_EQUAL(time_value()-a1, b1 - c1);
-    BOOST_CHECK_EQUAL(time_value()-b1, a1 - c1);
-
-    time_value a2(7, 800000), b2(0, 199999), c2(7, 999999);
-    BOOST_CHECK_EQUAL(c2, a2 + b2);
-    BOOST_CHECK_EQUAL(a2, c2 - b2);
-    BOOST_CHECK_EQUAL(b2, c2 - a2);
-    BOOST_CHECK_EQUAL(time_value()-a2, b2 - c2);
-    BOOST_CHECK_EQUAL(time_value()-b2, a2 - c2);
-}
-
 void worker_sleep(  thread_sleeper& ts, 
-                    const time_value& time_to_sleep,
+                  const boost::posix_time::time_duration& time_to_sleep,
                     bool& awake )
 {
     awake = false;
@@ -40,15 +24,16 @@ void worker_sleep(  thread_sleeper& ts,
 
 /// custom comparison predicate that checks that a time is in range
 boost::test_tools::predicate_result
-in_range(const time_value& min, const time_value& max, const time_value& actual) {
+in_range(const boost::posix_time::time_duration& min, const boost::posix_time::time_duration& max, const boost::posix_time::time_duration& actual) {
+    using namespace boost::posix_time;
     if (min > actual) {
         boost::test_tools::predicate_result res(false);
-        res.message() << " [" << actual << " < (" << min << "; " << max << ")]";
+        res.message() << " [" << to_simple_string(actual) << " < (" << to_simple_string(min) << "; " << to_simple_string(max) << ")]";
         return res;
     }
     if (max < actual) {
         boost::test_tools::predicate_result res(false);
-        res.message() << " [" << actual << " > (" << min << "; " << max << ")]";
+        res.message() << " [" << to_simple_string(actual) << " > (" << to_simple_string(min) << "; " << to_simple_string(max) << ")]";
         return res;
     }
 
@@ -58,11 +43,12 @@ in_range(const time_value& min, const time_value& max, const time_value& actual)
 namespace {
     // This should probably be 1ms or even less, but allow some for for our overloaded build servers
     // On my machine, the normal case is about 400us, but extrems up to 3.5ms happens -- rasmus
-    const time_value epsilon(0, 40000);
+    const boost::posix_time::time_duration epsilon = boost::posix_time::millisec(4);
 }
 
-boost::test_tools::predicate_result fast(const time_value& actual, const time_value& limit = epsilon) {
-    return in_range(time_value(), limit, actual);
+boost::test_tools::predicate_result fast(   const boost::posix_time::time_duration& actual, 
+                                            const boost::posix_time::time_duration& limit = epsilon) {
+    return in_range( boost::posix_time::seconds(0), limit, actual);
 }
 
 void test_full_sleep()
@@ -74,14 +60,14 @@ void test_full_sleep()
     a_timer.start();
 
     // The job:  Sleep for a quarter of a second
-    time_value tv(0,250000);
+    boost::posix_time::time_duration tv = boost::posix_time::milliseconds(250);
     bool is_awake(false);
 
     function_job_ptr a_job( new function_job(
         boost::bind(::worker_sleep, boost::ref(worker_thread_sleeper), tv, boost::ref(is_awake) )));
 
     a_worker.add_job( a_job );
-    BOOST_CHECK_MESSAGE(a_worker.wait_for_all_jobs_completed( 2500 ),
+    BOOST_CHECK_MESSAGE(a_worker.wait_for_all_jobs_completed( boost::posix_time::milliseconds(2500) ),
                         "Worker should complete before timeout");
     BOOST_CHECK( is_awake );
     a_timer.stop();
@@ -99,8 +85,9 @@ void test_interrupted_sleep()
     a_worker.start();
 
     a_timer.start(); 
+
     // The job: Sleep for two seconds.
-    time_value tv(2,0);
+    boost::posix_time::time_duration tv = boost::posix_time::seconds(2);
     bool is_awake(false);
 
     function_job_ptr a_job( new function_job(
@@ -111,7 +98,7 @@ void test_interrupted_sleep()
     BOOST_CHECK_MESSAGE(fast(a_timer.elapsed()), "Fast setup");
     
     // Wait for a quarter second, then interrupt the sleeping worker
-    time_value intrtime(0, 250000);
+    boost::posix_time::time_duration intrtime = boost::posix_time::millisec(250);
     b_timer.start();
     thread_sleeper main_thread_sleep;
     main_thread_sleep.current_thread_sleep(intrtime);
@@ -123,7 +110,7 @@ void test_interrupted_sleep()
     BOOST_CHECK_MESSAGE(fast(b_timer.elapsed()), "Fast wakeup");
 
     b_timer.start();
-    BOOST_CHECK_MESSAGE(a_worker.wait_for_all_jobs_completed( 50 ),
+    BOOST_CHECK_MESSAGE(a_worker.wait_for_all_jobs_completed( boost::posix_time::millisec(50) ),
                         "Worker should be interrupted before this timeout");
     BOOST_CHECK( is_awake );
     BOOST_CHECK_MESSAGE(fast(b_timer.elapsed()), "Fast check for completeness");
@@ -135,7 +122,6 @@ void test_interrupted_sleep()
 
 void test_time_helpers()
 {
-    test_time_value_arithmetic();
     test_full_sleep();
     test_interrupted_sleep();
 }

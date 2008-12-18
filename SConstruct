@@ -23,10 +23,19 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
 			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
 			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
-			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c_2_8_0-x86-windows-vc_7_1' )
-			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
-							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
-				self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_34_1' )
+			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c-2.8.0' )
+			# for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
+			#				 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
+			#	self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_37_0' )
+		elif self[ 'target' ] == 'vs2008':
+			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
+			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
+			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
+			#self.install_config( 'config/vs2008/xerces30.wc', 'bcomp/vs2008/xerces-c-3.0.0-x86-windows-vc-9.0' )
+			self.install_config( 'config/vs2008/xerces.wc', 'bcomp/vs2008/xerces-c-src_2_8_0' )
+ 			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc',
+							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc', 'boost_system.wc']:
+				self.install_config( 'config/vs2008/' + package, 'bcomp/vs2008/boost' )
 		elif self[ 'target' ] == 'osx':
 			self.install_config( 'config/osx/boost.pc', 'bcomp/boost' )
 			self.install_config( 'config/osx/boost_date_time.pc', 'bcomp/boost' )
@@ -45,6 +54,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
 			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'ubuntu32':
+			if os.path.exists( 'bcomp/boost' ):
+				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
+								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_signals.pc', 'boost_system.pc' ]:
+					self.install_config( 'config/ubuntu32/' + package, 'bcomp/boost' )
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'ubuntu64':

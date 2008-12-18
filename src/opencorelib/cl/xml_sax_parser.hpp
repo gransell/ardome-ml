@@ -3,6 +3,8 @@
 
 #include "./typedefs.hpp"
 
+#include <xercesc/util/PlatformUtils.hpp>
+
 namespace olib
 {
    namespace opencorelib

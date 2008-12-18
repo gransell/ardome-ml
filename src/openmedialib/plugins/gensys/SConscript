@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread' )
+local_env.packages( 'boost_thread', 'boost_system', 'boost_date_time' )
 
 local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 

@@ -1,6 +1,8 @@
-tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-boost_1_34_1.B.tar.bz2
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-boost_1_37-wchar_t_on-python25.tar.bz2
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/ffmpeg-win32-20080825-mch264.tbz2 -> ffmpeg.tbz2
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/sdl-win32.B.tar.bz2
-tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-xerces-c-2_8_0.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2003/vc71-xerces-c-2.8.0-wchar_t-on.tar.bz2
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/loki-0.1.6.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/doxygen-1.5.7.1.windows.bin.zip -> doxygen.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/html_help_workshop.zip 
 

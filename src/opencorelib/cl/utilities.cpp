@@ -228,18 +228,15 @@ namespace olib
 		try
 		{
                 	if (ph.empty() || boost::filesystem::exists(ph)) return; 
-                	make_sure_path_exists(ph.branch_path()); 
+                	make_sure_path_exists(ph.parent_path()); 
                 	boost::filesystem::create_directory(ph); 
 		}
-		catch( boost::filesystem::filesystem_wpath_error &exception )
+		catch( boost::filesystem::basic_filesystem_error<olib::t_path> &exception)
 		{
 			std::wcerr << "exists exits: " << exception.what( ) << std::endl;
 		}
-		catch( boost::filesystem::filesystem_path_error &exception )
-		{
-			std::wcerr << "exists exits: " << exception.what( ) << std::endl;
-		}
-            }
+
+			}
 
 			t_string get_stack_trace( int skip_levels )
 			{
@@ -259,16 +256,6 @@ namespace olib
 				return stack_trace;	
 			}
 
-            boost::xtime add_millsecs_from_now( long milli_sec )
-            {
-                boost::xtime wt;
-                boost::xtime_get(&wt, boost::TIME_UTC);
-                boost::int32_t whole_secs = milli_sec / 1000;
-                wt.sec += whole_secs;
-                milli_sec = milli_sec - (whole_secs * 1000); // remove whole seconds
-                wt.nsec += milli_sec * 1000000;  
-                return wt;
-            }
              
             CORE_API boost::uint32_t get_current_thread_id() 
             {
@@ -283,13 +270,12 @@ namespace olib
 
             timer::timer()
             {
-                m_Start = boost::posix_time::microsec_clock::local_time();
+                m_start = boost::get_system_time();
             }
 
-            long timer::elapsed_millisecs()
+            boost::posix_time::time_duration timer::elapsed()
             {
-                boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-                return static_cast<long>((now - m_Start).total_milliseconds());
+                return boost::get_system_time() - m_start;
             }
 
             t_string make_smb_path( const t_string& host,

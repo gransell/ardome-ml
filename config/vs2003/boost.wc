@@ -1,12 +1,14 @@
 # Name: boost
 # Description: boost
-# Version: 1.34.1
+# Version: 1.37
 
 import os
 
 def flags( env, prefix ):
 	env.Append( CPPPATH = [ os.path.join( prefix, 'include') ] )
 	env.Append( LIBPATH = [ os.path.join( prefix, 'lib') ] )
+	
+	env.Append( CPPFLAGS = [ '/Zc:wchar_t'] )
 
 def install( env, prefix ):
 	env.copy_files( os.path.join( env[ 'stage_include' ], 'boost' ),  os.path.join( prefix, 'include', 'boost' ) )

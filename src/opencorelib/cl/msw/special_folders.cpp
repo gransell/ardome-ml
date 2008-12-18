@@ -34,7 +34,7 @@ namespace olib
 
                 std::wstring module_path(buff);
                 olib::t_path full_path( module_path );
-                return full_path.remove_leaf();
+                return full_path.remove_filename();
             }
 
             olib::t_path get_module_path( const t_string& module_name )

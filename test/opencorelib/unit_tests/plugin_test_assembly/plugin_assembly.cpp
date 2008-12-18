@@ -19,7 +19,7 @@ typedef Loki::SingletonHolder<	assembly_class_creator,
 
 extern "C"
 {
-    DLL_EXPORT assembly_class_factory& get_assembly_class_factory()
+    OLIB_DLL_EXPORT assembly_class_factory& get_assembly_class_factory()
     {
         return the_assembly_class_creator::Instance();
     }

@@ -23,6 +23,10 @@ class CompilerTool:
 				AdditionalOptions="%s"/> """
 				
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
+		
+		if vsver == 'vs2008':
+			if precomp_flag == 3 : precomp_flag = 2
+		
 		return toolstr % ( precomp_flag, precomp_file, the_file.get_additional_cl_flags(config.name) ) 
 		
 class QtMocTool :
@@ -114,6 +118,7 @@ class VS2003:
 					AdditionalIncludeDirectories="%s"
 					PreprocessorDefinitions="%s"
 					RuntimeLibrary="%s"
+					TreatWChar_tAsBuiltInType="%s"
 					RuntimeTypeInfo="%s"
 					UsePrecompiledHeader="%s"
 					PrecompiledHeaderThrough="%s"
@@ -127,6 +132,7 @@ class VS2003:
 							options.preprocessor_flags_as_string(),
 							options.runtime_library( config.name ),
 							options.runtime_type_info_as_string(),
+							options.wchar_t_built_in_as_string(),
 							options.use_precompiled_headers(),
 							options.precompiled_header_file(),
 							options.warning_level,
@@ -174,22 +180,13 @@ class VS2008 :
 							options.debug_information_format( config.name) )
 										
 	def file_configuration( self, config, the_file, filetype ) :
-		if filetype == "source":
-			config_element = """<FileConfiguration Name="%s">
-			<Tool
-				Name="VCCLCompilerTool"
-				UsePrecompiledHeader="%d"
-				CompileAsManaged="0" />
-			</FileConfiguration>"""
-			
-			precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
-			# Changed numbers in vs2008
-			if precomp_flag == 3 : precomp_flag = 2
-			return  config_element % ( config.name, precomp_flag ) 
-		elif filetype == "header":
-			return ""
-		else : return ""
-			
+		if filetype == "source" or filetype == "header" or filetype == "resource":
+			res = "<FileConfiguration Name=\"" + config.name + "\">"
+			for tool in the_file.get_tools(config) :
+				res += tool.to_tool_xml( the_file, config, "vs2008" )
+			res += "</FileConfiguration>\n"
+			return res		
+		else : return ""	
 		
 	def solution_file_header( self ) :
 		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
@@ -213,7 +210,6 @@ class CompilerOptions:
 									
 		self.preprocessor_flags = ""
 		self.include_directories = []
-		self.wchar_t_is_built_in = False
 		self.runtime_type_info = True
 		self.precomp_headers = False, "", ""
 		self.sources_not_using_precomp = []
@@ -249,6 +245,13 @@ class CompilerOptions:
 		""" Returns the string 'TRUE' if runtime type info is going to be used, otherwise 'FALSE'"""
 		if self.runtime_type_info  : return "TRUE"
 		return "FALSE"
+		
+	def wchar_t_built_in_as_string( self ) :
+		# print self.additional_options
+		if self.additional_options.find('/Zc:wchar_t') != -1 :
+			return "TRUE"
+		else : 
+			return "FALSE"
 
 	def use_precompiled_headers( self ) :
 		""" Returns a number as a string that tells Visual Studio if precompiled headers are going to be used.
