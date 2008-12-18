@@ -1,4 +1,4 @@
-: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/boost-1_34_1-osx-1.5-universal-ts.tar.bz2 -> boost.tar.bz2
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/boost-1_37-osx-1.5-universal.tar.bz2 -> boost.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/ffmpeg-2008-08-25-mac-osx-10.5-intel-mmx-setpatch.tar.bz2 -> ffmpeg.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/SDL-1.2.13-mac-osx-10.5-intel-gc.tar.bz2 -> SDL.tar.bz2
 

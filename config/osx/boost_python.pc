@@ -9,6 +9,6 @@ Requires: boost
 prefix=/usr
 libdir=${prefix}/lib
 
-Libs:	-lboost_python-mt${debug}-1_34_1 -framework ApplicationServices -framework Cocoa
+Libs:	-lboost_python-xgcc40-mt${debug}-1_37 -framework ApplicationServices -framework Cocoa
 
-install_libs=${libdir}/libboost_python-mt${debug}-1_34_1.dylib
+install_libs=${libdir}/libboost_python-xgcc40-mt${debug}-1_37.dylib
