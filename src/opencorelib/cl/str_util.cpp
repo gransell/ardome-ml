@@ -252,26 +252,24 @@ namespace olib
 
 		t_string str_util::to_t_string( const wchar_t* source, size_t length )
 		{
-            #ifdef OLIB_ON_WINDOWS
+            //#ifdef OLIB_ON_WINDOWS
                 if( ! source ) return t_string();
                 return to_t_string( std::wstring(source, length) );
-            #else
-			    std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source,
-																							 length );
-			    return to_t_string( std::wstring(&wide_chars[0], length) );
-            #endif
+            //#else
+			    //std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source, length );
+			    //return to_t_string( std::wstring(&wide_chars[0], length) );
+            //#endif
 		}
 
 		t_string str_util::to_t_string( const wchar_t* source )
 		{
-            #ifdef OLIB_ON_WINDOWS
+            //#ifdef OLIB_ON_WINDOWS
                 if( ! source ) return t_string();
                 return to_t_string( std::wstring(source) );
-            #else
-			    std::vector<wchar_t> wide_chars = string_conversions::
-					unpack_packed_wide_string( source, wcslen(source) ) );
-			    return to_t_string( std::wstring(&wide_chars[0], wide_chars.size() - 1) );
-            #endif
+            //#else
+			    //std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source, wcslen(source) ) );
+			    //return to_t_string( std::wstring(&wide_chars[0], wide_chars.size() - 1) );
+            //#endif
 		}
 
 		t_string str_util::to_t_string( const char* source)

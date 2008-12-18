@@ -33,7 +33,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
 			#self.install_config( 'config/vs2008/xerces30.wc', 'bcomp/vs2008/xerces-c-3.0.0-x86-windows-vc-9.0' )
 			self.install_config( 'config/vs2008/xerces.wc', 'bcomp/vs2008/xerces-c-src_2_8_0' )
-			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
+ 			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc',
 							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc', 'boost_system.wc']:
 				self.install_config( 'config/vs2008/' + package, 'bcomp/vs2008/boost' )
 		elif self[ 'target' ] == 'osx':
@@ -54,6 +54,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
 			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'ubuntu32':
+			if os.path.exists( 'bcomp/boost' ):
+				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
+								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_signals.pc', 'boost_system.pc' ]:
+					self.install_config( 'config/ubuntu32/' + package, 'bcomp/boost' )
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'ubuntu64':

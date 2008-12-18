@@ -1,0 +1,10 @@
+
+Name: boost_python
+Description: boost python lib
+Version: 0.0.1
+
+Requires: boost
+
+Libs:	-lboost_python-gcc43-mt
+
+install_libs=${prefix}/lib/libboost_python-gcc*-mt*.so*

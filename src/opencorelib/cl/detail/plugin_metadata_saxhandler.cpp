@@ -77,8 +77,8 @@ namespace olib
                 const XMLCh* dname = st.m_attributes->getValue( L2("debug").c_str() );
                 const XMLCh* rname = st.m_attributes->getValue( L2("release").c_str() );
 
-                m_res->set_assembly_debug_name( to_t_string(dname, XMLString::stringLen(dname) ) );
-                m_res->set_assembly_release_name( to_t_string(rname, XMLString::stringLen(dname) ));
+                m_res->set_assembly_debug_name( x_to_t_string(dname, XMLString::stringLen(dname) ) );
+                m_res->set_assembly_release_name( x_to_t_string(rname, XMLString::stringLen(dname) ));
             }
         }
 
@@ -88,14 +88,14 @@ namespace olib
             {
                 plugin_class_description_ptr cd( new plugin_class_description() );
                 const XMLCh* id = st.m_attributes->getValue( L2("id").c_str() );
-                cd->set_id( to_t_string(id, XMLString::stringLen(id) ) );
+                cd->set_id( x_to_t_string(id, XMLString::stringLen(id) ) );
                 m_res->get_class_descriptions().push_back( cd );
             }
             else if( st.m_chars && ends_with(st.m_traverser->get_state(), L2("class/description"))) 
             {
                 ARENFORCE( m_res->get_class_descriptions().size() > 0 );
                 m_res->get_class_descriptions().back()
-                    ->set_description( to_t_string(st.m_chars, st.m_length));
+                    ->set_description( x_to_t_string(st.m_chars, st.m_length));
             }
         }
     }

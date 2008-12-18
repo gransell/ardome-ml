@@ -1,0 +1,10 @@
+
+Name: boost_filesystem
+Description: boost filesystem lib
+Version: 0.0.1
+
+Requires: boost
+
+Libs:	-lboost_filesystem-gcc43-mt
+
+install_libs=${prefix}/lib/libboost_filesystem-gcc*-mt*.so*
