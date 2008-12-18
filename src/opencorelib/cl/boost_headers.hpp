@@ -25,8 +25,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_array.hpp>
+#include <boost/scoped_array.hpp>
 #include <boost/ref.hpp>
-
 
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO 
     #pragma warning(push)
@@ -70,23 +70,7 @@
 #pragma warning (pop)
 #endif
 
-#ifndef BOOST_SIGNALS_DYN_LINK 
-    #define BOOST_SIGNALS_DYN_LINK 
-#endif
-#ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-    #pragma warning( push )
-    #pragma warning( disable: 4251 )
-    #pragma warning( disable: 4275 )
-    #pragma warning( disable: 4511 )
-    #pragma warning( disable: 4512 )
-    #pragma warning( disable: 4675 )
-#endif
-	#include <boost/signal.hpp>
-#ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
-#pragma warning (pop)
-#endif
 
-#include <boost/scoped_array.hpp>
 
 #endif // _CORE_BOOST_HEADERS_H_
 

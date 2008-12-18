@@ -62,17 +62,22 @@ inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 }
 
 static pl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
+static pl::pcos::key key_use_last_image_( pcos::key::from_string( "use_last_image" ) );
 
 static bool has_image( frame_type_ptr &frame )
 {
-	bool result = false;
-	std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
-	for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
+	pl::pcos::property use_last = frame->properties( ).get_property_with_key( key_use_last_image_ );
+	bool result = use_last.valid( ) && use_last.value< int >( ) == 1;
+	if ( !result )
 	{
-		if ( *iter && ( *iter )->has_image( ) )
+		std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
+		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
 		{
-			pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
-			result = !prop.valid( ) || prop.value< int >( ) == 0;
+			if ( *iter && ( *iter )->has_image( ) )
+			{
+				pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
+				result = !prop.valid( ) || prop.value< int >( ) == 0;
+			}
 		}
 	}
 	return result;
@@ -229,20 +234,23 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				alpha = deferred_alpha_;
 			}
 
-			// Construct a frame and populate with basic information
-			result->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
-			result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
-			result->set_pts( get_position( ) * 1.0 / fps( ) );
-			result->set_duration( 1.0 / fps( ) );
-			result->set_position( get_position( ) );
+			if ( get_process_flags( ) & ml::process_image )
+			{
+				// Construct a frame and populate with basic information
+				result->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
+				result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
+				result->set_pts( get_position( ) * 1.0 / fps( ) );
+				result->set_duration( 1.0 / fps( ) );
+				result->set_position( get_position( ) );
 
-			// Set the image
-			result->set_image( image );
-			result->set_alpha( alpha );
+				// Set the image
+				result->set_image( image );
+				result->set_alpha( alpha );
 
-			// Identify image as a background
-			pl::pcos::property prop( key_background_ );
-			result->properties( ).append( prop = 1 );
+				// Identify image as a background
+				pl::pcos::property prop( key_background_ );
+				result->properties( ).append( prop = 1 );
+			}
 		}
 
 		virtual bool reuse( ) { return false; }
@@ -721,15 +729,8 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 //
 // Property usage:
 //
-//	pixel = 0 [default] or 1
-//		use pixel or relative pixel coordinates
-//
 //	rx, ry, rw, rh = double, double, double, double (0,0,1,1 is default)
 //		the visible area of the background is specified in the range of 0.0 to 1.0
-//
-//	px, py, pw, ph = int, int, int, int (0,0,720,576 is default)
-//		coordinates specified should be specified relative to background hence
-//		the onus is pushed to the assignment functionality
 //
 //	mix = 0.0 to 1.0 [default]
 //		level of video mixing for the requested frame
@@ -749,9 +750,11 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 //		smart scales and crops to ensure that the full destination resolution
 //		is used
 //
-//	TODO: Provide support for non yuv planar formats.
+//	halign = 0, 1 or 2 (for left, centre, right)
+//	valign = 0, 1 or 2 (for left, centre, right)
+//		Horizontal and veritical alignment
 //
-//	TODO: Vertical and horizontal alignment.
+//	TODO: Provide support for non yuv planar formats.
 //
 //	TODO: Additional alpha compositing modes.
 
@@ -768,11 +771,6 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_mode_( pcos::key::from_string( "mode" ) )
 			, prop_swap_( pcos::key::from_string( "swap" ) )
-			, prop_pixel_( pcos::key::from_string( "pixel" ) )
-			, prop_px_( pcos::key::from_string( "px" ) )
-			, prop_py_( pcos::key::from_string( "py" ) )
-			, prop_pw_( pcos::key::from_string( "pw" ) )
-			, prop_ph_( pcos::key::from_string( "ph" ) )
 			, prop_rx_( pcos::key::from_string( "rx" ) )
 			, prop_ry_( pcos::key::from_string( "ry" ) )
 			, prop_rw_( pcos::key::from_string( "rw" ) )
@@ -786,11 +784,6 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_mode_ = pl::wstring( L"fill" ) );
 			properties( ).append( prop_swap_ = 0 );
-			properties( ).append( prop_pixel_ = 0 );
-			properties( ).append( prop_px_ = 0 );
-			properties( ).append( prop_py_ = 0 );
-			properties( ).append( prop_pw_ = 720 );
-			properties( ).append( prop_ph_ = 576 );
 			properties( ).append( prop_rx_ = 0.0 );
 			properties( ).append( prop_ry_ = 0.0 );
 			properties( ).append( prop_rw_ = 1.0 );
@@ -887,21 +880,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			if ( dst_sar_num == 0 ) dst_sar_num = 1;
 			if ( dst_sar_den == 0 ) dst_sar_den = 1;
 
-			// Pixel/relative positioning
-			if ( prop_pixel_.value< int >( ) )
-			{
-				result.x = prop_px_.value< int >( );
-				result.y = prop_py_.value< int >( );
-				result.w = prop_pw_.value< int >( );
-				result.h = prop_ph_.value< int >( );
-			}
-			else
-			{
-				result.x = int( dst_w * prop_rx_.value< double >( ) );
-				result.y = int( dst_h * prop_ry_.value< double >( ) );
-				result.w = int( dst_w * prop_rw_.value< double >( ) );
-				result.h = int( dst_h * prop_rh_.value< double >( ) );
-			}
+			// Relative positioning
+			result.x = int( dst_w * prop_rx_.value< double >( ) );
+			result.y = int( dst_h * prop_ry_.value< double >( ) );
+			result.w = int( dst_w * prop_rw_.value< double >( ) );
+			result.h = int( dst_h * prop_rh_.value< double >( ) );
 
 			// Specify the initial crop area
 			result.cx = 0;
@@ -950,6 +933,16 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				result.h = dst_h;
 				result.w = pillar_w;
 			}
+			else if ( prop_mode_.value< pl::wstring >( ).find( L"native" ) == 0 )
+			{
+				result.w = src_w;
+				result.h = src_h;
+			}
+			else if ( prop_mode_.value< pl::wstring >( ).find( L"corrected" ) == 0 )
+			{
+				result.w = int( 0.5 + ( src_w * src_sar_num * dst_sar_den ) / ( src_sar_den * dst_sar_num ) );
+				result.h = src_h;
+			}
 
 			// Correct the cropping as required
 			if ( dst_w >= result.w )
@@ -975,6 +968,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				result.ch = int( result.ch * ( 1.0 - diff ) );
 				result.h = dst_h;
 			}
+
+			if ( result.w % 1 ) result.w += 1;
 
 			return result;
 		}
@@ -1182,11 +1177,6 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		pcos::property prop_enable_;
 		pcos::property prop_mode_;
 		pcos::property prop_swap_;
-		pcos::property prop_pixel_;
-		pcos::property prop_px_;
-		pcos::property prop_py_;
-		pcos::property prop_pw_;
-		pcos::property prop_ph_;
 		pcos::property prop_rx_;
 		pcos::property prop_ry_;
 		pcos::property prop_rw_;
@@ -1990,6 +1980,22 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			}
 		}
 
+		void assign_property( frame_type_ptr frame, std::string name, pl::wstring result )
+		{
+			if ( name.find( ":" ) != std::string::npos )
+				name = name.substr( 0, name.find( ":" ) );
+
+			if ( !frame->properties( ).get_property_with_string( name.c_str( ) ).valid( ) )
+			{
+				pcos::property final( pcos::key::from_string( name.c_str( ) ) );
+				frame->properties( ).append( final = result );
+			}
+			else
+			{
+				frame->properties( ).get_property_with_string( name.c_str( ) ) = result;
+			}
+		}
+
 		virtual void evaluate( frame_type_ptr frame, pcos::key &key )
 		{
 			std::string name( key.as_string( ) );
@@ -2016,6 +2022,10 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 						result = double( lower );
 
 					assign_property( frame, name.substr( 2 ), result );
+				}
+				else if ( count == 0 )
+				{
+					assign_property( frame, name.substr( 2 ), value );
 				}
 			}
 		}
@@ -2153,6 +2163,8 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			, prop_type_( pcos::key::from_string( "type" ) )
 			, prop_colourspace_( pcos::key::from_string( "colourspace" ) )
 			, previous_( )
+			, previous_sar_num_( 59 )
+			, previous_sar_den_( 54 )
 		{
 			properties( ).append( prop_force_ = 0 );
 			properties( ).append( prop_width_ = 640 );
@@ -2183,9 +2195,15 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
 				visualise( result );
 			else if ( result && !result->has_image( ) )
+			{
 				result->set_image( previous_ );
+				result->set_sar( previous_sar_num_, previous_sar_den_ );
+			}
 			else if ( result )
+			{
 				previous_ = result->get_image( );
+				result->get_sar( previous_sar_num_, previous_sar_den_ );
+			}
 		}
 
 	private:
@@ -2349,6 +2367,8 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 		pcos::property prop_type_;
 		pcos::property prop_colourspace_;
 		il::image_type_ptr previous_;
+		int previous_sar_num_;
+		int previous_sar_den_;
 };
 
 // Playlist filter

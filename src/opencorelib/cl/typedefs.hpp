@@ -11,7 +11,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/function.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/signal.hpp>
 #include <map>
 #include "./minimal_string_defines.hpp"
 
@@ -61,16 +60,12 @@ namespace olib
               
         typedef boost::shared_ptr<invoker> invoker_ptr;
         typedef boost::function< void () > invokable_function;
-        
-        typedef std::basic_string<boost::uint16_t> xerces_string;
 
         /// Represents a media time in an exact way.
         typedef boost::rational< long > rational_time;
 
         typedef std::map< t_string, olib::t_path > schema_map;
 
-        typedef boost::signal< void ( const cache_utilizer_ptr&, 
-                                        const cache_resource_status_ptr& ) > cache_resource_updated_signal; 
     }
 }
 

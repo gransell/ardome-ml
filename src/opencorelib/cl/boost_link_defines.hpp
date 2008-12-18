@@ -17,6 +17,10 @@
 #define BOOST_SIGNALS_DYN_LINK 1
 #endif
 
+#ifndef BOOST_SYSTEM_DYN_LINK
+#define BOOST_SYSTEM_DYN_LINK 1
+#endif
+
 
 // Don't allow 1.33.1 style usage of boost::filesystem
 #define BOOST_FILESYSTEM_NO_DEPRECATED 1

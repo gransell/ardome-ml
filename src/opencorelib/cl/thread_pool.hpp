@@ -22,7 +22,7 @@ namespace olib
 				@param thread_termination_timeout The time out in milli seconds
 					to wait for the worker threads to terminate. */
 			thread_pool(   unsigned int max_nrOf_workers,  
-						boost::int32_t thread_termination_timeout);
+                            const boost::posix_time::time_duration& thread_termination_timeout);
 
 			/// Calls terminate_all_threads and dies.
 			virtual ~thread_pool();
@@ -31,7 +31,7 @@ namespace olib
             /** @param time_out This is the maximum wait time in 
                         milliseconds to wait for each thread in the pool
                         to terminate. */
-			void terminate_all_threads(long time_out) ;
+            void terminate_all_threads(const boost::posix_time::time_duration& time_out) ;
 
 			/// Add a job to the pool.
 			virtual void add_job( boost::shared_ptr< base_job > p_job ) ;
@@ -51,14 +51,14 @@ namespace olib
                 @param time_out If all jobs are not completed before the time_out,
                         (given in milli seconds) the function will return false.
                 @return true if all jobs were completed, false otherwise. */
-            bool wait_for_all_jobs_completed( long time_out );
+            bool wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out );
 
 		protected:
 
-			typedef std::vector< boost::shared_ptr< worker >  > Worker_vec;
-			Worker_vec m_Workers;
+			typedef std::vector< boost::shared_ptr< worker >  > worker_vec;
+			worker_vec m_workers;
 			unsigned int m_i_max_workers;
-			boost::int32_t m_dw_thread_termination_timeout;
+            boost::posix_time::time_duration m_thread_termination_timeout;
             mutable boost::recursive_mutex m_this_mtx;
 
 			bool add_to_empty_worker(boost::shared_ptr< base_job > p_job);

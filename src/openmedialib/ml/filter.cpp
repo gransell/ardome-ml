@@ -175,6 +175,15 @@ bool filter_type::connect( input_type_ptr input, size_t slot )
 	return result;
 }
 
+// Provides a hint to the input implementation
+void filter_type::set_process_flags( int flags ) 
+{
+	input_type::set_process_flags( flags );
+	for( std::vector< input_type_ptr >::iterator iter = slots_.begin( ); iter < slots_.end( ); iter ++ )
+		if ( *iter )
+			( *iter )->set_process_flags( get_process_flags( ) );
+}
+
 void filter_type::seek( const int position, const bool relative )
 {
 	if ( relative )
@@ -190,9 +199,6 @@ void filter_type::acquire_values( )
 {
 	if ( fetch_callback( ) ) 
 		fetch_callback( )->assign( properties( ), get_position( ) ); 
-	for( std::vector< input_type_ptr >::iterator iter = slots_.begin( ); iter < slots_.end( ); iter ++ )
-		if ( *iter )
-			( *iter )->set_process_flags( get_process_flags( ) );
 }
 
 bool filter_type::is_thread_safe( )

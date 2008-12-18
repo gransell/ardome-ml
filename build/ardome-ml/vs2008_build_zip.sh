@@ -4,77 +4,42 @@ echo "Trying to build ardome-ml-vs2008.zip target, creating directory named TMPZ
 rm -rf TMPZIP
 
 mkdir TMPZIP || exit 1
-mkdir TMPZIP/bin/ || exit 1
-mkdir TMPZIP/bin/debug || exit 1
-mkdir TMPZIP/bin/debug/aml-plugins || exit 1
-mkdir TMPZIP/bin/release || exit 1
-mkdir TMPZIP/bin/release/aml-plugins || exit 1
-mkdir TMPZIP/src || exit 1
+mkdir TMPZIP/aml || exit 1
+mkdir TMPZIP/aml/release || exit 1
+mkdir TMPZIP/aml/debug || exit 1
 
-echo "Adding release binaries..."
-cp -r bcomp/ardome-ml/vs2008/bin_vs2008/release/*.dll \
-      bcomp/ardome-ml/vs2008/bin_vs2008/release/*.lib \
-	  bcomp/ardome-ml/vs2008/bin_vs2008/release/*.pdb \
-      TMPZIP/bin/release 
+echo "Adding release files..."
+cp -r build/release/vs2008/bin TMPZIP/aml/release/
+cp -r build/release/vs2008/include TMPZIP/aml/release/
+cp -r build/release/vs2008/lib TMPZIP/aml/release/
+
+if [ ! $? == 0 ]; then
+	echo "Failed to copy release files"
+	exit 1
+fi
+
 	  
+echo "Adding debug files..."
+cp -r build/debug/vs2008/bin TMPZIP/aml/debug/
+cp -r build/debug/vs2008/include TMPZIP/aml/debug/
+cp -r build/debug/vs2008/lib TMPZIP/aml/debug/
+
+
 if [ ! $? == 0 ]; then
-	echo "Failed to copy binary files"
+	echo "Failed to copy debug files"
 	exit 1
 fi
 
-echo "Adding release plugins..."
-cp -r bcomp/ardome-ml/vs2008/bin_vs2008/release/aml-plugins/*.dll \
-	  bcomp/ardome-ml/vs2008/bin_vs2008/release/aml-plugins/*.pdb \
-      TMPZIP/bin/release/aml-plugins 
-
-if [ ! $? == 0 ]; then
-	echo "Failed to copy binary files"
-	exit 1
-fi
-	  
-echo "Adding opl-files..."
-cp bcomp/ardome-ml/src/openmedialib/plugins/avformat/avformat_plugin.opl TMPZIP/bin/release/aml-plugins 
-cp bcomp/ardome-ml/src/openmedialib/plugins/gensys/gensys_plugin.opl TMPZIP/bin/release/aml-plugins
-cp bcomp/ardome-ml/src/openmedialib/plugins/sdl/sdl_plugin.opl TMPZIP/bin/release/aml-plugins
-cp bcomp/ardome-ml/src/openimagelib/plugins/gdi+/gdi_plugin.opl TMPZIP/bin/release/aml-plugins
-
-cp bcomp/ardome-ml/src/openmedialib/plugins/avformat/avformat_plugin.opl TMPZIP/bin/debug/aml-plugins 
-cp bcomp/ardome-ml/src/openmedialib/plugins/gensys/gensys_plugin.opl TMPZIP/bin/debug/aml-plugins
-cp bcomp/ardome-ml/src/openmedialib/plugins/sdl/sdl_plugin.opl TMPZIP/bin/debug/aml-plugins
-cp bcomp/ardome-ml/src/openimagelib/plugins/gdi+/gdi_plugin.opl TMPZIP/bin/debug/aml-plugins
-
-if [ ! $? == 0 ]; then
-	echo "Failed to copy opl files"
-	exit 1
-fi
-
-echo "Adding debug binaries..."	  
-cp -r bcomp/ardome-ml/vs2008/bin_vs2008/debug/*.dll \
-      bcomp/ardome-ml/vs2008/bin_vs2008/debug/*.lib \
-	  bcomp/ardome-ml/vs2008/bin_vs2008/debug/*.pdb \
-      TMPZIP/bin/debug
-
-if [ ! $? == 0 ]; then
-	echo "Failed to copy binary files"
-	exit 1
-fi
-
-echo "Adding debug plugins..."	  
-cp -r bcomp/ardome-ml/vs2008/bin_vs2008/debug/aml-plugins/*.dll \
-	  bcomp/ardome-ml/vs2008/bin_vs2008/debug/aml-plugins/*.pdb \
-      TMPZIP/bin/debug/aml-plugins 
-
-if [ ! $? == 0 ]; then
-	echo "Failed to copy binary files"
-	exit 1
-fi
 					
-echo "Adding header files to be able to build, adding source files to be able to debug ..."	  
-cp -r bcomp/ardome-ml/src/* TMPZIP/src/
+echo "Adding source files to be able to debug ..."	  
+cp -r src/ TMPZIP/aml/
 if [ ! $? == 0 ]; then
-	echo "Failed to copy include and source files"
+	echo "Failed to copy source files"
 	exit 1
 fi
+
+echo "Purging .svn folders"
+find TMPZIP -name \.svn -type d -prune -print0 | xargs -0 rm -rf
 
 echo "Building zip-file ardome-ml-vs2008.zip .."
 cd TMPZIP 

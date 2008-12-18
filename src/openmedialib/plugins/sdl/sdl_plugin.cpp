@@ -99,8 +99,12 @@ static bool sdl_init_audio( )
 class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 {
 	public:
+        typedef boost::recursive_mutex::scoped_lock scoped_lock;
+
 		sdl_video( const pl::wstring &, const frame_type_ptr & ) 
 			: store_type( )
+			, last_sar_num_( 1 )
+			, last_sar_den_( 1 )
 			, prop_winid_( pcos::key::from_string( "winid" ) )
 			, prop_flags_( pcos::key::from_string( "flags" ) )
 			, prop_width_( pcos::key::from_string( "width" ) )
@@ -143,10 +147,10 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		virtual bool init( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			scoped_lock lock( mutex_ );
 
 			if ( prop_winid_.value< boost::uint64_t >( ) != 0 )
-				sdl_setenv( "SDL_WINDOWID", prop_winid_.value< boost::uint64_t >( ) );
+				sdl_setenv( "SDL_WINDOWID", static_cast<int>( prop_winid_.value< boost::uint64_t >( ) ) );
 
 			bool grab_video = sdl_init_video( );
 
@@ -172,7 +176,10 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// Use the previously converted image if current frame has no image or we're repeating
 			if ( img == 0 )
+			{
 				img = last_image_;
+				frame->set_sar( last_sar_num_, last_sar_den_ );
+			}
 
 			// If we still don't have an image, bail now
 			if ( img == 0 )
@@ -188,6 +195,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			// Convert to requested colour space
 			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
 			last_image_ = img;
+			frame->get_sar( last_sar_num_, last_sar_den_ );
 
 			// TODO: Provide an alternative mechanism window event handling (via properties)
 			SDL_Event event;
@@ -264,6 +272,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					SDL_UnlockYUVOverlay( overlay );
 					SDL_DisplayYUVOverlay( overlay, &screen->clip_rect );
 				}
+
+				img->crop_clear( );
 			}
 
 			unlock_display( );
@@ -277,8 +287,14 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		virtual frame_type_ptr flush( )
 		{
-			return frame_type_ptr( );
+            scoped_lock lock( mutex_ );
+            return flush( lock );
 		}
+
+        frame_type_ptr flush( scoped_lock& lck )
+        {
+            return frame_type_ptr( );
+        }
 
 	private:
 
@@ -440,6 +456,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		frame_type_ptr last_frame_;
 		il::image_type_ptr last_image_;
+		int last_sar_num_;
+		int last_sar_den_;
 		pcos::property prop_winid_;
 		pcos::property prop_flags_;
 		pcos::property prop_width_;
@@ -488,6 +506,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 {
 	public:
         typedef fn_observer< sdl_audio > observer;
+        typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
 		sdl_audio( const pl::wstring &, const frame_type_ptr & ) 
 			: store_type( )
@@ -516,7 +535,8 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		virtual ~sdl_audio( )
 		{
-			flush( );
+            scoped_lock lock( mutex_ );
+			flush( lock );
 			SDL_CloseAudio( );
 		}
 
@@ -527,12 +547,13 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
+            scoped_lock lock( mutex_ );
 			if( frame )
 				frame_duration_ = static_cast<int>((1.0 / frame->fps()) * 1000);
 
         	bool result = frame && frame->get_audio( );
 			if ( result )
-				result = queue_audio( frame->get_audio( ) );
+				result = queue_audio( frame->get_audio( ), lock );
 
 			return result;
 		}
@@ -541,23 +562,28 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
         // If it is set to anything but 0, make sure SDL is paused.
         void update_pause()
         {
+            boost::recursive_mutex::scoped_lock lock( mutex_ );
             int should_pause = prop_pause_.value< int >();
             if( should_pause != 0 )
             {
-				boost::recursive_mutex::scoped_lock lock( mutex_ );
 				is_paused_ = true;
-				complete();
+				complete( lock );
             }
         }
 
-		virtual void complete( )
+        void complete( )
+        {
+            scoped_lock lock( mutex_ );
+            complete( lock );
+        }
+
+		virtual void complete( scoped_lock& lck )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( chunks_.size( ) > 0 && is_paused_ )
 			{
 				is_paused_ = false;
 				while( chunks_.size( ) > 0 )
-					cond_.wait( lock );
+					cond_.wait( lck );
 				cond_.notify_all( );
 			}
 
@@ -568,9 +594,14 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			used_ = 0;
 		}
 
-		virtual frame_type_ptr flush( )
+        virtual frame_type_ptr flush( )
+        {
+            scoped_lock lock( mutex_ );
+            return flush( lock );
+        }
+
+		frame_type_ptr flush( scoped_lock& lck )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			is_paused_ = true;
 			cond_.notify_all( );
 			chunks_.clear( );
@@ -581,35 +612,32 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 		}
 
 	protected:
-		bool queue_audio( audio_type_ptr audio )
+		bool queue_audio( audio_type_ptr audio, scoped_lock& lck )
 		{
 			bool result = true;
 
 			if ( audio->channels( ) > 2 )
 				audio = audio_channel_convert( audio, 2 );
 
-			result = acquire_audio( audio );
+			result = acquire_audio( audio, lck );
 
 			if ( result )
-				split_audio( audio );
+				split_audio( audio, lck  );
 
 			return result;
 		}
 
-		bool acquire_audio( audio_type_ptr audio )
+		bool acquire_audio( audio_type_ptr audio, scoped_lock& lck )
 		{
 			int channels = audio->channels( );
 			int frequency = audio->frequency( );
 
 			if ( audio_acquired_ && ( channels != audio_spec_.channels || frequency != audio_spec_.freq ) )
-			{
-				{
-					boost::recursive_mutex::scoped_lock lock( mutex_ );
-					cond_.notify_all( );
-                    is_paused_ = true;
-				}
-
-				flush( );
+			{	
+				cond_.notify_all( );
+                is_paused_ = true;
+		
+				flush( lck );
 				audio_acquired_ = false;
                 SDL_PauseAudio(1);
 				SDL_CloseAudio( );
@@ -620,8 +648,6 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 			if ( !audio_acquired_ )
 			{
-				boost::recursive_mutex::scoped_lock lock( mutex_ );
-
 				SDL_AudioSpec request;
 
 				memset( &request, 0, sizeof( SDL_AudioSpec ) );
@@ -643,7 +669,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			return audio_acquired_;
 		}
 
-		bool split_audio( audio_type_ptr audio )
+		bool split_audio( audio_type_ptr audio, scoped_lock& lck )
 		{
 			uint8_t *ptr = audio->data( );
 			int bytes = audio->samples( ) * audio->channels( ) * 2;
@@ -653,8 +679,6 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 			if ( position_ > prop_preroll_.value< int >( ) )
 			{
-                boost::recursive_mutex::scoped_lock lock( mutex_ );
-
 			   	if ( is_paused_ )
 				{
 					chunks_at_start_ = static_cast<int>(chunks_.size( ));
@@ -673,7 +697,6 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 					ptr += buffer_size - used_;
 					bytes -= buffer_size - used_;
 					{
-						boost::recursive_mutex::scoped_lock lock( mutex_ );
 						chunks_.push_back( buffer_ );
 						cond_.notify_all( );
 					}
@@ -690,11 +713,10 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
             if ( position_ > prop_preroll_.value< int >( ) )
             {
-                boost::recursive_mutex::scoped_lock lock( mutex_ );
                 while( static_cast<int>(chunks_.size( )) > chunks_at_start_ )
                 {
                     if( is_paused_ ) return true;
-                    cond_.wait( lock );
+                    cond_.wait( lck );
                 }
             }
 
@@ -708,8 +730,8 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		void fill_buffer( uint8_t *buffer, int len )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-        
+            scoped_lock lock(mutex_);
+
             if( is_paused_ )
             {
                 memset( buffer, 0, len);
@@ -719,8 +741,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			if( chunks_.size( ) == 0 )
 			{
 				// Never wait longer than the duration of one frame.
-				cond_.timed_wait( lock, 
-					olib::opencorelib::utilities::add_millsecs_from_now( frame_duration_ ) );
+                cond_.timed_wait( lock, boost::posix_time::milliseconds(frame_duration_) );
 			}
 			
 			if ( chunks_.size( ) > 0 && !is_paused_ )
@@ -748,7 +769,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 		int used_;
 		std::deque< chunk_type_ptr > chunks_;
 		boost::recursive_mutex mutex_;
-		boost::condition cond_;
+		boost::condition_variable_any cond_;
         boost::shared_ptr< pcos::observer > obs_pause_;
         bool is_paused_;
 		int frame_duration_;

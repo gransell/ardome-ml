@@ -84,7 +84,7 @@ namespace olib
                 @param activity The activity that should be performed by the calling thread during the wait.
                 @return false if the wait timed out. true if the job was done
                     before the timeout value. */
-            bool wait_for_job_done( long time_out, 
+            bool wait_for_job_done( const boost::posix_time::time_duration& time_out, 
                                     thread_sleep_activity::type activity = thread_sleep_activity::block );
 
             /// The int parameter is just a dummy.
@@ -132,12 +132,14 @@ namespace olib
             // Makes it possible to add some bookkeeping code around the real job function do_work.
             void do_work_bootstrapper();
 
-            mutable boost::recursive_mutex m_job_done_mtx, m_signal_mtx;
-            boost::condition m_job_done_condition;
+            mutable boost::recursive_mutex m_signal_mtx;
+			mutable boost::recursive_mutex m_job_done_mtx;
+			
+			boost::condition_variable_any m_job_done_condition;
             bool m_job_done, m_exception_thrown, m_run_more_than_once;
             boost::int32_t m_result;
-            time_value m_reoccuring_interval, m_run_next_time;
-            time_value m_next_time_to_run;
+            boost::system_time m_next_time_to_run;
+            boost::posix_time::time_duration m_reoccuring_interval;
 
             boost::shared_ptr< std::exception > m_std_exception;
             boost::shared_ptr< base_exception > m_base_exception;
@@ -149,8 +151,8 @@ namespace olib
 
             jobdone_signal m_job_done_signal;
 
-            boost::shared_ptr< boost::recursive_mutex::scoped_lock >
-            prevent_job_from_terminating();
+			boost::shared_ptr< boost::recursive_mutex::scoped_lock >
+			prevent_job_from_terminating();
             
             friend class worker;
         };

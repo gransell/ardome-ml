@@ -1,0 +1,12 @@
+
+Name: boost_unit_test_framework
+Description: boost unit_test_framework lib
+Version: 0.0.1
+
+Requires: boost
+
+CFlags: 
+
+Libs:	${prefix}/lib/libboost_unit_test_framework-gcc43-mt-1_37.a
+
+install_libs=${prefix}/lib/libboost_unit_test_framework-*.a

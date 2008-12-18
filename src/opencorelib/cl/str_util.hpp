@@ -79,23 +79,20 @@ namespace olib
 			/// Convert a std::string to a t_string (might not be a conversion)
 			CORE_API t_string to_t_string( const std::string& source);
 			
-            /// Convert an array of shorts to a t_string 
+			/// Convert a std::wstring to a t_string (might not be a conversion)
+			CORE_API t_string to_t_string( const std::wstring& source);
+
+			/// Convert an array of shorts to a t_string 
             /** On mac this means converting either to utf-8 (if TCHAR = char ) 
                 or utf-32 (TCHAR=wchar_t). On windows or unix it means a no-conversion
                 (if TCHAR=wchar_t) or an utf-8 conversion */
-		    CORE_API t_string to_t_string( const boost::uint16_t* const source, size_t length );
+		    CORE_API t_string to_t_string( const wchar_t* source, size_t length );
             
             /// Converts a short array to a t_string. The sequence must be null-terminated. 
-            CORE_API t_string to_t_string( const boost::uint16_t* source );
+			CORE_API t_string to_t_string( const wchar_t* source );
 			
 			/// Convert a char* to a t_string
-			CORE_API t_string to_t_string( const char* source);
-			
-			/// Convert a wchar_t* to a t_string
-            CORE_API t_string to_t_string( const boost::uint32_t* source);
-			
-			/// Convert a std::wstring to a t_string
-			CORE_API t_string to_t_string( const std::wstring& source);
+			CORE_API t_string to_t_string( const char* source);						
   
 			/// Convert a std::string to a std::wstring
 			CORE_API std::wstring to_wstring(const std::string& source);
@@ -106,10 +103,10 @@ namespace olib
 			CORE_API const std::wstring& to_wstring(const std::wstring& source);
             
             /// Converts a short array to a std::wstring.
-            CORE_API std::wstring to_wstring( const boost::uint16_t* const source, size_t length );
+            CORE_API std::wstring to_wstring( const wchar_t* source, size_t length );
             
             /// Converts a null-terminated short array to a std::wstring.
-            CORE_API std::wstring to_wstring( const boost::uint16_t* source );
+            CORE_API std::wstring to_wstring( const wchar_t* source );
 	
 			/// Convert a std::wstring to a std::string
 			CORE_API std::string to_string(const std::wstring& source);
@@ -120,10 +117,10 @@ namespace olib
 			CORE_API const std::string& to_string(const std::string& source);
             
             /// Converts a short array to a std::string.
-            CORE_API std::string to_string( const boost::uint16_t* source, size_t length );
+            CORE_API std::string to_string( const wchar_t* source, size_t length );
             
             /// Converts a null terminated short array to a std::string.
-            CORE_API std::string to_string( const boost::uint16_t* source );
+            CORE_API std::string to_string( const wchar_t* source );
 
 			/// Converts a boost::any to a string
 			/** The value must be one of the following:

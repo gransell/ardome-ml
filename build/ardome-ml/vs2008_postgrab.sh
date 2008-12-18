@@ -8,25 +8,23 @@ fi
 
 cd vs2008
 
-if [ ! -d boost-1_34_1 ]; then
-
-	echo "Extracting boost [~150 MB]..."
-	tar -zxf ../vs2008_boost/boost-1.34.1.tar.gz  
-
+if [ ! -d boost ]; then
+	echo "Extracting boost [~90 MB on disk]..."
+	tar -jxf ../tmp/boost.tar.bz2
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -zxf ../vs2008_boost/boost-1.34.1.tar.gz. Terminating."
+		echo "Failed to run: tar -jxf ../tmp/boost.tar.bz2. Terminating."
 		exit
 	fi
 fi
 
-if [ ! -d xerces-c-2_8_0 ]; then
+if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
 
-	tar -zxf ../vs2008_xerces/xerces-c-2_8_0.tar.gz 
+	unzip -oq ../tmp/xerces.zip 
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: tar -zxf ../vs2008_xerces/xerces-c-2_8_0.tar.gz. Terminating."
+	  echo "Failed to run: unzip -oq ../tmp/xerces.zip. Terminating."
 	  exit 1
 	fi
 fi
@@ -39,9 +37,9 @@ fi
 
 cd common
 
-if [ ! -d  ffmpeg/include ]; then
+if [ ! -d ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
-	tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2 
+	tar -jxf ../tmp/ffmpeg.tbz2 
 	
 	if [ ! $? == 0 ]; then
 	  echo "Failed to run tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2. Terminating."
@@ -49,26 +47,24 @@ if [ ! -d  ffmpeg/include ]; then
 	fi
 fi
 
-cd ../..
-
-if [ ! -d  bcomp/sdl/include ]; then
+if [ ! -d  sdl/include ]; then
 
 	echo "Extracting sdl [~1 MB]..."
-	unzip -oq bcomp/sdl/sdl-win32.zip -d bcomp/ 
+	tar -jxf ../tmp/sdl-win32.B.tar.bz2
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/sdl/sdl-win32.zip. Terminating."
+	  echo "Failed to run tar -jxf ../tmp/sdl-win32.B.tar.bz2. Terminating."
 	  exit
 	fi
 fi
 
-if [ ! -d  bcomp/loki-0.1.6/include ]; then
+if [ ! -d  loki-0.1.6/include ]; then
 
 	echo "Extracting Loki [~11 MB]..."
-	unzip -oq bcomp/loki/loki-0.1.6.zip -d bcomp/ 
+	unzip -oq ../tmp/loki-0.1.6.zip  
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to unzip bcomp/loki/loki-0.1.6.zip. Terminating."
+	  echo "Failed to run unzip -oq ../tmp/loki-0.1.6.zip. Terminating."
 	  exit
 	fi
 fi

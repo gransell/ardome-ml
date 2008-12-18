@@ -11,8 +11,8 @@
 #include "./disabled_warnings.hpp"
 
 #ifdef OLIB_ON_WINDOWS
-    // The DLL_EXPORT macro should only be used in plugins, since it always exports symbols.
-    #define DLL_EXPORT __declspec( dllexport )
+    // The OLIB_DLL_EXPORT macro should only be used in plugins, since it always exports symbols.
+    #define OLIB_DLL_EXPORT __declspec( dllexport )
         #if defined CORE_EXPORTS && defined(DYNAMIC_BUILD)
         #define CORE_API __declspec(dllexport)
         #pragma message ("Building open_core_library as a dynamic library")
@@ -25,7 +25,7 @@
         #define CORE_API
     #endif
 #else 
-    #define DLL_EXPORT
+    #define OLIB_DLL_EXPORT
     #define CORE_API
 #endif
 

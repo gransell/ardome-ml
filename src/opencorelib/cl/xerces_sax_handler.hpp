@@ -2,6 +2,7 @@
 #define _CORE_XERCES_SAX_HANDLER_H_
 
 #include "./typedefs.hpp"
+#include "./xml_sax_parser.hpp"
 
 namespace olib
 {

@@ -1,0 +1,21 @@
+# Name: boost_python
+# Description: boost python lib
+# Version: 1.34.1
+
+import os
+
+def flags( env, prefix ):
+	env.requires( 'boost' )
+	if env.debug : env.Append( LIBS = [ 'boost_python-vc90-mt-gd-1_37.lib' ] )	
+	else : env.Append( LIBS = [ 'boost_python-vc90-mt-1_37.lib' ] )	
+
+def install( env, prefix ):
+    if env.debug :
+        env.release( [ os.path.join( prefix, 'lib', 'boost_python-vc90-mt-gd-1_37.lib' ) ] )
+        env.release( [ os.path.join( prefix, 'bin', 'boost_python-vc90-mt-gd-1_37.dll' ) ] )
+    else :
+        env.release( [ os.path.join( prefix, 'lib', 'boost_python-vc90-mt-1_37.lib' ) ] )
+        env.release( [ os.path.join( prefix, 'bin', 'boost_python-vc90-mt-1_37.dll' ) ] )
+
+
+
