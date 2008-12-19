@@ -20,7 +20,7 @@ namespace olib
 	{
         void ec_add_value(exception_context& ec, const char* exp,  char* const & obj)
         {
-            ec.add_value( exp, str_util::to_t_string(obj));
+			ec.add_value( exp, str_util::to_t_string(obj));	
         }
 
         void ec_add_value(exception_context& ec, const char* exp,  wchar_t* const & obj)
