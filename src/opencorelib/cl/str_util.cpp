@@ -234,7 +234,21 @@ namespace olib
 		t_string str_util::to_t_string( const std::string& source)
 		{
 			#ifdef OLIB_USE_UTF16
-				return string_conversions::from_utf8_to_utf16(source.c_str(), source.size());
+				try
+				{
+					return string_conversions::from_utf8_to_utf16(source.c_str(), source.size());
+				}
+				catch( std::exception& )
+				{
+					std::wstring res;
+					for( size_t i = 0; i < source.size(); ++i )
+					{
+						unsigned char ch = source[i];
+						if( ch > 127 ) ch = 'x';
+						res.push_back( static_cast<wchar_t>(ch));
+					}
+					return res;
+				}
 			#else
 				return source.c_str();
 			#endif
@@ -245,31 +259,31 @@ namespace olib
 			#ifdef OLIB_USE_UTF16
 				return source;
 			#else
-				return string_conversions::from_utf16_to_utf8(source.c_str(), source.size());
+				try
+				{
+					return string_conversions::from_utf16_to_utf8(source.c_str(), source.size());
+				}
+				catch( std::exception& )
+				{
+					std::string res;
+					for( size_t i = 0; i < source.size(); ++i )
+						res.push_back( static_cast<char>(source[i]));
+					return res;
+				}
 			#endif
 		}
 
 
 		t_string str_util::to_t_string( const wchar_t* source, size_t length )
 		{
-            //#ifdef OLIB_ON_WINDOWS
-                if( ! source ) return t_string();
-                return to_t_string( std::wstring(source, length) );
-            //#else
-			    //std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source, length );
-			    //return to_t_string( std::wstring(&wide_chars[0], length) );
-            //#endif
+            if( ! source ) return t_string();
+               return to_t_string( std::wstring(source, length) );
 		}
 
 		t_string str_util::to_t_string( const wchar_t* source )
 		{
-            //#ifdef OLIB_ON_WINDOWS
-                if( ! source ) return t_string();
-                return to_t_string( std::wstring(source) );
-            //#else
-			    //std::vector<wchar_t> wide_chars = string_conversions::unpack_packed_wide_string( source, wcslen(source) ) );
-			    //return to_t_string( std::wstring(&wide_chars[0], wide_chars.size() - 1) );
-            //#endif
+            if( ! source ) return t_string();
+            return to_t_string( std::wstring(source) );
 		}
 
 		t_string str_util::to_t_string( const char* source)
