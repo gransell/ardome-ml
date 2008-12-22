@@ -6,5 +6,7 @@ tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/window
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/doxygen-1.5.7.1.windows.bin.zip -> doxygen.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/html_help_workshop.zip 
 
+owl : bzr://oof.ardendo.se/data/bzr/owl/trunk
+
 
 
