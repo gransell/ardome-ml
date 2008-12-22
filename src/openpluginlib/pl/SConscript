@@ -34,32 +34,34 @@ object = local_env.shared_library( 'openpluginlib_pl', [
 
 local_env.release( object )
 
-local_env.copy_project_files( local_env[ 'pl_include' ], [ 
-	'bind_info.hpp',
-	'discovery_traits.hpp', 
-	'openplugin.hpp', 
-	'openpluginlib.hpp', 
-	'config.hpp', 
-	'log.hpp', 
-	'pool.hpp', 
-	'utf8_utils.hpp', 
-	'string.hpp', 
-	'timer.hpp', 
-	'geometry.hpp', 
-	'string.hpp', 
-] )
+if local_env[ 'PLATFORM' ] != 'win32' :
+	local_env.copy_project_files( local_env[ 'pl_include' ], [ 
+		'bind_info.hpp',
+		'discovery_traits.hpp', 
+		'openplugin.hpp', 
+		'openpluginlib.hpp', 
+		'config.hpp', 
+		'log.hpp', 
+		'pool.hpp', 
+		'utf8_utils.hpp', 
+		'string.hpp', 
+		'timer.hpp', 
+		'geometry.hpp', 
+		'string.hpp', 
+	] )
 
-local_env.copy_project_files( local_env[ 'pcos_include' ], [ 
-	'pcos/key.hpp', 
-	'pcos/observer.hpp', 
-	'pcos/iproperty_container.hpp', 
-	'pcos/property.hpp', 
-	'pcos/property_container.hpp', 
-	'pcos/subject.hpp', 
-	'pcos/any.hpp', 
-	'pcos/visitor.hpp', 
-	'pcos/isubject.hpp', 
-	'pcos/iclonable.hpp'
-] )
+if local_env[ 'PLATFORM' ] != 'win32' :
+	local_env.copy_project_files( local_env[ 'pcos_include' ], [ 
+		'pcos/key.hpp', 
+		'pcos/observer.hpp', 
+		'pcos/iproperty_container.hpp', 
+		'pcos/property.hpp', 
+		'pcos/property_container.hpp', 
+		'pcos/subject.hpp', 
+		'pcos/any.hpp', 
+		'pcos/visitor.hpp', 
+		'pcos/isubject.hpp', 
+		'pcos/iclonable.hpp'
+	] )
 
 Return( 'object' )
