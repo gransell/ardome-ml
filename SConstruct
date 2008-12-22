@@ -227,9 +227,9 @@ if env.check_externals( ):
 		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
 
 	env.create_package( )
-	env.install_openbuild( )
-
-	env.package_install( )
+	if env[ 'PLATFORM' ] != 'win32':
+		env.install_openbuild( )
+		env.package_install( )
 
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 

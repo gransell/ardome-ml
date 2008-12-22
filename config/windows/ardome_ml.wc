@@ -1,0 +1,48 @@
+import os
+
+def flags( env, prefix ):
+	env.requires( 'xerces' )
+
+	env.Append( CPPPATH = [ os.path.join( prefix, 'include', 'ardome-ml' ) ] )
+	env.Append( CPPDEFINES = [ 'OPENMEDIALIB_BUILD', 'OPENPLUGINLIB_BUILD', 'OPENIMAGELIB_BUILD' ] )
+	if env.debug:
+		env.Append( LIBPATH = [ os.path.join( prefix, 'lib', 'debug' ) ] )
+	else:
+		env.Append( LIBPATH = [ os.path.join( prefix, 'lib', 'release' ) ] )
+		
+	env.Append( LIBS= [ 'opencorelib_cl.lib', 'openimagelib_il.lib', 'openpluginlib_pl.lib', 'openmedialib_ml.lib' ] )
+
+def install( env, prefix ):
+	if env.debug :
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'opencorelib_cl.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'opencorelib_cl.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openimagelib_il.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openimagelib_il.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openpluginlib_pl.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openpluginlib_pl.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openmedialib_ml.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'debug', 'openmedialib_ml.pdb') ] )
+
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'debug', 'opencorelib_cl.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'debug', 'openpluginlib_pl.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'debug', 'openmedialib_ml.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'debug', 'openimagelib_il.lib') ] )
+	else:
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'opencorelib_cl.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'opencorelib_cl.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openimagelib_il.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openimagelib_il.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openpluginlib_pl.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openpluginlib_pl.pdb') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openmedialib_ml.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', 'release', 'openmedialib_ml.pdb') ] )
+
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'release', 'opencorelib_cl.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'release', 'openpluginlib_pl.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'release', 'openmedialib_ml.lib') ] )
+		if env.full_install : env.release(  [ os.path.join( prefix, 'lib', 'release', 'openimagelib_il.lib') ] )
+
+	env.install_dir( os.path.join( env[ 'stage_bin' ], 'aml-plugins' ), os.path.join( prefix, 'bin', 'aml-plugins') )
+	env.install_dir( os.path.join( env[ 'stage_bin' ], 'plugins' ), os.path.join( prefix, 'bin', 'plugins') )
+
+
