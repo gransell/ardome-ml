@@ -87,6 +87,8 @@ class Environment( BaseEnvironment ):
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
 		
+		self.full_install = 'full_install' in sys.argv
+		
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
 

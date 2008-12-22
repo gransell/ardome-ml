@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_filesystem', 'boost_regex', 'boost_thread', 'boost_system', 'boost_unit_test_framework', 'xerces', 'boost_signals', 'boost_date_time' )
+local_env.packages( 'boost_filesystem', 'boost_regex', 'boost_thread', 'boost_system', 'boost_unit_test_framework', 'xerces', 'boost_date_time' )
 
 test_sources = ['main_entry_unittests.cpp',
 				'test_assert.cpp',

@@ -8,11 +8,11 @@ fi
 
 cd vs2008
 
-if [ ! -d boost ]; then
-	echo "Extracting boost [~90 MB on disk]..."
-	tar -jxf ../tmp/boost.tar.bz2
+if [ ! -d boost_1_37_0 ]; then
+	echo "Extracting boost [~140 MB on disk]..."
+	tar -jxf ../tmp/vc90-boost_1_37-wchar_t-on.tar.bz2
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -jxf ../tmp/boost.tar.bz2. Terminating."
+		echo "Failed to run: tar -jxf ../tmp/vc90-boost_1_37-wchar_t-on.tar.bz2. Terminating."
 		exit
 	fi
 fi
@@ -21,10 +21,10 @@ if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
 
-	unzip -oq ../tmp/xerces.zip 
+	unzip -oq ../tmp/vc90-xerces-c-2_8_0.zip 
 
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run: unzip -oq ../tmp/xerces.zip. Terminating."
+	  echo "Failed to run: unzip -oq ../tmp/vc90-xerces-c-2_8_0.zip. Terminating."
 	  exit 1
 	fi
 fi
