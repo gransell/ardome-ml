@@ -295,8 +295,8 @@ class CompilerOptions:
 		# 3 - Program Database
 		# 4 - Program Database for Edit and Continue
 		m = re.compile("debug",re.I).search(config_name)
-		if( m ) : return "4"
-		return "3"
+		if( m ) : return "1"
+		return "1"
 			
 	def include_directories_as_string( self, root_dir ) :
 		res = ""
