@@ -89,6 +89,9 @@ class Environment( BaseEnvironment ):
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'full-install', self[ 'distdir' ] + self[ 'prefix' ] )
+		
+		self.Alias( 'debug', self['debug_prefix'] )
+		self.Alias( 'release', self['release_prefix'] )
 
 		self[ 'win_target_path' ] = '$stage_bin'
 
