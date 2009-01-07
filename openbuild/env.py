@@ -84,10 +84,11 @@ class Environment( BaseEnvironment ):
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
 		
-		self.full_install = 'full_install' in sys.argv
+		self.full_install = 'full_install' in sys.argv or 'full-install' in sys.argv
 		
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
+		self.Alias( 'full-install', self[ 'distdir' ] + self[ 'prefix' ] )
 
 		self[ 'win_target_path' ] = '$stage_bin'
 
@@ -214,6 +215,9 @@ class Environment( BaseEnvironment ):
 		"""	Installs includes, libs and frameworks listed in .pc files. """
 
 		if self[ 'PLATFORM' ] == 'win32': return
+		# If none of the install targets are set then we dont install anything
+		if self[ 'PLATFORM' ] == 'darwin' and not self.full_install :
+			return
 
 		for build_type in self.build_types( ):
 			env = self.Clone( )
