@@ -3,9 +3,6 @@
 echo Entering bcomp directory
 cd bcomp
 
-echo "Extracting boost..."
-tar -jxf boost.tar.bz2 || exit 1
-
 echo Extracting sdl...
 tar -jxf SDL.tar.bz2 || exit 1
 
@@ -36,6 +33,9 @@ while read dylib ;
     fi
 done
 )
+
+echo "Extracting boost..."
+tar -jxf boost.tar.bz2 || exit 1
 
 echo Extracting ffmpeg...
 tar -jxf ffmpeg.tar.bz2 || exit 1
