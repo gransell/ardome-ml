@@ -450,13 +450,15 @@ class Environment( BaseEnvironment ):
 #		self.Install( framework_name +'/Versions/A/Resources', resources )
 
 
-	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, pre=None, nopre=None, *keywords ):
+	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, resources = None, extra_libs = None, pre=None, nopre=None, *keywords ):
 		import openbuild.Tools.mac
 		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
 		libs = Environment.bundle_libraries[ int( self.debug ) ]
-		resources = Environment.bundle_resources[ int( self.debug ) ]
+		bundle_resources = Environment.bundle_resources[ int( self.debug ) ]
 		build = [ Environment.prep_release, Environment.prep_debug ][ int( self.debug ) ]
+
+		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@loader_path/../Frameworks/%s.framework/%s' % (fmwk_name, fmwk_name) ] )
 
 		lib = None
 		for item in self.build_deps:
@@ -472,8 +474,11 @@ class Environment( BaseEnvironment ):
 			if item[ build ] is not None:
 				for file in item[ build ]:
 					libs += [ [ '', file ] ]
-
-		return self.MakeBundle( fmwk_name, lib, libs, headers, info_plist, resources=resources, *keywords )
+		
+		if resources is not None :
+			bundle_resources.append(resources)
+		
+		return self.MakeBundle( fmwk_name, lib, libs, headers, info_plist, resources=bundle_resources, *keywords )
 
 	def plugin( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a plugin. See shared_library in this class for a detailed description. """
