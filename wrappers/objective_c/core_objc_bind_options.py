@@ -9,8 +9,8 @@ conversion_dict = {'olib::opencorelib::frames' : 'NSUInteger',
 
 class core_objc_bind_options( owl.wrapper.objc.objc_bind_options ):
 	"""docstring for core_objc_bind_options"""
-	def __init__( self, owl_path, assemblies ):
-		super(core_objc_bind_options, self).__init__( owl_path, assemblies )
+	def __init__( self, owl_path, output_path, assemblies ):
+		super(core_objc_bind_options, self).__init__( owl_path, output_path, assemblies )
 	
 	def get_standard_header_includes(self, type_instance):
 		"""docstring for get_standard_header_includes"""
