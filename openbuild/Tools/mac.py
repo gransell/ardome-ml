@@ -92,15 +92,20 @@ def TOOL_BUNDLE(env):
 			env.Install(bndl_name+'/Versions/A/', lib)
 			
 			for item in ext_libs:
-				env.Install( bndl_name+'/Versions/lib/' + item[ 0 ], item[ 1 ] )
+				env.Install( bndl_name+'/Versions/A/lib/' + item[ 0 ], item[ 1 ] )
 			
 			abs_bundle_path = os.path.join( env.temporary_build_path( [ 'release', 'debug' ][int( env.debug ) ] ), bndl_name )
 			if not os.path.exists(abs_bundle_path):
 				os.makedirs( abs_bundle_path )
+			else :
+				os.utime(abs_bundle_path)
 			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions') ):
 				os.makedirs( os.path.join(abs_bundle_path, 'Versions') )
 			
 			# Set up links
+			#Hack to get the paths correct
+			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/lib')):
+				os.symlink( 'A/lib', os.path.join(abs_bundle_path, 'Versions/lib') )
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions', 'Current')):
 				os.symlink( 'A', os.path.join(abs_bundle_path, 'Versions', 'Current') )			
 			if not os.path.islink(os.path.join(abs_bundle_path, str(lib))):
@@ -129,17 +134,7 @@ def TOOL_BUNDLE(env):
 				env.Install( bndl_name+'/Versions/A/Headers', public_headers )
 			if info_plist is not None :
 				env.Install(bndl_name+'/Versions/A/Resources/', info_plist)
-			#env.WriteVal(target=bundledir+'/Contents/PkgInfo', source=SCons.Node.Python.Value(typecode+signature))
-
-			# install the resources
-			#resources.append(icon_file)
-			#for r in resources:
-			#	if SCons.Util.is_List(r):
-			#		env.InstallAs(join(bundledir+'/Contents/Resources',
-			#						   r[1]),
-			#					  r[0])
-			#	else:
-			#		env.Install(bundledir+'/Contents/Resources', r)
+			
 			return [ SCons.Node.FS.default_fs.Dir(bndl_name) ]
 
 		# This is not a regular Builder; it's a wrapper function.
