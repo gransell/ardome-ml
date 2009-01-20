@@ -11,7 +11,7 @@ namespace olib {
     namespace opencorelib {
         namespace mac {
             
-            int invoke_function_on_main_thread( const invokable_function& f );
+            int invoke_function_on_main_thread( const invokable_function& f, const invoke_callback_function_ptr& result_cb, bool block );
                         
         }
     }

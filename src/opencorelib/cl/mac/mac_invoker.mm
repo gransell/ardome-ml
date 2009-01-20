@@ -7,17 +7,24 @@
  *
  */
 
-#include <opencorelib/cl/typedefs.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "opencorelib/cl/export_defines.hpp"
+#include "opencorelib/cl/typedefs.hpp"
+#include "opencorelib/cl/invoker.hpp"
 #include "mac_invoker.hpp"
 
 #import <Foundation/NSObject.h>
 #import <Foundation/NSAutoreleasePool.h>
 #import <Foundation/NSThread.h>
 
+ typedef boost::shared_ptr<olib::opencorelib::invokable_function> mac_invokable_function_ptr;
+
 typedef struct _invoker_function_holder {
     /// Holds the function that we should call when invkoed.
     /// This is a function taking no arguments and returning and invoker_result.
-    olib::opencorelib::invokable_function _func;
+     mac_invokable_function_ptr _func;
+     olib::opencorelib::invoke_callback_function_ptr _cb;
 } invoker_function_holder;
 
 
@@ -28,7 +35,7 @@ typedef struct _invoker_function_holder {
     BOOL _result;
 }
 
-- (id)initWithFunction:(const olib::opencorelib::invokable_function *)ifh;
+- (id)initWithFunction:(const olib::opencorelib::invokable_function *)ifh andCallback:(olib::opencorelib::invoke_callback_function_ptr)cb;
 
 - (void)invoke;
 
@@ -40,13 +47,14 @@ typedef struct _invoker_function_holder {
 
 @implementation ACInvokerObject
 
-- (id)initWithFunction:(const olib::opencorelib::invokable_function *)fun
+- (id)initWithFunction:(const olib::opencorelib::invokable_function *)fun andCallback:(olib::opencorelib::invoke_callback_function_ptr)cb
 {
     if( (self = [super init]) ) {
         _result = 0;
         
         _holder = new invoker_function_holder;
-        _holder->_func = *fun;
+        _holder->_func = mac_invokable_function_ptr( new olib::opencorelib::invokable_function(*fun) );
+        _holder->_cb = cb;
     }
     return self;
 }
@@ -54,12 +62,20 @@ typedef struct _invoker_function_holder {
 
 - (void)invoke
 {
+    olib::opencorelib::std_exception_ptr e_ret;
     try {
-        _holder->_func();
+        (*(_holder->_func))();
         _result = YES;
+    }
+    catch( const std::exception& e ) {
+        _result = NO;
+        e_ret = olib::opencorelib::std_exception_ptr( new std::exception(e) );
     }
     catch( ... ) {
         _result = NO;
+    }
+    if( _holder->_cb ) {
+        (*(_holder->_cb))( _result ? olib::opencorelib::invoke_result::success : olib::opencorelib::invoke_result::failure, e_ret );
     }
 }
 
@@ -88,12 +104,14 @@ namespace olib {
     namespace opencorelib {
         namespace mac {
             
-            int invoke_function_on_main_thread( const invokable_function& f )
+            int invoke_function_on_main_thread( const invokable_function& f, 
+                                                const olib::opencorelib::invoke_callback_function_ptr& cb,
+                                                bool block )
             {
                 NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
                 
-                ACInvokerObject *inv = [[[ACInvokerObject alloc] initWithFunction:&f] autorelease];
-                [inv performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:YES];
+                ACInvokerObject *inv = [[[ACInvokerObject alloc] initWithFunction:&f andCallback:cb] autorelease];
+                [inv performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:block ? YES : NO];
                 int res = [inv result];
                 
                 [pool release];
