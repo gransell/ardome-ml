@@ -89,18 +89,20 @@ def TOOL_BUNDLE(env):
 			if not bndl_name.split(".")[-1] == 'framework':
 				bndl_name += '.framework'
 			
-			env.Install(bndl_name+'/Versions/A/', lib)
+			abs_bundle_path = env.subst( os.path.join(env[ 'stage_frameworks' ], bndl_name) )
+
+			env.Install(abs_bundle_path + '/Versions/A/', lib)
 			
 			for item in ext_libs:
-				env.Install( bndl_name+'/Versions/A/lib/' + item[ 0 ], item[ 1 ] )
+				env.Install( abs_bundle_path + '/Versions/A/lib/' + item[ 0 ], item[ 1 ] )
 			
-			abs_bundle_path = os.path.join( env.temporary_build_path( [ 'release', 'debug' ][int( env.debug ) ] ), bndl_name )
 			if not os.path.exists(abs_bundle_path):
 				os.makedirs( abs_bundle_path )
 			else :
-				os.utime(abs_bundle_path)
+				os.utime( abs_bundle_path, None )
 			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions') ):
 				os.makedirs( os.path.join(abs_bundle_path, 'Versions') )
+			
 			
 			# Set up links
 			#Hack to get the paths correct
@@ -114,7 +116,7 @@ def TOOL_BUNDLE(env):
 				os.symlink( 'Versions/Current/Headers', os.path.join(abs_bundle_path, 'Headers') )
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Resources')):
 				os.symlink( 'Versions/Current/Resources', os.path.join(abs_bundle_path, 'Resources') )
-
+			
 			links = {}
 			for item in ext_libs:
 				try:
@@ -129,13 +131,13 @@ def TOOL_BUNDLE(env):
 			# 		os.symlink( os.readlink( link ), full )
 
 			for item in resources:
-				env.Install( bndl_name+'/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
+				env.Install( abs_bundle_path + '/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
 			if len(public_headers) != 0 :
-				env.Install( bndl_name+'/Versions/A/Headers', public_headers )
+				env.Install( abs_bundle_path + '/Versions/A/Headers', public_headers )
 			if info_plist is not None :
-				env.Install(bndl_name+'/Versions/A/Resources/', info_plist)
+				env.Install(abs_bundle_path + '/Versions/A/Resources/', info_plist)
 			
-			return [ SCons.Node.FS.default_fs.Dir(bndl_name) ]
+			return [ SCons.Node.FS.default_fs.Dir(abs_bundle_path) ]
 
 		# This is not a regular Builder; it's a wrapper function.
 		# So just make it available as a method of Environment.
