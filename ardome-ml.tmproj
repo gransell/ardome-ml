@@ -3,22 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>openbuild/Tools/mac.py</string>
+	<string>src/opencorelib/cl/mac/mac_invoker.mm</string>
 	<key>documents</key>
 	<array>
 		<dict>
-			<key>expanded</key>
-			<true/>
-			<key>name</key>
-			<string>owl</string>
-			<key>regexFolderFilter</key>
-			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
-			<key>sourceDirectory</key>
-			<string>bcomp/owl</string>
-		</dict>
-		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>openbuild</string>
 			<key>regexFolderFilter</key>
@@ -27,8 +15,6 @@
 			<string>openbuild</string>
 		</dict>
 		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>src</string>
 			<key>regexFolderFilter</key>
@@ -40,11 +26,9 @@
 			<key>filename</key>
 			<string>SConstruct</string>
 			<key>lastUsed</key>
-			<date>2008-12-12T08:34:40Z</date>
+			<date>2009-01-20T10:15:41Z</date>
 		</dict>
 		<dict>
-			<key>expanded</key>
-			<true/>
 			<key>name</key>
 			<string>wrappers</string>
 			<key>regexFolderFilter</key>
@@ -58,61 +42,41 @@
 			<key>lastUsed</key>
 			<date>2008-12-01T12:18:14Z</date>
 		</dict>
+		<dict>
+			<key>name</key>
+			<string>objective_c</string>
+			<key>regexFolderFilter</key>
+			<string>!.*/(\.[^/]*|CVS|_darcs|_MTN|\{arch\}|blib|.*~\.nib|.*\.(framework|app|pbproj|pbxproj|xcode(proj)?|bundle))$</string>
+			<key>sourceDirectory</key>
+			<string>build/debug/osx/tmp/wrappers/objective_c</string>
+		</dict>
 	</array>
 	<key>fileHierarchyDrawerWidth</key>
-	<integer>294</integer>
+	<integer>242</integer>
 	<key>metaData</key>
 	<dict>
-		<key>SConstruct</key>
+		<key>build/debug/osx/tmp/wrappers/objective_c/src/OlibOpencorelibObjectPrivate.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>1</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>248</integer>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>195</integer>
-		</dict>
-		<key>bcomp/owl/wrapper/objc/objc.py</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>65</integer>
-				<key>line</key>
-				<integer>78</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
 			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>19</integer>
 		</dict>
-		<key>bcomp/owl/wrapper/objc/objc_bind_options.py</key>
+		<key>build/debug/osx/tmp/wrappers/objective_c/src/OlibOpencorelibTimeCode.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>12</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>36</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>7</integer>
-		</dict>
-		<key>bcomp/owl/wrapper/objc/templates/type_source_template.txt</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>18</integer>
-				<key>line</key>
-				<integer>86</integer>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -124,28 +88,86 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>14</integer>
+				<integer>36</integer>
 				<key>line</key>
-				<integer>75</integer>
+				<integer>101</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>65</integer>
+			<integer>83</integer>
 		</dict>
-		<key>openbuild/env.py</key>
+		<key>src/opencorelib/cl/invoker.hpp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>3</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>468</integer>
+				<integer>38</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>436</integer>
+			<integer>0</integer>
+		</dict>
+		<key>src/opencorelib/cl/mac/invoker_impl.cpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>151</integer>
+				<key>line</key>
+				<integer>26</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>104</integer>
+				<key>line</key>
+				<integer>26</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>151</integer>
+				<key>line</key>
+				<integer>26</integer>
+			</dict>
+		</dict>
+		<key>src/opencorelib/cl/mac/mac_invoker.hpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>134</integer>
+				<key>line</key>
+				<integer>13</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+		</dict>
+		<key>src/opencorelib/cl/mac/mac_invoker.mm</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>100</integer>
+				<key>line</key>
+				<integer>77</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
 		</dict>
 		<key>src/opencorelib/cl/media_definitions.hpp</key>
 		<dict>
@@ -191,19 +213,93 @@
 			<key>firstVisibleLine</key>
 			<integer>45</integer>
 		</dict>
+		<key>src/opencorelib/cl/string_conversions.cpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>13</integer>
+				<key>line</key>
+				<integer>246</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>194</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>6</integer>
+				<key>line</key>
+				<integer>246</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>13</integer>
+				<key>line</key>
+				<integer>246</integer>
+			</dict>
+		</dict>
 		<key>src/opencorelib/cl/time_code.hpp</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>89</integer>
+				<integer>35</integer>
 				<key>line</key>
-				<integer>55</integer>
+				<integer>91</integer>
+			</dict>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>23</integer>
+		</dict>
+		<key>src/opencorelib/cl/typedefs.hpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>0</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+		</dict>
+		<key>src/openmedialib/ml/utilities.hpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>39</integer>
+				<key>line</key>
+				<integer>13</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>17</integer>
+				<key>line</key>
+				<integer>13</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>39</integer>
+				<key>line</key>
+				<integer>13</integer>
+			</dict>
 		</dict>
 		<key>src/openpluginlib/pl/pcos/observer.hpp</key>
 		<dict>
@@ -263,6 +359,36 @@
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
 		</dict>
+		<key>src/openpluginlib/pl/timer.hpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>12</integer>
+				<key>line</key>
+				<integer>320</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>29</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>7</integer>
+				<key>line</key>
+				<integer>320</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>12</integer>
+				<key>line</key>
+				<integer>320</integer>
+			</dict>
+		</dict>
 		<key>wrappers/SConscript</key>
 		<dict>
 			<key>caret</key>
@@ -270,21 +396,51 @@
 				<key>column</key>
 				<integer>0</integer>
 				<key>line</key>
+				<integer>59</integer>
+			</dict>
+			<key>columnSelection</key>
+			<false/>
+			<key>firstVisibleColumn</key>
+			<integer>0</integer>
+			<key>firstVisibleLine</key>
+			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
 				<integer>0</integer>
+				<key>line</key>
+				<integer>58</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>59</integer>
+			</dict>
+		</dict>
+		<key>wrappers/built_in_types.hpp</key>
+		<dict>
+			<key>caret</key>
+			<dict>
+				<key>column</key>
+				<integer>56</integer>
+				<key>line</key>
+				<integer>58</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>3</integer>
+			<integer>0</integer>
 		</dict>
 		<key>wrappers/objective_c/core_objc_bind_options.py</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>47</integer>
+				<integer>71</integer>
 				<key>line</key>
-				<integer>27</integer>
+				<integer>12</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -352,21 +508,14 @@
 	</dict>
 	<key>openDocuments</key>
 	<array>
-		<string>wrappers/SConscript</string>
-		<string>openbuild/Tools/mac.py</string>
-		<string>openbuild/env.py</string>
-		<string>SConstruct</string>
-		<string>bcomp/owl/wrapper/objc/objc.py</string>
-		<string>bcomp/owl/wrapper/objc/objc_bind_options.py</string>
-		<string>wrappers/objective_c/src/CoreConverts.mm</string>
-		<string>bcomp/owl/wrapper/objc/templates/type_source_template.txt</string>
-		<string>wrappers/objective_c/src/OlibOpencorelibAssertLevelFunctions.mm</string>
-		<string>wrappers/objective_c/core_objc_bind_options.py</string>
-		<string>wrappers/objective_c/src/CoreConverts.h</string>
+		<string>src/opencorelib/cl/mac/mac_invoker.mm</string>
+		<string>src/opencorelib/cl/mac/mac_invoker.hpp</string>
+		<string>src/opencorelib/cl/invoker.hpp</string>
+		<string>src/opencorelib/cl/mac/invoker_impl.cpp</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{2, 57}, {1358, 971}}</string>
+	<string>{{257, 57}, {1358, 971}}</string>
 </dict>
 </plist>
