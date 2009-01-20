@@ -56,7 +56,7 @@ objc_options = core_objc_bind_options( os.path.join( local_env.root, 'bcomp' ), 
 wrapper_files = objc_wrapper.bind( sample_assembly, objc_options, 'objective_c/src' )
 obj = local_env.framework( 'AML', sources = wrapper_files['source_files'], headers = wrapper_files['header_files'], info_plist = 'objective_c/src/Info.plist' )
 
-local_env.release(obj)
+# local_env.release(obj)
 
 # wrapper_files = c_sharp_wrapper.bind( sample_assembly, options, 'cppcli' )
 # #               
