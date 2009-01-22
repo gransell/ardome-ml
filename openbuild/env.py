@@ -476,7 +476,7 @@ class Environment( BaseEnvironment ):
 					libs += [ [ '', file ] ]
 		
 		if resources is not None :
-			bundle_resources.append(resources)
+			bundle_resources.extend(resources)
 		
 		return self.MakeBundle( fmwk_name, lib, libs, headers, info_plist, resources=bundle_resources, *keywords )
 
@@ -712,7 +712,7 @@ class Environment( BaseEnvironment ):
 		if dst.startswith( target ):
 			sub_dir = dst_dir[ len( target ) : ]
 			if not sub_dir.startswith( '/pkgconfig' ) and not sub_dir.startswith( '/python' ):
-				if not src.endswith( '.pc' ) and not src.endswith( '.a' ) and not src.endswith( '.py' ) and not src.endswith( '.pyc' ) and not src.endswith( '.aml' ) and not src.endswith( '.so' ):
+				if not src.endswith( '.pc' ) and not src.endswith( '.a' ) and not src.endswith( '.py' ) and not src.endswith( '.pyc' ) and not src.endswith( '.aml' ) and not src.endswith( '.so' ) and not src.endswith('.la'):
 					Environment.bundle_libraries[ int( self.debug ) ] += [ [ dst_dir[ len( target ) : ], source ] ]
 		if dst.startswith( resources ):
 			sub_dir = dst_dir[ len( resources ) : ]
