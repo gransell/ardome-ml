@@ -18,7 +18,11 @@ namespace olib
     {
         /// Simple class used to keep a connection alive.
         /** When a connection goes out-of-scope, the event_handler
-            that created it will know and no longer call that callback */
+            that created it will know and no longer call that callback
+            <bindgen>
+        		<attribute name="visibility" value="private"></attribute>
+        	</bindgen>
+        */
         class CORE_API event_connection : public object
         {
         public:
@@ -31,9 +35,19 @@ namespace olib
         typedef boost::weak_ptr< event_connection > weak_event_connection_ptr;
 
         /// Provides thread-safe event_handler instances.
+        /**
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    	*/
         class thread_locker
         {
         public:
+            /**
+            <bindgen>
+        		<attribute name="visibility" value="private"></attribute>
+        	</bindgen>
+        	*/
             class lock
             {
             public:
@@ -47,10 +61,19 @@ namespace olib
 
         /// Use this class to get non-thread-safe event_handlers, pass it in as the ThreadLocker argument.
         /** If you know that your event_handle doesn't need thread-safety, 
-            use this class as the template argument to ThreadLocker to get a speed increase */
+            use this class as the template argument to ThreadLocker to get a speed increase
+            <bindgen>
+        		<attribute name="visibility" value="private"></attribute>
+        	</bindgen>
+        */
         class not_thread_safe
         {
         public:
+            /**
+            <bindgen>
+        		<attribute name="visibility" value="private"></attribute>
+        	</bindgen>
+        	*/
             class lock
             {
             public:
@@ -69,7 +92,11 @@ namespace olib
             to be locked every time someone access the event_handler. The default
             is that it will, and should normally be used. 
 
-            @author Mats Lindel&ouml;f*/
+            @author Mats Lindel&ouml;f
+            <bindgen>
+        		<attribute name="visibility" value="private"></attribute>
+        	</bindgen>
+        */
         template < class Sender, class EventArgs, class ThreadLocker = thread_locker >
         class event_handler
         {
