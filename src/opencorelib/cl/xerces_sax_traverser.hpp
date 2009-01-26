@@ -44,32 +44,32 @@ namespace olib
 
 		/// Convert a char array to xml string
 		/** Uses str_util::to_wstring */
-		xerces_string to_x_string(const char *source, unsigned int length);
+		CORE_API xerces_string to_x_string(const char *source, unsigned int length);
 
 		/// Convert a std::string to xml string
 		/** Uses str_util::to_wstring */
-		xerces_string to_x_string(const std::string &source);
+		CORE_API xerces_string to_x_string(const std::string &source);
 
 		/// Convert a wchar_t array to xml string
 		/** Mac and Linux implementation repacks from 32 bit to 16 bit */
-		xerces_string to_x_string(const wchar_t *source, unsigned int length);
+		CORE_API xerces_string to_x_string(const wchar_t *source, unsigned int length);
 
 		/// Convert a std::wstring to xml string
 		/** Mac and Linux implementation repacks from 32 bit to 16 bit */
-		xerces_string to_x_string(const std::wstring &source);
+		CORE_API xerces_string to_x_string(const std::wstring &source);
 
 		/// Convert a Xerces string to std::wstring
-		std::wstring x_to_wstring(const XMLCh *source);
+		CORE_API std::wstring x_to_wstring(const XMLCh *source);
 
 		/// Convert a Xerces string to olib::t_string
-		t_string x_to_t_string(const XMLCh *source);
+		CORE_API t_string x_to_t_string(const XMLCh *source);
 
 		/// Convert a Xerces string to olib::t_string
-		t_string x_to_t_string(const XMLCh *source, unsigned int length);
+		CORE_API t_string x_to_t_string(const XMLCh *source, unsigned int length);
 
 		/// Convert a Xerces string to std::string
 		/** Uses str_util::to_string */ 
-		std::string x_to_string(const XMLCh *source);
+		CORE_API std::string x_to_string(const XMLCh *source);
 
      /// An array of unsigned shorts, or XMLCh as it is called by xerces. 
         typedef boost::scoped_array<XMLCh> xerces_array;

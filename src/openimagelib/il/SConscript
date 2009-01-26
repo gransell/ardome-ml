@@ -10,16 +10,17 @@ object = local_env.shared_library( 'openimagelib_il', [ 'il.cpp', 'openimagelib_
 
 local_env.release( object )
 
-local_env.copy_project_files( local_env[ 'il_include' ], [ 
-	'basic_image.hpp', 
-	'compression_traits.hpp', 
-	'config.hpp', 
-	'float_traits.hpp', 
-	'il.hpp', 'noise_traits.hpp', 
-	'openimagelib_plugin.hpp', 
-	'rgb_traits.hpp', 
-	'traits.hpp', 
-	'utility.hpp', 
-	'yuv_traits.hpp' ] )
+if local_env[ 'PLATFORM' ] != 'win32' :
+	local_env.copy_project_files( local_env[ 'il_include' ], [ 
+		'basic_image.hpp', 
+		'compression_traits.hpp', 
+		'config.hpp', 
+		'float_traits.hpp', 
+		'il.hpp', 'noise_traits.hpp', 
+		'openimagelib_plugin.hpp', 
+		'rgb_traits.hpp', 
+		'traits.hpp', 
+		'utility.hpp', 
+		'yuv_traits.hpp' ] )
 
 Return( 'object' )

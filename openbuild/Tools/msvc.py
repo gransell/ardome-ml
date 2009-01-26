@@ -193,8 +193,7 @@ def setup_object_builders( env ):
 def setup_standard_environment( env ):
 	""" Most of this code was stolen from the default setup of 
 		msvc. The most important thing that was added was the
-		res_builder to the SharedLibrary builder. Some minor changes to
-		pdb-file generation as well."""
+		res_builder to the SharedLibrary builder. """
 		
 	pch_action = SCons.Action.Action('$PCHCOM', '$PCHCOMSTR')
 	pch_builder = SCons.Builder.Builder(action=pch_action, suffix='.pch',
@@ -213,7 +212,7 @@ def setup_standard_environment( env ):
 	env['BUILDERS']['SharedLibrary'].add_src_builder(res_builder)
 	env['BUILDERS']['Program'].add_src_builder(res_builder)
 	
-	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Zi") or ""}'])
+	env['CCPDBFLAGS'] = SCons.Util.CLVar(['${(PDB and "/Z7") or ""}'])
 	env['CCPCHFLAGS'] = SCons.Util.CLVar(['${(PCH and "/Yu%s /Fp%s"%(PCHSTOP or "",File(PCH))) or ""}'])
 	env['CCCOMFLAGS'] = '$CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo$TARGET $CCPCHFLAGS $CCPDBFLAGS'
 	env['CC']		 = 'cl'

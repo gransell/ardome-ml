@@ -19,23 +19,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self.Append( CPPPATH = [ '#/src', '.' ] )
 
 	def install_packages( self ):
-		if self[ 'target' ] == 'vs2003':
-			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
-			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
-			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
-			self.install_config( 'config/vs2003/xerces.wc', 'bcomp/vs2003/xerces-c-2.8.0' )
-			# for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc', 
-			#				 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc' ]:
-			#	self.install_config( 'config/vs2003/' + package, 'bcomp/vs2003/boost_1_37_0' )
-		elif self[ 'target' ] == 'vs2008':
-			self.install_config( 'config/common/loki.wc', 'bcomp/common/loki-0.1.6' )
-			self.install_config( 'config/common/sdl.wc', 'bcomp/common/sdl' )
-			self.install_config( 'config/common/libavformat.wc', 'bcomp/common/ffmpeg' )
-			#self.install_config( 'config/vs2008/xerces30.wc', 'bcomp/vs2008/xerces-c-3.0.0-x86-windows-vc-9.0' )
-			self.install_config( 'config/vs2008/xerces.wc', 'bcomp/vs2008/xerces-c-src_2_8_0' )
- 			for package in [ 'boost_python.wc', 'boost_filesystem.wc', 'boost_thread.wc', 'boost_regex.wc',
-							 'boost_date_time.wc', 'boost_unit_test_framework.wc', 'boost.wc', 'boost_signals.wc', 'boost_system.wc']:
-				self.install_config( 'config/vs2008/' + package, 'bcomp/vs2008/boost' )
+		if self[ 'target' ] == 'vs2003': pass
+		elif self[ 'target' ] == 'vs2008': pass
 		elif self[ 'target' ] == 'osx':
 			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
@@ -217,7 +202,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
 # Add bcomp to the python path so that we can use owl
-sys.path.append( os.path.join( os.getcwd( ), 'bcomp' ) )
+sys.path.append( os.path.join( os.getcwd( ), 'external' ) )
 
 env = AMLEnvironment( opts )
 
@@ -246,9 +231,9 @@ if env.check_externals( ):
 		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
 
 	env.create_package( )
-	env.install_openbuild( )
-
-	env.package_install( )
+	if env[ 'PLATFORM' ] != 'win32':
+		env.install_openbuild( )
+		env.package_install( )
 
 	env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
 	

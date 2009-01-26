@@ -15,18 +15,14 @@ cd vs2003
 
 if [ ! -d boost_1_37_0 ]; then
 
-	mkdir boost_1_37_0
-	cd boost_1_37_0
-	
 	echo "Extracting boost [~90 MB when extracted]..."
-	tar -jxf ../../tmp/vc71-boost_1_37-wchar_t_on-python25.tar.bz2
+	tar -jxf ../tmp/vc71-boost_1_37-wchar_t_on-python25.tar.bz2
 	
 	if [ ! $? == 0 ]; then
 		echo "Failed to run: tar -jxf ../../tmp/vc71-boost_1_37-wchar_t_on-python25.tar.bz2. Terminating."
 		exit
 	fi
 	
-	cd ..
 fi
 
 if [ ! -d xerces-c-2.8.0 ]; then
