@@ -124,11 +124,10 @@ def TOOL_BUNDLE(env):
 				except Exception, e:
 					continue
 			
-			# for link in links.keys( ):
-			# 	full = abs_bundle_path+'/Versions/lib/' + links[ link ]
-			# 	if not os.path.islink( full ):
-			# 		print full
-			# 		os.symlink( os.readlink( link ), full )
+			for link in links.keys( ):
+				full = abs_bundle_path+'/Versions/A/lib/' + links[ link ]
+				if not os.path.islink( full ):
+					os.symlink( os.readlink( link ), full )
 
 			for item in resources:
 				env.Install( abs_bundle_path + '/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
