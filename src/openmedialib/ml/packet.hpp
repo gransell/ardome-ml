@@ -17,7 +17,9 @@ namespace olib { namespace openmedialib { namespace ml {
 enum packet_id
 {
 	unknown = 0,
-	dv25
+	dv25,
+	png,
+	jpeg
 };
 
 /// The packet_type interface

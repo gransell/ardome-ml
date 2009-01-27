@@ -21,19 +21,21 @@ const std::wstring avformat_to_oil( int fmt );
 const int oil_to_avformat( const std::wstring &fmt );
 
 /// The packet decoder interface.
-class ML_PLUGIN_DECLSPEC avformat_dv_decoder : public ml::packet_decoder
+class ML_PLUGIN_DECLSPEC avformat_decoder : public ml::packet_decoder
 {
 	public:
 		typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
-		avformat_dv_decoder( )
+		avformat_decoder( enum ml::packet_id id, CodecID codec )
 			: ml::packet_decoder( )
 			, mutex_( )
+			, id_( id )
+			, codec_( codec )
 		{
 		}
 
 		/// Destructor
-		virtual ~avformat_dv_decoder( ) 
+		virtual ~avformat_decoder( ) 
 		{
 			for ( std::vector< AVCodecContext * >::iterator iter = codecs_.begin( ); iter != codecs_.end( ); iter ++ )
 				avcodec_close( *iter );
@@ -42,7 +44,7 @@ class ML_PLUGIN_DECLSPEC avformat_dv_decoder : public ml::packet_decoder
 		/// Dictates which type can be decoded by this decoder
 		virtual enum ml::packet_id id( )
 		{
-			return ml::dv25;
+			return id_;
 		}
 
 		/// Decode the packet on the frame
@@ -99,7 +101,7 @@ class ML_PLUGIN_DECLSPEC avformat_dv_decoder : public ml::packet_decoder
 			if ( codecs_.size( ) == 0 )
 			{
 				AVCodecContext *context = avcodec_alloc_context( );
-				AVCodec *codec = avcodec_find_decoder( CODEC_ID_DVVIDEO );
+				AVCodec *codec = avcodec_find_decoder( codec_ );
 				if ( avcodec_open( context, codec ) >= 0 )
 					codecs_.push_back( context );
 				else
@@ -123,11 +125,15 @@ class ML_PLUGIN_DECLSPEC avformat_dv_decoder : public ml::packet_decoder
 
 		std::vector< AVCodecContext * > codecs_;
 		boost::recursive_mutex mutex_;
+		enum ml::packet_id id_; 
+		CodecID codec_;
 };
 
 void ML_PLUGIN_DECLSPEC register_dv_decoder( )
 {
-	packet_handler( ml::packet_decoder_ptr( new avformat_dv_decoder( ) ) );
+	packet_handler( ml::packet_decoder_ptr( new avformat_decoder( ml::dv25, CODEC_ID_DVVIDEO ) ) );
+	packet_handler( ml::packet_decoder_ptr( new avformat_decoder( ml::png, CODEC_ID_PNG ) ) );
+	packet_handler( ml::packet_decoder_ptr( new avformat_decoder( ml::jpeg, CODEC_ID_JPEG2000 ) ) );
 }
 
 } } }
