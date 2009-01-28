@@ -1566,6 +1566,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					frames_ = size_media_by_packets();
 				}
+
+				// Courtesy - ensure we're reposition on the first frame
+				seek( 0 );
 			}
 
 			// Report the file size via the file_size and frames properties
