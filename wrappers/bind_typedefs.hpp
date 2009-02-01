@@ -37,7 +37,7 @@ namespace olib
         class thread_sleeper;
         class library_info;
 
-                // typedef boost::shared_ptr< base_job > base_job_ptr;
+        typedef boost::shared_ptr< base_job > base_job_ptr;
         //         typedef boost::shared_ptr< const base_job > const_base_job_ptr;
         //         typedef boost::shared_ptr< function_job > function_job_ptr;
         //         typedef boost::shared_ptr< const function_job > const_function_job_ptr;
@@ -59,7 +59,8 @@ namespace olib
 
         // typedef boost::weak_ptr< object > weak_object_ptr;
         //       
-        // typedef boost::shared_ptr<invoker> invoker_ptr;
+        typedef boost::shared_ptr<invoker> invoker_ptr;
+		typedef boost::function< void () > invokable_function;
         // typedef boost::function< void () > invokable_function;
         
         typedef std::basic_string<boost::uint16_t> xerces_string;

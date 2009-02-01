@@ -20,6 +20,14 @@ namespace boost
     */
     template< class T >
     class weak_ptr {};
+	
+	/** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */
+    template< class T >
+    class function {};
 
     /** 
         <bindgen>
@@ -60,7 +68,26 @@ namespace boost
     	</bindgen>
     */
     template< class T >
-    class rational {};
+    class rational 
+	{
+		public: 
+			rational( const T& nom, const T& den ) : _nom(nom), _den(den) {}
+			T denominator() const { return _den; }
+		private:
+			T _nom, _den;
+	};
+	
+	namespace tuples
+	{
+		/** 
+	        <bindgen>
+	    		<attribute name="visibility" value="private"></attribute>
+	    		<attribute name="convert" value="yes"></attribute>
+	    	</bindgen>
+	    */
+	    template< class T, class U >
+	    class tuple {};
+	}
 	
     /** 
         <bindgen>
@@ -87,6 +114,12 @@ namespace boost
 	
 	/** 	<bindgen><attribute name="visibility" value="private"></attribute></bindgen> */
     class wformat {};
+	
+	namespace posix_time
+	{
+		/** 	<bindgen><attribute name="visibility" value="private"></attribute></bindgen> */
+		class time_duration {}
+	}
 	
 	namespace filesystem {
 		
@@ -354,6 +387,13 @@ namespace std
     	</bindgen>
     */
     class wistream {};    
+	
+	/** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */
+    class exception {};    
 }
 
 #endif // _BUILT_IN_TYPES_H_
