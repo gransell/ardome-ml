@@ -219,8 +219,8 @@ class Environment( BaseEnvironment ):
 
 		if self[ 'PLATFORM' ] == 'win32': return
 		# If none of the install targets are set then we dont install anything
-		if self[ 'PLATFORM' ] == 'darwin' and not self.full_install :
-			return
+		#if self[ 'PLATFORM' ] == 'darwin' and not self.full_install :
+		#	return
 
 		for build_type in self.build_types( ):
 			env = self.Clone( )
