@@ -460,8 +460,8 @@ class Environment( BaseEnvironment ):
 
 
 	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, resources = None, extra_libs = None, pre=None, nopre=None, *keywords ):
-		import openbuild.Tools.mac
-		openbuild.Tools.mac.TOOL_BUNDLE( self )
+		#import openbuild.Tools.mac
+		openbuild.mac.TOOL_BUNDLE( self )
 
 		libs = Environment.bundle_libraries[ int( self.debug ) ]
 		bundle_resources = Environment.bundle_resources[ int( self.debug ) ]
