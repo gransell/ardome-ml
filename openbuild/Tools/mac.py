@@ -102,7 +102,8 @@ def TOOL_BUNDLE(env):
 				os.utime( abs_bundle_path, None )
 			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions') ):
 				os.makedirs( os.path.join(abs_bundle_path, 'Versions') )
-			
+			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions/A/lib') ):
+				os.makedirs( os.path.join(abs_bundle_path, 'Versions/A/lib') )
 			
 			# Set up links
 			#Hack to get the paths correct

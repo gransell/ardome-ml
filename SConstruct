@@ -9,6 +9,8 @@ import openbuild.opt
 import openbuild.env
 import openbuild.utils
 
+sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
+
 class AMLEnvironment( openbuild.env.Environment ):
 
 	def __init__( self, opts ):
@@ -235,7 +237,7 @@ if env.check_externals( ):
 		env.install_openbuild( )
 		env.package_install( )
 
-	env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
+	#env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
 	
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 
