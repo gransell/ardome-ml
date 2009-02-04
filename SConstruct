@@ -9,6 +9,8 @@ import openbuild.opt
 import openbuild.env
 import openbuild.utils
 
+sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
+
 class AMLEnvironment( openbuild.env.Environment ):
 
 	def __init__( self, opts ):
@@ -201,6 +203,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
 
+# Add bcomp to the python path so that we can use owl
+sys.path.append( os.path.join( os.getcwd( ), 'external' ) )
+
 env = AMLEnvironment( opts )
 
 if env.check_externals( ):
@@ -214,12 +219,13 @@ if env.check_externals( ):
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
-	
-	env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] )
-	env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] )
+
+	plugins = []
+	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 
 	if env.have_boost_python( ):
 		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
@@ -231,6 +237,8 @@ if env.check_externals( ):
 		env.install_openbuild( )
 		env.package_install( )
 
+	#env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
+	
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 
 		exit()

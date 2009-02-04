@@ -1,0 +1,72 @@
+import os
+
+#import owl.wrapper.c_sharp
+import owl.wrapper.objc
+from owl.reflection import header_file, header_files, assembly
+
+from wrappers.objective_c import core_objc_bind_options
+#from wrappers.csharp import core_c_sharp_bind_options
+
+Import(['local_env'])
+
+local_env.packages( 'boost' )
+# Add core to the include path
+local_env.Append( CPPPATH = '#src/')
+
+dep_asses = []
+dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
+dep_hfs = []
+for dh in dep_headers :
+	dep_hfs.append(header_file(str(dh)))
+dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
+
+defines = [('CORE_API', ''), ]
+if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
+	defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
+elif local_env['PLATFORM'] == 'win32' :
+	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
+
+local_env.Append( CPPPATH = [ '#/wrappers/objective_c/src' ] )
+
+cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
+
+headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'object.hpp') ),]
+			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'point.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),]
+			# header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),]
+
+files = header_files( headers, defines, [] )
+
+core_assembly = assembly( 'Core', files, dep_asses )
+
+fd = open( 'assembly.xml', "w" )
+fd.write( core_assembly.xml_str() )
+
+obj = None;
+
+if local_env['PLATFORM'] == 'darwin' : 
+	objc_wrapper = owl.wrapper.objc.objc()
+	objc_options = core_objc_bind_options( os.path.join( local_env.root, 'bcomp' ), 'output', [core_assembly] )
+
+	wrapper_files = objc_wrapper.bind( core_assembly, objc_options, 'objective_c/src' )
+	obj = local_env.framework( 'Aml', sources = wrapper_files['source_files'], headers = wrapper_files['header_files'], info_plist = 'objective_c/src/Info.plist' )
+elif local_env['PLATFORM'] == 'win32' :    
+	csharp_wrapper = owl.wrapper.c_sharp.c_sharp()
+	csharp_options = core_c_sharp_bind_options( os.path.join( local_env.root, 'external' ), [core_assembly] )
+
+	wrapper_files = csharp_wrapper.bind( core_assembly, csharp_options, 'c_sharp/src' )
+	local_env.Append( CCFLAGS = '/EHa /clr' ) 
+	obj = local_env.shared_library( 'AML', sources = wrapper_files['source_files'], 
+									headers = wrapper_files['header_files'] )
+	 
+Return( 'obj' )
+

@@ -8,6 +8,11 @@ namespace olib
    namespace opencorelib
     {
         /// Describes the size of something (width/height) 
+        /** 
+            <bindgen>
+               <attribute name="convert" value="yes"></attribute>
+            </bindgen>
+       */
         class CORE_API size : 
             public boost::equality_comparable< size >,
             public boost::addable< size >,

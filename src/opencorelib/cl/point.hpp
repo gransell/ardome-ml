@@ -9,6 +9,11 @@ namespace olib
 {
    namespace opencorelib
     {
+        /** 
+            <bindgen>
+               <attribute name="convert" value="yes"></attribute>
+            </bindgen>
+       */
         class CORE_API point :  public boost::less_than_comparable< point >,
                                 public boost::equality_comparable< point >,
                                 public boost::addable< point >,

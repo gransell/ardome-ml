@@ -54,15 +54,15 @@ namespace olib
         typedef boost::shared_ptr< cached_resource_status > cache_resource_status_ptr;
         typedef boost::shared_ptr< cache_description > cache_description_ptr;
         typedef boost::shared_ptr< thread_sleeper > thread_sleeper_ptr;
-		typedef boost::shared_ptr< library_info > library_info_ptr;
+        typedef boost::shared_ptr< library_info > library_info_ptr;
 
         typedef boost::weak_ptr< object > weak_object_ptr;
-      
+              
         typedef boost::shared_ptr<invoker> invoker_ptr;
         typedef boost::function< void () > invokable_function;
 
         /// Represents a media time in an exact way.
-        typedef boost::rational< boost::int64_t > rational_time;
+        typedef boost::rational< long > rational_time;
 
         typedef std::map< t_string, olib::t_path > schema_map;
 

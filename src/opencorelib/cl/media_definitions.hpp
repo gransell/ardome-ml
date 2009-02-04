@@ -68,14 +68,14 @@ namespace olib
             };
 
             /// Get the frame rate per second for a certain frame_rate::type
-            CORE_API rational_time get_fps( type ft );
+            CORE_API rational_time get_fps( olib::opencorelib::frame_rate::type ft );
 
             /// Is the given type a drop frame type or not?
-            CORE_API bool uses_drop_frame( type ft);
+            CORE_API bool uses_drop_frame( olib::opencorelib::frame_rate::type ft);
 
             /// Convert to a frame_rate::type from a fps and drop frame flag.
-            CORE_API frame_rate::type get_type( const opencorelib::rational_time& rt, 
-                                                bool drop_frame  );
+            CORE_API olib::opencorelib::frame_rate::type get_type( const rational_time& rt, 
+                                                                    bool drop_frame  );
 
             /// Convert the enum to a human readable string.
             CORE_API const TCHAR* to_string( type ft );
@@ -109,7 +109,7 @@ namespace olib
             /** @param x The x resolution of the display.
                 @param y The y resolution of the display.
                 @param st The scanmode of the display. */
-            display_info(int x, int y, scanmode::type st ): m_x(x), m_y(y), m_scanmode(st) {}
+            display_info(int x, int y, olib::opencorelib::scanmode::type st ): m_x(x), m_y(y), m_scanmode(st) {}
             
             /** 720p means that the resolution of the picture is 1280 vertical 
                 pixels by 720 horizontal pixels progressive. progressive 
@@ -142,10 +142,10 @@ namespace olib
             void set_y(int a) { m_y = a; }
 
             /// Get the scanmode.
-            scanmode::type get_scanmode() const { return m_scanmode; }
+            olib::opencorelib::scanmode::type get_scanmode() const { return m_scanmode; }
 
             /// Set the scanmode.
-            void set_scanmode( scanmode::type st ) { m_scanmode = st; }
+            void set_scanmode( olib::opencorelib::scanmode::type st ) { m_scanmode = st; }
         private:
             int m_x, m_y;
             scanmode::type m_scanmode;
