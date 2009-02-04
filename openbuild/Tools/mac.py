@@ -128,7 +128,8 @@ def TOOL_BUNDLE(env):
 			for link in links.keys( ):
 				full = abs_bundle_path+'/Versions/A/lib/' + links[ link ]
 				if not os.path.islink( full ):
-					os.symlink( os.readlink( link ), full )
+					if not os.path.islink( full ) :
+						os.symlink( os.readlink( link ), full )
 
 			for item in resources:
 				env.Install( abs_bundle_path + '/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )
