@@ -15,6 +15,7 @@ from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 from sets import Set
 import types
+import mac
 
 class Environment( BaseEnvironment ):
 
@@ -461,7 +462,7 @@ class Environment( BaseEnvironment ):
 
 	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, resources = None, extra_libs = None, pre=None, nopre=None, *keywords ):
 		#import openbuild.Tools.mac
-		import mac
+		#import mac
 		mac.TOOL_BUNDLE( self )
 
 		libs = Environment.bundle_libraries[ int( self.debug ) ]
