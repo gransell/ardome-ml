@@ -2,5 +2,5 @@
 #
 # Released under the LGPL
 
-__all__ = [ 'env', 'opt', 'utils', 'mac' ]
+__all__ = [ 'env', 'opt', 'utils' ]
 

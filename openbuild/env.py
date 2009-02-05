@@ -15,7 +15,6 @@ from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 from sets import Set
 import types
-import mac
 
 class Environment( BaseEnvironment ):
 
@@ -88,7 +87,7 @@ class Environment( BaseEnvironment ):
 		self.release_install = 'install' in sys.argv
 		self.debug_install = 'debug-install' in sys.argv
 		
-		self.full_install = 'full_install' in sys.argv or 'full-install' in sys.argv
+		self.full_install = 'full_install' in sys.argv
 		
 		self.Alias( 'install', self[ 'distdir' ] + self[ 'prefix' ] )
 		self.Alias( 'debug-install', self[ 'distdir' ] + self[ 'prefix' ] )
@@ -222,9 +221,6 @@ class Environment( BaseEnvironment ):
 		"""	Installs includes, libs and frameworks listed in .pc files. """
 
 		if self[ 'PLATFORM' ] == 'win32': return
-		# If none of the install targets are set then we dont install anything
-		#if self[ 'PLATFORM' ] == 'darwin' and not self.full_install :
-		#	return
 
 		for build_type in self.build_types( ):
 			env = self.Clone( )
@@ -461,9 +457,8 @@ class Environment( BaseEnvironment ):
 
 
 	def framework( self, fmwk_name, sources=None, headers=[], info_plist = None, resources = None, extra_libs = None, pre=None, nopre=None, *keywords ):
-		#import openbuild.Tools.mac
-		#import mac
-		mac.TOOL_BUNDLE( self )
+		import openbuild.Tools.mac
+		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
 		libs = Environment.bundle_libraries[ int( self.debug ) ]
 		bundle_resources = Environment.bundle_resources[ int( self.debug ) ]
