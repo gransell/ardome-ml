@@ -10,6 +10,7 @@ import openbuild.env
 import openbuild.utils
 
 sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
+sys.path.append( os.path.join(os.getcwd(), 'bcomp/aml/release/lib/openbuild') )
 
 class AMLEnvironment( openbuild.env.Environment ):
 
