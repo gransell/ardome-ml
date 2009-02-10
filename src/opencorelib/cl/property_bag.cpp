@@ -23,6 +23,16 @@ namespace olib
         {
             return m_key_values[key];
         }
+        
+        const boost::any& property_bag::get_value_for_key( const t_string& key ) const
+        {
+            return this->operator[](key);
+        }
+        
+        void property_bag::set_value_for_key( const t_string& key, const boost::any& val )
+        {
+            m_key_values[key] = val;
+        }
 
         bool property_bag::get_is_key_present( const t_string& key ) const
         {

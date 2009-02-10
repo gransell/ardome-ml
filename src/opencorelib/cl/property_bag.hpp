@@ -33,6 +33,11 @@ namespace olib
                         The value can be set/changed by the caller. */
             boost::any& operator[]( const t_string& key );
 
+            /// Get the value for a key
+            const boost::any& get_value_for_key( const t_string& key ) const;
+            
+            // Set the value for a key
+            void set_value_for_key( const t_string& key, const boost::any& val );
 
             /// Returns true if there is a key-value pair for the given key.
             bool get_is_key_present( const t_string& key ) const;
