@@ -9,6 +9,6 @@ Requires: boost
 prefix=/usr
 libdir=${prefix}/lib
 
-Libs:	-lboost_date_time-gcc40-mt${debug}-lsb_3_1_32
+Libs:	-lboost_system-gcc40-mt${debug}-lsb_3_1_32
 
-install_libs=${libdir}/libboost_date_time-gcc40-mt${debug}-1_37.so*
+install_libs=${libdir}/libboost_system-gcc40-mt${debug}-1_37.so*

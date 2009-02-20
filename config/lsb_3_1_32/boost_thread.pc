@@ -11,6 +11,6 @@ libdir=${prefix}/lib
 
 CFlags: -pthread
 
-Libs:	-lboost_thread-gcc40-mt${debug}-1_34_1
+Libs:	-lboost_thread-gcc40-mt${debug}-1_37
 
-install_libs=${libdir}/libboost_thread-gcc40-mt${debug}-1_34_1.so*
+install_libs=${libdir}/libboost_thread-gcc40-mt${debug}-1_37.so*
