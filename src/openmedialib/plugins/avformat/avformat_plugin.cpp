@@ -1252,6 +1252,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_frames_( pcos::key::from_string( "frames" ) )
 			, prop_file_size_( pcos::key::from_string( "file_size" ) )
 			, prop_estimate_( pcos::key::from_string( "estimate" ) )
+			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
+			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -1271,6 +1273,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, start_time_( 0 )
 			, img_convert_( 0 )
 			, h264_hack_( false )
+			, samples_per_frame_( 0.0 )
+			, samples_per_packet_( 0 )
+			, samples_duration_( 0 )
 		{
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
@@ -1283,6 +1288,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_frames_ = -1 );
 			properties( ).append( prop_file_size_ = boost::int64_t( 0 ) );
 			properties( ).append( prop_estimate_ = 0 );
+			properties( ).append( prop_fps_num_ = -1 );
+			properties( ).append( prop_fps_den_ = -1 );
 		}
 
 		virtual ~avformat_input( ) 
@@ -1677,8 +1684,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else if ( has_audio( ) )
 			{
-				fps_num_ = 25;
-				fps_den_ = 1;
+				if ( prop_fps_num_.value< int >( ) > 0 && prop_fps_den_.value< int >( ) > 0 )
+				{
+					fps_num_ = prop_fps_num_.value< int >( );
+					fps_den_ = prop_fps_den_.value< int >( );
+				}
+				else
+				{
+					fps_num_ = 25;
+					fps_den_ = 1;
+				}
 				sar_num_ = 1;
 				sar_den_ = 1;
 			}
@@ -1814,11 +1829,52 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				if ( pkt_.stream_index == 0 )
 				{
-					double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
-					int result = int( dts * fps( ) + 0.5 ) + 1;
-					if ( result > max )
-						max = result;
+					bool fallback = true;
+
+					// Handle the custom frame rate if specified
+					if ( prop_fps_num_.value< int >( ) == fps_num_ && prop_fps_den_.value< int >( ) == fps_den_ )
+					{
+						if ( samples_per_packet_ == 0 )
+						{
+							AVCodecContext *codec_context = get_audio_stream( )->codec;
+							int audio_size = sizeof(audio_buf_);
+							int len = pkt_.size;
+							uint8_t *data = pkt_.data;
+		   					if ( avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ ), &audio_size, data, len ) >= 0 )
+							{
+								samples_per_frame_ = double( codec_context->sample_rate * fps_den_ ) / fps_num_;
+								samples_per_packet_ = audio_size / codec_context->channels / 2;
+								samples_duration_ = pkt_.duration;
+							}
+						}
+
+						if ( pkt_.duration > 0 && samples_duration_ == pkt_.duration && samples_per_frame_ > 0 )
+						{
+							int64_t packet_idx = ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) / pkt_.duration;
+							int64_t total = ( packet_idx + 1 ) * samples_per_packet_;
+							int result = int( total / samples_per_frame_ );
+							if ( result > max )
+								max = result;
+							fallback = false;
+						}
+						else
+						{
+							// Make sure we don't try this logic again for this file
+							prop_fps_num_ = -1;
+							prop_fps_den_ = -1;
+							samples_per_packet_ = 0;
+						}
+					}
+
+					if ( fallback )
+					{
+						double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
+						int result = int( dts * fps( ) + 0.5 ) + 1;
+						if ( result > max )
+							max = result;
+					}
 				}
+
 				av_free_packet( &pkt_ );
 			}
 
@@ -2114,10 +2170,23 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			uint8_t *data = pkt_.data;
 
 			// This is the pts of the packet
-			double dts = 0;
+			int found = 0;
+			double dts = av_q2d( get_audio_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) );
+			int64_t packet_idx = 0;
+
 			if ( uint64_t( pkt_.dts ) != AV_NOPTS_VALUE )
-		   		dts = av_q2d( get_audio_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) );
-			int found = int( dts * avformat_input::fps( ) );
+			{
+		   		if ( pkt_.duration > 0 && samples_duration_ == pkt_.duration && samples_per_packet_ > 0 )
+				{
+					packet_idx = ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) ) / pkt_.duration;
+					int64_t total = packet_idx * samples_per_packet_;
+					found = int( total / samples_per_frame_ );
+				}
+				else
+				{
+					found = int( dts * avformat_input::fps( ) );
+				}
+			}
 
 			// Ignore packets before 0
 			if ( found < 0 )
@@ -2137,13 +2206,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 				else
 				{
-					int64_t samples_to_dts = int64_t( dts * frequency + 0.5 );
-					int64_t samples_to_next = ml::audio_samples_to_frame( int( dts * avformat_input::fps( ) + 0.5 ), frequency, fps_num_, fps_den_ );
+					int64_t samples_to_now = 0;
+					int64_t samples_to_next = 0;
 
-					if ( samples_to_dts < samples_to_next )
+					if ( pkt_.duration && samples_per_frame_ > 0 )
+						samples_to_now = int64_t( samples_per_packet_ * packet_idx );
+					else
+						samples_to_now = int64_t( dts * frequency + 0.5 );
+
+					samples_to_next = ml::audio_samples_to_frame( found, frequency, fps_num_, fps_den_ );
+
+					if ( samples_to_now < samples_to_next )
 					{
-						skip = int( samples_to_next - samples_to_dts ) * channels * bps;
-						found = int( dts * avformat_input::fps( ) );
+						skip = int( samples_to_next - samples_to_now ) * channels * bps;
 					}
 #if 0
 					else
@@ -2409,6 +2484,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_frames_;
 		pcos::property prop_file_size_;
 		pcos::property prop_estimate_;
+		pcos::property prop_fps_num_;
+		pcos::property prop_fps_den_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
@@ -2435,6 +2512,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		struct SwsContext *img_convert_;
 		bool h264_hack_;
 		ml::frame_type_ptr last_frame_;
+
+		int samples_per_frame_;
+		int samples_per_packet_;
+		int samples_duration_;
 };
 
 
