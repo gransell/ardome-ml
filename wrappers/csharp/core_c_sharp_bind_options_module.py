@@ -38,11 +38,17 @@ class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 						'owl/wrapper/c_sharp/cppsrc/CommonDefines.hpp',
 						'owl/wrapper/c_sharp/cppsrc/SharedPtr.hpp',
 						'owl/wrapper/c_sharp/cppsrc/wrap_manager.hpp',
-						'owl/wrapper/c_sharp/cppsrc/ref_wrapper.hpp']
+						'owl/wrapper/c_sharp/cppsrc/ref_wrapper.hpp' ]
+						
+		
+		
 						
 		hpp_content = '#pragma once\n'
 		for inc in to_include:
 			hpp_content += '#include "' + inc + '"\n'
+		
+		hpp_content += '\n#define LOKI_CLASS_LEVEL_THREADING\n'
+		hpp_content += '#include <loki/Singleton.h>\n\n'
 		
 		hpp.write( hpp_content )
 		cpp.write('#include "' + self.precompiled_header_info[1] + '"\n');
