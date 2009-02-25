@@ -1254,6 +1254,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_estimate_( pcos::key::from_string( "estimate" ) )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
+			, prop_ts_filter_( pcos::key::from_string( "ts_filter" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -1276,6 +1277,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, samples_per_frame_( 0.0 )
 			, samples_per_packet_( 0 )
 			, samples_duration_( 0 )
+			, ts_pusher_( )
+			, ts_filter_( )
 		{
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
@@ -1290,6 +1293,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_estimate_ = 0 );
 			properties( ).append( prop_fps_num_ = -1 );
 			properties( ).append( prop_fps_den_ = -1 );
+			properties( ).append( prop_ts_filter_ = opl::wstring( L"" ) );
 		}
 
 		virtual ~avformat_input( ) 
@@ -1542,6 +1546,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// If the stream is deemed seekable, then we don't need the first_found logic
 			first_frame_ = !is_seekable_;
 
+			// Check for and create the timestamp correction filter graph
+			if ( prop_ts_filter_.value< opl::wstring >( ) != L"" )
+			{
+				ts_filter_ = create_filter( prop_ts_filter_.value< opl::wstring >( ) );
+				if ( ts_filter_ )
+				{
+					ts_pusher_ = create_input( L"pusher:" );
+					ts_filter_->connect( ts_pusher_ );
+				}
+			}
+
 			// Check if we need to do additional size checks
 			bool sizing = error == 0 && should_size_media( context_->iformat->name );
 
@@ -1663,7 +1678,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// Configure video input properties
-			if ( video_indexes_.size( ) > 0 )
+			if ( has_video( ) )
 			{
 				AVStream *stream = get_video_stream( ) ? get_video_stream( ) : context_->streams[ 0 ];
 
@@ -1998,9 +2013,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Derive the dts
 			double dts = 0;
 			if ( packet && uint64_t( packet->dts ) != AV_NOPTS_VALUE )
-			{
 				dts = av_q2d( get_video_stream( )->time_base ) * ( packet->dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
-			}
 
 			// Approximate frame position
 			int position = int( dts * fps( ) + 0.5 );
@@ -2012,6 +2025,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( ( packet == 0 || position == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
 				position = images_[ images_.size( ) - 1 ]->position( ) + 1;
+
+			// Just in case we get a failure in the ts correction
+			while( has_video_for( position ) )
+				position ++;
 
 			// Ignore packets before 0
 			// Small optimisation - abandon packet now if we can (ie: we don't have to decode
@@ -2036,20 +2053,32 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// If we have just done a search, then we need to locate the first key frame
 			// all others are discarded.
 			if ( key_search_ && av_frame_->key_frame == 0 && position < get_position( ) + first_found_ )
-			{
 				got_picture = false;
-				got_dummy = false;
-			}
 			else
-			{
 				key_search_ = false;
+
+			il::image_type_ptr image;
+
+			if ( error >= 0 && ( key_search_ == false && ( got_picture || got_dummy ) ) )
+				image = image_convert( );
+
+			if ( ts_pusher_ && image )
+			{
+				frame_type_ptr temp = frame_type_ptr( new frame_type( ) );
+				temp->set_position( position );
+				temp->set_image( image );
+				ts_pusher_->push( temp );
+				temp = ts_filter_->fetch( );
+				image = temp->get_image( );
+				position = temp->get_position( );
+				if ( position >= get_position( ) + first_found_ ) got_picture = true;
 			}
 
 			// Store the image in the queue
-			if ( position >= 0 && ( got_picture || got_dummy ) )
+			if ( position >= 0 && image )
 			{
 				if ( position >= get_position( ) + first_found_ - prop_gop_cache_.value< int >( ) )
-					store_image( dts, position );
+					store_image( image, position );
 				else
 					img_pos_ = position;
 				if ( aud_pos_ == -1 )
@@ -2059,7 +2088,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( !prop_gop_size_.value< int >( ) && aud_pos_ != -1 && sync_diff_ > 0 && aud_pos_ - img_pos_ > sync_diff_ )
 				{
 					if ( ++ position >= get_position( ) + first_found_ - prop_gop_cache_.value< int >( ) )
-						store_image( dts, position );
+						store_image( image, position );
 					else
 						img_pos_ = position;
 					img_inc_ += 1;
@@ -2071,7 +2100,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			return ret;
 		}
 
-		void store_image( double pts, int64_t position )
+		il::image_type_ptr image_convert( )
 		{
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
@@ -2122,16 +2151,20 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
  			}
  #endif
 
+		return image;
+		}
+
+		void store_image( il::image_type_ptr image, int position )
+		{
 			if ( first_frame_ )
 			{
-				first_found_ = static_cast<int>(position - get_position( ));
+				first_found_ = position - get_position( );
 				first_frame_ = false;
 			}
 
-			image->set_pts( pts );
-			image->set_position( static_cast<int>( position ) );
+			image->set_position( position );
 
-			img_pos_ = int( position );
+			img_pos_ = position;
 
 			if ( images_.size( ) > 0 )
 			{
@@ -2486,6 +2519,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_estimate_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
+		pcos::property prop_ts_filter_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
@@ -2516,6 +2550,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		int samples_per_frame_;
 		int samples_per_packet_;
 		int samples_duration_;
+
+		input_type_ptr ts_pusher_;
+		filter_type_ptr ts_filter_;
 };
 
 
