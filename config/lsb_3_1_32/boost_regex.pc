@@ -9,6 +9,6 @@ Requires: boost
 prefix=/usr
 libdir=${prefix}/lib
 
-Libs:	-lboost_regex-gcc40-mt${debug}-1_37
+Libs:	-lboost_regex-gcc40-mt
 
-install_libs=${libdir}/libboost_regex-gcc40-mt${debug}-1_37.so*
+install_libs=${libdir}/libboost_regex-gcc40-mt*

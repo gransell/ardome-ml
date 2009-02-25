@@ -11,5 +11,5 @@ CFlags:
 
 Libs:	${libdir}/libboost_unit_test_framework-gcc40-mt.a
 
-install_libs=${libdir}/libboost_unit_test_framework-gcc40-mt.a*
+install_libs=${libdir}/libboost_unit_test_framework-*.a
 

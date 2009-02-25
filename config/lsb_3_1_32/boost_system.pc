@@ -1,6 +1,6 @@
 
-Name: boost_date_time
-Description: boost date_time lib
+Name: boost_system
+Description: boost system lib
 Version: 0.0.1
 debug=
 
@@ -9,6 +9,6 @@ Requires: boost
 prefix=/usr
 libdir=${prefix}/lib
 
-Libs:	-lboost_system-gcc40-mt${debug}-lsb_3_1_32
+Libs:	-lboost_system-gcc40-mt
 
-install_libs=${libdir}/libboost_system-gcc40-mt${debug}-1_37.so*
+install_libs=${libdir}/libboost_system-gcc40-mt*
