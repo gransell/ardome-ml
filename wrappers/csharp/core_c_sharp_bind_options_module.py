@@ -35,10 +35,11 @@ class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 						'opencorelib/cl/log_defines.hpp',
 						'opencorelib/cl/logtarget.hpp',
 						'opencorelib/cl/base_exception.hpp',
-						'owl/wrapper/c_sharp/cppsrc/CommonDefines.hpp',
 						'owl/wrapper/c_sharp/cppsrc/SharedPtr.hpp',
 						'owl/wrapper/c_sharp/cppsrc/wrap_manager.hpp',
-						'owl/wrapper/c_sharp/cppsrc/ref_wrapper.hpp' ]
+						'owl/wrapper/c_sharp/cppsrc/ref_wrapper.hpp',
+						'owl/wrapper/c_sharp/cppsrc/CommonDefines.hpp',
+						'owl/wrapper/c_sharp/cppsrc/ConversionFunctions.hpp' ]
 						
 		
 		
