@@ -11,7 +11,7 @@ Import(['local_env'])
 
 local_env.packages( 'boost' , 'loki')
 # Add core to the include path
-local_env.Append( CPPPATH = '#src/')
+local_env.Append( CPPPATH = ['#/external'])
 
 dep_asses = []
 dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
@@ -49,7 +49,7 @@ headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
 			# #header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'span.hpp') ),

@@ -77,6 +77,14 @@ namespace boost
 			T _nom, _den;
 	};
 	
+		
+	/** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */
+    class noncopyable {};
+	
 	namespace tuples
 	{
 		/** 
@@ -393,7 +401,7 @@ namespace std
     		<attribute name="visibility" value="private"></attribute>
     	</bindgen>
     */
-    class exception {};    
+    class exception {};
 }
 
 #endif // _BUILT_IN_TYPES_H_

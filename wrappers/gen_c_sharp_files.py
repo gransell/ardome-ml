@@ -60,8 +60,9 @@ headers = [ header_file( os.path.join( project_root , 'wrappers', 'bind_typedefs
 			header_file( os.path.join( cl_src_dir, 'special_folders.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ) ,
 			header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'template.hpp') )			]
+			header_file( os.path.join( cl_src_dir, 'template.hpp') ) ]
 
+			
 defines = [('CORE_API', ''), ]
 defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 	
