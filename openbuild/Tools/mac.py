@@ -108,7 +108,10 @@ def TOOL_BUNDLE(env):
 			# Set up links
 			#Hack to get the paths correct
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/lib')):
-				os.symlink( 'A/lib', os.path.join(abs_bundle_path, 'Versions/lib') )
+				os.symlink( 'Current/lib', os.path.join(abs_bundle_path, 'Versions/lib') )
+			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/Resources')):
+				os.symlink( 'Current/Resources', os.path.join(abs_bundle_path, 'Versions/Resources') )
+			
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions', 'Current')):
 				os.symlink( 'A', os.path.join(abs_bundle_path, 'Versions', 'Current') )			
 			if not os.path.islink(os.path.join(abs_bundle_path, str(lib))):
