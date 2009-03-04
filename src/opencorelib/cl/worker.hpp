@@ -21,7 +21,11 @@ namespace olib
 			Once a job has started it can not be interrupted. 
 
 			@sa olib::opencorelib::thread_pool
-			@author Mats Lindel&ouml;f*/
+			@author Mats Lindel&ouml;f
+			<bindgen>
+				<attribute name="ref-counted" value="yes"></attribute>
+			</bindgen>	
+			*/
         class CORE_API worker : public boost::noncopyable
 		{
 		public:

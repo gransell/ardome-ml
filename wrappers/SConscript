@@ -9,7 +9,7 @@ from wrappers.csharp import core_c_sharp_bind_options
 
 Import(['local_env'])
 
-local_env.packages( 'boost' , 'loki')
+local_env.packages( 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'boost_regex', 'loki' )
 # Add core to the include path
 local_env.Append( CPPPATH = ['#/external'])
 
@@ -50,12 +50,12 @@ headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
-			# #header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'point.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'assert.hpp') ),
-			# #header_file( os.path.join( cl_src_dir, 'color.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'color.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'enforce.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'invoker.hpp') ),
@@ -64,7 +64,7 @@ headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'jobbase.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'event_handler.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),	
-			# #header_file( os.path.join( cl_src_dir, 'logger.hpp') ) ,
+			header_file( os.path.join( cl_src_dir, 'logger.hpp') ) ,
 			header_file( os.path.join( cl_src_dir, 'object.hpp') ) ,
 			header_file( os.path.join( cl_src_dir, 'logtarget.hpp') ) ,
 			header_file( os.path.join( cl_src_dir, 'point.hpp') ) ,
@@ -74,6 +74,9 @@ headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedef
 			header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ) ,
 			# #header_file( os.path.join( cl_src_dir, 'template.hpp') )
 			]
+			
+# headers = map( header_file, local_env.Glob(os.path.join(cl_src_dir, '*.hpp'), True, False, True) )
+
 
 obj = None;
 
@@ -118,7 +121,14 @@ elif local_env['PLATFORM'] == 'win32' :
 		wrapper_files['header_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.hpp'), True, False, True)
 		wrapper_files['source_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.cpp'), True, False, True)
 		
-		
+	
+	aux_dir = os.path.join( local_env.root, 'external', 'owl', 'wrapper', 'c_sharp', 'cppsrc' )
+	aux_headers = local_env.Glob(os.path.join(aux_dir, '*.hpp'), True, False, True)
+	aux_sources = local_env.Glob(os.path.join(aux_dir, '*.cpp'), True, False, True)
+	
+	wrapper_files['header_files'].extend(aux_headers)
+	wrapper_files['source_files'].extend(aux_sources)
+	
 	local_env.Append( CPPFLAGS = [ '/EHa', '/clr', '/AI "C:\\program\\Reference Assemblies\\Microsoft\\Framework\\v3.0"', '/FU "WindowsBase.dll"' ] ) 
 	obj = local_env.shared_library( 'AML', sources = wrapper_files['source_files'], 
 									headers = wrapper_files['header_files'], pre = [ os.path.join(owl_output_dir, 'precompiled_headers.cpp'), os.path.join(owl_output_dir, 'precompiled_headers.hpp') ] )
