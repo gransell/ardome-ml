@@ -30,7 +30,7 @@ void test_plugin()
 
         plugin_metadata_ptr md = plugin_metadata_from_xml(xml_path, schemas);
 
-        olib::t_path plugin_path = special_folder::get( special_folder::amf_resources ) / _T("plugins");
+        olib::t_path plugin_path = special_folder::get( special_folder::plugins); 
         plugin_loader loader;
         std::vector<t_string> plugin_names;
         plugin_names.push_back(_T("plugin_test_assembly.xml"));
