@@ -62,7 +62,7 @@ namespace olib
         typedef boost::function< void () > invokable_function;
 
         /// Represents a media time in an exact way.
-        typedef boost::rational< long > rational_time;
+		typedef boost::rational< boost::int64_t > rational_time;
 
         typedef std::map< t_string, olib::t_path > schema_map;
 
