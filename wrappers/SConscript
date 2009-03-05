@@ -26,56 +26,249 @@ if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 elif local_env['PLATFORM'] == 'win32' :
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 
-local_env.Append( CPPPATH = [ '#/wrappers/objective_c/src' ] )
+local_env.Append( CPPPATH = [ '#/wrappers/objective_c/src', '#/../AMF/trunk/layout/include', '#/../AMF/trunk/render/include' ] )
 
-cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
+# cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
 
-#headers = [ header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+		
+# headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedefs.hpp' ) ),
 			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-#			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
-#			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
-#			header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),
-#			header_file( os.path.join( cl_src_dir, 'object.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
 			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'point.hpp') ),]
+			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'point.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'assert.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'color.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'enforce.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'invoker.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'ip_address.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'worker.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'jobbase.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'event_handler.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),	
+			# header_file( os.path.join( cl_src_dir, 'logger.hpp') ) ,
+			# # header_file( os.path.join( cl_src_dir, 'object.hpp') ) ,
+			# header_file( os.path.join( cl_src_dir, 'logtarget.hpp') ) ,
+			# header_file( os.path.join( cl_src_dir, 'point.hpp') ) ,
+			# header_file( os.path.join( cl_src_dir, 'rectangle.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'size.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'special_folders.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ) ,
+			# # header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ) ,
+			# # #header_file( os.path.join( cl_src_dir, 'template.hpp') )
+			# ]
+
+# layout_dir = os.path.join( local_env.root, '..', 'AMF', 'trunk', 'layout', 'include', 'layout' )
 			
-headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedefs.hpp' ) ),
+# layout_files = 	[ 	# 'accept_helper.h',
+					# # 'accessor.h',
+					# # 'animatable_property.h',
+					# # 'animatable_property_bag.h',
+					# # 'app_data.h',
+					# # 'app_data_container.h',
+					# # 'ardok_accessor.h',
+					# # 'ardome_locator.h',
+					# 'audio_mix_matrix.h',
+					# 'base_finders.h',
+					# 'basic_media_info.h',
+					# 'basic_size_info.h',
+					# # 'capability.h',
+					# # 'channel_referencer.h',
+					# # 'codec_definition.h',
+					# # 'collections.h',
+					# # 'collection_customizers.h',
+					# # 'common.h',
+					# # 'config.h',
+					# # 'constant_property.h',
+					# # 'container_definition.h',
+					# # 'container_descriptor.h',
+					# # 'creation_info.h',
+					# # 'credentials.h',
+					# # 'data_definition.h',
+					# # 'definitions.h',
+					# # 'descriptor.h',
+					# # 'destination_settings.h',
+					# # 'destination_track_info.h',
+					# # 'edit_delta.h',
+					# # 'edit_delta_event_adapter.h',
+					# # 'edit_delta_visitor.h',
+					# # 'edit_lock.h',
+					# # 'edit_lock_group.h',
+					# # 'effect_definition.h',
+					# # 'export_defines.h',
+					# # 'filter.h',
+					# # 'ftp_accessor.h',
+					# # 'generic_definition.h',
+					# # 'http_accessor.h',
+					# # 'index_descriptor.h',
+					# # 'layout.h',
+					# # 'layout_enums.h',
+					# # 'local_locator.h',
+					# # 'location.h',
+					# # 'locator.h',
+					# # 'locator_descriptor.h',
+					# # 'lockable_vector.h',
+					# 'master_media_object.h',
+					# 'media_descriptor.h',
+					# 'media_info.h',
+					# 'media_object_base.h',
+					# 'media_quality_descriptor.h',
+					# 'media_track_item.h',
+					# 'path_property.h',
+					# 'physical_descriptor.h',
+					# 'picture_descriptor.h',
+					# 'product_info.h',
+					# 'project.h',
+					# 'property_holder.h',
+					# 'quality_description.h',
+					# 'revision_info.h',
+					# 'service_locator.h',
+					# 'smb_accessor.h',
+					# 'smooth_function_curve.h',
+					# 'smpte.h',
+					# 'sound_descriptor.h',
+					# 'source_media_object.h',
+					# 'source_referencer.h',
+					# 'svg_output_options.h',
+					# 'svg_utilities.h',
+					# 'synchronizer.h',
+					# 'timecode_track_item.h',
+					# 'timeline.h',
+					# 'timeline_cut_functions.h',
+					# 'timeline_edit_functions.h',
+					# 'timeline_helper_functions.h',
+					# 'timeline_insert_functions.h',
+					# 'timeline_placement_functions.h',
+					# 'timeline_remove_functions.h',
+					# # 'to_text_edit_delta_visitor.h',
+					# 'track.h',
+					# 'track_configuration.h',
+					# 'track_conf_definition.h',
+					# 'track_definition.h',
+					# 'track_descriptor.h',
+					# 'track_item.h',
+					# 'track_item_group.h',
+					# 'track_item_paste_group.h',
+					# 'track_item_paste_info.h',
+					# 'track_referencer.h',
+					# # 'transition.h',
+					# # 'typedefs.h',
+					# # 'value_list_property.h',
+					# # 'version.h' 
+					# ]
+				
+# def fix_layout_filename( fn ) :
+	# return header_file( os.path.join( layout_dir, fn ) )
+			
+# headers.extend( map( fix_layout_filename, layout_files ) )
+
+
+
+
+
+cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
+layout_src_dir = os.path.join( local_env.root, '..', 'AMF', 'trunk', 'layout', 'include', 'layout' )
+render_src_dir = os.path.join( local_env.root, '..', 'AMF', 'trunk', 'render', 'include', 'render' )
+network_src_dir = os.path.join( local_env.root, '..', 'AMF', 'trunk', 'network', 'include', 'network' )
+
+cl_headers = [
+			# Core
+			header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),
+			
 			header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'invoker.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'typedefs.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'object.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'point.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'assert.hpp') ),
+			# header_file( os.path.join( cl_src_dir, 'point.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'color.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'enforce.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'invoker.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'ip_address.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'worker.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'jobbase.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ),
 			header_file( os.path.join( cl_src_dir, 'event_handler.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),	
-			header_file( os.path.join( cl_src_dir, 'logger.hpp') ) ,
-			header_file( os.path.join( cl_src_dir, 'object.hpp') ) ,
-			header_file( os.path.join( cl_src_dir, 'logtarget.hpp') ) ,
-			header_file( os.path.join( cl_src_dir, 'point.hpp') ) ,
-			header_file( os.path.join( cl_src_dir, 'rectangle.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'size.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'special_folders.hpp') ),
-			header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ) ,
-			# #header_file( os.path.join( cl_src_dir, 'template.hpp') )
-			]
-			
-# headers = map( header_file, local_env.Glob(os.path.join(cl_src_dir, '*.hpp'), True, False, True) )
+			header_file( os.path.join( cl_src_dir, 'property_bag.hpp') ),
+			# Layout
+			header_file( os.path.join( layout_src_dir, 'layout_enums.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'typedefs.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'credentials.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'location.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'accessor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'ardok_accessor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'ftp_accessor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'http_accessor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'smb_accessor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'locator.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'ardome_locator.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'local_locator.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'service_locator.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'container_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'locator_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'picture_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'sound_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'physical_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'index_descriptor.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'edit_lock.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'source_referencer.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'channel_referencer.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'track_item.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'media_track_item.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timecode_track_item.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'track.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'media_object_base.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'master_media_object.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'source_media_object.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'track_item_group.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'track_item_paste_group.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_cut_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_edit_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_helper_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_insert_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_placement_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'timeline_remove_functions.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'project.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'destination_track_info.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'basic_media_info.h' ) ),
+			header_file( os.path.join( layout_src_dir, 'basic_size_info.h' ) ),
+			#header_file( os.path.join( layout_src_dir, 'lockable_vector.h' ) ),
+			#header_file( os.path.join( layout_src_dir, 'collections.h' ) ),
+			#header_file( os.path.join( layout_src_dir, 'collection_customizers.h' ) ),
+			# Render
+			header_file( os.path.join( render_src_dir, 'typedefs.h' ) ),
+			header_file( os.path.join( render_src_dir, 'amf_initializer.h' ) ),
+			header_file( os.path.join( render_src_dir, 'amf_settings.h' ) ),
+			header_file( os.path.join( render_src_dir, 'enums.h' ) ),
+			header_file( os.path.join( render_src_dir, 'host_info.h' ) ),
+			header_file( os.path.join( render_src_dir, 'server_info.h' ) ),
+			header_file( os.path.join( render_src_dir, 'audio.h' ) ),
+			header_file( os.path.join( render_src_dir, 'image.h' ) ),
+			header_file( os.path.join( render_src_dir, 'media_frame.h' ) ),
+			header_file( os.path.join( render_src_dir, 'filter_graph.h' ) ),
+			header_file( os.path.join( render_src_dir, 'event_arg_classes.h' ) ),
+			header_file( os.path.join( render_src_dir, 'player.h' ) ),
+			# Network
+			header_file( os.path.join( network_src_dir, 'invokerdata.h' ) ),
+			header_file( os.path.join( network_src_dir, 'invokersettings.h' ) ),
+			header_file( os.path.join( network_src_dir, 'messagebus_typedefs.h' ) ),
+			header_file( os.path.join( network_src_dir, 'messagebus.h' ) ),
+			header_file( os.path.join( network_src_dir, 'messagebus_config.h' ) ),
+			header_file( os.path.join( network_src_dir, 'messagebus_message.h' ) ),
+			header_file( os.path.join( network_src_dir, 'service_connector.h' ) ),]
+
+
+
+
+
 
 
 obj = None;
@@ -92,9 +285,9 @@ if local_env['debug'] == '1' :
 if generate_files :
 	print 'Building AST...'
 
-	files = header_files( headers, defines, [] )
+	files = header_files( cl_headers, defines, [] )
 
-	core_assembly = assembly( 'Core', files, dep_asses )
+	core_assembly = assembly( 'AMF', files, dep_asses )
 
 	fd = open( 'assembly.xml', "w" )
 	fd.write( core_assembly.xml_str() )
