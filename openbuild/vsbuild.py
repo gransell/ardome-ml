@@ -126,11 +126,29 @@ class VsBuilder :
 	def create_string( self, env_var_name, env) :
 		if not env.has_key(env_var_name) : return ""
 		res = ''
-		for p in env[env_var_name] :
-			res += p + ' ' 
+		#print 'env_var_name=', env_var_name, ', env[env_var_name]=', env[env_var_name]
+		if isinstance(env[env_var_name], list) :
+			for p in env[env_var_name] :
+				res += p.replace('"', '&quot;') + ' ' 
+		else :
+			res += env[env_var_name].replace('"', '&quot;') + ' '
+				
 		return res
 
+	def remove_duplicates( self, file_list ) :
+		if file_list is None : return None
+		temp = set(file_list)
+		res = []
+		for item in temp :
+			res.append(item)
+		
+		return res
+		
+		
 	def project( self, env, lib, sources, project_type, subsystem=None, headers=None, pre=None, nopre=None, extra_compiler_flags = None  ) :
+	
+		#sources = self.remove_duplicates( sources )
+		#headers = self.remove_duplicates( headers )
 	
 		self.vs_solution.root = env.root
 		

@@ -27,7 +27,7 @@ class CompilerTool:
 		if vsver == 'vs2008':
 			if precomp_flag == 3 : precomp_flag = 2
 		
-		return toolstr % ( precomp_flag, precomp_file, the_file.get_additional_cl_flags(config.name) ) 
+		return toolstr % ( precomp_flag, os.path.basename( precomp_file ), the_file.get_additional_cl_flags(config.name) ) 
 		
 class QtMocTool :
 	""" Will use moc.exe to create class meta-data """
@@ -125,7 +125,7 @@ class VS2003:
 					WarningLevel="%s"
 					Detect64BitPortabilityProblems="FALSE"
 					DebugInformationFormat="%s"/> """
-
+					
 		return tool_str % ( options.additional_options,
 							options.optimization,
 							options.include_directories_as_string( project.root_dir),
@@ -134,7 +134,7 @@ class VS2003:
 							options.runtime_type_info_as_string(),
 							options.wchar_t_built_in_as_string(),
 							options.use_precompiled_headers(),
-							options.precompiled_header_file(),
+							os.path.basename( options.precompiled_header_file() ),
 							options.warning_level,
 							options.debug_information_format( config.name) )
 							
@@ -169,13 +169,15 @@ class VS2008 :
 					WarningLevel="%s"
 					DebugInformationFormat="%s"/> """
 
+		#print 'options=', options.additional_options
+					
 		return tool_str % ( options.additional_options,
 							options.include_directories_as_string( project.root_dir),
 							options.preprocessor_flags_as_string(),
 							options.runtime_library( config.name ),
 							options.runtime_type_info_as_string(),
 							options.use_precompiled_headers(),
-							options.precompiled_header_file(),
+							os.path.basename( options.precompiled_header_file() ),
 							options.warning_level,
 							options.debug_information_format( config.name) )
 										
@@ -215,6 +217,13 @@ class CompilerOptions:
 		self.sources_not_using_precomp = []
 		self.warning_level = 3
 		self.additional_options = ""
+		self.vc_version = ""
+		
+	def set_vc_version( self, v ) :
+		self.vc_version = v
+		
+	def get_vc_version( self ) :
+		return self.vc_version
 		
 	def runtime_library( self, config_name ) :
 		""" Returns the c++-runtime library to use
@@ -260,7 +269,13 @@ class CompilerOptions:
 			1 - Create precompiled headers (only used on the cpp-file that will create the pch-file)
 			2 - Autiomatic use (not recommeded)
 			3 - Use precompiled headers """	
-		if self.precomp_headers[0] : return "3"
+					
+		if self.precomp_headers[0] : 
+			if self.vc_version == 'vs2008':
+				return "2"
+			else:
+				return "3"
+				
 		return "0"
 
 	def precompiled_header_file( self ) :
@@ -286,7 +301,9 @@ class CompilerOptions:
 				if the_file.name in src.name : return 0, ""
 			
 		if self.precomp_headers[2] in the_file.name : return 1, self.precomp_headers[1]
-		return  3, self.precomp_headers[1]
+		
+		return int( self.use_precompiled_headers() ), self.precomp_headers[1]
+
 
 	def debug_information_format( self, config_name ) :
 		# 0 - Disabled
@@ -394,6 +411,7 @@ class BuildConfiguration:
 		
 	def set_vc_version( self, vc_version ):
 		self.vc_version = vc_version
+		self.compiler_options.set_vc_version( self.vc_version )
 		
 	 
 	def binary_type( self ) :
@@ -489,7 +507,7 @@ class VSProject :
 
 
 	def handle_compiler( self, config, ostr ) :
-		
+		#print 'to write to sln: ', self.vs.compiler_tool( self, config, config.compiler_options )
 		ostr.write( self.vs.compiler_tool( self, config, config.compiler_options ) )
 								
 
@@ -603,6 +621,7 @@ class VSProject :
 		ostr.write( self.create_filter("Source Files", self.cpp_extensions() ) + "\n")
 		files_to_use = self.get_files_with_filter( self.cpp_extensions() )
 		for cpp_file in files_to_use:
+			#print 'source file: ', cpp_file
 			self.handle_src_file(cpp_file, ostr)
 		ostr.write("</Filter>\n")
 		

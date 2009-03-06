@@ -107,6 +107,7 @@ namespace olib
         rgba_color rgba_color::gold(){ return rgba_color(255, 215, 0); }
         rgba_color rgba_color::goldenrod(){ return rgba_color(218, 165, 32); }
         rgba_color rgba_color::gray(){ return rgba_color(128, 128, 128); }
+		rgba_color rgba_color::grey(){ return rgba_color(128, 128, 128); }
         rgba_color rgba_color::green(){ return rgba_color( 0, 128, 0); }
         rgba_color rgba_color::greenyellow(){ return rgba_color(173, 255, 47); }
         rgba_color rgba_color::honeydew(){ return rgba_color(240, 255, 240); }
