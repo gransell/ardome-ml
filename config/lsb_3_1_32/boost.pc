@@ -5,7 +5,7 @@ Version: 0.0.1
 prefix=/usr
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
-includedir=${prefix}/include/boost-1_37
+includedir=${prefix}/include/boost
 
 CFlags:	-I${includedir}
 
