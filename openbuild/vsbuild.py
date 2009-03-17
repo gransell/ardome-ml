@@ -129,7 +129,11 @@ class VsBuilder :
 		#print 'env_var_name=', env_var_name, ', env[env_var_name]=', env[env_var_name]
 		if isinstance(env[env_var_name], list) :
 			for p in env[env_var_name] :
-				res += p.replace('"', '&quot;') + ' ' 
+				str = p
+				if p.find('\\') != -1 :
+					str = '"' + str + '"'
+				
+				res += str.replace('"', '&quot;') + ' ' 
 		else :
 			res += env[env_var_name].replace('"', '&quot;') + ' '
 				
