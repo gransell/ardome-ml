@@ -95,7 +95,7 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 	return result;
 }
 
-pcos::property_container frame_type::properties( ) { return properties_; }
+pcos::property_container &frame_type::properties( ) { return properties_; }
 pcos::property frame_type::property( const char *name ) const { return properties_.get_property_with_string( name ); }
 
 bool frame_type::has_image( )
@@ -108,11 +108,9 @@ bool frame_type::has_audio( )
 	return audio_ != audio_type_ptr( );
 }
 
-void set_image( olib::openimagelib::il::image_type_ptr image );
-
-
 void frame_type::set_packet( packet_type_ptr packet ) { packet_ = packet; }
 packet_type_ptr frame_type::get_packet( ) { return packet_; }
+
 void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
 
 il::image_type_ptr frame_type::get_image( ) 

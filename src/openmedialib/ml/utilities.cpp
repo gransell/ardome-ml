@@ -37,7 +37,7 @@ namespace
 	const short max_short = (std::numeric_limits<short>::max)();
 	
 	// Locate the largest common denominator of a and b
-	int gcd( int a, int b )
+	boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
 	{
 		if(a < 0)
 			a = int( std::abs( a ) );
@@ -604,7 +604,7 @@ ML_DECLSPEC int audio_samples_for_frame(int frameoffset, int samplefreq, int fra
 {
 	// Work around: some video files report frame rates with a common denominator (ie: 25000:1000)
 	// Without factoring that out upfront (in this implementation), the results are incorrect
-	int common = gcd( framerate_numerator, framerate_denominator );
+	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
 	framerate_numerator /= common;
 	framerate_denominator /= common; 
 
@@ -626,7 +626,7 @@ ML_DECLSPEC int audio_samples_for_frame(int frameoffset, int samplefreq, int fra
 
 ML_DECLSPEC long long audio_samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
 {
-	int common = gcd( framerate_numerator, framerate_denominator );
+	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
 	framerate_numerator /= common;
 	framerate_denominator /= common; 
 

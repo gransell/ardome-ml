@@ -44,7 +44,7 @@ class ML_DECLSPEC frame_type
 		static frame_type_ptr fold( std::deque< frame_type_ptr > & );
 
 		/// Return the properties associated to this frame.
-		olib::openpluginlib::pcos::property_container properties( );
+		olib::openpluginlib::pcos::property_container &properties( );
 
 		/// Convenience method - returns the property by its name.
 		olib::openpluginlib::pcos::property property( const char *name ) const;

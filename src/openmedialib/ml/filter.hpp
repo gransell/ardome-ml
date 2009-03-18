@@ -47,7 +47,7 @@ class ML_DECLSPEC filter_type : public input_type
 {
 	public:
 		explicit filter_type( );
-		virtual ~filter_type( ) { }
+		virtual ~filter_type( );
 
 		/// Filters can request any number of inputs - override this method as required
 		virtual const size_t slot_count( ) const;

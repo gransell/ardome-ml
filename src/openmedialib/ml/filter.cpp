@@ -99,8 +99,12 @@ filter_type::filter_type( )
 	, slots_( )
 	, keys_( )
 	, position_( 0 ) 
-{ 
+{
 	slots_.push_back( input_type_ptr( ) ); 
+}
+
+filter_type::~filter_type( )
+{
 }
 
 const size_t filter_type::slot_count( ) const 
@@ -159,9 +163,14 @@ input_type_ptr filter_type::fetch_slot( size_t slot ) const
 
 bool filter_type::connect( input_type_ptr input, size_t slot )
 {
-	if ( slots_.size( ) < slot_count( ) )
-		for ( size_t i = slots_.size( ); i < slot_count( ); i ++ )
+	if ( slots_.size( ) != slot_count( ) )
+	{
+		size_t i;
+		for ( i = slots_.size( ); i > slot_count( ); i -- )
+			slots_.pop_back( );
+		for ( i = slots_.size( ); i < slot_count( ); i ++ )
 			slots_.push_back( input_type_ptr( ) );
+	}
 
 	bool result = slot < slot_count( );
 	if ( result )
