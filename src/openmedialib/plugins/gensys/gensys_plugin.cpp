@@ -298,7 +298,13 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 {
 	public:
 		// Constructor and destructor
-		pusher_input( ) : input_type( ) { }
+		pusher_input( ) 
+			: input_type( ) 
+			, prop_length_( pcos::key::from_string( "length" ) )
+		{ 
+			properties( ).append( prop_length_ = -1 );
+		}
+
 		virtual ~pusher_input( ) { }
 
 		// Indicates if the input will enforce a packet decode
@@ -309,7 +315,14 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		virtual const pl::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
-		virtual int get_frames( ) const { return int( queue_.size( ) ); }
+		virtual int get_frames( ) const 
+		{ 
+			if ( prop_length_.value< int >( ) == -1 )
+				return int( queue_.size( ) ); 
+			else
+				return prop_length_.value< int >( );
+		}
+
 		virtual bool is_seekable( ) const { return false; }
 
 		// Visual
@@ -345,6 +358,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		}
 
 	private:
+		pcos::property prop_length_;
 		std::deque< frame_type_ptr > queue_;
 };
 
@@ -974,12 +988,14 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			return result;
 		}
 
-		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr foreground, struct geometry geom )
+		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry geom )
 		{
 			// Ensure conformance
 			if ( !is_yuv_planar( background ) )
 				background = frame_convert( background, L"yuv420p" );
-			foreground = frame_convert( foreground, background->get_image( )->pf( ) );
+
+			ml::frame_type_ptr foreground = frame_convert( ml::frame_type::shallow_copy( fg ), background->get_image( )->pf( ) );
+			foreground->set_image( il::conform( foreground->get_image( ), il::writable ) );
 
 			// Crop to computed geometry
 			foreground = frame_crop( foreground, geom.cx, geom.cy, geom.cw, geom.ch );
@@ -1720,12 +1736,16 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 	private:
 		inline int map_source_to_dest( int position ) const
 		{
-			return int( position * ( double( prop_fps_num_.value< int >( ) * src_fps_den_ ) / double( prop_fps_den_.value< int >( ) * src_fps_num_ ) ) );
+			boost::int64_t t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
+			boost::int64_t t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
+			return int( position * ( double( ( 1024 * t2 / t1 ) ) / 1024 ) );
 		}
 
 		inline int map_dest_to_source( int position ) const
 		{
-			return int( position * ( double( src_fps_num_ * prop_fps_den_.value< int >( ) ) / double( src_fps_den_ * prop_fps_num_.value< int >( ) ) ) );
+			boost::int64_t t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
+			boost::int64_t t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
+			return int( position * ( double( ( 1024 * t1 / t2 ) ) / 1024 ) );
 		}
 
 		int position_;
@@ -1897,10 +1917,13 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
-				result->set_image( il::conform( result->get_image( ), il::writable ) );
-				if ( prop_force_.value< int >( ) )
-					result->get_image( )->set_field_order( prop_force_.value< int >( ) == 2 ? il::bottom_field_first : il::top_field_first );
-				result->set_image( il::deinterlace( result->get_image( ) ) );
+				if ( result->get_image( )->field_order( ) != il::progressive || prop_force_.value< int >( ) )
+				{
+					result->set_image( il::conform( result->get_image( ), il::writable ) );
+					if ( prop_force_.value< int >( ) )
+						result->get_image( )->set_field_order( prop_force_.value< int >( ) == 2 ? il::bottom_field_first : il::top_field_first );
+					result->set_image( il::deinterlace( result->get_image( ) ) );
+				}
 			}
 		}
 
@@ -1912,6 +1935,11 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 // Lerp
 //
 // Experimental linear interpolation
+
+static bool key_sort( const pcos::key &k1, const pcos::key &k2 )
+{
+	return strcmp( k1.as_string( ), k2.as_string( ) ) < 0;
+}
 
 class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 {
@@ -1941,78 +1969,85 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			{
 				input->seek( get_position( ) );
 				result = input->fetch( );
-				pcos::key_vector props = properties( ).get_keys( );
-				for( pcos::key_vector::iterator it = props.begin( ); result && it != props.end( ); it ++ )
-					evaluate( result, *it );
+				pcos::key_vector keys = properties( ).get_keys( );
+				std::sort( keys.begin( ), keys.end( ), key_sort );
+				int frames = get_frames( );
+				pcos::property_container input_props = properties( );
+				pcos::property_container &frame_props = result->properties( );
+				for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); it ++ )
+					evaluate( frame_props, input_props, *it, frames );
 			}
 		}
 
-		void correct_in_out( int &in, int &out )
+		void correct_in_out( int &in, int &out, const int &frames )
 		{
 			if ( in < 0 )
-				in = get_frames( ) + in;
+				in = frames + in;
 			if ( in < 0 )
 				in = 0;
-			if ( in >= get_frames( ) )
-				in = get_frames( ) - 1;
+			if ( in >= frames )
+				in = frames - 1;
 
 			if ( out < 0 )
-				out = get_frames( ) + out;
+				out = frames + out;
 			if ( out <= 0 )
 				out = 0;
-			if ( out >= get_frames( ) )
-				out = get_frames( ) - 1;
+			if ( out >= frames )
+				out = frames - 1;
 		}
 
-		void assign_property( frame_type_ptr frame, std::string name, double result )
+		void assign_property( pl::pcos::property_container &props, pcos::key &target, double result )
 		{
-			if ( name.find( ":" ) != std::string::npos )
-				name = name.substr( 0, name.find( ":" ) );
-
-			if ( !frame->properties( ).get_property_with_string( name.c_str( ) ).valid( ) )
+			pl::pcos::property prop = props.get_property_with_key( target );
+			if ( prop.valid( ) )
 			{
-				pcos::property final( pcos::key::from_string( name.c_str( ) ) );
-				frame->properties( ).append( final = result );
+				prop = result;
 			}
 			else
 			{
-				frame->properties( ).get_property_with_string( name.c_str( ) ) = result;
+				pcos::property final( target );
+				props.append( final = result );
 			}
 		}
 
-		void assign_property( frame_type_ptr frame, std::string name, pl::wstring result )
+		void assign_property( pl::pcos::property_container &props, pcos::key &target, pl::wstring result )
 		{
-			if ( name.find( ":" ) != std::string::npos )
-				name = name.substr( 0, name.find( ":" ) );
-
-			if ( !frame->properties( ).get_property_with_string( name.c_str( ) ).valid( ) )
+			pl::pcos::property prop = props.get_property_with_key( target );
+			if ( prop.valid( ) )
 			{
-				pcos::property final( pcos::key::from_string( name.c_str( ) ) );
-				frame->properties( ).append( final = result );
+				prop = result;
 			}
 			else
 			{
-				frame->properties( ).get_property_with_string( name.c_str( ) ) = result;
+				pcos::property final( target );
+				props.append( final = result );
 			}
 		}
 
-		virtual void evaluate( frame_type_ptr frame, pcos::key &key )
+		virtual void evaluate( pl::pcos::property_container &props, pl::pcos::property_container &input, pcos::key &key, const int &frames )
 		{
 			std::string name( key.as_string( ) );
 
-			if ( name.substr( 0, 2 ) == "@@" && get_frames( ) )
+			if ( name.substr( 0, 2 ) == "@@" && frames )
 			{
-				pcos::property prop = properties( ).get_property_with_key( key );
+				name = name.substr( 2 );
+				if ( name.find( ":" ) != std::string::npos )
+					name = name.substr( 0, name.find( ":" ) );
+
+				pcos::key target = pcos::key::from_string( name.c_str( ) );
+
+				pcos::property prop = input.get_property_with_key( key );
 				pl::wstring value = prop.value< pl::wstring >( );
 
 				double lower, upper, result;
 				int in = prop_in_.value< int >( );
 				int out = prop_out_.value< int >( );
-				int position = get_position( ) % get_frames( );
+				int position = get_position( ) % frames;
 
 				int count = sscanf( pl::to_string( value ).c_str( ), "%lf:%lf:%d:%d", &lower, &upper, &in, &out );
 
-				correct_in_out( in, out );
+				if ( in < 0 || out < 0 )
+					correct_in_out( in, out, frames );
 
 				if ( count > 0 && position >= in && position <= out )
 				{
@@ -2021,11 +2056,11 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 					else
 						result = double( lower );
 
-					assign_property( frame, name.substr( 2 ), result );
+					assign_property( props, target, result );
 				}
 				else if ( count == 0 )
 				{
-					assign_property( frame, name.substr( 2 ), value );
+					assign_property( props, target, value );
 				}
 			}
 		}
@@ -2079,14 +2114,14 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
     		y = ( ay * t_cubed ) + ( by * t_squared ) + ( cy * t ) + points[ 0 ].y;
 		}
 
-		void evaluate( frame_type_ptr frame, pcos::key &key )
+		void evaluate( pl::pcos::property_container &props, pl::pcos::property_container &input, pcos::key &key, const int &frames )
 		{
 			std::string name( key.as_string( ) );
 
-			if ( name.substr( 0, 2 ) == "@@" && get_frames( ) )
+			if ( name.substr( 0, 2 ) == "@@" && frames )
 			{
-				int position = get_position( ) % get_frames( );
-				pcos::property prop = properties( ).get_property_with_key( key );
+				int position = get_position( ) % frames;
+				pcos::property prop = input.get_property_with_key( key );
 				pl::wstring value = prop.value< pl::wstring >( );
 
 				point points[ 4 ];
@@ -2100,7 +2135,7 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 																	  &points[ 3 ].x, &points[ 3 ].y,
 																	  &in, &out );
 
-				correct_in_out( in, out );
+				correct_in_out( in, out, frames );
 
 				double x = 0.0;
 				double y = 0.0;
@@ -2112,12 +2147,15 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 					size_t index = name.rfind( "," );
 					if ( index !=  std::string::npos )
 					{
-						assign_property( frame, name.substr( 2, index - 2 ), x );
-						assign_property( frame, name.substr( index + 1 ), y );
+						pcos::key target1 = pcos::key::from_string( name.substr( 2, index - 2 ).c_str( ) );
+						pcos::key target2 = pcos::key::from_string( name.substr( index - 1 ).c_str( ) );
+						assign_property( props, target1, x );
+						assign_property( props, target2, y );
 					}
 					else
 					{
-						assign_property( frame, name.substr( 2 ), x );
+						pcos::key target = pcos::key::from_string( name.substr( 2 ).c_str( ) );
+						assign_property( props, target, x );
 					}
 				}
 			}
@@ -2193,7 +2231,9 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			result = fetch_from_slot( );
 
 			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
+			{
 				visualise( result );
+			}
 			else if ( result && !result->has_image( ) )
 			{
 				result->set_image( previous_ );
