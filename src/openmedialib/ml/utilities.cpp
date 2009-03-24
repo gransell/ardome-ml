@@ -40,9 +40,9 @@ namespace
 	boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
 	{
 		if(a < 0)
-			a = int( std::abs( a ) );
+			a = int( std::abs( static_cast<long>(a) ) );
 		if(b < 0)
-			b = int( std::abs( b ) );
+			b = int( std::abs( static_cast<long>(b) ) );
 		if ( b > a )
 		{
 			int t = a;
