@@ -206,9 +206,9 @@ namespace olib
 			}
 			else
 			{
-				std::list<parse_handler> new_set;
-				new_set.push_back(ph);
-				m_handlers[s] = new_set;
+				std::list<parse_handler> new_list;
+				new_list.push_back(ph);
+				m_handlers[s] = new_list;
 			}
         }
 
@@ -232,7 +232,6 @@ namespace olib
                                                         const schema_map& schemas )
         {
             object_ptr temp = load_and_parse( &bin_data, 0, schemas );
-			std::cout << "lnp1" << std::endl;
 			return temp;
         }
 
@@ -241,7 +240,6 @@ namespace olib
                             const schema_map& schemas )
         {
 			object_ptr temp = load_and_parse( 0, &xml_doc_path, schemas );
-			std::cout << "lnp2" << std::endl;
             return temp;
         }
 
@@ -292,7 +290,6 @@ namespace olib
 
 				m_parser->parsing_done();
 				object_ptr temp = m_parser->get_result();
-				std::cout << "lnp3" << std::endl;
                 return temp;
             }
             catch( SAXException& e)
