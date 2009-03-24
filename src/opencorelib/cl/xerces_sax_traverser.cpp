@@ -198,8 +198,18 @@ namespace olib
         void xerces_sax_traverser::add_handler( const xerces_string& s, const parse_handler& ph )
         {
             parse_handler_map::iterator it = m_handlers.find(s);
-            ARENFORCE_MSG( it == m_handlers.end(), "key already in use" )(x_to_t_string(s.c_str()));
-            m_handlers[s] = ph;
+            //ARENFORCE_MSG( it == m_handlers.end(), "key already in use" )(x_to_t_string(s.c_str()));
+			if ( it != m_handlers.end() )
+			{
+				//There were existing handlers for this tag
+				it->second.push_back(ph);
+			}
+			else
+			{
+				std::list<parse_handler> new_set;
+				new_set.push_back(ph);
+				m_handlers[s] = new_set;
+			}
         }
 
         void xerces_sax_traverser::start_create_inner_xml()
@@ -221,14 +231,18 @@ namespace olib
         object_ptr xerces_sax_traverser::load_and_parse(const XERCES_CPP_NAMESPACE::InputSource& bin_data,
                                                         const schema_map& schemas )
         {
-            return load_and_parse( &bin_data, 0, schemas );
+            object_ptr temp = load_and_parse( &bin_data, 0, schemas );
+			std::cout << "lnp1" << std::endl;
+			return temp;
         }
 
         object_ptr xerces_sax_traverser::load_and_parse(   
                             const olib::t_path& xml_doc_path,
                             const schema_map& schemas )
         {
-            return load_and_parse( 0, &xml_doc_path, schemas );
+			object_ptr temp = load_and_parse( 0, &xml_doc_path, schemas );
+			std::cout << "lnp2" << std::endl;
+            return temp;
         }
 
         object_ptr xerces_sax_traverser::load_and_parse(  const XERCES_CPP_NAMESPACE::InputSource* bin_data ,
@@ -277,7 +291,9 @@ namespace olib
 #endif
 
 				m_parser->parsing_done();
-                return m_parser->get_result();
+				object_ptr temp = m_parser->get_result();
+				std::cout << "lnp3" << std::endl;
+                return temp;
             }
             catch( SAXException& e)
             {
@@ -324,7 +340,11 @@ namespace olib
                 if(fit != m_handlers.end())
                 {
                     traverse_state st( &attributes, 0, 0, this, xml_location::element_start );
-                    fit->second(st);
+					std::list<parse_handler>::const_iterator iter = fit->second.begin();
+					for ( ;iter != fit->second.end(); iter++)
+					{
+						(*iter)(st);
+					}
                 }
             }
         }
@@ -338,7 +358,11 @@ namespace olib
                 if(fit != m_handlers.end())
                 {
                     traverse_state st( 0, chars, length, this, xml_location::element_content );
-                    fit->second(st);
+					std::list<parse_handler>::const_iterator iter = fit->second.begin();
+					for ( ;iter != fit->second.end(); iter++)
+					{
+						(*iter)(st);
+					}
                 }
             } 
         }
@@ -351,7 +375,11 @@ namespace olib
                 if(fit != m_handlers.end())
                 {
                     traverse_state st( 0, 0, 0, this, xml_location::element_end );
-                    fit->second(st);
+					std::list<parse_handler>::const_iterator iter = fit->second.begin();
+					for ( ;iter != fit->second.end(); iter++)
+					{
+						(*iter)(st);
+					}
                 }
                 else
                 {
@@ -364,7 +392,11 @@ namespace olib
                 if(fit != m_handlers.end())
                 {
                     traverse_state st( 0, 0, 0, this, xml_location::element_end );
-                    fit->second(st);
+					std::list<parse_handler>::const_iterator iter = fit->second.begin();
+					for ( ;iter != fit->second.end(); iter++)
+					{
+						(*iter)(st);
+					}
                 }
             }
 

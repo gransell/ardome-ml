@@ -24,6 +24,8 @@
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
 
+#include <list>
+
 #include <boost/scoped_array.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/any.hpp>
@@ -250,8 +252,10 @@ namespace olib
                     &lt;/path&gt;
                 &lt;/some&gt;
                 </pre>
+				Multiple handlers can be added for the same state, in which case they 
+				will be called in the same order that they were added.
                 @param s The key to match the parser's state against. When the match is 
-                        true, the parse_hander is issued.
+                        true, the parse_handler is issued.
                 @param ph The parse_hander to call when the state of the parser matches s. */
             void add_handler( const xerces_string& s, const parse_handler& ph );
 
@@ -312,7 +316,7 @@ namespace olib
 
             
             /// Map of functions to handle different states of the parser
-            typedef std::map< xerces_string, parse_handler> parse_handler_map;
+			typedef std::map< xerces_string, std::list<parse_handler> > parse_handler_map;
 
             /// Put you handler functions here.
             /** You should match your handler with a state string.
