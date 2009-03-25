@@ -32,8 +32,6 @@ if [ ! -d xerces-c-2.8.0 ]; then
 	fi
 fi
 
-cd ..
-
 if [ ! -d  ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
 	tar -zxf ../tmp/ffmpeg.tgz
