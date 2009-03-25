@@ -39,10 +39,10 @@ cd common
 
 if [ ! -d ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
-	tar -jxf ../tmp/ffmpeg.tbz2 
+	tar -zxf ../tmp/ffmpeg.tgz 
 	
 	if [ ! $? == 0 ]; then
-	  echo "Failed to run tar -jxf ../tmp/ffmpeg-win32-20080825.tbz2. Terminating."
+	  echo "Failed to run tar -zxf ../tmp/ffmpeg-win32-20080825.tgz. Terminating."
 	  exit
 	fi
 fi
