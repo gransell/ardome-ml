@@ -35,23 +35,26 @@ namespace
 	//       see http://www.boost.org/more/lib_guide.htm
 	const short min_short = (std::numeric_limits<short>::min)();
 	const short max_short = (std::numeric_limits<short>::max)();
+
+	inline boost::int64_t abs( boost::int64_t value )
+	{ return value < 0 ? - value : value; }
 	
 	// Locate the largest common denominator of a and b
 	boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
 	{
 		if(a < 0)
-			a = int( std::abs( static_cast<long>(a) ) );
+			a = int( abs( a ) );
 		if(b < 0)
-			b = int( std::abs( static_cast<long>(b) ) );
+			b = int( abs( b ) );
 		if ( b > a )
 		{
-			int t = a;
+			boost::int64_t t = a;
 			a = b;
 			b = t;
 		}
 		while ( a % b > 0 )
 		{
-			int t = a % b;
+			boost::int64_t t = a % b;
 			a = b;
 			b = t;
 		}
@@ -72,7 +75,7 @@ namespace
 		if(int(floor(extra_samples + 0.5)) == 0)
 			cycle_size = 1;
 		else
-			cycle_size /= gcd(cycle_size, int(floor(extra_samples + 0.5)));
+			cycle_size /= int( gcd(cycle_size, int(floor(extra_samples + 0.5))) );
 	
 		deficit = int(extra_samples) < 0 ? -1 : 1;
 
@@ -605,8 +608,8 @@ ML_DECLSPEC int audio_samples_for_frame(int frameoffset, int samplefreq, int fra
 	// Work around: some video files report frame rates with a common denominator (ie: 25000:1000)
 	// Without factoring that out upfront (in this implementation), the results are incorrect
 	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
-	framerate_numerator /= common;
-	framerate_denominator /= common; 
+	framerate_numerator /= int( common );
+	framerate_denominator /= int( common ); 
 
 	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
 	double	samples_per_frame	= double(samplefreq) / frames_per_second;
@@ -627,8 +630,8 @@ ML_DECLSPEC int audio_samples_for_frame(int frameoffset, int samplefreq, int fra
 ML_DECLSPEC long long audio_samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
 {
 	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
-	framerate_numerator /= common;
-	framerate_denominator /= common; 
+	framerate_numerator /= int( common );
+	framerate_denominator /= int( common ); 
 
 	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
 	double	samples_per_frame	= double(samplefreq) / frames_per_second;

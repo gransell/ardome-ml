@@ -68,11 +68,11 @@ const std::wstring avformat_to_oil( int fmt )
 {
 	if ( fmt == PIX_FMT_YUV420P )
 		return L"yuv420p";
-	else if ( fmt == PIX_FMT_UYVY411 )
+	else if ( fmt == PIX_FMT_UYYVYY411 )
 		return L"yuv411";
 	else if ( fmt == PIX_FMT_YUV411P )
 		return L"yuv411p";
-	else if ( fmt == PIX_FMT_YUV422 )
+	else if ( fmt == PIX_FMT_YUYV422 )
 		return L"yuv422";
 	else if ( fmt == PIX_FMT_YUV422P )
 		return L"yuv422p";
@@ -80,7 +80,7 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"r8g8b8";
 	else if ( fmt == PIX_FMT_BGR24 )
 		return L"b8g8r8";
-	else if ( fmt == PIX_FMT_RGBA32 )
+	else if ( fmt == PIX_FMT_RGBA )
 		return L"b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGB32 )
 		return L"r8g8b8a8";
@@ -89,16 +89,16 @@ const std::wstring avformat_to_oil( int fmt )
 	return L"";
 }
 
-const int oil_to_avformat( const std::wstring &fmt )
+const PixelFormat oil_to_avformat( const std::wstring &fmt )
 {
 	if ( fmt == L"yuv420p" )
 		return PIX_FMT_YUV420P;
 	else if ( fmt == L"yuv411" )
-		return PIX_FMT_UYVY411;
+		return PIX_FMT_UYYVYY411;
 	else if ( fmt == L"yuv411p" )
 		return PIX_FMT_YUV411P;
 	else if ( fmt == L"yuv422" )
-		return PIX_FMT_YUV422;
+		return PIX_FMT_YUYV422;
 	else if ( fmt == L"yuv422p" )
 		return PIX_FMT_YUV422P;
 	else if ( fmt == L"r8g8b8" )
@@ -107,7 +107,7 @@ const int oil_to_avformat( const std::wstring &fmt )
 		return PIX_FMT_BGR24;
 	else if ( fmt == L"r8g8b8a8" )
 		return PIX_FMT_RGB32;
-	return -1;
+	return PIX_FMT_NONE;
 }
 
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
@@ -845,6 +845,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Allocate the image
 				avcodec_get_frame_defaults( &av_image_ );
 				avpicture_alloc( ( AVPicture * )&av_image_, video_enc->pix_fmt, prop_width_.value< int >( ), prop_height_.value< int >( ) );
+				std::cerr << ( int64_t( av_image_.data[ 0 ] ) % 16 ) << std::endl;
 
 				// Open the codec safely
 				ret = codec != NULL && avcodec_open( video_enc, codec ) >= 0;
@@ -1280,6 +1281,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, ts_pusher_( )
 			, ts_filter_( )
 		{
+			audio_buf_ = audio_buf_data_ + int64_t( 4 - ( int64_t( audio_buf_data_ ) & 3 ) );
+
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
 			properties( ).append( prop_video_index_ = 0 );
@@ -1855,12 +1858,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						if ( samples_per_packet_ == 0 )
 						{
 							AVCodecContext *codec_context = get_audio_stream( )->codec;
-							int audio_size = sizeof(audio_buf_);
+							int audio_size = sizeof( audio_buf_data_ ) - 4;
 							int len = pkt_.size;
 							uint8_t *data = pkt_.data;
 		   					if ( avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ ), &audio_size, data, len ) >= 0 )
 							{
-								samples_per_frame_ = double( codec_context->sample_rate * fps_den_ ) / fps_num_;
+								samples_per_frame_ = int( double( codec_context->sample_rate * fps_den_ ) / fps_num_ );
 								samples_per_packet_ = audio_size / codec_context->channels / 2;
 								samples_duration_ = pkt_.duration;
 							}
@@ -2260,7 +2263,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					else
 					{
 						audio_buf_used_ = size_t( samples_to_dts - samples_to_next ) * channels * bps;
-						std::cerr << boost::uint64_t( audio_buf_ ) << " " << audio_buf_used_ << std::endl;
 						if ( audio_buf_used_ > 0 )
 							memset( audio_buf_, 0, audio_buf_used_ );
 					}
@@ -2273,7 +2275,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Each packet may need multiple parses
 			while( len > 0 )
 			{
-				int audio_size = sizeof(audio_buf_) - audio_buf_used_;
+				int audio_size = sizeof( audio_buf_data_ ) - 4 - audio_buf_used_;
 
 				// Decode the audio into the buffer
 		   		ret = avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ + audio_buf_used_ ), &audio_size, data, len );
@@ -2536,7 +2538,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool must_reopen_;
 		bool key_search_;
 
-		DECLARE_ALIGNED( 16, boost::uint8_t, audio_buf_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2 ] );
+		boost::uint8_t audio_buf_data_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 4) / 2 ];
+		boost::uint8_t *audio_buf_;
 		int audio_buf_used_;
 		int audio_buf_offset_;
 

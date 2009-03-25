@@ -6,7 +6,11 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-extern int img_convert(AVPicture *dst, int dst_pix_fmt, const AVPicture *src, int src_pix_fmt, int src_width, int src_height);
+#ifdef HAVE_SWSCALE
+#	include <libswscale/swscale.h>
+#else
+	extern int img_convert(AVPicture *dst, int dst_pix_fmt, const AVPicture *src, int src_pix_fmt, int src_width, int src_height);
+#endif
 }
 
 #include <iostream>
@@ -65,6 +69,26 @@ class ML_PLUGIN_DECLSPEC avformat_decoder : public ml::packet_decoder
 
 					std::wstring format = avformat_to_oil( context->pix_fmt );
 
+#ifdef HAVE_SWSCALE
+					if ( format == L"" )
+					{
+						image = il::allocate( L"yuv420p", width, height );
+						AVPicture output;
+						avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, width, height );
+						img_convert_ = sws_getCachedContext( img_convert_, width, height, context->pix_fmt, width, height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL );
+						if ( img_convert_ != NULL )
+							sws_scale( img_convert_, frame->data, frame->linesize, 0, height, output.data, output.linesize );
+					}
+					else
+					{
+						image = il::allocate( format, width, height );
+						AVPicture output;
+						avpicture_fill( &output, image->data( ), context->pix_fmt, width, height );
+						img_convert_ = sws_getCachedContext( img_convert_, width, height, context->pix_fmt, width, height, context->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+						if ( img_convert_ != NULL )
+							sws_scale( img_convert_, frame->data, frame->linesize, 0, height, output.data, output.linesize );
+					}
+#else
  					if ( format == L"" )
  					{
  						image = il::allocate( L"yuv420p", width, height );
@@ -79,6 +103,7 @@ class ML_PLUGIN_DECLSPEC avformat_decoder : public ml::packet_decoder
  						avpicture_fill( &output, image->data( ), context->pix_fmt, width, height );
  						img_convert( &output, context->pix_fmt, (AVPicture *)frame, context->pix_fmt, width, height );
  					}
+#endif
 
 					if ( frame->interlaced_frame )
 						image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
@@ -127,6 +152,7 @@ class ML_PLUGIN_DECLSPEC avformat_decoder : public ml::packet_decoder
 		boost::recursive_mutex mutex_;
 		enum ml::packet_id id_; 
 		CodecID codec_;
+		struct SwsContext *img_convert_;
 };
 
 void ML_PLUGIN_DECLSPEC register_dv_decoder( )
