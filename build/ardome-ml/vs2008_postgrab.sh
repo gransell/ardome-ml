@@ -31,12 +31,6 @@ fi
 
 cd ..
 
-if [ ! -d common ] ; then
-	mkdir common
-fi
-
-cd common
-
 if [ ! -d ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
 	tar -zxf ../tmp/ffmpeg.tgz 

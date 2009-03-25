@@ -6,11 +6,6 @@ if [ ! -d vs2003 ]; then
 	mkdir vs2003
 fi
 
-if [ ! -d common ]; then
-	echo "Creating common subdir to bcomp"
-	mkdir common
-fi
-
 cd vs2003
 
 if [ ! -d boost_1_37_0 ]; then
@@ -38,7 +33,6 @@ if [ ! -d xerces-c-2.8.0 ]; then
 fi
 
 cd ..
-cd common
 
 if [ ! -d  ffmpeg/include ]; then
 	echo "Extracting ffmpeg [~33 MB]..."
