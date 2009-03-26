@@ -19,7 +19,7 @@ class WinConfig :
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
-		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp', 'common' ), os.path.join( 'bcomp', env[ 'target' ] ) ]  :
+		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp' ) ]  :
 			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
 				for f in files:
 					if f.endswith( '.wc' ):
