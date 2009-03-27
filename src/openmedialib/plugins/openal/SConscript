@@ -4,10 +4,19 @@
 
 Import(['local_env'])
 
-options = local_env.optional( 'openal' )
+build = False
 
-if options[ 'have_openal' ]:
-	local_env.packages( 'boost_thread', 'openal' )
+if local_env[ 'PLATFORM' ] != 'darwin':
+	options = local_env.optional( 'openal' )
+	build = options[ 'have_openal' ]
+else:
+	local_env.Append( CPPDEFINES = [ 'HAVE_OPENALFRAMEWORK' ] )
+	local_env.Append( CCFLAGS = [ '-F/System/Library/Frameworks/OpenAL.Framework' ] )
+	local_env.Append( LINKFLAGS = [ '-framework', 'OpenAL' ] )
+	build = True
+
+if build:
+	local_env.packages( 'boost_thread' )
 	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 	object = local_env.plugin( 'openmedialib_openal', [ 'openal_plugin.cpp' ] )
 	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'openal_plugin.opl' ] )
