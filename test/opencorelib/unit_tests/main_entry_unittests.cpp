@@ -88,7 +88,7 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
     myTests["test_invoker"] = &test_invoker;
 	myTests["test_logprint"] = &test_logprint;
 	myTests["test_messagequeue"] = &test_messagequeue;
-	myTests["test_serious_error_handler"] = &test_serious_error_handler;
+	//myTests["test_serious_error_handler"] = &test_serious_error_handler;
 	myTests["test_span"] = &test_span;
 	myTests["test_timecode"] = &test_timecode;
 	myTests["test_plugin"] = &test_plugin;
@@ -97,7 +97,7 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
 	myTests["test_int64_conversions"] = &test_int64_conversions; 
 	myTests["test_string_conversions"] = &test_string_conversions; 
     myTests["test_color"] = &test_color; 
-    myTests["test_time_helpers"] = &test_time_helpers;
+    // myTests["test_time_helpers"] = &test_time_helpers;
     myTests["test_event_handler"] = &test_event_handler;
     myTests["test_worker"] = &test_worker;
 
