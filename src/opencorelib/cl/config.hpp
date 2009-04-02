@@ -8,9 +8,9 @@
 #define CORE_VERSION_PROD "1.0.0.1"
 
 #ifdef _DEBUG
-#define CORE_BINARY_NAME _T("core.dll")
+#define CORE_BINARY_NAME _CT("core.dll")
 #else
-#define CORE_BINARY_NAME _T("core.dll")
+#define CORE_BINARY_NAME _CT("core.dll")
 #endif
 
 #endif // _CORE_CONFIG_H_

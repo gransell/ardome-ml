@@ -62,7 +62,7 @@ namespace olib
             try
             {
                 t_stringstream ss;
-                ss << m_context->source() << _T("::") << m_context->target_site();;
+                ss << m_context->source() << _CT("::") << m_context->target_site();;
                 the_log_handler::instance().log(*this, ss.str().c_str());
             }
             catch (...) 
@@ -154,11 +154,11 @@ namespace olib
             m_context->add_context( filename, linenr, funcdname, "");
             
             olib::t_stringstream ss_msg;
-            ss_msg << _T(" --> ") << m_funcname << _T(" ") << m_msg;
+            ss_msg << _CT(" --> ") << m_funcname << _CT(" ") << m_msg;
             m_context->message( ss_msg.str() );
             
             olib::t_stringstream ss;
-            ss << m_context->source() << _T("::") << m_context->target_site();
+            ss << m_context->source() << _CT("::") << m_context->target_site();
             logger to_log(m_context, m_level );
             olib::opencorelib::the_log_handler::instance().log( to_log , ss.str().c_str());
             m_timer.start();
@@ -169,11 +169,11 @@ namespace olib
             m_timer.stop();
             
             olib::t_stringstream ss_msg;
-            ss_msg << _T(" <-- ") << m_funcname << _T(" (") << m_timer.elapsed() << _T(") ")  << m_msg;
+            ss_msg << _CT(" <-- ") << m_funcname << _CT(" (") << m_timer.elapsed() << _CT(") ")  << m_msg;
             m_context->message( ss_msg.str() );
 
             olib::t_stringstream ss;
-            ss << m_context->source() << _T("::") << m_context->target_site();
+            ss << m_context->source() << _CT("::") << m_context->target_site();
 
             logger to_log(m_context, m_level);
             olib::opencorelib::the_log_handler::instance().log( to_log, ss.str().c_str());

@@ -21,7 +21,7 @@
 
 #include <opencorelib/cl/dynlib.hpp>
 
-const amf::t_string wxDynamicLibrary::m_libext = _T("dynlib");
+const amf::t_string wxDynamicLibrary::m_libext = _CT("dynlib");
 
 /* static */
 wxDllType

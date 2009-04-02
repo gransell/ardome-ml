@@ -81,7 +81,7 @@ namespace olib
         /// Load an xml-file containing info about plug-in metadata.
         /** Example usage: <pre>
 schema_map schemas;
-schemas[_T("http://www.ardendo.com/amf/core/")] = plugin_schema_location;
+schemas[_CT("http://www.ardendo.com/amf/core/")] = plugin_schema_location;
 plugin_metadata_ptr md = plugin_metadata_from_xml( full_path, schemas ); </pre>
 
             @param xml_path Path to the actual xml file to load.

@@ -38,19 +38,19 @@ namespace olib
 
             CORE_API const TCHAR* to_string( type ft )
             {
-                if( ft == pal ) return _T("pal");
-                else if( ft == movie ) return _T("movie");
-                else if ( ft == ntsc ) return _T("ntsc");
-                else if( ft == ntsc_drop_frame ) return _T("ntsc_drop_frame");
-                return _T("olib::opencorelib::frame_rate::to_string: Unknown enum value");
+                if( ft == pal ) return _CT("pal");
+                else if( ft == movie ) return _CT("movie");
+                else if ( ft == ntsc ) return _CT("ntsc");
+                else if( ft == ntsc_drop_frame ) return _CT("ntsc_drop_frame");
+                return _CT("olib::opencorelib::frame_rate::to_string: Unknown enum value");
             }
 
 			CORE_API type to_type( const t_string& str )
 			{
-				if(  str_util::compare_nocase( t_string(_T("pal")), str) == 0 ) return pal;
-				if(  str_util::compare_nocase( t_string(_T("movie")), str) == 0 ) return movie;
-				if(  str_util::compare_nocase( t_string(_T("ntsc")), str) == 0 ) return ntsc;
-				if(  str_util::compare_nocase( t_string(_T("ntsc_drop_frame")), str) == 0 ) return ntsc_drop_frame;
+				if(  str_util::compare_nocase( t_string(_CT("pal")), str) == 0 ) return pal;
+				if(  str_util::compare_nocase( t_string(_CT("movie")), str) == 0 ) return movie;
+				if(  str_util::compare_nocase( t_string(_CT("ntsc")), str) == 0 ) return ntsc;
+				if(  str_util::compare_nocase( t_string(_CT("ntsc_drop_frame")), str) == 0 ) return ntsc_drop_frame;
 				
 				ARENFORCE_MSG( false, "Unknown value %s, can not convert to enumeration.")(str);
 				return undef;

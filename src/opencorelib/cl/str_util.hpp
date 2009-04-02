@@ -63,7 +63,7 @@ namespace olib
 			/*!	The second parameter can be omitted and trim then trims leading and trailing whites paces.
 				@param str The string that will be manipulated.
 				@param chars_toTrim string with characters that will be trimmed from the start and end of str.*/
-			CORE_API t_string& trim(t_string& str, const t_string& chars_toTrim = _T(" \t\n"));
+			CORE_API t_string& trim(t_string& str, const t_string& chars_toTrim = _CT(" \t\n"));
 
 			/// Split an input string into tokens.
 			/** @param input The string to tokenize.

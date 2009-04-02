@@ -196,24 +196,24 @@ namespace olib
 
 		t_ostream& operator<<( t_ostream& ostrm, const invoke_assert& a)
 		{
-			ostrm << _T("<assert level='") << a.assert_level_asstring() << _T("'>");
+			ostrm << _CT("<assert level='") << a.assert_level_asstring() << _CT("'>");
 			if(a.m_context) ostrm << (*a.m_context);
-			else ostrm << _T("<No_further_information/>");
-			ostrm << _T("</assert>");
+			else ostrm << _CT("<No_further_information/>");
+			ostrm << _CT("</assert>");
 			return ostrm;
 		}
 
 		void invoke_assert::pretty_print( t_ostream& ostrm , print::option print_option)
 		{
 			if( !m_context ) return;
-			ostrm << _T("Assertion failed [ ") << assert_level_asstring() << _T(" ]") << std::endl;
+			ostrm << _CT("Assertion failed [ ") << assert_level_asstring() << _CT(" ]") << std::endl;
 			m_context->pretty_print(ostrm, print_option);
 		}
 
 		void invoke_assert::pretty_print_one_line( t_ostream& ostrm, print::option print_option )
 		{
 			if( !m_context ) return;
-			ostrm << _T("Assertion failed [ ") << assert_level_asstring() << _T(" ] ");
+			ostrm << _CT("Assertion failed [ ") << assert_level_asstring() << _CT(" ] ");
 			m_context->pretty_print_one_line(ostrm, print_option);
 		}
 

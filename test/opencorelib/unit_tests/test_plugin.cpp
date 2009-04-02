@@ -18,26 +18,26 @@ void test_plugin()
 {
     try 
     {  
-        olib::t_path schema_path = special_folder::get( special_folder::amf_resources ) / _T( "schemas/amf-plugin.xsd" );
+        olib::t_path schema_path = special_folder::get( special_folder::amf_resources ) / _CT( "schemas/amf-plugin.xsd" );
 		#ifdef	OLIB_ON_LINUX
-			olib::t_path xml_path = fs::initial_path<olib::t_path>() / _T("prefix/amf_plugin_example.xml");
+			olib::t_path xml_path = fs::initial_path<olib::t_path>() / _CT("prefix/amf_plugin_example.xml");
 		#else
-			olib::t_path xml_path = special_folder::get( special_folder::amf_resources ) / _T("examples/amf_plugin_example.xml");
+			olib::t_path xml_path = special_folder::get( special_folder::amf_resources ) / _CT("examples/amf_plugin_example.xml");
 		#endif
         
 		schema_map schemas;
-        schemas[_T("http://www.ardendo.com/amf/core/")] = schema_path;
+        schemas[_CT("http://www.ardendo.com/amf/core/")] = schema_path;
 
         plugin_metadata_ptr md = plugin_metadata_from_xml(xml_path, schemas);
 
         olib::t_path plugin_path = special_folder::get( special_folder::plugins); 
         plugin_loader loader;
         std::vector<t_string> plugin_names;
-        plugin_names.push_back(_T("plugin_test_assembly.xml"));
+        plugin_names.push_back(_CT("plugin_test_assembly.xml"));
         loader.load_plugin_metadata( plugin_path, schema_path, plugin_names );
 
         {
-            object_ptr cptr = create_plugin< object >( _T("test_plugin"), loader );
+            object_ptr cptr = create_plugin< object >( _CT("test_plugin"), loader );
             BOOST_REQUIRE_MESSAGE( cptr, "Could not create test_plugin.");
             logtarget_ptr lt = boost::dynamic_pointer_cast< logtarget >(cptr);
             BOOST_REQUIRE_MESSAGE( lt, "amf_standard_plugin should implement the logtarget interface");

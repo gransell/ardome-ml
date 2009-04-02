@@ -9,7 +9,7 @@ namespace olib
 		
         CORE_API t_ostream& operator<<( t_ostream& os, const time_code& tc )
         {
-            t_format fmt(_T("%02i:%02i:%02i:%02i"));
+            t_format fmt(_CT("%02i:%02i:%02i:%02i"));
             os << (fmt % tc.m_i_hours % tc.m_i_min % tc.m_i_sec % tc.m_i_frames);
             return os;
         }

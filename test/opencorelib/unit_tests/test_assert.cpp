@@ -39,7 +39,7 @@ void test_assert()
 	//      ARASSERT_MSG( false, "Hello %s!")("world!");
 	//         ARENFORCE_MSG(false, "A message %i")(5);
 	//      //ARENFORCE( false );
-	//         THROW_BASEEXCEPTION(_T("wholy macaronie"));
+	//         THROW_BASEEXCEPTION(_CT("wholy macaronie"));
 	//  }
 	//  catch( const olib::opencorelib::base_exception& e  )
 	//  {
@@ -53,7 +53,7 @@ void test_assert()
 
 	/*try
 	{
-		ARENFORCE_WIN( ::CreateFile(_T("fnurre"),FILE_WRITE_DATA, FILE_SHARE_READ, NULL, 
+		ARENFORCE_WIN( ::CreateFile(_CT("fnurre"),FILE_WRITE_DATA, FILE_SHARE_READ, NULL, 
 							OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL ) != INVALID_HANDLE_VALUE );
 	}
 	catch (const olib::opencorelib::base_exception& e  )

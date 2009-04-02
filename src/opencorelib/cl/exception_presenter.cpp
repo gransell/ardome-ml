@@ -56,8 +56,8 @@ namespace olib
                           << "--\n";
                 return true;
             }
-            dialog->add_value(_T("Ignore"), static_cast<int>(Ignore));
-            dialog->add_value(_T("Rethrow"), static_cast<int>(Rethrow));
+            dialog->add_value(_CT("Ignore"), static_cast<int>(Ignore));
+            dialog->add_value(_CT("Rethrow"), static_cast<int>(Rethrow));
             
             dialog->set_assembly_run_as_service(m_assembly_run_as_service);
 

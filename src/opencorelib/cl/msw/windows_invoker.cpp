@@ -27,7 +27,7 @@ namespace olib
             {
                 static UINT unique_msg = 0;
                 if( unique_msg == 0)
-                    unique_msg = RegisterWindowMessage(_T("olib::opencorelib::windows_invoker::request_msg"));
+                    unique_msg = RegisterWindowMessage(_CT("olib::opencorelib::windows_invoker::request_msg"));
                 return unique_msg;
             }
 
@@ -35,7 +35,7 @@ namespace olib
             {
                 static UINT unique_msg = 0;
                 if( unique_msg == 0)
-                    unique_msg = RegisterWindowMessage(_T("olib::opencorelib::windows_invoker::post_request_msg"));
+                    unique_msg = RegisterWindowMessage(_CT("olib::opencorelib::windows_invoker::post_request_msg"));
                 return unique_msg;
             }
 

@@ -50,9 +50,9 @@
 // ---------------------------------------------------------------------------
 
 #if defined(__WXPM__) || defined(__EMX__)
-    const TCHAR *wxDynamicLibrary::ms_dllext = _T(".dll");
+    const TCHAR *wxDynamicLibrary::ms_dllext = _CT(".dll");
 #elif defined(__WXMAC__) && !defined(__DARWIN__)
-    const TCHAR *wxDynamicLibrary::ms_dllext = _T("");
+    const TCHAR *wxDynamicLibrary::ms_dllext = _CT("");
 #endif
 
 // for MSW/Unix it is defined in platform-specific file
@@ -77,7 +77,7 @@ bool wxDynamicLibrary::Load(const olib::t_string& libnameOrig, int flags)
     {
         olib::t_string ext;
         // and also check that the libname doesn't already have it
-        olib::t_string::size_type extPos = libnameOrig.find_last_of(_T("."));
+        olib::t_string::size_type extPos = libnameOrig.find_last_of(_CT("."));
         if(extPos != olib::t_string::npos ) 
             ext = olib::t_string( libnameOrig, extPos, libnameOrig.size() - extPos -1);
 

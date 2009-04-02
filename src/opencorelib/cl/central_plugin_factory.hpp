@@ -16,14 +16,14 @@ namespace olib
         /** Some examples might be useful:
         <pre>
 //// The path to the folder where the plug-ins are located.
-const olib::t_path amf_pp = _T("/plugins");
+const olib::t_path amf_pp = _CT("/plugins");
 //// The path to the schemas used by amf
 //// We need the amf-plugins.xsd schema to validate plug-in xml documents.
 olib::t_path schema_path = special_folder::get( special_folder::amf_resources, 
-                                    _T(""), _T("") ) / _T("schemas/amf-plugin.xsd");
+                                    _CT(""), _CT("") ) / _CT("schemas/amf-plugin.xsd");
 
 std::vector<t_string> xml_docs;
-xml_docs.push_back(_T("my_test_plugin.xml"));
+xml_docs.push_back(_CT("my_test_plugin.xml"));
 //// Use the_plugin_loader to load the information about the plugins.
 the_plugin_loader::instance().load_plugin_metadata( amf_pp, schema_path, xml_docs );
         </pre>

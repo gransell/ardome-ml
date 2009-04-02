@@ -59,8 +59,8 @@ namespace olib
 		bool escaped_quote( size_t idx, const t_string& input)
 		{
 			if( idx + 2 >= input.size() ) return false;
-			if( input.compare(idx, 2, _T("\\\"")) == 0) return true;
-			if( input.compare(idx, 2, _T("\\'")) == 0) return true;
+			if( input.compare(idx, 2, _CT("\\\"")) == 0) return true;
+			if( input.compare(idx, 2, _CT("\\'")) == 0) return true;
 			return false;
 		}
 
@@ -69,8 +69,8 @@ namespace olib
 										std::vector<t_string>& results, 
 										quote::action qa)
 		{
-			ARASSERT( delimiter.find(_T("\"")) == t_string::npos)(delimiter);
-			ARASSERT( delimiter.find(_T("'")) == t_string::npos)(delimiter);
+			ARASSERT( delimiter.find(_CT("\"")) == t_string::npos)(delimiter);
+			ARASSERT( delimiter.find(_CT("'")) == t_string::npos)(delimiter);
 
 			size_t last_match = 0;
 			std::list<TCHAR> quote_stack;
@@ -90,7 +90,7 @@ namespace olib
 
 				if(qa == quote::respect)
 				{
-					if( input[i] == _T('"') || input[i] == _T('\'') && !escaped_quote(i, input) ) 
+					if( input[i] == _CT('"') || input[i] == _CT('\'') && !escaped_quote(i, input) ) 
 					{
 						if(quote_stack.empty()) quote_stack.push_back(input[i]);
 						else if( quote_stack.back() == input[i] ) quote_stack.pop_back();
@@ -142,7 +142,7 @@ namespace olib
             #ifdef OLIB_ON_WINDOWS
                 ARENFORCE_WIN( ::SetEnvironmentVariable(env_var_name.c_str(), val.c_str()));
             #else
-                t_format fmt(_T("%s=%s"));
+                t_format fmt(_CT("%s=%s"));
                 putenv( const_cast<char*>(to_string((fmt % env_var_name % val).str()).c_str()) );
             #endif
         }
@@ -152,14 +152,14 @@ namespace olib
             #ifdef OLIB_ON_WINDOWS
                 ARENFORCE_WIN( ::SetEnvironmentVariable(env_var_name.c_str(), 0 ))(env_var_name);
             #else
-                t_format fmt(_T("%s="));
+                t_format fmt(_CT("%s="));
                 putenv( const_cast<char*>(to_string((fmt % env_var_name).str()).c_str()) );
             #endif
         }
 
 		t_string str_util::expand_env_vars( const t_string& to_expand )
 		{
-			t_regex regex_env_var(_T("%(.*)%"));
+			t_regex regex_env_var(_CT("%(.*)%"));
 			t_string res;
 
 			t_string::const_iterator it_start(to_expand.begin()), it_end(to_expand.end()); 
@@ -202,7 +202,7 @@ namespace olib
 
             t_string language(buffer1);
             t_string country(buffer2);
-            t_string full_name = language + _T("_") + country;
+            t_string full_name = language + _CT("_") + country;
 
             try
             {
@@ -380,7 +380,7 @@ namespace olib
 				for( size_t i = 0; i < vv->size(); ++i )
 				{
 					os << (*vv)[i];
-					if( i + 1 !=  vv->size() ) os << _T(",");
+					if( i + 1 !=  vv->size() ) os << _CT(",");
 				}
 			} 
 			else 

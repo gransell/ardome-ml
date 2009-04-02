@@ -21,11 +21,11 @@ namespace olib
 
         CORE_API t_ostream& operator<<( t_ostream& os, const rectangle& rect )
         {
-            os << _T("<rectangle ");
-            os << _T("x=\"") << rect.get_x() << _T("\" ");
-            os << _T("y=\"") << rect.get_y() << _T("\" ");
-            os << _T("width=\"") << rect.get_width() << _T("\" ");
-            os << _T("heigth=\"") << rect.get_height() << _T("\" />");
+            os << _CT("<rectangle ");
+            os << _CT("x=\"") << rect.get_x() << _CT("\" ");
+            os << _CT("y=\"") << rect.get_y() << _CT("\" ");
+            os << _CT("width=\"") << rect.get_width() << _CT("\" ");
+            os << _CT("heigth=\"") << rect.get_height() << _CT("\" />");
             return os;
         }
 

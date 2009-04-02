@@ -100,8 +100,8 @@ namespace olib
 
 		CORE_API t_ostream& operator<<( t_ostream& os, const library_info& info )
 		{
-			os << info.m_version << _T("\t") << info.m_build_nr << _T("\t") 
-				<< info.m_filename << _T("\t") << info.m_company << _T("\t") << info.m_product;
+			os << info.m_version << _CT("\t") << info.m_build_nr << _CT("\t") 
+				<< info.m_filename << _CT("\t") << info.m_company << _CT("\t") << info.m_product;
 			return os;
 		}
 
@@ -116,28 +116,28 @@ namespace olib
         protected:
             virtual void OnStackFrame(const olib::opencorelib::stack_frame& frame)
             {
-                m_stack_trace << ( t_format(_T("[%02d] ")) % frame.GetLevel() ).str();
+                m_stack_trace << ( t_format(_CT("[%02d] ")) % frame.GetLevel() ).str();
 
                 t_string name = frame.GetName();
                 if ( !name.empty() )
                 {
-                    m_stack_trace << ( t_format(_T("%-40s")) % name ).str();
+                    m_stack_trace << ( t_format(_CT("%-40s")) % name ).str();
                 }
                 else
                 {
-                    m_stack_trace << (t_format( _T("0x%08lx")) % 
+                    m_stack_trace << (t_format( _CT("0x%08lx")) % 
                         (unsigned long)frame.GetAddress() ).str();
                 }
 
                 if ( frame.HasSourceLocation() )
                 {
-                    m_stack_trace	<< (_T("\t"))
+                    m_stack_trace	<< (_CT("\t"))
                         << frame.GetFileName()
-                        << (_T(":"))
+                        << (_CT(":"))
                         << (static_cast<int>(frame.GetLine()));
                 }
 
-                m_stack_trace << (_T("\n"));
+                m_stack_trace << (_CT("\n"));
             }
 
         private:
@@ -167,14 +167,14 @@ namespace olib
 				{
 					// Handle the error.
 					t_stringstream l_strstrm;
-					l_strstrm << _T("handle_system_error:\n Unable to format the error message.\n The error number was: ") 
+					l_strstrm << _CT("handle_system_error:\n Unable to format the error message.\n The error number was: ") 
 						<< l_error_nr;
 					return l_strstrm.str();
 				}
 
 				// Display the string if the caller wants to.
 				if(show_message_box)
-                    ::MessageBox( NULL, (LPCTSTR)lp_msg_buf, _T("System Error"), MB_OK | MB_ICONINFORMATION );
+                    ::MessageBox( NULL, (LPCTSTR)lp_msg_buf, _CT("System Error"), MB_OK | MB_ICONINFORMATION );
 
 				t_string l_ret_val(static_cast<LPCTSTR>(lp_msg_buf));
 
@@ -202,7 +202,7 @@ namespace olib
 					0,
 					NULL ))
 				{	
-					return t_string(_T(""));
+					return t_string(_CT(""));
 				}
 
 				t_string ret_val(static_cast<LPCTSTR>(lp_msg_buf));
@@ -217,8 +217,8 @@ namespace olib
 				t_string cpy(path_and_file);
 				
 				// Remove all forward slashes, replace with backslash.
-				boost::replace_all(cpy, _T("/"), _T("\\"));
-				t_string::size_type f = cpy.find_last_of(_T("\\"));
+				boost::replace_all(cpy, _CT("/"), _CT("\\"));
+				t_string::size_type f = cpy.find_last_of(_CT("\\"));
 				if( f != t_string::npos ) return cpy.erase(0, f);
 				return cpy;
 			}
@@ -283,22 +283,22 @@ namespace olib
                                     const t_string& file_name )
             {
                 ARENFORCE_MSG(!base_url.empty(), "empty base url");
-                t_string res = host + t_string( _T("\\") ) + base_url + t_string( _T("\\") ) + file_name;
+                t_string res = host + t_string( _CT("\\") ) + base_url + t_string( _CT("\\") ) + file_name;
                 
-                t_regex rex(_T("\\\\+"));
-                t_string replace_with(_T("\\"));
+                t_regex rex(_CT("\\\\+"));
+                t_string replace_with(_CT("\\"));
                 
-                boost::replace_all(res, _T("/"), _T("\\")); // forward to backward slash
+                boost::replace_all(res, _CT("/"), _CT("\\")); // forward to backward slash
                 res = boost::regex_replace( res, rex, replace_with ); // no double slashes
-                boost::erase_all(res, _T("smb:")); // remove any smb identifier used on mac/unix.
+                boost::erase_all(res, _CT("smb:")); // remove any smb identifier used on mac/unix.
                 
-                if(res.size() > 0 && res[0] == _T('\\') ) 
-                    res = t_string(_T("\\")) + res; // Two backward slashes at the start. One already there
+                if(res.size() > 0 && res[0] == _CT('\\') ) 
+                    res = t_string(_CT("\\")) + res; // Two backward slashes at the start. One already there
                 else
-                    res = t_string(_T("\\\\")) + res; // Two backward slashes at the start
+                    res = t_string(_CT("\\\\")) + res; // Two backward slashes at the start
 
-                boost::replace_all(res, _T("\\"), _T("/"));
-                return t_string(_T("smb:")) + res;
+                boost::replace_all(res, _CT("\\"), _CT("/"));
+                return t_string(_CT("smb:")) + res;
 
             }
 
@@ -310,27 +310,27 @@ namespace olib
                                             const t_string& file_name,
                                             const t_string& protocol_prefix  )
             {
-                t_string res; //( base_url + t_string(_T("/") + file_name ));
+                t_string res; //( base_url + t_string(_CT("/") + file_name ));
 
                 if( user.size() > 0 || password.size() > 0 )
-                    res += user + _T(":") + password + _T("@");
+                    res += user + _CT(":") + password + _CT("@");
 
                 res += host;
-                if( !port.empty() ) res += _T(":") + port;
-                res += t_string(_T("/")) + base_url + t_string(_T("/")) + file_name;
+                if( !port.empty() ) res += _CT(":") + port;
+                res += t_string(_CT("/")) + base_url + t_string(_CT("/")) + file_name;
 
-				t_regex rex(_T("/+"));
-				t_string replace_with(_T("/"));
+				t_regex rex(_CT("/+"));
+				t_string replace_with(_CT("/"));
 
-                boost::replace_all(res, _T("\\"), _T("/")); // backward slash to forward
+                boost::replace_all(res, _CT("\\"), _CT("/")); // backward slash to forward
                 res = boost::regex_replace( res, rex, replace_with ); // no double slashes
 
                 boost::erase_all(res, protocol_prefix ); // remove any protocol identifier (like http:)
 
-                if(res.size() > 0 && res[0] == _T('/') ) 
-                    return protocol_prefix + t_string(_T("/")) + res; // Two backward slashes at the start. One already there
+                if(res.size() > 0 && res[0] == _CT('/') ) 
+                    return protocol_prefix + t_string(_CT("/")) + res; // Two backward slashes at the start. One already there
                 else
-                    return protocol_prefix + t_string(_T("//")) + res; // Two backward slashes at the start
+                    return protocol_prefix + t_string(_CT("//")) + res; // Two backward slashes at the start
             }
 
             CORE_API void add_xml_header_utf8( std::ostream& os )

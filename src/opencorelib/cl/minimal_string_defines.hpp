@@ -41,10 +41,10 @@
 #else
 	#ifdef OLIB_USE_UTF16
 		#define TCHAR wchar_t
-		#define _T(str) L##str
+		#define _CT(str) L##str
 	#elif defined(OLIB_USE_UTF8)
 		#define TCHAR char
-		#define _T(str) str
+		#define _CT(str) str
 	#else
 		#error("Need to define unicode standard, OLIB_USE_UTF8 or OLIB_USE_UTF16")
 	#endif
@@ -123,10 +123,10 @@ namespace olib
 		
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #define I64SUFFIX i64
-    #define I64FMTSPEC _T("I64")
+    #define I64FMTSPEC _CT("I64")
 #elif defined(OLIB_COMPILED_WITH_GCC) 
     #define I64SUFFIX ll
-    #define I64FMTSPEC _T("ll")
+    #define I64FMTSPEC _CT("ll")
 #else
     #error("Unsupported compiler. Can not create boost::int64_t integers.")
 #endif

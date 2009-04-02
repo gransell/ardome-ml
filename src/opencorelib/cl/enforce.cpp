@@ -44,7 +44,7 @@ namespace olib
 			try
 			{
 				base_exception excep(*m_exception_context);
-                the_log_handler::instance().log(excep, _T("olib::opencorelib::invoke_enforce::~invoke_enforce"));
+                the_log_handler::instance().log(excep, _CT("olib::opencorelib::invoke_enforce::~invoke_enforce"));
 				try
 				{
 					m_exception_context.reset();

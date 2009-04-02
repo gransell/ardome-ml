@@ -50,19 +50,19 @@ namespace olib
 			invoke_assert& reason( const t_string& r);
 
 			/// Set the severity of the assertion and a message.
-			invoke_assert& level( assert_level::severity lvl , const t_string& str_msg = _T(""));
+			invoke_assert& level( assert_level::severity lvl , const t_string& str_msg = _CT(""));
 
 			/// Set the severity to debug and the message to str_msg.
-			invoke_assert& debug( const t_string& str_msg = _T(""));
+			invoke_assert& debug( const t_string& str_msg = _CT(""));
 
 			/// Set the severity to warning and the message to str_msg.
-			invoke_assert& warn( const t_string& str_msg = _T(""));
+			invoke_assert& warn( const t_string& str_msg = _CT(""));
 
 			/// Set the severity to error and the message to str_msg.
-			invoke_assert& error( const t_string& str_msg = _T(""));
+			invoke_assert& error( const t_string& str_msg = _CT(""));
 
 			/// Set the severity to fatal and the message to str_msg.
-			invoke_assert& fatal( const t_string& str_msg = _T(""));
+			invoke_assert& fatal( const t_string& str_msg = _CT(""));
 
 			template< class T>
 			invoke_assert & add_value(const char * variable_name, const T & val)

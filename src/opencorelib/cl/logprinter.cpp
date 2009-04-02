@@ -53,13 +53,13 @@ namespace olib
             if( log_options & logoutput::current_thread_id  )
             {
                 boost::int32_t thread_id = utilities::get_current_thread_id();
-                t_format thread_fmt(_T(" (%08x)"));
+                t_format thread_fmt(_CT(" (%08x)"));
                 ss << (thread_fmt % thread_id).str();
             }
 
             if( log_options & logoutput::current_log_level )
             {
-                ss << _T(" [") << log_level::to_string(lvl) << _T("]");
+                ss << _CT(" [") << log_level::to_string(lvl) << _CT("]");
             }
             
             return ss.str();
@@ -72,7 +72,7 @@ namespace olib
             ARENFORCE_MSG( fs::is_directory(full_path), full_path.external_directory_string() ); 
             // Match all files with the pattern:  
             // Prefix.YYYY-MM-DD-DAY.log
-            olib::t_format wildcard_fmt(_T("%s\\..*\\.log"));
+            olib::t_format wildcard_fmt(_CT("%s\\..*\\.log"));
             olib::t_regex wildcard( (wildcard_fmt % pfx ).str());
 
             ptime time_t_epoch(boost::gregorian::date(1970,1,1)); 
@@ -117,11 +117,11 @@ namespace olib
             // %m = number of the month
             // %d = number of the day
             // %a = short name of the day
-            output_facet->format(_T("%Y-%m-%d-%a"));
+            output_facet->format(_CT("%Y-%m-%d-%a"));
             ss.imbue(std::locale(ss.getloc(), output_facet));
             ss << now.date();
 
-            t_format file_name(_T("%s.%s.log"));
+            t_format file_name(_CT("%s.%s.log"));
             file_name % app_name % ss.str(); 
 			return file_name.str();
         }

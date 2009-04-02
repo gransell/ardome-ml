@@ -31,7 +31,7 @@ class test_plugin : public logtarget,
 {
 public:
     test_plugin() {}
-    static const t_string get_class_id() { return _T("test_plugin"); }
+    static const t_string get_class_id() { return _CT("test_plugin"); }
 
     virtual void log( invoke_assert& a, const TCHAR* log_source)
     {
@@ -45,11 +45,11 @@ public:
 
     virtual void log( logger& log_msg, const TCHAR* log_source)  
     {
-        olib::t_path tmp_dir = special_folder::get( special_folder::temp) / _T( "core_unittests" );
+        olib::t_path tmp_dir = special_folder::get( special_folder::temp) / _CT( "core_unittests" );
 		
 		utilities::make_sure_path_exists(tmp_dir);
 
-        fs_t_ofstream ofs( tmp_dir / _T( "plugin_log_test.log" ), std::ios_base::app );
+        fs_t_ofstream ofs( tmp_dir / _CT( "plugin_log_test.log" ), std::ios_base::app );
         ofs << log_msg.get_context()->as_xml() << std::endl;
     }
 

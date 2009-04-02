@@ -51,7 +51,7 @@ namespace olib
 				for( ; curr != end; ++curr )
 				{
 					all_registered_ids.append( str_util::to_t_string(*curr) );
-					if( curr + 1 != end ) all_registered_ids.append(_T(", "));
+					if( curr + 1 != end ) all_registered_ids.append(_CT(", "));
 				}
 
 				ARENFORCE(invoke_enforce::always_fail())(in_type_id)(all_registered_ids).msg("unknown type");

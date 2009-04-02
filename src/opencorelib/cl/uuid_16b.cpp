@@ -14,10 +14,10 @@ namespace olib
         // Examples of what to match:
         // a42790e0-7810-11cf-8f52-0040333594a3 
         // 1A57AA22-DCA5-48CE-81AC-651986ADF224
-        t_regex uuid_16b::m_uuid_regex( _T("([A-Fa-f0-9]{8})-([A-Fa-f0-9]{4})") 
-                                        _T("-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{8})([A-Fa-f0-9]{4})"));
+        t_regex uuid_16b::m_uuid_regex( _CT("([A-Fa-f0-9]{8})-([A-Fa-f0-9]{4})") 
+                                        _CT("-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{8})([A-Fa-f0-9]{4})"));
 
-        t_format uuid_16b::m_uuid_fmt(_T("%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X"));
+        t_format uuid_16b::m_uuid_fmt(_CT("%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X"));
 
         uuid_16b::uuid_16b()
         {
@@ -48,8 +48,8 @@ namespace olib
             boost::uint32_t hex_to_long( const t_string& str )
             {
                 boost::uint32_t res(0);
-                static boost::uint32_t dec_zero = static_cast<boost::int32_t>(_T('0'));
-                static boost::uint32_t hex_zero = static_cast<boost::int32_t>(_T('A'));
+                static boost::uint32_t dec_zero = static_cast<boost::int32_t>(_CT('0'));
+                static boost::uint32_t hex_zero = static_cast<boost::int32_t>(_CT('A'));
 
                 for( size_t i = 0; i < str.size(); ++i )
                 {

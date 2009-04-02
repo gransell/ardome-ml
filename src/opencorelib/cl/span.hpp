@@ -136,7 +136,7 @@ namespace olib
         template <class boundary_type >
         t_ostream& operator<<( t_ostream& os, const span<boundary_type>& ts)
         {
-            os << _T("<span in='") << ts.get_in() << _T("' duration='") << ts.get_duration() << _T("'/>");
+            os << _CT("<span in='") << ts.get_in() << _CT("' duration='") << ts.get_duration() << _CT("'/>");
             return os;
         }
 

@@ -47,9 +47,9 @@ namespace olib
             static t_string create_schema_location( t_string& str, const schema_map::value_type& vt )
             {
                 t_string path_to_schema( str_util::to_t_string(vt.second.string()));
-                boost::algorithm::replace_all( path_to_schema, _T(" "), _T("%20"));
-                if(!str.empty()) str += _T(" ");
-                return str + vt.first + _T(" ") + path_to_schema;
+                boost::algorithm::replace_all( path_to_schema, _CT(" "), _CT("%20"));
+                if(!str.empty()) str += _CT(" ");
+                return str + vt.first + _CT(" ") + path_to_schema;
             }
 
             sax_parser_ptr create_parser( const schema_map& schemas )
@@ -74,7 +74,7 @@ namespace olib
 
                 t_string schema_locations = 
                     std::accumulate( schemas.begin(), 
-                    schemas.end(), t_string(_T("")), &parser_implementation::create_schema_location );
+                    schemas.end(), t_string(_CT("")), &parser_implementation::create_schema_location );
 
                 // Make sure that this is an utf 16 string with 2-byte chars
                 utf16_string wide = str_util::to_wstring( schema_locations );

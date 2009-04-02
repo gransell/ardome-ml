@@ -39,14 +39,14 @@ detect where the original error occurred.
             (olib::opencorelib::exception_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME , \
                                           "unknown expression.", -1 )); \
 	    new_ex.context().add_message(olib::opencorelib::str_util::to_t_string(utf8_string(ex.what()))); \
-	    new_ex.original_exception_type(_T("std::exception"));\
+	    new_ex.original_exception_type(_CT("std::exception"));\
 	    throw new_ex; \
 	}\
 	catch (...) {\
 	    olib::opencorelib::base_exception new_ex(olib::opencorelib::exception_context(__FILE__, __LINE__, \
                                                                       OLIB_CURRENT_FUNC_NAME , \
                                                                       "unknown expression.", -1 )); \
-	    new_ex.original_exception_type(_T("unknown exception (access violation or some other nasty thing)"));\
+	    new_ex.original_exception_type(_CT("unknown exception (access violation or some other nasty thing)"));\
 	    throw new_ex; \
 	}
 

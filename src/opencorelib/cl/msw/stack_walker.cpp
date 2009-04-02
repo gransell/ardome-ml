@@ -67,7 +67,7 @@ void stack_frame::OnGetName()
 		pSymbol
 		) )
 	{
-		//wxDbgHelpDLL::LogError(_T("SymFromAddr"));
+		//wxDbgHelpDLL::LogError(_CT("SymFromAddr"));
 		return;
 	}
 
@@ -95,7 +95,7 @@ void stack_frame::OnGetLocation()
 	{
 		// it is normal that we don't have source info for some symbols,
 		// notably all the ones from the system DLLs...
-		//wxDbgHelpDLL::LogError(_T("SymGetLineFromAddr"));
+		//wxDbgHelpDLL::LogError(_CT("SymGetLineFromAddr"));
 		return;
 	}
 
@@ -127,7 +127,7 @@ stack_frame::GetParam(size_t n,
 
 void stack_frame::OnParam(_SYMBOL_INFO* pSymInfo)
 {
-	m_paramTypes.push_back(t_string(_T("")));
+	m_paramTypes.push_back(t_string(_CT("")));
 	m_paramNames.push_back(str_util::to_t_string(pSymInfo->Name));
 
 	// if symbol information is corrupted and we crash, the exception is going
@@ -152,7 +152,7 @@ void stack_frame::OnParam(_SYMBOL_INFO* pSymInfo)
 	__except ( EXCEPTION_EXECUTE_HANDLER )
 #endif
 	{
-		m_paramValues.push_back(t_string(_T("")));
+		m_paramValues.push_back(t_string(_CT("")));
 	}
 }
 
@@ -190,7 +190,7 @@ void stack_frame::OnGetParam()
 		// address, this is not a real error
 		if ( ::GetLastError() != ERROR_INVALID_ADDRESS )
 		{
-			wxDbgHelpDLL::LogError(_T("SymSetContext"));
+			wxDbgHelpDLL::LogError(_CT("SymSetContext"));
 		}
 
 		return;
@@ -205,7 +205,7 @@ void stack_frame::OnGetParam()
 		this                // data to pass to it
 		) )
 	{
-		wxDbgHelpDLL::LogError(_T("SymEnumSymbols"));
+		wxDbgHelpDLL::LogError(_CT("SymEnumSymbols"));
 	}
 }
 
@@ -221,7 +221,7 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 		// don't log a user-visible error message here because the stack trace
 		// is only needed for debugging/diagnostics anyhow and we shouldn't
 		// confuse the user by complaining that we couldn't generate it
-		//wxLogDebug(_T("Failed to get stack backtrace: %s"),
+		//wxLogDebug(_CT("Failed to get stack backtrace: %s"),
 		//	wxDbgHelpDLL::GetErrorMessage().c_str());
 		return;
 	}
@@ -242,7 +242,7 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 		TRUE    // load symbols for all loaded modules
 		) )
 	{
-		wxDbgHelpDLL::LogError(_T("SymInitialize"));
+		wxDbgHelpDLL::LogError(_CT("SymInitialize"));
 
 		return;
 	}
@@ -288,7 +288,7 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 			) )
 		{
 			if ( ::GetLastError() )
-				wxDbgHelpDLL::LogError(_T("StackWalk"));
+				wxDbgHelpDLL::LogError(_CT("StackWalk"));
 
 			break;
 		}
@@ -319,7 +319,7 @@ void stack_walker::WalkFrom(const CONTEXT *pCtx, size_t skip)
 #if 0
 	if ( !wxDbgHelpDLL::SymCleanup(hProcess) )
 	{
-		wxDbgHelpDLL::LogError(_T("SymCleanup"));
+		wxDbgHelpDLL::LogError(_CT("SymCleanup"));
 	}
 #endif
 }
@@ -333,7 +333,7 @@ void stack_walker::WalkFromException()
 {
 	extern EXCEPTION_POINTERS *wxGlobalSEInformation;
 
-    // 	_T("CStackWalker::WalkFromException() can only be called from wxApp::OnFatalException()") );
+    // 	_CT("CStackWalker::WalkFromException() can only be called from wxApp::OnFatalException()") );
 	if( !wxGlobalSEInformation ) return;
 	
 	// don't skip any frames, the first one is where we crashed

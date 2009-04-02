@@ -86,7 +86,7 @@ namespace olib
                 @return A path to the folder. If it doesn't exist before the 
                         call to get, get ensures its existence. */
             CORE_API olib::t_path get(  type folder_type, 
-                                                    const t_string& app_name = _T("amf") );
+                                                    const t_string& app_name = _CT("amf") );
         }
     }
 }

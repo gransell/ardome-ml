@@ -30,7 +30,7 @@
 #include "../str_util.hpp"
 #include "../utilities.hpp"
 
-const olib::t_string wxDynamicLibrary::m_libext(_T(".dll"));
+const olib::t_string wxDynamicLibrary::m_libext(_CT(".dll"));
 
 HMODULE wxGetModuleHandle(const char *name, void *addr);
 
@@ -131,9 +131,9 @@ HMODULE wxGetModuleHandle(const char *name, void *addr)
     static GetModuleHandleEx_t s_pfnGetModuleHandleEx = INVALID_FUNC_PTR;
     if ( s_pfnGetModuleHandleEx == INVALID_FUNC_PTR )
     {
-        wxDynamicLibrary dll(_T("kernel32.dll"), wxDL_VERBATIM);
+        wxDynamicLibrary dll(_CT("kernel32.dll"), wxDL_VERBATIM);
         s_pfnGetModuleHandleEx =
-            (GetModuleHandleEx_t)dll.RawGetSymbol(_T("GetModuleHandleExA"));
+            (GetModuleHandleEx_t)dll.RawGetSymbol(_CT("GetModuleHandleExA"));
 
         // dll object can be destroyed, kernel32.dll won't be unloaded anyhow
     }
@@ -164,7 +164,7 @@ HMODULE wxGetModuleHandle(const char *name, void *addr)
 
 wxVersionDLL::wxVersionDLL()
 {
-    if ( m_dll.Load(_T("version.dll"), wxDL_VERBATIM) )
+    if ( m_dll.Load(_CT("version.dll"), wxDL_VERBATIM) )
     {
         // the functions we load have either 'A' or 'W' suffix depending on
         // whether we're in ANSI or Unicode build
@@ -175,7 +175,7 @@ wxVersionDLL::wxVersionDLL()
         #endif // UNICODE/ANSI
 
         #define LOAD_VER_FUNCTION(name)                                       \
-            m_pfn ## name = (name ## _t)m_dll.GetSymbol(_T(#name SUFFIX));    \
+            m_pfn ## name = (name ## _t)m_dll.GetSymbol(_CT(#name SUFFIX));    \
         if ( !m_pfn ## name )                                                 \
         {                                                                     \
             m_dll.Unload();                                                   \
@@ -208,10 +208,10 @@ olib::t_string wxVersionDLL::GetFileVersion(const olib::t_string& filename) cons
             {
                 void *pVer;
                 UINT sizeInfo;
-                if ( m_pfnVerQueryValue(buf.get(), _T("\\"), &pVer, &sizeInfo) )
+                if ( m_pfnVerQueryValue(buf.get(), _CT("\\"), &pVer, &sizeInfo) )
                 {
                     VS_FIXEDFILEINFO *info = (VS_FIXEDFILEINFO *)pVer;
-                    olib::t_format fmt(_T("%d.%d.%d.%d"));
+                    olib::t_format fmt(_CT("%d.%d.%d.%d"));
                     ver = (fmt % HIWORD(info->dwFileVersionMS) %
                         LOWORD(info->dwFileVersionMS) %
                         HIWORD(info->dwFileVersionLS) %

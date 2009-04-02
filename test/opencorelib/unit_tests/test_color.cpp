@@ -12,12 +12,12 @@ void test_color()
 {
     //invoker_ptr inv = create_invoker(0);
 
-    olib::t_path a_path(_T("\\\\ardomedev\\lr0\\date\\folder\\file.mpeg"));
+    olib::t_path a_path(_CT("\\\\ardomedev\\lr0\\date\\folder\\file.mpeg"));
 
     olib::t_string rootn = a_path.root_name();
     olib::t_string rootp = a_path.root_path().string();
 
-    boost::algorithm::trim_left_if( rootn, boost::algorithm::is_any_of(_T("\\/")));
+    boost::algorithm::trim_left_if( rootn, boost::algorithm::is_any_of(_CT("\\/")));
 
     boost::uint8_t vals[8];
     memset(vals, 0, 8);
@@ -42,7 +42,7 @@ void test_color()
     BOOST_REQUIRE( c2.get_blue() == 10 );
     BOOST_REQUIRE( c2.get_alpha() == 10 );
 
-    BOOST_REQUIRE( c2.to_string() == _T("(128,10,10,10)"));
+    BOOST_REQUIRE( c2.to_string() == _CT("(128,10,10,10)"));
     
 }
 

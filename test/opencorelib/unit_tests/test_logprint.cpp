@@ -16,7 +16,7 @@ namespace Foo
     {
         void LogTest()
         {
-            t_string short_str(_T("some val"));
+            t_string short_str(_CT("some val"));
             ARLOG("This is a cool test: The value is = %s")(short_str);
             ARLOG_IF_LEVEL( log_level::emergency ,"Another cool test %s" )(short_str);
             ARLOG_IF( short_str.size() > 8, "The file name: %s" )( short_str);
@@ -25,9 +25,9 @@ namespace Foo
 }
 void test_logprint()
 {	
-	olib::t_string prefix(_T("TestLogprint"));
+	olib::t_string prefix(_CT("TestLogprint"));
 
-    t_string dateFmt(_T("%a-")), timeFmt(_T("%H:%M:%S%F"));
+    t_string dateFmt(_CT("%a-")), timeFmt(_CT("%H:%M:%S%F"));
     t_string str = get_log_prefix_string(  log_level::debug2, dateFmt, timeFmt, logoutput::output_default );
     t_string short_str = get_log_prefix_string(log_level::debug2, dateFmt, timeFmt, logoutput::output_default );
 

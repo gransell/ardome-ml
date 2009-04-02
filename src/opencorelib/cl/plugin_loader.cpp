@@ -95,16 +95,16 @@ namespace olib
             try
             {            
                 olib::t_path full_path = olib::t_path( m_base_path ) / olib::t_path( xml_file_name );
-                ARLOG_DEBUG2( _T("Loading plugin metdata from \"%1%\"."))(to_t_string(full_path.string()));
-                ARENFORCE_MSG_ERR(  fs::exists(full_path), _T("The plugin file can not be found. Path=%s"), 
+                ARLOG_DEBUG2( _CT("Loading plugin metdata from \"%1%\"."))(to_t_string(full_path.string()));
+                ARENFORCE_MSG_ERR(  fs::exists(full_path), _CT("The plugin file can not be found. Path=%s"), 
                                     olib::error::file_not_found())(to_t_string(full_path.string()));
                     
                 schema_map schemas;
-                schemas[_T("http://www.ardendo.com/amf/core/")] = plugin_schema_location;
+                schemas[_CT("http://www.ardendo.com/amf/core/")] = plugin_schema_location;
                 plugin_metadata_ptr md;
                 
                 ARENFORCE( md = plugin_metadata_from_xml( full_path, schemas ) )
-                    .reason(_T("olib::opencorelib::plugin_loader::metadate_load_failed"));
+                    .reason(_CT("olib::opencorelib::plugin_loader::metadate_load_failed"));
                 
                 #ifdef _DEBUG
                     olib::t_path assembly_path = m_base_path / md->get_assembly_debug_name();
@@ -180,7 +180,7 @@ namespace olib
             for( size_t i(0); fit != eit; ++fit, ++i ) 
             {
                 ss << fit->first;
-                if( i + 1 < m_class_to_assembly.size() ) ss << _T(", ");
+                if( i + 1 < m_class_to_assembly.size() ) ss << _CT(", ");
             }
 
             return ss.str();
@@ -193,7 +193,7 @@ namespace olib
             class_to_assembly_map::const_iterator fit = m_class_to_assembly.find(id);
             ARENFORCE_MSG(fit != m_class_to_assembly.end(), "No such class is registered")
                 (id.c_str())( all_registered_classes() )
-                .reason(_T("olib::opencorelib::plugin_loader::no_such_class_registered"));
+                .reason(_CT("olib::opencorelib::plugin_loader::no_such_class_registered"));
 
             assembly_reference_ptr aref;
             assembly_map::const_iterator ait=  m_assemblies.find( fit->second );

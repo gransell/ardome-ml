@@ -192,17 +192,17 @@ namespace olib
                     // This regex matches strings like:
                     // ?Test_simple_assert@
                     // produced by Visual C++ compiler defines __FUNCDNAME__.
-                    #define REGEX_FUNCTION_NAME_PATTERN _T("\\?([^?0].*?)@")
+                    #define REGEX_FUNCTION_NAME_PATTERN _CT("\\?([^?0].*?)@")
 
                     // Matches repeated NS1@ in NS1@NS2@NS3
                     // Don't match a @ at the start since this means
                     // that we have reached the end of the namespace sequence.
-                    #define REGEX_NAMESPACE_PATTERN _T("^([^@].*?)@")
+                    #define REGEX_NAMESPACE_PATTERN _CT("^([^@].*?)@")
                     
                     // __FUNCDNAME__ in a constructor looks somewhat different:
                     //  ??0My_dummy_class@@QAE@XZ
                     // This regexp matches that type.
-                    #define REGEX_CONSTRUCTOR_PATTERN _T("\\?\\?0(.*?)@")
+                    #define REGEX_CONSTRUCTOR_PATTERN _CT("\\?\\?0(.*?)@")
 
                 static const t_regex regex_function_name(REGEX_FUNCTION_NAME_PATTERN);
                 static const t_regex regex_namespace(REGEX_NAMESPACE_PATTERN);
@@ -220,7 +220,7 @@ namespace olib
                     while(boost::regex_search(it_start, it_end, what, regex_namespace, flags)) 
                     {
                         if(m_source.empty()) m_source = what[1];
-                        else m_source = what[1] + _T("::") + m_source;
+                        else m_source = what[1] + _CT("::") + m_source;
                         it_start = what[0].second;
                     }
                 }
@@ -292,40 +292,40 @@ namespace olib
 
 		void exception_context::print_value_pair( const std::pair< t_string, t_string >& p, t_ostream& ss)
 		{
-			ss << _T("<name_value_pair name='") << p.first << _T("' value='") << p.second << _T("' />");
+			ss << _CT("<name_value_pair name='") << p.first << _CT("' value='") << p.second << _CT("' />");
 		}
 
 		void exception_context::pretty_print_value_pair( const std::pair< t_string, t_string >& p, t_ostream& ss)
 		{
-			ss <<  _T("\t") << p.first << _T(" = ") << p.second << std::endl;
+			ss <<  _CT("\t") << p.first << _CT(" = ") << p.second << std::endl;
 		}
 
 		void exception_context::pretty_print_value_pair_one_line( const std::pair< t_string, t_string >& p, t_ostream& ss)
 		{
-			ss << _T("[") << p.first << _T(" = ") << p.second << _T("]");
+			ss << _CT("[") << p.first << _CT(" = ") << p.second << _CT("]");
 		}
 
 		t_ostream& exception_context::as_xml( t_ostream& ss) const
 		{
-			ss << _T("<exception_context>"); 
-			ss << _T("<file>") << m_file_name << _T("</file>");
-			ss << _T("<line_nr>") <<  m_line_nr << _T("</line_nr>");
-			ss << _T("<expression>") << m_expression << _T("</expression>");
-			ss << _T("<source>") << m_source << _T("</source>");
-			ss << _T("<target_site>") << m_target_site << _T("</target_site>");
-			ss << _T("<message>") << m_message << _T("</message>");
-			ss << _T("<hresult>") << m_hr << _T("</hresult>");
-			ss << _T("<machine_error>") << m_error_reason << _T("</machine_error>");
+			ss << _CT("<exception_context>"); 
+			ss << _CT("<file>") << m_file_name << _CT("</file>");
+			ss << _CT("<line_nr>") <<  m_line_nr << _CT("</line_nr>");
+			ss << _CT("<expression>") << m_expression << _CT("</expression>");
+			ss << _CT("<source>") << m_source << _CT("</source>");
+			ss << _CT("<target_site>") << m_target_site << _CT("</target_site>");
+			ss << _CT("<message>") << m_message << _CT("</message>");
+			ss << _CT("<hresult>") << m_hr << _CT("</hresult>");
+			ss << _CT("<machine_error>") << m_error_reason << _CT("</machine_error>");
 
-			ss << _T("<context_values>");
+			ss << _CT("<context_values>");
 			std::for_each(m_name_value_vec.begin(), m_name_value_vec.end(), 
                 boost::bind(&exception_context::print_value_pair, _1, boost::ref(ss)));
-			ss << _T("</context_values>");
-			ss << _T("<callstack>");
+			ss << _CT("</context_values>");
+			ss << _CT("<callstack>");
 			ss << m_call_stack;
-			ss << _T("</callstack>");
+			ss << _CT("</callstack>");
 
-			ss << _T("</exception_context>");
+			ss << _CT("</exception_context>");
 			return ss;
 		}
 
@@ -342,52 +342,52 @@ namespace olib
 			using std::endl;
             if( (p_option & print::output_file_and_line ) )
             {
-			    os << _T("Context :: \n\t_file:\t\t") << m_file_name
-                   << _T("\n\t_line:\t\t") << m_line_nr << endl;
+			    os << _CT("Context :: \n\t_file:\t\t") << m_file_name
+                   << _CT("\n\t_line:\t\t") << m_line_nr << endl;
             }
 
             if( (p_option & print::output_source ) ) 
             {
-                os << _T("\t_source:\t\t") << m_source;
+                os << _CT("\t_source:\t\t") << m_source;
 #ifdef OLIB_ON_WINDOWS
-				os << _T("::") << m_target_site;
+				os << _CT("::") << m_target_site;
 #endif
 				os << endl;
             }
 
             if((p_option & print::output_expression) && (!m_expression.empty() || out_empty) )
             {
-                os << endl << _T("Tested expression: ") << m_expression << endl;
+                os << endl << _CT("Tested expression: ") << m_expression << endl;
             }
 			
             if((p_option & print::output_message ))
             {
-                os << _T("Message: ") << m_message << endl ;
+                os << _CT("Message: ") << m_message << endl ;
             }
 			
 			if( (p_option & print::output_machine_error ) && (!m_error_reason.empty() || out_empty) ) 
             {
-                os << _T("Machine Readable Error: ") << m_error_reason << endl;
+                os << _CT("Machine Readable Error: ") << m_error_reason << endl;
             }
             
             #ifdef OLIB_ON_WINDOWS
 			if( (p_option & print::output_hr ) && (m_hr != 0 || out_empty )) 
             {
-                os << _T("HRESULT: ") << m_hr << _T(", ")
+                os << _CT("HRESULT: ") << m_hr << _CT(", ")
                    << utilities::hresult_to_string(m_hr) << endl << endl;
             }
             #endif
 			
             if( (p_option & print::output_name_values) && (!m_name_value_vec.empty() || out_empty) ) 
             {
-                os << _T("Recorded name value pairs: ") << endl << endl;
+                os << _CT("Recorded name value pairs: ") << endl << endl;
                 std::for_each(m_name_value_vec.begin(), m_name_value_vec.end(), 
                     boost::bind(&exception_context::pretty_print_value_pair, _1, boost::ref(os)));
             }
 		
 			if( (p_option & print::output_callstack )&& (!m_call_stack.empty() || out_empty) ) 
             {
-                os << endl << endl << _T("Callstack: ") << endl << m_call_stack;
+                os << endl << endl << _CT("Callstack: ") << endl << m_call_stack;
             }
 			return os;
 		}
@@ -396,17 +396,17 @@ namespace olib
 		{
 			bool out_empty = (p_option & print::output_empty_fields) ? true : false;
             if( (p_option & print::output_expression) && (!m_expression.empty() || out_empty) )
-                os << _T("< Expr: '") << m_expression << _T("'>");
+                os << _CT("< Expr: '") << m_expression << _CT("'>");
             
             if((p_option & print::output_message ))
-                os << m_message << _T(" ");
+                os << m_message << _CT(" ");
             
             if( (p_option & print::output_name_values) && (!m_name_value_vec.empty() || out_empty) ) 
 			{
-				os << _T("<");
+				os << _CT("<");
 				std::for_each(m_name_value_vec.begin(), m_name_value_vec.end(), 
                     boost::bind(&exception_context::pretty_print_value_pair_one_line, _1, boost::ref(os)));
-				os << _T(">");
+				os << _CT(">");
 			}
 
             #ifdef OLIB_ON_WINDOWS
@@ -414,35 +414,35 @@ namespace olib
 			{
 				t_string hr_str = utilities::hresult_to_string(m_hr);
 				boost::trim(hr_str);
-				os << _T("< HR: ") << m_hr << _T(", ") << hr_str << _T(" >");
+				os << _CT("< HR: ") << m_hr << _CT(", ") << hr_str << _CT(" >");
 			}
             #endif
 
             if( ((p_option & print::output_callstack)) && (!m_call_stack.empty() || out_empty))
 			{
 				t_string tmp_callstack = m_call_stack;
-				boost::replace_all( tmp_callstack, _T("\n"), _T("  "));
-				os << _T(" Callstack:[ ");
-				os << tmp_callstack << _T(" ]");
+				boost::replace_all( tmp_callstack, _CT("\n"), _CT("  "));
+				os << _CT(" Callstack:[ ");
+				os << tmp_callstack << _CT(" ]");
 			}
 
             if( (p_option & print::output_source ) ) 
             {
-                os << _T("<") << m_source;
+                os << _CT("<") << m_source;
 #ifdef OLIB_ON_WINDOWS
-				os << _T("::") << m_target_site;
+				os << _CT("::") << m_target_site;
 #endif
-				os << _T(">");
+				os << _CT(">");
             }
 
             if( (p_option & print::output_file_and_line ) )
 			{
-                os << _T("<") << m_file_name << _T(":") << m_line_nr << _T(">");
+                os << _CT("<") << m_file_name << _CT(":") << m_line_nr << _CT(">");
             }
 
             if( (p_option & print::output_machine_error ) && (!m_error_reason.empty() || out_empty) )
             {   
-				os << _T("<Machine error: ") << m_error_reason << _T(">");
+				os << _CT("<Machine error: ") << m_error_reason << _CT(">");
 			}
 
 			return os;

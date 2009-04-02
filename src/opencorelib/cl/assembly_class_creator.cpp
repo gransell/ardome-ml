@@ -21,7 +21,7 @@ namespace olib
 		{
             boost::recursive_mutex::scoped_lock lck( m_mtx );
 			creator_map::iterator fit = m_assembly_plugins.find(id);
-            ARENFORCE( fit == m_assembly_plugins.end())(id).msg(_T("Id not unique. Can not register plugin."));
+            ARENFORCE( fit == m_assembly_plugins.end())(id).msg(_CT("Id not unique. Can not register plugin."));
 			m_assembly_plugins[id] = pc;
 		}
 

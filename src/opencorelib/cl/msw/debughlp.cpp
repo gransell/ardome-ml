@@ -76,10 +76,10 @@ static bool BindDbgHelpFunctions(const wxDynamicLibrary& dllDbgHelp)
 {
     #define LOAD_SYM_FUNCTION(name)                                           \
         wxDbgHelpDLL::name = (wxDbgHelpDLL::name ## _t)                       \
-                                dllDbgHelp.GetSymbol(_T(#name));              \
+                                dllDbgHelp.GetSymbol(_CT(#name));              \
         if ( !wxDbgHelpDLL::name )                                            \
         {                                                                     \
-            gs_errMsg += _T("Function ") _T(#name) _T("() not found.\n");     \
+            gs_errMsg += _CT("Function ") _CT(#name) _CT("() not found.\n");     \
             return false;                                                     \
         }
 
@@ -93,7 +93,7 @@ static bool BindDbgHelpFunctions(const wxDynamicLibrary& dllDbgHelp)
 // called by Init() if we hadn't done this before
 static bool DoInit()
 {
-    wxDynamicLibrary dllDbgHelp(_T("dbghelp.dll"), wxDL_VERBATIM);
+    wxDynamicLibrary dllDbgHelp(_CT("dbghelp.dll"), wxDL_VERBATIM);
     if ( dllDbgHelp.IsLoaded() )
     {
         if ( BindDbgHelpFunctions(dllDbgHelp) )
@@ -109,19 +109,19 @@ static bool DoInit()
             return true;
         }
 
-        gs_errMsg += _T("\nPlease update your dbghelp.dll version, ")
-                     _T("at least version 5.1 is needed!\n")
-                     _T("(if you already have a new version, please ")
-                     _T("put it in the same directory where the program is.)\n");
+        gs_errMsg += _CT("\nPlease update your dbghelp.dll version, ")
+                     _CT("at least version 5.1 is needed!\n")
+                     _CT("(if you already have a new version, please ")
+                     _CT("put it in the same directory where the program is.)\n");
     }
     else // failed to load dbghelp.dll
     {
-        gs_errMsg += _T("Please install dbghelp.dll available free of charge ")
-                     _T("from Microsoft to get more detailed crash information!");
+        gs_errMsg += _CT("Please install dbghelp.dll available free of charge ")
+                     _CT("from Microsoft to get more detailed crash information!");
     }
 
-    gs_errMsg += _T("\nLatest dbghelp.dll is available at ")
-                 _T("http://www.microsoft.com/whdc/ddk/debugging/\n");
+    gs_errMsg += _CT("\nLatest dbghelp.dll is available at ")
+                 _CT("http://www.microsoft.com/whdc/ddk/debugging/\n");
 
     return false;
 }
@@ -154,7 +154,7 @@ const olib::t_string& wxDbgHelpDLL::GetErrorMessage()
 /* static */
 void wxDbgHelpDLL::LogError(const TCHAR* func)
 {
-    olib::t_format fmt(_T("dbghelp: %s() failed: %s\r\n")); 
+    olib::t_format fmt(_CT("dbghelp: %s() failed: %s\r\n")); 
     ::OutputDebugString( (fmt % func % olib::opencorelib::utilities::handle_system_error(false)).str().c_str() );
 }
 
@@ -220,12 +220,12 @@ wxDbgHelpDLL::DumpBaseType(BasicType bt, DWORD64 length, PVOID pAddress)
 {
     if ( !pAddress )
     {
-        return _T("null");
+        return _CT("null");
     }
 
     if ( ::IsBadReadPtr(pAddress, (UINT_PTR)(length)) != 0 )
     {
-        return _T("BAD");
+        return _CT("BAD");
     }
 
     olib::t_stringstream s;
@@ -235,13 +235,13 @@ wxDbgHelpDLL::DumpBaseType(BasicType bt, DWORD64 length, PVOID pAddress)
         const BYTE b = *(PBYTE)pAddress;
 
         if ( bt == BASICTYPE_BOOL )
-            s << ( b ? _T("true") : _T("false"));
+            s << ( b ? _CT("true") : _CT("false"));
         else
-            s << (olib::t_format(_T("%#04x")) %  b).str();
+            s << (olib::t_format(_CT("%#04x")) %  b).str();
     }
     else if ( length == 2 )
     {
-		s << (olib::t_format( bt == BASICTYPE_UINT ? _T("%#06x") : _T("%d") ) % 
+		s << (olib::t_format( bt == BASICTYPE_UINT ? _CT("%#06x") : _CT("%d") ) % 
 						(*(PWORD)pAddress)).str();
     }
     else if ( length == 4 )
@@ -250,7 +250,7 @@ wxDbgHelpDLL::DumpBaseType(BasicType bt, DWORD64 length, PVOID pAddress)
 
         if ( bt == BASICTYPE_FLOAT )
         {
-			s << (olib::t_format(_T("%f")) %  *(PFLOAT)pAddress).str();
+			s << (olib::t_format(_CT("%f")) %  *(PFLOAT)pAddress).str();
             handled = true;
         }
         else if ( bt == BASICTYPE_CHAR )
@@ -261,12 +261,12 @@ wxDbgHelpDLL::DumpBaseType(BasicType bt, DWORD64 length, PVOID pAddress)
             const char *pc = *(PSTR *)pAddress;
             if ( ::IsBadStringPtrA(pc, NUM_CHARS) == 0 )
             {
-                s << _T('"');
+                s << _CT('"');
                 for ( size_t n = 0; n < NUM_CHARS && *pc; n++, pc++ )
                 {
                     s << *pc;
                 }
-                s << _T('"');
+                s << _CT('"');
 
                 handled = true;
             }
@@ -275,18 +275,18 @@ wxDbgHelpDLL::DumpBaseType(BasicType bt, DWORD64 length, PVOID pAddress)
         if ( !handled )
         {
             // treat just as an opaque DWORD
-			s << (olib::t_format(_T("%#x")) %  *(PDWORD)pAddress ).str();
+			s << (olib::t_format(_CT("%#x")) %  *(PDWORD)pAddress ).str();
         }
     }
     else if ( length == 8 )
     {
         if ( bt == BASICTYPE_FLOAT )
         {
-			s << (olib::t_format(_T("%lf")) %  *(double *)pAddress ).str();
+			s << (olib::t_format(_CT("%lf")) %  *(double *)pAddress ).str();
         }
         else // opaque 64 bit value
         {
-			s << (olib::t_format(_T("%#") I64FMTSPEC _T("x")) %  *(PDWORD *)pAddress ).str();
+			s << (olib::t_format(_CT("%#") I64FMTSPEC _CT("x")) %  *(PDWORD *)pAddress ).str();
         }
     }
 
@@ -320,7 +320,7 @@ wxDbgHelpDLL::DumpField(PSYMBOL_INFO pSym, void *pVariable, unsigned level)
         case SYMBOL_TAG_DATA:
             if ( !pVariable )
             {
-                s = _T("NULL");
+                s = _CT("NULL");
             }
             else // valid location
             {
@@ -369,14 +369,14 @@ wxDbgHelpDLL::DumpField(PSYMBOL_INFO pSym, void *pVariable, unsigned level)
 
             if ( !s.empty() )
             {
-                s = GetSymbolName(pSym) + _T(" = ") + s;
+                s = GetSymbolName(pSym) + _CT(" = ") + s;
             }
             break;
     }
 
     if ( !s.empty() )
     {
-        s = olib::t_string(level + 1, _T('\t')) + s + _T('\n');
+        s = olib::t_string(level + 1, _CT('\t')) + s + _CT('\n');
     }
 #include <string>
     return s;
@@ -418,7 +418,7 @@ wxDbgHelpDLL::DumpUDT(PSYMBOL_INFO pSym, void *pVariable, unsigned level)
             return s;
         }
 
-        s += _T(" {\n");
+        s += _CT(" {\n");
 
         // Iterate through all children
         SYMBOL_INFO sym;
@@ -445,7 +445,7 @@ wxDbgHelpDLL::DumpUDT(PSYMBOL_INFO pSym, void *pVariable, unsigned level)
 
         free(children);
 
-        s += olib::t_string(level + 1, _T('\t')) + _T('}');
+        s += olib::t_string(level + 1, _CT('\t')) + _CT('}');
     }
 
     return s;
@@ -525,37 +525,37 @@ static olib::t_string TagString(wxDbgHelpDLL::SymbolTag tag)
 {
     static const TCHAR* tags[] =
     {
-        _T("null"),
-        _T("exe"),
-        _T("compiland"),
-        _T("compiland details"),
-        _T("compiland env"),
-        _T("function"),
-        _T("block"),
-        _T("data"),
-        _T("annotation"),
-        _T("label"),
-        _T("public symbol"),
-        _T("udt"),
-        _T("enum"),
-        _T("function type"),
-        _T("pointer type"),
-        _T("array type"),
-        _T("base type"),
-        _T("typedef"),
-        _T("base class"),
-        _T("friend"),
-        _T("function arg type"),
-        _T("func debug start"),
-        _T("func debug end"),
-        _T("using namespace"),
-        _T("vtable shape"),
-        _T("vtable"),
-        _T("custom"),
-        _T("thunk"),
-        _T("custom type"),
-        _T("managed type"),
-        _T("dimension"),
+        _CT("null"),
+        _CT("exe"),
+        _CT("compiland"),
+        _CT("compiland details"),
+        _CT("compiland env"),
+        _CT("function"),
+        _CT("block"),
+        _CT("data"),
+        _CT("annotation"),
+        _CT("label"),
+        _CT("public symbol"),
+        _CT("udt"),
+        _CT("enum"),
+        _CT("function type"),
+        _CT("pointer type"),
+        _CT("array type"),
+        _CT("base type"),
+        _CT("typedef"),
+        _CT("base class"),
+        _CT("friend"),
+        _CT("function arg type"),
+        _CT("func debug start"),
+        _CT("func debug end"),
+        _CT("using namespace"),
+        _CT("vtable shape"),
+        _CT("vtable"),
+        _CT("custom"),
+        _CT("thunk"),
+        _CT("custom type"),
+        _CT("managed type"),
+        _CT("dimension"),
     };
 
     wxCOMPILE_TIME_ASSERT( WXSIZEOF(tags) == wxDbgHelpDLL::SYMBOL_TAG_MAX,
@@ -565,7 +565,7 @@ static olib::t_string TagString(wxDbgHelpDLL::SymbolTag tag)
     if ( tag < WXSIZEOF(tags) )
         s = tags[tag];
     else
-        s.Printf(_T("unrecognized tag (%d)"), tag);
+        s.Printf(_CT("unrecognized tag (%d)"), tag);
 
     return s;
 }
@@ -574,16 +574,16 @@ static olib::t_string KindString(wxDbgHelpDLL::DataKind kind)
 {
     static const wxChar *kinds[] =
     {
-         _T("unknown"),
-         _T("local"),
-         _T("static local"),
-         _T("param"),
-         _T("object ptr"),
-         _T("file static"),
-         _T("global"),
-         _T("member"),
-         _T("static member"),
-         _T("constant"),
+         _CT("unknown"),
+         _CT("local"),
+         _CT("static local"),
+         _CT("param"),
+         _CT("object ptr"),
+         _CT("file static"),
+         _CT("global"),
+         _CT("member"),
+         _CT("static member"),
+         _CT("constant"),
     };
 
     wxCOMPILE_TIME_ASSERT( WXSIZEOF(kinds) == wxDbgHelpDLL::DATA_MAX,
@@ -593,7 +593,7 @@ static olib::t_string KindString(wxDbgHelpDLL::DataKind kind)
     if ( kind < WXSIZEOF(kinds) )
         s = kinds[kind];
     else
-        s.Printf(_T("unrecognized kind (%d)"), kind);
+        s.Printf(_CT("unrecognized kind (%d)"), kind);
 
     return s;
 }
@@ -602,9 +602,9 @@ static olib::t_string UdtKindString(wxDbgHelpDLL::UdtKind kind)
 {
     static const wxChar *kinds[] =
     {
-         _T("struct"),
-         _T("class"),
-         _T("union"),
+         _CT("struct"),
+         _CT("class"),
+         _CT("union"),
     };
 
     wxCOMPILE_TIME_ASSERT( WXSIZEOF(kinds) == wxDbgHelpDLL::UDT_MAX,
@@ -614,7 +614,7 @@ static olib::t_string UdtKindString(wxDbgHelpDLL::UdtKind kind)
     if ( kind < WXSIZEOF(kinds) )
         s = kinds[kind];
     else
-        s.Printf(_T("unrecognized UDT (%d)"), kind);
+        s.Printf(_CT("unrecognized UDT (%d)"), kind);
 
     return s;
 }
@@ -623,38 +623,38 @@ static olib::t_string TypeString(wxDbgHelpDLL::BasicType bt)
 {
     static const wxChar *types[] =
     {
-        _T("no type"),
-        _T("void"),
-        _T("char"),
-        _T("wchar"),
-        _T(""),
-        _T(""),
-        _T("int"),
-        _T("uint"),
-        _T("float"),
-        _T("bcd"),
-        _T("bool"),
-        _T(""),
-        _T(""),
-        _T("long"),
-        _T("ulong"),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T(""),
-        _T("CURRENCY"),
-        _T("DATE"),
-        _T("VARIANT"),
-        _T("complex"),
-        _T("bit"),
-        _T("BSTR"),
-        _T("HRESULT"),
+        _CT("no type"),
+        _CT("void"),
+        _CT("char"),
+        _CT("wchar"),
+        _CT(""),
+        _CT(""),
+        _CT("int"),
+        _CT("uint"),
+        _CT("float"),
+        _CT("bcd"),
+        _CT("bool"),
+        _CT(""),
+        _CT(""),
+        _CT("long"),
+        _CT("ulong"),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT(""),
+        _CT("CURRENCY"),
+        _CT("DATE"),
+        _CT("VARIANT"),
+        _CT("complex"),
+        _CT("bit"),
+        _CT("BSTR"),
+        _CT("HRESULT"),
     };
 
     wxCOMPILE_TIME_ASSERT( WXSIZEOF(types) == wxDbgHelpDLL::BASICTYPE_MAX,
@@ -665,7 +665,7 @@ static olib::t_string TypeString(wxDbgHelpDLL::BasicType bt)
         s = types[bt];
 
     if ( s.empty() )
-        s.Printf(_T("unrecognized type (%d)"), bt);
+        s.Printf(_CT("unrecognized type (%d)"), bt);
 
     return s;
 }
@@ -682,11 +682,11 @@ extern "C" void DumpTI(ULONG ti)
     DoGetTypeInfo(&sym, TI_GET_SYMTAG, &tag);
     DoGetTypeInfo(&sym, TI_GET_TYPEID, &ti);
 
-    OutputDebugString(olib::t_string::Format(_T("Type 0x%x: "), sym.TypeIndex));
+    OutputDebugString(olib::t_string::Format(_CT("Type 0x%x: "), sym.TypeIndex));
     olib::t_string name = wxDbgHelpDLL::GetSymbolName(&sym);
     if ( !name.empty() )
     {
-        OutputDebugString(olib::t_string::Format(_T("name=\"%s\", "), name.c_str()));
+        OutputDebugString(olib::t_string::Format(_CT("name=\"%s\", "), name.c_str()));
     }
 
     DWORD nested;
@@ -695,15 +695,15 @@ extern "C" void DumpTI(ULONG ti)
         nested = FALSE;
     }
 
-    OutputDebugString(olib::t_string::Format(_T("tag=%s%s"),
-                      nested ? _T("nested ") : wxEmptyString,
+    OutputDebugString(olib::t_string::Format(_CT("tag=%s%s"),
+                      nested ? _CT("nested ") : wxEmptyString,
                       TagString(tag).c_str()));
     if ( tag == wxDbgHelpDLL::SYMBOL_TAG_UDT )
     {
         wxDbgHelpDLL::UdtKind udtKind;
         if ( DoGetTypeInfo(&sym, TI_GET_UDTKIND, &udtKind) )
         {
-            OutputDebugString(_T(" (") + UdtKindString(udtKind) + _T(')'));
+            OutputDebugString(_CT(" (") + UdtKindString(udtKind) + _CT(')'));
         }
     }
 
@@ -711,13 +711,13 @@ extern "C" void DumpTI(ULONG ti)
     if ( DoGetTypeInfo(&sym, TI_GET_DATAKIND, &kind) )
     {
         OutputDebugString(olib::t_string::Format(
-            _T(", kind=%s"), KindString(kind).c_str()));
+            _CT(", kind=%s"), KindString(kind).c_str()));
         if ( kind == wxDbgHelpDLL::DATA_MEMBER )
         {
             DWORD ofs = 0;
             if ( DoGetTypeInfo(&sym, TI_GET_OFFSET, &ofs) )
             {
-                OutputDebugString(olib::t_string::Format(_T(" (ofs=0x%x)"), ofs));
+                OutputDebugString(olib::t_string::Format(_CT(" (ofs=0x%x)"), ofs));
             }
         }
     }
@@ -725,16 +725,16 @@ extern "C" void DumpTI(ULONG ti)
     wxDbgHelpDLL::BasicType bt = GetBasicType(&sym);
     if ( bt )
     {
-        OutputDebugString(olib::t_string::Format(_T(", type=%s"),
+        OutputDebugString(olib::t_string::Format(_CT(", type=%s"),
                                 TypeString(bt).c_str()));
     }
 
     if ( ti != sym.TypeIndex )
     {
-        OutputDebugString(olib::t_string::Format(_T(", next ti=0x%x"), ti));
+        OutputDebugString(olib::t_string::Format(_CT(", next ti=0x%x"), ti));
     }
 
-    OutputDebugString(_T("\r\n"));
+    OutputDebugString(_CT("\r\n"));
 }
 
 #endif // NDEBUG

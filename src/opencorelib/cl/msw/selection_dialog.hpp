@@ -181,7 +181,7 @@ namespace olib
 			for( size_t i = 0 ; i < m_possible_values.size(); ++i)
 			{
 				__int64 btn_id = base_id + static_cast<int>(i);
-				HWND h_btn = ::CreateWindowEx(WS_EX_WINDOWEDGE, _T("BUTTON"), m_possible_values[i].first.c_str(), 
+				HWND h_btn = ::CreateWindowEx(WS_EX_WINDOWEDGE, _CT("BUTTON"), m_possible_values[i].first.c_str(), 
 											WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, 200 + static_cast<int>(i) * 20, 200, 20, hw , 
 											(HMENU)btn_id, get_dll_module_handle(), NULL);
 				if(!h_btn) return;
@@ -192,7 +192,7 @@ namespace olib
 		template <typename T>
 		void windows_selection_dialog<T>::create_editbox(HWND hw) const
 		{
-			HWND h_edit = ::CreateWindowEx(WS_EX_CLIENTEDGE, _T("EDIT"), _T(""), 
+			HWND h_edit = ::CreateWindowEx(WS_EX_CLIENTEDGE, _CT("EDIT"), _CT(""), 
             WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL 
 			| ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY, 
             0, 0, 100, 100, hw , (HMENU)edit_id, get_dll_module_handle(), NULL);
@@ -258,13 +258,13 @@ namespace olib
                 DWORD dw_thread_id = ::GetCurrentThreadId(); 
                 HDESK curr_desk = ::GetThreadDesktop(dw_thread_id); 
 
-                HWINSTA win_sta0 = ::OpenWindowStation(_T("Win_sta0"), FALSE, MAXIMUM_ALLOWED); 
+                HWINSTA win_sta0 = ::OpenWindowStation(_CT("Win_sta0"), FALSE, MAXIMUM_ALLOWED); 
 				if(!win_sta0) return;
 
                 ARGUARD( bind<BOOL>(::SetProcessWindowStation, curr_station));
 				SetProcessWindowStation(win_sta0);
 
-                HDESK user_desk = ::OpenDesktop(_T("Default"), 0, FALSE, MAXIMUM_ALLOWED); 
+                HDESK user_desk = ::OpenDesktop(_CT("Default"), 0, FALSE, MAXIMUM_ALLOWED); 
 				if(!user_desk) return;
 
                 ARGUARD( bind<BOOL>(::SetThreadDesktop, curr_desk));

@@ -113,8 +113,8 @@ namespace olib
             using namespace boost::posix_time;
 
             t_smatch xmatch;
-            t_regex re(_T("([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})") _T("T")
-                _T("([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})"));
+            t_regex re(_CT("([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})") _CT("T")
+                _CT("([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})"));
             t_string str = x_to_t_string(chars, length);
             ARENFORCE_MSG( boost::regex_search( str, xmatch, re ), 
                 "The passed string is not on the form: CCYY-MM-DDThh:mm:ss" )( to_string(str));
@@ -141,7 +141,7 @@ namespace olib
 		{
 			t_string str = x_to_t_string(chars);
 			boost::algorithm::to_lower(str);
-			return str == _T("true") || str == _T("1");
+			return str == _CT("true") || str == _CT("1");
 		}
 
         t_string parse_attribute(  const char* att_name, 
@@ -214,7 +214,7 @@ namespace olib
 
         void xerces_sax_traverser::start_create_inner_xml()
         {
-            m_xml_data.str(_T(""));
+            m_xml_data.str(_CT(""));
             m_crate_inner_xml = true;
         }
 
@@ -405,16 +405,16 @@ namespace olib
         void xerces_sax_traverser::stream_xml_start_tag( const XMLCh* const elem_name,
                                                             AttributeList* attributes )
         {
-            m_xml_data << _T("<") <<  x_to_t_string(elem_name);
+            m_xml_data << _CT("<") <<  x_to_t_string(elem_name);
             boost::uint32_t att_len = attributes->getLength();
             for( boost::uint32_t i = 0; i < att_len ; ++i)
             {
-                m_xml_data << _T(" ")
-                           << x_to_t_string(attributes->getName(i)) << _T("=\"")
-                           << x_to_t_string(attributes->getValue(i)) << _T("\"");
+                m_xml_data << _CT(" ")
+                           << x_to_t_string(attributes->getName(i)) << _CT("=\"")
+                           << x_to_t_string(attributes->getValue(i)) << _CT("\"");
             }
             
-            m_xml_data << _T(">");
+            m_xml_data << _CT(">");
         }
 
         void xerces_sax_traverser::stream_xml_content(   const XMLCh* const chars,
@@ -425,7 +425,7 @@ namespace olib
 
         void xerces_sax_traverser::stream_xml_end_tag( const XMLCh* const elem_name )
         {
-            m_xml_data << _T("</") << x_to_t_string(elem_name) << _T(">");
+            m_xml_data << _CT("</") << x_to_t_string(elem_name) << _CT(">");
         }
 
         namespace
@@ -433,9 +433,9 @@ namespace olib
             t_string create_schema_location( t_string& str, const schema_map::value_type& vt )
             {
                 t_string path_to_schema( str_util::to_t_string(vt.second.string()));
-                boost::algorithm::replace_all( path_to_schema, _T(" "), _T("%20"));
-                if(!str.empty()) str += _T(" ");
-                return str + vt.first + _T(" ") + path_to_schema;
+                boost::algorithm::replace_all( path_to_schema, _CT(" "), _CT("%20"));
+                if(!str.empty()) str += _CT(" ");
+                return str + vt.first + _CT(" ") + path_to_schema;
             }
         }
        
@@ -463,7 +463,7 @@ namespace olib
             if( schemas.empty()) return parser;
 
             t_string schema_locations =  std::accumulate( schemas.begin(), 
-                                schemas.end(), t_string(_T("")), &create_schema_location );
+                                schemas.end(), t_string(_CT("")), &create_schema_location );
 
             ARLOG_DEBUG4("Schema locations is %1%")(schema_locations);
             

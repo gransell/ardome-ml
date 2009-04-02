@@ -15,7 +15,7 @@ void test_timecode()
     ss << tc1;
     t_string s = ss.str();
 
-    BOOST_CHECK( ss.str().compare(_T("00:00:20:00")) == 0 );
+    BOOST_CHECK( ss.str().compare(_CT("00:00:20:00")) == 0 );
     BOOST_CHECK( tc2 == time_code(0,0,57,3));
 
     // Convert back to media time

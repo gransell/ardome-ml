@@ -45,7 +45,7 @@ namespace olib
                 ARENFORCE_WIN( ::GetModuleFileNameW(h_mod, buff, MAX_PATH) );
 
                 std::wstring module_path(buff);
-                ARENFORCE( module_path.size() > module_name.size() )(module_name).msg(_T("Path not found"));
+                ARENFORCE( module_path.size() > module_name.size() )(module_name).msg(_CT("Path not found"));
                 std::wstring lib_path(module_path,0, module_path.size() - module_name.size());
 
                 return olib::t_path( lib_path );
@@ -55,7 +55,7 @@ namespace olib
             {
                 // If we have a valid HOME directory, as is used on many machines that
                 // have unix utilities on them, we should use that.
-                t_string home_dir(_T("HOME"));
+                t_string home_dir(_CT("HOME"));
                 if( str_util::env_var_exists(home_dir) )
                 {
                     home_dir = str_util::get_env_var( home_dir );
@@ -63,7 +63,7 @@ namespace olib
                     return olib::t_path( home_dir );
                 }
 
-                t_string home_drive(_T("HOMEDRIVE")), home_path(_T("HOMEPATH"));
+                t_string home_drive(_CT("HOMEDRIVE")), home_path(_CT("HOMEPATH"));
                 if( str_util::env_var_exists(home_drive) && str_util::env_var_exists(home_path))
                 {
                     // the idea is that under NT these variables have default values
@@ -74,7 +74,7 @@ namespace olib
                     // knows what he is doing and use the supplied value.
                     home_drive = str_util::get_env_var(home_drive);
                     home_path = str_util::get_env_var(home_path);
-                    if(home_path.compare(_T("\\")) != 0)
+                    if(home_path.compare(_CT("\\")) != 0)
                     {
                         olib::t_path res( home_drive + home_path);
                         ARASSERT( fs::is_directory(res) )(res);
@@ -84,7 +84,7 @@ namespace olib
                 
                 // If we have a valid USERPROFILE directory, as is the case in
                 // Windows NT, 2000 and XP, we should use that as our home directory.
-                t_string user_profile(_T("USERPROFILE"));
+                t_string user_profile(_CT("USERPROFILE"));
                 if( str_util::env_var_exists(user_profile) )
                 {
                     user_profile = str_util::get_env_var( user_profile );
@@ -98,7 +98,7 @@ namespace olib
 
             olib::t_path get_temp_dir()
             {
-                t_string temp_env(_T("TEMP"));
+                t_string temp_env(_CT("TEMP"));
                 if( str_util::env_var_exists(temp_env))
                 {
                     t_string  temp_path = str_util::get_env_var(temp_env);
@@ -107,7 +107,7 @@ namespace olib
                     return wp;
                 }
                 
-                ARLOG_ERR(_T("Could not find TEMP environment variable"));
+                ARLOG_ERR(_CT("Could not find TEMP environment variable"));
                 olib::t_path wp = get( special_folder::user_data ) / L"temp";
                 fs::create_directory(wp);
                 return wp;

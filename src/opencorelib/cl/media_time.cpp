@@ -107,7 +107,7 @@ namespace olib
             }
 
             ARASSERT_MSG(   (double)tc.get_frames() < ((double)fps.numerator()/fps.denominator()), 
-                _T("Frame count is too high"))(tc.get_frames());
+                _CT("Frame count is too high"))(tc.get_frames());
             return tc;
         }
 
@@ -134,7 +134,7 @@ namespace olib
 
         CORE_API t_ostream& operator<<( t_ostream& os, const media_time& mt )
         {
-            os << mt.m_time.numerator() << _T("/") << mt.m_time.denominator();
+            os << mt.m_time.numerator() << _CT("/") << mt.m_time.denominator();
             return os;
         }
 

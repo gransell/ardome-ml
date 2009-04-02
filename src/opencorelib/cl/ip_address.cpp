@@ -24,15 +24,15 @@ namespace olib
 		ip_address ip_address::from_string( const t_string& str)
 		{
 			std::vector<t_string> tokens; 
-			boost::split( tokens, str, boost::is_any_of(_T(".")), boost::token_compress_on );
-			ARENFORCE( tokens.size() == 4 )(str).msg(_T("Desired pattern: 255.255.255.255"));
+			boost::split( tokens, str, boost::is_any_of(_CT(".")), boost::token_compress_on );
+			ARENFORCE( tokens.size() == 4 )(str).msg(_CT("Desired pattern: 255.255.255.255"));
 			unsigned int value;
 			ip_address address;
 			for(int i = 0; i < 4; ++i)
 			{
 				t_stringstream ss(tokens[i]);
 				ss >> value;
-				ARENFORCE( value < 256).msg(_T("Invalid ip-address component."));
+				ARENFORCE( value < 256).msg(_CT("Invalid ip-address component."));
 				address.m_address[i] = static_cast<unsigned char>(value);
 			}
 			return address;
@@ -48,7 +48,7 @@ namespace olib
 
 		t_string ip_address::as_string() const
 		{
-			t_format fmt(_T("%u.%u.%u.%u"));
+			t_format fmt(_CT("%u.%u.%u.%u"));
 			return (fmt % m_address[0] % m_address[1] % m_address[2] % m_address[3]).str();
 		}
 

@@ -20,17 +20,17 @@ namespace olib
 				{
 					VS_FIXEDFILEINFO *pVersionInfo;
 					UINT uiLength;
-					if( ::VerQueryValue(pVersionBlock, _T("\\"), (LPVOID *) &pVersionInfo, &uiLength) ) 
+					if( ::VerQueryValue(pVersionBlock, _CT("\\"), (LPVOID *) &pVersionInfo, &uiLength) ) 
 					{
 						int iMajor = pVersionInfo->dwFileVersionMS >> 16;
 						int iMinor1 = pVersionInfo->dwFileVersionMS & 0xffff;
 						int iMinor2 = pVersionInfo->dwFileVersionLS >> 16;
 
 						t_stringstream strOutStream;
-						strOutStream << iMajor << _T(".") << iMinor1;
+						strOutStream << iMajor << _CT(".") << iMinor1;
 						if (iMinor2)
 						{
-							strOutStream << _T(".") << iMinor2;
+							strOutStream << _CT(".") << iMinor2;
 						}
 
 						return strOutStream.str();
@@ -43,7 +43,7 @@ namespace olib
 				{
 					VS_FIXEDFILEINFO *pVersionInfo;
 					UINT uiLength;
-					if( ::VerQueryValue(pVersionBlock, _T("\\"), (LPVOID *) &pVersionInfo, &uiLength)) 
+					if( ::VerQueryValue(pVersionBlock, _CT("\\"), (LPVOID *) &pVersionInfo, &uiLength)) 
 					{
 						int iBuild = pVersionInfo->dwFileVersionLS & 0xffff;
 
@@ -60,7 +60,7 @@ namespace olib
 				{
 					// Format sub-block
 					TCHAR szSubBlock[1024];
-					::wsprintf( szSubBlock, _T("%s%s"), szTransBlock, szItem );
+					::wsprintf( szSubBlock, _CT("%s%s"), szTransBlock, szItem );
 
 					// Get result
 					TCHAR *szOut = NULL;
@@ -98,7 +98,7 @@ namespace olib
 					TCHAR *pszLang = szLang;
 					UINT   nLen = 0;
 
-					ARENFORCE_WIN(::VerQueryValue((LPVOID) &data[0], _T("\\VarFileInfo\\Translation"), (LPVOID *)&pszLang, &nLen));
+					ARENFORCE_WIN(::VerQueryValue((LPVOID) &data[0], _CT("\\VarFileInfo\\Translation"), (LPVOID *)&pszLang, &nLen));
 
 					/* The retrieved 'hex' value looks a little confusing, but
 					essentially what it is, is the hexadecimal representation
@@ -119,13 +119,13 @@ namespace olib
 
 					// Now save the whole string info including the language ID
 					// and final backslash as m_szTransBlock
-					::wsprintf(szTransBlock, _T("\\StringFileInfo\\%08lx\\"), *(LPDWORD)(pszLang));
+					::wsprintf(szTransBlock, _CT("\\StringFileInfo\\%08lx\\"), *(LPDWORD)(pszLang));
 
 					// Assign members
-					info->set_product(  get_item(_T("ProductName"), szTransBlock, (LPVOID)&data[0]) );
+					info->set_product(  get_item(_CT("ProductName"), szTransBlock, (LPVOID)&data[0]) );
 					info->set_version( extract_version((LPVOID)&data[0]) );
 					info->set_build_number( extract_build_number((LPVOID)&data[0]) );
-					info->set_company( get_item(_T("CompanyName"), szTransBlock, (LPVOID)&data[0]) );
+					info->set_company( get_item(_CT("CompanyName"), szTransBlock, (LPVOID)&data[0]) );
 				}
 
 

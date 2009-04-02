@@ -13,9 +13,9 @@ namespace olib
 
         CORE_API t_ostream& operator<<( t_ostream& os, const point& pt )
         {
-            os << _T("<point ");
-            os << _T("x=\"") << pt.get_x() << _T("\" ");
-            os << _T("y=\"") << pt.get_y() << _T("\" />");
+            os << _CT("<point ");
+            os << _CT("x=\"") << pt.get_x() << _CT("\" ");
+            os << _CT("y=\"") << pt.get_y() << _CT("\" />");
             return os;
         }
 

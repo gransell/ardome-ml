@@ -51,7 +51,7 @@ namespace olib
 		void assert_presenter::terminate_app() 
 		{
 			#ifdef WIN32	
-                ::FatalAppExit(0,_T("You have choosen to abort the application. It will now close down."));
+                ::FatalAppExit(0,_CT("You have choosen to abort the application. It will now close down."));
 			#else
                 exit(99);
             #endif

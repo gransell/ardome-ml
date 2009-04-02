@@ -123,7 +123,7 @@ void TestWorkerError()
     if( aJob->get_base_exception() )
     {
         BOOST_CHECK( aJob->get_base_exception()->context()
-            .message().compare(_T("The work function crashed")) == 0 );
+            .message().compare(_CT("The work function crashed")) == 0 );
     }
 }
 
@@ -176,7 +176,7 @@ void test_reoccurring_job()
     bool res = m_wait_condition.timed_wait(lock, boost::get_system_time() + boost::posix_time::seconds(10));*/
 
     sleeper.current_thread_sleep( boost::posix_time::seconds(10) );
-	// T_COUT << _T("reoccur_counter=") << reoccur_counter << std::endl;
+	// T_COUT << _CT("reoccur_counter=") << reoccur_counter << std::endl;
     BOOST_CHECK( reoccur_counter >= 9 );
     BOOST_CHECK_EQUAL( 1, dummy );
 }

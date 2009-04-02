@@ -32,7 +32,7 @@ namespace olib {
 //				const char *tmp = [NSTemporaryDirectory() cStringUsingEncoding:NSUTF8StringEncoding];
 //                std::string ret(tmp);
 //				[pool release];
-				return std::string(_T("/tmp/")); 
+				return std::string(_CT("/tmp/")); 
 			}
             
             std::string get_module_directory()

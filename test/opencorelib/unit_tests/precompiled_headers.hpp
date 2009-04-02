@@ -26,15 +26,15 @@
 
 #ifdef _DEBUG
 	#ifdef OLIB_ON_WINDOWS
-		#define USEFULUNITTEST_EXE_NAME _T("opencorelib_unit_tests.exe")
+		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests.exe")
 	#elif defined __UNIX_LIKE__
-		#define USEFULUNITTEST_EXE_NAME _T("opencorelib_unit_tests")
+		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests")
 	#endif
 #else
 	#ifdef OLIB_ON_WINDOWS
-		#define USEFULUNITTEST_EXE_NAME _T("opencorelib_unit_tests.exe")
+		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests.exe")
 	#elif defined __UNIX_LIKE__
-		#define USEFULUNITTEST_EXE_NAME _T("core_unit_tests")
+		#define USEFULUNITTEST_EXE_NAME _CT("core_unit_tests")
 	#endif
 #endif
 
