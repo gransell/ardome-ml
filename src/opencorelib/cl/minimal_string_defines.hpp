@@ -42,14 +42,13 @@
 		
 #ifdef OLIB_USE_UTF16
 	#define TCHAR wchar_t
-	#define _CT(str) L##str
+	#define _CT(str) L ## str
 #elif defined(OLIB_USE_UTF8)
 	#define TCHAR char
 	#define _CT(str) str
 #else
 	#error("Need to define unicode standard, OLIB_USE_UTF8 or OLIB_USE_UTF16")
 #endif
-//#endif
 
 #include <boost/format.hpp>
 
