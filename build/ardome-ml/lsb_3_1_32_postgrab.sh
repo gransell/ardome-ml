@@ -15,7 +15,6 @@ if [ ! $? == 0 ]; then
   echo "Failed to unpack boost. Terminating."
   exit 1
 fi
-ln -s `pwd`/boost/include/boost-1_37 boost/include/boost
 
 echo "Extracting ffmpeg..."
 tar xjf ffmpeg.tbz2
