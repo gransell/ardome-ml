@@ -854,6 +854,7 @@ class Environment( BaseEnvironment ):
 					file_count += 1
 					if execute: 
 						shutil.copyfile( src_file, dst_file )
+						shutil.copystat( src_file, dst_file )
 						if perms is not None:
 							os.chmod( dst_file, perms )
 			for dir, file, link in all_links:
