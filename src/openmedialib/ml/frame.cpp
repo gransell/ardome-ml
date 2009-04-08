@@ -131,7 +131,20 @@ int frame_type::get_position( ) const { return position_; }
 void frame_type::set_duration( double duration ) { duration_ = duration; }
 double frame_type::get_duration( ) const { return duration_; }
 void frame_type::set_sar( int num, int den ) { sar_num_ = num; sar_den_ = den; }
-void frame_type::get_sar( int &num, int &den ) const { num = sar_num_; den = sar_den_; }
+
+void frame_type::get_sar( int &num, int &den ) const 
+{ 
+	if ( packet_ )
+	{
+		num = packet_->sar( ).num;
+		den = packet_->sar( ).den;
+	}
+	else
+	{
+		num = sar_num_; den = sar_den_; 
+	}
+}
+
 void frame_type::set_fps( int num, int den ) { fps_num_ = num; fps_den_ = den; }
 void frame_type::get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
 
@@ -241,6 +254,33 @@ void frame_type::clear_exceptions( )
 {
 	if ( in_error( ) )
 		exceptions_.erase( exceptions_.begin( ), exceptions_.end( ) );
+}
+
+int frame_type::width( ) const
+{
+	if ( packet_ )
+		return packet_->size( ).width;
+	if ( image_ )
+		return image_->width( );
+	return 0;
+}
+
+int frame_type::height( ) const
+{
+	if ( packet_ )
+		return packet_->size( ).height;
+	if ( image_ )
+		return image_->height( );
+	return 0;
+}
+
+std::wstring frame_type::pf( ) const
+{
+	if ( packet_ )
+		return packet_->pf( );
+	if ( image_ )
+		return image_->pf( );
+	return L"";
 }
 
 } } }

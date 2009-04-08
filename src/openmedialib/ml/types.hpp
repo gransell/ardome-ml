@@ -16,6 +16,7 @@ class ML_DECLSPEC input_type;
 class ML_DECLSPEC filter_type;
 class ML_DECLSPEC store_type;
 class ML_DECLSPEC packet_decoder;
+class ML_DECLSPEC packet_encoder;
 
 typedef ML_DECLSPEC boost::shared_ptr< frame_type > frame_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< packet_type > packet_type_ptr;
@@ -23,6 +24,7 @@ typedef ML_DECLSPEC boost::shared_ptr< input_type > input_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< filter_type > filter_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< store_type > store_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< packet_decoder > packet_decoder_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< packet_encoder > packet_encoder_ptr;
 
 typedef ML_DECLSPEC boost::shared_ptr< std::exception > exception_ptr;
 typedef ML_DECLSPEC std::pair< exception_ptr, input_type_ptr > exception_item;

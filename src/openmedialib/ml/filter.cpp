@@ -161,6 +161,15 @@ input_type_ptr filter_type::fetch_slot( size_t slot ) const
 	return slot < slots_.size( ) ? slots_[ slot ] : input_type_ptr( ); 
 }
 
+frame_type_ptr filter_type::fetch( )
+{
+	collated_.erase( collated_.begin( ), collated_.end( ) );
+	ml::frame_type_ptr result = input_type::fetch( );
+	for ( exception_list::iterator i = collated_.begin( ); i != collated_.end( ); i ++ )
+		result->push_exception( ( *i ).first, ( *i ).second );
+	return result;
+}
+
 bool filter_type::connect( input_type_ptr input, size_t slot )
 {
 	if ( slots_.size( ) != slot_count( ) )
@@ -234,6 +243,13 @@ frame_type_ptr filter_type::fetch_from_slot( int index, bool assign )
 		else if ( !result )
 			PL_LOG( opl::level::error, boost::format( "Unable to retrieve frame %d from %s connected to %s" ) % 
 					get_position( ) % opl::to_string( get_uri( ) ) % opl::to_string( input->get_uri( ) ) );
+		if ( result )
+		{
+			exception_list list = result->exceptions( );
+			for ( exception_list::iterator i = list.begin( ); i != list.end( ); i ++ )
+				collated_.push_back( *i );
+			result->clear_exceptions( );
+		}
 	}
 	return result;
 }

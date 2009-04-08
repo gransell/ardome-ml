@@ -39,12 +39,7 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
-
-#ifdef HAVE_SWSCALE
-#	include <libswscale/swscale.h>
-#else
-	extern int img_convert(AVPicture *dst, int dst_pix_fmt, const AVPicture *src, int src_pix_fmt, int src_width, int src_height);
-#endif
+#include <libswscale/swscale.h>
 }
 
 namespace oml = olib::openmedialib;
@@ -86,6 +81,10 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"r8g8b8a8";
 	else if ( fmt == PIX_FMT_BGR32 )
 		return L"b8g8r8a8";
+	else if ( fmt == PIX_FMT_RGB32_1 )
+		return L"r8g8b8a8";
+	else if ( fmt == PIX_FMT_BGR32_1 )
+		return L"b8g8r8a8";
 	return L"";
 }
 
@@ -108,6 +107,35 @@ const PixelFormat oil_to_avformat( const std::wstring &fmt )
 	else if ( fmt == L"r8g8b8a8" )
 		return PIX_FMT_RGB32;
 	return PIX_FMT_NONE;
+}
+
+il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int width, int height )
+{
+	il::image_type_ptr image;
+	PixelFormat dst_fmt = pix_fmt;
+	std::wstring format = avformat_to_oil( pix_fmt );
+
+	if ( format == L"" )
+	{
+		format = L"b8g8r8a8";
+		dst_fmt = PIX_FMT_BGRA;
+	}
+
+	AVPicture output;
+	image = il::allocate( format, width, height );
+	avpicture_fill( &output, image->data( ), dst_fmt, width, height );
+	struct SwsContext *img_convert_ = 0;
+	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width, height, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+	if ( img_convert_ != NULL )
+	{
+		sws_scale( img_convert_, frame->data, frame->linesize, 0, height, output.data, output.linesize );
+		sws_freeContext( img_convert_ );
+	}
+
+	if ( frame->interlaced_frame )
+		image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
+
+	return image;
 }
 
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
@@ -379,7 +407,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			bool ret = false;
 
 			// Allocate the output context
-			oc_ = av_alloc_format_context( );
+			oc_ = avformat_alloc_context( );
 
 			// Derive the output format
 			fmt_ = alloc_output_format( );
@@ -845,7 +873,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Allocate the image
 				avcodec_get_frame_defaults( &av_image_ );
 				avpicture_alloc( ( AVPicture * )&av_image_, video_enc->pix_fmt, prop_width_.value< int >( ), prop_height_.value< int >( ) );
-				std::cerr << ( int64_t( av_image_.data[ 0 ] ) % 16 ) << std::endl;
 
 				// Open the codec safely
 				ret = codec != NULL && avcodec_open( video_enc, codec ) >= 0;
@@ -1031,7 +1058,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 			}
 			else
-#ifdef HAVE_SWSCALE
 			{
 				AVPicture input;
 				int width = image->width( );
@@ -1041,15 +1067,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
 			}
-#else
-			{
- 				AVPicture input;
-				int width = image->width( );
-				int height = image->height( );
-				avpicture_fill( &input, image->data( ), oil_to_avformat( image->pf( ) ), width, height );
-				img_convert( ( AVPicture * )&av_image_, c->pix_fmt, &input, oil_to_avformat( image->pf( ) ), width, height );
-			}
-#endif
 
 			if ( oc_->oformat->flags & AVFMT_RAWPICTURE )  
 			{
@@ -1281,7 +1298,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, ts_pusher_( )
 			, ts_filter_( )
 		{
-			audio_buf_ = audio_buf_data_ + int64_t( 4 - ( int64_t( audio_buf_data_ ) & 3 ) );
+			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
+			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
+			audio_buf_temp_ = ( uint8_t * )av_malloc( audio_buf_size_ );
 
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
@@ -1308,6 +1327,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( context_ )
 				av_close_input_file( context_ );
 			av_free( av_frame_ );
+			av_free( audio_buf_ );
+			av_free( audio_buf_temp_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -1848,7 +1869,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_init_packet( &pkt_ );
 			while ( stream && av_read_frame( context_, &pkt_ ) >= 0 )
 			{
-				if ( pkt_.stream_index == 0 )
+				if ( is_audio_stream( pkt_.stream_index ) )
 				{
 					bool fallback = true;
 
@@ -1858,7 +1879,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						if ( samples_per_packet_ == 0 )
 						{
 							AVCodecContext *codec_context = get_audio_stream( )->codec;
-							int audio_size = sizeof( audio_buf_data_ ) - 4;
+							int audio_size = audio_buf_size_;
 							int len = pkt_.size;
 							uint8_t *data = pkt_.data;
 		   					if ( avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ ), &audio_size, data, len ) >= 0 )
@@ -2113,51 +2134,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			int width = get_width( );
 			int height = get_height( );
 
-			int dst_w = width;
-			int dst_h = height;
-			if ( dst_w & 1 ) dst_w += 1;
-			if ( dst_h & 1 ) dst_h += 1;
-
-			std::wstring format = avformat_to_oil( codec_context->pix_fmt );
-			il::image_type_ptr image;
-
-#ifdef HAVE_SWSCALE
-			if ( format == L"" )
-			{
-				image = il::allocate( L"yuv420p", dst_w, dst_h );
-				AVPicture output;
-				avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, dst_w, dst_h );
-				img_convert_ = sws_getCachedContext( img_convert_, width, height, codec_context->pix_fmt, dst_w, dst_h, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL );
-				if ( img_convert_ != NULL )
-					sws_scale( img_convert_, av_frame_->data, av_frame_->linesize, 0, height, output.data, output.linesize );
-			}
-			else
-			{
-				image = il::allocate( format, dst_w, dst_h );
-				AVPicture output;
-				avpicture_fill( &output, image->data( ), codec_context->pix_fmt, dst_w, dst_h );
-				img_convert_ = sws_getCachedContext( img_convert_, width, height, codec_context->pix_fmt, dst_w, dst_h, codec_context->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL );
-				if ( img_convert_ != NULL )
-					sws_scale( img_convert_, av_frame_->data, av_frame_->linesize, 0, height, output.data, output.linesize );
-			}
-#else
- 			if ( format == L"" )
- 			{
- 				image = il::allocate( L"yuv420p", dst_w, dst_h );
-         		AVPicture output;
-         		avpicture_fill( &output, image->data( ), PIX_FMT_YUV420P, dst_w, dst_h );
-         		img_convert( &output, PIX_FMT_YUV420P, (AVPicture *)av_frame_, codec_context->pix_fmt, dst_w, dst_h );
- 			}
- 			else
- 			{
- 				image = il::allocate( format, dst_w, dst_h );
- 				AVPicture output;
- 				avpicture_fill( &output, image->data( ), codec_context->pix_fmt, dst_w, dst_h );
- 				img_convert( &output, codec_context->pix_fmt, (AVPicture *)av_frame_, codec_context->pix_fmt, dst_w, dst_h );
- 			}
- #endif
-
-		return image;
+			return convert_to_oil( av_frame_, codec_context->pix_fmt, width, height );
 		}
 
 		void store_image( il::image_type_ptr image, int position )
@@ -2275,10 +2252,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Each packet may need multiple parses
 			while( len > 0 )
 			{
-				int audio_size = sizeof( audio_buf_data_ ) - 4 - audio_buf_used_;
+				int audio_size = audio_buf_size_;
 
 				// Decode the audio into the buffer
-		   		ret = avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ + audio_buf_used_ ), &audio_size, data, len );
+		   		ret = avcodec_decode_audio2( codec_context, ( short * )( audio_buf_temp_ ), &audio_size, data, len );
 
 				// If no samples are returned, then break now
 				if ( ret < 0 )
@@ -2287,6 +2264,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					got_audio = true;
 					break;
 				}
+
+				// Copy the new samples to the main buffer
+				memcpy( audio_buf_ + audio_buf_used_, audio_buf_temp_, audio_size );
 
 				// Decrement the length by the number of bytes parsed
 				len -= ret;
@@ -2538,8 +2518,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool must_reopen_;
 		bool key_search_;
 
-		boost::uint8_t audio_buf_data_[ (AVCODEC_MAX_AUDIO_FRAME_SIZE * 4) / 2 ];
 		boost::uint8_t *audio_buf_;
+		boost::uint8_t *audio_buf_temp_;
+		int audio_buf_size_;
 		int audio_buf_used_;
 		int audio_buf_offset_;
 
@@ -2676,10 +2657,12 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 					context_ = NULL;
 				}
 				
-				context_ = audio_resample_init(	prop_output_channels_.value<int>(), 
-												input_channels_,
-												prop_output_sample_freq_.value<int>(),
-												input_sample_freq_ );
+				context_ = av_audio_resample_init(	prop_output_channels_.value<int>(), 
+													input_channels_,
+													prop_output_sample_freq_.value<int>(),
+													input_sample_freq_,
+													SAMPLE_FMT_S16, SAMPLE_FMT_S16,
+													16, 10, 0, 0.8 );
 				
 				if(!context_)
 					return;
@@ -2819,7 +2802,7 @@ namespace
 			av_register_all( );
     		for( int i = 0; i < CODEC_TYPE_NB; i ++ )
         		oml::ml::avctx_opts[ i ]= avcodec_alloc_context2( CodecType( i ) );
-			oml::ml::avformat_opts = av_alloc_format_context( );
+			oml::ml::avformat_opts = avformat_alloc_context( );
 			av_log_set_level( -1 );
 			oml::ml::register_dv_decoder( );
 		}

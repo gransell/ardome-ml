@@ -159,7 +159,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual int get_position( ) const { return position_; }
 
 		// frame fetch method
-		frame_type_ptr fetch( )
+		virtual frame_type_ptr fetch( )
 		{
 			frame_type_ptr result;
 			exception_ptr exception;

@@ -149,6 +149,15 @@ class ML_DECLSPEC frame_type
 		/// Work around for weak_ptr failure in python
 		void clear_exceptions( );
 
+		/// Obtain width from packet or image
+		int width( ) const;
+
+		/// Obtain height from packet or image
+		int height( ) const;
+
+		/// Obtain colourspace from packet or image
+		std::wstring pf( ) const;
+
 	private:
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::packet_type_ptr packet_;

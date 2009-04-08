@@ -18,6 +18,9 @@ enum packet_id
 {
 	unknown = 0,
 	dv25,
+	dv50,
+	dv100,
+	imx,
 	png,
 	jpeg
 };
@@ -41,6 +44,15 @@ class ML_DECLSPEC packet_type
 		/// Provides the sample aspect ratio of the image
 		virtual fraction sar( ) = 0;
 
+		// Colourspace
+		virtual olib::openpluginlib::wstring pf( ) = 0;
+
+		// Aspect ratio pair
+		virtual fraction ar( ) = 0;
+
+		// Field order
+		virtual olib::openimagelib::il::field_order_flags field( ) = 0;
+
 		/// Provides the dimensions of the image
 		virtual dimensions size( ) = 0;
 };
@@ -59,11 +71,30 @@ class ML_DECLSPEC packet_decoder
 		virtual olib::openimagelib::il::image_type_ptr decode( packet_type_ptr ) = 0;
 };
 
+/// The packet encoder interface.
+class ML_DECLSPEC packet_encoder
+{
+	public:
+		/// Destructor
+		virtual ~packet_encoder( ) { }
+
+		/// Dictates which type can be decoded by this decoder
+		virtual enum packet_id id( ) = 0;
+
+		/// Decode the packet on the frame
+		virtual packet_type_ptr encode( frame_type_ptr ) = 0;
+};
+
 /// Register a packet decoder
-extern void ML_DECLSPEC packet_handler( packet_decoder_ptr );
+extern void ML_DECLSPEC packet_handler( packet_decoder_ptr decoder );
+extern void ML_DECLSPEC packet_handler( packet_encoder_ptr encoder );
 
 /// Decode a packet on the frame
 extern olib::openimagelib::il::image_type_ptr ML_DECLSPEC packet_decode( packet_type_ptr );
+extern olib::openimagelib::il::image_type_ptr ML_DECLSPEC packet_decode( frame_type_ptr );
+
+// Encode a packet
+extern packet_type_ptr ML_DECLSPEC packet_encode( frame_type_ptr packet, packet_id id );
 
 } } }
 

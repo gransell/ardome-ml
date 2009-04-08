@@ -89,6 +89,9 @@ class ML_DECLSPEC filter_type : public input_type
 		/// Invoked when a slot is changed
 		virtual void on_slot_change( input_type_ptr, int );
 
+		// Override of fetch to allow collation of exceptions
+		virtual frame_type_ptr fetch( );
+
 		/// Retrieve the input associated to a slot
 		virtual input_type_ptr fetch_slot( size_t slot = 0 ) const;
 
@@ -140,6 +143,7 @@ class ML_DECLSPEC filter_type : public input_type
 		std::vector < input_type_ptr > slots_;
 		std::map < std::size_t, filter_key_ptr > keys_;
 		int position_;
+		exception_list collated_;
 };
 
 typedef boost::shared_ptr< filter_type > filter_type_ptr;
