@@ -2,12 +2,65 @@
 # Include the core definitions
 core.aml
 
+# Block the playing thread
+
+: block
+	play_filter threader active=2 drop
+;
+
+# Unblock the playing thread
+
+: unblock
+	play_filter threader active=1 drop
+;
+
+# Grab the current playing graph
+
+: current
+	-1 grab
+;
+
+# Convenience, block and grab
+
+: ( 
+	block 
+	current 
+;
+
+# Convenience, tag, drop current and unblock
+
+: ) 
+	tag
+	drop 
+	unblock 
+	dirty
+;
+
+# Attach a filter to an acquired node
+
+: attach		# <world> <original> <modified>
+	rot rot 	# <modified> <world> <original>
+	parent		# <modified> <world> <original> <parent> <slot>
+	rot			# <modified> <world> <parent> <slot> <original>
+	drop		# <modified> <world> <parent> <slot>
+	3 roll 		# <world> <parent> <slot> <modified>
+	swap 		# <world> <parent> <modified> <slot>
+	connect		# <world> <modified-parent>
+;
+
+# Detach a filter from an acquired node
+
+: detach
+	decap
+	attach
+;
+
 # Define some basic transport controls
 
 : play 1 speed ;
 : pause 0 speed ;
-: rew -25 speed ;
-: ffwd 25 speed ;
+: rew -100 speed ;
+: ffwd 100 speed ;
 : reverse -1 speed ;
 
 # Step for a number for frames
@@ -17,6 +70,12 @@ core.aml
 	position? + 
 	0 max
 	seek 
+;
+
+: step!
+	position? + 
+	0 max
+	seek!
 ;
 
 # Toggle pause/play
@@ -46,11 +105,7 @@ core.aml
 # <input1> ... <inputN> schedule --
 
 : add*
-
-	variable! count
-	begin
-		count !--
-	while
+	for_each
 		add
 	repeat
 ;
@@ -60,10 +115,7 @@ core.aml
 ;
 
 : grab*
-	variable! count
-	begin
-		count !--
-	while
+	loop
 		0 grab
 	repeat
 ;
@@ -128,11 +180,26 @@ core.aml
 	store audio_scrub=%s .
 ;
 
-: goom
-	play_filter goom effect=%s drop
-;
-
 : bt
 	bless transport
 ;
+
+# Replace the current playing item with the top of the stack while preserving position
+
+: replace
+dup 0 insert position? s. next 
+;
+
+: apply
+( parse$ execute replace ) 
+;
+
+: apply@
+(
+    parse find_all. pack
+    parse$ variable! cmds 
+    [ cmds @ execute drop ] 
+)
+;
+
 

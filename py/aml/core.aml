@@ -4,8 +4,8 @@
 
 : dup 0 pick ;
 : swap 1 roll ;
-: 2dup 1 pick 1 pick ;
 : over 1 pick ;
+: 2dup 1 pick 1 pick ;
 : nip 1 roll drop ;
 : rot 2 roll ;
 : -rot rot rot ;
@@ -40,267 +40,326 @@
 # Increment the number at the top of the return stack and leave a copy
 : r1+@ r1+ r@ ;
 
+: between
+    >r
+    2dup
+    < if swap then
+    r@ <= swap
+    r> >=
+    =
+;
+
+: range
+    inline
+    2dup
+    swap >r >r
+    < if 1 else -1 then
+    >r       
+    2 rpick >r
+    begin
+        3 rpick 2 rpick r@ between
+        dup
+        0= if rdrop rdrop rdrop rdrop then
+    while
+        r@
+        r> r@ + >r
+;
+
+: loop
+    inline
+    1- 0 range 
+        drop
+;
+
+: pack 
+    filter:playlist slots=%s 
+;
+
+: unpack 
+    slots? 0 >
+    if
+        decap 
+    else
+        drop
+    then
+;
+
+: iterate
+    inline
+    slots?
+    swap
+    >r >r
+    begin
+        r1-@ 0 >= 
+        dup 0= if rdrop rdrop then
+    while
+        1 rpick 
+        slots? r@ - 1- slot
+        swap drop
+;
+
+# Iterates through a collection of nodes
+# <input-1> ... <input-N> <N> for_each ... repeat
+# For example: ( contains deferred for_each deferred=0 drop repeat )
+
+: for_each 
+    inline 
+    pack
+    iterate
+;
+
+# Symbolic synonym for iterate
+: [ inline iterate ;
+
+# Synonym for repeat
+: ] inline repeat ;
+
+# Synonym for str
+: ` inline str ;
+
 # Move the top of stack to a specific place
 # ... <item> <position> move -- ... <item> ...
 
 : move 
-	dup variable! index 
-	variable! position 
-	begin 
-		index !-- 
-	while 
-		position @ roll 
-	repeat 
+    swap >r
+    pack
+    r>
+    unpack
 ;
 
 # Clear all stack items
 # <item-1> ... clear --
 
+: drop*
+pack drop
+;
+
 : clear 
-	begin 
-		depth? 0> 
-	while 
-		drop 
-	repeat 
+depth? drop*
 ;
 
 # Clear all return stack items
 # R: <item-1> ... clear -- R:
 
 : rclear 
-	begin 
-		rdepth? 0 > 
-	while 
-		rdrop 
-	repeat 
+    rdepth?
+    loop
+        rdepth? 1- rroll drop 
+    repeat 
 ;
 
 # Clear all stacks
 
 : clear$
-	clear
-	rclear
+    clear
+    rclear
 ;
 
 # Dump both stacks
 
 : dump$
-	dump
-	rdump
+    dump
+    rdump
 ;
 
 # Conditional check
 # <value-1> <value-2> is -- <value-1> <value-1 == value-2>
 
 : is
-	1 pick = if
+	inline
+    over = if
 ;
 
 # Define basic image traits associated to the profile
 # --
 
 : profile
-	0 is
-		: @fps 25 1 ;
-		: @size 720 576 ;
-		: @sar 59 54 ;
-	else
-	1 is
-		: @fps 30000 1001 ;
-		: @size 720 480 ;
-		: @sar 10 11 ;
-	else
-	2 is
-		: @fps 25 1 ;
-		: @size 720 576 ;
-		: @sar 118 81 ;
-	else
-	3 is
-		: @fps 30000 1001 ;
-		: @size 720 480 ;
-		: @sar 40 33 ;
-	then
-	drop
+    0 is
+        : @fps 25 1 ;
+        : @size 720 576 ;
+        : @sar 59 54 ;
+    else
+    1 is
+        : @fps 30000 1001 ;
+        : @size 720 480 ;
+        : @sar 10 11 ;
+    else
+    2 is
+        : @fps 25 1 ;
+        : @size 720 576 ;
+        : @sar 118 81 ;
+    else
+    3 is
+        : @fps 30000 1001 ;
+        : @size 720 480 ;
+        : @sar 40 33 ;
+    then then then then
+    drop
 
-	: fps @fps rot fps_den=%s fps_num=%s ;
-	: size @size rot height=%s width=%s ;
-	: sar @sar rot sar_den=%s sar_num=%s ;
+    : fps @fps rot fps_den=%s fps_num=%s ;
+    : size @size rot height=%s width=%s ;
+    : sar @sar rot sar_den=%s sar_num=%s ;
 ;
 
 : pal_4:3 
-	0 profile 
+    0 profile 
 ;
 
 : ntsc_4:3 
-	1 profile 
+    1 profile 
 ;
 
 : pal_16:9 
-	2 profile 
+    2 profile 
 ;
 
 : ntsc_16:9 
-	3 profile 
+    3 profile 
 ;
 
 # Convenience method for visualisation
 # <media> visualise -- <visualised-media>
 
 : visualise 
-	filter:visualise size sar
+    filter:visualise size sar
 ;
 
 # Generate a background according to the selected profile
 # -- <background>
 
 : background
-	colour: size fps sar
+    colour: size fps sar
 ;
 
 # Attach normalising filters to the input at the top of the stack
 # <media> normalise -- <normalised-media>
 
 : normalise
-	filter:frame_rate fps
-	filter:resampler
-	filter:deinterlace
+    filter:frame_rate fps
+    filter:resampler
+    filter:deinterlace
 ;
 
 # Normalise all media on the stack
 # <media-1> ... normalise$ -- <normalised-media-1> ...
 
+: normalise*
+    for_each
+        normalise 
+    repeat 
+;
+
 : normalise$ 
-	depth? >r r@ 
-	begin 
-		r@ roll normalise 
-		swap 1- 
-		dup 0 = 
-	until 
-	rdrop drop 
-;
-
-# Join items for consecutive playout
-# <media-1> ... <media-N> <N> group -- <media-1-to-N>
-
-: group
-	filter:playlist slots="%s"
-;
-
-# Join all items on the stack for consecutive playout
-# <media-1> ... group$ -- <media-1-to-...>
-
-: group$
-	depth? group
+    depth? normalise*
 ;
 
 : grid_calc
 
-	1 1 
-	begin
-		2dup *
-		3 pick < 
-	while
-		swap 2 *
-		swap 2 *
-	repeat
+    1 1 
+    begin
+        2dup *
+        3 pick < 
+    while
+        swap 2 *
+        swap 2 *
+    repeat
 
-	begin
-		2dup 1- * 
-		3 pick >=
-	while
-		swap 1- swap
-		dup 1- 2 pick *
-		3 pick >=
-		if 
-			1-
-		then
-	repeat
+    begin
+        2dup 1- * 
+        3 pick >=
+    while
+        swap 1- swap
+        dup 1- 2 pick *
+        3 pick >=
+        if 
+            1-
+        then
+    repeat
+
+	2 roll drop
 ;
 
 # Generate a mosaic of some items on the stack
 # <media-1> ... <media-N> <N> mosaic -- <mosaic-of-media>
 
-: mosaic
+: mosaic*
+	dup >r
+    pack
 
-	depth? grid_calc
+    slots? grid_calc
 
-	swap 1.0 swap /
-	swap 1.0 swap /
-	0.0 0.0
+	variable! cols
+	variable! rows
 
-	4 roll
+	1.0 cols @ / variable! iw
+	1.0 rows @ / variable! ih
 
-	begin
-		depth? 1- roll
-		5 pick 5 pick 5 pick 5 pick 
-		filter:lerp @@x=%s @@y=%s @@w=%s @@h=%s 
+	0 variable! x
+	0 variable! y
 
-		normalise filter:offset
-		5 roll 5 roll 5 roll 2 pick + 5 roll 
-		1 pick 0.9999 >=
+    iterate
+		ih @ iw @ y @ ih @ * x @ iw @ *
+
+        filter:lerp @@x=%s @@y=%s @@w=%s @@h=%s 
+        normalise 
+		filter:loop
+
+		1 x +! 
+		x @ cols @ >=
 		if
-			nip 0.0 swap
-			2 pick +
+			0 x !
+			1 y +!
 		then
-		5 roll
-		1- dup 0 =
-	until
 
-	drop drop drop drop drop
-	
-	background filter:compositor slots=1
-	depth?
-	swap
-	slots=%s
+    repeat
+
+    background filter:compositor slots=1
+	r> 1+ swap slots=%s
+;
+
+: mosaic
+    depth? mosaic*
 ;
 
 # Create a montage
 # <input> <frames> montage -- <montage-showing-frames>
 
 : montage
-	>r
-	r@ 2 +
-	filter:extract frames=%s 
-	r> 1 +
-	filter:clip in=1 out=%s
-	filter:montage orient=2 lines=0
+    >r
+    r@ 2 +
+    filter:extract frames=%s 
+    r> 1 +
+    filter:clip in=1 out=%s
+    filter:montage orient=2 lines=0
 ;
 
 # Cut media into two parts
 # <media> <position> cut -- <media-to-position> <media-from-position>
 
 : cut
-	>r 
-	dup
-	r@ filter:clip out=%s
-	swap
-	r> filter:clip in=%s
+    >r 
+    dup
+    r@ filter:clip out=%s
+    swap
+    r> filter:clip in=%s
 ;
 
 # Render all items on the stack as an aml graph
 # <media-1> ... describe* -- <media-1> ...
 
 : describe*
-	>r 
-	begin
-		r1-@ 0 >= 
-	while
-		r@ pick 
-		describe 
-		drop
-		str "#----" .
-	repeat
-	rdrop
+    for_each
+        describe 
+        str "#----" .
+    repeat
 ;
 
 : describe$ depth? describe* ;
 
-# Display the top of stack as an aml filter graph
-# <graph> render -- <graph>
-
-: render describe ;
-: render$ describe$ ;
+: parse$
+0 >r begin r1+ parse dup str "" = until drop r> 1- pack
+;
 
 # Default profile selection
-pal_4:3
+pal_16:9
 

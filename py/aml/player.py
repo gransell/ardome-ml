@@ -38,6 +38,9 @@ class player:
 		self.stores = []
 		self.initted = False
 		self.deferrable = False
+		self.droppable = False
+		self.dirty = False
+		self.nothing = ml.create_input( 'nothing' )
 
 	def create( self, args = [ ] ):
 		"""Create the stores requested or the default if none are specified."""
@@ -73,16 +76,23 @@ class player:
 		if len( self.stores ) == 0: self.create( )
 		if not self.initted:
 			self.deferrable = True
+			self.droppable = True
 			self.initted = True
 			for store in self.stores:
 				self.initted = self.initted and store.init( )
 				self.deferrable = self.deferrable and \
 								  store.property( "deferrable" ).valid( ) and \
 								  store.property( "deferrable" ).value_as_int( ) == 1
+				self.droppable  = self.droppable and \
+								  store.property( "droppable" ).valid( ) and \
+								  store.property( "droppable" ).value_as_int( ) == 1
 		return self.initted
 
 	def close( self ):
 		self.stores = [ ]
+
+	def set_dirty( self ):
+		self.dirty = True
 
 	def ante( self, input, stores, frame ):
 		"""Method called before push to stores. Returns true if termination 
@@ -116,7 +126,7 @@ class player:
 			self.instances[ rule[ 1 ] ] = self.stack.pop( )
 		else:
 			filter = self.instances[ rule[ 1 ] ]
-			filter.connect( ml.create_input( 'nothing:' ), 0 )
+			filter.connect( self.nothing, 0 )
 			self.stack.push( filter )
 
 	def check_input( self, input ):
@@ -128,6 +138,10 @@ class player:
 		elif isinstance( input, list ):
 			stack.push( input )
 			input = self.stack.pop( )
+
+		if 'threader' in self.instances.keys( ):
+			filter = self.instances[ 'threader' ]
+			filter.property( 'active' ).set( 2 )
 
 		if input is not None:
 
@@ -152,8 +166,11 @@ class player:
 			input = self.stack.pop( )
 
 		self.walk_and_assign( input, "deferred", int( self.deferrable ) )
-		self.walk_and_assign( input, "active", 2 )
-		self.walk_and_assign( input, "active", 1 )
+		#self.walk_and_assign( input, "dropping", int( self.droppable ) )
+
+		if 'threader' in self.instances.keys( ):
+			filter = self.instances[ 'threader' ]
+			filter.property( 'active' ).set( 1 )
 
 		return input
 
@@ -179,7 +196,8 @@ class player:
 	
 		try:
 			while not error and input.get_position( ) < input.get_frames( ):
-				if frame is None or frame.get_position( ) != input.get_position( ):
+				if frame is None or frame.get_position( ) != input.get_position( ) or self.dirty:
+					self.dirty = False
 					frame = input.fetch( )
 				error = self.ante( input, self.stores, frame )
 				if not error:

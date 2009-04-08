@@ -3,14 +3,10 @@
 import amlx
 import sys
 
-server = 'localhost'
-port = 55378
+arg = ''
+if len( sys.argv ) > 1: arg = sys.argv[ 1 ]
 
-if len( sys.argv ) > 1:
-	server = sys.argv[ 1 ]
-
-if len( sys.argv ) > 2:
-	port = int( sys.argv[ 2 ] )
+server, port = amlx.parse( arg )
 
 amlx.transport.run( server, port )
 

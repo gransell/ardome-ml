@@ -26,6 +26,9 @@ class client_handler:
 		self.stack.include( 'shell.aml' )
 		self.parent.register_socket( client, self )
 
+	def __del__( self ):
+		self.socket = None
+
 	def read( self ):
 		"""Read a chunk of data, parse complete lines and collect results."""
 
@@ -41,7 +44,7 @@ class client_handler:
 				for line in lines:
 					try:
 						if line != '':
-							self.stack.define( line )
+							self.stack.parse( line )
 							self.pending += [ 'OK' ]
 					except Exception, e:
 						self.pending += [ 'ERROR: ' + str( e ) ]
@@ -123,6 +126,9 @@ class http_client_handler:
 		self.msg = ''
 		self.pending = ''
 		self.parent.register_socket( client, self )
+
+	def __del__( self ):
+		self.socket = None
 
 	def parse( self, chunk ):
 		lines = chunk.split( '\r\n' )
@@ -213,8 +219,9 @@ class server( threading.Thread ):
 		self.http_port = http_port
 		self.sockets = { }
 		self.writer = { }
-		self.setDaemon( True )
+		#self.setDaemon( True )
 		self.pool = [ ]
+		self.running = False
 
 		self.server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 		self.server.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
@@ -224,6 +231,10 @@ class server( threading.Thread ):
 			self.http_server = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 			self.http_server.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
 			self.register_socket( self.http_server, http_server_handler( self, self.http_server ) )
+
+	def __del__( self ):
+		if self.running:
+			self.running = False
 
 	def stack_acquire( self ):
 		if len( self.pool ) == 0:
@@ -262,11 +273,14 @@ class server( threading.Thread ):
 	def run( self ):
 		"""The thread method."""
 
-		while True:
+		self.running = True
+
+		while self.running:
 			try:
-				readers, writers, errors = select.select( self.sockets.keys( ), self.writer.keys( ), [ ], 60 )
+				readers, writers, errors = select.select( self.sockets.keys( ), self.writer.keys( ), self.sockets.keys( ), 1 )
 
 				for error in errors:
+					print "error on ", error
 					self.unregister_socket( error )
 
 				for writer in writers:
@@ -278,10 +292,14 @@ class server( threading.Thread ):
 						self.sockets[ reader ].read( )
 
 			except Exception, e:
-				print e
-
 				for sock in self.sockets.keys( ):
 					readers, writers, errors = select.select( [ sock ], [ ], [ ], 0 )
 					for error in errors:
-						error.close( )
+						print "ah error on ", error
+						self.unregister_socket( error )
+
+		for sock in self.sockets.keys( ):
+			sock.close( )
+
+		self.running = False
 

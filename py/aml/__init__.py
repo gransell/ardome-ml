@@ -40,12 +40,12 @@ import openpluginlib as pl
 import openimagelib as il
 import openmedialib as ml
 
-from aml.stack import stack
-from aml.player import player
-from aml.server import server
-from aml.thread_player import thread_player
-from aml.thread_stack import thread_stack
-from aml.thread_shell import thread_shell
+from stack import stack
+from player import player
+from server import server
+from thread_player import thread_player
+from thread_stack import thread_stack
+from thread_shell import thread_shell
 
 pl.init( dir_path )
 pl.set_log_level( -1 )

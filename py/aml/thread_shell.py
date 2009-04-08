@@ -15,6 +15,10 @@ class thread_shell( threading.Thread ):
 		self.stack = aml.thread_stack( player, local = True )
 		self.player.control_start( )
 
+	def __del__( self ):
+		self.player = None
+		self.stack = None
+
 	def run( self ):
 		"""Loops on stdin reading and submits all commands to the stack."""
 
@@ -27,10 +31,14 @@ class thread_shell( threading.Thread ):
 				input = input.replace( "\'", "\"" ).replace( "\"\\\"\"", "\'" )
 				if input != '':
 					try:
-						self.stack.define( input )
+						self.player.cond.acquire( )
+						self.stack.parse( input )
 					except Exception, e:
 						print e
+					finally:
+						self.player.cond.release( )
 		except EOFError:
 			print
 		finally:
 			self.player.control_end( )
+			self.stack.stop_server( )

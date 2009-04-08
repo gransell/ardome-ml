@@ -3,13 +3,29 @@
 import aml
 import sys
 
+import os
+import signal
+
+def handle_signal( sig, frame ):
+	try:
+		os.waitpid( -1, os.WNOHANG )
+	except Exception, e:
+		pass
+
+signal.signal( signal.SIGCHLD, handle_signal )
+
 aml.init( )
 
 player = aml.thread_player( )
 player.create( sys.argv[ 1: ] )
 
 shell = aml.thread_shell( player )
-shell.start( )
 
-player.run( )
+if os.name == 'mac':
+	shell.start( )
+	player.run( )
+else:
+	player.start( )
+	shell.run( )
+
 

@@ -5,13 +5,14 @@ import string
 
 from aml.player import player, ml, pl
 
-class thread_player( player ):
+class thread_player( player, threading.Thread ):
 	"""Advanced playlist oriented threaded player."""
 
 	def __init__( self ):
 		"""Constructor."""
 
 		player.__init__( self )
+		threading.Thread.__init__( self )
 		self.lock = threading.RLock( )
 		self.cond = threading.Condition( self.lock )
 		self.next_input = False
@@ -26,6 +27,7 @@ class thread_player( player ):
 		self.exiting = False
 		self.generation = 0
 		self.client_count = 0
+		self.seek_pos = 0
 
 	def register( self, stack ):
 		return player_stack( stack, self )
@@ -97,12 +99,17 @@ class thread_player( player ):
 		finally:
 			self.cond.release( )
 
+	def set_dirty( self ):
+		self.current = self.get_instance( "threader" ).fetch_slot( 0 )
+		self.generation += 1
+		self.dirty = True
+
 	def get_speed( self ):
 		"""Return the speed of playout."""
 
 		return self.speed
 
-	def seek( self, position ):
+	def seek( self, position, wait = True ):
 		"""Seek to the requested frame position."""
 
 		self.cond.acquire( )
@@ -117,7 +124,8 @@ class thread_player( player ):
 				elif self.position_ >= self.current.get_frames( ):
 					self.position_ = self.current.get_frames( ) - 1
 				self.cond.notifyAll( )
-				self.cond.wait( 0.25 )
+				if wait:
+					self.cond.wait( 0.25 )
 		finally:
 			self.cond.release( )
 
@@ -156,7 +164,7 @@ class thread_player( player ):
 		elif index == -1 and self.current is not None:
 			result = self.current
 		elif index < -1 and - ( index + 2 ) < len( self.prev_inputs ):
-			result = self.prev_inputs.pop( len( self.prev_inputs ) + index + 1 )
+			result = self.stack.deserialise( self.prev_inputs.pop( len( self.prev_inputs ) + index + 1 ) )
 		self.cond.release( )
 		return result
 
@@ -185,6 +193,10 @@ class thread_player( player ):
 			input.seek( self.speed, True )
 		elif len( self.input ) > 0:
 			eof = True
+		if len( stores ) == 1 and self.speed == 0:
+			frame = stores[ 0 ].flush( )
+			if frame is not None:
+				input.seek( frame.get_position( ), False )
 		self.current_position = input.get_position( )
 		self.cond.release( )
 		return eof
@@ -226,20 +238,18 @@ class thread_player( player ):
 			if self.prev_input and self.current is not None:
 				self.input = [ self.current ] + self.input
 				if len( self.prev_inputs ) != 0:
-					self.input = [ self.prev_inputs[ -1 ] ] + self.input
+					self.input = [ self.stack.deserialise( self.prev_inputs[ -1 ] ) ] + self.input
 					self.prev_inputs.pop( -1 )
 			elif self.next_input and self.current is not None:
-				self.prev_inputs += [ self.current ]
+				self.prev_inputs += [ self.stack.serialise( self.current ) ]
 			elif self.current is not None:
-				self.prev_inputs += [ self.current ]
-
-			# Previous input maintenance
-			while len( self.prev_inputs ) > self.prev_count:
-				self.prev_inputs.pop( 0 )
+				self.prev_inputs += [ self.stack.serialise( self.current ) ]
 
 			# Schedule the first input for playout
 			self.current = self.input[ 0 ]
-			self.current.seek( 0, False )
+			self.current.seek( self.seek_pos, False )
+			self.seek( self.seek_pos, False )
+			self.seek_pos = 0
 			iter = self.play( self.current )
 			self.input.pop( 0 )
 			self.next_input = False
@@ -255,8 +265,9 @@ class thread_player( player ):
 				self.cond.notifyAll( )
 				if running and self.speed == 0:
 					self.cond.wait( 0.1 )
+				else:
+					self.cond.wait( 0.0001 )
 				self.cond.release( )
-				time.sleep( 0.0001 )
 
 		self.close( )
 
@@ -276,6 +287,8 @@ class player_stack:
 		self.commands[ 'add' ] = self.add
 		self.commands[ 'grab' ] = self.grab
 		self.commands[ 'insert' ] = self.insert
+		self.commands[ 'lock' ] = self.lock
+		self.commands[ 'unlock' ] = self.unlock
 		self.commands[ 'next' ] = self.next
 		self.commands[ 'playing' ] = self.playing
 		self.commands[ 'playlist' ] = self.playlist
@@ -283,25 +296,29 @@ class player_stack:
 		self.commands[ 'prev' ] = self.prev
 		self.commands[ 'previous' ] = self.previous
 		self.commands[ 'seek' ] = self.seek
+		self.commands[ 'seek!' ] = self.seek_no_wait
 		self.commands[ 'speed' ] = self.speed
 		self.commands[ 'speed?' ] = self.speed_query
 		self.commands[ 'status?' ] = self.status
 		self.commands[ 'store' ] = self.store
+		self.commands[ 'dirty' ] = self.dirty
 		self.commands[ 'play_filter' ] = self.play_filter
 
 	def play_filter( self ):
 		"""Obtains the specified play filter and places it on the stack."""
 
-		if self.stack.next_command is None:
-			self.stack.next_command = self.play_filter
-		else:
-			self.stack.next_command = None
-			self.push( self.player.get_instance( self.stack.incoming ) )
+		if self.stack.next_operation( self.play_filter ):
+			self.push( self.player.get_instance( self.stack.pop( ).get_uri( ) ) )
 
 	def speed( self ):
 		"""Set the speed to the number at the top of the stack."""
 
 		self.player.set_speed( string.atoi( self.pop( ).get_uri( ) ) )
+
+	def dirty( self ):
+		"""Mark the current frame as dirty"""
+
+		self.player.set_dirty( )
 
 	def speed_query( self ):
 		""" Put the current playout speed on top of the stack."""
@@ -330,6 +347,11 @@ class player_stack:
 
 		self.player.seek( string.atoi( self.pop( ).get_uri( ) ) )
 
+	def seek_no_wait( self ):
+		"""Seek to the position at the top of the stack."""
+
+		self.player.seek( string.atoi( self.pop( ).get_uri( ) ), False )
+
 	def position( self ):
 		"""Place current position on the top of the stack."""
 
@@ -342,8 +364,6 @@ class player_stack:
 		try:
 			for input in self.player.input:
 				self.stack.aml.connect( input, 0 )
-				text = self.stack.aml_stdout.value_as_string( )
-				self.output( text )
 				self.stack.aml_write.set( 1 )
 				self.output( '' )
 		finally:
@@ -355,10 +375,8 @@ class player_stack:
 		self.player.cond.acquire( )
 		try:
 			for input in self.player.prev_inputs:
-				self.stack.aml.connect( input, 0 )
-				text = self.stack.aml_stdout.value_as_string( )
-				self.output( text )
-				self.stack.aml_write.set( 1 )
+				for line in input:
+					self.output( line )
 				self.output( '' )
 		finally:
 			self.player.cond.release( )
@@ -370,8 +388,6 @@ class player_stack:
 		try:
 			if self.player.current is not None:
 				self.stack.aml.connect( self.player.current, 0 )
-				text = self.stack.aml_stdout.value_as_string( )
-				self.output( text )
 				self.stack.aml_write.set( 1 )
 				self.output( '' )
 		finally:
@@ -416,37 +432,45 @@ class player_stack:
 		self.player.insert( index, self.pop( ) )
 
 	def store( self ):
-		if self.stack.next_command is None:
-			self.stack.next_command = self.store
+		if not self.stack.next_operation( self.store ):
 			self.store_props = [ ]
-		elif self.stack.incoming != '.':
-			self.store_props += [ str( self.stack.incoming ) ]
+			return
 		else:
-			self.player.cond.acquire( )
-			try:
-				self.stack.next_command = None
-				if isinstance( self.player.stores, list ) and len( self.player.stores ) and isinstance( self.player.stores[0], str ):
-					self.player.store += self.store_props
-				else:
-					result = self.player.stores
-					for pair in self.store_props:
-						name, value = pair.split( '=', 1 )
-						prop = result[ 0 ].property( name )
-						if value.find( '%s' ) != -1:
-							value = value % str( self.stack.pop( ).get_uri( ) )
-						if prop.valid( ):
-							prop.set_from_string( value )
-						elif name.startswith( '@' ):
-							key = pl.create_key_from_string( name )
-							prop = pl.property( key )
-							prop.set( unicode( value ) )
-							result[ 0 ].properties( ).append( prop )
-						else:
-							print 'Requested property %s not found found - ignoring.' % name
+			result = str( self.stack.pop( ).get_uri( ) )
+			if result != '.':
+				self.store_props.append( result )
+				self.stack.next_operation( self.store )
+				return
 
-					prop = result[ 0 ].property( 'sync' )
+		self.player.cond.acquire( )
+		try:
+			if isinstance( self.player.stores, list ) and len( self.player.stores ) and isinstance( self.player.stores[0], str ):
+				self.player.store += self.store_props
+			else:
+				result = self.player.stores
+				for pair in self.store_props:
+					name, value = pair.split( '=', 1 )
+					prop = result[ 0 ].property( str( name ) )
+					if value.find( '%s' ) != -1:
+						value = value % str( self.stack.pop( ).get_uri( ) )
 					if prop.valid( ):
-						prop.set( 1 )
-			finally:
-				self.player.cond.release( )
+						prop.set_from_string( value )
+					elif name.startswith( '@' ):
+						key = pl.create_key_from_string( str( name ) )
+						prop = pl.property( key )
+						prop.set( unicode( value ) )
+						result[ 0 ].properties( ).append( prop )
+					else:
+						print 'Requested property %s not found found - ignoring.' % name
 
+				prop = result[ 0 ].property( 'sync' )
+				if prop.valid( ):
+					prop.set( 1 )
+		finally:
+			self.player.cond.release( )
+
+	def lock( self ):
+		self.player.cond.acquire( )
+
+	def unlock( self ):
+		self.player.cond.release( )
