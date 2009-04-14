@@ -25,10 +25,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self[ 'target' ] == 'vs2003': pass
 		elif self[ 'target' ] == 'vs2008': pass
 		elif self[ 'target' ] == 'osx':
-			self.install_config( 'config/osx/libavcodec.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavdevice.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavformat.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/osx/libavutil.pc', 'bcomp/ffmpeg' )
+			self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
 			if os.path.exists( 'bcomp/SDL' ):
 				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )

@@ -1,15 +1,15 @@
-prefix=/Users/gransell/tempbuild
+prefix=/tmp/ffmpeg
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: libavcodec
+Name: ffmpeg run time
+Version: 0.0.0
 Description: FFmpeg codec library
-Version: 51.52.0
-Requires:  libavutil = 49.6.0
-Conflicts:
-Libs: -L${libdir} -lavcodec   -lz -lm   
-Cflags: -I${includedir}
+Libs: 
+Cflags: 
+
 install_libs=${libdir}/*.dylib* ${libdir}/pkgconfig*
 install_include=${includedir}
+install_bin=${prefix}/bin/*
 
