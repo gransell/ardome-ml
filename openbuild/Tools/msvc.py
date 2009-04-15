@@ -54,7 +54,7 @@ class VisualStudio:
 		if self.install_path_internal == None :
 			if self.is_installed() : return os.path.join( self.install_path_internal, self.vsvars_sub_path )
 			else  : return None
-		else: return self.install_path_internal
+		else: return os.path.join( self.install_path_internal, self.vsvars_sub_path )
 		
 class VSVersions:
 	""" Provides all known versions of visual studio.
