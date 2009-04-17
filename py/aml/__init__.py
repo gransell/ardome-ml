@@ -29,7 +29,10 @@ full_path = os.path.join( os.getcwd( ), __file__ )
 
 # Determine the directory path to the plugins directory
 if platform.system() == 'Windows' or platform.system() == 'Microsoft':
-	dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ], 'bin', 'aml-plugins' )
+	if os.getenv( 'AML_PATH' ) == None:
+		dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ], 'bin', 'aml-plugins' )
+	else:
+		dir_path = os.getenv( 'AML_PATH' )
 elif platform.system( ) == 'Darwin':
 	dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ] )
 else:

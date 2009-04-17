@@ -24,7 +24,7 @@ local_env[ 'SHLIBPREFIX' ] = ''
 
 if local_env[ 'target' ] == 'osx':
 	local_env[ 'SHLIBSUFFIX' ] = '.so'
-elif local_env[ 'target' ] == 'win32':
+elif local_env[ 'PLATFORM' ] == 'win32':
 	local_env[ 'SHLIBSUFFIX' ] = '.pyd'
 
 local_env[ 'win_target_path' ] = '$python_packages'

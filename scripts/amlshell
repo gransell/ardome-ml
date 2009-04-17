@@ -12,7 +12,10 @@ def handle_signal( sig, frame ):
 	except Exception, e:
 		pass
 
-signal.signal( signal.SIGCHLD, handle_signal )
+try:
+	signal.signal( signal.SIGCHLD, handle_signal )
+except Exception, e:
+		pass
 
 aml.init( )
 

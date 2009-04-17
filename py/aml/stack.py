@@ -1,6 +1,7 @@
 from aml import ml, pl, full_path
 
 import os
+import sys
 import time
 
 class io( pl.observer ):
@@ -117,7 +118,10 @@ class stack:
 
 		while len( self.tokens ):
 			token = self.tokens.pop( 0 )
-			self.push( token )
+			if token != 'exit':
+				self.push( token )
+			else:
+				sys.exit( 0 )
 
 	def include( self, command ):
 		"""Include an aml file from the aml site-packages directory."""

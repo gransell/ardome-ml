@@ -384,6 +384,8 @@ void py_frame( )
 		.def( "get_fps_den", &ml::frame_type::get_fps_den )
 		.def( "aspect_ratio", &ml::frame_type::aspect_ratio )
 		.def( "in_error", &ml::frame_type::in_error )
+		.def( "width", &ml::frame_type::width )
+		.def( "height", &ml::frame_type::height )
 	;
 }
 
