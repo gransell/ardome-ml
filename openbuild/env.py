@@ -858,6 +858,8 @@ class Environment( BaseEnvironment ):
 						if perms is not None:
 							os.chmod( dst_file, perms )
 			for dir, file, link in all_links:
+                                if not os.path.exists( dir ):
+                                        if execute: os.makedirs( dir )
 				full = os.path.join( dir, file )
 				if not os.path.exists( full ):
 					link_count += 1
