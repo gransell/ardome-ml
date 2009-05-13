@@ -17,6 +17,7 @@
 #	undef INT64_C
 #	define INT64_C(x)	x ## i64
 #   undef max
+#	define snprintf _snprintf
 #else
 #	undef INT64_C
 #	define INT64_C(x)	x ## LL
@@ -40,6 +41,11 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 }
 
 namespace oml = olib::openmedialib;
@@ -226,9 +232,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_predictor_( pcos::key::from_string( "predictor" ) )
 			, prop_pass_( pcos::key::from_string( "pass" ) )
 			, prop_pass_log_( pcos::key::from_string( "pass_log" ) )
+			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
+			, ts_context_( 0 )
 			, log_file_( 0 )
 			, log_( 0 )
 			, frame_pos_( 0 )
+			, push_count_( 0 )
+			, last_audio_( -1 )
 		{
 			// Show stats
 			properties( ).append( prop_show_stats_ = 100 );
@@ -345,6 +355,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_predictor_ = 0 );
 			properties( ).append( prop_pass_ = 0 );
 			properties( ).append( prop_pass_log_ = opl::wstring( L"oml_avformat.log" ) );
+			properties( ).append( prop_ts_index_ = opl::wstring( L"" ) );
 		}
 
 		virtual ~avformat_store( )
@@ -373,6 +384,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				close_video_codec();
 				close_audio_codec();
 
+				// Get the final size now
+				boost::int64_t final = oc_->pb->pos;
+
 				// Free the streams
 				for( size_t i = 0; i < oc_->nb_streams; i++ )
 					av_freep( &oc_->streams[ i ] );
@@ -383,6 +397,14 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				// Free the context
 				av_free( oc_ );
+
+				if ( ts_context_ )
+				{
+					char temp[ 132 ];
+					snprintf( temp, 132, "eof:%d=%lld\n", push_count_, final );
+					write_ts_index( temp );
+					url_close( ts_context_ );
+				}
 			}
 
 			// Clean up the allocated image
@@ -494,11 +516,26 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					// Write the header
 					if ( ret )
+					{
 						av_write_header( oc_ );
+
+						if ( prop_ts_index_.value< opl::wstring >( ) != L"" )
+						{
+							ret = url_open( &ts_context_, opl::to_string( prop_ts_index_.value< opl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0;
+						}
+					}
 				}
 			}
 
 			return ret;
+		}
+
+		void write_ts_index( const char *data )
+		{
+			if ( ts_context_ )
+			{
+				url_write( ts_context_, ( unsigned char * )( data ), strlen( data ) );
+			}
 		}
 
 		void close_video_codec( )
@@ -943,12 +980,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				audio_type_ptr current = frame->get_audio( );
 
+				// Create an audio block if we haven't done so already
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
 					audio_block_ = audio_type_ptr( new audio_type( pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) ) );
+					audio_block_->set_position( push_count_ );
 				}
 
+				// We want to ensure that 'gop boundaries' are flagged when the audio is introduced, not when just when a new 
+				// audio frame is created (otherwise, a search based on the byte position will miss the start of the audio)
+				if ( push_count_ % prop_gop_size_.value< int >( ) == 0 )
+					audio_block_->set_position( push_count_ );
+		
 				int bytes = audio_input_frame_size_ * current->channels( ) * 2;
 				int available = current->allocsize( );
 				int offset = 0;
@@ -961,6 +1005,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					offset += bytes - audio_block_used_;
 					audio_block_used_ = 0;
 					audio_block_ = audio_type_ptr( new audio_type( pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) ) );
+					audio_block_->set_position( push_count_ );
 				}
 
 				if ( offset < current->allocsize( ) )
@@ -969,6 +1014,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					audio_block_used_ += current->allocsize( ) - offset;
 				}
 			}
+
+			// Keep a running total of frames pushed
+			push_count_ ++;
 		}
 
 		bool do_video_encode (bool finalize, int *out_size) 
@@ -995,7 +1043,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
 #endif
 				if( c->coded_frame && c->coded_frame->key_frame )
+				{
+					char temp[ 132 ];
+					snprintf( temp, 132, "%lld=%lld\n", c->coded_frame->pts, oc_->pb->pos );
+					write_ts_index( temp );
 					pkt.flags |= PKT_FLAG_KEY;
+				}
+
 				pkt.stream_index = video_stream_->index;
 				pkt.data = video_outbuf_;
 				pkt.size = *out_size;
@@ -1107,6 +1161,14 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
 				data = ( short * )( audio->data( ) );
+
+				if ( !video_stream_ && audio->position( ) != last_audio_ && audio->position( ) % prop_gop_size_.value< int >( ) == 0 )
+				{
+					last_audio_ = audio->position( );
+					char temp[ 132 ];
+					snprintf( temp, 132, "%d=%lld\n", audio->position( ), oc_->pb->pos );
+					write_ts_index( temp );
+				}
 			}
 
 			AVCodecContext *c = audio_stream_->codec;
@@ -1232,11 +1294,294 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property /* int */ prop_pass_;
 		pcos::property /* wstring */ prop_pass_log_;
 
+		pcos::property prop_ts_index_;
+		URLContext *ts_context_;
+
 		FILE *log_file_;
 		char *log_;
 
 		int frame_pos_;
+		int push_count_;
+		int last_audio_;
 };
+
+class aml_index
+{
+	public:
+		/// Read any pending data in the index
+		virtual void read( int max = -1 ) = 0;
+
+		/// Find the byte position for the position
+		virtual int64_t find( int position ) = 0;
+
+		/// Return the number of frames as reported by the index
+		/// Note that if we have not reached the eof, there is a chance that the index won't
+		/// accurately reflect the number of frames in the available media (since we can't
+		/// guarantee that the two files will be in sync), so prior to the reception of the 
+		/// terminating record, we need to return an approximation which is > current
+		virtual int frames( int current ) = 0;
+
+		/// Returns the size of the data file as indicated by the index
+		virtual boost::int64_t bytes( ) = 0;
+
+		/// Calculate the number of available frames for the given media data size 
+		/// Note that the size given can be less than, equal to or greater than the size
+		/// which the index reports - any data greater than the index should be ignored, 
+		/// and data less than the index should report a frame count such that the last
+		/// gop can be full decoded
+		virtual int calculate( boost::int64_t size ) = 0;
+
+		/// Indicates if the media can use the index for byte accurate seeking or not
+		/// This is a work around for audio files which don't like byte positions
+		virtual bool usable( ) = 0;
+
+		/// User of the index can indicate byte seeking usability here
+		virtual void set_usable( bool value ) = 0;
+};
+
+class aml_file_index : public aml_index
+{
+	public:
+		aml_file_index( const char *file )
+			: file_( file )
+			, position_( 0 )
+			, eof_( false )
+			, frames_( 0 )
+			, usable_( true )
+		{
+		}
+
+		virtual ~aml_file_index( )
+		{
+		}
+
+		virtual void read( int max = -1 )
+		{
+			if ( eof_ ) return;
+
+			FILE *fd = fopen( file_.c_str( ), "r" );
+			
+			if ( fd )
+			{
+				char temp[ 132 ];
+				fseek( fd, position_, SEEK_SET );
+				while( true )
+				{
+					position_ = ftell( fd );
+					if ( fgets( temp, 132, fd ) && temp[ strlen( temp ) - 1 ] == '\n' )
+					{
+						int index = 0;
+						boost::int64_t position;
+						if ( sscanf( temp, "%d=%lld", &index, &position ) == 2 )
+						{
+							key_index_[ index ] = position;
+						}
+						else if ( sscanf( temp, "eof:%d=%lld", &index, &position ) == 2 )
+						{
+							key_index_[ index ] = position;
+							eof_ = true;
+						}
+						else
+						{
+							std::cerr << "Invalid index info " << temp << std::endl;
+						}
+						if ( index > frames_ )
+							frames_ = index;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				fclose( fd );
+			}
+		}
+
+		int64_t find( int position )
+		{
+			boost::int64_t byte = -1;
+
+			if ( key_index_.size( ) )
+			{
+				std::map< int, boost::int64_t >::iterator iter = key_index_.lower_bound( position );
+				if ( iter != key_index_.end( ) )
+					byte = ( *iter ).second;
+			}
+
+			return byte;
+		}
+
+		int frames( int current )
+		{
+			read( 1 );
+
+			int result = frames_;
+
+			// If the current value does not indicate that the index and data are in sync, then we want
+			// to return a value which is greater than the current, and significantly less than the value
+			// indicated by the index 
+			if ( current < frames_ )
+			{
+				std::map< int, boost::int64_t >::iterator iter = key_index_.lower_bound( frames_ - 100 );
+				result = ( *iter ).first >= current ? ( *iter ).first + 1 : current + 1;
+			}
+
+			return result;
+		}
+
+		boost::int64_t bytes( )
+		{
+			std::map< int, boost::int64_t >::iterator iter = -- key_index_.end( );
+			return ( *iter ).second;
+		}
+
+		int calculate( boost::int64_t size )
+		{
+			std::map< int, boost::int64_t >::iterator iter = -- key_index_.end( );
+			int result = ( *iter ).first;
+			if ( !( eof_ && size == ( *iter ).second ) )
+			{
+				boost::int64_t next = ( *iter ).second;
+				while ( iter != key_index_.begin( ) )
+				{
+					iter --;
+					if ( ( *iter ).second < size && next < size )
+						break;
+					next = ( *iter ).second;
+				}
+				result = ( *iter ).first;
+			}
+			return result;
+		}
+
+		bool usable( )
+		{
+			return usable_;
+		}
+
+		void set_usable( bool value )
+		{
+			usable_ = value;
+		}
+
+	protected:
+		std::string file_;
+		int position_;
+		std::map < int, boost::int64_t > key_index_;
+		bool eof_;
+		int frames_;
+		bool usable_;
+};
+
+class aml_http_index : public aml_file_index
+{
+	public:
+		aml_http_index( const char *file )
+			: aml_file_index( file )
+			, remainder_ ( "" )
+			, next_time_( boost::get_system_time( ) )
+		{
+			if ( url_open( &ts_context_, file, URL_RDONLY ) < 0 )
+			{
+				usable_ = false;
+				eof_ = true;
+			}
+		}
+
+		virtual ~aml_http_index( )
+		{
+			url_close( ts_context_ );
+		}
+
+		void read( int max = -1 )
+		{
+			if ( eof_ ) return;
+
+			if ( boost::get_system_time( ) < next_time_ ) return;
+
+			if ( key_index_.size( ) == 0 )
+				next_time_ = boost::get_system_time( ) + boost::posix_time::seconds( 2 );
+
+			char temp[ 400 ];
+
+			while ( true )
+			{
+				int actual = 0;
+				int bytes = remainder_.length( );
+				int requested = 200 - bytes;
+				char *ptr = temp;
+
+				memset( temp, 0, sizeof( temp ) );
+				memcpy( temp, remainder_.c_str( ), bytes );
+
+				actual = url_read( ts_context_, ( unsigned char * )temp + bytes, requested );
+				if ( actual <= 0 ) break;
+
+				while( ptr && strchr( ptr, '\n' ) )
+				{
+					int index = 0;
+					boost::int64_t position;
+					if ( sscanf( ptr, "%d=%lld", &index, &position ) == 2 )
+					{
+						key_index_[ index ] = position;
+						if ( index > frames_ )
+							frames_ = index;
+					}
+					else if ( !strncmp( ptr, "eof:", 4 ) && sscanf( ptr + 4, "%d=%lld", &index, &position ) == 2 )
+					{
+						key_index_[ index ] = position;
+						eof_ = true;
+						if ( index > frames_ )
+							frames_ = index;
+					}
+					else
+					{
+						//std::cerr << "Invalid index info " << ptr << std::endl;
+					}
+
+					ptr = strchr( ptr, '\n' );
+					if ( ptr ) ptr ++;
+				}
+
+				if ( ptr )
+					remainder_ = ptr;
+				else
+					remainder_ = "";
+
+				if ( -- max == 0 ) break;
+				if ( eof_ || ( actual != requested && remainder_ == "" && boost::get_system_time( ) > next_time_ ) ) break;
+			}
+
+			next_time_ = boost::get_system_time( ) + boost::posix_time::seconds( 1 );
+		}
+
+	private:
+		URLContext *ts_context_;
+		std::string remainder_;
+		boost::system_time next_time_;
+};
+
+static aml_index *aml_index_factory( const char *url )
+{
+	aml_index *result = 0;
+	if ( !strncmp( url, "http://", 7 ) )
+		result = new aml_http_index( url );
+	else if ( !strcmp( url, "" ) )
+		result = new aml_file_index( url );
+
+	if ( result )
+	{
+		result->read( );
+		if ( result->frames( 0 ) == 0 )
+		{
+			delete result;
+			result = 0;
+		}
+	}
+
+	return result;
+}
 
 class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 {
@@ -1273,6 +1618,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_ts_filter_( pcos::key::from_string( "ts_filter" ) )
+			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -1292,11 +1638,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, start_time_( 0 )
 			, img_convert_( 0 )
 			, h264_hack_( false )
-			, samples_per_frame_( 0.0 )
+			, samples_per_frame_( 0 )
 			, samples_per_packet_( 0 )
 			, samples_duration_( 0 )
 			, ts_pusher_( )
 			, ts_filter_( )
+			, aml_index_( 0 )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -1316,6 +1663,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_fps_num_ = -1 );
 			properties( ).append( prop_fps_den_ = -1 );
 			properties( ).append( prop_ts_filter_ = opl::wstring( L"" ) );
+			properties( ).append( prop_ts_index_ = opl::wstring( L"" ) );
 		}
 
 		virtual ~avformat_input( ) 
@@ -1329,6 +1677,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
 			av_free( audio_buf_temp_ );
+			delete aml_index_;
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -1354,7 +1703,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		virtual bool has_audio( ) const { return prop_audio_index_.value< int >( ) != -1 && audio_indexes_.size( ) > 0; }
 
 		// Audio/Visual
-		virtual int get_frames( ) const { return frames_; }
+		virtual int get_frames( ) const 
+		{
+			if ( aml_index_  ) 
+				return aml_index_->frames( frames_ );
+			else 
+				return frames_; 
+		}
+
 		virtual bool is_seekable( ) const { return is_seekable_; }
 
 		// Visual
@@ -1387,6 +1743,18 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		void do_fetch( frame_type_ptr &result )
 		{
 			ARENFORCE_MSG( context_, "Invalid media" );
+
+			if ( aml_index_ )
+			{
+				if ( get_position( ) >= frames_ && aml_index_->frames( frames_ ) > frames_ )
+				{
+					boost::int64_t pos = context_->pb->pos;
+					av_url_read_pause( url_fileno( context_->pb ), 0 );
+					boost::int64_t bytes = url_seek( url_fileno( context_->pb ), -1, SEEK_END );
+					frames_ = aml_index_->calculate( bytes );
+					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
+				}
+			}
 
 			int process_flags = get_process_flags( );
 
@@ -1454,7 +1822,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( frames_ != 1 && has_video( ) && process_null )
 			{
 				bool temp;
-				decode_image( temp, NULL );
+				decode_image( temp, &pkt_ );
 			}
 
 			// Hmmph
@@ -1505,6 +1873,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			opl::wstring resource = uri_;
 
+			// Try to obtain the index specified
+			aml_index_ = aml_index_factory( opl::to_string( prop_ts_index_.value< opl::wstring >( ) ).c_str( ) );
+
 			// A mechanism to ensure that avformat can always be accessed
 			if ( resource.find( L"avformat:" ) == 0 )
 				resource = resource.substr( 9 );
@@ -1541,6 +1912,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				key_search_ = true;
 			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
 				prop_format_ = opl::wstring( L"dv" );
+			else if ( resource.find( L".mp2" ) == resource.length( ) - 4 )
+				prop_format_ = opl::wstring( L"mpeg" );
 
 			// Obtain format
 			if ( prop_format_.value< opl::wstring >( ) != L"" )
@@ -1560,6 +1933,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( error == 0 )
 				error = av_find_stream_info( context_ ) < 0;
 			
+			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
+			if ( error && format_ )
+			{
+				format_ = 0;
+				if ( context_ )
+					av_close_input_file( context_ );
+				error = av_open_input_file( &context_, opl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
+				if ( !error )
+					error = av_find_stream_info( context_ ) < 0;
+			}
+
+			used_name_ = opl::to_string( resource );
+
 			// Populate the input properties
 			if ( error == 0 )
 				populate( );
@@ -1584,10 +1970,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Check if we need to do additional size checks
 			bool sizing = error == 0 && should_size_media( context_->iformat->name );
 
-			// Carry out the media sizing logic
+			// Report the file size via the file_size and frames properties
 			if ( error == 0 )
+				prop_file_size_ = boost::int64_t( context_->file_size );
+
+			// Carry out the media sizing logic
+			if ( error == 0 && !aml_index_ )
 			{
-				if ( sizing )
+				if ( h264_hack_ && sizing )
 					av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				fetch( );
 
@@ -1616,10 +2006,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				// Courtesy - ensure we're reposition on the first frame
 				seek( 0 );
 			}
-
-			// Report the file size via the file_size and frames properties
-			if ( error == 0 )
-				prop_file_size_ = boost::int64_t( context_->file_size );
+			else if ( error == 0 && aml_index_ )
+			{
+				aml_index_->set_usable( has_video( ) );
+				boost::int64_t current = context_->pb->pos;
+				boost::int64_t bytes = url_seek( url_fileno( context_->pb ), -1, SEEK_END );
+				frames_ = aml_index_->calculate( bytes );
+				url_seek( url_fileno( context_->pb ), current, SEEK_SET );
+			}
 
 			return error == 0;
 		}
@@ -1831,6 +2225,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			int last = 0;
 			seek( frames_ - 1 );
 			fetch( );
+
 			do
 			{
 				if ( images_.size( ) )
@@ -1991,18 +2386,27 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					position -= prop_gop_size_.value< int >( );
 
 				int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ) + start_time_;
+				int64_t byte = -1;
+
 				if ( must_reopen_ )
 					reopen( );
 
 				if ( offset < start_time_ ) offset = start_time_;
 
+				// Use the index to get an absolute byte position in the data when available/usable
+				if ( aml_index_ && aml_index_->usable( ) )
+					byte = aml_index_->find( position );
+
 				std::string format = context_->iformat->name;
 				int result = -1;
 
-				if ( h264_hack_ && position < prop_gop_size_.value< int >( ) )
+				if ( byte != -1 )
+					result = av_seek_frame( context_, -1, byte, AVSEEK_FLAG_BYTE );
+				else if ( h264_hack_ && position < prop_gop_size_.value< int >( ) )
 					result = av_seek_frame( context_, -1, context_->data_offset, AVSEEK_FLAG_BYTE );
 				else
 					result = av_seek_frame( context_, -1, offset, AVSEEK_FLAG_BACKWARD );
+
 				key_search_ = true;
 
 				aud_pos_ = img_pos_ = 0;
@@ -2069,11 +2473,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// We have to continue processing until we get a dts >= to the requested position
 			int error = 0;
 			if ( !packet )
-				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, NULL, 0 );
+				error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, NULL );
 			else if ( position >= get_position( ) + first_found_ )
-				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, packet->data, packet->size );
+				error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, packet );
 			else if ( must_decode_ )
-				error = avcodec_decode_video( codec_context, av_frame_, &got_dummy, packet->data, packet->size );
+				error = avcodec_decode_video2( codec_context, av_frame_, &got_dummy, packet );
 
 			got_picture = got_pict != 0;
 
@@ -2102,7 +2506,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// Store the image in the queue
-			if ( position >= 0 && image )
+			if ( ( got_picture || got_dummy ) && position >= 0 && image )
 			{
 				if ( position >= get_position( ) + first_found_ - prop_gop_cache_.value< int >( ) )
 					store_image( image, position );
@@ -2505,6 +2909,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_ts_filter_;
+		pcos::property prop_ts_index_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
@@ -2540,6 +2945,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		input_type_ptr ts_pusher_;
 		filter_type_ptr ts_filter_;
+
+		mutable aml_index *aml_index_;
+		std::string used_name_;
 };
 
 
