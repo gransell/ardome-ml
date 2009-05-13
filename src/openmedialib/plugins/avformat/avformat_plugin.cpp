@@ -2472,12 +2472,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// We have to continue processing until we get a dts >= to the requested position
 			int error = 0;
-			if ( !packet )
-				error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, NULL );
-			else if ( position >= get_position( ) + first_found_ )
-				error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, packet );
-			else if ( must_decode_ )
-				error = avcodec_decode_video2( codec_context, av_frame_, &got_dummy, packet );
+ 			if ( !packet )
+				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, NULL, 0 );
+ 			else if ( position >= get_position( ) + first_found_ )
+				error = avcodec_decode_video( codec_context, av_frame_, &got_pict, packet->data, packet->size );
+ 			else if ( must_decode_ )
+				error = avcodec_decode_video( codec_context, av_frame_, &got_dummy, packet->data, packet->size );
 
 			got_picture = got_pict != 0;
 
