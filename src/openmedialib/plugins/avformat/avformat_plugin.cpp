@@ -233,6 +233,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_pass_( pcos::key::from_string( "pass" ) )
 			, prop_pass_log_( pcos::key::from_string( "pass_log" ) )
 			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
+			, prop_ts_auto_( pcos::key::from_string( "ts_auto" ) )
 			, ts_context_( 0 )
 			, log_file_( 0 )
 			, log_( 0 )
@@ -356,6 +357,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_pass_ = 0 );
 			properties( ).append( prop_pass_log_ = opl::wstring( L"oml_avformat.log" ) );
 			properties( ).append( prop_ts_index_ = opl::wstring( L"" ) );
+			properties( ).append( prop_ts_auto_ = 0 );
 		}
 
 		virtual ~avformat_store( )
@@ -519,10 +521,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					{
 						av_write_header( oc_ );
 
+						if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< opl::wstring >( ) == L"" )
+							prop_ts_index_ = opl::wstring( resource( ) + L".aix" );
+
 						if ( prop_ts_index_.value< opl::wstring >( ) != L"" )
-						{
 							ret = url_open( &ts_context_, opl::to_string( prop_ts_index_.value< opl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0;
-						}
 					}
 				}
 			}
@@ -1295,6 +1298,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property /* wstring */ prop_pass_log_;
 
 		pcos::property prop_ts_index_;
+		pcos::property prop_ts_auto_;
 		URLContext *ts_context_;
 
 		FILE *log_file_;
@@ -1567,7 +1571,7 @@ static aml_index *aml_index_factory( const char *url )
 	aml_index *result = 0;
 	if ( !strncmp( url, "http://", 7 ) )
 		result = new aml_http_index( url );
-	else if ( !strcmp( url, "" ) )
+	else if ( strcmp( url, "" ) )
 		result = new aml_file_index( url );
 
 	if ( result )
@@ -1619,6 +1623,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_ts_filter_( pcos::key::from_string( "ts_filter" ) )
 			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
+			, prop_ts_auto_( pcos::key::from_string( "ts_auto" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -1644,6 +1649,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, ts_pusher_( )
 			, ts_filter_( )
 			, aml_index_( 0 )
+			, next_time_( boost::get_system_time( ) + boost::posix_time::seconds( 2 ) )
+			, resize_count_( 0 )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -1664,6 +1671,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_fps_den_ = -1 );
 			properties( ).append( prop_ts_filter_ = opl::wstring( L"" ) );
 			properties( ).append( prop_ts_index_ = opl::wstring( L"" ) );
+			properties( ).append( prop_ts_auto_ = 0 );
 		}
 
 		virtual ~avformat_input( ) 
@@ -1750,10 +1758,38 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
-					boost::int64_t bytes = url_seek( url_fileno( context_->pb ), -1, SEEK_END );
-					frames_ = aml_index_->calculate( bytes );
+					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
+					frames_ = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 				}
+			}
+			else if ( resize_count_ && boost::get_system_time( ) >= next_time_ )
+			{
+				URLContext *context = 0;
+				opl::wstring temp = resource_;
+
+				// Strip the cache directive if present
+				if ( temp.find( L"aml:cache:" ) == 0 )
+					temp = L"aml:" + temp.substr( 10 );
+
+				// Attempt to reopen the media
+				if ( url_open( &context, opl::to_string( temp ).c_str( ), URL_RDONLY ) >= 0 )
+				{
+					// Check the current file size
+					boost::int64_t bytes = url_seek( context, 0, SEEK_END );
+
+					// If it's larger than before, then reopen, otherwise reduce resize count
+					if ( bytes > prop_file_size_.value< boost::int64_t >( ) )
+						reopen( );
+					else
+						resize_count_ --;
+
+					// Clean up the temporary sizing context
+					url_close( context );
+				}
+
+				// Ensure that the next sizing occurs 5 seconds from now
+				next_time_ = boost::get_system_time( ) + boost::posix_time::seconds( 5 );
 			}
 
 			int process_flags = get_process_flags( );
@@ -1857,9 +1893,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			last_frame_ = frame_type::shallow_copy( result );
 
-#if 0
 			// Temporarily commented out to avoid some false negatives (image repeat, small discrepancy
 			// during start of reverse play etc)
+#if 0
 			if ( has_audio( ) && has_video( ) )
 				ARENFORCE_MSG( exact_audio && exact_image, "Incomplete frame (audio or image missing)" );
 			else if ( has_audio( ) )
@@ -1871,7 +1907,24 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		virtual bool initialize( )
 		{
+			// We will modify the input uri as required here
 			opl::wstring resource = uri_;
+
+			// Ensure that we don't trip the resize logic during the inital load
+			resize_count_ = 0;
+
+			// Handle the auto generation of the ts_index url when requested
+			if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< opl::wstring >( ) == L"" )
+			{
+				if ( uri_.find( L"http://" ) != opl::wstring::npos )
+					prop_ts_index_ = opl::wstring( uri_.substr( uri_.find( L"http://" ) ) + L".aix" );
+				else if ( uri_.find( L"file:" ) != opl::wstring::npos )
+					prop_ts_index_ = opl::wstring( uri_.substr( uri_.find( L"file:" ) + 5 ) + L".aix" );
+				else if ( uri_.find( L"smb:" ) != opl::wstring::npos )
+					prop_ts_index_ = opl::wstring( uri_.substr( uri_.find( L"smb:" ) + 4 ) + L".aix" );
+				else
+					prop_ts_index_ = opl::wstring( uri_ + L".aix" );
+			}
 
 			// Try to obtain the index specified
 			aml_index_ = aml_index_factory( opl::to_string( prop_ts_index_.value< opl::wstring >( ) ).c_str( ) );
@@ -1918,6 +1971,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Obtain format
 			if ( prop_format_.value< opl::wstring >( ) != L"" )
 				format_ = av_find_input_format( opl::to_string( prop_format_.value< opl::wstring >( ) ).c_str( ) );
+
+			// Since we may need to reopen the file, we'll store the modified version now
+			resource_ = resource;
 
 			// Attempt to open the resource
 			int error = av_open_input_file( &context_, opl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
@@ -2005,14 +2061,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				// Courtesy - ensure we're reposition on the first frame
 				seek( 0 );
+
+				// Allow 2 resize checks
+				resize_count_ = 2;
 			}
 			else if ( error == 0 && aml_index_ )
 			{
 				aml_index_->set_usable( has_video( ) );
-				boost::int64_t current = context_->pb->pos;
-				boost::int64_t bytes = url_seek( url_fileno( context_->pb ), -1, SEEK_END );
+				boost::int64_t bytes = boost::int64_t( context_->file_size );
 				frames_ = aml_index_->calculate( bytes );
-				url_seek( url_fileno( context_->pb ), current, SEEK_SET );
 			}
 
 			return error == 0;
@@ -2861,27 +2918,46 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		void reopen( )
 		{
+			// With a cached item, we want to avoid it going out of scope/expiring so obtain
+			// a reference to the existing item now
+			URLContext *keepalive = 0;
+			if ( resource_.find( L"aml:cache:" ) == 0 )
+			{
+				url_open( &keepalive, opl::to_string( resource_ ).c_str( ), URL_RDONLY );
+
+				// AML specific reopen hack - enforces a reopen from a non-cached source
+				av_url_read_pause( url_fileno( context_->pb ), 0 );
+			}
+
+			// Preserve the current position (since we need to seek to start and end here)
+			int position = get_position( );
+
+			// Close the existing codec and file objects
 			if ( prop_video_index_.value< int >( ) >= 0 )
 				close_video_codec( );
 			if ( prop_audio_index_.value< int >( ) >= 0 )
 				close_audio_codec( );
 			if ( context_ )
 				av_close_input_file( context_ );
+			av_free( av_frame_ );
+			delete aml_index_;
 
-			// Attempt to open the resource
-			int error = av_open_input_file( &context_, opl::to_string( uri_ ).c_str( ), format_, 0, params_ ) < 0;
+			// Reopen the media
+			seek( 0 );
+			clear_stores( true );
+			initialize( );
 
-			// Get the stream info
-			if ( error == 0 )
-				error = av_find_stream_info( context_ ) < 0;
-			
-			// Populate the input properties
-			if ( error == 0 )
-				populate( );
+			// Close the keep alive
+			if ( keepalive )
+				url_close( keepalive );
+
+			// Restore the position request
+			seek( position );
 		}
 
 	private:
 		opl::wstring uri_;
+		opl::wstring resource_;
 		opl::wstring mime_type_;
 		int frames_;
 		bool is_seekable_;
@@ -2910,6 +2986,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_fps_den_;
 		pcos::property prop_ts_filter_;
 		pcos::property prop_ts_index_;
+		pcos::property prop_ts_auto_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
@@ -2948,6 +3025,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		mutable aml_index *aml_index_;
 		std::string used_name_;
+		boost::system_time next_time_;
+		int resize_count_;
 };
 
 
