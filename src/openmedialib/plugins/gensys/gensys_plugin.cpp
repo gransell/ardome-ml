@@ -1730,6 +1730,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			else if ( input )
 			{
 				result = fetch_from_slot( );
+				src_frames_ = input->get_frames( );
 			}
 		}
 
