@@ -6,6 +6,7 @@ MINORVER: 1
 # Replaces the string $ARDENDO$ with a version string based on the major and minor version 
 # along with user that prodded and product name
 # ARDENDOTAGFILES: CMakeLists.txt
+PRETAG: build/ardome-ml/pretag.sh
 
 
 MAILTO: mats@ardendo.se, gransell@ardendo.se, bga@ardendo.se, rasmus@ardendo.se

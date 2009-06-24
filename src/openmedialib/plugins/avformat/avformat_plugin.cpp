@@ -1643,7 +1643,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, start_time_( 0 )
 			, img_convert_( 0 )
 			, h264_hack_( false )
-			, samples_per_frame_( 0 )
+			, samples_per_frame_( 0.0 )
 			, samples_per_packet_( 0 )
 			, samples_duration_( 0 )
 			, ts_pusher_( )
@@ -2319,6 +2319,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			seek_to_position( );
 
 			av_init_packet( &pkt_ );
+			bool continue_trying = true;
 			while ( stream && av_read_frame( context_, &pkt_ ) >= 0 )
 			{
 				if ( is_audio_stream( pkt_.stream_index ) )
@@ -2326,7 +2327,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					bool fallback = true;
 
 					// Handle the custom frame rate if specified
-					if ( prop_fps_num_.value< int >( ) == fps_num_ && prop_fps_den_.value< int >( ) == fps_den_ )
+					if ( continue_trying && prop_fps_num_.value< int >( ) == fps_num_ && prop_fps_den_.value< int >( ) == fps_den_ )
 					{
 						if ( samples_per_packet_ == 0 )
 						{
@@ -2336,7 +2337,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 							uint8_t *data = pkt_.data;
 		   					if ( avcodec_decode_audio2( codec_context, ( short * )( audio_buf_ ), &audio_size, data, len ) >= 0 )
 							{
-								samples_per_frame_ = int( double( codec_context->sample_rate * fps_den_ ) / fps_num_ );
+								samples_per_frame_ = double( codec_context->sample_rate * fps_den_ ) / fps_num_;
 								samples_per_packet_ = audio_size / codec_context->channels / 2;
 								samples_duration_ = pkt_.duration;
 							}
@@ -2354,8 +2355,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						else
 						{
 							// Make sure we don't try this logic again for this file
-							prop_fps_num_ = -1;
-							prop_fps_den_ = -1;
+							//BT17386: Previously the fps property was set to -1 here to signal that 
+							//we shouldn't try again, but this caused problems in input_lazy when aquiring
+							//a graph, since the fps for the input and source didn't match.
+							continue_trying = false;
 							samples_per_packet_ = 0;
 						}
 					}
@@ -2686,7 +2689,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					int64_t samples_to_now = 0;
 					int64_t samples_to_next = 0;
 
-					if ( pkt_.duration && samples_per_frame_ > 0 )
+					if ( pkt_.duration && samples_per_packet_ > 0 )
 						samples_to_now = int64_t( samples_per_packet_ * packet_idx );
 					else
 						samples_to_now = int64_t( dts * frequency + 0.5 );
@@ -2697,14 +2700,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					{
 						skip = int( samples_to_next - samples_to_now ) * channels * bps;
 					}
-#if 0
 					else
 					{
-						audio_buf_used_ = size_t( samples_to_dts - samples_to_next ) * channels * bps;
+						audio_buf_used_ = size_t( samples_to_now - samples_to_next ) * channels * bps;
 						if ( audio_buf_used_ > 0 )
 							memset( audio_buf_, 0, audio_buf_used_ );
 					}
-#endif
 
 					audio_buf_offset_ = found;
 				}
@@ -3016,7 +3017,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool h264_hack_;
 		ml::frame_type_ptr last_frame_;
 
-		int samples_per_frame_;
+		double samples_per_frame_;
 		int samples_per_packet_;
 		int samples_duration_;
 
