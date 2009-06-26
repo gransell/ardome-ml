@@ -38,16 +38,22 @@
 
 
 #ifdef __APPLE__
-    #define OLIB_ON_MAC
+    #ifndef OLIB_ON_MAC
+        #define OLIB_ON_MAC
+    #endif
 #endif
 
 #ifdef __GNUC__
-    #define OLIB_COMPILED_WITH_GCC
+    #ifndef OLIB_COMPILED_WITH_GCC
+        #define OLIB_COMPILED_WITH_GCC
+    #endif
 #endif
 
 // Windows and Visual Studio
 #ifdef WIN32
-    #define OLIB_ON_WINDOWS
+    #ifndef OLIB_ON_WINDOWS
+        #define OLIB_ON_WINDOWS
+    #endif
 #endif
 
 
