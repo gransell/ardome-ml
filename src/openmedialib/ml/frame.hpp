@@ -158,6 +158,9 @@ class ML_DECLSPEC frame_type
 		/// Obtain colourspace from packet or image
 		std::wstring pf( ) const;
 
+		/// Indicates if the frame is deferred
+		bool is_deferred( ) const { return queue_.size( ) > 0; }
+
 	private:
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::packet_type_ptr packet_;

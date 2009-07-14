@@ -201,7 +201,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual void acquire_values( ) { if ( callback_ ) callback_->assign( properties( ), get_position( ) ); }
 
 		// Determines if the particular input is thread safe (should be re-implemented as required
-		virtual bool is_thread_safe( ) const { return callback_ ? callback_->is_thread_safe( ) : true; }
+		virtual bool is_thread_safe( ) { return callback_ ? callback_->is_thread_safe( ) : true; }
 
 		// Retrieve the callback
 		input_callback_ptr fetch_callback( ) const { return callback_; }
