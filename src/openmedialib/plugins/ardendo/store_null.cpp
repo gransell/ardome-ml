@@ -18,9 +18,11 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 	public:
 		store_null( ) 
 			: ml::store_type( )
+			, prop_enabled_( pcos::key::from_string( "enabled" ) )
 			, prop_count_( pcos::key::from_string( "count" ) )
 			, prop_deferrable_( pcos::key::from_string( "deferrable" ) )
 		{
+			properties( ).append( prop_enabled_ = 1 );
 			properties( ).append( prop_count_ = 1 );
 			properties( ).append( prop_deferrable_ = 1 );
 		}
@@ -30,7 +32,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 
 		virtual bool push( ml::frame_type_ptr frame )
 		{
-			if ( frame )
+			if ( frame && prop_enabled_.value< int >( ) )
 			{
 				std::deque< ml::frame_type_ptr > queue = ml::frame_type::unfold( frame );
 				for( std::deque< ml::frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); iter ++ )
@@ -42,7 +44,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 					frame_report_props( *iter );
 				}
 			}
-			else
+			else if ( prop_enabled_.value< int >( ) )
 			{
 				std::cerr << "null: No frame received.\n" << std::endl;
 			}
@@ -57,6 +59,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 		{ }
 
 	protected:
+		pcos::property prop_enabled_;
 		pcos::property prop_count_;
 		pcos::property prop_deferrable_;
 };
