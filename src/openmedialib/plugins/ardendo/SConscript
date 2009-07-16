@@ -1,0 +1,51 @@
+Import(['local_env'])
+import os
+
+local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'libavformat' )
+local_env.optional( 'ffmpeg' )
+
+options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale' )
+
+if options[ 'have_librsvg-2.0' ]: local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
+
+srcs = [ 'aml_ardendo.cpp',
+         'filter_aml.cpp',
+         'filter_charcoal.cpp',
+         'filter_chroma_key.cpp',
+         'filter_colour_space.cpp',
+         'filter_compositor.cpp',
+         'filter_loop.cpp',
+         'filter_muxer.cpp',
+         'filter_offset.cpp',
+         'filter_pitch.cpp',
+         'filter_sar.cpp',
+         'filter_store.cpp',
+         'filter_tee.cpp',
+         'filter_threader.cpp',
+         'filter_title.cpp',
+         'filter_transport.cpp',
+         'filter_volume.cpp',
+         'input_aml_stack.cpp',
+         'input_librsvg.cpp',
+         'input_silence.cpp',
+         'store_null.cpp',
+         'store_preview.cpp',
+         'utility.cpp' ]
+ 
+if local_env[ 'PLATFORM' ] == 'win32':
+	srcs.append('aml_filters.rc')
+	local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
+else:
+	local_env.Append( CPPDEFINES = ['_FILE_OFFSET_BITS=64'] )
+
+# Make sure we place the binary correctly on windows
+local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+
+the_headers = local_env.Glob('src/*.hpp', True, False, True)
+
+bin = local_env.plugin( 'openmedialib_ardendo', srcs, headers = the_headers, pre = ['precompiled_headers.cpp', 'precompiled_headers.hpp'] )
+
+local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'aml_ardendo.opl' ])
+
+Return( 'bin' )
+

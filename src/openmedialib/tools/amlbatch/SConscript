@@ -1,0 +1,18 @@
+Import(['local_env'])
+
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_date_time', 'boost_system', 'boost_regex' )
+
+if local_env[ 'target' ] in [ 'osx', 'vs2003', 'vs2008' ]:
+	local_env.packages( 'sdl' )
+	local_env.Append( CPPDEFINES = 'NEEDS_SDL' )
+
+srcs = [ 'amlbatch.cpp' ]
+	
+if local_env[ 'PLATFORM' ] == 'win32':
+	srcs.append('amlbatch.rc')
+
+obj = local_env.console_program( 'amlbatch',  srcs )
+
+local_env.release( obj )
+
+Return( 'obj' )
