@@ -41,7 +41,10 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ VOCAB_SHELL ][ '.' ] = self.dot
 		self.commands[ VOCAB_SHELL ][ 's.' ] = self.seek_dot
 		self.commands[ VOCAB_SHELL ][ 'clone' ] = self.clone
+		self.commands[ VOCAB_SHELL ][ 'available' ] = self.available
 		self.commands[ VOCAB_SHELL ][ 'filters' ] = self.filters
+		self.commands[ VOCAB_SHELL ][ 'inputs' ] = self.inputs
+		self.commands[ VOCAB_SHELL ][ 'stores' ] = self.stores
 		self.commands[ VOCAB_SHELL ][ 'props' ] = self.props
 		self.commands[ VOCAB_SHELL ][ 'describe' ] = self.describe
 		self.commands[ VOCAB_SHELL ][ 'include' ] = self.include_
@@ -77,11 +80,58 @@ class thread_stack( stack, pl.observer ):
 
 		self.next_op = []
 
+	def available( self ):
+		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
+		result = { }
+		for y in plugins:
+			if y.type( ) not in result.keys( ):
+				result[ y.type( ) ] = y.type( ) + '\n\n'
+			value = result[ y.type( ) ]
+			for f in y.filename( ):
+				if os.path.exists( str( f ) ):
+					value += str( f ) + ' '
+			value += ': '
+			for f in y.extension( ):
+				value += str( f ) + ' '
+			result[ y.type( ) ] = value + '\n'
+		for t in result.keys( ):
+			self.output( result[ t ] + '\n' )
+
 	def filters( self ):
 		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
 		filters = [ ]
 		for y in plugins:
 			if y.type( ) == "filter":
+				for f in y.extension( ):
+					filters += [ str( f ) ]
+		result = ''
+		for f in sorted( filters ):
+			if result == '':
+				result = f
+			else:
+				result += ', ' + f
+		self.output( result )
+
+	def inputs( self ):
+		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
+		filters = [ ]
+		for y in plugins:
+			if y.type( ) == "input":
+				for f in y.extension( ):
+					filters += [ str( f ) ]
+		result = ''
+		for f in sorted( filters ):
+			if result == '':
+				result = f
+			else:
+				result += ', ' + f
+		self.output( result )
+
+	def stores( self ):
+		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
+		filters = [ ]
+		for y in plugins:
+			if y.type( ) == "output":
 				for f in y.extension( ):
 					filters += [ str( f ) ]
 		result = ''
