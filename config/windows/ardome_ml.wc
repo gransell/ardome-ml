@@ -25,6 +25,14 @@ def install( env, prefix ):
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openpluginlib_pl.pdb') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openmedialib_ml.dll') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openmedialib_ml.pdb') ] )
+	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'site-packages' ), [ os.path.join( prefix, 'lib', folder_name, 'site-packages') ] )
+	env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlbatch.exe' ) ] )
+	if folder_name == 'release':
+		env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlclient' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlshell' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', folder_name, 'amltransport' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlserver' ) ] )
+		env.release( [ os.path.join( prefix, 'bin', folder_name, 'amltkplay' ) ] )
 
 	if env.full_install : env.release(  [ os.path.join( prefix, 'lib', folder_name, 'opencorelib_cl.lib') ] )
 	if env.full_install : env.release(  [ os.path.join( prefix, 'lib', folder_name, 'openpluginlib_pl.lib') ] )
