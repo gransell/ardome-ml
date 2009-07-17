@@ -80,6 +80,8 @@ namespace detail
 			{ return item_.context; }
 			std::vector<wstring> extension( ) const
 			{ return item_.extension; }
+			std::vector<wstring> filename( ) const
+			{ return item_.filename; }
 
 		private:
 			mutable plugin_item	item_;

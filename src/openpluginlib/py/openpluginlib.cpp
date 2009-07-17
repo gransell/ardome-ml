@@ -91,6 +91,7 @@ void py_openpluginlib( )
 		.def( "out_filter", &plugin_proxy::out_filter )
 		.def( "extension", &plugin_proxy::extension )
 		.def( "merit", &plugin_proxy::merit )
+		.def( "filename", &plugin_proxy::filename )
 		;
 
 	typedef opl::discovery<detail::all_query_traits> all_discovery;
