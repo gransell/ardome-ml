@@ -35,6 +35,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const pl::wstr
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & );
@@ -106,6 +107,8 @@ public:
 			return create_sar( resource );
 		if ( resource == L"store" )
 			return create_store( resource );
+		if ( resource == L"step" )
+			return create_step( resource );
 		if ( resource == L"tee" )
 			return create_tee( resource );
 		if ( resource == L"threader" )
