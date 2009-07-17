@@ -730,7 +730,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( !input ) break;
 
 				// Check for a sub thread - disable reverse reading if we do
-				bool forward = true; // has_sub_thread_ || speed > 0 || speed <= -12;
+				bool forward = has_sub_thread_ || speed > 0 || speed <= -4;
 
 				// Vars for handling reverse play
 				bool reverse = false;

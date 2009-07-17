@@ -30,6 +30,8 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const pl::wstring & )
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring & );
@@ -92,6 +94,10 @@ public:
 			return create_montage( resource );
 		if ( resource == L"muxer" )
 			return create_muxer( resource );
+		if ( resource == L"mvitc_decode" )
+			return create_mvitc_decode( resource );
+		if ( resource == L"mvitc_write" )
+			return create_mvitc_write( resource );
 		if ( resource == L"offset" )
 			return create_offset( resource );
 		if ( resource == L"pitch" )
