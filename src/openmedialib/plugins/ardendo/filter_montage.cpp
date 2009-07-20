@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static pl::pcos::key key_r_( pl::pcos::key::from_string( "r" ) );
 static pl::pcos::key key_g_( pl::pcos::key::from_string( "g" ) );

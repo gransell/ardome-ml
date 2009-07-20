@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 {

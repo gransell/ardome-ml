@@ -12,18 +12,18 @@
 
 #include <boost/cstdint.hpp>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static bool key_sort( const pcos::key &k1, const pcos::key &k2 )
 {
 	return strcmp( k1.as_string( ), k2.as_string( ) ) < 0;
 }
 
-class ML_PLUGIN_DECLSPEC filter_amf : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		explicit filter_amf( const pl::wstring & )
+		explicit filter_aml( const pl::wstring & )
 			: ml::filter_type( )
 			, prop_filename_( pl::pcos::key::from_string( "filename" ) )
 			, prop_write_( pl::pcos::key::from_string( "write" ) )
@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC filter_amf : public ml::filter_type
 			{
 				if ( prop_write_.value< int >( ) )
 				{
-					create_amf( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
+					create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
 					prop_write_ = 0;
 				}
 			}
@@ -58,29 +58,29 @@ class ML_PLUGIN_DECLSPEC filter_amf : public ml::filter_type
 		{
 			if ( prop_write_.value< int >( ) )
 			{
-				create_amf( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
+				create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
 				prop_write_ = 0;
 			}
 			result = fetch_from_slot( );
 		}
 
 	private:
-		void create_amf( ml::input_type_ptr input, const pl::wstring filename )
+		void create_aml( ml::input_type_ptr input, const pl::wstring filename )
 		{
 			if ( filename == L"@" )
 			{
 				std::ostringstream stream;
-				create_amf( stream, input );
+				create_aml( stream, input );
 				prop_stdout_ = stream.str( );
 			}
 			else if ( filename != L"-" )
 			{
 				std::fstream stream( pl::to_string( filename ).c_str( ), std::ios::out );
-				create_amf( stream, input );
+				create_aml( stream, input );
 			}
 			else
 			{
-				create_amf( std::cout, input );
+				create_aml( std::cout, input );
 			}
 		}
 
@@ -123,12 +123,12 @@ class ML_PLUGIN_DECLSPEC filter_amf : public ml::filter_type
 			return result;
 		}
 
-		void create_amf( std::ostream &stream, ml::input_type_ptr input )
+		void create_aml( std::ostream &stream, ml::input_type_ptr input )
 		{
 			if ( input )
 			{
 				for( size_t i = 0; i < input->slot_count( ); i ++ )
-					create_amf( stream, input->fetch_slot( i ) );
+					create_aml( stream, input->fetch_slot( i ) );
 
 				std::string uri = pl::to_string( input->get_uri( ) );
 
@@ -195,9 +195,9 @@ class ML_PLUGIN_DECLSPEC filter_amf : public ml::filter_type
 		pl::pcos::property prop_stdout_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_amf( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring &resource )
 {
-	return ml::filter_type_ptr( new filter_amf( resource ) );
+	return ml::filter_type_ptr( new filter_aml( resource ) );
 }
 
 } }

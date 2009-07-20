@@ -6,11 +6,11 @@
 #include "amf_filter_plugin.hpp"
 #include <iostream>
 
-namespace amf { namespace openmedialib { 
+namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_amf( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_amf_stack( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring & );
 
@@ -19,7 +19,7 @@ extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( );
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( );
 
 // OML Filter plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_amf( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const pl::wstring & );
@@ -58,7 +58,7 @@ public:
 		if ( resource.find( L".svg" ) != pl::wstring::npos )
 			return create_input_librsvg( resource );
 		if ( resource.find( L"aml_stack:" ) == 0 || ( resource.find( L"=" ) == pl::wstring::npos && resource.find( L".aml" ) != pl::wstring::npos ) )
-			return create_input_amf_stack( resource );
+			return create_input_aml_stack( resource );
 		if ( resource.find( L"silence:" ) == 0 )
 			return create_input_silence( resource );
 		return ml::input_type_ptr( );
@@ -74,7 +74,7 @@ public:
 	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
 	{
 		if ( resource == L"aml" )
-			return create_amf( resource );
+			return create_aml( resource );
 		if ( resource == L"charcoal" )
 			return create_charcoal( resource );
 		if ( resource == L"chroma_key" )
@@ -143,13 +143,13 @@ extern "C"
 	
 	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new amf::openmedialib::plugin;
+		*plug = new aml::openmedialib::plugin;
 		return true;
 	}
 	
 	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< amf::openmedialib::plugin * >( plug ); 
+		delete static_cast< aml::openmedialib::plugin * >( plug ); 
 	}
 }
 

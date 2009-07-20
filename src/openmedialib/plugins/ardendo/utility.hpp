@@ -5,7 +5,7 @@
 #include <ostream>
 #include <boost/cstdint.hpp>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 boost::int64_t parse_int64( const std::string &, int base = 10 );
 boost::uint64_t parse_uint64( const std::string &, int base = 10 );

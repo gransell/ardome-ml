@@ -11,7 +11,7 @@
 #include "utility.hpp"
 #include <iostream>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 {

@@ -57,7 +57,7 @@ typedef audio< unsigned char, pcm16 > pcm16_audio_type;
 
 } } }
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 extern bool contains_sub_thread( ml::input_type_ptr input );
 extern void activate_sub_thread( ml::input_type_ptr input, int value );

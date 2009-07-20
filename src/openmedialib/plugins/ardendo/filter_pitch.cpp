@@ -35,7 +35,7 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 {

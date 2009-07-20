@@ -83,7 +83,7 @@ namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 namespace fs = boost::filesystem;
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 bool contains_sub_thread( ml::input_type_ptr input )
 {
@@ -2032,7 +2032,7 @@ class input_aml_stack : public ml::input_type
 		boost::shared_ptr< pcos::observer > obs_deferred_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_amf_stack( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring &resource )
 {
 	return ml::input_type_ptr( new input_aml_stack( resource ) );
 }

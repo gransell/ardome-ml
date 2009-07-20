@@ -10,7 +10,7 @@
 #include <sstream>
 using namespace std;
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 boost::int64_t parse_int64( const std::string &str, int base )
 {

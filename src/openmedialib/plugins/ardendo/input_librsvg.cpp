@@ -11,7 +11,7 @@
 
 #include <librsvg/rsvg.h>
 
-namespace amf { namespace openmedialib { 
+namespace aml { namespace openmedialib { 
 
 static boost::recursive_mutex mutex;
 
@@ -222,7 +222,7 @@ ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring &r
 
 #else
 
-namespace amf { namespace openmedialib { 
+namespace aml { namespace openmedialib { 
 
 ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & )
 {

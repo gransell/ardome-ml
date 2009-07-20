@@ -19,7 +19,7 @@
 
 #include <boost/cstdint.hpp>
 
-namespace amf 
+namespace aml 
 { 
     namespace openmedialib 
     {
@@ -180,7 +180,7 @@ namespace amf
     }
 }
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static boost::mutex audio_lock_;
 static boost::weak_ptr< ml::store_type > audio_store;
@@ -231,7 +231,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			, last_frame_shown_( )
 			, first_( true )
 		{
-			timer_ = amf::openmedialib::create_timer( );
+			timer_ = aml::openmedialib::create_timer( );
 
 			properties( ).append( prop_video_ = pl::wstring( L"sdl_video:" ) );
 			properties( ).append( prop_audio_ = pl::wstring( L"sdl_audio:" ) );
@@ -386,7 +386,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		double time_now( )
 		{
 			timer_->stop( );
-			amf::openmedialib::time_value tv = timer_->elapsed( );
+			aml::openmedialib::time_value tv = timer_->elapsed( );
             return double( tv.get_seconds( ) & 0xfffff ) + ( double( tv.get_micro_seconds( ) ) / 1000000 );
 		}
 
@@ -394,7 +394,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
 			if ( t > 0 )
 			{
-            	amf::openmedialib::time_value tv( boost::int64_t( t ), boost::int64_t( ( t - int( t ) ) * 1000000 ) );
+            	aml::openmedialib::time_value tv( boost::int64_t( t ), boost::int64_t( ( t - int( t ) ) * 1000000 ) );
 #				ifdef WIN32
 				// Windows timer seems to be inaccurate - for now, we'll rely on vsync
 				// and audio blocking to handle the sync
@@ -639,7 +639,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			}
 		}
 
-		amf::openmedialib::timer_ptr timer_;
+		aml::openmedialib::timer_ptr timer_;
 		pl::pcos::property prop_video_;
 		pl::pcos::property prop_audio_;
 		pl::pcos::property prop_keydown_;

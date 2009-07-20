@@ -47,7 +47,7 @@
 #include <list>
 #include <map>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static pl::pcos::key key_z_( pcos::key::from_string( "z" ) );
 static pl::pcos::key key_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) );

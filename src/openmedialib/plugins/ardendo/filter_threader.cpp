@@ -20,7 +20,7 @@
 #pragma warning(disable:4355)
 #endif
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static pl::pcos::key key_audio_reversed_ = pl::pcos::key::from_string( "audio_reversed" );
 

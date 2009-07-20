@@ -6,7 +6,7 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static pcos::key key_length_( pcos::key::from_string( "length" ) );
 

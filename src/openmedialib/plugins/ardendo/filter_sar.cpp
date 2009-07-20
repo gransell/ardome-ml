@@ -7,7 +7,7 @@
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_type
 {

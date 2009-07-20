@@ -12,7 +12,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace amf { namespace openmedialib {
+namespace aml { namespace openmedialib {
 
 static pl::pcos::key key_deferred_( pcos::key::from_string( "deferred" ) );
 static pl::pcos::key key_doc_( pcos::key::from_string( "doc" ) );

@@ -48,7 +48,7 @@ BEGIN
 		  VALUE "FileVersion", "0,0,0,0"
 		  VALUE "InternalName", "Ardome Media Framework (AMF)"
 		  VALUE "LegalCopyright", "Copyright © Vizrt 2008"
-		  VALUE "OriginalFilename", "openmedialib_amf_filter.dll"
+		  VALUE "OriginalFilename", "openmedialib_ardendo.dll"
 		  VALUE "ProductName", "Vizrt AMF Open Media Library Filters"
 		  VALUE "ProductVersion", "0,0,0,0"
         END
