@@ -134,7 +134,7 @@ static pl::pcos::key key_deferred_ = pl::pcos::key::from_string( "deferred" );
 static pl::pcos::key key_handled_ = pl::pcos::key::from_string( "handled" );
 static pl::pcos::key key_query_ = pl::pcos::key::from_string( "query" );
 static pl::pcos::key key_token_ = pl::pcos::key::from_string( "token" );
-static pl::pcos::key key_stdout_ = pl::pcos::key::from_string( "token" );
+static pl::pcos::key key_stdout_ = pl::pcos::key::from_string( "stdout" );
 static pl::pcos::key key_redirect_ = pl::pcos::key::from_string( "redirect" );
 
 static boost::regex numeric_syntax( "^((?:)|-|\\+)[[:digit:]]+((?:)|\\.[[:digit:]]+)$" );
@@ -336,6 +336,7 @@ static void op_slot( aml_stack * );
 static void op_recover( aml_stack * );
 
 // Debug operators
+static void op_available( aml_stack * );
 static void op_dump( aml_stack * );
 static void op_rdump( aml_stack * );
 static void op_tos( aml_stack * );
@@ -350,8 +351,9 @@ class aml_stack
 	public:
 		typedef void ( *operation )( aml_stack * );
 
-		aml_stack( ml::input_type *parent )
+		aml_stack( ml::input_type *parent, pl::pcos::property &prop_stdout )
 			: parent_( parent )
+			, prop_stdout_( prop_stdout )
 			, output_( 0 )
 			, inputs_( )
 			, words_( )
@@ -434,6 +436,7 @@ class aml_stack
 			operations_[ L"slot" ] = op_slot;
 			operations_[ L"recover" ] = op_recover;
 
+			operations_[ L"available" ] = op_available;
 			operations_[ L"dump" ] = op_dump;
 			operations_[ L"rdump" ] = op_rdump;
 			operations_[ L"tos" ] = op_tos;
@@ -864,7 +867,7 @@ class aml_stack
 		void flush( )
 		{
 			if( parent_->properties( ).get_property_with_key( key_redirect_ ).value< int >( ) )
-				parent_->properties( ).get_property_with_key( key_stdout_ ) = output_->str( );
+				prop_stdout_.set( output_->str( ) );
 			else
 				std::cout << output_->str( );
 			output_->str( "" );
@@ -1111,6 +1114,7 @@ class aml_stack
 		}
 
 		ml::input_type *parent_;
+		pl::pcos::property &prop_stdout_;
 		std::ostringstream *output_;
 		std::deque < ml::input_type_ptr > inputs_;
 		std::deque < ml::input_type_ptr > rstack_;
@@ -1548,6 +1552,63 @@ static void op_rdepth( aml_stack *stack )
 	stack->push( double( stack->rstack_.size( ) ) );
 }
 
+struct ml_query_traits : public pl::default_query_traits
+{
+	ml_query_traits( const pl::wstring &type )
+		: type_( type )
+	{ }
+		
+	pl::wstring libname( ) const
+	{ return pl::wstring( L"openmedialib" ); }
+
+	pl::wstring type( ) const
+	{ return pl::wstring( type_ ); }
+
+	const pl::wstring type_;
+};
+
+static void query_type( aml_stack *stack, pl::wstring type )
+{
+	typedef pl::discovery< ml_query_traits > discovery;
+	ml_query_traits query( type );
+	discovery plugins( query );
+
+	( *stack->output_ ) << pl::to_string( type ) << ":" << std::endl << std::endl;
+
+	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
+	{
+		std::vector< pl::wstring > files = ( *i ).filename( );
+		std::vector< pl::wstring > contents = ( *i ).extension( );
+		bool found = false;
+
+		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); f ++ )
+		{
+			if ( fs::exists( *f ) )
+			{
+				( *stack->output_ ) << pl::to_string( *f ) << " : ";
+				found = true;
+			}
+		}
+
+		if ( found )
+		{
+			for ( std::vector< pl::wstring >::iterator j = contents.begin( ); j != contents.end( ); j ++ )
+			{
+				( *stack->output_ ) << pl::to_string( *j ) << " ";
+			}
+			( *stack->output_ ) << std::endl;
+		}
+	}
+	( *stack->output_ ) << std::endl;
+}
+
+static void op_available( aml_stack *stack )
+{
+	query_type( stack, pl::wstring( L"input" ) );
+	query_type( stack, pl::wstring( L"filter" ) );
+	query_type( stack, pl::wstring( L"output" ) );
+}
+
 static void op_dump( aml_stack *stack )
 {
 	stack->debug( "dump" );
@@ -1882,14 +1943,14 @@ class input_aml_stack : public ml::input_type
 		
 		input_aml_stack( const pl::wstring &resource )
 			: input_type( )
-			, stack_( this )
+			, prop_stdout_( pcos::key::from_string( "stdout" ) )
+			, stack_( this, prop_stdout_ )
 			, stream_( )
 			, tos_( )
 			, resource_( resource )
 			, prop_command_( pcos::key::from_string( "command" ) )
 			, prop_result_( pcos::key::from_string( "result" ) )
 			, prop_redirect_( pcos::key::from_string( "redirect" ) )
-			, prop_stdout_( pcos::key::from_string( "stdout" ) )
 			, prop_deferred_( key_deferred_ )
 			, prop_threaded_( pcos::key::from_string( "threaded" ) )
 			, prop_query_( pcos::key::from_string( "query" ) )
@@ -1956,12 +2017,15 @@ class input_aml_stack : public ml::input_type
 				prop_result_ = pl::to_wstring( exc );
 			}
 
-			if ( prop_redirect_.value< int >( ) )
-				prop_stdout_ = stream_.str( );
-			else
-				std::cout << stream_.str( );
+			if ( stream_.str( ) != "" )
+			{
+				if ( prop_redirect_.value< int >( ) )
+					prop_stdout_ = stream_.str( );
+				else
+					std::cout << stream_.str( );
 
-			stream_.str( "" );
+				stream_.str( "" );
+			}
 		}
 
 		void defer_composites( ml::input_type_ptr filter, int defer )
@@ -2015,6 +2079,7 @@ class input_aml_stack : public ml::input_type
 		}
 
 	private:
+		pl::pcos::property prop_stdout_;
 		aml_stack stack_;
 		std::ostringstream stream_;
 		ml::input_type_ptr tos_;
@@ -2022,7 +2087,6 @@ class input_aml_stack : public ml::input_type
 		pl::pcos::property prop_command_;
 		pl::pcos::property prop_result_;
 		pl::pcos::property prop_redirect_;
-		pl::pcos::property prop_stdout_;
 		pl::pcos::property prop_deferred_;
 		pl::pcos::property prop_threaded_;
 		pl::pcos::property prop_query_;

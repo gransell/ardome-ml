@@ -37,11 +37,15 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/str_util.hpp>
+
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/registry.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 
 namespace fs = boost::filesystem;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openpluginlib {
 
@@ -141,12 +145,18 @@ namespace
 		{
 			if( refs == 1 )
 			{
-#	ifdef WIN32
-				el_reg.insert_std( plugins_path( ) );
-#	else
-				el_reg.insert_std( OPENIMAGELIB_PLUGINS );
-				el_reg.insert_std( OPENMEDIALIB_PLUGINS );
-#	endif
+				olib::t_string var( "AML_PATH" );
+
+				if ( cl::str_util::env_var_exists( var ) )
+				{
+					el_reg.insert_std( cl::str_util::get_env_var( var ) );
+				}
+				else
+				{
+					el_reg.insert_std( OPENIMAGELIB_PLUGINS );
+					el_reg.insert_std( OPENMEDIALIB_PLUGINS );
+				}
+
 				string_list ofx_paths = get_ofx_plugin_path( );
 				std::for_each( ofx_paths.begin( ), ofx_paths.end( ), boost::bind( &detail::registry::insert_std, boost::ref( el_reg ), _1 ) );
 			}

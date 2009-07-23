@@ -379,12 +379,7 @@ int main( int argc, char *argv[ ] )
         
     #else
 		setlocale(LC_CTYPE, "");
-		if ( getenv( "AML_PATH" ) ) {
-			pl::init( getenv( "AML_PATH" ) );
-		}
-		else {
-        	pl::init( );
-		}
+       	pl::init( );
     #endif
 
 	if ( argc > 1 )
@@ -419,6 +414,20 @@ int main( int argc, char *argv[ ] )
 		if ( result.value< pl::wstring >( ) != L"OK" )
 		{
 			std::cerr << pl::to_string( result.value< pl::wstring >( ) ) << std::endl;
+			return 1;
+		}
+
+		// Duplicate top of stack and dot it - if the duped input is <= 0 frames, then print
+		// the inputs title (if it exists), otherwise just exit here (supports commands which
+		// have no stack output [such as available] or are just a computation)
+		push = pl::wstring( L"0" );
+		push = pl::wstring( L"pick" );
+		push = pl::wstring( L"." );
+
+		if ( input->get_frames( ) <= 0 )
+		{
+			if ( input->fetch_slot( 0 ) )
+				std::cerr << pl::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
 			return 1;
 		}
 

@@ -27,17 +27,6 @@ if platform.system( ) == 'Linux':
 # ignored)
 full_path = os.path.join( os.getcwd( ), __file__ )
 
-# Determine the directory path to the plugins directory
-if platform.system() == 'Windows' or platform.system() == 'Microsoft':
-	if os.getenv( 'AML_PATH' ) == None:
-		dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ], 'bin', 'aml-plugins' )
-	else:
-		dir_path = os.getenv( 'AML_PATH' )
-elif platform.system( ) == 'Darwin':
-	dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ] )
-else:
-	dir_path = os.path.join( full_path.rsplit( os.sep, 4 )[ 0 ], 'ardome-ml', 'openmedialib', 'plugins' )
-
 # Initialisate openpluginlib
 import openpluginlib as pl
 import openimagelib as il
@@ -50,7 +39,7 @@ from thread_player import thread_player
 from thread_stack import thread_stack
 from thread_shell import thread_shell
 
-pl.init( dir_path )
+pl.init( )
 pl.set_log_level( -1 )
 
 def init( ):
