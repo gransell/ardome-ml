@@ -114,6 +114,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			, prop_box_( pcos::key::from_string( "box" ) )
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 			, prop_full_( pcos::key::from_string( "fullscreen" ) )
+			, prop_native_( pcos::key::from_string( "native" ) )
 			, mutex_( )
 		{
 			// Allow the specification of a window id
@@ -129,6 +130,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			properties( ).append( prop_keymod_ = 0 );
 			properties( ).append( prop_box_ = pl::wstring( L"fill" ) );
 			properties( ).append( prop_full_ = 0 );
+			properties( ).append( prop_native_ = 0.0 );
 
 			// 422 is best for os/x
 #ifdef __APPLE__
@@ -226,6 +228,13 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					default:
 						break;
 				}
+			}
+
+			if ( prop_native_.value< double >( ) > 0.0 )
+			{
+				prop_width_ = int( prop_native_.value< double >( ) * img->width( ) * last_sar_num_ / last_sar_den_ );
+				prop_height_ = int( prop_native_.value< double >( ) * img->height( ) );
+				prop_native_ = 0.0;
 			}
 
 			if ( default_width_ != prop_width_.value< int >( ) || default_height_ != prop_height_.value< int >( ) || default_full_ != prop_full_.value< int >( ) )
@@ -467,6 +476,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 		pcos::property prop_box_;
 		pcos::property prop_pf_;
 		pcos::property prop_full_;
+		pcos::property prop_native_;
 		boost::recursive_mutex mutex_;
 };
 
