@@ -41,7 +41,6 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ VOCAB_SHELL ][ '.' ] = self.dot
 		self.commands[ VOCAB_SHELL ][ 's.' ] = self.seek_dot
 		self.commands[ VOCAB_SHELL ][ 'clone' ] = self.clone
-		self.commands[ VOCAB_SHELL ][ 'available' ] = self.available
 		self.commands[ VOCAB_SHELL ][ 'filters' ] = self.filters
 		self.commands[ VOCAB_SHELL ][ 'inputs' ] = self.inputs
 		self.commands[ VOCAB_SHELL ][ 'stores' ] = self.stores
@@ -79,23 +78,6 @@ class thread_stack( stack, pl.observer ):
 		self.commands[ PLAYER_SHELL ] = self.registration.commands
 
 		self.next_op = []
-
-	def available( self ):
-		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
-		result = { }
-		for y in plugins:
-			if y.type( ) not in result.keys( ):
-				result[ y.type( ) ] = y.type( ) + '\n\n'
-			value = result[ y.type( ) ]
-			for f in y.filename( ):
-				if os.path.exists( str( f ) ):
-					value += str( f ) + ' '
-			value += ': '
-			for f in y.extension( ):
-				value += str( f ) + ' '
-			result[ y.type( ) ] = value + '\n'
-		for t in result.keys( ):
-			self.output( result[ t ] + '\n' )
 
 	def filters( self ):
 		plugins = pl.discovery( pl.all_query_traits( "openmedialib", "", "", 0 ) )
