@@ -13,6 +13,7 @@ extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const pl::wstring
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring & );
 
 // OML Store plugins
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( );
@@ -61,6 +62,8 @@ public:
 			return create_input_aml_stack( resource );
 		if ( resource.find( L"silence:" ) == 0 )
 			return create_input_silence( resource );
+		if ( resource.find( L"tone:" ) == 0 )
+			return create_input_tone( resource );
 		return ml::input_type_ptr( );
 	}
 

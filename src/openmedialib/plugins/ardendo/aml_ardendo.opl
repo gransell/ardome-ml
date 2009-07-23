@@ -2,7 +2,7 @@
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
 		<plugin name="Ardendo plugin" type="filter" extension='"aml", "charcoal", "chroma_key", "colour_space", "color_space", "compositor", "extract", "invert", "loop", "mono", "montage", "muxer", "mvitc_write", "mvitc_decode", "offset", "pitch", "sar", "step", "store", "tee", "threader", "title", "volume"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
-		<plugin name="Ardendo plugin" type="input" extension='"aml_stack:.*", ".*\.aml", "silence:", ".*\.svg", "svg:.*"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
+		<plugin name="Ardendo plugin" type="input" extension='"aml_stack:.*", ".*\.aml", "silence:", "tone:", ".*\.svg", "svg:.*"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
 		<plugin name="Ardendo plugin" type="output" extension='"null:", "preview:"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
 	</openmedialib>
 </openlibraries>

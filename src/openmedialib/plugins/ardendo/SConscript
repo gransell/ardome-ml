@@ -34,6 +34,7 @@ srcs = [ 'aml_ardendo.cpp',
          'input_aml_stack.cpp',
          'input_librsvg.cpp',
          'input_silence.cpp',
+         'input_tone.cpp',
          'store_null.cpp',
          'store_preview.cpp',
          'utility.cpp' ]
