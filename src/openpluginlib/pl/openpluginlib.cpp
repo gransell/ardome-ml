@@ -151,11 +151,13 @@ namespace
 				{
 					el_reg.insert_std( cl::str_util::to_string( cl::str_util::get_env_var( var ) ) );
 				}
+#ifndef WIN32
 				else
 				{
 					el_reg.insert_std( OPENIMAGELIB_PLUGINS );
 					el_reg.insert_std( OPENMEDIALIB_PLUGINS );
 				}
+#endif
 
 				string_list ofx_paths = get_ofx_plugin_path( );
 				std::for_each( ofx_paths.begin( ), ofx_paths.end( ), boost::bind( &detail::registry::insert_std, boost::ref( el_reg ), _1 ) );
