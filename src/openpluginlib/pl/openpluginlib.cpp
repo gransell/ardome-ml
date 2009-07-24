@@ -145,11 +145,11 @@ namespace
 		{
 			if( refs == 1 )
 			{
-				olib::t_string var( "AML_PATH" );
+				olib::t_string var( _CT("AML_PATH") );
 
 				if ( cl::str_util::env_var_exists( var ) )
 				{
-					el_reg.insert_std( cl::str_util::get_env_var( var ) );
+					el_reg.insert_std( cl::str_util::to_string( cl::str_util::get_env_var( var ) ) );
 				}
 				else
 				{
