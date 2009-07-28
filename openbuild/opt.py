@@ -43,6 +43,7 @@ def create_options( file, args ):
 
 	if target == 'osx':
 		opts.Add( 'install_name', 'Bundle install name', '@loader_path/../lib/' )
+		opts.Add( 'generate_xcode', 'Do not build. Generate XCode projects instead', 'no' )
 
 	return opts
 

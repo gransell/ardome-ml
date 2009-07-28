@@ -189,6 +189,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
 
 	def have_boost_python( self ):
+		if self['build_python'] != 'yes':
+			return False
 		clone = self.Clone( )
 		clone.prep_release( )
 		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
@@ -198,6 +200,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
+opts.Add( 'build_python', 'If we should build python', 'yes' )
 
 # Add bcomp to the python path so that we can use owl
 sys.path.append( os.path.join( os.getcwd( ), 'external' ) )
@@ -215,7 +218,7 @@ if env.check_externals( ):
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
-
+	
 	plugins = []
 	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
@@ -224,12 +227,12 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
-
+	
 	if env.have_boost_python( ):
 		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
 		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
 		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
-
+	
 	env.create_package( )
 	if env[ 'PLATFORM' ] != 'win32':
 		env.install_openbuild( )

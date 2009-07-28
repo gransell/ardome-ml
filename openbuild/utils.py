@@ -37,6 +37,12 @@ def vs() :
 			return a.split("=")[1]
 	return None
 
+def xcode() :
+	for a in sys.argv:
+		if 'generate_xcode=' in a and a.split("=")[1] == 'yes':
+			return True
+	return False
+
 def clean_path( str ):
 	tokens = str.split( os.sep )
 	result = ''
