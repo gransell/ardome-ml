@@ -95,13 +95,20 @@ def _add_build_configuration( target, target_type, env, pre=None ):
 			else:
 				libs_and_fmwks.append('-l' + l)
 		libs_and_fmwks.extend( ['-framework ' + f for f in fmwks] )
-		conf.build_settings()['OTHER_LDFLAGS'] = '(' + str(libs_and_fmwks).strip('[]').replace(', ', ',\n') + ',\n\'-undefined dynamic_lookup\',)'
+		conf.build_settings()['OTHER_LDFLAGS'] = '(' + str(libs_and_fmwks).strip('[]').replace(', ', ',\n') + ',\n\'-undefined dynamic_lookup\', -pthread, \"-fvisibility=default\")'
 	
 	if env.has_key('install_name'):
 		conf.build_settings()['INSTALL_PATH'] = '"' + env['install_name'] + '"'
 		
 	conf.build_settings()['CONFIGURATION_TEMP_DIR'] = str(os.path.join( env.root, env.subst( env[ 'build_prefix' ] ), 'tmp', env.relative_path ))
 	conf.build_settings()['CONFIGURATION_BUILD_DIR'] = str( os.path.join( env.root, env.subst( env[ stage_dir_map[target_type] ] ) ) )
+	
+	conf.build_settings()['GCC_INLINES_ARE_PRIVATE_EXTERN'] = 'NO'
+	conf.build_settings()['GCC_CW_ASM_SYNTAX'] = 'NO'
+	conf.build_settings()['GCC_ENABLE_PASCAL_STRINGS'] = 'NO'
+	conf.build_settings()['PREBINDING'] = 'NO'
+	conf.build_settings()['OTHER_CFLAGS'] = '(\"-pthread\", \"-fvisibility=default\")'
+	conf.build_settings()['OTHER_CPLUSPLUSFLAGS'] = '(\"-pthread\", \"-fvisibility=default\")'
 	
 	if env.debug:
 		conf.build_settings()['GCC_OPTIMIZATION_LEVEL'] = '0'
