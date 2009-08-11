@@ -6,8 +6,7 @@
 // generation. 
 //
 // The concept behind this input is to provide a general testing mechanism 
-// which will allow the generation and build of any static graph. It's modelled
-// after the jbatch functionality, but drops the python requirements. 
+// which will allow the generation and build of any static graph. 
 //
 // There are two modes of use. The RPN can be authored in a text file with a
 // .aml extension or the graph can be constructed interactively via the 
@@ -297,6 +296,7 @@ static void op_eval( aml_stack * );
 static void op_drop( aml_stack * );
 static void op_pick( aml_stack * );
 static void op_roll( aml_stack * );
+static void op_shift( aml_stack * );
 static void op_depth( aml_stack * );
 
 // Return stack operators
@@ -398,6 +398,7 @@ class aml_stack
 			operations_[ L"drop" ] = op_drop;
 			operations_[ L"pick" ] = op_pick;
 			operations_[ L"roll" ] = op_roll;
+			operations_[ L"shift" ] = op_shift;
 			operations_[ L"depth?" ] = op_depth;
 
 			operations_[ L">r" ] = op_rpush;
@@ -1495,6 +1496,21 @@ static void op_roll( aml_stack *stack )
 		ml::input_type_ptr temp = *b;
 		stack->inputs_.erase( b );
 		stack->push( temp );
+	}
+	else
+	{
+		throw std::string( "Stack underflow" );
+	}
+}
+
+static void op_shift( aml_stack *stack )
+{
+	int a = int( stack->pop_value( ) );
+	if ( a >= 0 && a < int( stack->inputs_.size( ) ) )
+	{
+		ml::input_type_ptr b = stack->pop( );
+		std::deque < ml::input_type_ptr >::iterator c = stack->inputs_.end( ) - a;
+		stack->inputs_.insert( c, b );
 	}
 	else
 	{
