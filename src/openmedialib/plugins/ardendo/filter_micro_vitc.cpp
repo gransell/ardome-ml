@@ -77,6 +77,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_mask_( pcos::key::from_string( "mask" ) )
 			, found_match_( false )
+			, tries_( 3 )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_mask_ = 1 );
@@ -115,7 +116,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 
 			il::image_type_ptr result = frame->get_image( );
 
-			if ( result )
+			if ( result && tries_ > 0 )
 			{
 				int value[ 2 ];
 				value[ 0 ] = 0;
@@ -144,11 +145,19 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 					frame->set_position( value[ 0 ] );
 					found_match_ = true;
 				}
+				else
+				{
+					tries_ --;
+				}
 
 				if ( found_match_ && prop_mask_.value< int >( ) )
 				{
 					boost::uint8_t *ptr = result->data( 0 );
 					memcpy( ptr, ptr + result->pitch( 0 ), result->pitch( 0 ) );
+				}
+				else if ( tries_ == 0 )
+				{
+					prop_enable_ = 0;
 				}
 			}
 		}
@@ -156,6 +165,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 		pcos::property prop_enable_;
 		pcos::property prop_mask_;
 		bool found_match_;
+		int tries_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const pl::wstring &resource )
