@@ -545,8 +545,11 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		virtual ~sdl_audio( )
 		{
-            scoped_lock lock( mutex_ );
-			flush( lock );
+			{
+				scoped_lock lock( mutex_ );
+				flush( lock );
+			}
+			SDL_PauseAudio(1);
 			SDL_CloseAudio( );
 		}
 
