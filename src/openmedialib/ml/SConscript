@@ -6,13 +6,14 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time' )
 
-object = local_env.shared_library( 'openmedialib_ml', [ 'filter.cpp', 'frame.cpp', 'ml.cpp', 'openmedialib_plugin.cpp', 'utilities.cpp', 'packet.cpp' ] )
+object = local_env.shared_library( 'openmedialib_ml', [ 'awi.cpp', 'filter.cpp', 'frame.cpp', 'ml.cpp', 'openmedialib_plugin.cpp', 'utilities.cpp', 'packet.cpp' ] )
 
 local_env.release( object )
 
 if local_env[ 'PLATFORM' ] != 'win32' :
 	local_env.copy_project_files( local_env[ 'ml_include' ], 
 		[ 	'audio.hpp', 
+			'awi.hpp', 
 			'config.hpp', 
 			'filter.hpp', 
 			'frame.hpp', 
