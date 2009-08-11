@@ -301,10 +301,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 							// Wait for the next frame arrival
 							if ( result == 0 && cache_.find( position ) == cache_.end( ) )
 							{
-                                boost::posix_time::time_duration ms;
-                                if( last_frame_ ) ms = boost::posix_time::milliseconds( int( 2000 * last_frame_->get_duration( ) ) );
-                                else ms = boost::posix_time::milliseconds(1000);
-                                if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
+								boost::posix_time::time_duration ms;
+								if( last_frame_ && speed_ == 1 && speed_ == old_speed ) 
+									ms = boost::posix_time::milliseconds( int( 2000 * last_frame_->get_duration( ) ) );
+								else 
+									ms = boost::posix_time::milliseconds(5000);
+								if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
 								{
 									result = last_frame_;
 									blank_audio = true;
