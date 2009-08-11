@@ -97,7 +97,10 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 				else if ( speed > 0.0 )
 				{
 					required = int( samples / speed );
-					result->set_fps( int( result->get_fps_num( ) * speed ), result->get_fps_den( ) );
+					boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * result->get_fps_num( ) ) * speed );
+					boost::int64_t d = boost::int64_t( 10000LL * result->get_fps_den( ) );
+					ml::remove_gcd( n, d );
+					result->set_fps( int( n ), int( d ) );
 				}
 				else
 				{
@@ -107,11 +110,13 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 
 				if ( samples != required )
 					change_pitch( result, required );
-
 			}
 			else if ( result && speed > 0.0 )
 			{
-				result->set_fps( int( result->get_fps_num( ) * speed ), result->get_fps_den( ) );
+				boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * result->get_fps_num( ) ) * speed );
+				boost::int64_t d = boost::int64_t( 10000LL * result->get_fps_den( ) );
+				ml::remove_gcd( n, d );
+				result->set_fps( int( n ), int( d ) );
 			}
 			else if ( result && ( result->get_fps_num( ) != num || result->get_fps_den( ) != den ) )
 			{
