@@ -23,6 +23,7 @@ static pl::pcos::key key_rx_( pcos::key::from_string( "rx" ) );
 static pl::pcos::key key_ry_( pcos::key::from_string( "ry" ) );
 static pl::pcos::key key_rw_( pcos::key::from_string( "rw" ) );
 static pl::pcos::key key_rh_( pcos::key::from_string( "rh" ) );
+static pl::pcos::key key_mix_( pcos::key::from_string( "mix" ) );
 static pl::pcos::key key_mode_( pcos::key::from_string( "mode" ) );
 static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
@@ -78,6 +79,8 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			, prop_lines_( pcos::key::from_string( "lines" ) )
 			, prop_mode_( pcos::key::from_string( "mode" ) )
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
+			, prop_frames_( pcos::key::from_string( "frames" ) )
+			, prop_step_( pcos::key::from_string( "step" ) )
 			, prop_r_( pcos::key::from_string( "r" ) )
 			, prop_g_( pcos::key::from_string( "g" ) )
 			, prop_b_( pcos::key::from_string( "b" ) )
@@ -89,6 +92,8 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			properties( ).append( prop_lines_ = 4 );
 			properties( ).append( prop_mode_ = pl::wstring( L"smart" ) );
 			properties( ).append( prop_deferred_ = 0 );
+			properties( ).append( prop_frames_ = 0 );
+			properties( ).append( prop_step_ = 1 );
 			properties( ).append( prop_r_ = 248 );
 			properties( ).append( prop_g_ = 118 );
 			properties( ).append( prop_b_ = 19 );
@@ -98,7 +103,15 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 		virtual bool requires_image( ) const { return true; }
 
 		virtual int get_frames( ) const
-		{ return 1; }
+		{
+			if ( prop_frames_.value< int >( ) > 0 )
+			{
+				ml::input_type_ptr input = fetch_slot( 0 );
+				if ( input )
+					return input->get_frames( );
+			}
+			return 1;
+		}
 
 		virtual const opl::wstring get_uri( ) const { return L"montage"; }
 
@@ -108,11 +121,22 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			acquire_values( );
 
 			result = result_frame_;
+
 			ml::input_type_ptr input = fetch_slot( );
 
 			if ( !result && input && input->get_frames( ) > 0 )
 			{
-				int length = input->get_frames( );
+				int position = ( get_position( ) / prop_step_.value< int >( ) ) * prop_step_.value< int >( );
+				int length = input->get_frames( ) / prop_step_.value< int >( );
+				int in = 0;
+				int out = length;
+
+				if ( prop_frames_.value< int >( ) > 0 )
+				{
+					length = prop_frames_.value< int >( );
+					in = position - ( length / 2 ) * prop_step_.value< int >( );
+					out = position + ( length / 2 + 1 ) * prop_step_.value< int >( );
+				}
 
 				int height = prop_height_.value< int >( ) * length;
 				int width = prop_width_.value< int >( );
@@ -175,37 +199,53 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 				pl::pcos::property w = composite->properties( ).get_property_with_key( key_rw_ );
 				pl::pcos::property h = composite->properties( ).get_property_with_key( key_rh_ );
 				pl::pcos::property m = composite->properties( ).get_property_with_key( key_mode_ );
+				pl::pcos::property mix = composite->properties( ).get_property_with_key( key_mix_ );
 
 				m = prop_mode_.value< pl::wstring >( );
 
-				for ( int position = 0; position < length; position ++ )
+				for ( int index = in, offset = 0; index < out; index += prop_step_.value< int >( ), offset ++ )
 				{
-					input->seek( position );
-					ml::frame_type_ptr fg = input->fetch( );
+					ml::frame_type_ptr fg;
+
+					if ( index < 0 || index >= input->get_frames( ) )
+						continue;
+
+					if ( frames_.find( index ) == frames_.end( ) )
+					{
+						input->seek( index );
+						frames_[ index ] = input->fetch( );
+					}
+
+					fg = ml::frame_type::shallow_copy( frames_[ index ] );
 
 					switch( prop_orient_.value< int >( ) )
 					{
 						case 1:
-							x = double( position * prop_width_.value< int >( ) ) / width;
+							x = double( offset * prop_width_.value< int >( ) ) / width;
 							y = 0.0;
 							w = double( prop_width_.value< int >( ) ) / width;
 							h = 1.0;
 							break;
 
 						case 2:
-							x = double( ( position % cols ) * prop_width_.value< int >( ) ) / width;
-							y = double( ( position / cols ) * prop_height_.value< int >( ) ) / height;
+							x = double( ( offset % cols ) * prop_width_.value< int >( ) ) / width;
+							y = double( ( offset / cols ) * prop_height_.value< int >( ) ) / height;
 							w = double( prop_width_.value< int >( ) ) / width;
 							h = double( prop_height_.value< int >( ) ) / height;
 							break;
 
 						default:
 							x = 0.0;
-							y = double( position * prop_height_.value< int >( ) ) / height;
+							y = double( offset * prop_height_.value< int >( ) ) / height;
 							w = 1.0;
 							h = double( prop_height_.value< int >( ) ) / height;
 							break;
 					}
+
+					if ( prop_frames_.value< int >( ) && index != position )
+						mix = 0.3;
+					else
+						mix = 1.0;
 
 					if ( prop_deferred_.value< int >( ) == 0 )
 					{
@@ -217,7 +257,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 						{
 							int cx = int( x.value< double >( ) * width + 0.5 );
 							int cy = int( y.value< double >( ) * height + 0.5 ) + prop_height_.value< int >( ) - prop_lines_.value< int >( );
-							int cw = int( ( double( position ) / ( length - 1 ) ) * prop_width_.value< int >( ) + 0.5 );
+							int cw = int( ( double( offset ) / ( length - 1 ) ) * prop_width_.value< int >( ) + 0.5 );
 
 							// Properties attached to result
 							pl::pcos::property prop_r( key_r_ );
@@ -238,6 +278,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 						assign( fg, key_w_, w.value< double >( ) );
 						assign( fg, key_h_, h.value< double >( ) );
 						assign( fg, key_mode_, prop_mode_.value< pl::wstring >( ) );
+						assign( fg, key_mix_, mix.value< double >( ) );
 						result->push( fg );
 					}
 				}
@@ -250,7 +291,10 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 					result->properties().append( slots = length + 1 );
 				}
 
-				result_frame_ = result;
+				if ( prop_frames_.value< int >( ) <= 0 )
+					result_frame_ = result;
+				else
+					result->set_position( get_position( ) );
 			}
 		}
 
@@ -287,10 +331,13 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 		pl::pcos::property prop_lines_;
 		pl::pcos::property prop_mode_;
 		pl::pcos::property prop_deferred_;
+		pl::pcos::property prop_frames_;
+		pl::pcos::property prop_step_;
 		pl::pcos::property prop_r_;
 		pl::pcos::property prop_g_;
 		pl::pcos::property prop_b_;
 		ml::frame_type_ptr result_frame_;
+		std::map< int, ml::frame_type_ptr > frames_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const pl::wstring &resource )
