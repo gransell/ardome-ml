@@ -211,6 +211,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
             , prop_ttn_( pcos::key::from_string( "ttn" ) )
             , prop_sync_( pcos::key::from_string( "sync" ) )
             , prop_preroll_( pcos::key::from_string( "preroll" ) )
+            , prop_keys_wanted_( pcos::key::from_string( "keys_wanted" ) )
 			, key_box_( pcos::key::from_string( "box" ) )
 			, key_deferrable_( pcos::key::from_string( "deferrable" ) )
 			, key_preroll_( pcos::key::from_string( "preroll" ) )
@@ -249,6 +250,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			properties( ).append( prop_ttn_ = 0 );
 			properties( ).append( prop_sync_ = 0 );
 			properties( ).append( prop_preroll_ = 1 );
+			properties( ).append( prop_keys_wanted_ = 1 );
 			prop_box_.attach( obs_box_ );
 			prop_grab_audio_.attach( obs_grab_audio_ );
 			prop_sync_.attach( obs_sync_ );
@@ -410,7 +412,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
             bool result = false;
 			{
-				if ( first_ && frame )
+				if ( first_ && frame && frame->get_image( ) )
 				{
 					video_->push( frame );
 					first_ = false;
@@ -539,7 +541,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 						prop_ttn_ = 0;
 				}
 
-				if ( video_ )
+				if ( video_ && prop_keys_wanted_.value< int >( ) )
 				{
 					pl::pcos::property keydown = video_->properties( ).get_property_with_key( key_keydown_ );
 					if ( keydown.valid( ) )
@@ -601,9 +603,12 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		bool video_push( ml::frame_type_ptr frame )
 		{
 			scoped_lock lock( video_mutex_ );
-			last_frame_shown_ = frame;
-            bool result = video_->push( frame );
-			return result;
+			if ( frame && frame->get_image( ) )
+			{
+				last_frame_shown_ = frame;
+            	return video_->push( frame );
+			}
+			return true;
 		}
 
 		void pass_all_props( ml::store_type_ptr &store, std::string prefix )
@@ -656,6 +661,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
         pl::pcos::property prop_ttn_;
         pl::pcos::property prop_sync_;
         pl::pcos::property prop_preroll_;
+        pl::pcos::property prop_keys_wanted_;
 		pl::pcos::key key_box_;
 		pl::pcos::key key_deferrable_;
 		pl::pcos::key key_preroll_;
