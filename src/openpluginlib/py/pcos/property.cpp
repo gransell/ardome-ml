@@ -14,6 +14,7 @@
 #include <openpluginlib/py/py.hpp>
 #include <openimagelib/il/basic_image.hpp>
 #include <openmedialib/ml/input.hpp>
+#include <openmedialib/ml/store.hpp>
 #include <boost/cstdint.hpp>
 
 namespace opl	= olib::openpluginlib;
@@ -33,6 +34,7 @@ void ( pcos::property::*set_int_list )( const pcos::int_list& ) = &pcos::propert
 void ( pcos::property::*set_double_list )( const pcos::double_list& ) = &pcos::property::set<pcos::double_list>;
 void ( pcos::property::*set_image_type_ptr )( const il::image_type_ptr& ) = &pcos::property::set<il::image_type_ptr>;
 void ( pcos::property::*set_input_type_ptr )( const ml::input_type_ptr& ) = &pcos::property::set<ml::input_type_ptr>;
+void ( pcos::property::*set_store_type_ptr )( const ml::store_type_ptr& ) = &pcos::property::set<ml::store_type_ptr>;
 
 void back_reference_set( pcos::property* p, py::back_reference<int> x )
 {
@@ -57,6 +59,7 @@ pcos::double_list  ( pcos::property::*value_double_list )( ) const = &pcos::prop
 bool			   ( pcos::property::*value_bool )( ) const = &pcos::property::value<bool>;
 il::image_type_ptr ( pcos::property::*value_image_type_ptr )( ) const = &pcos::property::value<il::image_type_ptr>;
 ml::input_type_ptr ( pcos::property::*value_input_type_ptr )( ) const = &pcos::property::value<ml::input_type_ptr>;
+ml::store_type_ptr ( pcos::property::*value_store_type_ptr )( ) const = &pcos::property::value<ml::store_type_ptr>;
 std::vector< double > ( pcos::property::*value_double_vector )( ) const = &pcos::property::value< std::vector< double > >;
 
 bool			 ( pcos::property::*is_a_wstring )( ) const = &pcos::property::is_a<opl::wstring>;
@@ -72,6 +75,7 @@ bool			 ( pcos::property::*is_a_double_list )( ) const = &pcos::property::is_a<p
 bool			 ( pcos::property::*is_a_bool )( ) const = &pcos::property::is_a<bool>;
 bool			 ( pcos::property::*is_a_image_type_ptr )( ) const = &pcos::property::is_a<il::image_type_ptr>;
 bool			 ( pcos::property::*is_a_input_type_ptr )( ) const = &pcos::property::is_a<ml::input_type_ptr>;
+bool			 ( pcos::property::*is_a_store_type_ptr )( ) const = &pcos::property::is_a<ml::store_type_ptr>;
 bool			 ( pcos::property::*is_a_double_vector )( ) const = &pcos::property::is_a< std::vector< double > >;
 
 template < typename T > struct PyConvertTrait
@@ -163,6 +167,7 @@ void py_pcos_property()
 		.def( "set", set_wstring_list )
 		.def( "set", set_image_type_ptr )
 		.def( "set", set_input_type_ptr )
+		.def( "set", set_store_type_ptr )
 		.def( "set", back_reference_set )
 		.def( "set_from_string", &pcos::property::set_from_string )
 		.def( "value_as_wstring", value_wstring )
@@ -177,6 +182,7 @@ void py_pcos_property()
 		.def( "value_as_bool", value_bool )
 		.def( "value_as_image", value_image_type_ptr )
 		.def( "value_as_input", value_input_type_ptr )
+		.def( "value_as_store", value_store_type_ptr )
 		.def( "value_as_double_vector", value_double_vector )
 		.def( "is_a_wstring", is_a_wstring )
 		.def( "is_a_string", is_a_string )
@@ -191,6 +197,7 @@ void py_pcos_property()
 		.def( "is_a_bool", is_a_bool )
 		.def( "is_a_image", is_a_image_type_ptr )
 		.def( "is_a_input", is_a_input_type_ptr )
+		.def( "is_a_store", is_a_store_type_ptr )
 		.def( "is_a_double_vector", is_a_double_vector )
 		.def( "get_property", &pcos::property::get_property_with_string, py::return_value_policy< py::return_by_value >() )
 		.def( "get_property", &pcos::property::get_property_with_key, py::return_value_policy< py::return_by_value >() )
