@@ -26,6 +26,36 @@ namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml {
 
+// Locate the largest common denominator of a and b
+ML_DECLSPEC boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
+{
+	if(a < 0)
+		a = int( abs( a ) );
+	if(b < 0)
+		b = int( abs( b ) );
+	if ( b > a )
+	{
+		boost::int64_t t = a;
+		a = b;
+		b = t;
+	}
+	while ( a % b > 0 )
+	{
+		boost::int64_t t = a % b;
+		a = b;
+		b = t;
+	}
+	return b;
+}
+
+ML_DECLSPEC boost::int64_t remove_gcd( boost::int64_t &a, boost::int64_t &b )
+{
+	boost::int64_t f = gcd( a, b );
+	a /= f;
+	b /= f;
+	return f;
+}
+
 namespace
 {
 	inline float audio_convert_db( float db ) { return static_cast<float>(std::pow( 10.0, db / 20.0 )); }
@@ -38,28 +68,6 @@ namespace
 
 	inline boost::int64_t abs( boost::int64_t value )
 	{ return value < 0 ? - value : value; }
-	
-	// Locate the largest common denominator of a and b
-	boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
-	{
-		if(a < 0)
-			a = int( abs( a ) );
-		if(b < 0)
-			b = int( abs( b ) );
-		if ( b > a )
-		{
-			boost::int64_t t = a;
-			a = b;
-			b = t;
-		}
-		while ( a % b > 0 )
-		{
-			boost::int64_t t = a % b;
-			a = b;
-			b = t;
-		}
-		return b;
-	}
 	
 	int calculate_cycle_size(double frames_per_second, int samplefreq, double samples_per_frame, int &deficit)
 	{

@@ -10,8 +10,13 @@
 
 #include <deque>
 #include <openimagelib/il/utility.hpp>
+#include <boost/cstdint.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
+
+// Calculates the largest common denominator of the terms given
+ML_DECLSPEC boost::int64_t gcd( boost::int64_t a, boost::int64_t b );
+ML_DECLSPEC boost::int64_t remove_gcd( boost::int64_t &a, boost::int64_t &b );
 
 // Courtesy functions for quick input/output plugin look ups
 ML_DECLSPEC bool has_plugin_for( const openpluginlib::wstring &resource, const openpluginlib::wstring &type );
