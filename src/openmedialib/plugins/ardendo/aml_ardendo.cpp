@@ -11,6 +11,7 @@ namespace aml { namespace openmedialib {
 // OML Input plugins
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring & );
@@ -58,6 +59,8 @@ public:
 			return create_input_librsvg( resource );
 		if ( resource.find( L".svg" ) != pl::wstring::npos )
 			return create_input_librsvg( resource );
+		if ( resource.find( L".awi" ) != pl::wstring::npos )
+			return create_input_awi( resource );
 		if ( resource.find( L"aml_stack:" ) == 0 || ( resource.find( L"=" ) == pl::wstring::npos && resource.find( L".aml" ) != pl::wstring::npos ) )
 			return create_input_aml_stack( resource );
 		if ( resource.find( L"silence:" ) == 0 )
