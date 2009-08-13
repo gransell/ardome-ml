@@ -66,10 +66,29 @@ void awi_index::set( const awi_header &value )
 void awi_index::set( const awi_item &value )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	if ( items_.find( value.frame ) == items_.end( ) )
-		frames_ += value.frames;
-	items_[ value.frame ] = value;
-	offsets_[ value.offset ] = value;
+	if ( value.length != 0 )
+	{
+		if ( items_.size( ) == 0 )
+		{
+			awi_item dummy;
+			dummy.reserved = 0;
+			dummy.frames = value.frames;
+			dummy.frame = value.frame;
+			dummy.offset = 0;
+			dummy.length = value.offset + value.length;
+			items_[ 0 ] = dummy;
+			offsets_[ 0 ] = dummy;
+			frames_ += value.frames;
+		}
+		else
+		{
+			if ( items_.find( value.frame ) == items_.end( ) )
+				frames_ += value.frames;
+			items_[ value.frame ] = value;
+			if ( offsets_.find( value.offset ) == offsets_.end( ) )
+				offsets_[ value.offset ] = value;
+		}
+	}
 }
 
 // Set the footer record
@@ -423,7 +442,7 @@ bool awi_generator::enroll( boost::int32_t position, boost::int64_t offset )
 			position_ = position;
 			offset_ = offset;
 		}
-		else
+		else if ( offset != offset_ )
 		{
 			bool refresh = false;
 			awi_item item;
@@ -439,7 +458,7 @@ bool awi_generator::enroll( boost::int32_t position, boost::int64_t offset )
 			set( item );
 
 			if ( refresh )
-				current_ = -- items_.end( );
+				current_ = items_.end( ) != items_.begin( ) ?  -- items_.end( ) : items_.end( );
 
 			position_ = position;
 			offset_ = offset;
