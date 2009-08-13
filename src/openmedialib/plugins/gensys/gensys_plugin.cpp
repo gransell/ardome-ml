@@ -1703,7 +1703,14 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 					result = frame_type::deep_copy( map_.find( requested )->second );
 					if ( result && reseat_->has( samples ) )
+					{
 						result->set_audio( reseat_->retrieve( samples ) );
+					}
+					else if ( result )
+					{
+						result->set_audio( ml::audio_type_ptr( ) );
+						result->set_fps( fps_num, fps_den );
+					}
 
 					std::map< int, frame_type_ptr >::iterator iter = map_.begin( );
 					while( iter != map_.end( ) )
@@ -1711,8 +1718,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 						if ( iter->first < requested || iter->first > requested + 25 )
 						{
 							int index = iter->first;
-							iter ++;
+							int next = ( ++ iter )->first;
 							map_.erase( index );
+							iter = map_.find( next );
 						}
 						else
 						{
@@ -2044,13 +2052,14 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 				int in = prop_in_.value< int >( );
 				int out = prop_out_.value< int >( );
 				int position = get_position( ) % frames;
+				int temp = 0;
 
-				int count = sscanf( pl::to_string( value ).c_str( ), "%lf:%lf:%d:%d", &lower, &upper, &in, &out );
+				int count = sscanf( pl::to_string( value ).c_str( ), "%lf:%lf:%d:%d:%d", &lower, &upper, &in, &out, &temp );
 
 				if ( in < 0 || out < 0 )
 					correct_in_out( in, out, frames );
 
-				if ( count > 0 && position >= in && position <= out )
+				if ( temp == 0 && count > 0 && position >= in && position <= out )
 				{
 					if ( count >= 2 )
 						result = lower + ( double( position - in ) / double( out - in + 1 ) ) * ( upper - lower );
@@ -2058,6 +2067,21 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 						result = double( lower );
 
 					assign_property( props, target, result );
+				}
+				else if ( temp == 1 )
+				{
+					if ( in == out )
+					{
+						assign_property( props, target, double( upper ) );
+					}
+					else
+					{
+						double result = lower + ( double( in + 1 ) / double( out ) ) * ( upper - lower );
+						assign_property( props, target, result );
+						char temp[ 1024 ];
+						sprintf( temp, "%lf:%lf:%d:%d:%d", lower, upper, in + 1, out, 1 );
+						prop = pl::to_wstring( temp );
+					}
 				}
 				else if ( count == 0 )
 				{
