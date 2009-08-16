@@ -2177,9 +2177,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( error == 0 )
 				populate( );
 
-			// If the stream is deemed seekable, then we don't need the first_found logic
-			first_frame_ = !is_seekable_;
-
 			// Check for and create the timestamp correction filter graph
 			if ( prop_ts_filter_.value< opl::wstring >( ) != L"" )
 			{
@@ -2527,6 +2524,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					fps_num_ = 24000;
 					fps_den_ = 1001;
+				}
+				// HACK FOR 50:1 - TREAT AS PAL
+				else if ( fps_num_ == 50 && fps_den_ == 1 )
+				{
+					fps_num_ = 25;
+					fps_den_ = 1;
 				}
 			}
 			else if ( has_audio( ) )
@@ -2902,6 +2905,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				il::image_type_ptr image;
 
 				int error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, packet );
+
 				if ( error < 0 || !got_pict )
 				{
 					if ( aml_index_ && aml_index_->usable( ) )
@@ -2998,7 +3002,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( first_frame_ )
 			{
-				//first_found_ = position - get_position( );
+				first_found_ = position - get_position( );
 				first_frame_ = false;
 			}
 
