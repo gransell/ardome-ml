@@ -142,6 +142,12 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		virtual ~sdl_video( )
 		{
+			// Make sure we turn off full screen now
+			if ( prop_full_.value< int >( ) )
+			{
+				SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) );
+			}
+
 			SDL_FreeYUVOverlay( sdl_overlay_ );
 			sdl_overlay_ = 0;
 			SDL_FreeSurface( SDL_GetVideoSurface( ) );
@@ -243,7 +249,13 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				default_height_ = prop_height_.value< int >( );
 				default_full_ = prop_full_.value< int >( );
 				int full_flag = default_full_ ? SDL_FULLSCREEN : 0;
-				SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) | full_flag );
+				SDL_Surface *screen = SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) | full_flag );
+				if ( full_flag )
+				{
+					screen = SDL_SetVideoMode( screen->w, screen->h, 0, prop_flags_.value< int >( ) | full_flag );
+					prop_width_ = screen->w;
+					prop_height_ = screen->h;
+				}
 			}
 
 			lock_display( );
