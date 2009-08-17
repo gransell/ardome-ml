@@ -67,7 +67,7 @@ enum awi_state
 /// Index holder class - currently assumes v2. Allows look ups by position ->
 /// file offset and file offset -> position.
 
-class awi_index
+class ML_DECLSPEC awi_index
 {
 	public:
 		awi_index( );
@@ -102,7 +102,7 @@ class awi_index
 /// contiguous chunks (arbitary size) from a source and pass this to the 
 /// parse method.
 
-class awi_parser : public awi_index
+class ML_DECLSPEC awi_parser : public awi_index
 {
 	public:
 		awi_parser( );
@@ -131,7 +131,7 @@ class awi_parser : public awi_index
 /// method (which it can do periodically, or after each enroll and the close
 /// call to support growing file use).
 
-class awi_generator : public awi_index
+class ML_DECLSPEC awi_generator : public awi_index
 {
 	public:
 		awi_generator( );
