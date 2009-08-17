@@ -30,9 +30,9 @@ namespace olib { namespace openmedialib { namespace ml {
 ML_DECLSPEC boost::int64_t gcd( boost::int64_t a, boost::int64_t b )
 {
 	if(a < 0)
-		a = int( abs( a ) );
+		a = int( abs( static_cast<long>(a) ) );
 	if(b < 0)
-		b = int( abs( b ) );
+		b = int( abs( static_cast<long>(b) ) );
 	if ( b > a )
 	{
 		boost::int64_t t = a;
