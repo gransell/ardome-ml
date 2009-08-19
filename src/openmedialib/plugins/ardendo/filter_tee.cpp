@@ -57,7 +57,14 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 				for ( size_t i = 1; i < slot_count( ); i ++ )
 				{
 					fetch_slot( i )->seek( get_position( ) );
-					fetch_slot( i )->fetch( );
+					ml::frame_type_ptr fr = fetch_slot( i )->fetch( );
+					if (fr->in_error())
+					{
+						for (int i=0; i<fr->exceptions().size(); i++)
+						{
+							result->push_exception(fr->exceptions()[i].first, fr->exceptions()[i].second);
+						}
+					}
 				}
 			}
 
