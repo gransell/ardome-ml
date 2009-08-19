@@ -191,6 +191,10 @@ namespace olib
                 const xerces_sax_handler_ptr& saxh  ) 
                 : m_crate_inner_xml(false), m_parser(saxh)
         {
+            //Reserve some space to avoid reallocations
+            //for short strings
+            m_char_buffer.reserve(100);
+
             ARENFORCE(m_parser);
             m_parser->register_handlers( *this, L2(""));
         }
@@ -348,19 +352,16 @@ namespace olib
 
         void xerces_sax_traverser::characters(const XMLCh* const chars, const unsigned int length)
         {
-            if(m_crate_inner_xml ) stream_xml_content(chars, length);
+            if(m_crate_inner_xml )
+            {
+                stream_xml_content(chars, length);
+            }
             else
             {
-                parse_handler_map::const_iterator fit = m_handlers.find( m_state );
-                if(fit != m_handlers.end())
-                {
-                    traverse_state st( 0, chars, length, this, xml_location::element_content );
-					std::list<parse_handler>::const_iterator iter = fit->second.begin();
-					for ( ;iter != fit->second.end(); iter++)
-					{
-						(*iter)(st);
-					}
-                }
+                //Add the characters to the intermediate buffer
+                //Any client callbacks will be called when the
+                //end element is found.
+                m_char_buffer.append(chars, length);
             } 
         }
 
@@ -385,6 +386,27 @@ namespace olib
             }
             else
             {
+                //Since we reached the end element, we know that
+                //what is in the intermediate buffer is the entire
+                //string, so we now invoke all element_content callbacks.
+                if (!m_char_buffer.empty())
+                {
+                    parse_handler_map::const_iterator fit = m_handlers.find( m_state );
+                    if(fit != m_handlers.end())
+                    {
+                        traverse_state st( 0, m_char_buffer.c_str(), m_char_buffer.size(), this, xml_location::element_content );
+                        std::list<parse_handler>::const_iterator iter = fit->second.begin();
+                        for ( ;iter != fit->second.end(); iter++)
+                        {
+                            (*iter)(st);
+                        }
+                    }
+
+                    m_char_buffer.clear();
+                }
+
+
+                //Invoke the element_end callbacks
                 parse_handler_map::const_iterator fit = m_handlers.find( m_state );
                 if(fit != m_handlers.end())
                 {

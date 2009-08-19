@@ -337,6 +337,15 @@ namespace olib
             bool m_crate_inner_xml;
             t_stringstream m_xml_data;
             xerces_sax_handler_ptr m_parser;
+
+            /************************************************************************/
+            /* The Xerces SAX Parser can split up character strings into chunks at
+            /* newlines, some escape sequences and because of internal buffer limits .
+            /* Requiring every callback handler to compensate for this would be 
+            /* impractical, so we accumulate all character chunks and send the 
+            /* complete string to the callback.
+            /************************************************************************/
+            xerces_string m_char_buffer;
             
             sax_parser_ptr create_traverser( const schema_map& schemas );
             sax_parser_ptr m_traverser;
