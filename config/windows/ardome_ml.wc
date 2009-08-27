@@ -1,7 +1,7 @@
 import os
  
 def flags( env, prefix ):
-	#env.requires( 'xerces' )
+	env.requires( 'xerces' )
 
 	env.Append( CPPPATH = [ os.path.join( prefix, 'include', 'ardome-ml' ) ] )
 	env.Append( CPPDEFINES = [ 'OPENMEDIALIB_BUILD', 'OPENPLUGINLIB_BUILD', 'OPENIMAGELIB_BUILD' ] )
