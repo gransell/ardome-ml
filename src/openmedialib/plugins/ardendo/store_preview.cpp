@@ -432,7 +432,12 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				if ( position - last_position_ != last_speed_ )
                 	last_speed_ = position - last_position_;
 
-				if ( !prop_timed_.value< int >( ) && next_image_ != 0.0 )
+				if ( prop_preroll_.value< int >( ) == 1 )
+				{
+					if ( last_speed_ == 0 )
+						time_sleep( duration( frame ) );
+				}
+				else if ( !prop_timed_.value< int >( ) && next_image_ != 0.0 )
 				{
 					double diff = next_image_ - time_now( );
 					time_sleep( diff );
