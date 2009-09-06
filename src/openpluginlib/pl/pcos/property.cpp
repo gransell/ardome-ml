@@ -13,6 +13,12 @@
 #include <openpluginlib/pl/pcos/property_container.hpp>
 #include <openpluginlib/pl/pcos/any.hpp>
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/str_util.hpp>
+#include <opencorelib/cl/assert_defines.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/minimal_string_defines.hpp>
+
 #include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 
@@ -213,7 +219,16 @@ template < typename T > T property::value() const
 		return T();
 	}
 
-	return any_cast< T >( impl_->value );
+	try
+	{
+		return any_cast< T >( impl_->value );
+	}
+	catch( olib::openpluginlib::pcos::bad_any_cast &e )
+	{
+		ARENFORCE_MSG( false, olib::opencorelib::str_util::to_t_string( std::string( e.what( ) ) ) + _CT( " " ) + olib::opencorelib::str_util::to_t_string( impl_->key_.as_string( ) ) );
+	}
+
+	return T();
 }
 
 template < typename T > T* property::pointer( ) const
