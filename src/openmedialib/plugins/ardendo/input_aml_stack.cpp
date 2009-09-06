@@ -1599,7 +1599,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); f ++ )
 		{
-			if ( fs::exists( *f ) )
+			if ( fs::exists( pl::to_string( *f ) ) )
 			{
 				( *stack->output_ ) << pl::to_string( *f ) << " : ";
 				found = true;
