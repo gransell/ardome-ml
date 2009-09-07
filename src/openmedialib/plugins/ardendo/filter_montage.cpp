@@ -243,7 +243,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 					}
 
 					if ( prop_frames_.value< int >( ) && index != position )
-						mix = 0.3;
+						mix = 0.5;
 					else
 						mix = 1.0;
 
