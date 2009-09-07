@@ -15,7 +15,7 @@ class aml_index
 		virtual void read( ) = 0;
 
 		/// Find the byte position for the position
-		virtual int64_t find( int position ) = 0;
+		virtual boost::int64_t find( int position ) = 0;
 
 		/// Return the number of frames as reported by the index
 		/// Note that if we have not reached the eof, there is a chance that the index won't
