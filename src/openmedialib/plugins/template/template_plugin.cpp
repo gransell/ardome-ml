@@ -7,6 +7,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/awi.hpp>
 
 #ifdef WIN32
 #include <windows.h>
@@ -117,26 +118,41 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 		packets_store( const pl::wstring &name, const frame_type_ptr &frame ) 
 			: store_type( )
 			, name_( name )
-			, output_( NULL )
+			, output_( 0 )
+			, index_( 0 )
+			, count_( 0 )
 		{
-			if ( frame && frame->get_packet( ) )
+			if ( frame && ( frame->get_packet( ) || frame->get_stream( ) ) )
 			{
 				if ( name_.find( L"packets:" ) == 0 )
 					name_ = name_.substr( 8 );
 				output_ = fopen( pl::to_string( name_ ).c_str( ), "wb" );
+				if ( frame->get_stream( ) )
+					index_ = fopen( pl::to_string( name_ + L".awi" ).c_str( ), "wb" );
 			}
 		}
 
 		virtual ~packets_store( )
 		{
-			if ( output_ )
-				fclose( output_ );
 		}
 
 		virtual bool push( frame_type_ptr frame )
 		{
 			bool result = false;
-			if ( output_ && frame->get_packet( ) )
+			if ( output_ && frame->get_stream( ) )
+			{
+				if ( index_ && frame->get_stream( )->key( ) == frame->get_stream( )->position( ) )
+				{
+					generator_.enroll( count_, ftell( output_ ) );
+					std::vector< boost::uint8_t > buffer;
+					generator_.flush( buffer );
+					fwrite( &buffer[ 0 ], buffer.size( ), 1, index_ );
+				}
+				stream_type_ptr pkt = frame->get_stream( );
+				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
+				count_ ++;
+			}
+			else if ( output_ && frame->get_packet( ) )
 			{
 				packet_type_ptr pkt = frame->get_packet( );
 				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
@@ -148,11 +164,27 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 		{ return frame_type_ptr( ); }
 
 		virtual void complete( )
-		{ }
+		{
+			if ( index_ )
+			{
+				generator_.close( count_, ftell( output_ ) );
+				std::vector< boost::uint8_t > buffer;
+				generator_.flush( buffer );
+				fwrite( &buffer[ 0 ], buffer.size( ), 1, index_ );
+				fclose( index_ );
+			}
+			if ( output_ )
+				fclose( output_ );
+			index_ = 0;
+			output_ = 0;
+		}
 
 	private:
 		pl::wstring name_;
 		FILE *output_;
+		FILE *index_;
+		awi_generator generator_;
+		int count_;
 };
 
 class ML_PLUGIN_DECLSPEC template_filter : public filter_type
