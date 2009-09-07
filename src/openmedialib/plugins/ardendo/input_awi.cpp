@@ -67,7 +67,7 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 					if ( video->init( ) )
 					{
 						ml::frame_type_ptr sample = video->fetch( );
-						if ( sample && sample->get_image( ) )
+						if ( sample && sample->has_image( ) )
 							sample->get_fps( num, den );
 						audio->property( "fps_num" ) = num;
 						audio->property( "fps_den" ) = den;
@@ -75,9 +75,11 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 
 					if ( audio->init( ) )
 					{
+						ml::filter_type_ptr avdecode = ml::create_filter( L"avdecode" );
 						ml::filter_type_ptr mvitc = ml::create_filter( L"mvitc_decode" );
 						ml::filter_type_ptr muxer = ml::create_filter( L"muxer" );
-						mvitc->connect( video );
+						avdecode->connect( video );
+						mvitc->connect( avdecode );
 						muxer->connect( mvitc, 0 );
 						muxer->connect( audio, 1 );
 						internal_ = muxer;
@@ -99,8 +101,10 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 					{
 						video_streams_ = input->get_video_streams( );
 						audio_streams_ = input->get_audio_streams( );
+						ml::filter_type_ptr avdecode = ml::create_filter( L"avdecode" );
 						ml::filter_type_ptr mvitc = ml::create_filter( L"mvitc_decode" );
-						mvitc->connect( input );
+						avdecode->connect( input );
+						mvitc->connect( avdecode );
 						internal_ = mvitc;
 					}
 				}
