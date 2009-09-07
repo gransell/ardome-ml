@@ -280,7 +280,7 @@ class stream_queue
 
 typedef boost::shared_ptr< stream_queue > stream_queue_ptr;
 
-class ML_DECLSPEC frame_avformat : public ml::frame_type 
+class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type 
 {
 	public:
 		/// Constructor
