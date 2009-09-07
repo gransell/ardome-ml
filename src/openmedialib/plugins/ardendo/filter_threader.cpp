@@ -269,33 +269,49 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 						while( cache_.size( ) && result == 0 )
 						{
+							bool made_space = false;
+
+							// Remove least likely to be used from cache
+							while ( speed_ != 0 && static_cast<int>(cache_.size( )) >= prop_queue_.value< int >( ) / 2 )
+							{
+								std::map< int, ml::frame_type_ptr >::iterator remove = cache_.end( );
+								std::map< int, ml::frame_type_ptr >::iterator min = cache_.begin( );
+								std::map< int, ml::frame_type_ptr >::iterator max = -- cache_.end( );
+
+								if ( speed_ < 0 && max->first > position )
+									remove = max;
+								else if ( speed_ > 0 && min->first < position - ( prop_queue_.value< int >( ) / 4 ) )
+									remove = min;
+
+								if ( speed_ > 0 && get_position( ) <= remove->first )
+									break;
+
+								if ( speed_ < 0 && get_position( ) >= remove->first )
+									break;
+
+								if ( remove != cache_.end( ) )
+								{
+									PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Removing %d at %d" ) % remove->first % speed_ );
+									cache_.erase( remove );
+									made_space = true;
+								}
+								else
+								{
+									break;
+								}
+							}
+
+							if ( made_space )
+								cond_.notify_all( );
+
 							// Determine current, min and max
 							std::map< int, ml::frame_type_ptr >::iterator res = cache_.find( position );
-							std::map< int, ml::frame_type_ptr >::iterator min = cache_.begin( );
-							std::map< int, ml::frame_type_ptr >::iterator max = -- cache_.end( );
 
 							// If we have a match, dereference now
 							if ( res != cache_.end( ) )
 							{
 								result = res->second;
 								PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Found %d" ) % result->get_position( ) );
-							}
-
-							// Remove least likely to be used from cache
-							if ( static_cast<int>(cache_.size( )) >= prop_queue_.value< int >( ) )
-							{
-								std::map< int, ml::frame_type_ptr >::iterator remove = cache_.end( );
-								if ( speed_ < 0 && max->first > position )
-									remove = max;
-								else if ( speed_ > 0 && min->first < position - ( prop_queue_.value< int >( ) / 4 ) )
-									remove = min;
-
-								if ( remove != cache_.end( ) )
-								{
-									PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Removing %d" ) % remove->first );
-									cache_.erase( remove );
-									cond_.notify_all( );
-								}
 							}
 
 							// Wait for the next frame arrival
@@ -306,7 +322,14 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 									ms = boost::posix_time::milliseconds( int( 2000 * last_frame_->get_duration( ) ) );
 								else 
 									ms = boost::posix_time::milliseconds(5000);
-								if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
+
+								res = cache_.find( position );
+								if ( res != cache_.end( ) )
+								{
+									result = res->second;
+									PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Found %d" ) % result->get_position( ) );
+								}
+								else if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
 								{
 									result = last_frame_;
 									blank_audio = true;
@@ -733,6 +756,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 				// Check for a sub thread - disable reverse reading if we do
 				bool forward = has_sub_thread_ || speed > 0 || speed <= -4;
+				forward = true;
 
 				// Vars for handling reverse play
 				bool reverse = false;
