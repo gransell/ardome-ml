@@ -44,6 +44,7 @@ frame_type_ptr frame_type::shallow_copy( const frame_type_ptr &other )
 			typedef audio< unsigned char, pcm16 > pcm16;
 			audio_type *aud = new audio_type( pcm16( other->audio_->frequency( ), other->audio_->channels( ), other->audio_->samples( ) ) );
 			memcpy( aud->data( ), other->audio_->data( ), aud->size( ) );
+			aud->set_position( other->audio_->position( ) );
 			copy->audio_ = ml::audio_type_ptr( aud );
 		}
 		copy->pts_ = other->pts_;
@@ -78,6 +79,7 @@ frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
 			typedef audio< unsigned char, pcm16 > pcm16;
 			audio_type *aud = new audio_type( pcm16( other->audio_->frequency( ), other->audio_->channels( ), other->audio_->samples( ) ) );
 			memcpy( aud->data( ), other->audio_->data( ), aud->size( ) );
+			aud->set_position( other->audio_->position( ) );
 			copy->audio_ = ml::audio_type_ptr( aud );
 		}
 		copy->pts_ = other->pts_;
@@ -107,6 +109,9 @@ bool frame_type::has_audio( )
 {
 	return audio_ != audio_type_ptr( );
 }
+
+void frame_type::set_stream( stream_type_ptr stream ) { stream_ = stream; }
+stream_type_ptr frame_type::get_stream( ) { return stream_; }
 
 void frame_type::set_packet( packet_type_ptr packet ) { packet_ = packet; }
 packet_type_ptr frame_type::get_packet( ) { return packet_; }

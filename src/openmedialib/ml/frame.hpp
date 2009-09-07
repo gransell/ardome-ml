@@ -26,6 +26,26 @@ class ML_DECLSPEC frame_type
 		/// Constructor
 		explicit frame_type( );
 
+		/// Copy constructor from a frame_type_ptr
+		frame_type( frame_type_ptr other )
+			: properties_( other->properties_ )
+			, stream_( other->stream_ )
+			, packet_( other->packet_ )
+			, image_( other->image_ )
+			, alpha_( other->alpha_ )
+			, audio_( other->audio_ )
+			, pts_( other->pts_ )
+			, position_( other->position_ )
+			, duration_( other->duration_ )
+			, sar_num_( other->sar_num_ )
+			, sar_den_( other->sar_den_ )
+			, fps_num_( other->fps_num_ )
+			, fps_den_( other->fps_den_ )
+			, queue_( other->queue_ )
+			, exceptions_( other->exceptions_ )
+		{
+		}
+
 		/// Destructor
 		virtual ~frame_type( );
 
@@ -57,6 +77,12 @@ class ML_DECLSPEC frame_type
 
 		/// Set the image associated to the frame.
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image );
+
+		/// Set the packet associated to the frame.
+		virtual void set_stream( olib::openmedialib::ml::stream_type_ptr );
+
+		/// Get the packet associated to the frame.
+		virtual olib::openmedialib::ml::stream_type_ptr get_stream( );
 
 		/// Set the packet associated to the frame.
 		virtual void set_packet( olib::openmedialib::ml::packet_type_ptr );
@@ -161,8 +187,9 @@ class ML_DECLSPEC frame_type
 		/// Indicates if the frame is deferred
 		bool is_deferred( ) const { return queue_.size( ) > 0; }
 
-	private:
+	protected:
 		olib::openpluginlib::pcos::property_container properties_;
+		olib::openmedialib::ml::stream_type_ptr stream_;
 		olib::openmedialib::ml::packet_type_ptr packet_;
 		olib::openimagelib::il::image_type_ptr image_;
 		olib::openimagelib::il::image_type_ptr alpha_;

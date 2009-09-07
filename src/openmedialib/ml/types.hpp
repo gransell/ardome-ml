@@ -11,24 +11,39 @@
 namespace olib { namespace openmedialib { namespace ml {
 
 class ML_DECLSPEC frame_type;
-class ML_DECLSPEC packet_type;
+class ML_DECLSPEC stream_type;
 class ML_DECLSPEC input_type;
 class ML_DECLSPEC filter_type;
 class ML_DECLSPEC store_type;
+
+// Being replaced by stream_type
+class ML_DECLSPEC packet_type;
 class ML_DECLSPEC packet_decoder;
 class ML_DECLSPEC packet_encoder;
 
 typedef ML_DECLSPEC boost::shared_ptr< frame_type > frame_type_ptr;
-typedef ML_DECLSPEC boost::shared_ptr< packet_type > packet_type_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< stream_type > stream_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< input_type > input_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< filter_type > filter_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< store_type > store_type_ptr;
+
+// Being replaced by stream_type_ptr and associated filters
+typedef ML_DECLSPEC boost::shared_ptr< packet_type > packet_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< packet_decoder > packet_decoder_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< packet_encoder > packet_encoder_ptr;
 
 typedef ML_DECLSPEC boost::shared_ptr< std::exception > exception_ptr;
 typedef ML_DECLSPEC std::pair< exception_ptr, input_type_ptr > exception_item;
 typedef ML_DECLSPEC std::vector< exception_item > exception_list;
+
+/// AWI definitions
+class ML_DECLSPEC awi_index;
+class ML_DECLSPEC awi_parser;
+class ML_DECLSPEC awi_generator;
+
+typedef ML_DECLSPEC boost::shared_ptr< awi_index > awi_index_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_parser > awi_parser_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_generator > awi_generator_ptr;
 
 /// Used to return frame rate and sample aspect ratio
 struct fraction
