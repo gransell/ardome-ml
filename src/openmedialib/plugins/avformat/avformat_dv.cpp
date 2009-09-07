@@ -60,13 +60,16 @@ class ML_PLUGIN_DECLSPEC avformat_decoder : public ml::packet_decoder
 
 				if ( avcodec_decode_video( context, frame, &got, pkt->bytes( ), pkt->length( ) ) >= 0 )
 				{
-					const PixelFormat fmt = context->pix_fmt;
-					const int width = context->width;
-					const int height = context->height;
-					image = convert_to_oil( frame, fmt, width, height );
-					av_free( frame );
+					if ( got )
+					{
+						const PixelFormat fmt = context->pix_fmt;
+						const int width = context->width;
+						const int height = context->height;
+						image = convert_to_oil( frame, fmt, width, height );
+					}
 				}
 
+				av_free( frame );
 				release( context );
 			}
 
