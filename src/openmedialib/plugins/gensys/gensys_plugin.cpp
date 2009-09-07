@@ -1955,9 +1955,11 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 	public:
 		lerp_filter( )
 			: filter_type( )
+			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_in_( pcos::key::from_string( "in" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
 		{
+			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_out_ = -1 );
 		}
@@ -1978,13 +1980,16 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			{
 				input->seek( get_position( ) );
 				result = input->fetch( );
-				pcos::key_vector keys = properties( ).get_keys( );
-				std::sort( keys.begin( ), keys.end( ), key_sort );
-				int frames = get_frames( );
-				pcos::property_container input_props = properties( );
-				pcos::property_container &frame_props = result->properties( );
-				for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); it ++ )
-					evaluate( frame_props, input_props, *it, frames );
+				if ( prop_enable_.value< int >( ) )
+				{
+					pcos::key_vector keys = properties( ).get_keys( );
+					std::sort( keys.begin( ), keys.end( ), key_sort );
+					int frames = get_frames( );
+					pcos::property_container input_props = properties( );
+					pcos::property_container &frame_props = result->properties( );
+					for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); it ++ )
+						evaluate( frame_props, input_props, *it, frames );
+				}
 			}
 		}
 
@@ -2090,6 +2095,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 			}
 		}
 
+		pcos::property prop_enable_;
 		pcos::property prop_in_;
 		pcos::property prop_out_;
 };
