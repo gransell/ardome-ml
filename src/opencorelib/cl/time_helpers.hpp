@@ -7,7 +7,7 @@
 #include <opencorelib/cl/minimal_string_defines.hpp>
 
 #include <boost/operators.hpp>
-#include <boost/thread/xtime.hpp>
+#include <boost/thread/thread_time.hpp>
 
 #include "./core_enums.hpp"
 
