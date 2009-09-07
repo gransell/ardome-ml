@@ -68,26 +68,11 @@ void awi_index::set( const awi_item &value )
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	if ( value.length != 0 )
 	{
-		if ( items_.size( ) == 0 )
-		{
-			awi_item dummy;
-			dummy.reserved = 0;
-			dummy.frames = value.frames;
-			dummy.frame = value.frame;
-			dummy.offset = 0;
-			dummy.length = value.offset + value.length;
-			items_[ 0 ] = dummy;
-			offsets_[ 0 ] = dummy;
+		if ( items_.find( value.frame ) == items_.end( ) )
 			frames_ += value.frames;
-		}
-		else
-		{
-			if ( items_.find( value.frame ) == items_.end( ) )
-				frames_ += value.frames;
-			items_[ value.frame ] = value;
-			if ( offsets_.find( value.offset ) == offsets_.end( ) )
-				offsets_[ value.offset ] = value;
-		}
+		items_[ value.frame ] = value;
+		if ( offsets_.find( value.offset ) == offsets_.end( ) )
+			offsets_[ value.offset ] = value;
 	}
 }
 
