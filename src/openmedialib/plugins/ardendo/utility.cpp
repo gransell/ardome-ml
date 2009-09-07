@@ -4,6 +4,7 @@
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
+#include <openmedialib/ml/packet.hpp>
 #include <cmath>
 
 #include <iostream>
@@ -457,9 +458,23 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	frame->get_fps( num, den );
 	stream << "Frame Report" << endl << endl;
 	stream << "Position    : " << frame->get_position( ) << endl;
+	if ( frame->get_stream( ) )
+		stream << "Has Stream  : Yes, key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( ) << endl;
+	else
+		stream << "Has Stream  : No" << endl;
+
 	stream << "Has Packet  : " << ( frame->get_packet( ) ? "Yes" : "No" ) << endl;
-	stream << "Has Image   : " << ( frame->has_image( ) ? "Yes" : "No" ) << endl;
-	stream << "Has Audio   : " << ( frame->has_audio( ) ? "Yes" : "No" ) << endl;
+
+	if ( frame->get_image( ) )
+		stream << "Has Image   : Yes, position = " << frame->get_image( )->position( ) << endl;
+	else
+		stream << "Has Image   : No" << endl;
+
+	if ( frame->get_audio( ) )
+		stream << "Has Audio   : Yes, position = " << frame->get_audio( )->position( ) << endl;
+	else
+		stream << "Has Audio   : No" << endl;
+
 	stream << "Has Alpha   : " << ( frame->get_alpha( ) ? "Yes" : "No" ) << endl;
 	stream << "Frame Rate  : " << frame->fps( ) << " (" << num << ":" << den << ")" << endl;
 	stream << endl;
