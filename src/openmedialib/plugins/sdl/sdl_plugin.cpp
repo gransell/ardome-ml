@@ -249,12 +249,36 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				default_height_ = prop_height_.value< int >( );
 				default_full_ = prop_full_.value< int >( );
 				int full_flag = default_full_ ? SDL_FULLSCREEN : 0;
-				SDL_Surface *screen = SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) | full_flag );
+
 				if ( full_flag )
 				{
-					screen = SDL_SetVideoMode( screen->w, screen->h, 0, prop_flags_.value< int >( ) | full_flag );
-					prop_width_ = screen->w;
-					prop_height_ = screen->h;
+					SDL_Rect **modes = SDL_ListModes( NULL, prop_flags_.value< int >( ) | full_flag );
+
+					if ( modes )
+					{
+						int large_w = 0;
+						int large_h = 0;
+
+						for ( int i = 0; modes[ i ]; i ++ ) 
+						{
+							if ( modes[ i ]->w > large_w && modes[ i ]->h > large_h )
+							{
+								large_w = int( modes[ i ]->w );
+								large_h = int( modes[ i ]->h );
+							}
+						}
+
+						prop_width_ = int( large_w );
+						prop_height_ = int( large_h );
+					}
+
+					SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) | full_flag );
+				}
+				else
+				{
+					SDL_Surface *screen = SDL_SetVideoMode( prop_width_.value< int >( ), prop_height_.value< int >( ), 0, prop_flags_.value< int >( ) );
+					prop_width_ = int( screen->w );
+					prop_height_ = int( screen->h );
 				}
 			}
 
