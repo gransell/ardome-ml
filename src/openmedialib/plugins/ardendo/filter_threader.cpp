@@ -283,6 +283,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 								else if ( speed_ > 0 && min->first < position - ( prop_queue_.value< int >( ) / 4 ) )
 									remove = min;
 
+								if ( remove == cache_.end( ) )
+									break;
+
 								if ( speed_ > 0 && get_position( ) <= remove->first )
 									break;
 
