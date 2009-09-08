@@ -587,8 +587,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			got_picture = has_video_for( get_position( ) );
 			got_audio = has_audio_for( get_position( ) );
 
-			bool process_null = false;
-
 			while( error >= 0 && ( !got_picture || !got_audio ) )
 			{
 				last_packet_pos_ = url_ftell( context_->pb );
@@ -602,11 +600,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( prop_genpts_.value< int >( ) == 1 && error < 0 )
 					frames_ = get_position( );
 				else if ( error < 0 )
-					process_null = true;
+					break;
 				av_free_packet( &pkt_ );
 			}
 
-			if ( frames_ != 1 && has_video( ) && process_null )
+			// Special case for eof - last video frame is retrieved via a null packet
+			if ( frames_ != 1 && has_video( ) && url_feof( context_->pb ) )
 			{
 				bool temp = false;
 
