@@ -543,6 +543,14 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					 result->properties( ).get_property_with_key( key_is_background_ ).valid( ) )
 				{
 					ml::frame_type_ptr frame = frames[ 0 ];
+
+					//If we didn't explicitly set a sar value for the background,
+					//we'll inherit the one from the first input source
+					if ( result->get_sar_num() == -1 && frame->get_sar_num() != -1 )
+					{
+						result->set_sar(frame->get_sar_num(), frame->get_sar_den());
+					}
+
 					if ( frame->width( ) == result->width( ) &&
 						 frame->height( ) == result->height( ) &&
 						 frame->get_sar_num( ) == result->get_sar_num( ) &&
