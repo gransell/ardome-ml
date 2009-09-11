@@ -34,6 +34,9 @@ class ML_DECLSPEC stream_type
 		/// Indicates whether this is from a video or audio stream
 		virtual const enum stream_id id( ) const = 0;
 
+		/// Indicates the container format of the input
+		virtual const std::string &container( ) const = 0;
+
 		/// Indicates the codec used to decode the stream
 		virtual const std::string &codec( ) const = 0;
 
@@ -57,6 +60,9 @@ class ML_DECLSPEC stream_type
 
 		/// Returns the sar of the image associated to this packet (1,1 if n/a)
 		virtual const fraction sar( ) const { return fraction( 1, 1 ); }
+
+		/// Returns the picture format of the image associated to this packet
+		virtual const olib::openpluginlib::wstring pf( ) const { return olib::openpluginlib::wstring( L"" ); }
 
 		/// Returns the frequency associated to the audio in the packet (0 if n/a)
 		virtual const int frequency( ) const { return 0; }

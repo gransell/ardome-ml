@@ -20,248 +20,8 @@ namespace pcos= olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-class input_delegate : public ml::input_type, public py::wrapper< ml::input_type >
-{
-	public:
-		input_delegate( ) : input_type( ) { }
-		virtual ~input_delegate( ) { }
-
-		// Indicates if the input will enforce a packet decode
-		virtual bool requires_image( ) const { return true; }
-
-		virtual void reset( )
-		{
-			py::override method = get_override( "reset" );
-			if ( method ) method( ); 
-		}
-
-		virtual const openpluginlib::wstring get_uri( ) const
-		{
-			py::override method = get_override( "get_uri" );
-			if ( method ) return method( ); 
-			return openpluginlib::wstring( L"" );
-		}
-
-		virtual const openpluginlib::wstring get_mime_type( ) const
-		{
-			py::override method = get_override( "get_mime_type" );
-			if ( method ) return method( ); 
-			return openpluginlib::wstring( L"" );
-		}
-
-		virtual int get_frames( ) const
-		{
-			py::override method = get_override( "get_frames" );
-			if ( method ) return py::call<int>( method.ptr( ) ); 
-			return 0;
-		}
-
-		virtual bool is_seekable( ) const
-		{
-			py::override method = get_override( "is_seekable" );
-			if ( method ) return py::call<bool>( method.ptr( ) ); 
-			return false;
-		}
-
-		virtual int get_video_streams( ) const
-		{
-			py::override method = get_override( "get_video_streams" );
-			if ( method ) return py::call<int>( method.ptr( ) ); 
-			return 0;
-		}
-
-		virtual int get_audio_streams( ) const
-		{
-			py::override method = get_override( "get_audio_streams" );
-			if ( method ) return py::call<int>( method.ptr( ) ); 
-			return 0;
-		}
-
-		virtual bool set_video_stream( const int index ) 
-		{ 
-			py::override method = get_override( "set_video_streams" );
-			if ( method ) return py::call<bool>( method.ptr( ), index ); 
-			return false; 
-		}
-
-		virtual bool set_audio_stream( const int index ) 
-		{ 
-			py::override method = get_override( "set_audio_streams" );
-			if ( method ) return py::call<bool>( method.ptr( ), index ); 
-			return false; 
-		}
-
-		virtual void seek( const int position, const bool relative = false )
-		{
-			py::override method = get_override( "seek" );
-			if ( method ) method( position, relative ); 
-			else input_type::seek( position, relative ); 
-		}
-
-		virtual int get_position( ) const
-		{
-			py::override method = get_override( "get_position" );
-			if ( method ) return py::call<int>( method.ptr( ) ); 
-			return input_type::get_position( ); 
-		}
-
-		virtual bool push( frame_type_ptr frame )
-		{
-			py::override method = get_override( "push" );
-			if ( method ) return py::call<bool>( method.ptr( ), frame ); 
-			return false;
-		}
-
-		virtual bool reuse( ) 
-		{
-			py::override method = get_override( "reuse" );
-			if ( method ) return py::call<bool>( method.ptr( ) ); 
-			return false;
-		}
-
-		virtual bool is_thread_safe( ) const
-		{
-			return false;
-		}
-
-	protected:
-		virtual void do_fetch( frame_type_ptr &result  )
-		{
-			py::override method = get_override( "fetch" );
-			if ( method ) method( result ); 
-		}
-
-};
-
-class filter_delegate : public ml::filter_type, public py::wrapper< ml::filter_type >
-{
-	public:
-		filter_delegate( ) : filter_type( ) { }
-		virtual ~filter_delegate( ) { }
-
-		// Indicates if the input will enforce a packet decode
-		virtual bool requires_image( ) const { return true; }
-
-		virtual void reset( )
-		{
-			py::override method = get_override( "reset" );
-			if ( method ) method( ); 
-		}
-
-		virtual const openpluginlib::wstring get_uri( ) const
-		{
-			py::override method = get_override( "get_uri" );
-			if ( method ) return method( ); 
-			return openpluginlib::wstring( L"" );
-		}
-
-		virtual const size_t slot_count( ) const
-		{
-			py::override method = get_override( "slot_count" );
-			if ( method ) return py::call<const size_t>( method.ptr( ) ); 
-			return 1;
-		}
-
-		virtual int get_frames( ) const
-		{
-			py::override method = get_override( "get_frames" );
-			if ( method ) return py::call<int>( method.ptr( ) ); 
-			return 0;
-		}
-
-		virtual void seek( const int position, const bool relative = false )
-		{
-			py::override method = get_override( "seek" );
-			if ( method ) method( position, relative ); 
-			else input_type::seek( position, relative ); 
-		}
-
-		virtual int get_position( ) const
-		{
-			py::override method = get_override( "get_position" );
-			if ( method ) return py::call<int>( method.ptr( ) );  
-			return input_type::get_position( ); 
-		}
-
-		virtual void on_slot_change( input_type_ptr input, int slot )
-		{
-			py::override method = get_override( "on_slot_change" );
-			if ( method ) method( input, slot ); 
-		}
-
-		virtual bool reuse( ) 
-		{
-			py::override method = get_override( "reuse" );
-			if ( method ) return py::call<bool>( method.ptr( ) ); 
-			return false;
-		}
-
-		virtual bool is_thread_safe( ) const
-		{
-			return false;
-		}
-
-	protected:
-		virtual void do_fetch( frame_type_ptr &result  )
-		{
-			py::override method = get_override( "fetch" );
-			if ( method ) method( result ); 
-		}
-};
-
-class store_delegate : public ml::store_type, public py::wrapper< ml::store_type >
-{
-	public:
-		store_delegate( ) : store_type( ) { }
-		virtual ~store_delegate( ) { }
-
-		virtual bool init( ) 
-		{ 
-			py::override method = get_override( "init" );
-			if ( method ) return py::call<bool>( method.ptr( ) );
-			return true;
-		}
-
-		virtual bool push( frame_type_ptr frame )
-		{
-			py::override method = get_override( "push" );
-			if ( method ) return py::call<bool>( method.ptr( ), frame );
-			return false;
-		}
-
-		virtual frame_type_ptr flush( ) 
-		{ 
-			py::override method = get_override( "flush" );
-			if ( method ) return method( );
-			return frame_type_ptr( ); 
-		}
-
-		virtual void complete( ) 
-		{ 
-			py::override method = get_override( "complete" );
-			if ( method ) method( );
-		}
-
-		virtual bool empty( ) 
-		{
-			py::override method = get_override( "empty" );
-			if ( method ) return py::call<bool>( method.ptr( ) );
-			return false; 
-		}
-};
-
-class callback_delegate : public ml::input_callback, public py::wrapper< ml::input_callback >
-{
-	public:
-		callback_delegate( ) : input_callback( ) { }
-		virtual ~callback_delegate( ) { }
-
-		void assign( pcos::property_container properties, int position )
-		{
-			py::override method = get_override( "assign" );
-			if ( method ) method( properties, position );
-		}
-};
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( input_fetch_overloads, fetch, 0, 1 );
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( input_seek_overloads, seek, 1, 2 );
 
 class stream_handler_delegate : public ml::stream_handler, public py::wrapper< ml::stream_handler >
 {
@@ -391,51 +151,16 @@ void py_frame( )
 
 void py_input( )
 {
-	py::class_<ml::callback_delegate, boost::noncopyable>( "callback_delegate" )
-		.def( "assign", &ml::callback_delegate::assign )
-	;
-
-	py::register_ptr_to_python< boost::shared_ptr< callback_delegate > >( );
-
 	py::enum_<ml::process_flags>( "process_flags" )
 		.value( "image", ml::process_image )
 		.value( "audio", ml::process_audio )
 	;
-
-	py::class_<ml::input_delegate, boost::noncopyable>( "input_delegate" )
-		.def( "slots", &ml::input_type::slot_count )
-		.def( "reset", &ml::input_type::reset )
-		.def( "connect", &ml::input_type::connect )
-		.def( "register", &ml::input_type::register_callback )
-		.def( "properties", &ml::input_type::properties, py::return_value_policy< py::return_by_value >( ) )
-		.def( "property", &ml::input_type::property, py::return_value_policy< py::return_by_value >( ) )
-		.def( "get_uri", &ml::input_delegate::get_uri )
-		.def( "get_mime_type", &ml::input_delegate::get_mime_type )
-		.def( "get_frames", &ml::input_delegate::get_frames )
-		.def( "is_seekable", &ml::input_delegate::is_seekable )
-		.def( "get_video_streams", &ml::input_delegate::get_video_streams )
-		.def( "get_audio_streams", &ml::input_delegate::get_audio_streams )
-		.def( "set_video_stream", &ml::input_delegate::set_video_stream )
-		.def( "set_audio_stream", &ml::input_delegate::set_audio_stream )
-		.def( "set_process_flags", &ml::input_delegate::set_process_flags )
-		.def( "get_process_flags", &ml::input_delegate::get_process_flags )
-		.def( "seek", &ml::input_delegate::seek )
-		.def( "get_position", &ml::input_delegate::get_position )
-		.def( "push", &ml::input_delegate::push )
-		.def( "fetch", &ml::input_delegate::fetch )
-		.def( "fetch_callback", &ml::input_delegate::fetch_callback )
-		.def( "reuse", &ml::input_delegate::reuse )
-		.def( "is_thread_safe", &ml::input_delegate::is_thread_safe )
-	;
-
-	py::register_ptr_to_python< boost::shared_ptr< input_delegate > >( );
 
 	py::class_<ml::input_type, boost::noncopyable, ml::input_type_ptr>( "input", py::no_init )
 		.def( "init", &ml::input_type::init )
 		.def( "slots", &ml::input_type::slot_count )
 		.def( "reset", &ml::input_type::reset )
 		.def( "connect", &ml::input_type::connect )
-		.def( "register", &ml::input_type::register_callback )
 		.def( "properties", &ml::input_type::properties, py::return_value_policy< py::return_by_value >( ) )
 		.def( "property", &ml::input_type::property, py::return_value_policy< py::return_by_value >( ) )
 		.def( "get_uri", &ml::input_type::get_uri )
@@ -448,11 +173,10 @@ void py_input( )
 		.def( "set_audio_stream", &ml::input_type::set_audio_stream )
 		.def( "set_process_flags", &ml::input_type::set_process_flags )
 		.def( "get_process_flags", &ml::input_type::get_process_flags )
-		.def( "seek", &ml::input_type::seek )
+		.def( "seek", &ml::input_type::seek, input_seek_overloads( ) )
 		.def( "get_position", &ml::input_type::get_position )
 		.def( "push", &ml::input_type::push )
-		.def( "fetch", &ml::input_type::fetch )
-		.def( "fetch_callback", &ml::input_type::fetch_callback )
+		.def( "fetch", ( ml::frame_type_ptr( input_type::* )( int ) )0, input_fetch_overloads( ) )
 		.def( "reuse", &ml::input_type::reuse )
 		.def( "fetch_slot", &ml::input_type::fetch_slot )
 		.def( "is_thread_safe", &ml::input_type::is_thread_safe )
@@ -461,18 +185,6 @@ void py_input( )
 
 void py_store( )
 {
-	py::class_<ml::store_delegate, boost::noncopyable>( "store_delegate" )
-		.def( "properties", &ml::store_delegate::properties, py::return_value_policy< py::return_by_value >( ) )
-		.def( "property", &ml::store_delegate::property, py::return_value_policy< py::return_by_value >( ) )
-		.def( "init", &ml::store_delegate::init )
-		.def( "push", &ml::store_delegate::push )
-		.def( "complete", &ml::store_delegate::complete )
-		.def( "flush", &ml::store_delegate::flush )
-		.def( "empty", &ml::store_delegate::empty )
-	;
-
-	py::register_ptr_to_python< boost::shared_ptr< store_delegate > >( );
-
 	py::class_<ml::store_type, boost::noncopyable, ml::store_type_ptr>( "store", py::no_init )
 		.def( "properties", &ml::store_type::properties, py::return_value_policy< py::return_by_value >( ) )
 		.def( "property", &ml::store_type::property, py::return_value_policy< py::return_by_value >( ) )
@@ -486,34 +198,6 @@ void py_store( )
 
 void py_filter( )
 {
-	py::class_<ml::filter_delegate, boost::noncopyable>( "filter_delegate" )
-		.def( "slots", &ml::filter_delegate::slot_count )
-		.def( "fetch", &ml::filter_delegate::fetch )
-		.def( "reset", &ml::filter_delegate::reset )
-		.def( "connect", &ml::filter_delegate::connect )
-		.def( "register", &ml::filter_delegate::register_callback )
-		.def( "properties", &ml::filter_delegate::properties, py::return_value_policy< py::return_by_value >( ) )
-		.def( "property", &ml::filter_delegate::property, py::return_value_policy< py::return_by_value >( ) )
-		.def( "get_uri", &ml::filter_delegate::get_uri )
-		.def( "get_mime_type", &ml::filter_delegate::get_mime_type )
-		.def( "get_frames", &ml::filter_delegate::get_frames )
-		.def( "is_seekable", &ml::filter_delegate::is_seekable )
-		.def( "get_video_streams", &ml::filter_delegate::get_video_streams )
-		.def( "get_audio_streams", &ml::filter_delegate::get_audio_streams )
-		.def( "set_video_stream", &ml::filter_delegate::set_video_stream )
-		.def( "set_audio_stream", &ml::filter_delegate::set_audio_stream )
-		.def( "set_process_flags", &ml::filter_delegate::set_process_flags )
-		.def( "get_process_flags", &ml::filter_delegate::get_process_flags )
-		.def( "seek", &ml::filter_delegate::seek )
-		.def( "get_position", &ml::filter_delegate::get_position )
-		.def( "acquire_values", &ml::filter_delegate::acquire_values )
-		.def( "on_slot_change", &ml::filter_delegate::on_slot_change )
-		.def( "fetch_slot", &ml::filter_delegate::fetch_slot )
-		.def( "reuse", &ml::filter_delegate::reuse )
-	;
-
-	py::register_ptr_to_python< boost::shared_ptr< filter_delegate > >( );
-
 	py::class_<ml::filter_type, boost::noncopyable, ml::filter_type_ptr, py::bases< input_type > >( "filter", py::no_init )
 		.def( "connect", &ml::filter_type::connect )
 		.def( "fetch_slot", &ml::filter_type::fetch_slot )

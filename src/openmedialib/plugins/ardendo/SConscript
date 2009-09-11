@@ -6,7 +6,7 @@ local_env.optional( 'ffmpeg' )
 
 options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale' )
 
-#if options[ 'have_librsvg-2.0' ]: local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
+if options[ 'have_librsvg-2.0' ]: local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
 
 srcs = [ 'aml_ardendo.cpp',
          'filter_aml.cpp',

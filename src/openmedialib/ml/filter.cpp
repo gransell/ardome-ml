@@ -215,15 +215,11 @@ void filter_type::seek( const int position, const bool relative )
 
 void filter_type::acquire_values( ) 
 {
-	if ( fetch_callback( ) ) 
-		fetch_callback( )->assign( properties( ), get_position( ) ); 
 }
 
 bool filter_type::is_thread_safe( )
 {
 	bool result = true;
-	if ( fetch_callback( ) )
-		result = fetch_callback( )->is_thread_safe( ); 
 	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); result && iter < slots_.end( ); iter ++ )
 		if ( *iter )
 			result = ( *iter )->is_thread_safe( );

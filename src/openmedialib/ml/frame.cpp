@@ -110,10 +110,32 @@ bool frame_type::has_audio( )
 	return audio_ != audio_type_ptr( );
 }
 
-void frame_type::set_stream( stream_type_ptr stream ) { stream_ = stream; }
+// Set the stream component on the frame
+// Note: we extract the sar here to allow modification via the filter:sar mechanism
+void frame_type::set_stream( stream_type_ptr stream ) 
+{ 
+	stream_ = stream; 
+	if ( stream )
+	{
+		sar_num_ = stream->sar( ).num;
+		sar_den_ = stream->sar( ).den;
+	}
+}
+
 stream_type_ptr frame_type::get_stream( ) { return stream_; }
 
-void frame_type::set_packet( packet_type_ptr packet ) { packet_ = packet; }
+// Set the packet component on the frame
+// Note: we extract the sar here to allow modification via the filter:sar mechanism
+void frame_type::set_packet( packet_type_ptr packet ) 
+{ 
+	packet_ = packet; 
+	if ( packet )
+	{
+		sar_num_ = packet->sar( ).num;
+		sar_den_ = packet->sar( ).den;
+	}
+}
+
 packet_type_ptr frame_type::get_packet( ) { return packet_; }
 
 void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
@@ -261,31 +283,91 @@ void frame_type::clear_exceptions( )
 		exceptions_.erase( exceptions_.begin( ), exceptions_.end( ) );
 }
 
+/// Indicates the container format if known ("" if unknown or n/a)
+std::string frame_type::container( ) const
+{
+	if ( stream_ )
+		return stream_->container( );
+	return "";
+}
+
+/// Indicates the input's video codec if known ("" if unknown or n/a)
+std::string frame_type::video_codec( ) const
+{
+	if ( stream_ && stream_->id( ) == ml::stream_video )
+		return stream_->codec( );
+	return "";
+}
+
 int frame_type::width( ) const
 {
-	if ( packet_ )
-		return packet_->size( ).width;
 	if ( image_ )
 		return image_->width( );
+	else if ( packet_ )
+		return packet_->size( ).width;
+	else if ( stream_ )
+		return stream_->size( ).width;
 	return 0;
 }
 
 int frame_type::height( ) const
 {
-	if ( packet_ )
-		return packet_->size( ).height;
 	if ( image_ )
 		return image_->height( );
+	else if ( packet_ )
+		return packet_->size( ).height;
+	else if ( stream_ )
+		return stream_->size( ).height;
 	return 0;
 }
 
 std::wstring frame_type::pf( ) const
 {
-	if ( packet_ )
-		return packet_->pf( );
 	if ( image_ )
 		return image_->pf( );
+	else if ( stream_ )
+		return stream_->pf( );
+	else if ( packet_ )
+		return packet_->pf( );
 	return L"";
+}
+
+/// Indicates the input's audio codec if known ("" if unknown or n/a)
+std::string frame_type::audio_codec( ) const
+{
+	if ( stream_ && stream_->id( ) == ml::stream_audio )
+		return stream_->codec( );
+	return "";
+}
+
+/// Obtain frequency from packet or audio
+int frame_type::frequency( ) const
+{
+	if ( audio_ )
+		return audio_->frequency( );
+	else if ( stream_ )
+		return stream_->frequency( );
+	return 0;
+}
+
+/// Obtain channels from packet or audio
+int frame_type::channels( ) const
+{
+	if ( audio_ )
+		return audio_->channels( );
+	else if ( stream_ )
+		return stream_->channels( );
+	return 0;
+}
+
+/// Obtain samples from packet or audio
+int frame_type::samples( ) const
+{
+	if ( audio_ )
+		return audio_->samples( );
+	else if ( stream_ )
+		return stream_->samples( );
+	return 0;
 }
 
 } } }

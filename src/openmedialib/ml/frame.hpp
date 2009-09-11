@@ -175,6 +175,12 @@ class ML_DECLSPEC frame_type
 		/// Work around for weak_ptr failure in python
 		void clear_exceptions( );
 
+		/// Indicates the container format if known ("" if unknown or n/a)
+		virtual std::string container( ) const;
+
+		/// Indicates the input's video codec if known ("" if unknown or n/a)
+		virtual std::string video_codec( ) const;
+
 		/// Obtain width from packet or image
 		int width( ) const;
 
@@ -183,6 +189,18 @@ class ML_DECLSPEC frame_type
 
 		/// Obtain colourspace from packet or image
 		std::wstring pf( ) const;
+
+		/// Indicates the input's audio codec if known ("" if unknown or n/a)
+		virtual std::string audio_codec( ) const;
+
+		/// Obtain frequency from packet or audio
+		int frequency( ) const;
+
+		/// Obtain channels from packet or audio
+		int channels( ) const;
+
+		/// Obtain samples from packet or audio
+		int samples( ) const;
 
 		/// Indicates if the frame is deferred
 		bool is_deferred( ) const { return queue_.size( ) > 0; }

@@ -22,25 +22,6 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-// A callback can be registered with each input - the concept being that when a frame
-// is fetched via the fetch method, the application has a means to assign property values 
-// prior to the execution.
-//
-// NB: Whilst all inputs accept a callback registration, the execution is dependent on 
-// the implementations use of the acquire_values protected method. Whilst it is 
-// conceivable that an input might wish to expose this, it's not mandated - it is 
-// generally considered more useful for filters.
-
-class ML_DECLSPEC input_callback
-{
-	public:
-		virtual ~input_callback( ) { }
-		virtual void assign( olib::openpluginlib::pcos::property_container, int ) = 0;
-		virtual bool is_thread_safe( ) const { return false; }
-};
-
-typedef boost::shared_ptr< input_callback > input_callback_ptr;
-
 // Enumerated type to allow the user of the input to restrict the scope of the 
 // fetch - for example, if you only need audio, there is no need to process the
 // associated image.
@@ -66,7 +47,6 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			, prop_debug_( olib::openpluginlib::pcos::key::from_string( "debug" ) )
 			, position_( 0 )
 			, process_( process_image | process_audio )
-			, callback_( )
 			, report_exceptions_( true )
 		{
 			properties( ).append( prop_debug_ = 0 );
@@ -113,9 +93,6 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		// Virtual method for state reset
 		virtual void reset( ) { }
-
-		// Register the callback
-		void register_callback( input_callback_ptr callback ) { callback_ = callback; }
 
 		// Basic information
 		virtual const openpluginlib::wstring get_uri( ) const = 0;
@@ -189,22 +166,24 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			return result;
 		}
 
+		// Overloaded convenience fetch method
+		frame_type_ptr fetch( int position )
+		{
+			seek( position );
+			return fetch( );
+		}
+
 		// Virtual push method for a frame
 		virtual bool push( frame_type_ptr ) { return false; }
 
 		// Allow the app to refresh a cached frame
 		virtual void refresh_cache( frame_type_ptr ) { }
 
-		// Invoke the callback - note that it is the input implementation responsibility to 
-		// invoke this (normally as the first line of a fetch) - the properties object provided
-		// may assist the recipient in determining the specific input object.
-		virtual void acquire_values( ) { if ( callback_ ) callback_->assign( properties( ), get_position( ) ); }
+		// Deprecated
+		virtual void acquire_values( ) { }
 
 		// Determines if the particular input is thread safe (should be re-implemented as required
-		virtual bool is_thread_safe( ) { return callback_ ? callback_->is_thread_safe( ) : true; }
-
-		// Retrieve the callback
-		input_callback_ptr fetch_callback( ) const { return callback_; }
+		virtual bool is_thread_safe( ) { return true; }
 
 		// Indication for node reuse
 		virtual bool reuse( ) { return true; }
@@ -225,7 +204,6 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		olib::openpluginlib::pcos::property prop_debug_;
 		int position_;
 		int process_;
-		input_callback_ptr callback_;
 		bool report_exceptions_;
 };
 

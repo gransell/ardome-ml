@@ -19,6 +19,7 @@
 #include <map>
 
 #include "index.hpp"
+#include "avformat_stream.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -46,93 +47,12 @@ namespace olib { namespace openmedialib { namespace ml {
 
 static pcos::key key_enable_( pcos::key::from_string( "enable" ) );
 
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
-
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
-
-class stream_avformat : public ml::stream_type
-{
-	public:
-		/// Constructor allocates memory and assigns the type specified
-		stream_avformat( enum ml::stream_id id, CodecID codec, size_t length, int position, int key )
-			: ml::stream_type( )
-			, id_( id )
-			, length_( length )
-			, data_( length + 32 )
-			, position_( position )
-			, key_( key )
-		{
-			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
-				codec_ = codec_name_lookup_[ codec ];
-		}
-
-		/// Virtual destructor
-		virtual ~stream_avformat( ) 
-		{ }
-
-		/// Return the properties associated to this frame.
-		virtual olib::openpluginlib::pcos::property_container &properties( )
-		{
-			return properties_;
-		}
-
-		/// Indicates the codec used to decode the stream
-		virtual const std::string &codec( ) const
-		{
-			return codec_;
-		}
-
-		/// Returns the id of the stream (so that we can select a codec to decode it)
-		virtual const enum ml::stream_id id( ) const
-		{
-			return id_;
-		}
-
-		/// Returns the length of the data in the stream
-		virtual size_t length( )
-		{
-			return length_;
-		}
-
-		/// Returns a pointer to the first byte of the stream
-		virtual boost::uint8_t *bytes( )
-		{
-			return &data_[ 16 - boost::int64_t( &data_[ 0 ] ) % 16 ];
-		}
-
-		/// Returns the position of the key frame associated to this packet
-		virtual const int key( ) const
-		{
-			return key_;
-		}
-
-		/// Returns the position of this packet
-		virtual const int position( ) const
-		{
-			return position_;
-		}
-
-		/// Returns the bitrate of the stream this packet belongs to
-		virtual const int bitrate() const
-		{
-			return 0;
-		}
-
-	private:
-		enum ml::stream_id id_;
-		std::string codec_;
-		size_t length_;
-		std::vector < boost::uint8_t > data_;
-		olib::openpluginlib::pcos::property_container properties_;
-		int position_;
-		int key_;
-};
 
 class aml_check
 {
@@ -729,9 +649,28 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( pkt_.flags )
 					key_last_ = expected_;
 
-				ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( got_packet, stream->codec->codec_id, pkt_.size, expected_, key_last_ ) );
-				memcpy( packet->bytes( ), pkt_.data, pkt_.size );
-				result->set_stream( packet );
+				ml::stream_type_ptr packet;
+
+				switch( got_packet )
+				{
+					case ml::stream_video:
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ) ) );
+						break;
+
+					case ml::stream_audio:
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0 ) );
+						break;
+
+					default:
+						// Not supported
+						break;
+				}
+
+				if ( packet )
+				{
+					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
+					result->set_stream( packet );
+				}
 
 				av_free_packet( &pkt_ );
 
@@ -941,6 +880,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				width_ = stream->codec->width;
 				height_ = stream->codec->height;
+
+				sar_num_ = stream->codec->sample_aspect_ratio.num;
+				sar_den_ = stream->codec->sample_aspect_ratio.den;
+
+				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
+				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
 
 				get_fps_from_stream( stream );
 			}

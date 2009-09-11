@@ -41,6 +41,7 @@ namespace olib { namespace openmedialib { namespace ml {
 
 extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & );
+extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
 
@@ -160,6 +161,8 @@ public:
 	{
 		if ( resource == L"avdecode" )
 			return create_avdecode( resource );
+		else if ( resource == L"avencode" )
+			return create_avencode( resource );
 		return create_resampler( resource );
 	}
 };

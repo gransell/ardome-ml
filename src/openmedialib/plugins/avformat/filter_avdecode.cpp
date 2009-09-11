@@ -12,6 +12,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "avformat_stream.hpp"
 
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
@@ -32,8 +33,9 @@ class stream_queue
 	public:
 		typedef audio< unsigned char, pcm16 > pcm16_audio_type;
 
-		stream_queue( ml::input_type_ptr input )
+		stream_queue( ml::input_type_ptr input, int gop_open )
 			: input_( input )
+			, gop_open_( gop_open )
 			, keys_( 0 )
 			, context_( 0 )
 			, codec_( 0 )
@@ -85,7 +87,7 @@ class stream_queue
 		{
 			ml::frame_type_ptr result;
 
-			if ( frames_.find( position ) == frames_.end( ) )
+			if ( frames_.find( position ) == frames_.end( ) && position < input_->get_frames( ) )
 			{
 				//std::cerr << "fetching from input " << position << std::endl;
 				input_->seek( position );
@@ -101,7 +103,7 @@ class stream_queue
 					result = input_->fetch( );
 				}
 			}
-			else
+			else if ( position < input_->get_frames( ) )
 			{
 				used( position );
 				result = frames_[ position ];
@@ -130,12 +132,46 @@ class stream_queue
 				if ( start == position && position != 0 )
 					start = fetch( start - 1 )->get_stream( )->key( );
 
-				ml::frame_type_ptr temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+				ml::frame_type_ptr temp;
 
-				while( temp && temp->get_stream( ) && decode( temp, position ) )
+				if ( start < input_->get_frames( ) )
+				{
 					temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
 
-				return temp->get_image( );
+					while( temp && temp->get_stream( ) && decode( temp, position ) )
+					{
+						if ( start < input_->get_frames( ) )
+							temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+						else
+							temp = ml::frame_type_ptr( );
+					}
+				}
+
+				if ( temp )
+				{
+					return temp->get_image( );
+				}
+				else
+				{
+					int got = 0;
+					if ( avcodec_decode_video( context_, frame_, &got, 0, 0 ) >= 0 )
+					{
+						il::image_type_ptr image;
+						if ( got )
+						{
+							const PixelFormat fmt = context_->pix_fmt;
+							const int width = context_->width;
+							const int height = context_->height;
+							image = convert_to_oil( frame_, fmt, width, height );
+							image->set_position( input_->get_frames( ) - 1 );
+							if ( frame_->interlaced_frame )
+								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
+							images_[ input_->get_frames( ) - 1 ] = image;
+						}
+						expected_ ++;
+						return image;
+					}
+				}
 			}
 
 			return il::image_type_ptr( );
@@ -158,7 +194,7 @@ class stream_queue
 				if ( position + offset_ != expected_ )
 					start = frame->get_stream( )->key( );
 
-				if ( start == position && position != 0 )
+				if ( gop_open_ && start == position && position != 0 )
 					start = fetch( start - 1 )->get_stream( )->key( );
 
 				ml::frame_type_ptr temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
@@ -212,6 +248,9 @@ class stream_queue
 							image->set_position( pkt->position( ) );
 							result->set_image( image );
 
+							if ( frame_->interlaced_frame )
+								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
+
 							if ( position == 0 )
 							{
 								//std::cerr << "found first " << result->get_position( ) << " " << expected_ << std::endl;
@@ -261,6 +300,8 @@ class stream_queue
 
 	private:
 		ml::input_type_ptr input_;
+		int gop_open_;
+
 		std::map< int, ml::frame_type_ptr > frames_;
 		std::map< int, il::image_type_ptr > images_;
 		std::map< int, ml::audio_type_ptr > audios_;
@@ -353,9 +394,11 @@ class avformat_decode_filter : public filter_type
 		// Filter_type overloads
 		avformat_decode_filter( )
 			: ml::filter_type( )
+			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
 			, initialised_( false )
 			, queue_( )
 		{
+			properties( ).append( prop_gop_open_ = 1 );
 		}
 
 		virtual ~avformat_decode_filter( )
@@ -385,7 +428,7 @@ class avformat_decode_filter : public filter_type
 
 				if ( result->get_stream( ) )
 				{
-					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ) ) );
+					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ) ) );
 					ml::frame_type_ptr( new frame_avformat( queue_->fetch( 0 ), queue_ ) )->get_image( );
 					ml::frame_type_ptr( new frame_avformat( queue_->fetch( 1 ), queue_ ) )->get_image( );
 				}
@@ -405,13 +448,245 @@ class avformat_decode_filter : public filter_type
 		}
 
 	private:
+		pl::pcos::property prop_gop_open_;
 		bool initialised_;
 		stream_queue_ptr queue_;
+};
+
+class avformat_encode_filter : public filter_type
+{
+	public:
+		// Filter_type overloads
+		avformat_encode_filter( )
+			: ml::filter_type( )
+			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
+			, prop_force_( pl::pcos::key::from_string( "force" ) )
+			, codec_( "mpeg2" )
+			, initialised_( false )
+			, encoding_( false )
+			, context_( 0 )
+			, instance_( 0 )
+		{
+			properties( ).append( prop_enable_ = 1 );
+			properties( ).append( prop_force_ = 0 );
+		}
+
+		virtual ~avformat_encode_filter( )
+		{
+		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
+
+		// This provides the name of the plugin (used in serialisation)
+		virtual const pl::wstring get_uri( ) const { return L"avencode"; }
+
+		virtual int get_frames( ) const
+		{
+			if ( fetch_slot( 0 ) ) 
+				return fetch_slot( 0 )->get_frames( );
+			return 0;
+		}
+
+	protected:
+		// The main access point to the filter
+		void do_fetch( ml::frame_type_ptr &result )
+		{
+			if ( prop_enable_.value< int >( ) )
+			{
+				if ( !initialised_ )
+				{
+					result = fetch_from_slot( 0 );
+	
+					// Try to set up an internal graph to handle the cpu compositing of deferred frames
+					pusher_ = ml::create_input( L"pusher:" );
+					render_ = ml::create_filter( L"render" );
+	
+					if ( render_ )
+						render_->connect( pusher_ );
+	
+					initialised_ = true;
+				}
+	
+				if ( !last_frame_ || get_position( ) != last_frame_->get_position( ) )
+				{
+					ml::frame_type_ptr source = fetch_from_slot( 0 );
+	
+					if ( prop_force_.value< int >( ) )
+					{
+						encoding_ = true;
+					}
+					else if ( !source->get_stream( ) )
+					{
+						std::cerr << "case 0: " << get_position( ) << " no stream component" << std::endl;
+						encoding_ = true;
+					}
+					else if ( source->is_deferred( ) )
+					{
+						std::cerr << "case 1: " << get_position( ) << " deferred frame must be rendered" << std::endl;
+						encoding_ = true;
+					}
+					else if ( !last_frame_ && source->get_stream( )->key( ) != source->get_stream( )->position( ) )
+					{
+						std::cerr << "case 2: " << get_position( ) << " first frame not an i frame" << std::endl;
+						encoding_ = true;
+					}
+					else if ( !encoding_ && source->get_stream( )->codec( ) != codec_ )
+					{
+						std::cerr << "case 3: " << get_position( ) << " stream of different type" << std::endl;
+						encoding_ = true;
+					}
+					else if ( !encoding_ && !continuous( last_frame_, source ) )
+					{
+						std::cerr << "case 4: " << get_position( ) << " started encoding due to non-contiguous packets" << std::endl;
+						encoding_ = true;
+					}
+					else if ( encoding_ && ( source->get_stream( )->codec( ) != codec_ || source->get_stream( )->key( ) != source->get_stream( )->position( ) ) )
+					{
+						std::cerr << "case 5: " << get_position( ) << " already encoding and stream component does not indicate that we have reached the next key frame yet" << std::endl;
+					}
+					else if ( encoding_ && source->get_stream( )->key( ) == source->get_stream( )->position( ) )
+					{
+						std::cerr << "case 6: " << get_position( ) << " encoding turned off as next key is reached" << std::endl;
+						encoding_ = false;
+						avcodec_flush_buffers( context_ );
+					}
+	
+					if ( encoding_ )
+					{
+						result = render( source );
+						result->set_position( source->get_position( ) );
+						encode( result );
+					}
+					else
+					{
+						result = source;
+					}
+	
+					last_frame_ = result;
+				}
+				else
+				{
+					result = last_frame_;
+				}
+			}
+			else
+			{
+				result = fetch_from_slot( 0 );
+			}
+		}
+	
+		ml::frame_type_ptr render( const ml::frame_type_ptr &frame )
+		{
+			ml::frame_type_ptr result = frame;
+
+			if ( render_ )
+			{
+				pusher_->push( frame );
+				result = render_->fetch( );
+			}
+			else
+			{
+				result->get_image( );
+			}
+
+			return result;
+		}
+
+		bool continuous( const ml::frame_type_ptr &last, const ml::frame_type_ptr &current )
+		{
+			bool result = true;
+
+			// Check for continuity
+			// TODO: ensure that the source hasn't changed
+			if ( last && last->get_stream( ) )
+			{
+				result = last->get_stream( )->position( ) == current->get_stream( )->position( ) - 1;
+				if ( !result )
+					result = current->get_stream( )->position( ) == current->get_stream( )->key( );
+			}
+			else
+			{
+				result = current->get_stream( )->position( ) == current->get_stream( )->key( );
+			}
+
+			return result;
+		}
+
+		void encode( const ml::frame_type_ptr &result )
+		{
+			if ( context_ == 0 )
+			{
+				instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
+				context_ = avcodec_alloc_context( );
+				picture_ = avcodec_alloc_frame( );
+				context_->bit_rate = 50000000;
+				context_->width = result->width( );
+				context_->height = result->height( );
+				context_->time_base= (AVRational){ result->get_fps_den( ), result->get_fps_num( ) };
+				context_->gop_size = 12;
+				context_->max_b_frames = 0;
+				context_->pix_fmt = PIX_FMT_YUV422P;
+				context_->flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME;
+				context_->scenechange_threshold = 1000000000;
+				context_->thread_count = 4;
+
+				if ( avcodec_open( context_, instance_ ) < 0 ) 
+				{
+					std::cerr << "Unable to open codec" << std::endl;
+				}
+
+				if ( context_->thread_count )
+					avcodec_thread_init( context_, context_->thread_count );
+
+				outbuf_size_ = 5000000;
+				outbuf_ = ( boost::uint8_t * )malloc( outbuf_size_ );
+			}
+
+			picture_->data[ 0 ] = result->get_image( )->data( 0 );
+			picture_->data[ 1 ] = result->get_image( )->data( 1 );
+			picture_->data[ 2 ] = result->get_image( )->data( 2 );
+			picture_->linesize[ 0 ] = result->get_image( )->pitch( 0 );
+			picture_->linesize[ 1 ] = result->get_image( )->pitch( 1 );
+			picture_->linesize[ 2 ] = result->get_image( )->pitch( 2 );
+
+			if ( result->get_image( )->field_order( ) != il::progressive )
+			{
+				picture_->interlaced_frame  = 1;
+				picture_->top_field_first = result->get_image( )->field_order( ) != il::top_field_first;
+			}
+
+			int out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
+
+			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( CODEC_ID_MPEG2VIDEO, out_size, get_position( ), 0, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ) ) );
+			memcpy( packet->bytes( ), outbuf_, out_size );
+			result->set_stream( packet );
+		}
+
+	private:
+		pl::pcos::property prop_enable_;
+		pl::pcos::property prop_force_;
+		std::string codec_;
+		bool initialised_;
+		ml::frame_type_ptr last_frame_;
+		ml::input_type_ptr pusher_;
+		ml::filter_type_ptr render_;
+		bool encoding_;
+		AVCodecContext *context_;
+		AVCodec *instance_;
+		AVFrame *picture_;
+		int outbuf_size_;
+		boost::uint8_t *outbuf_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
 {
 	return filter_type_ptr( new avformat_decode_filter( ) );
+}
+
+filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & )
+{
+	return filter_type_ptr( new avformat_encode_filter( ) );
 }
 
 } } }
