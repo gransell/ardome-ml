@@ -623,7 +623,8 @@ class avformat_encode_filter : public filter_type
 				context_->bit_rate = 50000000;
 				context_->width = result->width( );
 				context_->height = result->height( );
-				context_->time_base= (AVRational){ result->get_fps_den( ), result->get_fps_num( ) };
+				AVRational avr = { result->get_fps_den( ), result->get_fps_num( ) };
+				context_->time_base= avr;
 				context_->gop_size = 12;
 				context_->max_b_frames = 0;
 				context_->pix_fmt = PIX_FMT_YUV422P;
