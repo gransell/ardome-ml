@@ -151,8 +151,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			}
 			catch( std::exception &be )
 			{
-				//Avoid slicing the caught exception
-				exception = exception_ptr( new std::exception( be.what() ) );
+				exception = exception_ptr( new std::exception( be ) );
 			}
 
 			if ( !result )
