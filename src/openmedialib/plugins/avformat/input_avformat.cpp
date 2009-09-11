@@ -1208,9 +1208,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				
 				if ( position < 0 ) position = 0;
 
-				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ) + start_time_;
-				if ( offset < start_time_ ) offset = start_time_;
-
+				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE );
 				boost::int64_t byte = -1;
 
 				// Use the index to get an absolute byte position in the data when available/usable
