@@ -5,6 +5,10 @@
 
 #include "awi.hpp"
 
+#define awi_header_size 8
+#define awi_item_size 20
+#define awi_footer_size 16
+
 namespace olib { namespace openmedialib { namespace ml {
 
 namespace 
@@ -225,7 +229,7 @@ bool awi_parser::parse( const boost::uint8_t *data, const size_t length )
 	// We need to ensure that we have the minimum length of the smallest record
 	while( result && buffer_.size( ) > 8 )
 	{
-		if ( ( is_item( ) && buffer_.size( ) < sizeof( awi_item ) ) || ( !is_item( ) && buffer_.size( ) < sizeof( awi_footer ) ) )
+		if ( ( is_item( ) && buffer_.size( ) < awi_item_size ) || ( !is_item( ) && buffer_.size( ) < awi_footer_size ) )
 			break;
 
 		switch( state_ )
@@ -236,12 +240,12 @@ bool awi_parser::parse( const boost::uint8_t *data, const size_t length )
 				break;
 
 			case item:
-				if ( buffer_.size( ) >= sizeof( awi_item ) && is_item( ) )
+				if ( buffer_.size( ) >= awi_item_size && is_item( ) )
 				{
 					result = parse_item( );
 					state_ = result ? item : error;
 				}
-				else if ( buffer_.size( ) == sizeof( awi_footer ) && !is_item( ) )
+				else if ( buffer_.size( ) == awi_footer_size && !is_item( ) )
 				{
 					result = parse_footer( );
 					state_ = result ? footer : error;
@@ -490,9 +494,9 @@ bool awi_generator::flush( std::vector< boost::uint8_t > &buffer )
 
 	if ( state_ != footer && result )
 	{
-		size_t size_h = state_ == header ? sizeof( awi_header ) : 0;
-		size_t size_i = ( items_.size( ) - flushed_ ) * sizeof( awi_item );
-		size_t size_f = ( finished( ) ? sizeof( awi_footer ) : 0 );
+		size_t size_h = state_ == header ? awi_header_size : 0;
+		size_t size_i = ( items_.size( ) - flushed_ ) * awi_item_size;
+		size_t size_f = ( finished( ) ? awi_footer_size : 0 );
 
 		buffer.resize( size_h + size_i + size_f );
 
