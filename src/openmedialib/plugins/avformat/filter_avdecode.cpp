@@ -466,6 +466,7 @@ class avformat_encode_filter : public filter_type
 			, encoding_( false )
 			, context_( 0 )
 			, instance_( 0 )
+			, key_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
@@ -659,7 +660,10 @@ class avformat_encode_filter : public filter_type
 
 			int out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
 
-			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( CODEC_ID_MPEG2VIDEO, out_size, get_position( ), 0, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ) ) );
+			if ( context_->coded_frame && context_->coded_frame->key_frame )
+				key_ = get_position( );
+
+			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( CODEC_ID_MPEG2VIDEO, out_size, get_position( ), key_, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ) ) );
 			memcpy( packet->bytes( ), outbuf_, out_size );
 			result->set_stream( packet );
 		}
@@ -678,6 +682,7 @@ class avformat_encode_filter : public filter_type
 		AVFrame *picture_;
 		int outbuf_size_;
 		boost::uint8_t *outbuf_;
+		int key_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
