@@ -2261,7 +2261,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 
 			result = fetch_from_slot( );
 
-			if ( result && ( ( previous_ == 0 && !has_image( result ) ) || prop_force_.value< int >( ) ) )
+			if ( result && ( ( previous_ == 0 && !result->has_image( ) ) || prop_force_.value< int >( ) ) )
 			{
 				visualise( result );
 			}
