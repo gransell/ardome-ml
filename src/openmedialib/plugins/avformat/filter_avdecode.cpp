@@ -557,7 +557,8 @@ class avformat_encode_filter : public filter_type
 					{
 						result = render( source );
 						result->set_position( source->get_position( ) );
-						encode( result );
+						if ( result->get_image( ) )
+							encode( result );
 					}
 					else
 					{
