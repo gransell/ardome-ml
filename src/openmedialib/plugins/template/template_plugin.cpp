@@ -147,6 +147,8 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 					std::vector< boost::uint8_t > buffer;
 					generator_.flush( buffer );
 					fwrite( &buffer[ 0 ], buffer.size( ), 1, index_ );
+					fflush( output_ );
+					fflush( index_ );
 				}
 				stream_type_ptr pkt = frame->get_stream( );
 				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
