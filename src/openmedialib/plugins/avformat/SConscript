@@ -10,9 +10,6 @@ options = local_env.optional( 'libswscale' )
 
 if options[ 'have_libswscale' ]: local_env.Append( CPPDEFINES = [ 'HAVE_SWSCALE' ] )
 
-local_env.Append( CPPDEFINES = [ '_LARGEFILE_SOURCE' ] )
-local_env.Append( CPPDEFINES = [ '_FILE_OFFSET_BITS=64' ] )
-
 if local_env[ 'PLATFORM' ] == 'win32' :
 	local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS', '_CRT_SECURE_NO_WARNINGS' ] )
 

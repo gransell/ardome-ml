@@ -151,6 +151,8 @@ class Environment( BaseEnvironment ):
 
 		if self[ 'PLATFORM' ] == 'posix':
 			self.Append( CCFLAGS = [ '-Wall', '-ggdb', '-O0' ] )
+			self.Append( CPPDEFINES = [ '_LARGEFILE_SOURCE' ] )
+			self.Append( CPPDEFINES = [ '_FILE_OFFSET_BITS=64' ] )
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-gdwarf-2', '-O0' ] )
 		elif self[ 'PLATFORM' ] == 'win32':
@@ -175,6 +177,8 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'posix':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 			self.Append( LINKFLAGS = [ '-s' ] )
+			self.Append( CPPDEFINES = [ '_LARGEFILE_SOURCE' ] )
+			self.Append( CPPDEFINES = [ '_FILE_OFFSET_BITS=64' ] )
 		elif self[ 'PLATFORM' ] == 'darwin':
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 		elif self[ 'PLATFORM' ] == 'win32':

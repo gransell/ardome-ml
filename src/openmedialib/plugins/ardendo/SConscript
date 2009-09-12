@@ -43,8 +43,6 @@ srcs = [ 'aml_ardendo.cpp',
 if local_env[ 'PLATFORM' ] == 'win32':
 	srcs.append('aml_filters.rc')
 	local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
-else:
-	local_env.Append( CPPDEFINES = ['_FILE_OFFSET_BITS=64'] )
 
 # Make sure we place the binary correctly on windows
 local_env[ 'win_target_path' ] = '$stage_ml_plugin'
