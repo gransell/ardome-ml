@@ -212,6 +212,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "requesting %d from dormant" ) % position );
 					input->seek( position );
 					result = input->fetch( );
+					return;
 				}
 				else if ( !changed || speed_ != old_speed || std::abs( speed_ ) > 16 )
 				{
