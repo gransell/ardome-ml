@@ -9,8 +9,12 @@ from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 import SCons.Tool
 import SCons.Script
 import utils
+
 if utils.vs( ):
 	import vsbuild
+if utils.xcode():
+	from xcode import XcodeBuilder
+	
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
 from sets import Set
@@ -21,7 +25,9 @@ class Environment( BaseEnvironment ):
 	"""Base environment for Ardendo AML/AMF and related builds."""
 	
 	vs_builder = None 
+	xcode_builder = None
 	if utils.vs() : vs_builder = vsbuild.VsBuilder( utils.vs() )
+	if utils.xcode() : xcode_builder = XcodeBuilder()
 	
 	already_installed = {}
 	bundle_libraries = [ [], [] ]
@@ -38,7 +44,7 @@ class Environment( BaseEnvironment ):
 					and plugin.
 			kw -- The rest of the passed parameters to this constructor.
 			"""
-			
+		
 		self.root = os.path.abspath( '.' )
 			
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
@@ -61,6 +67,8 @@ class Environment( BaseEnvironment ):
 		elif utils.vs() : 
 			self.build_manager = Environment.vs_builder
 			self['target'] = utils.vs()
+		elif utils.xcode() :
+			self.build_manager = Environment.xcode_builder
 		else: 
 			self.build_manager = None
 		
@@ -276,10 +284,11 @@ class Environment( BaseEnvironment ):
 		if result[build_type] is None : return
 		if dep[build_type] == None : return
 		res_min = str(result[ build_type ][ 0 ])
-		dep_min = str(dep[ build_type ][ 0 ]) 
+		dep_min = str(dep[ build_type ][ 0 ])
 		
-		res_min = res_min[ res_min.rfind("\\") + 1 : res_min.rfind(".dll") ]
-		dep_min = dep_min[ dep_min.rfind("\\") + 1 : dep_min.rfind(".dll") ]
+		if self['PLATFORM'] == 'win32':
+			res_min = res_min[ res_min.rfind("\\") + 1 : res_min.rfind(".dll") ]
+			dep_min = dep_min[ dep_min.rfind("\\") + 1 : dep_min.rfind(".dll") ]
 		
 		existing_deps = self.dependencies.get( res_min, None)
 		if existing_deps == None :
@@ -353,7 +362,7 @@ class Environment( BaseEnvironment ):
 					lib = lib.rsplit( '.', 1 )[ 0 ]
 					local_env.Append( LIBPATH = [libpath] )
 					local_env.Append( LIBS = [lib] )
-
+			
 			for dep in externals:
 				if dep is not None and dep[ build_type ] is not None:
 					self.add_dependencies(result, dep, build_type)
@@ -390,6 +399,17 @@ class Environment( BaseEnvironment ):
 			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
 			self.Append( PCHSTOP = pre[1].replace("/", os.sep ), PCH = self.PCH(pre[0])[0] )
 			if pre[0] not in sources: sources += [ pre[0] ]
+	
+	def shared_object(self, sources, **keywords ):
+		"""	Generate object files from the provided sources
+		
+			Arguments:
+			sources -- The source files to compile into hared objects
+			keywords -- All other parameters passed with keyword assignment.
+		"""
+		if "shared_object" in dir(self.build_manager):
+			return self.build_manager.shared_object( self, sources, **keywords )
+		return self.SharedObject( sources, **keywords )
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
 		"""	Build a shared library ( dll or so )

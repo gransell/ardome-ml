@@ -41,8 +41,6 @@ namespace olib
 		{
 			#ifdef OLIB_ON_WINDOWS	
 			    ::DebugBreak();
-            #elif defined(OLIB_ON_MAC)
-                Debugger();
             #else
             // #pragma message( "No way to break into the debugger on your platform" )
 			#endif	
