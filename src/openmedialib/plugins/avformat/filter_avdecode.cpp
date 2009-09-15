@@ -664,7 +664,7 @@ class avformat_encode_filter : public filter_type
 			if ( context_->coded_frame && context_->coded_frame->key_frame )
 				key_ = get_position( );
 
-			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( CODEC_ID_MPEG2VIDEO, out_size, get_position( ), key_, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ) ) );
+			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( CODEC_ID_MPEG2VIDEO, out_size, get_position( ), key_, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), result->get_image()->pf() ) );
 			memcpy( packet->bytes( ), outbuf_, out_size );
 			result->set_stream( packet );
 		}

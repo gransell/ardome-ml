@@ -190,7 +190,6 @@ namespace
 			ml::avformat_opts = avformat_alloc_context( );
 			if ( getenv( "AML_AVFORMAT_DEBUG" ) == 0 )
 				av_log_set_level( -1 );
-			ml::register_dv_decoder( );
 
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2" );
@@ -198,6 +197,7 @@ namespace
 			ml::register_lookup( CODEC_ID_MPEG4, "mpeg4" );
 			ml::register_lookup( CODEC_ID_MP2, "mp2" );
 			ml::register_lookup( CODEC_ID_MP3, "mp3" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "dv" );
 		}
 		else if( init < 0 && --refs == 0 )
 		{
