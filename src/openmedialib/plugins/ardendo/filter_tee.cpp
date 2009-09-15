@@ -51,7 +51,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 
 				// Push the frame to each discovered pusher
 				for( std::vector < ml::input_type_ptr >::iterator iter = pushers.begin( ); iter != pushers.end( ); iter ++ )
-					( *iter )->push(  ml::frame_type::shallow_copy( result ) );
+					( *iter )->push(  result->shallow( ) );
 
 				// Seek and fetch from each input
 				for ( size_t i = 1; i < slot_count( ); i ++ )

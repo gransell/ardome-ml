@@ -28,72 +28,49 @@ frame_type::frame_type( )
 frame_type::~frame_type( ) 
 { }
 
-frame_type_ptr frame_type::shallow_copy( const frame_type_ptr &other )
+frame_type_ptr frame_type::shallow( )
 {
 	frame_type_ptr result;
-	if ( other )
+	frame_type *copy = new frame_type( *this );
+	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
+	copy->properties_ = *clone.get( );
+	if ( audio_ )
 	{
-		frame_type *copy = new frame_type( );
-		std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
-		copy->properties_ = *clone.get( );
-		copy->packet_ = other->packet_;
-		copy->image_ = other->image_;
-		copy->alpha_ = other->alpha_;
-		if ( other->audio_ )
-		{
-			typedef audio< unsigned char, pcm16 > pcm16;
-			audio_type *aud = new audio_type( pcm16( other->audio_->frequency( ), other->audio_->channels( ), other->audio_->samples( ) ) );
-			memcpy( aud->data( ), other->audio_->data( ), aud->size( ) );
-			aud->set_position( other->audio_->position( ) );
-			copy->audio_ = ml::audio_type_ptr( aud );
-		}
-		copy->pts_ = other->pts_;
-		copy->position_ = other->position_;
-		copy->duration_ = other->duration_;
-		copy->sar_num_ = other->sar_num_;
-		copy->sar_den_ = other->sar_den_;
-		copy->fps_num_ = other->fps_num_;
-		copy->fps_den_ = other->fps_den_;
-		for ( std::deque< ml::frame_type_ptr >::iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
-			copy->queue_.push_back( shallow_copy( *iter ) );
-		copy->exceptions_ = other->exceptions_;
-		result = frame_type_ptr( copy );
+		typedef audio< unsigned char, pcm16 > pcm16;
+		audio_type *aud = new audio_type( pcm16( audio_->frequency( ), audio_->channels( ), audio_->samples( ) ) );
+		memcpy( aud->data( ), audio_->data( ), aud->size( ) );
+		aud->set_position( audio_->position( ) );
+		copy->audio_ = ml::audio_type_ptr( aud );
 	}
+	copy->queue_.clear( );
+	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
+		copy->queue_.push_back( ( *iter )->shallow( ) );
+	result = frame_type_ptr( copy );
 	return result;
 }
 
-frame_type_ptr frame_type::deep_copy( const frame_type_ptr &other )
+frame_type_ptr frame_type::deep( )
 {
 	frame_type_ptr result;
-	if ( other )
+	frame_type *copy = new frame_type( *this );
+	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
+	copy->properties_ = *clone.get( );
+	if ( image_ )
+		copy->image_ = il::image_type_ptr( image_->clone( ) );
+	if ( alpha_ )
+		copy->alpha_ = il::image_type_ptr( alpha_->clone( ) );
+	if ( audio_ )
 	{
-		frame_type *copy = new frame_type( );
-		std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
-		copy->properties_ = *clone.get( );
-		if ( other->image_ )
-			copy->image_ = il::image_type_ptr( other->image_->clone( ) );
-		if ( other->alpha_ )
-			copy->alpha_ = il::image_type_ptr( other->alpha_->clone( ) );
-		if ( other->audio_ )
-		{
-			typedef audio< unsigned char, pcm16 > pcm16;
-			audio_type *aud = new audio_type( pcm16( other->audio_->frequency( ), other->audio_->channels( ), other->audio_->samples( ) ) );
-			memcpy( aud->data( ), other->audio_->data( ), aud->size( ) );
-			aud->set_position( other->audio_->position( ) );
-			copy->audio_ = ml::audio_type_ptr( aud );
-		}
-		copy->pts_ = other->pts_;
-		copy->position_ = other->position_;
-		copy->duration_ = other->duration_;
-		copy->sar_num_ = other->sar_num_;
-		copy->sar_den_ = other->sar_den_;
-		copy->fps_num_ = other->fps_num_;
-		copy->fps_den_ = other->fps_den_;
-		for ( std::deque< ml::frame_type_ptr >::iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
-			copy->queue_.push_back( shallow_copy( *iter ) );
-		copy->exceptions_ = other->exceptions_;
-		result = frame_type_ptr( copy );
+		typedef audio< unsigned char, pcm16 > pcm16;
+		audio_type *aud = new audio_type( pcm16( audio_->frequency( ), audio_->channels( ), audio_->samples( ) ) );
+		memcpy( aud->data( ), audio_->data( ), aud->size( ) );
+		aud->set_position( audio_->position( ) );
+		copy->audio_ = ml::audio_type_ptr( aud );
 	}
+	copy->queue_.clear( );
+	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
+		copy->queue_.push_back( ( *iter )->shallow( ) );
+	result = frame_type_ptr( copy );
 	return result;
 }
 

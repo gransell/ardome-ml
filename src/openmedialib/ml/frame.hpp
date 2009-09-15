@@ -50,10 +50,10 @@ class ML_DECLSPEC frame_type
 		virtual ~frame_type( );
 
 		/// Provide a shallow copy of the frame (and all attached frames)
-		static frame_type_ptr shallow_copy( const frame_type_ptr &other );
+		virtual frame_type_ptr shallow( );
 
 		/// Provide a deepy copy of the frame (and a shallow copy of all attached frames)
-		static frame_type_ptr deep_copy( const frame_type_ptr &other );
+		virtual frame_type_ptr deep( );
 
 		/// Obtains the queue of frames (when there are no attached frames, the queue
 		/// only contains a single frame, being the input).

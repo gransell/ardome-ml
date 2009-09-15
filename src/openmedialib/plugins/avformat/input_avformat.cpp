@@ -436,7 +436,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Repeat last frame if necessary
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				result = frame_type::shallow_copy( last_frame_ );
+				result = last_frame_->shallow( );
 				return;
 			}
 
@@ -581,7 +581,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 			}
 
-			last_frame_ = frame_type::shallow_copy( result );
+			last_frame_ = result->shallow( );
 		}
 
 		void do_packet_fetch( frame_type_ptr &result )

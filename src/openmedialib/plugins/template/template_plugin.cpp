@@ -11,6 +11,7 @@
 
 #ifdef WIN32
 #include <windows.h>
+#define ftello _ftelli64
 #endif // WIN32
 
 #include <iostream>
@@ -143,7 +144,7 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 			{
 				if ( index_ && frame->get_stream( )->key( ) == frame->get_stream( )->position( ) )
 				{
-					generator_.enroll( count_, ftell( output_ ) );
+					generator_.enroll( count_, ftello( output_ ) );
 					std::vector< boost::uint8_t > buffer;
 					generator_.flush( buffer );
 					fwrite( &buffer[ 0 ], buffer.size( ), 1, index_ );

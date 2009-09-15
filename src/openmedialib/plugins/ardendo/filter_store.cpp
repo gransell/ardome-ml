@@ -52,7 +52,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 
 				if ( store_ )
 				{
-					ARENFORCE_MSG(store_->push( result ), 
+					ARENFORCE_MSG(store_->push( result->shallow( ) ),
 						"Pushing to store failed. A possible cause could be insufficient disk space.");
 				}
 			}
