@@ -3,6 +3,6 @@
 	<!-- plugins go here -->
 	<openmedialib name="oml" version="0.1.0">
 		<plugin name="OpenLibraries gensys plugin" type="input" extension='"colour:", "color:", "nothing:", "pusher:"' merit="0" filename='"libopenmedialib_gensys.so", "libopenmedialib_gensys.dylib", "openmedialib_gensys.dll"'/>
-		<plugin name="OpenLibraries gensys plugin" type="filter" extension='"bezier", "chroma", "clip", "composite", "conform", "correction", "crop", "deinterlace", "frame_rate", "lerp", "playlist", "temporal", "threader", "visualise", "visualize"' merit="0" filename='"libopenmedialib_gensys.so", "libopenmedialib_gensys.dylib", "openmedialib_gensys.dll"'/>
+		<plugin name="OpenLibraries gensys plugin" type="filter" extension='"bezier", "chroma", "clip", "composite", "conform", "correction", "crop", "deinterlace", "frame_rate", "lerp", "playlist", "visualise", "visualize"' merit="0" filename='"libopenmedialib_gensys.so", "libopenmedialib_gensys.dylib", "openmedialib_gensys.dll"'/>
 	</openmedialib>
 </openlibraries>

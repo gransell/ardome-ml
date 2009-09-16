@@ -216,7 +216,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 						frames_[ index ] = input->fetch( );
 					}
 
-					fg = ml::frame_type::shallow_copy( frames_[ index ] );
+					fg = frames_[ index ]->shallow( );
 
 					switch( prop_orient_.value< int >( ) )
 					{

@@ -436,7 +436,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Repeat last frame if necessary
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				result = frame_type::shallow_copy( last_frame_ );
+				result = last_frame_->shallow( );
 				return;
 			}
 
@@ -581,7 +581,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 			}
 
-			last_frame_ = frame_type::shallow_copy( result );
+			last_frame_ = result->shallow( );
 		}
 
 		void do_packet_fetch( frame_type_ptr &result )
@@ -654,11 +654,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ) ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"" ) );
 						break;
 
 					case ml::stream_audio:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0, L"" ) );
 						break;
 
 					default:

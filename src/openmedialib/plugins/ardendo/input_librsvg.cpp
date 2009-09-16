@@ -192,7 +192,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 			if ( frame_ )
 			{
-				result = ml::frame_type::deep_copy( frame_ );
+				result = frame_->deep( );
 				result->set_position( get_position( ) );
 				result->set_sar( 1, 1 );
 				result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );

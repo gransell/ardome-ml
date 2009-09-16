@@ -356,7 +356,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				}
 
 				// Create a shallow copy to ensure the reference and cache are unaffected later in the graph
-				result = ml::frame_type::shallow_copy( result );
+				result = result->shallow( );
 
 				// Deal with audio direction
 				if ( blank_audio && result->get_audio( ) )

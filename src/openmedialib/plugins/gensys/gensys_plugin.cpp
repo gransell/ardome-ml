@@ -70,7 +70,7 @@ static bool has_image( frame_type_ptr &frame )
 	bool result = use_last.valid( ) && use_last.value< int >( ) == 1;
 	if ( !result )
 	{
-		std::deque< frame_type_ptr > queue = frame_type::unfold( frame_type::shallow_copy( frame ) );
+		std::deque< frame_type_ptr > queue = frame_type::unfold( frame->shallow( ) );
 		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
 		{
 			if ( *iter && ( *iter )->has_image( ) )
@@ -994,7 +994,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			if ( !is_yuv_planar( background ) )
 				background = frame_convert( background, L"yuv420p" );
 
-			ml::frame_type_ptr foreground = frame_convert( ml::frame_type::shallow_copy( fg ), background->get_image( )->pf( ) );
+			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
 			foreground->set_image( il::conform( foreground->get_image( ), il::writable ) );
 
 			// Crop to computed geometry
@@ -1338,229 +1338,6 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_type
 		pcos::property prop_saturation_;
 };
 
-// Threading filter
-//
-// Requires a single connected input. 
-//
-// The basic premise of this filter is to provide a threaded read ahead filter
-// which can be placed anywhere in a filter graph (see caveats below). 
-//
-// It has a state of inactive or active - when it's inactive, a fetch is a
-// straightforward call into the the connected inputs fetch method. When it's
-// active, a thread is employed which pulls frames from the connected input and
-// places them in a size limit imposed queue. A fetch from the right hand side of
-// the graph will simply obtain the requested frame from the queue and remove it.
-// When the readahead queue is full, the thread blocks until a remove occurs
-// thus freeing an entry for the thread to populate.
-//
-// Property usage:
-//
-// 	active = 0 [default] or 1
-// 		start or stop the thread
-//
-// 	queue = max size of read ahead queue
-// 		only modifiable when the filter is inactive and must be >= 1
-//
-// Caveats:
-//
-// Can only be used when the left hand node is fully thread safe. 
-
-template < typename C > class fn_observer : public pcos::observer
-{
-	public:
-		fn_observer( C *instance, void ( C::*fn )( ) )
-			: instance_( instance )
-			, fn_( fn )
-		{ }
-
-		virtual void updated( pcos::isubject * )
-		{
-			( instance_->*fn_ )( );
-		}
-
-	private:
-		C *instance_;
-		void ( C::*fn_ )( );
-};
-
-class ML_PLUGIN_DECLSPEC threader_filter : public filter_type
-{
-	typedef boost::mutex::scoped_lock scoped_lock;
-
-	struct reader_thread
-	{
-		reader_thread( threader_filter *filter ) : filter_( filter ) { }
-		void operator( )( ) { filter_->run( ); }
-		threader_filter *filter_;
-	};
-
-	public:
-		threader_filter( )
-			: filter_type( )
-			, start_( this )
-			, obs_active_( new fn_observer< threader_filter >( const_cast< threader_filter * >( this ), &threader_filter::update_active ) )
-			, prop_active_( pcos::key::from_string( "active" ) )
-			, running_( false )
-			, prop_queue_( pcos::key::from_string( "queue" ) )
-			, last_position_( -1 )
-			, reader_( 0 )
-		{
-			properties( ).append( prop_active_ = 0 );
-			properties( ).append( prop_queue_ = 25 );
-			prop_active_.attach( obs_active_ );
-		}
-
-		virtual ~threader_filter( )
-		{
-			prop_active_.set( 0 );
-		}
-
-		// Indicates if the input will enforce a packet decode
-		virtual bool requires_image( ) const { return prop_active_.value< int >( ) != 0; }
-
-		virtual const pl::wstring get_uri( ) const { return L"threader"; }
-
-		void update_active( )
-		{
-			if ( is_thread_safe( ) )
-			{
-				if ( prop_active_.value< int >( ) == 1 && !running_ )
-				{
-					running_ = true;
-					reader_ = new boost::thread( start_ );
-				}
-				else if ( prop_active_.value< int >( ) == 0 && running_ )
-				{
-					running_ = false;
-					{
-						scoped_lock lock( mutex_ );
-						cond_.notify_all( );
-					}
-					reader_->join( );
-					delete reader_;
-				}
-			}
-			else
-			{
-				fprintf( stderr, "Not thread safe\n" );
-			}
-		}
-
-		void run( )
-		{
-			int position = get_position( );
-			int max_size = prop_queue_.value< int >( );
-			input_type_ptr input = fetch_slot( );
-
-			while( input && running_ && position < input->get_frames( ) )
-			{
-				input->seek( position );
-				frame_type_ptr frame = input->fetch( );
-				if ( frame )
-				{
-					scoped_lock lock( mutex_ );
-
-					if ( int( queue_.size( ) ) >= max_size )
-						while ( running_ && int( queue_.size( ) ) >= max_size )
-							cond_.wait( lock );
-
-					if ( frame )
-						frame->set_position( position );
-					queue_.push_back( frame );
-					cond_.notify_one( );
-				}
-				else
-				{
-					break;
-				}
-
-				position += 1;
-			}
-		}
-
-		virtual void on_slot_change( input_type_ptr input, int )
-		{
-			if ( !input )
-				prop_active_.set( 0 );
-		}
-
-	protected:
-		void do_fetch( frame_type_ptr &result )
-		{
-			acquire_values( );
-
-			input_type_ptr input = fetch_slot( );
-
-			if ( input )
-			{
-				if ( !running_ )
-				{
-					if ( debug_level( ) )
-						fprintf( stderr, "requesting %d from dormant\n", get_position( ) );
-					input->seek( get_position( ) );
-					result = input->fetch( );
-					last_position_ = get_position( );
-				}
-				else
-				{
-					// This could be a little more intelligent - disposing of
-					// the entire queue is a bit agressive
-					if ( get_position( ) != last_position_ && get_position( ) != last_position_ + 1 )
-					{
-						if ( debug_level( ) )
-							fprintf( stderr, "restarting the thread %d %d\n", get_position( ), last_position_ );
-						prop_active_.set( 0 );
-						queue_.clear( );
-						input->seek( get_position( ) );
-						prop_active_.set( 1 );
-					}
-					else
-					{
-						if ( debug_level( ) )
-							fprintf( stderr, "requesting %d from active %d\n", get_position( ), int( queue_.size( ) ) );
-					}
-
-					last_position_ = get_position( );
-
-					{
-						scoped_lock lock( mutex_ );
-
-						if ( queue_.size( ) == 0 )
-							cond_.wait( lock );
-
-						if ( queue_.size( ) != 0 )
-						{
-							result = *( queue_.begin( ) );
-							while ( result && get_position( ) > result->get_position( ) )
-							{
-								queue_.pop_front( );
-								if ( queue_.size( ) == 0 )
-									cond_.wait( lock );
-								result = *( queue_.begin( ) );
-							}
-						}
-
-						cond_.notify_one( );
-					}
-				}
-
-				result = frame_type::deep_copy( result );
-			}
-		}
-
-	private:
-		reader_thread start_;
-		boost::shared_ptr< pcos::observer > obs_active_;
-		pcos::property prop_active_;
-		bool running_;
-		pcos::property prop_queue_;
-		int last_position_;
-		boost::mutex mutex_;
-		boost::condition cond_;
-		std::deque< frame_type_ptr > queue_;
-		boost::thread *reader_;
-};
-
 // Frame rate filter
 //
 // Changes the frame rate to the requested value.
@@ -1701,7 +1478,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 						}
 					}
 
-					result = frame_type::deep_copy( map_.find( requested )->second );
+					result = map_.find( requested )->second->deep( );
 					if ( result && reseat_->has( samples ) )
 					{
 						result->set_audio( reseat_->retrieve( samples ) );
@@ -2572,10 +2349,6 @@ public:
 			return filter_type_ptr( new bezier_filter( ) );
 		else if ( request == L"playlist" )
 			return filter_type_ptr( new playlist_filter( ) );
-		else if ( request == L"temporal" )
-			return filter_type_ptr( new clip_filter( ) );
-		else if ( request == L"threader" )
-			return filter_type_ptr( new threader_filter( ) );
 		else if ( request == L"visualise" )
 			return filter_type_ptr( new visualise_filter( ) );
 		else if ( request == L"visualize" )

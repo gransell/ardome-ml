@@ -118,8 +118,8 @@ void py_audio( )
 void py_frame( )
 {
 	py::class_<ml::frame_type, boost::noncopyable, ml::frame_type_ptr>( "frame", py::no_init )
-		.def( "shallow_copy", &ml::frame_type::shallow_copy, py::return_value_policy< py::return_by_value >( ) )
-		.def( "deep_copy", &ml::frame_type::deep_copy, py::return_value_policy< py::return_by_value >( ) )
+		.def( "shallow", &ml::frame_type::shallow, py::return_value_policy< py::return_by_value >( ) )
+		.def( "deep", &ml::frame_type::deep, py::return_value_policy< py::return_by_value >( ) )
 		.def( "properties", &ml::frame_type::properties, py::return_value_policy< py::return_by_value >( ) )
 		.def( "property", &ml::frame_type::property, py::return_value_policy< py::return_by_value >( ) )
 		.def( "set_alpha", &ml::frame_type::set_alpha )
@@ -180,6 +180,7 @@ void py_input( )
 		.def( "reuse", &ml::input_type::reuse )
 		.def( "fetch_slot", &ml::input_type::fetch_slot )
 		.def( "is_thread_safe", &ml::input_type::is_thread_safe )
+		.def( "requires_image", &ml::input_type::requires_image )
 	;
 }
 

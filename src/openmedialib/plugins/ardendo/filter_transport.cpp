@@ -67,7 +67,7 @@ class ML_PLUGIN_DECLSPEC filter_transport : public ml::filter_type
 
 						if ( prop_silence_.value< int >( ) || prop_speed_.value< int >( ) == 0 || result->get_position( ) == last_position_ )
 						{
-							result = ml::frame_type::shallow_copy( result );
+							result = result->shallow( );
 							result->set_audio( ml::audio_type_ptr( ) );
 						}
 

@@ -18,7 +18,7 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar )
+	stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, length_( length )
@@ -31,13 +31,14 @@ class stream_avformat : public ml::stream_type
 			, frequency_( 0 )
 			, channels_( 0 )
 			, samples_( 0 )
+			, pf_( pf )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
 				codec_ = codec_name_lookup_[ codec ];
 		}
 
 		/// Constructor for a audio packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, int frequency, int channels, int samples )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf  )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
 			, length_( length )
@@ -50,6 +51,7 @@ class stream_avformat : public ml::stream_type
 			, frequency_( frequency )
 			, channels_( channels )
 			, samples_( samples )
+			, pf_( pf )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
 				codec_ = codec_name_lookup_[ codec ];
@@ -142,6 +144,11 @@ class stream_avformat : public ml::stream_type
 		{ 
 			return samples_; 
 		}
+	
+		virtual const olib::openpluginlib::wstring pf( ) const 
+		{ 
+			return pf_; 
+		}
 
 	private:
 		enum ml::stream_id id_;
@@ -158,6 +165,7 @@ class stream_avformat : public ml::stream_type
 		int frequency_;
 		int channels_;
 		int samples_;
+		olib::openpluginlib::wstring pf_;
 };
 
 } } }
