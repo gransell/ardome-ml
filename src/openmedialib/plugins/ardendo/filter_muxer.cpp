@@ -17,8 +17,10 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 		explicit filter_muxer( )
 			: ml::filter_type( )
 			, prop_slot_( pcos::key::from_string( "slot" ) )
+			, prop_use_longest_( pcos::key::from_string( "use_longest" ) )
 		{
 			properties( ).append( prop_slot_ = -1 );
+			properties( ).append( prop_use_longest_ = 1 );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -36,7 +38,13 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 			while ( i < slot_count( ) )
 			{
 				if ( fetch_slot( i ) )
-					result = result == 0 || fetch_slot( i )->get_frames( ) < result ? fetch_slot( i )->get_frames( ) : result;
+				{
+				    // Should we report the duration based on the longest track or on the shortest
+				    if ( prop_use_longest_.value< int >( ) )
+				        result = result == 0 || fetch_slot( i )->get_frames( ) > result ? fetch_slot( i )->get_frames( ) : result;
+				    else
+				        result = result == 0 || fetch_slot( i )->get_frames( ) < result ? fetch_slot( i )->get_frames( ) : result;
+				}
 				i ++;
 			}
 			return result;
@@ -71,7 +79,8 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 		}
 
 	private:
-		pl::pcos::property prop_slot_;
+        pl::pcos::property prop_slot_;
+        pl::pcos::property prop_use_longest_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & )
