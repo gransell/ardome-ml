@@ -27,6 +27,7 @@ extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
+static const pl::pcos::key key_gop_closed_ = pl::pcos::key::from_string( "gop_closed" );
 
 class stream_queue
 {
@@ -83,6 +84,61 @@ class stream_queue
 			}
 		}
 
+		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
+		{
+			boost::uint8_t *result = 0;
+			boost::uint8_t *ptr = stream->bytes( );
+			unsigned int index = 0;
+			unsigned int length = stream->length( );
+			while ( result == 0 && index + 10 < length )
+			{
+				if ( ptr[ index ] == 0 && ptr[ index + 1 ] == 0 && ptr[ index + 2 ] == 1 )
+				{
+					if ( ptr[ index + 3 ] == 0xb8 )
+					{
+						if ( ptr[ index + 8 ] == 0 && ptr[ index + 9 ] == 0 && ptr[ index + 10 ] == 1 )
+							result = ptr + index;
+						else
+							index += 4;
+					}
+					else if ( ptr[ index + 3 ] == 0x00 )
+						index += 3;
+					else
+						index += 4;
+				}
+				else
+				{
+					index ++;
+				}
+				if ( !result && ptr[ index ] != 0x00 )
+				{
+					boost::uint8_t *t = ( boost::uint8_t * )memchr( ptr + index, 0x00, length - index );
+					if ( t == 0 ) break;
+					index = t - ptr;
+				}
+			}
+	
+			return result;
+		}
+
+		void look_for_closed( const ml::frame_type_ptr &frame )
+		{
+			pl::pcos::property gop_closed( key_gop_closed_ );
+			if ( frame->get_stream( )->codec( ) == "dv" )
+			{
+				frame->get_stream( )->properties( ).append( gop_closed = 1 );
+			}
+			else if ( frame->get_stream( )->codec( ) == "mpeg2" )
+			{
+				boost::uint8_t *ptr = find_mpeg2_gop( frame->get_stream( ) );
+				if ( ptr ) frame->get_stream( )->properties( ).append( gop_closed = int( ( ptr[ 7 ] & 64 ) >> 6 ) );
+			}
+			else
+			{
+				frame->get_stream( )->properties( ).append( gop_closed = -1 );
+			}
+		}
+
 		ml::frame_type_ptr fetch( int position )
 		{
 			ml::frame_type_ptr result;
@@ -95,6 +151,8 @@ class stream_queue
 				while ( result && result->get_stream( ) )
 				{
 					//std::cerr << "obtained from input " << result->get_position( ) << " for " << position << std::endl;
+					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
+						look_for_closed( result );
 					frames_[ result->get_position( ) ] = result;
 					used( result->get_position( ) );
 					if ( result->get_position( ) == position )
@@ -525,6 +583,13 @@ class avformat_encode_filter : public filter_type
 				if ( !last_frame_ || get_position( ) != last_frame_->get_position( ) )
 				{
 					ml::frame_type_ptr source = fetch_from_slot( 0 );
+					int gop_closed = 0;
+
+					if ( source->get_stream( ) && source->get_stream( )->properties( ).get_property_with_key( key_gop_closed_ ).valid( ) )
+					{
+						if ( source->get_stream( )->properties( ).get_property_with_key( key_gop_closed_ ).value< int >( ) == 1 )
+							gop_closed = 1;
+					}
 	
 					if ( prop_force_.value< int >( ) )
 					{
@@ -559,7 +624,7 @@ class avformat_encode_filter : public filter_type
 					{
 						std::cerr << "case 5: " << get_position( ) << " already encoding and stream component does not indicate that we have reached the next key frame yet" << std::endl;
 					}
-					else if ( encoding_ && source->get_stream( )->key( ) == source->get_stream( )->position( ) )
+					else if ( encoding_ && source->get_stream( )->key( ) == source->get_stream( )->position( ) && gop_closed )
 					{
 						std::cerr << "case 6: " << get_position( ) << " encoding turned off as next key is reached" << std::endl;
 						encoding_ = false;
