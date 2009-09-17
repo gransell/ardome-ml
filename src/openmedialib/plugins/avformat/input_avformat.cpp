@@ -646,7 +646,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				AVCodecContext *codec_context = stream->codec;
 				video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 
-				if ( pkt_.flags )
+				if ( aml_index_ && aml_index_->usable( ) )
+					key_last_ = aml_index_->key_frame_of( expected_ );
+				else if ( pkt_.flags )
 					key_last_ = expected_;
 
 				ml::stream_type_ptr packet;
@@ -1289,12 +1291,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					if ( aml_index_ && aml_index_->usable( ) )
 					{
-						if ( packet->flags && images_.size( ) == 0 )
-							expected_packet_ = aml_index_->key_frame_from( last_packet_pos_ );
-						else
+						if ( position >= expected_packet_ )
 							expected_packet_ ++;
 					}
-					return error;
+					return 0;
 				}
 
 				if ( key_search_ && av_frame_->key_frame == 0 && position < get_position( ) )
