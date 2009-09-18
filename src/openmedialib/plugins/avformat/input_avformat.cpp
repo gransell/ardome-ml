@@ -618,6 +618,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					got_packet = ml::stream_audio;
 				else if ( error >= 0 )
 					av_free_packet( &pkt_ );
+				if ( error >= 0 && key_last_ == -1 && got_packet != ml::stream_unknown && !pkt_.flags )
+					got_packet = ml::stream_unknown;
 			}
 
 			if ( got_packet != ml::stream_unknown )
@@ -646,9 +648,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				AVCodecContext *codec_context = stream->codec;
 				video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 
-				if ( aml_index_ && aml_index_->usable( ) )
-					key_last_ = aml_index_->key_frame_of( expected_ );
-				else if ( pkt_.flags )
+				if ( pkt_.flags )
 					key_last_ = expected_;
 
 				ml::stream_type_ptr packet;
@@ -1291,7 +1291,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					if ( aml_index_ && aml_index_->usable( ) )
 					{
-						if ( position >= expected_packet_ )
+						if ( packet->flags )
 							expected_packet_ ++;
 					}
 					return 0;
