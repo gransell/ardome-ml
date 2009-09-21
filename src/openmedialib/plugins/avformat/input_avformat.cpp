@@ -176,6 +176,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, aml_check_( 0 )
 			, next_time_( boost::get_system_time( ) + boost::posix_time::seconds( 2 ) )
 			, indexer_context_( 0 )
+			, unreliable_container_( false )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -859,7 +860,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				// Ignore streams that we don't have a decoder for
 				if ( avcodec_find_decoder( codec_context->codec_id ) == NULL )
+				{
+					unreliable_container_ = true;
 					continue;
+				}
 		
 				// Determine the type and obtain the first index of each type
    				switch( codec_context->codec_type ) 
@@ -1211,7 +1215,24 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( position < 0 ) position = 0;
 
 				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE );
+				int stream = -1;
 				boost::int64_t byte = -1;
+
+				// If we have stream in the container which we can't parse, we should defer to seeking on a specific stream
+				// (see populate for identification of unreliable_container_)
+				if ( unreliable_container_ )
+				{
+					if ( has_video( ) )
+					{
+						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_video_stream( )->time_base ) );
+						stream = video_indexes_[ prop_video_index_.value< int >( ) ];
+					}
+					else if ( has_audio( ) )
+					{
+						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_audio_stream( )->time_base ) );
+						stream = audio_indexes_[ prop_audio_index_.value< int >( ) ];
+					}
+				}
 
 				// Use the index to get an absolute byte position in the data when available/usable
 				if ( aml_index_ && aml_index_->usable( ) )
@@ -1226,7 +1247,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( byte != -1 )
 					result = av_seek_frame( context_, -1, byte, AVSEEK_FLAG_BYTE );
 				else
-					result = av_seek_frame( context_, -1, offset, AVSEEK_FLAG_BACKWARD );
+					result = av_seek_frame( context_, stream, offset, AVSEEK_FLAG_BACKWARD );
 
 				key_search_ = true;
 				key_last_ = -1;
@@ -1821,6 +1842,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		awi_generator indexer_;
 		URLContext *indexer_context_;
+
+		bool unreliable_container_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
