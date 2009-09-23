@@ -330,11 +330,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Corrections for file formats
 			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
-              resource.find( L".mpeg" ) == resource.length( ) - 5 )
-         {
+				 resource.find( L".mpeg" ) == resource.length( ) - 5 )
+			{
 				prop_format_ = pl::wstring( L"mpeg" );
 				key_search_ = true;
-         }
+			}
 			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
 				prop_format_ = pl::wstring( L"dv" );
 			else if ( resource.find( L".mp2" ) == resource.length( ) - 4 )
@@ -571,7 +571,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			else if ( exact_image || exact_audio )
 				expected_ ++;
 
-			if ( aml_index_ == 0 && ( expected_ >= frames_ && error >= 0 ) )
+			if ( aml_index_ == 0 && ( expected_ >= frames_ && error >= 0 && url_ftell( context_->pb ) != context_->file_size ) )
 				frames_ = expected_ + 1;
 
 			if ( prop_gen_index_.value< int >( ) && error < 0 )
@@ -1472,6 +1472,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			int frequency = codec_context->sample_rate;
 			int bps = 2;
 			int skip = 0;
+			bool ignore = false;
 
 			if ( audio_buf_used_ == 0 && audio_.size( ) == 0 )
 			{
@@ -1511,9 +1512,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				{
 					audio_buf_used_ = size_t( samples_to_packet - samples_to_frame ) * channels * bps;
 					if ( audio_buf_used_ < audio_buf_size_ / 2 )
+					{
 						memset( audio_buf_, 0, audio_buf_used_ );
+						ignore = found < get_position( );
+					}
 					else
+					{
 						audio_buf_used_ = 0;
+					}
 				}
 
 				audio_buf_offset_ = found;
@@ -1576,12 +1582,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						break;
 
 					// Create an audio frame
-					index += store_audio( audio_buf_offset_, audio_buf_ + index, samples );
+					if ( !ignore )
+					{
+						index += store_audio( audio_buf_offset_, audio_buf_ + index, samples );
 
-					audio_buf_offset_ = audio_.back( )->position( );
+						audio_buf_offset_ = audio_.back( )->position( );
 
-					if ( audio_buf_offset_ ++  >= get_position( ) )
-						got_audio = 1;
+						if ( audio_buf_offset_ ++  >= get_position( ) )
+							got_audio = 1;
+					}
+					else
+					{
+						index += samples * channels * 2;
+					}
 				}
 
 				audio_buf_used_ -= index;
