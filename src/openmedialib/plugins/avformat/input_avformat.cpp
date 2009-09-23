@@ -329,8 +329,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// Corrections for file formats
-			if ( resource.find( L".mpg" ) == resource.length( ) - 4 )
+			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
+              resource.find( L".mpeg" ) == resource.length( ) - 5 )
+         {
+				prop_format_ = pl::wstring( L"mpeg" );
 				key_search_ = true;
+         }
 			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
 				prop_format_ = pl::wstring( L"dv" );
 			else if ( resource.find( L".mp2" ) == resource.length( ) - 4 )
