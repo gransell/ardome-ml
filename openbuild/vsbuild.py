@@ -124,18 +124,19 @@ class VsBuilder :
 		return [] + env[env_var_name]
 		
 	def create_string( self, env_var_name, env) :
-		if not env.has_key(env_var_name) : return ""
+		if not env.has_key(env_var_name) : 
+			return ""
 		res = ''
 		#print 'env_var_name=', env_var_name, ', env[env_var_name]=', env[env_var_name]
 		if isinstance(env[env_var_name], list) :
 			for p in env[env_var_name] :
-				str = p
+				strval = p
 				if p.find('\\') != -1 :
-					str = '"' + str + '"'
+					strval = '"' + strval + '"'
 				
-				res += str.replace('"', '&quot;') + ' ' 
+				res += strval.replace('"', '&quot;') + ' ' 
 		else :
-			res += env[env_var_name].replace('"', '&quot;') + ' '
+			res += str( env[env_var_name] ).replace('"', '&quot;') + ' '
 				
 		return res
 
@@ -148,6 +149,22 @@ class VsBuilder :
 		
 		return res
 		
+	def handle_clr_project( self, opts ) :
+		if '/clr' in opts :
+			opts = opts.replace('/EHsc', '')
+			opts += ' /EHs- /EHa '
+			return opts
+		else:
+			return opts
+			
+	def add_zm_compiler_switch( self, opts ) :
+		# Make sure there is enough heap space for the PCH generation.
+		if self.vs_version == 'vs2003':
+			if '/Zm' in opts : return opts
+			return opts + ' /Zm800 '
+		else:
+			if '/Zm800' in opts : return opts.replace('/Zm800', '/Zm200')
+			return opts + ' /Zm200 '
 		
 	def project( self, env, lib, sources, project_type, subsystem=None, headers=None, pre=None, nopre=None, extra_compiler_flags = None  ) :
 	
@@ -156,14 +173,8 @@ class VsBuilder :
 	
 		self.vs_solution.root = env.root
 		
-		# Make sure there is enough heap space for the PCH generation.
-		if self.vs_version == 'vs2003':
-			if extra_compiler_flags is None : extra_compiler_flags = '/Zm800 '
-			else: extra_compiler_flags += ' /Zm800 '
-		else:
-			if extra_compiler_flags is None : extra_compiler_flags = '/Zm200 '
-			else: extra_compiler_flags += ' /Zm200 '
-		
+		if extra_compiler_flags is None: extra_compiler_flags = ""
+			
 		if env['debug'] == '1': config_name = 'Debug|Win32'
 		else : config_name = 'Release|Win32'
 			
@@ -190,6 +201,10 @@ class VsBuilder :
 			curr_cfg.compiler_options.additional_options += ' ' + extra_compiler_flags
 		
 		curr_cfg.compiler_options.additional_options += self.create_string('CPPFLAGS', env)
+		curr_cfg.compiler_options.additional_options += self.create_string('CCFLAGS', env)
+		
+		curr_cfg.compiler_options.additional_options = self.handle_clr_project( curr_cfg.compiler_options.additional_options )
+		curr_cfg.compiler_options.additional_options = self.add_zm_compiler_switch( curr_cfg.compiler_options.additional_options )
 		
 		curr_cfg.set_vc_version(self.vs_version)
 		curr_cfg.output_directory = env.subst('$win_target_path')
@@ -224,6 +239,7 @@ class VsBuilder :
 		return [ dll_file, lib_file, exp_file, pdb_file]
 		
 	def shared_library( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		# print 'shared_library in vsbuild.py. Building ', lib
 		return self.project(env=env, lib=lib, sources=sources, project_type="dll", subsystem=None, headers=headers, pre=pre, nopre=nopre )
 		
 	def plugin( self, env, lib, sources, headers=None, pre=None, nopre=None, *keywords ):

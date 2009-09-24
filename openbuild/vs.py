@@ -162,6 +162,7 @@ class VS2008 :
 					AdditionalOptions="%s"
 					AdditionalIncludeDirectories="%s"
 					PreprocessorDefinitions="%s"
+					ExceptionHandling="%s"
 					RuntimeLibrary="%s"
 					RuntimeTypeInfo="%s"
 					UsePrecompiledHeader="%s"
@@ -169,11 +170,11 @@ class VS2008 :
 					WarningLevel="%s"
 					DebugInformationFormat="%s"/> """
 
-		#print 'options=', options.additional_options
-					
+		
 		return tool_str % ( options.additional_options,
 							options.include_directories_as_string( project.root_dir),
 							options.preprocessor_flags_as_string(),
+							options.exception_handling(),
 							options.runtime_library( config.name ),
 							options.runtime_type_info_as_string(),
 							options.use_precompiled_headers(),
@@ -249,6 +250,12 @@ class CompilerOptions:
 		m = re.compile("debug",re.I).search(config_name)
 		if( m ) : return "3"
 		return "2"
+		
+	def exception_handling( self ) :
+		if self.additional_options.find('/clr') != -1 :
+			return "2" #/EHa - this is a clr project, we need /EHa exception handling!
+		else : 
+			return "1" #/EHsc
 
 	def runtime_type_info_as_string( self ) :
 		""" Returns the string 'TRUE' if runtime type info is going to be used, otherwise 'FALSE'"""
@@ -588,6 +595,7 @@ class VSProject :
 		return res_files
 
 	def handle_src_file( self, cpp_file, ostr ) :
+		#print "self.relative_sln, self.relative_path, cpp_file ", self.relative_sln, self.relative_path, cpp_file
 		thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file.name )
 		ostr.write( "<File RelativePath=\"%s\" >\n" % thepath.replace("/", "\\")  )
 		for config in self.configurations :
@@ -686,6 +694,8 @@ class VSSolution :
 				proj_deps = deps[ proj.name ]
 				for d in proj_deps :
 					dependent_project = self.find_project_by_name( d )
+					# We might depend on pure object files, so these will not be found...
+					if dependent_project is None : continue
 					sln.write("\t\t{%s}={%s}\n" % (dependent_project.guid, dependent_project.guid ))
 			
 			sln.write("\tEndProjectSection\n")
