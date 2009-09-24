@@ -382,6 +382,28 @@ class Environment( BaseEnvironment ):
 
 		return result
 		
+	def create_string_from_construction_variable( self, env_var_name) :
+		if not self.has_key(env_var_name) : 
+			return ""
+		res = ''
+		#print 'env_var_name=', env_var_name, ', env[env_var_name]=', env[env_var_name]
+		if isinstance(self[env_var_name], list) :
+			for p in self[env_var_name] :
+				res += p + ' ' 
+		else :
+			res += str( self[env_var_name] ) + ' '
+				
+		return res
+		
+	def setup_clr_compilation( self ) :
+		ccflags = self.create_string_from_construction_variable('CPPFLAGS')
+		ccflags += self.create_string_from_construction_variable('CCFLAGS')
+		if '/clr' in ccflags:
+			ccflags = ccflags.replace('/EHsc', '')
+			ccflags += ' /EHs- /EHa '
+			self.Replace( CCFLAGS = ccflags )
+			self.Replace( CPPFLAGS = '' )
+			
 	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
 		"""	Adds recompiled headers to the environment for this build.
 
@@ -409,6 +431,9 @@ class Environment( BaseEnvironment ):
 		"""
 		if "shared_object" in dir(self.build_manager):
 			return self.build_manager.shared_object( self, sources, **keywords )
+		
+		if self[ 'PLATFORM' ] == 'win32':
+			self.setup_clr_compilation()
 		return self.SharedObject( sources, **keywords )
 
 	def shared_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
@@ -438,6 +463,7 @@ class Environment( BaseEnvironment ):
 	
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
+			self.setup_clr_compilation()
 
 		new_lib = self.SharedLibrary( lib, sources, *keywords )
 		return new_lib
@@ -520,6 +546,7 @@ class Environment( BaseEnvironment ):
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
+			self.setup_clr_compilation()
 
 		new_lib = self.SharedLibrary( lib, sources, *keywords )
 		return new_lib
@@ -535,6 +562,7 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
 			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
+			self.setup_clr_compilation()
 			
 		return self.Program( lib, sources, *keywords )
 		
@@ -549,6 +577,7 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
 			self.Append( LINKFLAGS="/SUBSYSTEM:CONSOLE" )
+			self.setup_clr_compilation()
 		
 		return self.Program( lib, sources, *keywords )
 	
