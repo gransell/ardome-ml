@@ -122,7 +122,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					// but if there is a short fall, then we pitch shift to make sure we have what we want
 					if ( samples == audio_span_->samples( ) )
 					{
-						uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = audio_span_->data( );
 						for( std::vector< ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); iter ++ )
 						{
 							memcpy( ptr, ( *iter )->get_audio( )->data( ), ( *iter )->get_audio( )->size( ) );
@@ -131,7 +131,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					}
 					else if ( start_audio != -1 )
 					{
-						uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = audio_span_->data( );
                         std::vector< double > weights;
 						double max_level;
 
@@ -167,7 +167,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					result = frames_[ get_position( ) - start ];
 					if ( result && result->get_audio( ) )
 					{
-						uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = audio_span_->data( );
 						for ( int index = start; index < get_position( ); index ++ )
 							ptr += table[ index - start ] * channels_ * 2;
 						ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, table[ get_position( ) - start ] ) ) );
