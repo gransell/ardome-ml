@@ -566,9 +566,11 @@ class avformat_encode_filter : public filter_type
 		{
 			if ( prop_enable_.value< int >( ) )
 			{
+				ml::frame_type_ptr source = fetch_from_slot( 0 );
+
 				if ( !initialised_ )
 				{
-					result = fetch_from_slot( 0 );
+					result = source;
 	
 					// Try to set up an internal graph to handle the cpu compositing of deferred frames
 					pusher_ = ml::create_input( L"pusher:" );
@@ -582,7 +584,6 @@ class avformat_encode_filter : public filter_type
 	
 				if ( !last_frame_ || get_position( ) != last_frame_->get_position( ) )
 				{
-					ml::frame_type_ptr source = fetch_from_slot( 0 );
 					int gop_closed = 0;
 
 					if ( source->get_stream( ) && source->get_stream( )->properties( ).get_property_with_key( key_gop_closed_ ).valid( ) )
