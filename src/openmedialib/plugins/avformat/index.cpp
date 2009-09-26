@@ -18,7 +18,7 @@ namespace ml = olib::openmedialib;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-class aml_awi_index : public aml_index
+template <typename T> class aml_awi_index : public aml_index
 {
 	public:
 		aml_awi_index( const char *file )
@@ -121,7 +121,7 @@ class aml_awi_index : public aml_index
 	protected:
 		boost::recursive_mutex mutex_;
 		std::string file_;
-		ml::awi_parser awi_;
+		T awi_;
 		boost::int64_t position_;
 };
 
@@ -383,10 +383,25 @@ aml_index *aml_index_factory( const char *url )
 {
 	aml_index *result = 0;
 
-	// Check for new version (binary AWI v2) first
+#if 0
+	// Check for binary AWI v3 
 	if ( strstr( url, ".awi" ) )
 	{
-		result = new aml_awi_index( url );
+		result = new aml_awi_index< ml::awi_parser_v3 >( url );
+		result->read( );
+
+		if ( result->frames( 0 ) == 0 )
+		{
+			delete result;
+			result = 0;
+		}
+	}
+#endif
+
+	// Check for binary AWI v2 
+	if ( result == 0 && strstr( url, ".awi" ) )
+	{
+		result = new aml_awi_index< ml::awi_parser_v2 >( url );
 		result->read( );
 
 		if ( result->frames( 0 ) == 0 )

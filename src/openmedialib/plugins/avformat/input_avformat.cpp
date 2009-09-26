@@ -1857,7 +1857,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		opencorelib::worker index_read_worker_;
 		opencorelib::function_job_ptr read_job_;
 
-		awi_generator indexer_;
+		awi_generator_v2 indexer_;
 		URLContext *indexer_context_;
 
 		bool unreliable_container_;

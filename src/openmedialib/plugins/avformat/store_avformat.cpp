@@ -1284,7 +1284,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_ts_auto_;
 		pcos::property prop_audio_split_;
 
-		awi_generator ts_generator_;
+		awi_generator_v2 ts_generator_;
 		URLContext *ts_context_;
 		int ts_last_position_;
 		boost::uint64_t ts_last_offset_;
