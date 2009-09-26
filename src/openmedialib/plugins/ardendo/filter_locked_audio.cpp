@@ -2,9 +2,6 @@
 //
 // Copyright (C) 2009 Ardendo
 
-#include <olib/opencorelib/cl/core.hpp>
-#include <olib/opencorelib/cl/core.hpp>
-
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
