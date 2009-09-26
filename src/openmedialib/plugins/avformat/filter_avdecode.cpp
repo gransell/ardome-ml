@@ -703,7 +703,10 @@ class avformat_encode_filter : public filter_type
 				context_ = avcodec_alloc_context( );
 				picture_ = avcodec_alloc_frame( );
 
-				if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2" )
+				if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2" ||
+                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/30" ||
+                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/50" ||
+                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/mpeg2hd_1080i" )
 				{
 					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
 					context_->bit_rate = 50000000;
@@ -714,7 +717,10 @@ class avformat_encode_filter : public filter_type
 					context_->scenechange_threshold = 1000000000;
 					context_->thread_count = 4;
 				}
-				else if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv" )
+				else if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv" ||
+                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv25" ||
+                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv50" ||
+                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dvcprohd_1080i" )
 				{
 					instance_ = avcodec_find_encoder( CODEC_ID_DVVIDEO );
 					context_->pix_fmt = oil_to_avformat( result->pf( ) );

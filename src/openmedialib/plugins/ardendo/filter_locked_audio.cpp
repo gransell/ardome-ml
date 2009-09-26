@@ -2,6 +2,9 @@
 //
 // Copyright (C) 2009 Ardendo
 
+#include <olib/opencorelib/cl/core.hpp>
+#include <olib/opencorelib/cl/core.hpp>
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
@@ -132,6 +135,9 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					else if ( start_audio != -1 )
 					{
 						boost::uint8_t *ptr = audio_span_->data( );
+                        // if ( frames_size( ) == table.size( ) )
+                        //                             ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
+                        
                         std::vector< double > weights;
 						double max_level;
 

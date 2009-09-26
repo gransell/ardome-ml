@@ -193,11 +193,15 @@ namespace
 
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2" );
+			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/mpeg2hd_1080i" );
 			ml::register_lookup( CODEC_ID_H264, "h264" );
 			ml::register_lookup( CODEC_ID_MPEG4, "mpeg4" );
 			ml::register_lookup( CODEC_ID_MP2, "mp2" );
 			ml::register_lookup( CODEC_ID_MP3, "mp3" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dv" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "dv25" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "dv50" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "dvcprohd_1080i" );
 		}
 		else if( init < 0 && --refs == 0 )
 		{
