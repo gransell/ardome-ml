@@ -48,6 +48,8 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 
 					if ( !store_ || !store_->init( ) )
 						store_ = ml::store_type_ptr( );
+					else
+						return;
 				}
 
 				if ( store_ )

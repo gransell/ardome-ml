@@ -17,7 +17,6 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 			: ml::filter_type( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_slots_( pcos::key::from_string( "slots" ) )
-			, last_frame_( )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_slots_ = 2 );
@@ -36,13 +35,10 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 			acquire_values( );
 
 			// Fetch input frame or reuse last frame
-			if ( !last_frame_ || last_frame_->get_position( ) != get_position( ) )
-				result = fetch_from_slot( 0 );
-			else
-				result = last_frame_;
+			result = fetch_from_slot( 0 );
 
 			// Only do this while enabled and avoid pushing duplicates
-			if ( prop_enable_.value< int >( ) && result != last_frame_ )
+			if ( prop_enable_.value< int >( ) )
 			{
 				// For each input, collect pushers
 				std::vector < ml::input_type_ptr > pushers;
@@ -67,8 +63,6 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 					}
 				}
 			}
-
-			last_frame_ = result;
 		}
 
 	private:
@@ -97,7 +91,6 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 
 		pcos::property prop_enable_;
 		pcos::property prop_slots_;
-		ml::frame_type_ptr last_frame_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring &resource )
