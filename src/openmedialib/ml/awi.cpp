@@ -750,7 +750,7 @@ bool awi_index_v3::get_index_data( const std::string &key, boost::uint16_t &valu
 	else if ( key == "video_width" ) value = header_.video_width;
 	else if ( key == "video_height" ) value = header_.video_height;
 	else if ( key == "video_gop" ) value = header_.video_gop;
-	else if ( key == "video_rrp" ) value = header_.video_rrp;
+	else if ( key == "video_rpp" ) value = header_.video_rpp;
 	else if ( key == "video_ar_num" ) value = header_.video_ar_num;
 	else if ( key == "video_ar_den" ) value = header_.video_ar_den;
 	else if ( key == "audio_type" ) value = header_.audio_type;
@@ -788,7 +788,7 @@ bool awi_index_v3::set_index_data( const std::string &key, const boost::uint16_t
 	else if ( key == "video_width" ) header_.video_width = value;
 	else if ( key == "video_height" ) header_.video_height = value;
 	else if ( key == "video_gop" ) header_.video_gop = value;
-	else if ( key == "video_rrp" ) header_.video_rrp = value;
+	else if ( key == "video_rpp" ) header_.video_rpp = value;
 	else if ( key == "video_ar_num" ) header_.video_ar_num = value;
 	else if ( key == "video_ar_den" ) header_.video_ar_den = value;
 	else if ( key == "audio_type" ) header_.audio_type = value;
@@ -915,7 +915,7 @@ bool awi_parser_v3::parse_header( )
 			read( header.video_height ) &&
 			read( header.video_chroma ) &&
 			read( header.video_gop ) &&
-			read( header.video_rrp ) &&
+			read( header.video_rpp ) &&
 			read( header.video_ar_num ) &&
 			read( header.video_ar_den ) &&
 			read( header.video_sar_num ) &&
@@ -940,7 +940,7 @@ bool awi_parser_v3::parse_header( )
 bool awi_parser_v3::is_item( )
 {
 	awi_item_v3 item;
-	return peek( item.type ) && ( item.type & 0xfffc );
+	return peek( item.type ) && ( ( item.type & 0xfffc ) == 0);
 }
 
 // Attempt to parse an item and remove it from the internal buffer
@@ -950,7 +950,7 @@ bool awi_parser_v3::parse_item( )
 	awi_item_v3 item;
 	bool result = peek( item.type );
 
-	if ( result && ( item.type & 0xfffc ) )
+	if ( result && ( ( item.type & 0xfffc ) == 0) )
 		result = read( item.type ) && read( item.frames ) && read( item.frame ) && read( item.offset ) && read( item.length );
 
 	if ( result )

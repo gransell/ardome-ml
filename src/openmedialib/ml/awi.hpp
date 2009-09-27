@@ -60,7 +60,7 @@ struct awi_header_v3
 	boost::uint16_t video_height;
 	boost::uint32_t video_chroma;
 	boost::uint16_t video_gop;
-	boost::uint16_t video_rrp;
+	boost::uint16_t video_rpp;
 	boost::uint16_t video_ar_num;
 	boost::uint16_t video_ar_den;
 	boost::uint8_t video_sar_num;
