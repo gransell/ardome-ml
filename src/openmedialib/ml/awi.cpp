@@ -732,34 +732,80 @@ bool awi_index_v3::has_index_data( ) const
 	return state_ != header && state_ != error;
 }
 
-bool awi_index_v3::get_index_data( const std::string &, boost::uint8_t & ) const
+bool awi_index_v3::get_index_data( const std::string &key, boost::uint8_t &value ) const
 {
-	return false;
+	if ( key == "video_progressive" ) value = header_.video_progressive;
+	else if ( key == "video_flags" ) value = header_.video_flags;
+	else if ( key == "video_sar_num" ) value = header_.video_sar_num;
+	else if ( key == "video_sar_den" ) value = header_.video_sar_den;
+	else return false;
+	return true;
 }
 
-bool awi_index_v3::get_index_data( const std::string &, boost::uint16_t & ) const
+bool awi_index_v3::get_index_data( const std::string &key, boost::uint16_t &value ) const
 {
-	return false;
+	if ( key == "video_type" ) value = header_.video_type;
+	else if ( key == "video_fps_num" ) value = header_.video_fps_num;
+	else if ( key == "video_fps_den" ) value = header_.video_fps_den;
+	else if ( key == "video_width" ) value = header_.video_width;
+	else if ( key == "video_height" ) value = header_.video_height;
+	else if ( key == "video_gop" ) value = header_.video_gop;
+	else if ( key == "video_rrp" ) value = header_.video_rrp;
+	else if ( key == "video_ar_num" ) value = header_.video_ar_num;
+	else if ( key == "video_ar_den" ) value = header_.video_ar_den;
+	else if ( key == "audio_type" ) value = header_.audio_type;
+	else if ( key == "audio_channels" ) value = header_.audio_channels;
+	else if ( key == "audio_bits" ) value = header_.audio_bits;
+	else if ( key == "audio_store_bits" ) value = header_.audio_store_bits;
+	else return false;
+	return true;
 }
 
-bool awi_index_v3::get_index_data( const std::string &, boost::uint32_t & ) const
+bool awi_index_v3::get_index_data( const std::string &key, boost::uint32_t &value ) const
 {
-	return false;
+	if ( key == "video_bitrate" ) value = header_.video_bitrate;
+	else if ( key == "video_chroma" ) value = header_.video_chroma;
+	else if ( key == "audio_frequency" ) value = header_.audio_frequency;
+	else return false;
+	return true;
 }
 
-bool awi_index_v3::set_index_data( const std::string &, const boost::uint8_t )
+bool awi_index_v3::set_index_data( const std::string &key, const boost::uint8_t value )
 {
-	return false;
+	if ( key == "video_progressive" ) header_.video_progressive = value;
+	else if ( key == "video_flags" ) header_.video_flags = value;
+	else if ( key == "video_sar_num" ) header_.video_sar_num = value;
+	else if ( key == "video_sar_den" ) header_.video_sar_den = value;
+	else return false;
+	return true;
 }
 
-bool awi_index_v3::set_index_data( const std::string &, const boost::uint16_t )
+bool awi_index_v3::set_index_data( const std::string &key, const boost::uint16_t value )
 {
-	return false;
+	if ( key == "video_type" ) header_.video_type = value;
+	else if ( key == "video_fps_num" ) header_.video_fps_num = value;
+	else if ( key == "video_fps_den" ) header_.video_fps_den = value;
+	else if ( key == "video_width" ) header_.video_width = value;
+	else if ( key == "video_height" ) header_.video_height = value;
+	else if ( key == "video_gop" ) header_.video_gop = value;
+	else if ( key == "video_rrp" ) header_.video_rrp = value;
+	else if ( key == "video_ar_num" ) header_.video_ar_num = value;
+	else if ( key == "video_ar_den" ) header_.video_ar_den = value;
+	else if ( key == "audio_type" ) header_.audio_type = value;
+	else if ( key == "audio_channels" ) header_.audio_channels = value;
+	else if ( key == "audio_bits" ) header_.audio_bits = value;
+	else if ( key == "audio_store_bits" ) header_.audio_store_bits = value;
+	else return false;
+	return true;
 }
 
-bool awi_index_v3::set_index_data( const std::string &, const boost::uint32_t )
+bool awi_index_v3::set_index_data( const std::string &key, const boost::uint32_t value )
 {
-	return false;
+	if ( key == "video_bitrate" ) header_.video_bitrate = value;
+	else if ( key == "video_chroma" ) header_.video_chroma = value;
+	else if ( key == "audio_frequency" ) header_.audio_frequency = value;
+	else return false;
+	return true;
 }
 
 // ----------------------------------------------------------------------------
@@ -862,16 +908,16 @@ bool awi_parser_v3::parse_header( )
 			read( header.video_type ) &&
 			read( header.video_progressive ) &&
 			read( header.video_flags ) &&
-			read( header.video_rate ) &&
-			read( header.video_rate_rational ) &&
+			read( header.video_fps_num ) &&
+			read( header.video_fps_den ) &&
 			read( header.video_bitrate ) &&
 			read( header.video_width ) &&
 			read( header.video_height ) &&
 			read( header.video_chroma ) &&
 			read( header.video_gop ) &&
 			read( header.video_rrp ) &&
-			read( header.video_aspect ) &&
-			read( header.video_aspect_rational ) &&
+			read( header.video_ar_num ) &&
+			read( header.video_ar_den ) &&
 			read( header.video_sar_num ) &&
 			read( header.video_sar_den ) &&
 			read( header.reserved1, 6 ) &&
@@ -894,7 +940,7 @@ bool awi_parser_v3::parse_header( )
 bool awi_parser_v3::is_item( )
 {
 	awi_item_v3 item;
-	return peek( item.type ) && ( item.type == 0 || item.type == 1 );
+	return peek( item.type ) && ( item.type & 0xfffc );
 }
 
 // Attempt to parse an item and remove it from the internal buffer
@@ -904,7 +950,7 @@ bool awi_parser_v3::parse_item( )
 	awi_item_v3 item;
 	bool result = peek( item.type );
 
-	if ( result && ( item.type == 0 || item.type == 1 ) )
+	if ( result && ( item.type & 0xfffc ) )
 		result = read( item.type ) && read( item.frames ) && read( item.frame ) && read( item.offset ) && read( item.length );
 
 	if ( result )

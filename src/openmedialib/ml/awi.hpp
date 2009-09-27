@@ -53,16 +53,16 @@ struct awi_header_v3
 	boost::uint16_t video_type;
 	boost::uint8_t video_progressive;
 	boost::uint8_t video_flags;
-	boost::uint16_t video_rate;
-    boost::uint16_t video_rate_rational;
+	boost::uint16_t video_fps_num;
+	boost::uint16_t video_fps_den;
 	boost::uint32_t video_bitrate;
 	boost::uint16_t video_width;
 	boost::uint16_t video_height;
 	boost::uint32_t video_chroma;
 	boost::uint16_t video_gop;
 	boost::uint16_t video_rrp;
-	boost::uint16_t video_aspect;
-	boost::uint16_t video_aspect_rational;
+	boost::uint16_t video_ar_num;
+	boost::uint16_t video_ar_den;
 	boost::uint8_t video_sar_num;
 	boost::uint8_t video_sar_den;
 	char reserved1[ 6 ];
@@ -139,14 +139,14 @@ class ML_DECLSPEC awi_index
 		// sure that the the awi index matches and we should have some frames to work with.
 		virtual int total_frames( ) const = 0;
  
-        // Methods for querying and setting index information
-        virtual bool has_index_data( ) const { return false; }
-        virtual bool get_index_data( const std::string &, boost::uint8_t & ) const { return false; }
-        virtual bool get_index_data( const std::string &, boost::uint16_t & ) const { return false; }
-        virtual bool get_index_data( const std::string &, boost::uint32_t & ) const { return false; }
-        virtual bool set_index_data( const std::string &, const boost::uint8_t ) { return false; }
-        virtual bool set_index_data( const std::string &, const boost::uint16_t ) { return false; }
-        virtual bool set_index_data( const std::string &, const boost::uint32_t ) { return false; }
+		// Methods for querying and setting index information
+		virtual bool has_index_data( ) const { return false; }
+		virtual bool get_index_data( const std::string &, boost::uint8_t & ) const { return false; }
+		virtual bool get_index_data( const std::string &, boost::uint16_t & ) const { return false; }
+		virtual bool get_index_data( const std::string &, boost::uint32_t & ) const { return false; }
+		virtual bool set_index_data( const std::string &, const boost::uint8_t ) { return false; }
+		virtual bool set_index_data( const std::string &, const boost::uint16_t ) { return false; }
+		virtual bool set_index_data( const std::string &, const boost::uint32_t ) { return false; }
 
 	protected:
 		awi_state state_;
@@ -258,14 +258,14 @@ class ML_DECLSPEC awi_index_v3 : public awi_index
 		virtual int key_frame_from( boost::int64_t offset );
 		virtual int total_frames( ) const;
 
-        virtual bool has_index_data( ) const;
-        virtual bool get_index_data( const std::string &, boost::uint8_t & ) const;
-        virtual bool get_index_data( const std::string &, boost::uint16_t & ) const;
-        virtual bool get_index_data( const std::string &, boost::uint32_t & ) const;
-        virtual bool set_index_data( const std::string &, const boost::uint8_t );
-        virtual bool set_index_data( const std::string &, const boost::uint16_t );
-        virtual bool set_index_data( const std::string &, const boost::uint32_t );
-        
+		virtual bool has_index_data( ) const;
+		virtual bool get_index_data( const std::string &, boost::uint8_t & ) const;
+		virtual bool get_index_data( const std::string &, boost::uint16_t & ) const;
+		virtual bool get_index_data( const std::string &, boost::uint32_t & ) const;
+		virtual bool set_index_data( const std::string &, const boost::uint8_t );
+		virtual bool set_index_data( const std::string &, const boost::uint16_t );
+		virtual bool set_index_data( const std::string &, const boost::uint32_t );
+
 	protected:
 		mutable boost::recursive_mutex mutex_;
 		int position_;
