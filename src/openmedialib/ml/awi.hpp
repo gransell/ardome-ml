@@ -108,6 +108,11 @@ enum awi_state
 class ML_DECLSPEC awi_index
 {
 	public:
+		awi_index( )
+			: state_( header )
+		{
+		}
+
 		virtual ~awi_index( ) { }
 		virtual bool finished( ) = 0;
 		virtual boost::int64_t find( int position ) = 0;
@@ -118,15 +123,33 @@ class ML_DECLSPEC awi_index
 		virtual void set_usable( bool value ) = 0;
 		virtual int key_frame_of( int position ) = 0;
 		virtual int key_frame_from( boost::int64_t offset ) = 0;
-        
+
+		// This should be reimplemented on the parser implementations
+		virtual void read( ) { }
+
+		// We need to be able to determine if the index is valid, particularly in a parser instance and after a read
+		// NB: this might not report itself sanely in the case where the index is an empty file (ie: no header available)
+		// and it's difficult to know if that's a case of 'not yet' or 'never'
+		virtual bool valid( ) { return state_ != error; }
+
+		// This should be implemented in all subclasses to report the total number of frames which the index knows about
+		// NB: this should *never* be used to determine the number of frames in the media unless both index derived file
+		// size and open data file size match - it should only be used to supplement the valid method in the case of 
+		// verifying a particular parser instance for use (eg: valid( ) && total_frames( ) > 0 - with that, we can be
+		// sure that the the awi index matches and we should have some frames to work with.
+		virtual int total_frames( ) const = 0;
+ 
         // Methods for querying and setting index information
-//        virtual bool has_index_data( ) const { return false; }
-//        
-//        //virtual bool get_index_data( std::string key, boost::uint16_t &value ) { return false; }
-//        virtual bool get_index_data( std::string key, boost::uint32_t &value ) const { return false; }
-//        
-//        //virtual bool set_index_data( std::string key, boost::uint16_t value ) { return false; }
-//        virtual bool set_index_data( std::string key, boost::uint32_t value ) { return false; }
+        virtual bool has_index_data( ) const { return false; }
+        virtual bool get_index_data( const std::string &, boost::uint8_t & ) const { return false; }
+        virtual bool get_index_data( const std::string &, boost::uint16_t & ) const { return false; }
+        virtual bool get_index_data( const std::string &, boost::uint32_t & ) const { return false; }
+        virtual bool set_index_data( const std::string &, const boost::uint8_t ) { return false; }
+        virtual bool set_index_data( const std::string &, const boost::uint16_t ) { return false; }
+        virtual bool set_index_data( const std::string &, const boost::uint32_t ) { return false; }
+
+	protected:
+		awi_state state_;
 };
 
 /// Index holder class - currently assumes v2. Allows look ups by position ->
@@ -149,9 +172,10 @@ class ML_DECLSPEC awi_index_v2 : public awi_index
 		virtual void set_usable( bool value );
 		virtual int key_frame_of( int position );
 		virtual int key_frame_from( boost::int64_t offset );
+		virtual int total_frames( ) const;
 
 	protected:
-		boost::recursive_mutex mutex_;
+		mutable boost::recursive_mutex mutex_;
 		int position_;
 		bool eof_;
 		int frames_;
@@ -188,7 +212,6 @@ class ML_DECLSPEC awi_parser_v2 : public awi_index_v2
 		bool peek( boost::int16_t &value );
 
 		std::vector< boost::uint8_t > buffer_;
-		awi_state state_;
 };
 
 /// Generator for an index - as with the parser, physical storage is left
@@ -207,7 +230,6 @@ class ML_DECLSPEC awi_generator_v2 : public awi_index_v2
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
 	private:
-		awi_state state_;
 		std::map< boost::int32_t, awi_item >::iterator current_;
 		size_t flushed_;
 		boost::int32_t position_;
@@ -234,18 +256,18 @@ class ML_DECLSPEC awi_index_v3 : public awi_index
 		virtual void set_usable( bool value );
 		virtual int key_frame_of( int position );
 		virtual int key_frame_from( boost::int64_t offset );
-        
-        // Methods for querying and setting index information
-//        virtual bool has_index_data( ) const { return true; }
-//        
-//        //virtual bool get_index_data( std::string key, boost::uint16_t &value ) { return false; }
-//        virtual bool get_index_data( std::string key, boost::uint32_t &value ) const;
-//        
-//        //virtual bool set_index_data( std::string key, boost::uint16_t value ) { return false; }
-//        virtual bool set_index_data( std::string key, boost::uint32_t value );
+		virtual int total_frames( ) const;
+
+        virtual bool has_index_data( ) const;
+        virtual bool get_index_data( const std::string &, boost::uint8_t & ) const;
+        virtual bool get_index_data( const std::string &, boost::uint16_t & ) const;
+        virtual bool get_index_data( const std::string &, boost::uint32_t & ) const;
+        virtual bool set_index_data( const std::string &, const boost::uint8_t );
+        virtual bool set_index_data( const std::string &, const boost::uint16_t );
+        virtual bool set_index_data( const std::string &, const boost::uint32_t );
         
 	protected:
-		boost::recursive_mutex mutex_;
+		mutable boost::recursive_mutex mutex_;
 		int position_;
 		bool eof_;
 		int frames_;
@@ -285,7 +307,6 @@ class ML_DECLSPEC awi_parser_v3 : public awi_index_v3
 		bool peek( boost::int16_t &value );
 
 		std::vector< boost::uint8_t > buffer_;
-		awi_state state_;
 };
 
 /// Generator for an index - as with the parser, physical storage is left
@@ -304,7 +325,6 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
 	private:
-		awi_state state_;
 		std::map< boost::int32_t, awi_item_v3 >::iterator current_;
 		size_t flushed_;
 		boost::int32_t position_;

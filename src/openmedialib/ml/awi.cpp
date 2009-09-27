@@ -55,7 +55,8 @@ namespace
 // I frames and GOPs.
 
 awi_index_v2::awi_index_v2( )
-	: mutex_( )
+	: awi_index( )
+	, mutex_( )
 	, position_( 0 )
 	, eof_( false )
 	, frames_( 0 )
@@ -155,7 +156,11 @@ int awi_index_v2::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	int result = -1;
-	if ( offsets_.size( ) )
+	if ( eof_ && size == bytes( ) )
+	{
+		result = frames_;
+	}
+	else if ( offsets_.size( ) )
 	{
 		std::map< boost::int64_t, awi_item >::iterator iter = offsets_.upper_bound( size );
 		if ( iter != offsets_.begin( ) ) iter --;
@@ -209,6 +214,12 @@ int awi_index_v2::key_frame_from( boost::int64_t offset )
 	return result;
 }
 
+int awi_index_v2::total_frames( ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	return frames_;
+}
+
 // ----------------------------------------------------------------------------
 
 // The parser is designed to convert a written file to a usable index object - 
@@ -217,7 +228,6 @@ int awi_index_v2::key_frame_from( boost::int64_t offset )
 
 awi_parser_v2::awi_parser_v2( ) 
 	: awi_index_v2( )
-	, state_( header )
 {
 }
 	
@@ -415,7 +425,6 @@ bool awi_parser_v2::peek( boost::int16_t &value )
 
 awi_generator_v2::awi_generator_v2( )
 	: awi_index_v2( )
-	, state_( header )
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )
@@ -551,7 +560,8 @@ bool awi_generator_v2::flush( std::vector< boost::uint8_t > &buffer )
 // I frames and GOPs.
 
 awi_index_v3::awi_index_v3( )
-	: mutex_( )
+	: awi_index( )
+	, mutex_( )
 	, position_( 0 )
 	, eof_( false )
 	, frames_( 0 )
@@ -652,7 +662,12 @@ int awi_index_v3::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	int result = -1;
-	if ( offsets_.size( ) )
+
+	if ( eof_ && size == bytes( ) )
+	{
+		result = frames_;
+	}
+	else if ( offsets_.size( ) )
 	{
 		std::map< boost::int64_t, awi_item_v3 >::iterator iter = offsets_.upper_bound( size );
 		if ( iter != offsets_.begin( ) ) iter --;
@@ -706,15 +721,46 @@ int awi_index_v3::key_frame_from( boost::int64_t offset )
 	return result;
 }
 
-//bool awi_index_v3::get_index_data( std::string key, boost::uint32_t &value ) const
-//{
-//	return false;
-//}
-//
-//bool awi_index_v3::set_index_data( std::string key, boost::uint32_t value )
-//{
-//	return false;
-//}
+int awi_index_v3::total_frames( ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	return frames_;
+}
+
+bool awi_index_v3::has_index_data( ) const
+{
+	return state_ != header && state_ != error;
+}
+
+bool awi_index_v3::get_index_data( const std::string &, boost::uint8_t & ) const
+{
+	return false;
+}
+
+bool awi_index_v3::get_index_data( const std::string &, boost::uint16_t & ) const
+{
+	return false;
+}
+
+bool awi_index_v3::get_index_data( const std::string &, boost::uint32_t & ) const
+{
+	return false;
+}
+
+bool awi_index_v3::set_index_data( const std::string &, const boost::uint8_t )
+{
+	return false;
+}
+
+bool awi_index_v3::set_index_data( const std::string &, const boost::uint16_t )
+{
+	return false;
+}
+
+bool awi_index_v3::set_index_data( const std::string &, const boost::uint32_t )
+{
+	return false;
+}
 
 // ----------------------------------------------------------------------------
 
@@ -724,7 +770,6 @@ int awi_index_v3::key_frame_from( boost::int64_t offset )
 
 awi_parser_v3::awi_parser_v3( ) 
 	: awi_index_v3( )
-	, state_( header )
 {
 }
 
@@ -993,7 +1038,6 @@ bool awi_parser_v3::peek( boost::int16_t &value )
 
 awi_generator_v3::awi_generator_v3( )
 	: awi_index_v3( )
-	, state_( header )
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )
