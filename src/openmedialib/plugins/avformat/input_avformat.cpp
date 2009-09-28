@@ -54,6 +54,8 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 
+static opencorelib::worker index_read_worker_;
+
 class aml_check
 {
 	public:
@@ -70,9 +72,15 @@ class aml_check
 			return file_size_;
 		}
 
+		bool finished( )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			return done_;
+		}
+
 		void read( )
 		{
-			if ( done_ ) return;
+			if ( finished( ) ) return;
 
 			URLContext *context = 0;
 			std::string temp = resource_;
@@ -86,20 +94,17 @@ class aml_check
 			{
 				// Check the current file size
 				boost::int64_t bytes = url_seek( context, 0, SEEK_END );
-
-				// If it's larger than before, then reopen, otherwise reduce resize count
-				if ( bytes > file_size_ )
-				{
-					boost::recursive_mutex::scoped_lock lock( mutex_ );
-					file_size_ = bytes;
-				}
-				else
-				{
-					done_ = true;
-				}
-
 				// Clean up the temporary sizing context
 				url_close( context );
+
+				// If it's larger than before, then reopen, otherwise reduce resize count
+				{
+					boost::recursive_mutex::scoped_lock lock( mutex_ );
+					if ( bytes > file_size_ )
+						file_size_ = bytes;
+					else
+						done_ = true;
+				}
 			}
 		}
 
@@ -202,8 +207,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_gen_index_ = 0 );
 			properties( ).append( prop_packet_stream_ = 0 );
 
-			index_read_worker_.start();
-
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
 
@@ -221,8 +224,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
 			av_free( audio_buf_temp_ );
-			index_read_worker_.remove_reoccurring_job( read_job_ );
-			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
+			if ( read_job_ )
+				index_read_worker_.remove_reoccurring_job( read_job_ );
 			delete aml_index_;
 			delete aml_check_;
 		}
@@ -695,6 +698,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 	private:
 		void sync_with_index( )
 		{
+			bool finished = false;
+
 			if ( aml_index_ )
 			{
 				if ( get_position( ) >= frames_ && aml_index_->frames( frames_ ) > frames_ )
@@ -706,14 +711,23 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
 				}
+				finished = aml_index_->finished( );
 			}
-			else if ( aml_check_ && get_position( ) > frames_ - 100 )
+			else if ( aml_check_ )
 			{
-				if ( aml_check_->current( ) > prop_file_size_.value< boost::int64_t >( ) )
+				if ( get_position( ) > frames_ - 100 && aml_check_->current( ) > prop_file_size_.value< boost::int64_t >( ) )
 				{
 					reopen( );
 					last_frame_ = ml::frame_type_ptr( );
 				}
+				finished = aml_check_->finished( );
+			}
+
+			// The background check has reported no more growth - kill the threads now
+			if ( finished && read_job_ )
+			{
+				index_read_worker_.remove_reoccurring_job( read_job_ );
+				read_job_ = opencorelib::function_job_ptr( );
 			}
 		}
 
@@ -761,11 +775,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Schedule the indexing jobs
 			if ( aml_index_ )
 			{
-				read_job_ = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &aml_index::read, aml_index_ ) ) );
-				index_read_worker_.add_reoccurring_job( read_job_, boost::posix_time::milliseconds(2000) );
+				// When we have an index, and it's marked as finished, we don't need to start a job to monitor growth
+				if ( !aml_index_->finished( ) )
+				{
+					read_job_ = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &aml_index::read, aml_index_ ) ) );
+					index_read_worker_.add_reoccurring_job( read_job_, boost::posix_time::milliseconds(2000) );
+				}
 			}
 			else
 			{
+				// We don't know anything in the case of an unindexed file, so we need to start a job to handle it
 				aml_check_ = new aml_check( pl::to_string( resource_ ), 0 );
 				read_job_ = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &aml_check::read, aml_check_ ) ) );
 				index_read_worker_.add_reoccurring_job( read_job_, boost::posix_time::milliseconds(10000) );
@@ -1854,7 +1873,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		boost::system_time next_time_;
 
-		opencorelib::worker index_read_worker_;
 		opencorelib::function_job_ptr read_job_;
 
 		awi_generator_v2 indexer_;
@@ -1862,6 +1880,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		bool unreliable_container_;
 };
+
+void start_index_worker( )
+{
+	index_read_worker_.start( );
+}
+
+void stop_index_worker( )
+{
+	index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
+}
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
 {
