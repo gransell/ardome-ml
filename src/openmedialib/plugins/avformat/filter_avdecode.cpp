@@ -522,6 +522,9 @@ class avformat_decode_filter : public filter_type
 			{
 				result = fetch_from_slot( 0 );
 			}
+
+			// Make sure all frames are shallow copied here
+			result = result->shallow( );
 		}
 
 	private:
