@@ -184,11 +184,18 @@ class stream_queue
 			{
 				int start = expected_;
 
-				if ( position + offset_ != expected_ )
-					start = frame->get_stream( )->key( );
+				if ( frame->get_stream( )->codec( ).find( "dv" ) != 0 )
+				{
+					if ( position + offset_ != expected_ )
+						start = frame->get_stream( )->key( );
 
-				if ( start == position && position != 0 )
-					start = fetch( start - 1 )->get_stream( )->key( );
+					if ( start == position && position != 0 )
+						start = fetch( start - 1 )->get_stream( )->key( );
+				}
+				else
+				{
+					start = position;
+				}
 
 				ml::frame_type_ptr temp;
 
@@ -209,7 +216,7 @@ class stream_queue
 				{
 					return temp->get_image( );
 				}
-				else
+				else if ( frame->get_stream( )->codec( ).find( "dv" ) != 0 )
 				{
 					int got = 0;
 					if ( avcodec_decode_video( context_, frame_, &got, 0, 0 ) >= 0 )
