@@ -280,6 +280,7 @@ class stream_queue
 			if ( context_ == 0 )
 			{
 				context_ = avcodec_alloc_context( );
+				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				avcodec_open( context_, codec_ );
 				avcodec_thread_init( context_, 4 );
@@ -719,10 +720,13 @@ class avformat_encode_filter : public filter_type
                      pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/mpeg2hd_1080i" )
 				{
 					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
-					context_->bit_rate = 50000000;
+					if ( result->get_stream( ) )
+						context_->bit_rate = result->get_stream( )->bitrate( );
+					else
+						context_->bit_rate = 50000000;
 					context_->gop_size = 12;
 					context_->max_b_frames = 0;
-					context_->pix_fmt = PIX_FMT_YUV422P;
+					context_->pix_fmt = oil_to_avformat( result->pf( ) );
 					context_->flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME;
 					context_->scenechange_threshold = 1000000000;
 					context_->thread_count = 4;
