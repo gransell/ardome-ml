@@ -18,6 +18,7 @@ extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstrin
 
 // OML Store plugins
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( );
+extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const pl::wstring & );
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( );
 
 // OML Filter plugins
@@ -73,6 +74,8 @@ public:
 
 	virtual ml::store_type_ptr store( const pl::wstring &resource, const ml::frame_type_ptr & )
 	{
+		if ( resource.find( L".ppm" ) != pl::wstring::npos )
+			return create_store_ppm( resource );
 		if ( resource == L"null:" )
 			return create_store_null( );
 		return create_store_preview( );
