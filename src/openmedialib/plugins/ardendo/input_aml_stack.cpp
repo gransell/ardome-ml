@@ -223,6 +223,14 @@ struct sequence
 		, parseable_( parseable )
 	{ }
 
+	sequence( const pl::wstring_list &words, bool parseable = false )
+		: parseable_( parseable )
+	{ 
+		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); i ++ )
+			words_.push_back( *i );
+		iter_ = words_.begin( );
+	}
+
 	sequence( const sequence &other, bool parseable = false )
 		: words_( other.words_ )
 		, iter_( words_.begin( ) )
@@ -345,6 +353,7 @@ static void op_words( aml_stack * );
 static void op_dict( aml_stack * );
 static void op_define( aml_stack * );
 static void op_log_level( aml_stack * );
+static void op_render( aml_stack * );
 
 class aml_stack 
 {
@@ -446,6 +455,7 @@ class aml_stack
 			operations_[ L"dict" ] = op_dict;
 			operations_[ L"define" ] = op_define;
 			operations_[ L"log_level" ] = op_log_level;
+			operations_[ L"render" ] = op_render;
 
 			conds_.push_back( true );
 			variables_push( );
@@ -594,7 +604,7 @@ class aml_stack
 				parse_http( url );
 			else if ( is_http_source && arg.find( L".aml" ) == arg.size( ) - 4 )
 				parse_http( paths_.back( ).external_directory_string( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
-			else if ( url.find( _CT(".aml") ) == url.size( ) - 4 )
+			else if ( url.find( _CT(".aml") ) == url.size( ) - 4 || url == _CT( "stdin:" ) )
                 parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"filter:" ) == 0 )
 				create_filter( arg );
@@ -868,7 +878,7 @@ class aml_stack
 		void flush( )
 		{
 			if( parent_->properties( ).get_property_with_key( key_redirect_ ).value< int >( ) )
-				prop_stdout_.set( output_->str( ) );
+				prop_stdout_.set( prop_stdout_.value< std::string >( ) + output_->str( ) );
 			else
 				std::cout << output_->str( );
 			output_->str( "" );
@@ -886,6 +896,11 @@ class aml_stack
 		}
 
 		void run( const std::vector< pl::wstring > &words, bool parseable = false )
+		{
+			run( sequence_ptr( new sequence( words, parseable ) ) );
+		}
+
+		void run( const pl::wstring_list &words, bool parseable = false )
 		{
 			run( sequence_ptr( new sequence( words, parseable ) ) );
 		}
@@ -1040,18 +1055,27 @@ class aml_stack
 
 		void parse_file( const pl::wstring &filename )
 		{
-            olib::t_path apath( cl::str_util::to_t_string(filename));
-            /// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
-            std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+			if ( filename != L"stdin:" )
+			{
+            	olib::t_path apath( cl::str_util::to_t_string(filename));
+            	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
+            	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
 
-			paths_.push_back( fs::system_complete( apath ).parent_path( ) );
+				paths_.push_back( fs::system_complete( apath ).parent_path( ) );
 
-			if ( !file.is_open( ) )
-				throw std::string( "Unable to find " ) + pl::to_string( filename );
+				if ( !file.is_open( ) )
+					throw std::string( "Unable to find " ) + pl::to_string( filename );
 
-            parse_file( file );
+            	parse_file( file );
 
-			paths_.pop_back( );
+				paths_.pop_back( );
+			}
+			else
+			{
+				paths_.push_back( fs::system_complete( "" ).parent_path( ) );
+            	parse_file( std::cin );
+				paths_.pop_back( );
+			}
 		}
 
 		void parse_http( const olib::t_string &url )
@@ -1950,6 +1974,13 @@ static void op_log_level( aml_stack *stack )
 	pl::set_log_level( a );
 }
 
+static void op_render( aml_stack *stack )
+{
+	ml::input_type_ptr input = stack->pop( );
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+		input->fetch( i );
+}
+
 #define const_aml_stack const_cast< input_aml_stack * >
 
 class input_aml_stack : public ml::input_type
@@ -1965,6 +1996,7 @@ class input_aml_stack : public ml::input_type
 			, tos_( )
 			, resource_( resource )
 			, prop_command_( pcos::key::from_string( "command" ) )
+			, prop_commands_( pcos::key::from_string( "commands" ) )
 			, prop_result_( pcos::key::from_string( "result" ) )
 			, prop_redirect_( pcos::key::from_string( "redirect" ) )
 			, prop_deferred_( key_deferred_ )
@@ -1973,9 +2005,11 @@ class input_aml_stack : public ml::input_type
 			, prop_handled_( pcos::key::from_string( "handled" ) )
 			, prop_token_( pcos::key::from_string( "token" ) )
 			, obs_command_( new observer( const_aml_stack( this ), &input_aml_stack::push ) )
+			, obs_commands_( new observer( const_aml_stack( this ), &input_aml_stack::push_commands ) )
 			, obs_deferred_( new observer( const_aml_stack( this ), &input_aml_stack::deferred ) )
 		{
 			properties( ).append( prop_command_ = pl::wstring( L"" ) );
+			properties( ).append( prop_commands_ = pl::wstring_list( ) );
 			properties( ).append( prop_result_ = pl::wstring( L"OK" ) );
 			properties( ).append( prop_redirect_ = 0 );
 			properties( ).append( prop_stdout_ = std::string( "" ) );
@@ -1983,11 +2017,13 @@ class input_aml_stack : public ml::input_type
 			properties( ).append( prop_threaded_ = int( 0 ) );
 			properties( ).append( prop_query_ = pl::wstring( L"" ) );
 			prop_command_.set_always_notify( true );
+			prop_commands_.set_always_notify( true );
 			prop_query_.set_always_notify( true );
 			prop_stdout_.set_always_notify( true );
 			properties( ).append( prop_handled_ = int( 0 ) );
 			properties( ).append( prop_token_ = pl::wstring( L"" ) );
 			prop_command_.attach( obs_command_ );
+			prop_commands_.attach( obs_commands_ );
 			prop_deferred_.attach( obs_deferred_ );
 
 			if ( resource.find( L"aml_stack:" ) == 0 )
@@ -2041,6 +2077,36 @@ class input_aml_stack : public ml::input_type
 					std::cout << stream_.str( );
 
 				stream_.str( "" );
+			}
+		}
+
+		void push_commands( )
+		{
+			if ( prop_commands_.value< pl::wstring_list >( ).size( ) != 0 )
+			{
+				stack_.set_output( &stream_ );
+
+				try
+				{
+					stack_.run( prop_commands_.value< pl::wstring_list >( ), true );
+					prop_result_ = pl::to_wstring( "OK" );
+				}
+				catch( std::string exc )
+				{
+					stack_.reset( );
+					prop_result_ = pl::to_wstring( exc );
+				}
+
+				if ( stream_.str( ) != "" )
+				{
+					if ( prop_redirect_.value< int >( ) )
+						prop_stdout_ = stream_.str( );
+					else
+						std::cout << stream_.str( );
+	
+					stream_.str( "" );
+				}
+				prop_commands_.set( pl::wstring_list( ) );
 			}
 		}
 
@@ -2101,6 +2167,7 @@ class input_aml_stack : public ml::input_type
 		ml::input_type_ptr tos_;
 		pl::wstring resource_;
 		pl::pcos::property prop_command_;
+		pl::pcos::property prop_commands_;
 		pl::pcos::property prop_result_;
 		pl::pcos::property prop_redirect_;
 		pl::pcos::property prop_deferred_;
@@ -2109,6 +2176,7 @@ class input_aml_stack : public ml::input_type
 		pl::pcos::property prop_handled_;
 		pl::pcos::property prop_token_;
 		boost::shared_ptr< pcos::observer > obs_command_;
+		boost::shared_ptr< pcos::observer > obs_commands_;
 		boost::shared_ptr< pcos::observer > obs_deferred_;
 };
 
