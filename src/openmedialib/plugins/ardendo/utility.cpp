@@ -458,6 +458,10 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	frame->get_fps( num, den );
 	stream << "Frame Report" << endl << endl;
 	stream << "Position    : " << frame->get_position( ) << endl;
+	if ( frame->has_image( ) )
+		stream << "Image Info  : pf: " << pl::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
+	if ( frame->has_audio( ) )
+		stream << "Audio Info  : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
 		stream << "Has Stream  : Yes, key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( ) << endl;
 	else
