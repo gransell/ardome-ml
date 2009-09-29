@@ -1072,7 +1072,7 @@ class aml_stack
 			}
 			else
 			{
-				paths_.push_back( fs::system_complete( "" ).parent_path( ) );
+				paths_.push_back( fs::system_complete( _CT( "" ) ).parent_path( ) );
             	parse_file( std::cin );
 				paths_.pop_back( );
 			}
