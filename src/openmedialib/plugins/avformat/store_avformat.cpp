@@ -253,7 +253,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_noise_reduction_ = 0 );
 			properties( ).append( prop_sc_threshold_ = 0 );
 			properties( ).append( prop_me_range_ = 1023 );
-			properties( ).append( prop_trellis_ = 2 );
+			properties( ).append( prop_trellis_ = 0 );
 			properties( ).append( prop_4mv_ = 0 );
 			properties( ).append( prop_thread_count_ = 1 );
 
@@ -437,10 +437,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			av_write_trailer( oc_ );
 
 			// Get the final size now
-			boost::int64_t final = oc_->pb->pos;
-
 			if ( ts_context_ )
 			{
+				boost::int64_t final = oc_->pb->pos;
 				ts_generator_.close( push_count_, final );
 				write_ts_index( );
 				url_close( ts_context_ );
@@ -606,6 +605,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( codec != NULL )
 					codec_id = codec->id;
 			}
+			else
+			{
+				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, CODEC_TYPE_VIDEO );
+			}
 			if ( prop_debug_.value< int >( ) )
  				std::cerr << L"obtain_video_codec_id: found: " << codec_id << " for "
 						  << pl::to_string( prop_vcodec_.value< pl::wstring >( ) ) << std::endl;
@@ -625,6 +628,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					std::cerr << L"obtain_audio_codec_id: failed to find codec for value: "
 							   << pl::to_string( prop_acodec_.value< pl::wstring >( ) )
 							   << std::endl;
+			}
+			else
+			{
+				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, CODEC_TYPE_AUDIO );
 			}
 
 			if ( prop_debug_.value< int >( ) )
@@ -992,7 +999,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if ( boost::uint64_t( c->reordered_opaque ) != AV_NOPTS_VALUE)
 					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
-				if( c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
+				if( oc_->pb && c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{
 					ts_generator_.enroll( c->coded_frame->pts, oc_->pb->pos );
 					write_ts_index( );
