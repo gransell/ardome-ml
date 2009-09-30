@@ -724,15 +724,21 @@ class avformat_encode_filter : public filter_type
                      pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/mpeg2hd_1080i" )
 				{
 					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
-					if ( result->get_stream( ) )
-						context_->bit_rate = result->get_stream( )->bitrate( );
-					else
-						context_->bit_rate = 50000000;
+					context_->qmin = 1;
+					context_->lmin = FF_QP2LAMBDA;
+					context_->bit_rate = 50000000;
+					context_->rc_max_available_vbv_use = 1.0;
+					context_->rc_min_vbv_overflow_use = 1.0;
+					context_->rc_min_rate = context_->bit_rate;
+					context_->rc_max_rate = context_->bit_rate;
+					context_->rc_buffer_size = 36408333;
 					context_->gop_size = 12;
 					context_->max_b_frames = 0;
 					context_->pix_fmt = oil_to_avformat( result->pf( ) );
-					context_->flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME;
+					context_->flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME | CODEC_FLAG_INTERLACED_DCT;
+					context_->flags2 |= CODEC_FLAG2_INTRA_VLC;
 					context_->scenechange_threshold = 1000000000;
+					context_->intra_dc_precision = 1;
 					context_->thread_count = 4;
 				}
 				else if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv" ||
