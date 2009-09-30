@@ -22,7 +22,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 
 		virtual ~filter_store( )
 		{
-			if ( first_ )
+			if ( first_ && store_ )
 				store_->push( first_->shallow( ) );
 			if ( store_ )
 				store_->complete( );
