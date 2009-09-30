@@ -548,6 +548,7 @@ class avformat_encode_filter : public filter_type
 			, context_( 0 )
 			, instance_( 0 )
 			, key_( 0 )
+			, pf_( L"" )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
@@ -591,6 +592,7 @@ class avformat_encode_filter : public filter_type
 						render_->connect( pusher_ );
 	
 					initialised_ = true;
+					pf_ = result->pf( );
 				}
 	
 				if ( !last_frame_ || get_position( ) != last_frame_->get_position( ) )
@@ -683,6 +685,8 @@ class avformat_encode_filter : public filter_type
 			{
 				result->get_image( );
 			}
+
+			result = ml::frame_convert( result, pf_ );
 
 			return result;
 		}
@@ -783,7 +787,7 @@ class avformat_encode_filter : public filter_type
 			if ( context_->coded_frame && context_->coded_frame->key_frame )
 				key_ = get_position( );
 
-			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( instance_->id, out_size, get_position( ), key_, 0, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), result->get_image()->pf() ) );
+			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( instance_->id, out_size, get_position( ), key_, context_->bit_rate, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), result->get_image()->pf() ) );
 			memcpy( packet->bytes( ), outbuf_, out_size );
 			result->set_stream( packet );
 		}
@@ -803,6 +807,7 @@ class avformat_encode_filter : public filter_type
 		int outbuf_size_;
 		boost::uint8_t *outbuf_;
 		int key_;
+		pl::wstring pf_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
