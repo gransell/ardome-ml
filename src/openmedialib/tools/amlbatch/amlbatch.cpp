@@ -329,6 +329,15 @@ void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_ty
 	}
 }
 
+bool uses_stdin( )
+{
+#ifndef WIN32
+	return !isatty( fileno( stdin ) );
+#else
+	return false;
+#endif
+}
+
 int main( int argc, char *argv[ ] )
 {
     #ifdef WIN32
@@ -382,18 +391,24 @@ int main( int argc, char *argv[ ] )
        	pl::init( );
     #endif
 
-	if ( argc > 1 )
+	if ( argc > 1 || uses_stdin( ) )
 	{
 		bool interactive = false;
 		ml::input_type_ptr input = ml::create_input( pl::wstring( L"aml_stack:" ) );
 		pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
+		pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
 		pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
 		int seek_to = -1;
 		bool stats = true;
 
 		int index = 1;
 
-		while( result.value< pl::wstring >( ) == L"OK" && index < argc )
+		pl::wstring_list tokens;
+
+		if ( uses_stdin( ) )
+			tokens.push_back( L"stdin:" );
+
+		while( index < argc )
 		{
 			pl::wstring arg = pl::to_wstring( argv[ index ] );
 
@@ -406,10 +421,13 @@ int main( int argc, char *argv[ ] )
 			else if ( arg == L"--" )
 				break;
 			else
-				push = arg;
+				tokens.push_back( arg );
 
 			index ++;
 		}
+
+		// Execute the tokens
+		execute = tokens;
 
 		if ( result.value< pl::wstring >( ) != L"OK" )
 		{
