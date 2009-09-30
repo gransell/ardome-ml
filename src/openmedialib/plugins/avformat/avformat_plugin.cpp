@@ -89,6 +89,13 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"r8g8b8a8";
 	else if ( fmt == PIX_FMT_BGR32_1 )
 		return L"b8g8r8a8";
+
+	// Lies, damned lies but statistically won't matter
+	else if ( fmt == PIX_FMT_YUVJ420P )
+		return L"yuv420p";
+	else if ( fmt == PIX_FMT_YUVJ422P )
+		return L"yuv422p";
+
 	return L"";
 }
 
