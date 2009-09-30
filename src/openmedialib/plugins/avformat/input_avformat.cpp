@@ -405,7 +405,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 
 				// Align with first frame
-				if ( error == 0 )
+				if ( error == 0 && std::string( context_->iformat->name ) != "image2" )
 				{
 					seek_to_position( );
 					fetch( );
@@ -575,7 +575,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				expected_ ++;
 
 			if ( aml_index_ == 0 && ( expected_ >= frames_ && error >= 0 && url_ftell( context_->pb ) != context_->file_size ) )
-				frames_ = expected_ + 1;
+				if( std::string( context_->iformat->name ) != "image2" )
+					frames_ = expected_ + 1;
 
 			if ( prop_gen_index_.value< int >( ) && error < 0 )
 			{
