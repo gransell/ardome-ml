@@ -18,7 +18,7 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-	stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, length_( length )
@@ -35,6 +35,25 @@ class stream_avformat : public ml::stream_type
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
 				codec_ = codec_name_lookup_[ codec ];
+		}
+
+		// Constructor with known codec name
+		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
+			: ml::stream_type( )
+			, id_( ml::stream_video )
+			, codec_( codec )
+			, length_( length )
+			, data_( length + 32 )
+			, position_( position )
+			, key_( key )
+			, bitrate_( bitrate )
+			, size_( size )
+			, sar_( sar )
+			, frequency_( 0 )
+			, channels_( 0 )
+			, samples_( 0 )
+			, pf_( pf )
+		{
 		}
 
 		/// Constructor for a audio packet

@@ -29,6 +29,21 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 static const pl::pcos::key key_gop_closed_ = pl::pcos::key::from_string( "gop_closed" );
 
+static bool is_dv( const std::string &codec )
+{
+	return codec == "dv" || codec == "dv25" || codec == "dv50" || codec == "dvcprohd_1080i";
+}
+
+static bool is_mpeg2( const std::string &codec )
+{
+	return codec == "mpeg2" || codec == "mpeg2/mpeg2hd_1080i";
+}
+
+static bool is_imx( const std::string &codec )
+{
+	return codec == "mpeg2/30" || codec == "mpeg2/50";
+}
+
 class stream_queue
 {
 	public:
@@ -124,11 +139,11 @@ class stream_queue
 		void look_for_closed( const ml::frame_type_ptr &frame )
 		{
 			pl::pcos::property gop_closed( key_gop_closed_ );
-			if ( frame->get_stream( )->codec( ) == "dv" )
+			if ( is_dv( frame->get_stream( )->codec( ) ) || is_imx( frame->get_stream( )->codec( ) ) )
 			{
 				frame->get_stream( )->properties( ).append( gop_closed = 1 );
 			}
-			else if ( frame->get_stream( )->codec( ) == "mpeg2" )
+			else if ( is_mpeg2( frame->get_stream( )->codec( ) ) )
 			{
 				boost::uint8_t *ptr = find_mpeg2_gop( frame->get_stream( ) );
 				if ( ptr ) frame->get_stream( )->properties( ).append( gop_closed = int( ( ptr[ 7 ] & 64 ) >> 6 ) );
@@ -718,10 +733,7 @@ class avformat_encode_filter : public filter_type
 				context_ = avcodec_alloc_context( );
 				picture_ = avcodec_alloc_frame( );
 
-				if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2" ||
-                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/30" ||
-                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/50" ||
-                     pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "mpeg2/mpeg2hd_1080i" )
+				if ( is_mpeg2( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
 				{
 					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
 					context_->qmin = 1;
@@ -741,13 +753,36 @@ class avformat_encode_filter : public filter_type
 					context_->intra_dc_precision = 1;
 					context_->thread_count = 4;
 				}
-				else if ( pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv" ||
-                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv25" ||
-                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dv50" ||
-                          pl::to_string( prop_codec_.value< pl::wstring >( ) ) == "dvcprohd_1080i" )
+				else if ( is_imx( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
 				{
+					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
+					context_->qmin = 1;
+					context_->lmin = FF_QP2LAMBDA;
+					context_->bit_rate = 50000;
+					context_->rc_max_available_vbv_use = 1.0;
+					context_->rc_min_vbv_overflow_use = 1.0;
+					context_->rc_min_rate = context_->bit_rate;
+					context_->rc_max_rate = context_->bit_rate;
+					context_->rc_buffer_size = 36408333;
+					context_->gop_size = 1;
+					context_->max_b_frames = 0;
+					context_->pix_fmt = oil_to_avformat( result->pf( ) );
+					context_->flags |= CODEC_FLAG_INTERLACED_ME | CODEC_FLAG_INTERLACED_DCT;
+					context_->flags2 |= CODEC_FLAG2_INTRA_VLC;
+					context_->intra_dc_precision = 1;
+					context_->thread_count = 4;
+				}
+				else if ( is_dv( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
+				{
+					std::string codec =  pl::to_string( prop_codec_.value< pl::wstring >( ) );
 					instance_ = avcodec_find_encoder( CODEC_ID_DVVIDEO );
 					context_->pix_fmt = oil_to_avformat( result->pf( ) );
+					if ( codec == "dv25" )
+						context_->bit_rate = 25000000;
+					else if ( codec == "dv50" )
+						context_->bit_rate = 50000000;
+					else if ( codec == "dvcprohd_1080i" )
+						context_->bit_rate = 25000000;
 				}
 				else
 				{
@@ -793,7 +828,14 @@ class avformat_encode_filter : public filter_type
 			if ( context_->coded_frame && context_->coded_frame->key_frame )
 				key_ = get_position( );
 
-			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( instance_->id, out_size, get_position( ), key_, context_->bit_rate, ml::dimensions( result->width( ), result->height( ) ), ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), result->get_image()->pf() ) );
+			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( pl::to_string( prop_codec_.value< pl::wstring >( ) ), 
+																				   out_size, 
+																				   get_position( ), 
+																				   key_, 
+																				   context_->bit_rate, 
+																				   ml::dimensions( result->width( ), result->height( ) ), 
+																				   ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), 
+																				   result->get_image()->pf() ) );
 			memcpy( packet->bytes( ), outbuf_, out_size );
 			result->set_stream( packet );
 		}
