@@ -33,21 +33,21 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 
 		virtual int get_frames( ) const
 		{
-			int result = 0;
-			size_t i = 0;
-			while ( i < slot_count( ) )
-			{
-				if ( fetch_slot( i ) )
-				{
-				    // Should we report the duration based on the longest track or on the shortest
-				    if ( prop_use_longest_.value< int >( ) )
-				        result = result == 0 || fetch_slot( i )->get_frames( ) > result ? fetch_slot( i )->get_frames( ) : result;
-				    else
-				        result = result == 0 || fetch_slot( i )->get_frames( ) < result ? fetch_slot( i )->get_frames( ) : result;
-				}
-				i ++;
-			}
-			return result;
+			int frames_0 = 0;
+			int frames_1 = 0;
+
+			if ( fetch_slot( 0 ) )
+				frames_0 = fetch_slot( 0 )->get_frames( );
+			if ( fetch_slot( 1 ) )
+				frames_1 = fetch_slot( 1 )->get_frames( );
+
+			if ( frames_0 == 0 || frames_1 == 0 )
+				return frames_0 != 0 ? frames_0 : frames_1;
+
+			if ( prop_use_longest_.value< int >( ) )
+				return frames_0 > frames_1 ? frames_0 : frames_1;
+
+			return frames_0 < frames_1 ? frames_0 : frames_1;
 		}
 
 	protected:
@@ -60,13 +60,27 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 
 			if ( slot == -1 )
 			{
-				result = fetch_from_slot( 0, false );
-				ml::frame_type_ptr overlay = fetch_from_slot( 1, false );
+				ml::input_type_ptr input_0 = fetch_slot( 0 );
+				ml::input_type_ptr input_1 = fetch_slot( 1 );
 
-				if ( result && overlay && overlay->get_audio( ) )
+				if ( input_0 && input_1 && input_0->get_frames( ) && input_1->get_frames( ) )
 				{
-					result->set_audio( overlay->get_audio( ) );
-					join_peaks( result, overlay );
+					result = fetch_from_slot( 0, false );
+					ml::frame_type_ptr overlay = fetch_from_slot( 1, false );
+
+					if ( result && overlay && overlay->get_audio( ) )
+					{
+						result->set_audio( overlay->get_audio( ) );
+						join_peaks( result, overlay );
+					}
+				}
+				else if ( input_0 && input_0->get_frames( ) )
+				{
+					result = fetch_from_slot( 0, false );
+				}
+				else if ( input_1 && input_1->get_frames( ) )
+				{
+					result = fetch_from_slot( 1, false );
 				}
 			}
 			else
@@ -79,8 +93,8 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 		}
 
 	private:
-        pl::pcos::property prop_slot_;
-        pl::pcos::property prop_use_longest_;
+		pl::pcos::property prop_slot_;
+		pl::pcos::property prop_use_longest_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & )
