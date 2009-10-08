@@ -28,7 +28,7 @@ class indexer_job : public indexer_item
 {
 	public:
 		virtual ~indexer_job( ) { }
-		virtual void job_request( ) = 0;
+		virtual void job_request( opencorelib::base_job_ptr ) = 0;
 		virtual const boost::posix_time::milliseconds job_delay( ) const = 0;
 };
 
@@ -59,17 +59,14 @@ class indexer : public indexer_type
 		/// Request an index item for the specified url
 		indexer_item_ptr request( const pl::wstring &url )
 		{
-			std::cerr << "honouring request for " << pl::to_string( url ) << std::endl;
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( map_.find( url ) == map_.end( ) )
 			{
-				std::cerr << "creating new instance" << std::endl;
 				indexer_job_ptr job = indexer_job_factory( url );
-				opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job ) ) );
+				opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
 				index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
 				jobs_[ url ] = read_job;
 				map_[ url ] = job;
-				std::cerr << "registered new instance " << job->size( ) << std::endl;
 			}
 			return map_[ url ];
 		}
@@ -78,7 +75,6 @@ class indexer : public indexer_type
 		/// Constructor for the indexer collection
 		indexer( )
 		{
-			std::cerr << "indexer constructed" << std::endl;
 			index_read_worker_.start( );
 		}
 
@@ -164,7 +160,7 @@ class indexed_job_type : public indexer_job
 			: url_( url )
 			, index_( index )
 		{
-			job_request( );
+			index_->read( );
 		}
 
 		awi_index_ptr index( )
@@ -182,9 +178,10 @@ class indexed_job_type : public indexer_job
 			return index_->finished( );
 		}
 
-		void job_request( )
+		void job_request( opencorelib::base_job_ptr job )
 		{
 			index_->read( );
+			job->set_should_reschedule( !finished( ) );
 		}
 
 		const boost::posix_time::milliseconds job_delay( ) const
@@ -205,7 +202,7 @@ class unindexed_job_type : public indexer_job
 			, size_( 0 )
 			, finished_( false )
 		{
-			job_request( );
+			check_size( );
 		}
 
 		awi_index_ptr index( )
@@ -225,7 +222,19 @@ class unindexed_job_type : public indexer_job
 			return false;
 		}
 
-		void job_request( )
+		void job_request( opencorelib::base_job_ptr job )
+		{
+			check_size( );
+			job->set_should_reschedule( !finished( ) );
+		}
+
+		const boost::posix_time::milliseconds job_delay( ) const
+		{
+			return boost::posix_time::milliseconds( 2000 );
+		}
+
+	private:
+		void check_size( )
 		{
 			if ( finished( ) ) return;
 
@@ -250,11 +259,6 @@ class unindexed_job_type : public indexer_job
 						finished_ = true;
 				}
 			}
-		}
-
-		const boost::posix_time::milliseconds job_delay( ) const
-		{
-			return boost::posix_time::milliseconds( 2000 );
 		}
 
 	private:
