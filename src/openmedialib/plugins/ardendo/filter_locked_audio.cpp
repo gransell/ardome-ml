@@ -6,6 +6,9 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/log_defines.hpp>
+
 namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
@@ -65,11 +68,11 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 				std::vector< int > table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
 				int start = get_position( ) - get_position( ) % table.size( );
 				int final = start + table.size( );
+				ml::frame_type_ptr frame = fetch_from_slot( );
 
 				// Allocate a single audio object to accomodate the number of samples specified in the table
-				if ( audio_span_ == 0 )
+				if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
 				{
-					ml::frame_type_ptr frame = fetch_from_slot( );
 					if ( frame && frame->get_audio( ) )
 					{
 						frame->get_fps( fps_num_, fps_den_ );
@@ -81,6 +84,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 							for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
 							audio_span_ = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, total ) ) );
 							memset( audio_span_->data( ), 0, audio_span_->size( ) );
+							// Make sure to clear the frame vector so that we use the new audio span allocated and refetch our 5 frame span
+                            frames_.clear( );
 						}
 						else
 						{
@@ -132,8 +137,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					else if ( start_audio != -1 )
 					{
 						boost::uint8_t *ptr = audio_span_->data( );
-                        // if ( frames_size( ) == table.size( ) )
-                        //                             ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
+                        if ( frames_.size( ) == table.size( ) )
+                            ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
                         
                         std::vector< double > weights;
 						double max_level;
