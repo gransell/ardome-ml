@@ -45,6 +45,12 @@ typedef ML_DECLSPEC boost::shared_ptr< awi_index > awi_index_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< awi_parser > awi_parser_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< awi_generator > awi_generator_ptr;
 
+class ML_DECLSPEC indexer_item;
+typedef ML_DECLSPEC boost::shared_ptr< indexer_item > indexer_item_ptr;
+
+class ML_DECLSPEC indexer_type;
+typedef ML_DECLSPEC boost::shared_ptr< indexer_type > indexer_type_ptr;
+
 /// Used to return frame rate and sample aspect ratio
 struct fraction
 {
