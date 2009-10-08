@@ -117,6 +117,12 @@ namespace olib
 
             boost::int32_t get_priority() const { return m_prio; }
 
+			/// Indicates if a reoccuring job should be rescheduled or not
+			bool get_should_reschedule( ) const { return m_reschedule; }
+
+			/// Modifier to indicate if a reoccuring job should be rescheduled or not
+			void set_should_reschedule( const bool value ) { m_reschedule = value; }
+
         protected:
             // The priority of the job
             boost::int32_t m_prio;
@@ -154,6 +160,8 @@ namespace olib
 			boost::shared_ptr< boost::recursive_mutex::scoped_lock >
 			prevent_job_from_terminating();
             
+			bool m_reschedule;
+
             friend class worker;
         };
     }
