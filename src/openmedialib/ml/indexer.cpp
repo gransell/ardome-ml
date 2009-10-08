@@ -63,9 +63,11 @@ class indexer : public indexer_type
 			if ( map_.find( url ) == map_.end( ) )
 			{
 				indexer_job_ptr job = indexer_job_factory( url );
-				opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
-				index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
-				jobs_[ url ] = read_job;
+				if ( !job->finished( ) )
+				{
+					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
+					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
+				}
 				map_[ url ] = job;
 			}
 			return map_[ url ];
@@ -80,7 +82,6 @@ class indexer : public indexer_type
 
 		mutable boost::recursive_mutex mutex_;
 		std::map< pl::wstring, indexer_job_ptr > map_;
-		std::map< pl::wstring, opencorelib::function_job_ptr > jobs_;
 		opencorelib::worker index_read_worker_;
 };
 
