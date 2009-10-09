@@ -12,14 +12,14 @@ namespace olib
         long base_job::s_dw_counter = 0;
         base_job::base_job() 
             :   m_prio(5), m_terminate_job(false), m_job_done(false), 
-                m_exception_thrown(false), m_run_more_than_once(false), m_result(0)
+                m_exception_thrown(false), m_run_more_than_once(false), m_result(0), m_reschedule(true)
         {
             m_dw_number = s_dw_counter++;
         }
 
         base_job::base_job( boost::int32_t prio )
             :   m_prio(prio), m_terminate_job(false), m_job_done(false), 
-                m_exception_thrown(false), m_run_more_than_once(false), m_result(0)
+                m_exception_thrown(false), m_run_more_than_once(false), m_result(0), m_reschedule(true)
         {
             m_dw_number = s_dw_counter++;
         }
