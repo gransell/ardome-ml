@@ -419,7 +419,7 @@ namespace olib
                     ARLOG("unknown Exception on worker thread. catch( ... )").alert();
                 }
 
-				if( m_current_job->get_should_reschedule( ) )
+				if( !m_current_job->get_should_reschedule( ) )
 					remove_reoccurring_job( m_current_job );
             }
         }
