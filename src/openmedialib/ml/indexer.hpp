@@ -25,15 +25,8 @@ class ML_DECLSPEC indexer_item
 		virtual const bool finished( ) const = 0;
 };
 
-class ML_DECLSPEC indexer_type
-{
-	public:
-		/// Obtain the item associated to the url
-		virtual indexer_item_ptr request( const openpluginlib::wstring &url ) = 0;
-};
-
 /// Singleton instance of the indexer object
-extern indexer_type_ptr ML_DECLSPEC indexer_instance( );
+extern indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url );
 
 } } }
 

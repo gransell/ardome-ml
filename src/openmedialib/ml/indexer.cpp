@@ -4,6 +4,12 @@
 // Released under the LGPL.
 
 #include <openmedialib/ml/indexer.hpp>
+#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/awi.hpp>
+#include <openmedialib/ml/input.hpp>
+#include <openmedialib/ml/frame.hpp>
+#include <openmedialib/ml/audio.hpp>
+#include <openmedialib/ml/utilities.hpp>
 
 // includes for openpluginlib string handling
 #include <openpluginlib/pl/utf8_utils.hpp>
@@ -37,6 +43,17 @@ typedef ML_DECLSPEC boost::shared_ptr< indexer_job > indexer_job_ptr;
 
 // Forward declaration to local factory method
 static indexer_job_ptr indexer_job_factory( const pl::wstring &url );
+
+// Possibly redundant?
+class ML_DECLSPEC indexer_type
+{
+	public:
+		/// Obtain the item associated to the url
+		virtual indexer_item_ptr request( const openpluginlib::wstring &url ) = 0;
+};
+
+// Possibly redundant?
+typedef ML_DECLSPEC boost::shared_ptr< indexer_type > indexer_type_ptr;
 
 // The indexer singleton
 class indexer : public indexer_type
@@ -269,18 +286,98 @@ class unindexed_job_type : public indexer_job
 		bool finished_;
 };
 
+static const pl::pcos::key key_offset_ = pl::pcos::key::from_string( "offset" );
+static const pl::pcos::key key_file_size_ = pl::pcos::key::from_string( "file_size" );
+
+class generating_job_type : public indexer_job 
+{
+	public:
+
+		generating_job_type( const pl::wstring &url )
+			: url_( url )
+			, index_( awi_generator_v3_ptr( new awi_generator_v3( ) ) )
+			, input_( create_input( url ) )
+			, start_( 0 )
+		{
+			if ( input_ )
+			{
+				last_frame_ = input_->fetch( 0 );
+				if ( last_frame_ && last_frame_->get_stream( ) )
+				{
+					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
+					start_ += 1;
+				}
+			}
+			else
+			{
+			}
+		}
+
+		awi_index_ptr index( )
+		{
+			return index_;
+		}
+
+		const boost::int64_t size( ) const
+		{
+			return index_->bytes( );
+		}
+
+		const bool finished( ) const
+		{
+			return input_ && input_->get_frames( ) > 0 && index_->finished( );
+		}
+
+		void job_request( opencorelib::base_job_ptr job )
+		{
+			while ( input_ && start_ < input_->get_frames( ) )
+			{
+				last_frame_ = input_->fetch( start_ ++ );
+				if ( last_frame_->get_stream( )->position( ) == last_frame_->get_stream( )->key( ) )
+				{
+					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
+					break;
+				}
+			}
+
+			if ( last_frame_ && start_ == input_->get_frames( ) )
+				index_->close( last_frame_->get_position( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );
+
+			job->set_should_reschedule( !finished( ) );
+		}
+
+		const boost::posix_time::milliseconds job_delay( ) const
+		{
+			return boost::posix_time::milliseconds( 100 );
+		}
+
+	private:
+		pl::wstring url_;
+		awi_generator_v3_ptr index_;
+		input_type_ptr input_;
+		int start_;
+		frame_type_ptr last_frame_;
+};
+
 static indexer_job_ptr indexer_job_factory( const pl::wstring &url )
 {
-	aml_index_reader_ptr index = create( pl::to_string( url ) );
-	if ( index )
-		return indexer_job_ptr( new indexed_job_type( url, index ) );
+	if ( url.find( L"index:" ) != 0 )
+	{
+		aml_index_reader_ptr index = create( pl::to_string( url ) );
+		if ( index )
+			return indexer_job_ptr( new indexed_job_type( url, index ) );
+		else
+			return indexer_job_ptr( new unindexed_job_type( url ) );
+	}
 	else
-		return indexer_job_ptr( new unindexed_job_type( url ) );
+	{
+		return indexer_job_ptr( new generating_job_type( url ) );
+	}
 }
 
-indexer_type_ptr ML_DECLSPEC indexer_instance( )
+indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url )
 {
-	return indexer::instance( );
+	return indexer::instance( )->request( url );
 }
 
 } } }

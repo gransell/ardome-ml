@@ -38,18 +38,19 @@ typedef ML_DECLSPEC std::vector< exception_item > exception_list;
 
 /// AWI definitions
 class ML_DECLSPEC awi_index;
-class ML_DECLSPEC awi_parser;
-class ML_DECLSPEC awi_generator;
+class ML_DECLSPEC awi_parser_v2;
+class ML_DECLSPEC awi_generator_v2;
+class ML_DECLSPEC awi_parser_v3;
+class ML_DECLSPEC awi_generator_v3;
 
 typedef ML_DECLSPEC boost::shared_ptr< awi_index > awi_index_ptr;
-typedef ML_DECLSPEC boost::shared_ptr< awi_parser > awi_parser_ptr;
-typedef ML_DECLSPEC boost::shared_ptr< awi_generator > awi_generator_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_parser_v2 > awi_parser_v2_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_parser_v3 > awi_parser_v3_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_generator_v2 > awi_generator_v2_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< awi_generator_v3 > awi_generator_v3_ptr;
 
 class ML_DECLSPEC indexer_item;
 typedef ML_DECLSPEC boost::shared_ptr< indexer_item > indexer_item_ptr;
-
-class ML_DECLSPEC indexer_type;
-typedef ML_DECLSPEC boost::shared_ptr< indexer_type > indexer_type_ptr;
 
 /// Used to return frame rate and sample aspect ratio
 struct fraction
