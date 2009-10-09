@@ -292,7 +292,6 @@ static const pl::pcos::key key_file_size_ = pl::pcos::key::from_string( "file_si
 class generating_job_type : public indexer_job 
 {
 	public:
-
 		generating_job_type( const pl::wstring &url )
 			: url_( url )
 			, index_( awi_generator_v3_ptr( new awi_generator_v3( ) ) )
@@ -306,6 +305,7 @@ class generating_job_type : public indexer_job
 				{
 					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
 					start_ += 1;
+					analyse_gop( );
 				}
 			}
 			else
@@ -325,11 +325,26 @@ class generating_job_type : public indexer_job
 
 		const bool finished( ) const
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			return input_ && input_->get_frames( ) > 0 && index_->finished( );
 		}
 
 		void job_request( opencorelib::base_job_ptr job )
 		{
+			analyse_gop( );
+			job->set_should_reschedule( !finished( ) );
+		}
+
+		const boost::posix_time::milliseconds job_delay( ) const
+		{
+			return boost::posix_time::milliseconds( 100 );
+		}
+
+
+	private:
+		void analyse_gop( )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			while ( input_ && start_ < input_->get_frames( ) )
 			{
 				last_frame_ = input_->fetch( start_ ++ );
@@ -342,16 +357,9 @@ class generating_job_type : public indexer_job
 
 			if ( last_frame_ && start_ == input_->get_frames( ) )
 				index_->close( last_frame_->get_position( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );
-
-			job->set_should_reschedule( !finished( ) );
 		}
 
-		const boost::posix_time::milliseconds job_delay( ) const
-		{
-			return boost::posix_time::milliseconds( 100 );
-		}
-
-	private:
+		mutable boost::recursive_mutex mutex_;
 		pl::wstring url_;
 		awi_generator_v3_ptr index_;
 		input_type_ptr input_;
