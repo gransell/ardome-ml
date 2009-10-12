@@ -123,7 +123,7 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 			, index_( 0 )
 			, count_( 0 )
 		{
-			if ( frame && ( frame->get_packet( ) || frame->get_stream( ) ) )
+			if ( frame && frame->get_stream( ) )
 			{
 				if ( name_.find( L"packets:" ) == 0 )
 					name_ = name_.substr( 8 );
@@ -154,11 +154,6 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 				stream_type_ptr pkt = frame->get_stream( );
 				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
 				count_ ++;
-			}
-			else if ( output_ && frame->get_packet( ) )
-			{
-				packet_type_ptr pkt = frame->get_packet( );
-				result = fwrite( pkt->bytes( ), pkt->length( ), 1, output_ ) == 1;
 			}
 			return result;
 		}
