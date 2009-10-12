@@ -6,7 +6,10 @@
 #include <iostream>
 #include <fstream>
 #include <deque>
+
+#ifdef WIN32
 #include <io.h>
+#endif
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
