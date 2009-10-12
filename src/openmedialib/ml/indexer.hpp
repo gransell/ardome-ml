@@ -25,8 +25,14 @@ class ML_DECLSPEC indexer_item
 		virtual const bool finished( ) const = 0;
 };
 
-/// Singleton instance of the indexer object
+// Initialise the indexer
+extern void ML_DECLSPEC indexer_init( );
+
+/// Factory method for index_item_ptr objects
 extern indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url );
+
+/// Shuts the indexer subsystem down
+extern void ML_DECLSPEC indexer_shutdown( );
 
 } } }
 

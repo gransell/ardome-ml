@@ -49,7 +49,9 @@ class ML_DECLSPEC indexer_type
 {
 	public:
 		/// Obtain the item associated to the url
+		virtual void init( ) = 0;
 		virtual indexer_item_ptr request( const openpluginlib::wstring &url ) = 0;
+		virtual void shutdown( ) = 0;
 };
 
 // Possibly redundant?
@@ -73,6 +75,11 @@ class indexer : public indexer_type
 			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
 		}
 
+		// Force an initialisation of the worker
+		void init( )
+		{
+		}
+
 		/// Request an index item for the specified url
 		indexer_item_ptr request( const pl::wstring &url )
 		{
@@ -88,6 +95,11 @@ class indexer : public indexer_type
 				map_[ url ] = job;
 			}
 			return map_[ url ];
+		}
+
+		void shutdown( )
+		{
+			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
 		}
 
 	private:
@@ -337,7 +349,7 @@ class generating_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 100 );
+			return boost::posix_time::milliseconds( 300 );
 		}
 
 
@@ -383,9 +395,19 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url )
 	}
 }
 
+void ML_DECLSPEC indexer_init( )
+{
+	return indexer::instance( )->init( );
+}
+
 indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url )
 {
 	return indexer::instance( )->request( url );
+}
+
+void ML_DECLSPEC indexer_shutdown( )
+{
+	return indexer::instance( )->shutdown( );
 }
 
 } } }
