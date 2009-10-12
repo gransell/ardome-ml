@@ -75,6 +75,8 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
 
+#include <opencorelib/cl/str_util.hpp>
+
 #include <boost/regex.hpp>
 
 namespace ml = olib::openmedialib::ml;
@@ -82,6 +84,14 @@ namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 namespace fs = boost::filesystem;
+
+#ifdef AMF_ON_WINDOWS
+#define stack_popen _popen
+#define stack_pclose _pclose
+#else
+#define stack_popen popen
+#define stack_pclose pclose
+#endif
 
 namespace aml { namespace openmedialib {
 
@@ -2598,7 +2608,7 @@ static void op_iter_popen( aml_stack *stack )
 				command += input->fetch_slot( i )->get_uri( ) + L" ";
 		}
 	
-		FILE *pipe = popen( pl::to_string( command ).c_str( ), "r" );
+		FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
 		char temp[ 1024 ];
 	
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
@@ -2612,7 +2622,7 @@ static void op_iter_popen( aml_stack *stack )
 			stack->run( seq );
 		}
 	
-		pclose( pipe );
+		stack_pclose( pipe );
 	}
 	else
 	{
@@ -2775,7 +2785,7 @@ static void op_popen( aml_stack *stack )
 			command += input->fetch_slot( i )->get_uri( ) + L" ";
 	}
 
-	FILE *pipe = popen( pl::to_string( command ).c_str( ), "r" );
+	FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
 	char temp[ 1024 ];
 	int count = 0;
 
@@ -2786,14 +2796,14 @@ static void op_popen( aml_stack *stack )
 		count ++;
 	}
 
-	pclose( pipe );
+	stack_pclose( pipe );
 	stack->push( double( count ) );
 }
 
 static void op_path( aml_stack *stack )
 {
 	olib::t_path path = stack->paths_.back( );
-	stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( path.string( ) ) ) ) );
+	stack->push( ml::input_type_ptr( new input_value( olib::opencorelib::str_util::to_wstring( path.string( ) ) ) ) );
 }
 
 #define const_aml_stack const_cast< input_aml_stack * >
