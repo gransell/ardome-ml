@@ -39,7 +39,7 @@ key key::from_string( const char* keyAsString )
 {
 	scoped_lock lock( mutex_ );
 
-    if ( !stringKeyMap().count( keyAsString ) )
+    if ( stringKeyMap().find( keyAsString ) == stringKeyMap().end( ) )
     {
         boost::hash< std::string > hashFn;
         std::size_t h = hashFn( keyAsString );
