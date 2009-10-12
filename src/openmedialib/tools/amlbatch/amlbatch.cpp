@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <deque>
+#include <io.h>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
