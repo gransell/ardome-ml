@@ -526,6 +526,7 @@ ML_DECLSPEC filter_type_ptr create_filter( const pl::wstring &resource )
 	scoped_lock lock( mutex_ );
 	filter_type_ptr result = filter_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"filter" );
+	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for filter: %1%" ) % opl::to_string( resource ) );
 	if ( plug == 0 )
 		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
 	result = plug == 0 ? result : plug->filter( resource );
