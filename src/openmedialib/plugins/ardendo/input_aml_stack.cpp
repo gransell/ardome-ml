@@ -73,6 +73,7 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/packet.hpp>
 
 #include <boost/regex.hpp>
 
@@ -135,7 +136,11 @@ static pl::pcos::key key_query_ = pl::pcos::key::from_string( "query" );
 static pl::pcos::key key_token_ = pl::pcos::key::from_string( "token" );
 static pl::pcos::key key_stdout_ = pl::pcos::key::from_string( "stdout" );
 static pl::pcos::key key_redirect_ = pl::pcos::key::from_string( "redirect" );
+static pl::pcos::key key_aml_value_ = pl::pcos::key::from_string( ".aml_value" );
+static pl::pcos::key key_slots_ = pl::pcos::key::from_string( "slots" );
 
+static boost::regex int_syntax( "^((?:)|-|\\+)[[:digit:]]+((?:))$" );
+static boost::regex double_syntax( "^((?:)|-|\\+)[[:digit:]]+((?:)|\\.[[:digit:]]+)$" );
 static boost::regex numeric_syntax( "^((?:)|-|\\+)[[:digit:]]+((?:)|\\.[[:digit:]]+)$" );
 static olib::t_regex aml_syntax( _CT("^(aml:|http:).*") );
 static olib::t_regex prop_syntax( _CT("^.*=.*") );
@@ -170,25 +175,273 @@ class input_value : public ml::input_type
 		pl::wstring value_;
 };
 
-template < typename T > class stack_value : public ml::input_type
+static pl::pcos::key key_input_video_streams_ = pl::pcos::key::from_string( "@input_video_streams" );
+static pl::pcos::key key_input_audio_streams_ = pl::pcos::key::from_string( "@input_audio_streams" );
+static pl::pcos::key key_input_slots_ = pl::pcos::key::from_string( "@input_slots" );
+static pl::pcos::key key_input_position_ = pl::pcos::key::from_string( "@input_position" );
+static pl::pcos::key key_input_frames_ = pl::pcos::key::from_string( "@input_frames" );
+
+static pl::pcos::key key_frame_position_ = pl::pcos::key::from_string( "@frame_position" );
+static pl::pcos::key key_frame_fps_num_ = pl::pcos::key::from_string( "@frame_fps_num" );
+static pl::pcos::key key_frame_fps_den_ = pl::pcos::key::from_string( "@frame_fps_den" );
+static pl::pcos::key key_frame_has_stream_ = pl::pcos::key::from_string( "@frame_has_stream" );
+static pl::pcos::key key_frame_has_image_ = pl::pcos::key::from_string( "@frame_has_image" );
+static pl::pcos::key key_frame_has_audio_ = pl::pcos::key::from_string( "@frame_has_audio" );
+static pl::pcos::key key_frame_is_deferred_ = pl::pcos::key::from_string( "@frame_is_deferred" );
+static pl::pcos::key key_frame_pf_ = pl::pcos::key::from_string( "@frame_pf" );
+static pl::pcos::key key_frame_width_ = pl::pcos::key::from_string( "@frame_width" );
+static pl::pcos::key key_frame_height_ = pl::pcos::key::from_string( "@frame_height" );
+
+static pl::pcos::key key_stream_id_ = pl::pcos::key::from_string( "@stream_id" );
+static pl::pcos::key key_stream_container_ = pl::pcos::key::from_string( "@stream_container" );
+static pl::pcos::key key_stream_codec_ = pl::pcos::key::from_string( "@stream_codec" );
+static pl::pcos::key key_stream_length_ = pl::pcos::key::from_string( "@stream_length" );
+static pl::pcos::key key_stream_key_ = pl::pcos::key::from_string( "@stream_key" );
+static pl::pcos::key key_stream_position_ = pl::pcos::key::from_string( "@stream_position" );
+static pl::pcos::key key_stream_bitrate_ = pl::pcos::key::from_string( "@stream_bitrate" );
+static pl::pcos::key key_stream_width_ = pl::pcos::key::from_string( "@stream_width" );
+static pl::pcos::key key_stream_height_ = pl::pcos::key::from_string( "@stream_height" );
+static pl::pcos::key key_stream_sar_num_ = pl::pcos::key::from_string( "@stream_sar_num" );
+static pl::pcos::key key_stream_sar_den_ = pl::pcos::key::from_string( "@stream_sar_den" );
+static pl::pcos::key key_stream_pf_ = pl::pcos::key::from_string( "@stream_pf" );
+static pl::pcos::key key_stream_frequency_ = pl::pcos::key::from_string( "@stream_frequency" );
+static pl::pcos::key key_stream_channels_ = pl::pcos::key::from_string( "@stream_channels" );
+static pl::pcos::key key_stream_samples_ = pl::pcos::key::from_string( "@stream_samples" );
+
+static pl::pcos::key key_image_pf_ = pl::pcos::key::from_string( "@image_pf" );
+static pl::pcos::key key_image_width_ = pl::pcos::key::from_string( "@image_width" );
+static pl::pcos::key key_image_height_ = pl::pcos::key::from_string( "@image_height" );
+static pl::pcos::key key_image_pitch_ = pl::pcos::key::from_string( "@image_pitch" );
+static pl::pcos::key key_image_linesize_ = pl::pcos::key::from_string( "@image_linesize" );
+static pl::pcos::key key_image_position_ = pl::pcos::key::from_string( "@image_position" );
+static pl::pcos::key key_image_field_order_ = pl::pcos::key::from_string( "@image_field_order" );
+static pl::pcos::key key_image_planes_ = pl::pcos::key::from_string( "@image_planes" );
+static pl::pcos::key key_image_size_ = pl::pcos::key::from_string( "@image_size" );
+static pl::pcos::key key_image_sar_num_ = pl::pcos::key::from_string( "@image_sar_num" );
+static pl::pcos::key key_image_sar_den_ = pl::pcos::key::from_string( "@image_sar_den" );
+
+static pl::pcos::key key_audio_af_ = pl::pcos::key::from_string( "@audio_af" );
+static pl::pcos::key key_audio_position_ = pl::pcos::key::from_string( "@audio_position" );
+static pl::pcos::key key_audio_frequency_ = pl::pcos::key::from_string( "@audio_frequency" );
+static pl::pcos::key key_audio_channels_ = pl::pcos::key::from_string( "@audio_channels" );
+static pl::pcos::key key_audio_samples_ = pl::pcos::key::from_string( "@audio_samples" );
+static pl::pcos::key key_audio_size_ = pl::pcos::key::from_string( "@audio_size" );
+
+class frame_value : public ml::input_type
 {
 	public:
-		stack_value( const T &value )
+		frame_value( const ml::frame_type_ptr &value, ml::input_type_ptr &input )
 			: input_type( )
-			, value_( value )
+			, prop_input_video_streams_( key_input_video_streams_ )
+			, prop_input_audio_streams_( key_input_audio_streams_ )
+			, prop_input_slots_( key_input_slots_ )
+			, prop_input_frames_( key_input_frames_ )
+			, prop_input_position_( key_input_position_ )
+			, prop_frame_position_( key_frame_position_ )
+			, prop_frame_fps_num_( key_frame_fps_num_ )
+			, prop_frame_fps_den_( key_frame_fps_den_ )
+			, prop_frame_has_stream_( key_frame_has_stream_ )
+			, prop_frame_has_image_( key_frame_has_image_ )
+			, prop_frame_has_audio_( key_frame_has_audio_ )
+			, prop_frame_is_deferred_( key_frame_is_deferred_ )
+			, prop_stream_id_( key_stream_id_ )
+			, prop_stream_container_( key_stream_container_ )
+			, prop_stream_codec_( key_stream_codec_ )
+			, prop_stream_length_( key_stream_length_ )
+			, prop_stream_key_( key_stream_key_ )
+			, prop_stream_position_( key_stream_position_ )
+			, prop_stream_bitrate_( key_stream_bitrate_ )
+			, prop_stream_width_( key_stream_width_ )
+			, prop_stream_height_( key_stream_height_ )
+			, prop_stream_sar_num_( key_stream_sar_num_ )
+			, prop_stream_sar_den_( key_stream_sar_den_ )
+			, prop_stream_pf_( key_stream_pf_ )
+			, prop_stream_frequency_( key_stream_frequency_ )
+			, prop_stream_channels_( key_stream_channels_ )
+			, prop_stream_samples_( key_stream_samples_ )
+			, prop_image_pf_( key_image_pf_ )
+			, prop_image_width_( key_image_width_ )
+			, prop_image_height_( key_image_height_ )
+			, prop_image_pitch_( key_image_pitch_ )
+			, prop_image_linesize_( key_image_linesize_ )
+			, prop_image_position_( key_image_position_ )
+			, prop_image_field_order_( key_image_field_order_ )
+			, prop_image_planes_( key_image_planes_ )
+			, prop_image_size_( key_image_size_ )
+			, prop_image_sar_num_( key_image_sar_num_ )
+			, prop_image_sar_den_( key_image_sar_den_ )
+			, prop_audio_af_( key_audio_af_ )
+			, prop_audio_position_( key_audio_position_ )
+			, prop_audio_frequency_( key_audio_frequency_ )
+			, prop_audio_channels_( key_audio_channels_ )
+			, prop_audio_samples_( key_audio_samples_ )
+			, prop_audio_size_( key_audio_size_ )
 		{
 			properties( ).remove( properties( ).get_property_with_string( "debug" ) );
-			std::ostringstream stream;
-			stream.precision( 24 );
-			stream << value;
-			string_ = pl::to_wstring( stream.str( ) );
+
+			if ( input )
+			{
+				properties( ).append( prop_input_video_streams_ = input->get_video_streams( ) );
+				properties( ).append( prop_input_audio_streams_ = input->get_audio_streams( ) );
+				properties( ).append( prop_input_slots_ = int( input->slot_count( ) ) );
+				properties( ).append( prop_input_position_ = int( input->get_position( ) ) );
+				properties( ).append( prop_input_frames_ = int( input->get_frames( ) ) );
+			}
+
+			if ( value )
+			{
+				value_ = value->shallow( );
+
+				properties( ).append( prop_frame_position_ = value_->get_position( ) );
+				properties( ).append( prop_frame_fps_num_ = value_->get_fps_num( ) );
+				properties( ).append( prop_frame_fps_den_ = value_->get_fps_den( ) );
+				properties( ).append( prop_frame_has_stream_ = int( value_->get_stream( ) != ml::stream_type_ptr( ) ) );
+				properties( ).append( prop_frame_has_image_ = int( value_->has_image( ) ) );
+				properties( ).append( prop_frame_has_audio_ = int( value_->has_audio( ) ) );
+				properties( ).append( prop_frame_is_deferred_ = int( value_->is_deferred( ) ) );
+
+				if ( value_->get_stream( ) )
+				{
+					ml::stream_type_ptr stream = value_->get_stream( );
+					properties( ).append( prop_stream_id_ = int( stream->id( ) ) );
+					properties( ).append( prop_stream_container_ = pl::to_wstring( stream->container( ) ) );
+					properties( ).append( prop_stream_codec_ = pl::to_wstring( stream->codec( ) ) );
+					properties( ).append( prop_stream_length_ = int( stream->length( ) ) );
+					properties( ).append( prop_stream_key_ = stream->key( ) );
+					properties( ).append( prop_stream_position_ = stream->position( ) );
+					properties( ).append( prop_stream_bitrate_ = stream->bitrate( ) );
+					properties( ).append( prop_stream_width_ = stream->size( ).width );
+					properties( ).append( prop_stream_height_ = stream->size( ).height );
+					properties( ).append( prop_stream_sar_num_ = stream->sar( ).num );
+					properties( ).append( prop_stream_sar_den_ = stream->sar( ).den );
+					properties( ).append( prop_stream_pf_ = stream->pf( ) );
+					properties( ).append( prop_stream_frequency_ = stream->frequency( ) );
+					properties( ).append( prop_stream_channels_ = stream->channels( ) );
+					properties( ).append( prop_stream_samples_ = stream->samples( ) );
+				}
+
+				if ( value_->has_image( ) )
+				{
+					il::image_type_ptr image = value_->get_image( );
+					properties( ).append( prop_image_pf_ = image->pf( ) );
+					properties( ).append( prop_image_width_ = image->width( ) );
+					properties( ).append( prop_image_height_ = image->height( ) );
+					properties( ).append( prop_image_pitch_ = image->pitch( ) );
+					properties( ).append( prop_image_linesize_ = image->linesize( ) );
+					properties( ).append( prop_image_position_ = image->position( ) );
+					properties( ).append( prop_image_field_order_ = int( image->field_order( ) ) );
+					properties( ).append( prop_image_planes_ = int( image->plane_count( ) ) );
+					properties( ).append( prop_image_size_ = image->size( ) );
+					properties( ).append( prop_image_sar_num_ = value->get_sar_num( ) );
+					properties( ).append( prop_image_sar_den_ = value->get_sar_den( ) );
+				}
+
+				if ( value_->has_audio( ) )
+				{
+					ml::audio_type_ptr audio = value_->get_audio( );
+					properties( ).append( prop_audio_af_ = audio->af( ) );
+					properties( ).append( prop_audio_position_ = audio->position( ) );
+					properties( ).append( prop_audio_frequency_ = audio->frequency( ) );
+					properties( ).append( prop_audio_channels_ = audio->channels( ) );
+					properties( ).append( prop_audio_samples_ = audio->samples( ) );
+					properties( ).append( prop_audio_size_ = audio->size( ) );
+				}
+			}
 		}
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return string_; }
+		virtual const pl::wstring get_uri( ) const { return L"frame:"; }
+		virtual const pl::wstring get_mime_type( ) const { return L"frame/value"; }
+
+		// Audio/Visual
+		virtual int get_frames( ) const { return value_ ? 1 : 0; }
+		virtual bool is_seekable( ) const { return true; }
+		virtual int get_video_streams( ) const { return value_ && value_->has_image( ) ? 1 : 0; }
+		virtual int get_audio_streams( ) const { return value_ && value_->has_audio( ) ? 1 : 0; }
+
+	protected:
+		void do_fetch( ml::frame_type_ptr &f ) { if ( value_ && get_position( ) == 0 ) { f = value_->shallow( ); f->set_position( 0 ); } }
+
+	private:
+		ml::frame_type_ptr value_;
+		pl::pcos::property prop_input_video_streams_;
+		pl::pcos::property prop_input_audio_streams_;
+		pl::pcos::property prop_input_slots_;
+		pl::pcos::property prop_input_frames_;
+		pl::pcos::property prop_input_position_;
+		pl::pcos::property prop_frame_position_;
+		pl::pcos::property prop_frame_fps_num_;
+		pl::pcos::property prop_frame_fps_den_;
+		pl::pcos::property prop_frame_has_stream_;
+		pl::pcos::property prop_frame_has_image_;
+		pl::pcos::property prop_frame_has_audio_;
+		pl::pcos::property prop_frame_is_deferred_;
+		pl::pcos::property prop_stream_id_;
+		pl::pcos::property prop_stream_container_;
+		pl::pcos::property prop_stream_codec_;
+		pl::pcos::property prop_stream_length_;
+		pl::pcos::property prop_stream_key_;
+		pl::pcos::property prop_stream_position_;
+		pl::pcos::property prop_stream_bitrate_;
+		pl::pcos::property prop_stream_width_;
+		pl::pcos::property prop_stream_height_;
+		pl::pcos::property prop_stream_sar_num_;
+		pl::pcos::property prop_stream_sar_den_;
+		pl::pcos::property prop_stream_pf_;
+		pl::pcos::property prop_stream_frequency_;
+		pl::pcos::property prop_stream_channels_;
+		pl::pcos::property prop_stream_samples_;
+		pl::pcos::property prop_image_pf_;
+		pl::pcos::property prop_image_width_;
+		pl::pcos::property prop_image_height_;
+		pl::pcos::property prop_image_pitch_;
+		pl::pcos::property prop_image_linesize_;
+		pl::pcos::property prop_image_position_;
+		pl::pcos::property prop_image_field_order_;
+		pl::pcos::property prop_image_planes_;
+		pl::pcos::property prop_image_size_;
+		pl::pcos::property prop_image_sar_num_;
+		pl::pcos::property prop_image_sar_den_;
+		pl::pcos::property prop_audio_af_;
+		pl::pcos::property prop_audio_position_;
+		pl::pcos::property prop_audio_frequency_;
+		pl::pcos::property prop_audio_channels_;
+		pl::pcos::property prop_audio_samples_;
+		pl::pcos::property prop_audio_size_;
+};
+
+template < typename T > class stack_value : public ml::input_type
+{
+	public:
+		stack_value( const T &value )
+			: input_type( )
+			, prop_value_( key_aml_value_ )
+			, converted_( false )
+		{
+			properties( ).remove( properties( ).get_property_with_string( "debug" ) );
+			properties( ).append( prop_value_ = value );
+		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
+
+		// Basic information
+		virtual const pl::wstring get_uri( ) const 
+		{ 
+			// Delay converting until requested
+			if ( !converted_ )
+			{
+				std::ostringstream stream;
+				stream.precision( 24 );
+				stream << prop_value_.value< T >( );
+				string_ = pl::to_wstring( stream.str( ) );
+				converted_ = true;
+			}
+			return string_; 
+		}
 		virtual const pl::wstring get_mime_type( ) const { return L"text/value"; }
 
 		// Audio/Visual
@@ -201,8 +454,9 @@ template < typename T > class stack_value : public ml::input_type
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
 
 	private:
-		T value_;
-		pl::wstring string_;
+		pl::pcos::property prop_value_;
+		mutable pl::wstring string_;
+		mutable bool converted_;
 };
 
 struct sequence
@@ -294,6 +548,7 @@ static void op_tan( aml_stack * );
 
 // Comparison operators
 static void op_equal( aml_stack * );
+static void op_is( aml_stack * );
 static void op_lt( aml_stack * );
 static void op_gt( aml_stack * );
 static void op_lt_equal( aml_stack * );
@@ -327,6 +582,20 @@ static void op_until( aml_stack * );
 static void op_while( aml_stack * );
 static void op_repeat( aml_stack * );
 
+static void op_pack( aml_stack * );
+static void op_pack_append( aml_stack * );
+static void op_pack_append_list( aml_stack * );
+static void op_pack_insert( aml_stack * );
+static void op_pack_remove( aml_stack * );
+static void op_pack_query( aml_stack * );
+static void op_pack_assign( aml_stack * );
+
+static void op_iter_start( aml_stack * );
+static void op_iter_slots( aml_stack * );
+static void op_iter_frames( aml_stack * );
+static void op_iter_range( aml_stack * );
+static void op_iter_popen( aml_stack * );
+
 // Variables
 static void op_variable( aml_stack * );
 static void op_variable_assign( aml_stack * );
@@ -335,13 +604,17 @@ static void op_deref( aml_stack * );
 
 // ml operators
 static void op_prop_query( aml_stack * );
-static void op_has_prop( aml_stack * );
+static void op_prop_exists( aml_stack * );
+static void op_prop_matches( aml_stack * );
+static void op_prop_query_parse( aml_stack * );
+static void op_has_prop_parse( aml_stack * );
 static void op_length( aml_stack * );
 static void op_decap( aml_stack * );
 static void op_slots( aml_stack * );
 static void op_connect( aml_stack * );
 static void op_slot( aml_stack * );
 static void op_recover( aml_stack * );
+static void op_fetch( aml_stack * );
 
 // Debug operators
 static void op_available( aml_stack * );
@@ -354,6 +627,10 @@ static void op_dict( aml_stack * );
 static void op_define( aml_stack * );
 static void op_log_level( aml_stack * );
 static void op_render( aml_stack * );
+
+// OS operatots
+static void op_path( aml_stack * );
+static void op_popen( aml_stack * );
 
 class aml_stack 
 {
@@ -384,6 +661,7 @@ class aml_stack
 			operations_[ L";" ] = op_semi_colon;
 
 			operations_[ L"forget" ] = op_forget;
+			operations_[ L"$" ] = op_str;
 			operations_[ L"str" ] = op_str;
 			operations_[ L"execute" ] = op_execute;
 			operations_[ L"throw" ] = op_throw;
@@ -422,6 +700,7 @@ class aml_stack
 			operations_[ L"else" ] = op_else;
 			operations_[ L"then" ] = op_then;
 			operations_[ L"=" ] = op_equal;
+			operations_[ L"is" ] = op_is;
 			operations_[ L"<" ] = op_lt;
 			operations_[ L">" ] = op_gt;
 			operations_[ L"<=" ] = op_lt_equal;
@@ -432,19 +711,37 @@ class aml_stack
 			operations_[ L"while" ] = op_while;
 			operations_[ L"repeat" ] = op_repeat;
 
+			operations_[ L"pack" ] = op_pack;
+			operations_[ L"pack&" ] = op_pack_append;
+			operations_[ L"pack&&" ] = op_pack_append_list;
+			operations_[ L"pack+" ] = op_pack_insert;
+			operations_[ L"pack-" ] = op_pack_remove;
+			operations_[ L"pack@" ] = op_pack_query;
+			operations_[ L"pack!" ] = op_pack_assign;
+
+			operations_[ L"iter_start" ] = op_iter_start;
+			operations_[ L"iter_slots" ] = op_iter_slots;
+			operations_[ L"iter_frames" ] = op_iter_frames;
+			operations_[ L"iter_range" ] = op_iter_range;
+			operations_[ L"iter_popen" ] = op_iter_popen;
+
 			operations_[ L"variable" ] = op_variable;
 			operations_[ L"variable!" ] = op_variable_assign;
 			operations_[ L"!" ] = op_assign;
 			operations_[ L"@" ] = op_deref;
 
-			operations_[ L"?" ] = op_prop_query;
-			operations_[ L"has?" ] = op_has_prop;
+			operations_[ L"prop_query" ] = op_prop_query;
+			operations_[ L"prop_exists" ] = op_prop_exists;
+			operations_[ L"prop_matches" ] = op_prop_matches;
+			operations_[ L"?" ] = op_prop_query_parse;
+			operations_[ L"has?" ] = op_has_prop_parse;
 			operations_[ L"length?" ] = op_length;
 			operations_[ L"decap" ] = op_decap;
 			operations_[ L"slots?" ] = op_slots;
 			operations_[ L"connect" ] = op_connect;
 			operations_[ L"slot" ] = op_slot;
 			operations_[ L"recover" ] = op_recover;
+			operations_[ L"fetch" ] = op_fetch;
 
 			operations_[ L"available" ] = op_available;
 			operations_[ L"dump" ] = op_dump;
@@ -456,6 +753,9 @@ class aml_stack
 			operations_[ L"define" ] = op_define;
 			operations_[ L"log_level" ] = op_log_level;
 			operations_[ L"render" ] = op_render;
+
+			operations_[ L"popen" ] = op_popen;
+			operations_[ L"path" ] = op_path;
 
 			conds_.push_back( true );
 			variables_push( );
@@ -539,7 +839,7 @@ class aml_stack
 		{
 			if ( next_op_.size( ) == 0 && token == L"" ) return;
 
-			if ( execution_stack_.size( ) + 1 <= trace_ )
+			if ( int( execution_stack_.size( ) ) + 1 <= trace_ )
 			{
 				( *output_ ).fill( '#' );
 				( *output_ ).width( execution_stack_.size( ) + 2 );
@@ -580,7 +880,7 @@ class aml_stack
 			}
 			else if ( next_op_.size( ) == 0 && inline_.find( arg ) != inline_.end( ) )
 				execute_inline( arg );
-			else if ( arg != L"begin" && arg != L"until" && arg != L"repeat" && state_ == 2 )
+			else if ( arg != L"begin" && arg != L"until" && arg != L"repeat" && arg.find( L"iter_" ) != 0 && state_ == 2 )
 				loops_.push_back( arg );
 			else if ( arg != L"if" && arg != L"else" && arg != L"then" && !conds_.back( ) )
 				;
@@ -590,10 +890,16 @@ class aml_stack
 				inputs_.push_back( ml::input_type_ptr( new input_value( arg ) ) );
 			else if ( handled( arg ) )
 				;
-			else if ( words_.find( arg ) != words_.end( ) )
-				execute_word( arg );
+			else if ( is_word( arg ) )
+				;
+			//else if ( words_.find( arg ) != words_.end( ) )
+				//execute_word( arg );
 			else if ( operations_.find( arg ) != operations_.end( ) )
 				execute_operation( arg );
+			else if ( boost::regex_match( pl::to_string( arg ), int_syntax ) )
+				create_int( arg );
+			else if ( boost::regex_match( pl::to_string( arg ), double_syntax ) )
+				create_double( arg );
 			else if ( boost::regex_match( pl::to_string( arg ), numeric_syntax ) )
 				create_numeric( arg );
 			else if ( arg.find( L"=" ) != pl::wstring::npos && arg.find( L"http:" ) < arg.find( L"=" ) )
@@ -610,10 +916,20 @@ class aml_stack
 				create_filter( arg );
 			else if ( arg != L"" && arg[ arg.size( ) - 1 ] != L':' && arg.find( L"http://" ) == pl::wstring::npos && is_http_source )
                 create_input( cl::str_util::to_wstring( url ) );
+			else if ( arg != L"" && is_an_aml_script( arg ) && arg.find( L"http://" ) == pl::wstring::npos )
+                parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg != L"" && ( arg[ arg.size( ) - 1 ] == L':' || arg.find( L"http://" ) != pl::wstring::npos ) )
                 create_input( arg );
 			else if ( arg != L"" )
                 create_input( cl::str_util::to_wstring( url ) );
+		}
+
+		bool is_word( const pl::wstring &arg )
+		{
+			bool result = words_.find( arg ) != words_.end( );
+			if ( result )
+				execute_word( arg );
+			return result;
 		}
 
 		std::map< pl::wstring, ml::input_type_ptr > &get_locals( )
@@ -716,6 +1032,13 @@ class aml_stack
 			inputs_.push_back( input );
 		}
 
+		void push( ml::filter_type_ptr input )
+		{
+			if ( state_ != 0 )
+				throw std::string( "Synatx error - attempt to insert binary input in function" );
+			inputs_.push_back( input );
+		}
+
 		void push( double value )
 		{
 			if ( !empty( ) ) push( pop( ) );
@@ -726,6 +1049,18 @@ class aml_stack
 		{
 			if ( !empty( ) ) push( pop( ) );
 			inputs_.push_back( ml::input_type_ptr( new stack_value< int >( value ) ) );
+		}
+
+		void push( boost::int64_t value )
+		{
+			if ( !empty( ) ) push( pop( ) );
+			inputs_.push_back( ml::input_type_ptr( new stack_value< boost::int64_t >( value ) ) );
+		}
+
+		void push( bool value )
+		{
+			if ( !empty( ) ) push( pop( ) );
+			inputs_.push_back( ml::input_type_ptr( new stack_value< int >( value ? 1 : 0 ) ) );
 		}
 
 		bool empty( ) const
@@ -968,6 +1303,20 @@ class aml_stack
 			}
 		}
 
+		void create_int( const pl::wstring &arg )
+		{
+			if ( !empty( ) ) push( pop( ) );
+			boost::int64_t result = atoll( pl::to_string( arg ).c_str( ) );
+			inputs_.push_back( ml::input_type_ptr( new stack_value< boost::int64_t >( result ) ) );
+		}
+
+		void create_double( const pl::wstring &arg )
+		{
+			if ( !empty( ) ) push( pop( ) );
+			double result = atof( pl::to_string( arg ).c_str( ) );
+			inputs_.push_back( ml::input_type_ptr( new stack_value< double >( result ) ) );
+		}
+
 		void create_numeric( const pl::wstring &arg )
 		{
 			if ( !empty( ) ) push( pop( ) );
@@ -985,7 +1334,7 @@ class aml_stack
 			{
 				result = inputs_.back( );
 				inputs_.pop_back( );
-				if ( result && is_local( result->get_uri( ) ) )
+				if ( result && ( !result->property_with_key( key_aml_value_ ).valid( ) && is_local( result->get_uri( ) ) ) )
 				{
 					;
 				}
@@ -1025,7 +1374,41 @@ class aml_stack
 			{
 				ml::input_type_ptr value = inputs_.back( );
 				inputs_.pop_back( );
-				result = atof( pl::to_string( value->get_uri( ) ).c_str( ) );
+				pl::pcos::property prop = value->property_with_key( key_aml_value_ );
+				if ( prop.valid( ) && prop.is_a< double >( ) )
+					result = prop.value< double >( );
+				else if ( prop.valid( ) && prop.is_a< int >( ) )
+					result = double( prop.value< int >( ) );
+				else if ( prop.valid( ) && prop.is_a< boost::int64_t >( ) )
+					result = double( prop.value< boost::int64_t >( ) );
+				else
+					result = atof( pl::to_string( value->get_uri( ) ).c_str( ) );
+			}
+			else
+			{
+				throw std::string( "Stack underflow" );
+			}
+
+			return result;
+		}
+
+		template < typename T > T pop_numeric( )
+		{
+			T result;
+
+			if ( inputs_.size( ) )
+			{
+				ml::input_type_ptr value = inputs_.back( );
+				inputs_.pop_back( );
+				pl::pcos::property prop = value->property_with_key( key_aml_value_ );
+				if ( prop.valid( ) && prop.is_a< double >( ) )
+					result = T( prop.value< double >( ) );
+				else if ( prop.valid( ) && prop.is_a< int >( ) )
+					result = T( prop.value< int >( ) );
+				else if ( prop.valid( ) && prop.is_a< boost::int64_t >( ) )
+					result = T( prop.value< boost::int64_t >( ) );
+				else
+					result = T( atof( pl::to_string( value->get_uri( ) ).c_str( ) ) );
 			}
 			else
 			{
@@ -1051,6 +1434,22 @@ class aml_stack
 				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
+		}
+
+		bool is_an_aml_script( const pl::wstring &filename )
+		{
+           	olib::t_path apath( cl::str_util::to_t_string(filename));
+           	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
+           	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+
+			if ( !file.is_open( ) )
+				return false;
+
+			std::string sub1;
+			std::string sub2;
+			file >> sub1 >> sub2;
+
+			return sub1.find( "#!" ) == 0 && sub2.find( "amlbatch" ) != std::string::npos;
 		}
 
 		void parse_file( const pl::wstring &filename )
@@ -1429,25 +1828,60 @@ static void op_tan( aml_stack *stack )
 	stack->push( std::tan( a ) );
 }
 
-static void op_prop_query( aml_stack *stack )
+static void op_prop_query_parse( aml_stack *stack )
 {
-	if ( stack->next_op( op_prop_query ) )
+	if ( stack->next_op( op_prop_query_parse ) )
 	{
 		ml::input_type_ptr a = stack->pop( );
 		stack->push_property( a->get_uri( ) );
 	}
 }
 
-static void op_has_prop( aml_stack *stack )
+static void op_has_prop_parse( aml_stack *stack )
 {
-	if ( stack->next_op( op_has_prop ) )
+	if ( stack->next_op( op_has_prop_parse ) )
 	{
 		ml::input_type_ptr a = stack->pop( );
 		ml::input_type_ptr b = stack->pop( );
 		stack->push( b );
 		std::string name = pl::to_string( a->get_uri( ) );
-		stack->push( double( b->property( name.c_str( ) ).valid( ) ? 1.0 : 0.0 ) );
+		stack->push( b->property( name.c_str( ) ).valid( ) );
 	}
+}
+
+static void op_prop_query( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	stack->push_property( a->get_uri( ) );
+}
+
+static void op_prop_exists( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	ml::input_type_ptr b = stack->pop( );
+	stack->push( b );
+	std::string name = pl::to_string( a->get_uri( ) );
+	stack->push( b->property( name.c_str( ) ).valid( ) );
+}
+
+static void op_prop_matches( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	ml::input_type_ptr b = stack->pop( );
+	stack->push( b );
+	std::string name = pl::to_string( a->get_uri( ) );
+	boost::regex match( name );
+	pl::pcos::key_vector keys = b->properties( ).get_keys( );
+	int count = 0;
+	for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+	{
+		if ( boost::regex_match( ( *it ).as_string( ), match ) )
+		{
+			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( ( *it ).as_string( ) ) ) ) );
+			count ++;
+		}
+	}
+	stack->push( double( count ) );
 }
 
 static void op_length( aml_stack *stack )
@@ -1716,16 +2150,33 @@ static void op_equal( aml_stack *stack )
 	ml::input_type_ptr b = stack->pop( );
 	if ( a != b )
 	{
+		pl::pcos::property prop_a = a->property_with_key( key_aml_value_ );
+		pl::pcos::property prop_b = b->property_with_key( key_aml_value_ );
+		if ( prop_a.valid( ) && prop_b.valid( ) )
+		{
+			bool done = true;
+			if ( prop_a.is_a< boost::int64_t >( ) && prop_b.is_a< boost::int64_t >( ) )
+				stack->push( prop_a.value< boost::int64_t >( ) == prop_b.value< boost::int64_t >( ) );
+			else if ( prop_a.is_a< int >( ) && prop_b.is_a< int >( ) )
+				stack->push( prop_a.value< int >( ) == prop_b.value< int >( ) );
+			else if ( prop_a.is_a< double >( ) && prop_b.is_a< double >( ) )
+				stack->push( prop_a.value< double >( ) == prop_b.value< double >( ) );
+			else
+				done = false;
+			if ( done )
+				return;
+		}
+
 		if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
 			 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
 		{
 			double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
 			double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
-			stack->push( vb == va ? 1.0 : 0.0 );
+			stack->push( vb == va );
 		}
 		else
 		{
-			stack->push( b->get_uri( ) == a->get_uri( ) ? 1.0 : 0.0 );
+			stack->push( b->get_uri( ) == a->get_uri( ) );
 		}
 	}
 	else
@@ -1734,20 +2185,45 @@ static void op_equal( aml_stack *stack )
 	}
 }
 
+static void op_is( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	ml::input_type_ptr b = stack->pop( );
+	stack->push( a == b );
+}
+
 static void op_lt( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
+	pl::pcos::property prop_b = b->property_with_key( key_aml_value_ );
+	pl::pcos::property prop_a = a->property_with_key( key_aml_value_ );
+
+	if ( prop_a.valid( ) && prop_b.valid( ) )
+	{
+		bool done = true;
+		if ( prop_b.is_a< boost::int64_t >( ) && prop_a.is_a< boost::int64_t >( ) )
+			stack->push( prop_b.value< boost::int64_t >( ) < prop_a.value< boost::int64_t >( ) );
+		else if ( prop_b.is_a< int >( ) && prop_a.is_a< int >( ) )
+			stack->push( prop_b.value< int >( ) < prop_a.value< int >( ) );
+		else if ( prop_b.is_a< double >( ) && prop_a.is_a< double >( ) )
+			stack->push( prop_b.value< double >( ) < prop_a.value< double >( ) );
+		else
+			done = false;
+		if ( done )
+			return;
+	}
+
 	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
 		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
 		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
 		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
-		stack->push( vb < va ? 1.0 : 0.0 );
+		stack->push( vb < va );
 	}
 	else
 	{
-		stack->push( b->get_uri( ) < a->get_uri( ) ? 1.0 : 0.0 );
+		stack->push( b->get_uri( ) < a->get_uri( ) );
 	}
 }
 
@@ -1755,16 +2231,34 @@ static void op_gt( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
+	pl::pcos::property prop_b = b->property_with_key( key_aml_value_ );
+	pl::pcos::property prop_a = a->property_with_key( key_aml_value_ );
+
+	if ( prop_a.valid( ) && prop_b.valid( ) )
+	{
+		bool done = true;
+		if ( prop_b.is_a< boost::int64_t >( ) && prop_a.is_a< boost::int64_t >( ) )
+			stack->push( prop_b.value< boost::int64_t >( ) > prop_a.value< boost::int64_t >( ) );
+		else if ( prop_b.is_a< int >( ) && prop_a.is_a< int >( ) )
+			stack->push( prop_b.value< int >( ) > prop_a.value< int >( ) );
+		else if ( prop_b.is_a< double >( ) && prop_a.is_a< double >( ) )
+			stack->push( prop_b.value< double >( ) > prop_a.value< double >( ) );
+		else
+			done = false;
+		if ( done )
+			return;
+	}
+
 	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
 		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
 		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
 		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
-		stack->push( vb > va ? 1.0 : 0.0 );
+		stack->push( vb > va );
 	}
 	else
 	{
-		stack->push( b->get_uri( ) > a->get_uri( ) ? 1.0 : 0.0 );
+		stack->push( b->get_uri( ) > a->get_uri( ) );
 	}
 }
 
@@ -1772,16 +2266,34 @@ static void op_lt_equal( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
+	pl::pcos::property prop_b = b->property_with_key( key_aml_value_ );
+	pl::pcos::property prop_a = a->property_with_key( key_aml_value_ );
+
+	if ( prop_a.valid( ) && prop_b.valid( ) )
+	{
+		bool done = true;
+		if ( prop_b.is_a< boost::int64_t >( ) && prop_a.is_a< boost::int64_t >( ) )
+			stack->push( prop_b.value< boost::int64_t >( ) <= prop_a.value< boost::int64_t >( ) );
+		else if ( prop_b.is_a< int >( ) && prop_a.is_a< int >( ) )
+			stack->push( prop_b.value< int >( ) <= prop_a.value< int >( ) );
+		else if ( prop_b.is_a< double >( ) && prop_a.is_a< double >( ) )
+			stack->push( prop_b.value< double >( ) <= prop_a.value< double >( ) );
+		else
+			done = false;
+		if ( done )
+			return;
+	}
+
 	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
 		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
 		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
 		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
-		stack->push( vb <= va ? 1.0 : 0.0 );
+		stack->push( vb <= va );
 	}
 	else
 	{
-		stack->push( b->get_uri( ) <= a->get_uri( ) ? 1.0 : 0.0 );
+		stack->push( b->get_uri( ) <= a->get_uri( ) );
 	}
 }
 
@@ -1789,16 +2301,34 @@ static void op_gt_equal( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
+	pl::pcos::property prop_b = b->property_with_key( key_aml_value_ );
+	pl::pcos::property prop_a = a->property_with_key( key_aml_value_ );
+
+	if ( prop_a.valid( ) && prop_b.valid( ) )
+	{
+		bool done = true;
+		if ( prop_b.is_a< boost::int64_t >( ) && prop_a.is_a< boost::int64_t >( ) )
+			stack->push( prop_b.value< boost::int64_t >( ) >= prop_a.value< boost::int64_t >( ) );
+		else if ( prop_b.is_a< int >( ) && prop_a.is_a< int >( ) )
+			stack->push( prop_b.value< int >( ) >= prop_a.value< int >( ) );
+		else if ( prop_b.is_a< double >( ) && prop_a.is_a< double >( ) )
+			stack->push( prop_b.value< double >( ) >= prop_a.value< double >( ) );
+		else
+			done = false;
+		if ( done )
+			return;
+	}
+
 	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
 		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
 		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
 		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
-		stack->push( vb >= va ? 1.0 : 0.0 );
+		stack->push( vb >= va );
 	}
 	else
 	{
-		stack->push( b->get_uri( ) >= a->get_uri( ) ? 1.0 : 0.0 );
+		stack->push( b->get_uri( ) >= a->get_uri( ) );
 	}
 }
 
@@ -1863,6 +2393,233 @@ static void op_repeat( aml_stack *stack )
 	}
 }
 
+static void op_pack( aml_stack *stack )
+{
+	int count = stack->pop_numeric< int >( );
+	ml::filter_type_ptr filter = ml::create_filter( L"playlist" );
+	filter->property_with_key( key_slots_ ) = count;
+	stack->push( filter );
+}
+
+static void op_pack_append( aml_stack *stack )
+{
+	ml::input_type_ptr value = stack->pop( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	list->property_with_key( key_slots_ ) = int( list->slot_count( ) + 1 );
+	list->connect( value, size_t( list->slot_count( ) - 1 ) );
+}
+
+static void op_pack_append_list( aml_stack *stack )
+{
+	ml::input_type_ptr value = stack->pop( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	size_t dst_index = list->slot_count( );
+	list->property_with_key( key_slots_ ) = int( list->slot_count( ) + value->slot_count( ) );
+	for ( size_t src_index = 0; src_index <  value->slot_count( ); src_index ++, dst_index ++ )
+		list->connect( value->fetch_slot( src_index ), dst_index );
+}
+
+static void op_pack_insert( aml_stack *stack )
+{
+	int offset = stack->pop_numeric< int >( );
+	ml::input_type_ptr value = stack->pop( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	if ( offset < 0 )
+		offset = list->slot_count( ) + offset;
+	if ( offset >= 0 && offset <= int( list->slot_count( ) ) )
+	{
+		list->property_with_key( key_slots_ ) = int( list->slot_count( ) + 1 );
+		for ( int i = int( list->slot_count( ) ) - 2; i >= ( offset ); i -- )
+			list->connect( list->fetch_slot( size_t( i ) ), size_t( i + 1 ) );
+		list->connect( value, offset );
+	}
+	else
+	{
+		throw std::string( "Index out of range on pack insert" );
+	}
+}
+
+static void op_pack_remove( aml_stack *stack )
+{
+	int offset = stack->pop_numeric< int >( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	if ( offset < 0 )
+		offset = list->slot_count( ) + offset;
+	if ( offset >= 0 && offset < int( list->slot_count( ) ) )
+	{
+		for ( size_t i = size_t( offset ); i < list->slot_count( ); i ++ )
+			list->connect( list->fetch_slot( i + 1 ), i );
+		list->property_with_key( key_slots_ ) = int( list->slot_count( ) - 1 );
+	}
+	else
+	{
+		throw std::string( "Index out of range on pack remove" );
+	}
+}
+
+static void op_pack_query( aml_stack *stack )
+{
+	int offset = stack->pop_numeric< int >( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	if ( offset < 0 )
+		offset = list->slot_count( ) + offset;
+	if ( offset >= 0 && offset < int( list->slot_count( ) ) )
+		stack->push( list->fetch_slot( size_t( offset ) ) );
+	else
+		throw std::string( "Index out of range on pack query" );
+}
+
+static void op_pack_assign( aml_stack *stack )
+{
+	int offset = stack->pop_numeric< int >( );
+	ml::input_type_ptr value = stack->pop( );
+	ml::input_type_ptr list = stack->pop( );
+	stack->push( list );
+	if ( offset < 0 )
+		offset = list->slot_count( ) + offset;
+	if ( offset >= 0 && offset < int( list->slot_count( ) ) )
+		list->connect( value, size_t( offset ) );
+	else
+		throw std::string( "Index out of range on pack query" );
+}
+
+static void op_iter_start( aml_stack *stack )
+{
+	if ( stack->loop_count_ == 0 )
+		stack->state_ = 2;
+	else
+		stack->loops_.push_back( L"iter_start" );
+	stack->loop_count_ ++;
+}
+
+static void op_iter_slots( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+		ml::input_type_ptr a = stack->pop( );
+
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		for ( size_t i = 0; i < a->slot_count( ); i ++ )
+		{
+			seq->start( );
+			stack->push( a->fetch_slot( i ) );
+			stack->run( seq );
+		}
+
+		stack->push( a );
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_slots" );
+	}
+}
+
+static void op_iter_frames( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+		ml::input_type_ptr a = stack->pop( );
+
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		for ( int i = 0; i < a->get_frames( ); i ++ )
+		{
+			seq->start( );
+			ml::frame_type_ptr f = a->fetch( i );
+			stack->push( ml::input_type_ptr( new frame_value( f, a ) ) );
+			stack->run( seq );
+		}
+
+		stack->push( a );
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_frames" );
+	}
+}
+
+static void op_iter_range( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+		ml::input_type_ptr a = stack->pop( );
+		boost::int64_t value;
+
+		pl::pcos::property prop = a->property_with_key( key_aml_value_ );
+		if ( prop.valid( ) && prop.is_a< boost::int64_t >( ) )
+			value = prop.value< boost::int64_t >( );
+		else if ( prop.valid( ) && prop.is_a< int >( ) )
+			value = boost::int64_t( prop.value< int >( ) );
+		else if ( prop.valid( ) && prop.is_a< double >( ) )
+			value = boost::int64_t( prop.value< double >( ) );
+		else
+			value = boost::int64_t( atof( pl::to_string( a->get_uri( ) ).c_str( ) ) );
+
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		for ( boost::int64_t i = 0; i < value; i ++ )
+		{
+			seq->start( );
+			stack->push( i );
+			stack->run( seq );
+		}
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_range" );
+	}
+}
+
+static void op_iter_popen( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+
+		ml::input_type_ptr input = stack->pop( );
+		pl::wstring command;
+		for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
+		{
+			if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+				command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
+			else
+				command += input->fetch_slot( i )->get_uri( ) + L" ";
+		}
+	
+		FILE *pipe = popen( pl::to_string( command ).c_str( ), "r" );
+		char temp[ 1024 ];
+	
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		while( fgets( temp, 1024, pipe ) )
+		{
+			seq->start( );
+			if ( temp[ strlen( temp ) - 1 ] == '\n' ) temp[ strlen( temp ) - 1 ] = '\0';
+			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( temp ) ) ) );
+			stack->run( seq );
+		}
+	
+		pclose( pipe );
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_popen" );
+	}
+}
+
 static void op_depth( aml_stack *stack )
 {
 	stack->push( double( stack->inputs_.size( ) ) );
@@ -1914,8 +2671,15 @@ static void op_decap( aml_stack *stack )
 	ml::input_type_ptr a = stack->pop( );
 	if ( a->slot_count( ) )
 	{
-		for ( size_t i = 0; i < a->slot_count( ); i ++ )
-			stack->push( a->fetch_slot( i ) );
+		if ( a->property( "original_input" ).valid( ) )
+		{
+			stack->push( a->property( "original_input" ).value< ml::input_type_ptr >( ) );
+		}
+		else
+		{
+			for ( size_t i = 0; i < a->slot_count( ); i ++ )
+				stack->push( a->fetch_slot( i ) );
+		}
 	}
 	else
 	{
@@ -1959,6 +2723,17 @@ static void op_recover( aml_stack *stack )
 	stack->push( slot );
 }
 
+static void op_fetch( aml_stack *stack )
+{
+	int a = int( stack->pop_value( ) );
+	ml::input_type_ptr b = stack->pop( );
+	stack->push( b );
+	if ( a < 0 )
+		a = b->get_frames( ) + a;
+	ml::frame_type_ptr f = b->fetch( a );
+	stack->push( ml::input_type_ptr( new frame_value( f, b ) ) );
+}
+
 static void op_define( aml_stack *stack )
 {
 	if ( stack->next_op( op_define ) )
@@ -1977,8 +2752,48 @@ static void op_log_level( aml_stack *stack )
 static void op_render( aml_stack *stack )
 {
 	ml::input_type_ptr input = stack->pop( );
-	for ( int i = 0; i < input->get_frames( ); i ++ )
-		input->fetch( i );
+	if ( input->get_frames( ) )
+	{
+		for ( int i = 0; i < input->get_frames( ); i ++ )
+			input->fetch( i );
+	}
+	else
+	{
+		*( stack->output_ ) << pl::to_string( input->get_uri( ) ) << std::endl;
+	}
+}
+
+static void op_popen( aml_stack *stack )
+{
+	ml::input_type_ptr input = stack->pop( );
+	pl::wstring command;
+	for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
+	{
+		if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+			command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
+		else
+			command += input->fetch_slot( i )->get_uri( ) + L" ";
+	}
+
+	FILE *pipe = popen( pl::to_string( command ).c_str( ), "r" );
+	char temp[ 1024 ];
+	int count = 0;
+
+	while( fgets( temp, 1024, pipe ) )
+	{
+		if ( temp[ strlen( temp ) - 1 ] == '\n' ) temp[ strlen( temp ) - 1 ] = '\0';
+		stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( temp ) ) ) );
+		count ++;
+	}
+
+	pclose( pipe );
+	stack->push( double( count ) );
+}
+
+static void op_path( aml_stack *stack )
+{
+	olib::t_path path = stack->paths_.back( );
+	stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( path.string( ) ) ) ) );
 }
 
 #define const_aml_stack const_cast< input_aml_stack * >
