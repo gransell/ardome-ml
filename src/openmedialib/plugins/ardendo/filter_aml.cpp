@@ -1,6 +1,7 @@
 // AMF filter
 //
 // This filter generates aml files on request.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
@@ -46,7 +47,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			{
 				if ( prop_write_.value< int >( ) )
 				{
-					create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
+					create_aml( input, prop_filename_.value< pl::wstring >( ) );
 					prop_write_ = 0;
 				}
 			}
@@ -127,8 +128,23 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		{
 			if ( input )
 			{
-				for( size_t i = 0; i < input->slot_count( ); i ++ )
-					create_aml( stream, input->fetch_slot( i ) );
+				const pl::pcos::property_container &props = input->properties( );
+				pl::pcos::key_vector keys = props.get_keys( );
+
+				if ( !props.get_property_with_string( "serialise_terminator" ).valid( ) )
+				{
+					for( size_t i = 0; i < input->slot_count( ); i ++ )
+						create_aml( stream, input->fetch_slot( i ) );
+				}
+				else
+				{
+					if ( props.get_property_with_string( "serialise" ).valid( ) )
+					{
+                    	props.get_property_with_string( "serialise" ) = boost::int64_t( &stream );
+                    	props.get_property_with_string( "serialise" ) = boost::int64_t( 0 );
+						return;
+					}
+				}
 
 				std::string uri = pl::to_string( input->get_uri( ) );
 
@@ -140,9 +156,6 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 					stream << uri;
 				else
 					stream << "filter:" << uri;
-
-				const pl::pcos::property_container &props = input->properties( );
-				pl::pcos::key_vector keys = props.get_keys( );
 
 				if ( props.get_property_with_string( "serialise" ).valid( ) )
 				{
@@ -161,7 +174,9 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 					{
 						std::string name( ( *it ).as_string( ) );
 						pl::pcos::property p = props.get_property_with_string( name.c_str( ) );
-						if ( p.is_a< double >( ) )
+						if ( name.find( ".aml_" ) == 0 )
+							continue;
+						else if ( p.is_a< double >( ) )
 							stream << name << "=" << p.value< double >( ) << " ";
 						else if ( p.is_a< int >( ) )
 							stream << name << "=" << p.value< int >( ) << " ";
