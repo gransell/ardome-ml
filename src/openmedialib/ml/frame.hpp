@@ -30,7 +30,6 @@ class ML_DECLSPEC frame_type
 		frame_type( frame_type_ptr other )
 			: properties_( other->properties_ )
 			, stream_( other->stream_ )
-			, packet_( other->packet_ )
 			, image_( other->image_ )
 			, alpha_( other->alpha_ )
 			, audio_( other->audio_ )
@@ -69,6 +68,10 @@ class ML_DECLSPEC frame_type
 		/// Convenience method - returns the property by its name.
 		olib::openpluginlib::pcos::property property( const char *name ) const;
 
+		/// Convenience method - returns the property by its key.
+		olib::openpluginlib::pcos::property property_with_key( const olib::openpluginlib::pcos::key &name ) const
+		{ return properties_.get_property_with_key( name ); }
+
 		/// Indicates if the frame has an image
 		virtual bool has_image( );
 
@@ -83,12 +86,6 @@ class ML_DECLSPEC frame_type
 
 		/// Get the packet associated to the frame.
 		virtual olib::openmedialib::ml::stream_type_ptr get_stream( );
-
-		/// Set the packet associated to the frame.
-		virtual void set_packet( olib::openmedialib::ml::packet_type_ptr );
-
-		/// Get the packet associated to the frame.
-		virtual olib::openmedialib::ml::packet_type_ptr get_packet( );
 
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( );
@@ -208,7 +205,6 @@ class ML_DECLSPEC frame_type
 	protected:
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::stream_type_ptr stream_;
-		olib::openmedialib::ml::packet_type_ptr packet_;
 		olib::openimagelib::il::image_type_ptr image_;
 		olib::openimagelib::il::image_type_ptr alpha_;
 		audio_type_ptr audio_;

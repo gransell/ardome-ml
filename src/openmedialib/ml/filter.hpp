@@ -111,25 +111,11 @@ class ML_DECLSPEC filter_type : public input_type
 		/// DEPRECATE?
 		virtual void acquire_values( );
 
-		/// By default, filters aren't reused
-		/// DEPRECATE?
-		virtual bool reuse( ) { return false; }
-
 		/// Visual
-		/// DEPRECATE?
 		virtual int get_video_streams( ) const;
 
 		/// Audio
-		/// DEPRECATE?
 		virtual int get_audio_streams( ) const;
-
-		/// Set video streams
-		/// DEPRECATE?
-		virtual bool set_video_stream( const int stream );
-
-		/// Set audio streams
-		/// DEPRECATE?
-		virtual bool set_audio_stream( const int stream );
 
 	protected:
 

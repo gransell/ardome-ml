@@ -11,7 +11,6 @@ namespace olib { namespace openmedialib { namespace ml {
 
 frame_type::frame_type( ) 
 	: properties_( )
-	, packet_( )
 	, image_( )
 	, alpha_( )
 	, audio_( )
@@ -79,7 +78,7 @@ pcos::property frame_type::property( const char *name ) const { return propertie
 
 bool frame_type::has_image( )
 {
-	return image_ != il::image_type_ptr( ) || packet_ != ml::packet_type_ptr( );
+	return image_ != il::image_type_ptr( );
 }
 
 bool frame_type::has_audio( )
@@ -101,26 +100,10 @@ void frame_type::set_stream( stream_type_ptr stream )
 
 stream_type_ptr frame_type::get_stream( ) { return stream_; }
 
-// Set the packet component on the frame
-// Note: we extract the sar here to allow modification via the filter:sar mechanism
-void frame_type::set_packet( packet_type_ptr packet ) 
-{ 
-	packet_ = packet; 
-	if ( packet )
-	{
-		sar_num_ = packet->sar( ).num;
-		sar_den_ = packet->sar( ).den;
-	}
-}
-
-packet_type_ptr frame_type::get_packet( ) { return packet_; }
-
 void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
 
 il::image_type_ptr frame_type::get_image( ) 
 { 
-	if ( !image_ && packet_ )
-		set_image( packet_decode( get_packet( ) ) );
 	return image_; 
 }
 
@@ -138,15 +121,7 @@ void frame_type::set_sar( int num, int den ) { sar_num_ = num; sar_den_ = den; }
 
 void frame_type::get_sar( int &num, int &den ) const 
 { 
-	if ( packet_ )
-	{
-		num = packet_->sar( ).num;
-		den = packet_->sar( ).den;
-	}
-	else
-	{
-		num = sar_num_; den = sar_den_; 
-	}
+	num = sar_num_; den = sar_den_; 
 }
 
 void frame_type::set_fps( int num, int den ) { fps_num_ = num; fps_den_ = den; }
@@ -280,8 +255,6 @@ int frame_type::width( ) const
 {
 	if ( image_ )
 		return image_->width( );
-	else if ( packet_ )
-		return packet_->size( ).width;
 	else if ( stream_ )
 		return stream_->size( ).width;
 	return 0;
@@ -291,8 +264,6 @@ int frame_type::height( ) const
 {
 	if ( image_ )
 		return image_->height( );
-	else if ( packet_ )
-		return packet_->size( ).height;
 	else if ( stream_ )
 		return stream_->size( ).height;
 	return 0;
@@ -304,8 +275,6 @@ std::wstring frame_type::pf( ) const
 		return image_->pf( );
 	else if ( stream_ )
 		return stream_->pf( );
-	else if ( packet_ )
-		return packet_->pf( );
 	return L"";
 }
 

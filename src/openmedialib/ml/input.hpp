@@ -91,6 +91,10 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		olib::openpluginlib::pcos::property property( const char *name ) const
 		{ return properties_.get_property_with_string( name ); }
 
+		// Convenience method
+		olib::openpluginlib::pcos::property property_with_key( const olib::openpluginlib::pcos::key &name ) const
+		{ return properties_.get_property_with_key( name ); }
+
 		// Virtual method for state reset
 		virtual void reset( ) { }
 
@@ -107,10 +111,6 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const = 0;
-
-		// Set video and audio streams
-		virtual bool set_video_stream( const int ) { return false; }
-		virtual bool set_audio_stream( const int ) { return false; }
 
 		// Provides a hint to the input implementation - allows the user to say 
 		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch

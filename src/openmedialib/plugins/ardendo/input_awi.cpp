@@ -75,13 +75,15 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 
 					if ( audio->init( ) )
 					{
-						ml::filter_type_ptr avdecode = ml::create_filter( L"avdecode" );
+						ml::filter_type_ptr video_avdecode = ml::create_filter( L"avdecode" );
+						ml::filter_type_ptr audio_avdecode = ml::create_filter( L"avdecode" );
 						ml::filter_type_ptr mvitc = ml::create_filter( L"mvitc_decode" );
 						ml::filter_type_ptr muxer = ml::create_filter( L"muxer" );
-						avdecode->connect( video );
-						mvitc->connect( avdecode );
+						video_avdecode->connect( video );
+						mvitc->connect( video_avdecode );
 						muxer->connect( mvitc, 0 );
-						muxer->connect( audio, 1 );
+						audio_avdecode->connect( audio );
+						muxer->connect( audio_avdecode, 1 );
 						internal_ = muxer;
 						video_streams_ = video->get_video_streams( );
 						audio_streams_ = video->get_audio_streams( );

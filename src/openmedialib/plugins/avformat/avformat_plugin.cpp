@@ -39,16 +39,11 @@ namespace ml = olib::openmedialib::ml;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-extern void start_index_worker( );
-extern void stop_index_worker( );
-
 extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
-
-extern void ML_PLUGIN_DECLSPEC register_dv_decoder( );
 
 // libavformat codec codec context
 static AVCodecContext *avctx_opts[ CODEC_TYPE_NB ];
@@ -212,12 +207,9 @@ namespace
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dv25" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dv50" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dvcprohd_1080i" );
-
-			ml::start_index_worker( );
 		}
 		else if( init < 0 && --refs == 0 )
 		{
-			ml::stop_index_worker( );
 		}
 	}
 	

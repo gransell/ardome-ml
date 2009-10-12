@@ -142,16 +142,6 @@ int filter_type::get_audio_streams( ) const
 	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_streams( ) : 0; 
 }
 
-bool filter_type::set_video_stream( const int stream )
-{
-	return slots_[ 0 ] ? slots_[ 0 ]->set_video_stream( stream ) : false; 
-}
-
-bool filter_type::set_audio_stream( const int stream )
-{
-	return slots_[ 0 ] ? slots_[ 0 ]->set_audio_stream( stream ) : false; 
-}
-
 void filter_type::on_slot_change( input_type_ptr, int ) 
 {
 }

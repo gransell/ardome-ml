@@ -13,7 +13,7 @@ if options[ 'have_libswscale' ]: local_env.Append( CPPDEFINES = [ 'HAVE_SWSCALE'
 if local_env[ 'PLATFORM' ] == 'win32' :
 	local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS', '_CRT_SECURE_NO_WARNINGS' ] )
 
-object = local_env.plugin( 'openmedialib_avformat', [ 'avformat_plugin.cpp', 'avformat_dv.cpp', 'filter_avdecode.cpp', 'filter_resampler.cpp', 'index.cpp', 'input_avformat.cpp', 'store_avformat.cpp' ] )
+object = local_env.plugin( 'openmedialib_avformat', [ 'avformat_plugin.cpp', 'filter_avdecode.cpp', 'filter_resampler.cpp', 'input_avformat.cpp', 'store_avformat.cpp' ] )
 
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'avformat_plugin.opl' ] )
 
