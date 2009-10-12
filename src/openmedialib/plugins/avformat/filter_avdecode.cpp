@@ -338,6 +338,7 @@ class stream_queue
 								offset_ = result->get_position( );
 							}
 
+							image->set_position( result->get_position( ) - offset_ );
 							images_[ result->get_position( ) - offset_ ] = image;
 
 							if ( result->get_position( ) >= position + offset_ )
@@ -432,13 +433,13 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		/// Indicates if the frame has an image
 		virtual bool has_image( )
 		{
-			return image_ || stream_->id( ) == ml::stream_video;
+			return image_ || ( stream_ && stream_->id( ) == ml::stream_video );
 		}
 
 		/// Indicates if the frame has audio
 		virtual bool has_audio( )
 		{
-			return audio_ || stream_->id( ) == ml::stream_audio;
+			return audio_ || ( stream_ && stream_->id( ) == ml::stream_audio );
 		}
 
 		/// Set the image associated to the frame.
