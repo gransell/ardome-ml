@@ -11,6 +11,7 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/indexer.hpp>
 
 #include <openpluginlib/pl/timer.hpp>
 #include <boost/thread.hpp>
@@ -334,7 +335,7 @@ bool uses_stdin( )
 #ifndef WIN32
 	return !isatty( fileno( stdin ) );
 #else
-	return false;
+	return !_isatty( fileno( stdin ) );
 #endif
 }
 
@@ -390,6 +391,9 @@ int main( int argc, char *argv[ ] )
 		setlocale(LC_CTYPE, "");
        	pl::init( );
     #endif
+
+	// Initialise the indexer
+	ml::indexer_init( );
 
 	if ( argc > 1 || uses_stdin( ) )
 	{
