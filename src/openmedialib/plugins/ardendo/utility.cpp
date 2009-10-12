@@ -467,8 +467,6 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	else
 		stream << "Has Stream  : No" << endl;
 
-	stream << "Has Packet  : " << ( frame->get_packet( ) ? "Yes" : "No" ) << endl;
-
 	if ( frame->get_image( ) )
 		stream << "Has Image   : Yes, position = " << frame->get_image( )->position( ) << endl;
 	else
