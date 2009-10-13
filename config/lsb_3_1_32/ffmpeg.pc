@@ -6,7 +6,7 @@ includedir=${prefix}/include
 Name: ffmpeg run time
 Version: 0.0.0
 Description: FFmpeg codec library
-Libs: -rpath-link ${libdir}
+Libs: -Wl,-rpath-link,${libdir}
 Cflags: 
 
 install_libs=${libdir}/*.so* ${libdir}/pkgconfig*
