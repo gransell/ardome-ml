@@ -1,14 +1,14 @@
-prefix=/opt/ffmpeg
+prefix=/opt/ffmpeg-090922/
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: libavutil
 Description: FFmpeg utility library
-Version: 49.9.0
+Version: 50.3.0
 Requires: 
 Requires.private: 
 Conflicts:
-Libs: -L${libdir} -lavutil 
+Libs: -L${libdir} -lavutil.aml 
 Libs.private: 
 Cflags: -I${includedir}
