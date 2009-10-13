@@ -119,6 +119,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, next_time_( boost::get_system_time( ) + boost::posix_time::seconds( 2 ) )
 			, indexer_context_( 0 )
 			, unreliable_container_( false )
+			, check_indexer_( true )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -352,7 +353,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				// Determine number of frames in the input
 				if ( error == 0 )
+				{
+					check_indexer_ = false;
 					size_media( );
+					check_indexer_ = true;
+				}
 			}
 			else if ( error == 0 )
 			{
@@ -368,7 +373,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			ARENFORCE_MSG( context_, "Invalid media" );
 
 			// Check for updates in the index
-			sync_with_index( );
+			if ( check_indexer_ )
+				sync_with_index( );
 
 			// Route to either decoded or packet extraction mechanisms
 			if ( prop_packet_stream_.value< int >( ) )
@@ -665,9 +671,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Check if we need to do additional size checks
 			bool sizing = should_size_media( context_->iformat->name );
 
-			// Report the file size via the file_size and frames properties
-			prop_file_size_ = boost::int64_t( context_->file_size );
-
 			// Carry out the media sizing logic
 			if ( !aml_index_ )
 			{
@@ -904,6 +907,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Determine the number of frames in the media
 			if ( prop_frames_.value< int >( ) != -1 )
 				frames_ = prop_frames_.value< int >( );
+
+			// Report the file size via the file_size and frames properties
+			prop_file_size_ = boost::int64_t( context_->file_size );
 		}
 
 		bool should_size_media( std::string format )
@@ -1781,6 +1787,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		URLContext *indexer_context_;
 
 		bool unreliable_container_;
+		bool check_indexer_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
