@@ -49,6 +49,7 @@ class ML_DECLSPEC indexer_type
 {
 	public:
 		/// Obtain the item associated to the url
+		virtual ~indexer_type( ) { }
 		virtual void init( ) = 0;
 		virtual indexer_item_ptr request( const openpluginlib::wstring &url ) = 0;
 		virtual void shutdown( ) = 0;

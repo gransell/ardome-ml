@@ -15,6 +15,9 @@ namespace olib { namespace openmedialib { namespace ml {
 class ML_DECLSPEC indexer_item
 {
 	public:
+		// Virtual dtor
+		virtual ~indexer_item( ) { }
+
 		/// Provides the awi index object associated to this item
 		virtual awi_index_ptr index( ) = 0;
 
