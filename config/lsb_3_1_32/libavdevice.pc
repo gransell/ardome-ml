@@ -9,6 +9,5 @@ Version: 52.2.0
 Requires: 
 Requires.private: libavformat = 52.38.0
 Conflicts:
-Libs: -L${libdir} -lavdevice.aml 
-Libs.private: -lz -lbz2 -pthread -lm -lmp3lame -lm
+Libs: -L${libdir} -lavdevice.aml -lz -lbz2 -pthread -lm -lmp3lame -lm
 Cflags: -I${includedir}

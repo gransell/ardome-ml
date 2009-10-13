@@ -9,6 +9,5 @@ Version: 52.35.0
 Requires: 
 Requires.private: libavutil = 50.3.0
 Conflicts:
-Libs: -L${libdir} -lavcodec.aml 
-Libs.private: -lz -lbz2 -pthread -lm -lmp3lame -lm
+Libs: -L${libdir} -lavcodec.aml -lz -lbz2 -pthread -lm -lmp3lame -lm
 Cflags: -I${includedir}
