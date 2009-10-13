@@ -339,7 +339,10 @@ bool uses_stdin( )
 #ifndef WIN32
 	return !isatty( fileno( stdin ) );
 #else
-	return !_isatty( fileno( stdin ) );
+	// NB: while this is correct, it doesn't work under cygwin, so for now, stdin can only be explicity parsed by 
+	// specifying stdin: on the stack itself
+	// return !_isatty( fileno( stdin ) );
+	return false;
 #endif
 }
 
