@@ -7,6 +7,6 @@ cross platform GUI clients (Tkinter based)."""
 
 from amlx.client import client, parse
 import amlx.transport as transport
-import amlx.utransport as utransport
+#import amlx.utransport as utransport
 import amlx.audio as audio
 import amlx.playlist as playlist

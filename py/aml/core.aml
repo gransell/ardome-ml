@@ -71,10 +71,6 @@
         drop
 ;
 
-: pack 
-    filter:playlist slots=%s 
-;
-
 : unpack 
     slots? 0 >
     if
@@ -86,21 +82,12 @@
 
 : iterate
     inline
-    slots?
-    swap
-    >r >r
-    begin
-        r1-@ 0 >= 
-        dup 0= if rdrop rdrop then
-    while
-        1 rpick 
-        slots? r@ - 1- slot
-        swap drop
+	iter_start
 ;
 
 # Iterates through a collection of nodes
-# <input-1> ... <input-N> <N> for_each ... repeat
-# For example: ( contains deferred for_each deferred=0 drop repeat )
+# <input-1> ... <input-N> <N> for_each ... ]
+# For example: ( contains deferred for_each deferred=0 drop ] )
 
 : for_each 
     inline 
@@ -109,13 +96,10 @@
 ;
 
 # Symbolic synonym for iterate
-: [ inline iterate ;
+: [ inline iter_start ;
 
 # Synonym for repeat
-: ] inline repeat ;
-
-# Synonym for str
-: ` inline str ;
+: ] inline iter_slots drop ;
 
 # Move the top of stack to a specific place
 # ... <item> <position> move -- ... <item> ...
@@ -246,7 +230,7 @@ depth? drop*
 : normalise*
     for_each
         normalise 
-    repeat 
+    ] 
 ;
 
 : normalise$ 
@@ -297,7 +281,7 @@ depth? drop*
 	0 variable! x
 	0 variable! y
 
-    iterate
+    [
 		ih @ iw @ y @ ih @ * x @ iw @ *
 
         filter:lerp @@x=%s @@y=%s @@w=%s @@h=%s 
@@ -310,8 +294,7 @@ depth? drop*
 			0 x !
 			1 y +!
 		then
-
-    repeat
+    ]
 
     background filter:compositor slots=1
 	r> 1+ swap slots=%s
@@ -351,7 +334,7 @@ depth? drop*
     for_each
         describe 
         str "#----" .
-    repeat
+    ]
 ;
 
 : describe$ depth? describe* ;

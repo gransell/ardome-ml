@@ -139,13 +139,12 @@ class http_client_handler:
 				media = request[ 6: ].split( '&' )
 				stack = self.parent.stack_acquire( )
 				if media[ 0 ].startswith( 'http://' ) and not media[ 0 ].endswith( '.aml' ):
-					stack.push( 'lazy_video:aml:' + media[ 0 ] )
-					stack.push( 'audio=0' )
+					stack.push( 'aml:' + media[ 0 ] + '.awi' )
 				else:
 					stack.push( media[ 0 ] )
-				for arg in media[ 1: ]:
-					if not arg.startswith( 'x=' ) and not arg.startswith( 'y=' ):
-						stack.push( arg )
+				#for arg in media[ 1: ]:
+				#	if not arg.startswith( 'x=' ) and not arg.startswith( 'y=' ):
+				#		stack.push( arg )
 				stack.push( 'add$' )
 				self.parent.stack_release( stack )
 
