@@ -120,6 +120,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, indexer_context_( 0 )
 			, unreliable_container_( false )
 			, check_indexer_( true )
+			, image_type_( false )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -331,6 +332,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( error == 0 )
 				populate( );
 
+			if ( error == 0 )
+				image_type_ = std::string( context_->iformat->name ) == "image2" ||
+							  std::string( context_->iformat->name ) == "yuv4mpegpipe";
+
 			if ( prop_packet_stream_.value< int >( ) == 0 )
 			{
 				// Check for and create the timestamp correction filter graph
@@ -345,7 +350,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 
 				// Align with first frame
-				if ( error == 0 && std::string( context_->iformat->name ) != "image2" )
+				if ( error == 0 && !image_type_ )
 				{
 					seek_to_position( );
 					fetch( );
@@ -864,6 +869,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Set the duration
 			if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
 				frames_ = int( ( avformat_input::fps( ) * ( context_->duration - start_time_ ) ) / ( double )AV_TIME_BASE );
+			else if ( std::string( context_->iformat->name ) == "yuv4mpegpipe" )
+				frames_ = 1;
 			else
 				frames_ = 1 << 30;
 
@@ -923,6 +930,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( format == "avi" )
 					result = codec == "dvvideo";
 				else if ( format == "image2" )
+					result = false;
+				else if ( format == "yuv4mpegpipe" )
 					result = false;
 				else if ( format == "dv" )
 					result = false;
@@ -1788,6 +1797,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		bool unreliable_container_;
 		bool check_indexer_;
+		bool image_type_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
