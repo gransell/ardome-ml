@@ -115,6 +115,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_sar_num_( pcos::key::from_string( "sar_num" ) )
 			, prop_sar_den_( pcos::key::from_string( "sar_den" ) )
+			, prop_interlace_( pcos::key::from_string( "interlace" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
 		{
@@ -130,6 +131,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_sar_num_ = 59 );
 			properties( ).append( prop_sar_den_ = 54 );
+			properties( ).append( prop_interlace_ = 0 );
 			properties( ).append( prop_out_ = 25 );
 			properties( ).append( prop_deferred_ = 0 );
 		}
@@ -207,6 +209,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 						fill( alpha, 0, ( unsigned char )( prop_a_.value< int >( ) ) );
 					}
 				}
+
+				image->set_field_order( il::field_order_flags( prop_interlace_.value< int >( ) ) );
 			}
 			else
 			{
@@ -232,6 +236,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 				image = deferred_image_;
 				alpha = deferred_alpha_;
+
+				image->set_field_order( il::field_order_flags( prop_interlace_.value< int >( ) ) );
 			}
 
 			if ( get_process_flags( ) & ml::process_image )
@@ -279,6 +285,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		pcos::property prop_fps_den_;
 		pcos::property prop_sar_num_;
 		pcos::property prop_sar_den_;
+		pcos::property prop_interlace_;
 		pcos::property prop_out_;
 		pcos::property prop_deferred_;
 		il::image_type_ptr deferred_image_;
