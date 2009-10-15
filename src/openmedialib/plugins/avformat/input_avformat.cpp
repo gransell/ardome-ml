@@ -498,8 +498,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Hmmph
 			if ( has_video( ) )
 			{
-				sar_num_ = get_video_stream( )->codec->sample_aspect_ratio.num;
-				sar_den_ = get_video_stream( )->codec->sample_aspect_ratio.den;
+				if ( get_video_stream( )->codec->sample_aspect_ratio.num )
+				{
+					sar_num_ = get_video_stream( )->codec->sample_aspect_ratio.num;
+					sar_den_ = get_video_stream( )->codec->sample_aspect_ratio.den;
+				}
+				else if ( get_video_stream( )->sample_aspect_ratio.num )
+				{
+					sar_num_ = get_video_stream( )->sample_aspect_ratio.num;
+					sar_den_ = get_video_stream( )->sample_aspect_ratio.den;
+				}
+
 				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
 				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
 			}
