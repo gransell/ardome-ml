@@ -288,6 +288,17 @@ class stream_queue
 			return ml::audio_type_ptr( );
 		}
 
+		ml::fraction sar( )
+		{
+			ml::fraction result( 0, 1 );
+			if ( context_ )
+			{
+				result.num = context_->sample_aspect_ratio.num;
+				result.den = context_->sample_aspect_ratio.den;
+			}
+			return result;
+		}
+
 		bool decode( ml::frame_type_ptr &result, int position )
 		{
 			bool found = false;
@@ -452,7 +463,12 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		virtual olib::openimagelib::il::image_type_ptr get_image( )
 		{
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
+			{
 				image_ = queue_->decode_image( stream_->position( ) );
+				ml::fraction sar = queue_->sar( );
+				if ( sar.num && sar.den )
+					set_sar( sar.num, sar.den );
+			}
 			return image_;
 		}
 
