@@ -1,0 +1,53 @@
+
+: clip_default
+	$ "The default in/out settings of the clip filter should report the inputs length"
+	test: filter:clip
+	length? 250 =
+	nip
+;
+
+: clip_0_size
+	$ "When in/out are equal, the length of the clip should be 0"
+	test: filter:clip in=0 out=0
+	length? 0 =
+	nip
+;
+
+: clip_1_size
+	$ "When in/out differ by 1, the length of the clip should be 1"
+	test: filter:clip in=0 out=1
+	length? 1 =
+	nip
+;
+
+: clip_range
+	$ "The length of a clip should be determined by 'out - in' when 'out > in'"
+	test: filter:clip in=20 out=30
+	length? 10 =
+	nip
+;
+
+: clip_reverse_range
+	$ "The length should be by 'in - out + 1' when 'in < out'"
+	test: filter:clip in=10 out=0
+	length? 11 =
+	nip
+;
+
+: clip_trim_to_available
+	$ "The length of a clip should be restricted to the length of the input"
+	test: filter:clip in=0 out=5000
+	length? 250 =
+	nip
+;
+
+: all
+	0 pack
+	$ clip_default pack&
+	$ clip_0_size pack&
+	$ clip_1_size pack&
+	$ clip_range pack&
+	$ clip_reverse_range pack&
+	$ clip_trim_to_available pack&
+;
+

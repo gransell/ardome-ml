@@ -1,0 +1,50 @@
+#!/usr/bin/env amlbatch
+
+: dup 0 pick ;
+: swap 1 roll ;
+: rot 2 roll ;
+: -rot rot rot ;
+: nip 1 roll drop ;
+: describe filter:aml filename=- decap ;
+: pair 2 pack ;
+
+: prop_match
+	1 swap
+	iter_start
+		decap 		# <input> <result> <name> <value>
+		3 roll		# <result> <name> <value> <input>
+		rot			# <result> <value> <input> <name>
+		prop_query  # <result> <value> <input> <current>
+		rot			# <result> <input> <current> <value>
+		= 			# <result> <input> <match>
+		rot			# <input> <match> <result>
+		* 			# <input> <result>
+	iter_slots
+	drop
+;
+
+: run
+	iter_start
+		dup
+		1 pack
+		execute
+		if $ "passed" else $ "FAILED" then
+		swap
+		$ "+ %s:%s:0:%s" 
+		render
+	iter_slots
+	drop
+;
+
+: main
+	$ "0*.aml" 
+	$ ls
+	2 pack
+	iter_start
+		dup $ "/ %s" render
+		dup execute
+		all run
+		$ "\ %s" render
+	iter_popen
+;
+

@@ -1,0 +1,25 @@
+
+: muxer_defaults_to_longest
+	$ "The default muxer reports the longest length"
+	colour: out=25
+	silence: out=50
+	filter:muxer
+	length? 50 = 
+	nip
+;
+
+: muxer_can_use_shortest
+	$ "The muxer reports the shortest length when use_longest is 0"
+	colour: out=25
+	silence: out=50
+	filter:muxer use_longest=0
+	length? 25 = 
+	nip
+;
+
+: all
+	0 pack
+	$ muxer_defaults_to_longest pack&
+	$ muxer_can_use_shortest pack&
+;
+

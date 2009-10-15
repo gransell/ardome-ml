@@ -1,0 +1,25 @@
+
+: common
+	colour:
+;
+
+: colour_default
+	$ "Default colour is at 25 fps, yuv420p, 720x576 @ 59:54"
+	common
+	$ colourspace $ yuv420p pair 
+	$ width 720 pair  
+	$ height 576 pair  
+	$ sar_num 59 pair  
+	$ sar_den 54 pair  
+	$ fps_num 25 pair 
+	$ fps_den 1 pair 
+	7 pack 
+	prop_match
+	nip
+;
+
+: all
+	0 pack
+	$ colour_default pack&
+;
+

@@ -1,0 +1,25 @@
+
+: playlist_default
+	$ "Length of the playlist is the sum of its inputs"
+	colour: out=25
+	colour: out=50
+	filter:playlist slots=2
+	length? 75 =
+	nip
+;
+
+: playlist_slots
+	$ "Number of slots is reported correctly"
+	colour: out=25
+	colour: out=50
+	filter:playlist slots=2
+	slots? 2 =
+	nip
+;
+
+: all
+	0 pack
+	$ playlist_default pack&
+	$ playlist_slots pack&
+;
+

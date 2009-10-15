@@ -1,0 +1,42 @@
+
+: common
+	silence:
+;
+
+: silence_default
+	$ "Default silence is at 25 fps, 48khz, stereo"
+	common
+	$ frequency 48000 pair $ channels 2 pair $ fps_num 25 pair $ fps_den 1 pair 4 pack 
+	prop_match
+	nip
+;
+
+: silence_0_channels
+	$ "A silence: input with 0 channels reports no audio"
+	common channels=0
+	0 fetch
+	$ @frame_has_audio 0 pair 1 pack
+	prop_match
+	nip nip
+;
+
+: silence_ntsc_samples
+	$ "A silence: input at a 30000:1001 fps provides 8008 samples over 5 frames"
+	0 
+	common fps_num=30000 fps_den=1001
+	filter:clip out=5
+	iter_start
+		$ @audio_samples prop_query
+		nip
+		+
+	iter_frames
+	drop
+	8008 =
+;
+
+: all
+	0 pack
+	$ silence_default pack&
+	$ silence_0_channels pack&
+	$ silence_ntsc_samples pack&
+;

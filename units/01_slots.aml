@@ -1,0 +1,28 @@
+
+: common
+	0 1 2 3 4 5 6 7 8 9 10 pack
+;
+
+: slots_default
+	$ "Default slots should not change the slot count its connected to"
+	common
+	filter:slots
+	slots? 10 =
+	nip
+;
+
+: slots_decap
+	$ "When we decapitate a slots filter from a playlust, the original playlist should be restored"
+	common
+	dup
+	filter:slots in=5 out=6
+	decap
+	is
+;
+
+: all
+	0 pack
+	$ slots_default pack&
+	$ slots_decap pack&
+;
+
