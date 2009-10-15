@@ -144,7 +144,7 @@ template < class T > class aml_index_reader : public T
 	
 			url_seek( ts_context, position_, SEEK_SET );
 	
-			while ( true )
+			while ( T::valid( ) )
 			{
 				int actual = url_read( ts_context, ( unsigned char * )temp, sizeof( temp ) );
 				if ( actual <= 0 ) break;
