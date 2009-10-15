@@ -96,6 +96,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, prop_gop_open_( pcos::key::from_string( "gop_open" ) )
 			, prop_gen_index_( pcos::key::from_string( "gen_index" ) )
 			, prop_packet_stream_( pcos::key::from_string( "packet_stream" ) )
+			, prop_fake_fps_( pcos::key::from_string( "fake_fps" ) )
 			, expected_( 0 )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
@@ -145,6 +146,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			properties( ).append( prop_gop_open_ = 0 );
 			properties( ).append( prop_gen_index_ = 0 );
 			properties( ).append( prop_packet_stream_ = 0 );
+			properties( ).append( prop_fake_fps_ = 0 );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -786,17 +788,20 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				fps_den_ = stream->codec->time_base.num;
 			}
 
-			// HACK FOR 60000:1001 - TREAT AS TELECINE
-			if ( fps_num_ == 60000 && fps_den_ == 1001 )
+			if ( prop_fake_fps_.value< int >( ) )
 			{
-				fps_num_ = 24000;
-				fps_den_ = 1001;
-			}
-			// HACK FOR 50:1 - TREAT AS PAL
-			else if ( fps_num_ == 50 && fps_den_ == 1 )
-			{
-				fps_num_ = 25;
-				fps_den_ = 1;
+				// HACK FOR 60000:1001 - TREAT AS TELECINE
+				if ( fps_num_ == 60000 && fps_den_ == 1001 )
+				{
+					fps_num_ = 24000;
+					fps_den_ = 1001;
+				}
+				// HACK FOR 50:1 - TREAT AS PAL
+				else if ( fps_num_ == 50 && fps_den_ == 1 )
+				{
+					fps_num_ = 25;
+					fps_den_ = 1;
+				}
 			}
 		}
 
@@ -1762,6 +1767,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pcos::property prop_gop_open_;
 		pcos::property prop_gen_index_;
 		pcos::property prop_packet_stream_;
+		pcos::property prop_fake_fps_;
 		std::vector < int > audio_indexes_;
 		std::vector < int > video_indexes_;
 		int expected_;
