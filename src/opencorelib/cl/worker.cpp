@@ -191,7 +191,10 @@ namespace olib
                 }
             }
 
-            ARASSERT(!m_thread_running);
+            if (m_thread_running)
+			{
+				ARLOG_ERR("Worker thread was still running after call to stop().");
+			}
             m_thread_running = false;
         }
 
