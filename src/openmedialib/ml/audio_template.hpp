@@ -14,10 +14,12 @@
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // The template which provides all the types
-template< typename T, identity B >
+template< typename T, identity B, int min_val, int max_val >
 class ML_DECLSPEC template_ : public interface
 {
 	public:
+		typedef T sample_type;
+
 		template_( int frequency, int channels, int samples )
 			: id_( B )
 			, frequency_( frequency )
@@ -25,7 +27,7 @@ class ML_DECLSPEC template_ : public interface
 			, samples_( samples )
 			, position_( 0 )
 		{
-			data_ = boost::shared_ptr< std::vector< T > >( new std::vector< T >( channels_ * samples_ ) );
+			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
 			memset( data( ), 0, size( ) );
 		}
 
@@ -36,24 +38,30 @@ class ML_DECLSPEC template_ : public interface
 			, samples_( other.samples( ) )
 			, position_( other.position( ) )
 		{
-			data_ = boost::shared_ptr< std::vector< T > >( new std::vector< T >( channels_ * samples_ ) );
+			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
 			other.convert( *this );
 		}
 
 		virtual ~template_( )
 		{ }
 
+		const sample_type min_sample( ) const
+		{ return sample_type( min_val ); }
+
+		const sample_type max_sample( ) const
+		{ return sample_type( max_val ); }
+
 		audio_type_ptr clone( ) const
-		{ return audio_type_ptr( new template_< T, B >( *this ) ); }
+		{ return audio_type_ptr( new template_< sample_type, B, min_val, max_val >( *this ) ); }
 
 		identity id( ) const 
 		{ return id_; }
 
 		int sample_size( ) const
-		{ return sizeof( T ); }
+		{ return sizeof( sample_type ); }
 
 		int size( ) const
-		{ return sizeof( T ) * samples_ * channels_; }
+		{ return sizeof( sample_type ) * samples_ * channels_; }
 
 		int frequency( ) const 
 		{ return frequency_; }
@@ -70,7 +78,7 @@ class ML_DECLSPEC template_ : public interface
 		void *pointer( ) const
 		{ return ( void * )&( *data_ )[ 0 ]; }
 
-		T *data( ) const 
+		sample_type *data( ) const 
 		{ return &( *data_ )[ 0 ]; }
 
 		int position( ) const 
@@ -100,7 +108,7 @@ class ML_DECLSPEC template_ : public interface
 		int channels_;
 		int samples_;
 		int position_;
-		boost::shared_ptr < std::vector< T > > data_;
+		boost::shared_ptr < std::vector< sample_type > > data_;
 };
 
 } } } }

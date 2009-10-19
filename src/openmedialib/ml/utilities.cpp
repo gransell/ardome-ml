@@ -738,7 +738,7 @@ ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_p
 	return mix;
 }
 
-template < typename T, typename S >
+template < typename T >
 ML_DECLSPEC boost::shared_ptr< T > audio_channel_convert_template(const boost::shared_ptr< T > &input_audio, int channels)
 {
 	// Reject if given dodgy input
@@ -755,15 +755,19 @@ ML_DECLSPEC boost::shared_ptr< T > audio_channel_convert_template(const boost::s
 
 	// Create audio object for output
 	const int samples = input_audio->samples( );
-	boost::shared_ptr< T > output_audio = boost::shared_ptr< T >( new T( input_audio->frequency( ), channels, samples ) );
+	T *base = new T( input_audio->frequency( ), channels, samples );
+
+	boost::shared_ptr< T > output_audio = boost::shared_ptr< T >( base );
+	typename T::sample_type min_sample = output_audio->min_sample( );
+	typename T::sample_type max_sample = output_audio->max_sample( );
 	
 	// upfront filter calcs
 	const double	cutoff_to_fs_ratio	= 0.5;
 	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
 	const double	one_minus_exponent	= 1 - exponent;
 	
-	S *output = output_audio->data( );
-	S *input = input_audio->data( );
+	typename T::sample_type *output = output_audio->data( );
+	typename T::sample_type *input = input_audio->data( );
 	int channels_in = input_audio->channels( );
 
 	std::vector< float > sum( channels );
@@ -772,24 +776,24 @@ ML_DECLSPEC boost::shared_ptr< T > audio_channel_convert_template(const boost::s
 	for( int sample_idx = 0; sample_idx < samples; ++sample_idx)
 	{
 		// Add appropriate channels together with appropriate weightings requested channels
-		mix_sample< S >( input, channels_in, channels, sum );
+		mix_sample< typename T::sample_type >( input, channels_in, channels, sum );
 		input += channels_in;
 
 		for(int ch = 0; ch < channels; ++ch)
 		{
 			// clip channels appropriately
-			if(sum[ch] < min_short)
-				clipped[ch] = min_short; 
-			else if(sum[ch] > max_short)
-				clipped[ch] = max_short;
+			if(sum[ch] < min_sample )
+				clipped[ch] = min_sample; 
+			else if(sum[ch] > max_sample )
+				clipped[ch] = max_sample ;
 			else
 				clipped[ch] = sum[ch];
 
 			// low pass filter to counter any effects from clipping
 			if(sample_idx == 0)
-				*output = S( one_minus_exponent * clipped[ch] );
+				*output = ( typename T::sample_type )( one_minus_exponent * clipped[ch] );
 			else
-				*output = S( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
+				*output = ( typename T::sample_type )( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
 
 			output ++;
 		}
@@ -800,27 +804,27 @@ ML_DECLSPEC boost::shared_ptr< T > audio_channel_convert_template(const boost::s
 
 ML_DECLSPEC audio::pcm8_ptr audio_channel_converter( const audio::pcm8_ptr &input, int channels )
 {
-	return audio_channel_convert_template< audio::pcm8, boost::int8_t >( input, channels );
+	return audio_channel_convert_template< audio::pcm8 >( input, channels );
 }
 
 ML_DECLSPEC audio::pcm16_ptr audio_channel_converter( const audio::pcm16_ptr &input, int channels )
 {
-	return audio_channel_convert_template< audio::pcm16, boost::int16_t >( input, channels );
+	return audio_channel_convert_template< audio::pcm16 >( input, channels );
 }
 
 ML_DECLSPEC audio::pcm24_ptr audio_channel_converter( const audio::pcm24_ptr &input, int channels )
 {
-	return audio_channel_convert_template< audio::pcm24, boost::int32_t >( input, channels );
+	return audio_channel_convert_template< audio::pcm24 >( input, channels );
 }
 
 ML_DECLSPEC audio::pcm32_ptr audio_channel_converter( const audio::pcm32_ptr &input, int channels )
 {
-	return audio_channel_convert_template< audio::pcm32, boost::int32_t >( input, channels );
+	return audio_channel_convert_template< audio::pcm32 >( input, channels );
 }
 
 ML_DECLSPEC audio::floats_ptr audio_channel_converter( const audio::floats_ptr &input, int channels )
 {
-	return audio_channel_convert_template< audio::floats, float >( input, channels );
+	return audio_channel_convert_template< audio::floats >( input, channels );
 }
 
 ML_DECLSPEC audio_type_ptr audio_channel_convert( const audio_type_ptr &input, int channels )

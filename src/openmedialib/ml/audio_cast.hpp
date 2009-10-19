@@ -35,7 +35,6 @@ inline boost::shared_ptr< T > coerce( const audio_type_ptr &audio )
 	return result;
 }
 
-
 } } } }
 
 #endif
