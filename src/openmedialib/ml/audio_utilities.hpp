@@ -27,6 +27,9 @@ extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, audio_type_ptr 
 // Convenience function to convert to another channel arrangement without changing type
 extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels );
 
+// Convenience function to extract a specific channel wihtou changing type
+extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &audio, int channel );
+
 // Method to determine number of samples per channel required for a given frame offset at a specified frequency and frame rate
 extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
 
