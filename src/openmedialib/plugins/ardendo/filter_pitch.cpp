@@ -91,7 +91,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 
 				if ( fixed > 0 )
 				{
-					result->set_audio( audio_channel_convert( result->get_audio( ), 2 ) );
+					result->set_audio( ml::audio_channel_convert( result->get_audio( ), 2 ) );
 					required = fixed;
 				}
 				else if ( speed > 0.0 )
@@ -109,7 +109,10 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 				}
 
 				if ( samples != required )
+				{
+					result->set_audio( ml::audio::coerce< ml::audio::pcm16 >( result->get_audio( ) ) );
 					change_pitch( result, required );
+				}
 			}
 			else if ( result && speed > 0.0 )
 			{

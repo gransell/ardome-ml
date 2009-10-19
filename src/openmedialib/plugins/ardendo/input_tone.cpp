@@ -94,12 +94,11 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 
 			if ( channels )
 			{
-				ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( frequency, channels, samples ) ) );
-				memset( aud->data( ), 0, aud->size( ) );
-				boost::int16_t *ptr = ( boost::int16_t * )aud->data( );
+				ml::audio::floats_ptr aud = ml::audio::floats_ptr( new ml::audio::floats( frequency, channels, samples ) );
+				float *ptr = aud->data( );
 				for ( int i = 0; i < samples; i ++ )
 					for ( int j = 0; j < channels; j ++ )
-						*ptr ++ = boost::int16_t( std::sin( ( periods * 2 * 3.1415 * i ) / samples ) * 32768 * peak );
+						*ptr ++ = float( std::sin( ( periods * 2 * 3.1415 * i ) / samples ) * peak );
 
 				frame->set_audio( aud );
 			}

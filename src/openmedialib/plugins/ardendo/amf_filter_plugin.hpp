@@ -50,13 +50,6 @@ namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 
-namespace olib { namespace openmedialib { namespace ml { 
-
-// This should be defined in oml's audio header
-typedef audio< unsigned char, pcm16 > pcm16_audio_type;
-
-} } }
-
 namespace aml { namespace openmedialib {
 
 extern bool contains_sub_thread( ml::input_type_ptr input );

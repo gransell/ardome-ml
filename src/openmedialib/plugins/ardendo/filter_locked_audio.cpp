@@ -82,8 +82,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 						{
 							int total = 0;
 							for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
-							audio_span_ = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, total ) ) );
-							memset( audio_span_->data( ), 0, audio_span_->size( ) );
+							audio_span_ = ml::audio::pcm16_ptr( new ml::audio::pcm16( 48000, channels_, total ) );
+							memset( audio_span_->pointer( ), 0, audio_span_->size( ) );
 							// Make sure to clear the frame vector so that we use the new audio span allocated and refetch our 5 frame span
                             frames_.clear( );
 						}
@@ -127,23 +127,23 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					// but if there is a short fall, then we pitch shift to make sure we have what we want
 					if ( samples == audio_span_->samples( ) )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::int16_t *ptr = ( boost::int16_t *)audio_span_->pointer( );
 						for( std::vector< ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); iter ++ )
 						{
-							memcpy( ptr, ( *iter )->get_audio( )->data( ), ( *iter )->get_audio( )->size( ) );
+							memcpy( ptr, ( *iter )->get_audio( )->pointer( ), ( *iter )->get_audio( )->size( ) );
 							ptr += ( *iter )->get_audio( )->size( );
 						}
 					}
 					else if ( start_audio != -1 )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::int16_t *ptr = ( boost::int16_t *)audio_span_->pointer( );
                         if ( frames_.size( ) == table.size( ) )
                             ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
                         
                         std::vector< double > weights;
 						double max_level;
 
-						memset( audio_span_->data( ), 0, audio_span_->size( ) );
+						memset( audio_span_->pointer( ), 0, audio_span_->size( ) );
 
 						for ( int j = 0; j < channels_; j ++ )
                             weights.push_back( 1.0 );
@@ -153,11 +153,11 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 							if ( ( int )i >= start_audio && ( int )i <= final_audio )
 							{
 								ml::frame_type_ptr conform = ml::frame_type_ptr( new ml::frame_type( ) );
-								ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, table[ i ] ) ) );
-								memset( aud->data( ), 0, aud->size( ) );
+								ml::audio::pcm16_ptr aud = ml::audio::pcm16_ptr( new ml::audio::pcm16( 48000, channels_, table[ i ] ) );
+								memset( aud->pointer( ), 0, aud->size( ) );
 								conform->set_audio( aud );
 								mix_channel( conform, frames_[ i ], weights, max_level, 0 );
-								memcpy( ptr, conform->get_audio( )->data( ), conform->get_audio( )->size( ) );
+								memcpy( ptr, conform->get_audio( )->pointer( ), conform->get_audio( )->size( ) );
 								ptr += conform->get_audio( )->size( );
 							}
 							else
@@ -175,11 +175,11 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					result = frames_[ get_position( ) - start ];
 					if ( result && result->get_audio( ) )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::int16_t *ptr = ( boost::int16_t *)audio_span_->pointer( );
 						for ( int index = start; index < get_position( ); index ++ )
 							ptr += table[ index - start ] * channels_ * 2;
-						ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, table[ get_position( ) - start ] ) ) );
-						memcpy( aud->data( ), ptr, aud->size( ) );
+						ml::audio::pcm16_ptr aud = ml::audio::pcm16_ptr( new ml::audio::pcm16( 48000, channels_, table[ get_position( ) - start ] ) );
+						memcpy( aud->pointer( ), ptr, aud->size( ) );
 						result->set_audio( aud );
 					}
 				}

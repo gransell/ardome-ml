@@ -57,8 +57,6 @@ static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 {
 	public:
-		typedef audio< unsigned char, pcm16 > pcm16_audio_type;
-
 		// Constructor and destructor
 		avformat_input( pl::wstring resource, const pl::wstring mime_type = L"" ) 
 			: input_type( ) 
@@ -1579,9 +1577,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				first_audio_frame_ = false;
 			}
 
-			audio_type_ptr aud = audio_type_ptr( new audio_type( pcm16_audio_type( frequency, channels, samples ) ) );
+			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
 			aud->set_position( position );
-			memcpy( aud->data( ), buf, aud->size( ) );
+			memcpy( aud->pointer( ), buf, aud->size( ) );
 
 			if ( audio_.size( ) > 0 )
 			{
@@ -1673,7 +1671,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( result != audio_.end( ) && ( *result )->position( ) == current )
 			{
-				frame->set_audio( ml::audio_type_ptr( ( *result )->clone( ) ) );
+				frame->set_audio( ( *result )->clone( ) );
 				frame->set_duration( double( ( *result )->samples( ) ) / double( ( *result )->frequency( ) ) );
 				exact = true;
 			}
@@ -1683,9 +1681,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				int channels = codec_context->channels;
 				int frequency = codec_context->sample_rate;
 				int samples = samples_for_frame( frequency, current );
-				audio_type_ptr aud = audio_type_ptr( new audio_type( pcm16_audio_type( frequency, channels, samples ) ) );
+				audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
 				aud->set_position( current );
-				memset( aud->data( ), 0, aud->size( ) );
+				memset( aud->pointer( ), 0, aud->size( ) );
 				frame->set_audio( aud );
 				frame->set_duration( double( samples ) / double( frequency ) );
 			}

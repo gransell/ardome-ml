@@ -15,6 +15,7 @@
 #endif // WIN32
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/audio.hpp>
 
 #include <iostream>
 #include <cstdlib>
@@ -478,8 +479,6 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
-			acquire_values( );
-
 			result = fetch_from_slot( );
 
 			if ( result )
@@ -498,13 +497,12 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 
 				if ( prop_audio_.value< int >( ) == 1 )
 				{
-					if ( !result->get_audio( ) )
+					if ( result->get_audio( ) == ml::audio_type_ptr( ) )
 					{
 						int frequency = prop_frequency_.value< int >( );
 						int channels = prop_channels_.value< int >( );
 						int samples = audio_samples_for_frame( get_position( ), frequency, result->get_fps_num( ), result->get_fps_den( ) );
-						audio_type_ptr aud = audio_type_ptr( new audio_type( audio<unsigned char, pcm16>( frequency, channels, samples ) ) );
-						memset( aud->data( ), 0, channels * aud->samples( ) * sizeof( short ) );
+						audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
 						result->set_audio( aud );
 					}
 				}
@@ -2113,13 +2111,13 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 		{
 			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
 
-			audio_type_ptr audio = frame->get_audio( );
+			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
 			il::image_type_ptr image = frame->get_image( );
 
 			int width = image->width( );
 			int height = image->height( );
 
-			short *buff = ( short * )audio->data( );
+			short *buff = ( short * )audio->pointer( );
 			int samples = audio->samples( );
 			int channels = audio->channels( );
 
@@ -2176,12 +2174,12 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			int gy, gu, gv;
 			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
 
-			audio_type_ptr audio = frame->get_audio( );
+			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
 			il::image_type_ptr image = frame->get_image( );
 			int width = image->width( );
 			int height = image->height( );
 
-			short *buff = ( short * )audio->data( );
+			short *buff = ( short * )audio->pointer( );
 			int samples = audio->samples( );
 			int channels = audio->channels( );
 

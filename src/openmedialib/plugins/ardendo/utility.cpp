@@ -47,10 +47,10 @@ ml::audio_type_ptr change_pitch( ml::audio_type_ptr audio, int required )
 	int channels = audio->channels( );
 	int frequency = audio->frequency( );
 
-	ml::audio_type_ptr output = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( frequency, channels, required ) ) );
+	ml::audio::pcm16_ptr output = ml::audio::pcm16_ptr( new ml::audio::pcm16( frequency, channels, required ) );
 
-	short *dst = ( short * )output->data( );
-	short *src = ( short * )audio->data( );
+	short *dst = output->data( );
+	short *src = ( short * )audio->pointer( );
 	double ratio = double( audio->samples( ) ) / required;
 	int upper = channels * ( audio->samples( ) - 1 );
 
@@ -60,7 +60,7 @@ ml::audio_type_ptr change_pitch( ml::audio_type_ptr audio, int required )
 		{
 			int offset = channels * int( i * ratio ) + c;
 			if ( offset < upper )
-				*dst ++ = short( ( int( src[ offset ] ) + src[ offset + channels ] ) / 2 );
+				*dst ++ = short( ( src[ offset ] + src[ offset + channels ] ) / 2 );
 			else
 				*dst ++ = src[ offset ];
 		}
@@ -79,7 +79,7 @@ void apply_volume( ml::frame_type_ptr &result, double volume, double end )
 		// Extract samples, number of channels and data
 		int samples = audio->samples( );
 		int channels = audio->channels( );
-		short *data = ( short * )audio->data( );
+		short *data = ( short * )audio->pointer( );
 
 		// Assign initial volume and increment value (assume fixed for now)
 		double increment = ( end - volume ) / samples;
@@ -149,12 +149,12 @@ void extract_channel( ml::frame_type_ptr &result, int channel )
 		samples = ml::audio_samples_for_frame( position, frequency, num, den );
 	}
 
-	audio = ml::audio_type_ptr(new ml::audio_type(ml::pcm16_audio_type( frequency, 1, samples )));
+	audio = ml::audio::pcm16_ptr(new ml::audio::pcm16( frequency, 1, samples ));
 
 	if ( input && channel < channels )
 	{
-		short *src = reinterpret_cast< short * >( input->data( ) ) + channel;
-		short *dst = reinterpret_cast< short * >( audio->data( ) );
+		short *src = reinterpret_cast< short * >( input->pointer( ) ) + channel;
+		short *dst = reinterpret_cast< short * >( audio->pointer( ) );
 		while( samples -- )
 		{
 			*dst ++ = *src;
@@ -163,7 +163,7 @@ void extract_channel( ml::frame_type_ptr &result, int channel )
 	}
 	else
 	{
-		memset( audio->data( ), 0, audio->size( ) );
+		memset( audio->pointer( ), 0, audio->size( ) );
 	}
 
 	result->set_audio( audio );
@@ -179,7 +179,7 @@ std::vector< double > extract_levels( ml::frame_type_ptr &result )
 		int channels = input->channels( );
 		std::vector< int > sum( channels, 0 );
 		int samples = input->samples( );
-		short *src = reinterpret_cast< short * >( input->data( ) );
+		short *src = reinterpret_cast< short * >( input->pointer( ) );
 
 		while( samples -- )
 			for ( int c = 0; c < channels; c++ )
@@ -231,10 +231,8 @@ bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const
 	{
 		const int frequency = input->frequency( );
 		const int samples = input->samples( );
-		output = ml::audio_type_ptr( 
-            new ml::audio_type( ml::pcm16_audio_type( frequency, 
-                    static_cast<ml::pcm16_audio_type::size_type>(volume.size( )), samples ) ) );
-		memset( output->data( ), 0, output->size( ) );
+		output = ml::audio::pcm16_ptr( new ml::audio::pcm16( frequency, volume.size( ), samples ) );
+		memset( output->pointer( ), 0, output->size( ) );
 	}
 
 	// Should never happen, but can accept if it does
@@ -261,8 +259,8 @@ bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const
 	// Extract samples, number of channels and data
 	int samples = input->samples( );
 	int channels = output->channels( );
-	short *dst = ( short * )output->data( );
-	short *src = ( short * )input->data( );
+	short *dst = ( short * )output->pointer( );
+	short *src = ( short * )input->pointer( );
 
 	const double cutoff_to_fs_ratio	= 0.5;
 	const double exponent = exp( -2.0 * M_PI * cutoff_to_fs_ratio );

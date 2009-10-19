@@ -223,7 +223,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				for( int i = 0; i < aud->size( ) / sizeof( short ); ++i )
 					buf[ i ] = ( buf[ i ] >> 8 ) | ( buf[ i ] << 8 );
 #			endif
- 				alBufferData( *buffers_.begin( ), format_, aud->data( ), aud->size( ), aud->frequency( ) );
+ 				alBufferData( *buffers_.begin( ), format_, aud->pointer( ), aud->size( ), aud->frequency( ) );
 				alSourceQueueBuffers( source_, 1, &( *buffers_.begin( ) ) );
 				buffers_.pop_front( );
 			}

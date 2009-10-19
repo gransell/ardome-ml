@@ -13,6 +13,7 @@
 
 #include <limits>
 #include <cmath>
+#include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
@@ -122,18 +123,18 @@ namespace
 				if ( has( requested ) )
 				{
 					int index = 0;
-					typedef audio< unsigned char, pcm16 > pcm16;
-
 					audio_type_ptr audio = queue[ 0 ];
 					int channels = audio->channels( );
 
-					result = audio_type_ptr( new audio_type( pcm16( audio->frequency( ), channels, requested ) ) );
-					short *dst = ( short * )result->data( );
+					audio::pcm16_ptr temp = audio::pcm16_ptr( new audio::pcm16( audio->frequency( ), channels, requested ) );
+					boost::int16_t *dst = temp->data( );
+
+					result = temp;
 
 					while( index != requested && queue.size( ) > 0 )
 					{
 						audio = queue[ 0 ];
-						short *src = ( short * )audio->data( ) + offset * channels;
+						short *src = ( short * )audio->pointer( ) + offset * channels;
 
 						int remainder = audio->samples( ) - offset;
 						int samples_from_packet = requested - index < remainder ? requested - index : remainder;
@@ -228,7 +229,7 @@ namespace
 		return false;
 	}
 	
-	inline void mix_sample( const short *input, int channels_in, int channels_out, std::vector< float > &sum)
+	template< typename S > inline void mix_sample( const S *input, int channels_in, int channels_out, std::vector< float > &sum)
 	{
 		switch(channels_out)
 		{
@@ -552,15 +553,15 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	double	num_samples			= (double(samples_in) * sampling_freq) / input_audio->frequency();
 	int		num_samples_rounded	= int(0.5 + num_samples);
 	
-	audio_type_ptr output_audio = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(sampling_freq, channels_in, num_samples_rounded)));
+	audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16(sampling_freq, channels_in, num_samples_rounded));
 	
 	double ratio = double(samples_in) / num_samples;
 	
 	// This means of interpolation assumes that the first sample of input and output are in sync
 	// The reality is that this is unlikely.
 	
-	short	*in_ptr		= ((short*)input_audio->data()),
-			*out_ptr	= ((short*)output_audio->data());
+	short	*in_ptr		= ((short*)input_audio->pointer()),
+			*out_ptr	= ((short*)output_audio->pointer());
 			
 	double	offset			= 0.0,
 			delta_offset	= 0.0;
@@ -688,14 +689,14 @@ ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_p
 		return audio_type_ptr();
 	
 	// Reject if audio format isn't 16-bit PCM
-	if(		(a->af().compare(AUDIO_FORMAT_PCM16) != 0)
-		||	(b->af().compare(AUDIO_FORMAT_PCM16) != 0) )
+	if(		(a->af().compare(audio::FORMAT_PCM16) != 0)
+		||	(b->af().compare(audio::FORMAT_PCM16) != 0) )
 		return audio_type_ptr();
 	
-	const audio_type::size_type samples_out  = a->samples();   // a & b are the same.
-	const audio_type::size_type channels_out = a->channels();
+	const int samples_out  = a->samples();   // a & b are the same.
+	const int channels_out = a->channels();
 	
-	audio_type_ptr mix = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(a->frequency(), channels_out, samples_out)));
+	audio::pcm16_ptr mix = audio::pcm16_ptr(new audio::pcm16(a->frequency(), channels_out, samples_out));
 
 	// upfront filter calcs
 	const double	cutoff_to_fs_ratio	= 0.5;
@@ -705,13 +706,13 @@ ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_p
 	long  sample_summation = 0;
 	short clipped_sample   = 0;
 
-	short *po = (short*)mix->data();
-	short *pa = (short*)a->data();
-	short *pb = (short*)b->data();
+	short *po = (short*)mix->pointer();
+	short *pa = (short*)a->pointer();
+	short *pb = (short*)b->pointer();
 
-	for(audio_type::size_type sample_idx = 0; sample_idx < samples_out; sample_idx++)
+	for( int sample_idx = 0; sample_idx < samples_out; sample_idx++)
 	{
-		for(audio_type::size_type channel_idx = 0; channel_idx < channels_out; ++channel_idx)
+		for( int channel_idx = 0; channel_idx < channels_out; ++channel_idx)
 		{
 			// Add a & b together
 			sample_summation = long( *pa ++ ) + long( *pb ++ );
@@ -737,44 +738,41 @@ ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_p
 	return mix;
 }
 
-ML_DECLSPEC audio_type_ptr audio_channel_convert(const audio_type_ptr& input_audio, int channels)
+template < typename T, typename S >
+ML_DECLSPEC boost::shared_ptr< T > audio_channel_convert_template(const boost::shared_ptr< T > &input_audio, int channels)
 {
 	// Reject if given dodgy input
-	if(input_audio == audio_type_ptr())
-		return audio_type_ptr();
+	if( input_audio == boost::shared_ptr< T >( ) )
+		return boost::shared_ptr< T >( );
 
 	// Return input if already in desired form
-	if(input_audio->channels() == channels)
+	if( input_audio->channels() == channels )
 		return input_audio;
 
 	// Reject if convertion isn't supported
 	if(!is_channel_convertion_supported(input_audio->channels(), channels))
-		return audio_type_ptr();
-
-	// Reject if audio format isn't 16-bit PCM
-	if(input_audio->af().compare(AUDIO_FORMAT_PCM16) != 0)
-		return audio_type_ptr();
+		return boost::shared_ptr< T >( );
 
 	// Create audio object for output
-	const audio_type::size_type	samples = input_audio->samples();
-	audio_type_ptr output_audio = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(input_audio->frequency(), channels, samples)));
+	const int samples = input_audio->samples( );
+	boost::shared_ptr< T > output_audio = boost::shared_ptr< T >( new T( input_audio->frequency( ), channels, samples ) );
 	
 	// upfront filter calcs
 	const double	cutoff_to_fs_ratio	= 0.5;
 	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
 	const double	one_minus_exponent	= 1 - exponent;
 	
-	short *output = (short*)output_audio->data();
-	short *input = (short*)input_audio->data();
+	S *output = output_audio->data( );
+	S *input = input_audio->data( );
 	int channels_in = input_audio->channels( );
-	
+
 	std::vector< float > sum( channels );
 	std::vector< float > clipped( channels );
 
-	for(audio_type::size_type sample_idx = 0; sample_idx < samples; ++sample_idx)
+	for( int sample_idx = 0; sample_idx < samples; ++sample_idx)
 	{
 		// Add appropriate channels together with appropriate weightings requested channels
-		mix_sample( input, channels_in, channels, sum );
+		mix_sample< S >( input, channels_in, channels, sum );
 		input += channels_in;
 
 		for(int ch = 0; ch < channels; ++ch)
@@ -789,9 +787,9 @@ ML_DECLSPEC audio_type_ptr audio_channel_convert(const audio_type_ptr& input_aud
 
 			// low pass filter to counter any effects from clipping
 			if(sample_idx == 0)
-				*output = short( one_minus_exponent * clipped[ch] );
+				*output = S( one_minus_exponent * clipped[ch] );
 			else
-				*output = short( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
+				*output = S( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
 
 			output ++;
 		}
@@ -800,16 +798,57 @@ ML_DECLSPEC audio_type_ptr audio_channel_convert(const audio_type_ptr& input_aud
 	return output_audio;
 }
 
+ML_DECLSPEC audio::pcm8_ptr audio_channel_converter( const audio::pcm8_ptr &input, int channels )
+{
+	return audio_channel_convert_template< audio::pcm8, boost::int8_t >( input, channels );
+}
+
+ML_DECLSPEC audio::pcm16_ptr audio_channel_converter( const audio::pcm16_ptr &input, int channels )
+{
+	return audio_channel_convert_template< audio::pcm16, boost::int16_t >( input, channels );
+}
+
+ML_DECLSPEC audio::pcm24_ptr audio_channel_converter( const audio::pcm24_ptr &input, int channels )
+{
+	return audio_channel_convert_template< audio::pcm24, boost::int32_t >( input, channels );
+}
+
+ML_DECLSPEC audio::pcm32_ptr audio_channel_converter( const audio::pcm32_ptr &input, int channels )
+{
+	return audio_channel_convert_template< audio::pcm32, boost::int32_t >( input, channels );
+}
+
+ML_DECLSPEC audio::floats_ptr audio_channel_converter( const audio::floats_ptr &input, int channels )
+{
+	return audio_channel_convert_template< audio::floats, float >( input, channels );
+}
+
+ML_DECLSPEC audio_type_ptr audio_channel_convert( const audio_type_ptr &input, int channels )
+{
+	audio_type_ptr result;
+	if ( input->id( ) == audio::pcm8_id )
+		result = audio_channel_converter( audio::cast< audio::pcm8 >( input ), channels );
+	else if ( input->id( ) == audio::pcm16_id )
+		result = audio_channel_converter( audio::cast< audio::pcm16 >( input ), channels );
+	else if ( input->id( ) == audio::pcm24_id )
+		result = audio_channel_converter( audio::cast< audio::pcm24 >( input ), channels );
+	else if ( input->id( ) == audio::pcm32_id )
+		result = audio_channel_converter( audio::cast< audio::pcm32 >( input ), channels );
+	else
+		result = audio_channel_converter( audio::force< audio::floats >( input ), channels );
+	return result;
+}
+
 ML_DECLSPEC audio_type_ptr audio_reverse( audio_type_ptr audio )
 {
 	if ( audio )
 	{
-		const audio_type::size_type	channels = audio->channels( );
-		const audio_type::size_type	samples = audio->samples( );
+		const int channels = audio->channels( );
+		const int samples = audio->samples( );
 
-		short *in = ( short * )audio->data( );
+		short *in = ( short * )audio->pointer( );
 		short *out = in + channels * samples - channels;
-		audio_type::size_type c;
+		int c;
 
 		while ( in < out )
 		{
@@ -898,10 +937,10 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 	{
 		audio_type_ptr audio = frame->get_audio( );
 
-		const audio_type::size_type	channels = audio->channels( );
-		const audio_type::size_type	samples = audio->samples( );
+		const int channels = audio->channels( );
+		const int samples = audio->samples( );
 
-		short *data = ( short * )audio->data( );
+		short *data = ( short * )audio->pointer( );
 		size_t count = ( channels * samples );
 
 		while( count -- )

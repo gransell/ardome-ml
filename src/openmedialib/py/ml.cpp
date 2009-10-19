@@ -97,21 +97,14 @@ namespace detail {
 
 void py_audio( )
 {
-	py::class_<ml::audio_type, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
-		.def( "frequency", &ml::audio_type::frequency )
-		.def( "channels", &ml::audio_type::channels )
-		.def( "samples", &ml::audio_type::samples )
-		.def( "af", &ml::audio_type::af )
-		.def( "pts", &ml::audio_type::pts )
-		.def( "set_pts", &ml::audio_type::set_pts )
-		.def( "position", &ml::audio_type::position )
-		.def( "set_position", &ml::audio_type::set_position )
-		.def( "size", &ml::audio_type::size )
-		.def( "is_cropped", &ml::audio_type::is_cropped )
-		.def( "crop_clear", &ml::audio_type::crop_clear )
-		.def( "crop", &ml::audio_type::crop )
-		.def( "get_som", &ml::audio_type::get_som )
-		.def( "get_eom", &ml::audio_type::get_eom )
+	py::class_<ml::audio::interface, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
+		.def( "frequency", &ml::audio::interface::frequency )
+		.def( "channels", &ml::audio::interface::channels )
+		.def( "samples", &ml::audio::interface::samples )
+		.def( "af", &ml::audio::interface::af )
+		.def( "position", &ml::audio::interface::position )
+		.def( "set_position", &ml::audio::interface::set_position )
+		.def( "size", &ml::audio::interface::size )
 	;
 }
 

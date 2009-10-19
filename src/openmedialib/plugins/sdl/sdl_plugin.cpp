@@ -661,12 +661,14 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 		}
 
 	protected:
-		bool queue_audio( audio_type_ptr audio, scoped_lock& lck )
+		bool queue_audio( audio_type_ptr input, scoped_lock& lck )
 		{
 			bool result = true;
 
+			audio::pcm16_ptr audio = audio::coerce< audio::pcm16 >( input );
+
 			if ( audio->channels( ) > 2 )
-				audio = audio_channel_convert( audio, 2 );
+				audio = audio_channel_converter( audio, 2 );
 
 			result = acquire_audio( audio, lck );
 
@@ -718,9 +720,9 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			return audio_acquired_;
 		}
 
-		bool split_audio( audio_type_ptr audio, scoped_lock& lck )
+		bool split_audio( audio::pcm16_ptr audio, scoped_lock& lck )
 		{
-			uint8_t *ptr = audio->data( );
+			uint8_t *ptr = ( uint8_t * )audio->pointer( );
 			int bytes = audio->samples( ) * audio->channels( ) * 2;
 			int buffer_size = audio_spec_.samples * audio->channels( ) * 2;
 

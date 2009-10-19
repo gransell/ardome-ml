@@ -360,7 +360,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 				// Deal with audio direction
 				if ( blank_audio && result->get_audio( ) )
-					memset( result->get_audio( )->data( ), 0, result->get_audio( )->size( ) );
+					memset( result->get_audio( )->pointer( ), 0, result->get_audio( )->size( ) );
 				else
 					handle_reverse_audio( result );
 			}
