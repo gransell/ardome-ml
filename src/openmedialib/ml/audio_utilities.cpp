@@ -50,6 +50,25 @@ ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency
 	return result;
 }
 
+// Convenience function to coerce an audio_type_ptr to a specific type
+ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &source )
+{
+	audio_type_ptr result;
+
+	if ( af == FORMAT_PCM8 )
+		result = coerce< pcm8 >( source );
+	else if ( af == FORMAT_PCM16 )
+		result = coerce< pcm16 >( source );
+	else if ( af == FORMAT_PCM24 )
+		result = coerce< pcm24 >( source );
+	else if ( af == FORMAT_PCM32 )
+		result = coerce< pcm32 >( source );
+	else if ( af == FORMAT_FLOAT )
+		result = coerce< floats >( source );
+
+	return result;
+}
+
 // Convert an id to a printable string
 const std::wstring &id_to_af( const identity &id )
 {
