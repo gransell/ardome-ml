@@ -150,7 +150,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self['PLATFORM'] == 'darwin':
 			return ''
 		elif self['PLATFORM'] == 'posix':
-			return '-Wl,--export-dynamic'
+			return '-Wl,--export-dynamic -Wl,-rpath-link,${libdir}'
 		else:
 			raise( "Don't know" )
 
