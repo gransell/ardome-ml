@@ -18,6 +18,9 @@ extern ML_DECLSPEC audio_type_ptr allocate( const std::wstring &, int frequency,
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
 extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequency = -1, int channels = -1, int samples = -1 );
 
+// Convenience function to coerce an audio_type_ptr to a specific type
+extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &source );
+
 // Map an id to the audio format
 extern const std::wstring &id_to_af( const identity &id );
 
