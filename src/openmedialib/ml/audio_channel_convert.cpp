@@ -1,8 +1,8 @@
 
 // ml::audio - channel conversion functionality for audio types
 
-// Copyright (C) 2009 Ardendo
 // Copyright (C) 2005-2006 VM Inc.
+// Copyright (C) 2009 Ardendo
 // Released under the LGPL.
 
 #include <openmedialib/ml/audio_channel_convert.hpp>
