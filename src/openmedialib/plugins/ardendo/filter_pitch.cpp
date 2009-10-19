@@ -31,6 +31,7 @@
 // Note: the pitch filters must be immediately upstream of composite (or at 
 // least downstream of any clip or frame rate or other potential position 
 // modifying filters).
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
@@ -104,7 +105,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 				}
 				else
 				{
-					required = ml::audio_samples_for_frame(	position, frequency, num, den );
+					required = ml::audio::samples_for_frame( position, frequency, num, den );
 					result->set_fps( num, den );
 				}
 

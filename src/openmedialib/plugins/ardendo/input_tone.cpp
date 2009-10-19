@@ -82,7 +82,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			int fps_den = prop_fps_den_.value< int >( );
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
-			int samples = ml::audio_samples_for_frame( get_position( ), frequency, fps_num, fps_den );
+			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den );
 			int periods = prop_periods_.value< int >( );
 			int oscillate = prop_oscillate_.value< int >( );
 			double peak = prop_peak_.value< double >( );

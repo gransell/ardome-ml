@@ -501,7 +501,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 					{
 						int frequency = prop_frequency_.value< int >( );
 						int channels = prop_channels_.value< int >( );
-						int samples = audio_samples_for_frame( get_position( ), frequency, result->get_fps_num( ), result->get_fps_den( ) );
+						int samples = audio::samples_for_frame( get_position( ), frequency, result->get_fps_num( ), result->get_fps_den( ) );
 						audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
 						result->set_audio( aud );
 					}
@@ -1461,7 +1461,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				}
 				else
 				{
-					int samples = audio_samples_for_frame( position_, src_frequency_, fps_num, fps_den );
+					int samples = audio::samples_for_frame( position_, src_frequency_, fps_num, fps_den );
 
 					while ( map_.find( next ) != map_.end( ) ) 
 						next ++;

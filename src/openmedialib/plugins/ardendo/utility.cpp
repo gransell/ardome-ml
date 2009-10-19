@@ -146,7 +146,7 @@ void extract_channel( ml::frame_type_ptr &result, int channel )
 	{
 		int num = result->get_fps_num( );
 		int den = result->get_fps_den( );
-		samples = ml::audio_samples_for_frame( position, frequency, num, den );
+		samples = ml::audio::samples_for_frame( position, frequency, num, den );
 	}
 
 	audio = ml::audio::pcm16_ptr(new ml::audio::pcm16( frequency, 1, samples ));

@@ -21,8 +21,17 @@ extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequenc
 // Convenience function to coerce an audio_type_ptr to a specific type
 extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &source );
 
+// Convenience function to force an audio_type_ptr to a specific type
+extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, audio_type_ptr &source );
+
 // Convenience function to convert to another channel arrangement without changing type
 extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels );
+
+// Method to determine number of samples per channel required for a given frame offset at a specified frequency and frame rate
+extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
+
+// Method to determine number of samples provided per channel required up to a given frame offset at a specified frequency and frame rate
+extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
 
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );

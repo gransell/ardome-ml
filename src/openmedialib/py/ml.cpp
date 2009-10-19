@@ -248,8 +248,8 @@ void py_plugin( )
 	py::def( "create_store", &detail::create_store );
 	py::def( "create_filter", &detail::create_filter );
 	py::def( "audio_resample", &ml::audio_resample );
-	py::def( "audio_samples_for_frame", &ml::audio_samples_for_frame );
-	py::def( "audio_samples_to_frame", &ml::audio_samples_to_frame );
+	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
+	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
 	py::def( "create_audio_reseat", &ml::create_audio_reseat );
 	py::def( "audio_mix", &ml::audio_mix );
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );

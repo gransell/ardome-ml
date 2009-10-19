@@ -9,8 +9,11 @@
 #define OPENMEDIALIB_UTILITIES_INC_
 
 #include <deque>
+#include <openimagelib/il/basic_image.hpp>
 #include <openimagelib/il/utility.hpp>
 #include <boost/cstdint.hpp>
+#include <openmedialib/ml/frame.hpp>
+#include <openmedialib/ml/audio_utilities.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -27,8 +30,6 @@ ML_DECLSPEC store_type_ptr create_store( const openpluginlib::wstring &, frame_t
 ML_DECLSPEC store_type_ptr create_store( const openpluginlib::string &, frame_type_ptr );
 ML_DECLSPEC filter_type_ptr create_filter( const openpluginlib::wstring & );
 
-ML_DECLSPEC int audio_samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
-ML_DECLSPEC long long audio_samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
 ML_DECLSPEC audio_type_ptr audio_mix( const audio_type_ptr& input_a, const audio_type_ptr& input_b );
 
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );

@@ -1385,7 +1385,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		inline int samples_for_frame( int frequency, int index )
 		{
-			return ml::audio_samples_for_frame( index, frequency, fps_num_, fps_den_ );
+			return ml::audio::samples_for_frame( index, frequency, fps_num_, fps_den_ );
 		}
 
 		int decode_audio( bool &got_audio )
@@ -1459,7 +1459,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else
 					samples_to_packet = int64_t( dts * frequency + 0.5 );
 
-				samples_to_frame = ml::audio_samples_to_frame( found, frequency, fps_num_, fps_den_ );
+				samples_to_frame = ml::audio::samples_to_frame( found, frequency, fps_num_, fps_den_ );
 
 				if ( samples_to_packet < samples_to_frame )
 				{

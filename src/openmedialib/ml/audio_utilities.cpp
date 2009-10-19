@@ -70,6 +70,25 @@ ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &sourc
 	return result;
 }
 
+// Convenience function to force an audio_type_ptr to a specific type
+ML_DECLSPEC audio_type_ptr force( const std::wstring &af, audio_type_ptr &source )
+{
+	audio_type_ptr result;
+
+	if ( af == FORMAT_PCM8 )
+		result = force< pcm8 >( source );
+	else if ( af == FORMAT_PCM16 )
+		result = force< pcm16 >( source );
+	else if ( af == FORMAT_PCM24 )
+		result = force< pcm24 >( source );
+	else if ( af == FORMAT_PCM32 )
+		result = force< pcm32 >( source );
+	else if ( af == FORMAT_FLOAT )
+		result = force< floats >( source );
+
+	return result;
+}
+
 // Convenience function to convert to another channel arrangement without changing type
 ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels )
 {
