@@ -221,7 +221,7 @@ bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const
 	// Again, shouldn't happen - all inputs should be channel split
 	if ( input->channels( ) != 1 )
 	{
-		input = ml::audio_channel_convert( input, 1 );
+		input = ml::audio::channel_convert( input, 1 );
 		if ( input == 0 )
 			return false;
 	}
@@ -239,7 +239,7 @@ bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const
 	if ( size_t( output->channels( ) ) != volume.size( ) )
 	{
         PL_LOG(pl::level::warning, "Channels doesn't match volumes in mix_channel");
-		output = ml::audio_channel_convert( input, static_cast<int>(volume.size( )) );
+		output = ml::audio::channel_convert( input, static_cast<int>(volume.size( )) );
 		if ( output == 0 )
 			return false;
 	}

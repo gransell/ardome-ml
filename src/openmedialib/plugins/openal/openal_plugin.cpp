@@ -213,7 +213,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				}
 				else
 				{
-					aud = audio_channel_convert( aud, 2 );
+					aud = audio::channel_convert( aud, 2 );
 					format_ = AL_FORMAT_STEREO16;
 				}
 

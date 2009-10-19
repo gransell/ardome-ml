@@ -252,7 +252,7 @@ void py_plugin( )
 	py::def( "audio_samples_to_frame", &ml::audio_samples_to_frame );
 	py::def( "create_audio_reseat", &ml::create_audio_reseat );
 	py::def( "audio_mix", &ml::audio_mix );
-	py::def( "audio_channel_convert", &ml::audio_channel_convert );
+	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "frame_convert", &ml::frame_convert );
 	py::def( "frame_rescale", &ml::frame_rescale );
 	py::def( "frame_crop_clear", &ml::frame_crop_clear );

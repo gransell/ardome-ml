@@ -21,8 +21,11 @@ extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequenc
 // Convenience function to coerce an audio_type_ptr to a specific type
 extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &source );
 
+// Convenience function to convert to another channel arrangement without changing type
+extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels );
+
 // Map an id to the audio format
-extern const std::wstring &id_to_af( const identity &id );
+extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
 
 } } } }
 

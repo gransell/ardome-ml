@@ -27,14 +27,6 @@ ML_DECLSPEC store_type_ptr create_store( const openpluginlib::wstring &, frame_t
 ML_DECLSPEC store_type_ptr create_store( const openpluginlib::string &, frame_type_ptr );
 ML_DECLSPEC filter_type_ptr create_filter( const openpluginlib::wstring & );
 
-ML_DECLSPEC audio::pcm8_ptr audio_channel_converter( const audio::pcm8_ptr &, int );
-ML_DECLSPEC audio::pcm16_ptr audio_channel_converter( const audio::pcm16_ptr &, int );
-ML_DECLSPEC audio::pcm24_ptr audio_channel_converter( const audio::pcm24_ptr &, int );
-ML_DECLSPEC audio::pcm32_ptr audio_channel_converter( const audio::pcm32_ptr &, int );
-ML_DECLSPEC audio::floats_ptr audio_channel_converter( const audio::floats_ptr &, int );
-
-ML_DECLSPEC audio_type_ptr audio_channel_convert( const audio_type_ptr &input_audio, int channels );
-
 ML_DECLSPEC int audio_samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
 ML_DECLSPEC long long audio_samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
 ML_DECLSPEC audio_type_ptr audio_mix( const audio_type_ptr& input_a, const audio_type_ptr& input_b );

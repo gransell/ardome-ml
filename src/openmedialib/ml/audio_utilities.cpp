@@ -5,6 +5,7 @@
 // Released under the LGPL.
 
 #include <openmedialib/ml/audio.hpp>
+#include <openmedialib/ml/audio_channel_convert.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
@@ -65,6 +66,28 @@ ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, audio_type_ptr &sourc
 		result = coerce< pcm32 >( source );
 	else if ( af == FORMAT_FLOAT )
 		result = coerce< floats >( source );
+
+	return result;
+}
+
+// Convenience function to convert to another channel arrangement without changing type
+ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels )
+{
+	audio_type_ptr result;
+
+	if ( audio )
+	{
+		if ( audio->id( ) == pcm8_id )
+			result = channel_convert( coerce< pcm8 >( audio ), channels );
+		else if ( audio->id( ) == pcm16_id )
+			result = channel_convert( coerce< pcm16 >( audio ), channels );
+		else if ( audio->id( ) == pcm24_id )
+			result = channel_convert( coerce< pcm24 >( audio ), channels );
+		else if ( audio->id( ) == pcm32_id )
+			result = channel_convert( coerce< pcm32 >( audio ), channels );
+		else if ( audio->id( ) == float_id )
+			result = channel_convert( coerce< floats >( audio ), channels );
+	}
 
 	return result;
 }
