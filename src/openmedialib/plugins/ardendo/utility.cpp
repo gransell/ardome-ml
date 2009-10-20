@@ -42,33 +42,6 @@ boost::uint64_t parse_uint64( const std::string &str, int base )
 static const float min_short = float( ( std::numeric_limits< short >::min )( ) );
 static const float max_short = float( ( std::numeric_limits< short >::max )( ) );
 
-ml::audio_type_ptr change_pitch( ml::audio_type_ptr audio, int required )
-{
-	int channels = audio->channels( );
-	int frequency = audio->frequency( );
-
-	ml::audio::pcm16_ptr output = ml::audio::pcm16_ptr( new ml::audio::pcm16( frequency, channels, required ) );
-
-	short *dst = output->data( );
-	short *src = ( short * )audio->pointer( );
-	double ratio = double( audio->samples( ) ) / required;
-	int upper = channels * ( audio->samples( ) - 1 );
-
-	for ( int i = 0; i < required; i ++ )
-	{
-		for ( int c = 0; c < channels; c ++ )
-		{
-			int offset = channels * int( i * ratio ) + c;
-			if ( offset < upper )
-				*dst ++ = short( ( src[ offset ] + src[ offset + channels ] ) / 2 );
-			else
-				*dst ++ = src[ offset ];
-		}
-	}
-
-	return output;
-}
-
 void apply_volume( ml::frame_type_ptr &result, double volume, double end )
 {
 	if ( result && result->get_audio( ) )
@@ -125,50 +98,6 @@ void apply_volume( ml::frame_type_ptr &result, double volume, double end )
 	}
 }
 
-void extract_channel( ml::frame_type_ptr &result, int channel )
-{
-	ml::audio_type_ptr audio;
-
-	ml::audio_type_ptr input = result->get_audio( );
-
-	int position = result->get_position( );
-	int frequency = 48000;
-	int channels = 2;
-	int samples = 0;
-
-	if ( input )
-	{
-		frequency = input->frequency( );
-		channels = input->channels( );
-		samples = input->samples( );
-	}
-	else
-	{
-		int num = result->get_fps_num( );
-		int den = result->get_fps_den( );
-		samples = ml::audio::samples_for_frame( position, frequency, num, den );
-	}
-
-	audio = ml::audio::pcm16_ptr(new ml::audio::pcm16( frequency, 1, samples ));
-
-	if ( input && channel < channels )
-	{
-		short *src = reinterpret_cast< short * >( input->pointer( ) ) + channel;
-		short *dst = reinterpret_cast< short * >( audio->pointer( ) );
-		while( samples -- )
-		{
-			*dst ++ = *src;
-			src += channels;
-		}
-	}
-	else
-	{
-		memset( audio->pointer( ), 0, audio->size( ) );
-	}
-
-	result->set_audio( audio );
-}
-
 std::vector< double > extract_levels( ml::frame_type_ptr &result )
 {
 	ml::audio_type_ptr input = result->get_audio( );
@@ -190,11 +119,6 @@ std::vector< double > extract_levels( ml::frame_type_ptr &result )
 	}
 
 	return levels;
-}
-
-void change_pitch( ml::frame_type_ptr &result, int required )
-{
-	result->set_audio( change_pitch( result->get_audio( ), required ) );
 }
 
 /**
@@ -253,7 +177,7 @@ bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const
 	// In theory, this shouldn't happen, but just in case, force samples to match
 	if ( input->samples( ) != output->samples( ) )
 	{
-		input = change_pitch( input, output->samples( ) );
+		input = ml::audio::pitch( input, output->samples( ) );
 	}
 
 	// Extract samples, number of channels and data

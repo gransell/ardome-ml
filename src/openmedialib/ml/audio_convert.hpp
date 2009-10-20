@@ -11,40 +11,17 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
-// Convert to pcm8
-extern void convert( pcm8 &dst, const pcm8 &src );
-extern void convert( pcm8 &dst, const pcm16 &src );
-extern void convert( pcm8 &dst, const pcm24 &src );
-extern void convert( pcm8 &dst, const pcm32 &src );
-extern void convert( pcm8 &dst, const floats &src );
-
-// Convert to pcm16
-extern void convert( pcm16 &dst, const pcm8 &src );
-extern void convert( pcm16 &dst, const pcm16 &src );
-extern void convert( pcm16 &dst, const pcm24 &src );
-extern void convert( pcm16 &dst, const pcm32 &src );
-extern void convert( pcm16 &dst, const floats &src );
-
-// Convert to pcm24
-extern void convert( pcm24 &dst, const pcm8 &src );
-extern void convert( pcm24 &dst, const pcm16 &src );
-extern void convert( pcm24 &dst, const pcm24 &src );
-extern void convert( pcm24 &dst, const pcm32 &src );
-extern void convert( pcm24 &dst, const floats &src );
-
-// Convert to pcm32
-extern void convert( pcm32 &dst, const pcm8 &src );
-extern void convert( pcm32 &dst, const pcm16 &src );
-extern void convert( pcm32 &dst, const pcm24 &src );
-extern void convert( pcm32 &dst, const pcm32 &src );
-extern void convert( pcm32 &dst, const floats &src );
-
-// Convert to float
-extern void convert( floats &dst, const pcm8 &src );
-extern void convert( floats &dst, const pcm16 &src );
-extern void convert( floats &dst, const pcm24 &src );
-extern void convert( floats &dst, const pcm32 &src );
-extern void convert( floats &dst, const floats &src );
+template < typename T, typename U >
+void convert( T &dst, const U &src )
+{
+	int count = dst.samples( ) * dst.channels( );
+	typename T::sample_type *dst_p = dst.data( );
+	typename U::sample_type *src_p = src.data( );
+	typename T::sample_type dst_max = dst.max_sample( );
+	typename U::sample_type src_max = src.max_sample( );
+	while( count -- )
+		*dst_p ++ = ( typename T::sample_type )( ( float( *src_p ++ ) / src_max ) * dst_max );
+}
 
 } } } }
 

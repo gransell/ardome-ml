@@ -407,7 +407,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					pl::pcos::property audio_reversed = result->properties( ).get_property_with_key( key_audio_reversed_ );
 					if ( ( audio_reversed.value< int >( ) && speed_ >= 0 ) || ( !audio_reversed.value< int >( ) && speed_ < 0 ) )
 					{
-						ml::audio_reverse( result->get_audio( ) );
+						result->set_audio( ml::audio::reverse( result->get_audio( ) ) );
 						audio_reversed = !audio_reversed.value< int >( );
 					}
 				}
@@ -415,7 +415,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				{
 					pl::pcos::property audio_reversed( key_audio_reversed_ );
 					if ( speed_ < 0 )
-						ml::audio_reverse( result->get_audio( ) );
+						result->set_audio( ml::audio::reverse( result->get_audio( ) ) );
 					result->properties( ).append( audio_reversed = speed_ < 0 ? 1 : 0 );
 				}
 			}

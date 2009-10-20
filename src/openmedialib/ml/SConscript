@@ -8,7 +8,6 @@ local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_m
 
 object = local_env.shared_library( 'openmedialib_ml', [ 
 		'audio_channel_convert.cpp', 
-		'audio_convert.cpp', 
 		'audio_sample_calcs.cpp', 
 		'audio_utilities.cpp', 
 		'awi.cpp', 
@@ -26,6 +25,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		[ 	'audio.hpp', 
 			'audio_cast.hpp', 
 			'audio_channel_convert.hpp', 
+			'audio_channel_extract.hpp', 
 			'audio_convert.hpp', 
 			'audio_interface.hpp', 
 			'audio_template.hpp', 

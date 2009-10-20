@@ -862,7 +862,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 				if ( result->get_audio( ) && overlay->get_audio( ) )
 				{
-					audio_type_ptr mix = audio_mix( result->get_audio( ), overlay->get_audio( ) );
+					audio_type_ptr mix = audio::mixer( result->get_audio( ), overlay->get_audio( ) );
 					result->set_audio( mix );
 				}
 
@@ -1628,7 +1628,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 					input->seek( get_in( ) - get_position( ) );
 					result = input->fetch( );
 					if ( result && result->get_audio( ) )
-						audio_reverse( result->get_audio( ) );
+						result->set_audio( audio::reverse( result->get_audio( ) ) );
 				}
 
 				if ( result )

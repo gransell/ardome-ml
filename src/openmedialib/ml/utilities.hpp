@@ -30,10 +30,7 @@ ML_DECLSPEC store_type_ptr create_store( const openpluginlib::wstring &, frame_t
 ML_DECLSPEC store_type_ptr create_store( const openpluginlib::string &, frame_type_ptr );
 ML_DECLSPEC filter_type_ptr create_filter( const openpluginlib::wstring & );
 
-ML_DECLSPEC audio_type_ptr audio_mix( const audio_type_ptr& input_a, const audio_type_ptr& input_b );
-
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );
-ML_DECLSPEC audio_type_ptr audio_reverse( audio_type_ptr );
 
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const openpluginlib::wstring & );
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, olib::openimagelib::il::rescale_filter filter );

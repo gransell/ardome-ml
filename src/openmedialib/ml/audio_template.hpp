@@ -72,7 +72,7 @@ class ML_DECLSPEC template_ : public interface
 		int samples( ) const 
 		{ return samples_; }
 
-		std::wstring af( )
+		const std::wstring &af( ) const
 		{ return id_to_af( id_ ); }
 
 		void *pointer( ) const
@@ -88,19 +88,19 @@ class ML_DECLSPEC template_ : public interface
 		{ position_ = position; }
 
 		void convert( pcm8 &dst ) const
-		{ audio::convert( dst, *this ); }
+		{ audio::convert< pcm8, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 		void convert( pcm16 &dst ) const
-		{ audio::convert( dst, *this ); }
+		{ audio::convert< pcm16, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 		void convert( pcm24 &dst ) const
-		{ audio::convert( dst, *this ); }
+		{ audio::convert< pcm24, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 		void convert( pcm32 &dst ) const
-		{ audio::convert( dst, *this ); }
+		{ audio::convert< pcm32, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 		void convert( floats &dst ) const
-		{ audio::convert( dst, *this ); }
+		{ audio::convert< floats, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 	private:
 		identity id_;

@@ -367,97 +367,6 @@ ML_DECLSPEC audio_reseat_ptr create_audio_reseat( )
 	return audio_reseat_ptr( new audio_reseat_impl( ) );
 }
 
-ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_ptr& b)
-{
-	// Reject if audio input frequencies differ
-	if(a->frequency() != b->frequency())
-		return audio_type_ptr();
-	
-	// Reject if number of audio samples differ
-	if(a->samples() != b->samples())
-		return audio_type_ptr();
-	
-	// Reject if number of audio channels differ
-	if(a->channels() != b->channels())
-		return audio_type_ptr();
-	
-	// Reject if audio format isn't 16-bit PCM
-	if(		(a->af().compare(audio::FORMAT_PCM16) != 0)
-		||	(b->af().compare(audio::FORMAT_PCM16) != 0) )
-		return audio_type_ptr();
-	
-	const int samples_out  = a->samples();   // a & b are the same.
-	const int channels_out = a->channels();
-	
-	audio::pcm16_ptr mix = audio::pcm16_ptr(new audio::pcm16(a->frequency(), channels_out, samples_out));
-
-	// upfront filter calcs
-	const double	cutoff_to_fs_ratio	= 0.5;
-	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
-	const double	one_minus_exponent	= 1 - exponent;
-	
-	long  sample_summation = 0;
-	short clipped_sample   = 0;
-
-	short *po = (short*)mix->pointer();
-	short *pa = (short*)a->pointer();
-	short *pb = (short*)b->pointer();
-
-	for( int sample_idx = 0; sample_idx < samples_out; sample_idx++)
-	{
-		for( int channel_idx = 0; channel_idx < channels_out; ++channel_idx)
-		{
-			// Add a & b together
-			sample_summation = long( *pa ++ ) + long( *pb ++ );
-			
-			// clip appropriately
-			if(sample_summation < min_short)
-				clipped_sample = min_short; 
-			else if(sample_summation > max_short)
-				clipped_sample = max_short;
-			else
-				clipped_sample = short(sample_summation);
-			
-			// low pass filter to counter any effects from clipping
-			if(sample_idx == 0)
-				*po = short(one_minus_exponent * clipped_sample);
-			else
-				*po = short(one_minus_exponent * clipped_sample + exponent * ( *( po - channels_out ) ) );
-
-			po ++;
-		}
-	}
-	
-	return mix;
-}
-
-ML_DECLSPEC audio_type_ptr audio_reverse( audio_type_ptr audio )
-{
-	if ( audio )
-	{
-		const int channels = audio->channels( );
-		const int samples = audio->samples( );
-
-		short *in = ( short * )audio->pointer( );
-		short *out = in + channels * samples - channels;
-		int c;
-
-		while ( in < out )
-		{
-			c = channels;
-			while( c -- )
-			{
-				short t = *in;
-				*in ++ = *out;
-				*out ++ = t;
-			}
-			out -= 2 * channels;
-		}
-	}
-
-	return audio;
-}
-
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const openpluginlib::wstring &pf )
 {
 	frame_type_ptr result = frame;
@@ -528,6 +437,7 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 	if ( frame && frame->get_audio( ) )
 	{
 		audio_type_ptr audio = frame->get_audio( );
+		audio = audio::coerce( audio::FORMAT_PCM16, audio );
 
 		const int channels = audio->channels( );
 		const int samples = audio->samples( );
@@ -540,6 +450,8 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 			*data = short( volume * *data );
 			data ++;
 		}
+
+		frame->set_audio( audio );
 	}
 	return frame;
 }

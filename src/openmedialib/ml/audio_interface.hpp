@@ -33,7 +33,7 @@ class ML_DECLSPEC interface
 		virtual int samples( ) const  = 0;
 
 		/// A textual description of the audio format
-		virtual std::wstring af( ) = 0;
+		virtual const std::wstring &af( ) const = 0;
 
 		/// The position of the audio object relative to the graph it belongs to
 		virtual int position( ) const  = 0;

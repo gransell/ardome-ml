@@ -101,7 +101,7 @@ void py_audio( )
 		.def( "frequency", &ml::audio::interface::frequency )
 		.def( "channels", &ml::audio::interface::channels )
 		.def( "samples", &ml::audio::interface::samples )
-		.def( "af", &ml::audio::interface::af )
+		.def( "af", &ml::audio::interface::af, py::return_value_policy< py::return_by_value >( ) )
 		.def( "position", &ml::audio::interface::position )
 		.def( "set_position", &ml::audio::interface::set_position )
 		.def( "size", &ml::audio::interface::size )
@@ -251,7 +251,7 @@ void py_plugin( )
 	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
 	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
 	py::def( "create_audio_reseat", &ml::create_audio_reseat );
-	py::def( "audio_mix", &ml::audio_mix );
+	py::def( "audio_mix", &ml::audio::mixer );
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "frame_convert", &ml::frame_convert );
 	py::def( "frame_rescale", &ml::frame_rescale );
