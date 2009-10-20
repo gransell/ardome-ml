@@ -10,6 +10,7 @@
 #include <openmedialib/ml/config.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/cstdint.hpp>
+#include <deque>
 #include <string>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
@@ -51,6 +52,15 @@ typedef ML_DECLSPEC boost::shared_ptr < pcm16 > pcm16_ptr;
 typedef ML_DECLSPEC boost::shared_ptr < pcm24 > pcm24_ptr;
 typedef ML_DECLSPEC boost::shared_ptr < pcm32 > pcm32_ptr;
 typedef ML_DECLSPEC boost::shared_ptr < floats > floats_ptr;
+
+// Forward declaration to audio reseat interface
+class ML_DECLSPEC reseat;
+
+// Audio reseat shared pointer
+typedef ML_DECLSPEC boost::shared_ptr< reseat > reseat_ptr;
+
+// Audio reseat factory method
+extern ML_DECLSPEC reseat_ptr create_reseat( );
 
 } } } }
 

@@ -1371,7 +1371,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
-			reseat_ = create_audio_reseat( );
+			reseat_ = audio::create_reseat( );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -1547,7 +1547,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		bool src_has_image_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
-		audio_reseat_ptr reseat_;
+		audio::reseat_ptr reseat_;
 		std::map < int, frame_type_ptr > map_;
 };
 

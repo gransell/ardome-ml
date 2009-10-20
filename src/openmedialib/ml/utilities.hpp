@@ -40,29 +40,6 @@ ML_DECLSPEC frame_type_ptr frame_crop( frame_type_ptr, int, int, int, int );
 // Convenience function to change volume on a frame
 extern ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr, float );
 
-class ML_DECLSPEC audio_reseat
-{
-	public:
-		typedef std::deque< audio_type_ptr > bucket;
-		typedef bucket::const_iterator const_iterator;
-		typedef bucket::iterator iterator;
-
-	public:
-		virtual ~audio_reseat( ) { }
-		virtual bool append( audio_type_ptr ) = 0;
-		virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
-		virtual void clear( ) = 0;
-		virtual bool has( int ) = 0;
-		virtual iterator begin( ) = 0;
-		virtual const_iterator begin( ) const = 0;
-		virtual iterator end( ) = 0;
-		virtual const_iterator end( ) const = 0;
-};
-
-typedef boost::shared_ptr< audio_reseat > audio_reseat_ptr;
-
-extern ML_DECLSPEC audio_reseat_ptr create_audio_reseat( );
-
 // A general abstraction for callback based reading and writing - this allows applications
 // to provide their own mechanism for stream reception and output (depending on the 
 // capabilities of the input_type).
@@ -97,6 +74,28 @@ extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const
 inline bool is_yuv_planar( const frame_type_ptr &frame )
 {
 	return frame ? olib::openimagelib::il::is_yuv_planar( frame->get_image( ) ) : false;
+}
+
+namespace audio
+{
+	class ML_DECLSPEC reseat
+	{
+		public:
+			typedef std::deque< audio_type_ptr > bucket;
+			typedef bucket::const_iterator const_iterator;
+			typedef bucket::iterator iterator;
+	
+		public:
+			virtual ~reseat( ) { }
+			virtual bool append( audio_type_ptr ) = 0;
+			virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
+			virtual void clear( ) = 0;
+			virtual bool has( int ) = 0;
+			virtual iterator begin( ) = 0;
+			virtual const_iterator begin( ) const = 0;
+			virtual iterator end( ) = 0;
+			virtual const_iterator end( ) const = 0;
+	};
 }
 
 } } }

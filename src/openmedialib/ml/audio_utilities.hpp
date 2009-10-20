@@ -40,7 +40,10 @@ extern ML_DECLSPEC audio_type_ptr pitch( const audio_type_ptr &audio, int sample
 extern ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr& input_a, const audio_type_ptr& input_b );
 
 // Convenience function to reverse the order of the samples in an audio object without changing type
-ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr & );
+extern ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr & );
+
+// Factory method for creating an audio reseat instance
+extern ML_DECLSPEC reseat_ptr create_reseat( );
 
 // Method to determine number of samples per channel required for a given frame offset at a specified frequency and frame rate
 extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den );

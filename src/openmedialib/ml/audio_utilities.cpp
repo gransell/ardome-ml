@@ -4,12 +4,14 @@
 // Copyright (C) 2009 Ardendo
 // Released under the LGPL.
 
+#include <openmedialib/ml/utilities.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/audio_channel_convert.hpp>
 #include <openmedialib/ml/audio_channel_extract.hpp>
 #include <openmedialib/ml/audio_pitch.hpp>
 #include <openmedialib/ml/audio_reverse.hpp>
 #include <openmedialib/ml/audio_mixer.hpp>
+#include <openmedialib/ml/audio_reseat.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
@@ -220,6 +222,12 @@ ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr 
 	}
 
 	return result;
+}
+
+// Factory method for creating an audio reseat instance
+ML_DECLSPEC reseat_ptr create_reseat( )
+{
+	return reseat_ptr( new reseat_impl( ) );
 }
 
 // Convert an id to a printable string

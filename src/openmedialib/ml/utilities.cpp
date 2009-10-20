@@ -70,113 +70,6 @@ namespace
 
 	inline boost::int64_t abs( boost::int64_t value )
 	{ return value < 0 ? - value : value; }
-	
-	class audio_reseat_impl : public audio_reseat
-	{
-		public:
-			audio_reseat_impl( ) 
-				: queue( )
-				, offset( 0 )
-				, samples( 0 )
-			{ 
-			}
-
-			virtual ~audio_reseat_impl( ) 
-			{ 
-			}
-
-			virtual bool append( audio_type_ptr audio )
-			{
-				// TODO: ensure that all audio packets are consistent and reject if not
-				if ( audio )
-				{
-					queue.push_back( audio );
-					samples += audio->samples( );
-				}
-
-				return true;
-			}
-
-			virtual audio_type_ptr retrieve( int requested, bool pad )
-			{
-				audio_type_ptr result;
-				if ( has( requested ) )
-				{
-					int index = 0;
-					audio_type_ptr audio = queue[ 0 ];
-					int channels = audio->channels( );
-
-					audio::pcm16_ptr temp = audio::pcm16_ptr( new audio::pcm16( audio->frequency( ), channels, requested ) );
-					boost::int16_t *dst = temp->data( );
-
-					result = temp;
-
-					while( index != requested && queue.size( ) > 0 )
-					{
-						audio = queue[ 0 ];
-						short *src = ( short * )audio->pointer( ) + offset * channels;
-
-						int remainder = audio->samples( ) - offset;
-						int samples_from_packet = requested - index < remainder ? requested - index : remainder;
-
-						for ( int i = 0; i < samples_from_packet * channels; i ++ )
-							*dst ++ = *src ++;
-
-						if ( samples_from_packet == remainder )
-						{
-							samples -= samples_from_packet;
-							queue.pop_front( );
-							offset = 0;
-						}
-						else
-						{
-							offset += samples_from_packet;
-							samples -= samples_from_packet;
-						}
-
-						index += samples_from_packet;
-					}
-				}
-				return result;
-			}
-
-			virtual void clear( )
-			{
-				queue.clear( );
-				offset = 0;
-				samples = 0;
-			}
-
-			bool has( int requested )
-			{
-				return requested <= samples;
-			}
-
-			virtual iterator begin( )
-			{
-				return queue.begin( );
-			}
-
-			virtual const_iterator begin( ) const
-			{
-				return queue.begin( );
-			}
-
-			virtual iterator end( )
-			{
-				return queue.end( );
-			}
-
-			virtual const_iterator end( ) const
-			{
-				return queue.end( );
-			}
-
-		private:
-			bucket queue;
-			int offset;
-			int samples;
-	};
 }
 
 // Query structure used
@@ -360,11 +253,6 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	}
 	
 	return output_audio;
-}
-
-ML_DECLSPEC audio_reseat_ptr create_audio_reseat( )
-{
-	return audio_reseat_ptr( new audio_reseat_impl( ) );
 }
 
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const openpluginlib::wstring &pf )

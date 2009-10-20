@@ -199,11 +199,11 @@ void py_filter( )
 
 void py_audio_reseat( )
 {
-	py::class_<ml::audio_reseat, boost::noncopyable, ml::audio_reseat_ptr>( "audio_reseat", py::no_init )
-		.def( "append", &ml::audio_reseat::append )
-		.def( "retrieve", &ml::audio_reseat::retrieve )
-		.def( "clear", &ml::audio_reseat::clear )
-		.def( "has", &ml::audio_reseat::has )
+	py::class_<ml::audio::reseat, boost::noncopyable, ml::audio::reseat_ptr>( "audio_reseat", py::no_init )
+		.def( "append", &ml::audio::reseat::append )
+		.def( "retrieve", &ml::audio::reseat::retrieve )
+		.def( "clear", &ml::audio::reseat::clear )
+		.def( "has", &ml::audio::reseat::has )
 	;
 }
 
@@ -250,7 +250,7 @@ void py_plugin( )
 	py::def( "audio_resample", &ml::audio_resample );
 	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
 	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
-	py::def( "create_audio_reseat", &ml::create_audio_reseat );
+	py::def( "create_audio_reseat", &ml::audio::create_reseat );
 	py::def( "audio_mix", &ml::audio::mixer );
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "frame_convert", &ml::frame_convert );
