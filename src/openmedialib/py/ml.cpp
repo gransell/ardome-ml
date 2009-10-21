@@ -241,6 +241,16 @@ bool is( ml::input_type_ptr a, ml::input_type_ptr b )
 	return a == b;
 }
 
+audio_type_ptr audio_allocate0( const std::wstring &af, int frequency, int channels, int samples )
+{
+	return audio::allocate( af, frequency, channels, samples );
+}
+
+audio_type_ptr audio_allocate1( const audio_type_ptr &audio, int frequency, int channels, int samples )
+{
+	return audio::allocate( audio, frequency, channels, samples );
+}
+
 void py_plugin( )
 {
 	py::def( "create_input", &detail::create_input0 );
@@ -248,6 +258,14 @@ void py_plugin( )
 	py::def( "create_store", &detail::create_store );
 	py::def( "create_filter", &detail::create_filter );
 	py::def( "audio_resample", &ml::audio_resample );
+	py::def( "audio_allocate", &detail::audio_allocate0 );
+	py::def( "audio_allocate", &detail::audio_allocate1 );
+	py::def( "audio_channel_convert", &ml::audio::channel_convert );
+	py::def( "audio_channel_extract", &ml::audio::channel_extract );
+	py::def( "audio_mixer", &ml::audio::mixer );
+	py::def( "audio_pitch", &ml::audio::pitch );
+	py::def( "audio_reverse", &ml::audio::reverse );
+	py::def( "audio_volume", &ml::audio::volume );
 	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
 	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
 	py::def( "create_audio_reseat", &ml::audio::create_reseat );

@@ -87,10 +87,6 @@ template < typename C > class fn_observer : public pcos::observer
 /// for use with ANSI file operations. 
 extern std::string to_multibyte_string( const olib::t_string& str );
 
-// Purge lazy objects for the specified url
-extern void lazy_purge( const olib::t_string &url );
-extern void lazy_purge_smaller( const olib::t_string &url, boost::int64_t new_size );
-
 } }
 
 #endif

@@ -269,7 +269,8 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 	return result;
 }
 
-ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b )
+// Provides a quick method to mix b with a specific channel of a
+ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, int channel )
 {
 	audio_type_ptr result = a;
 
@@ -278,7 +279,12 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 		double max_level = 0.0;
 		std::vector< double > levels;
 		for ( int i = 0; i < a->channels( ); i ++ )
-			levels.push_back( 1.0 );
+		{
+			if ( i == channel )
+				levels.push_back( 1.0 );
+			else
+				levels.push_back( 0.0 );
+		}
 		result = channel_mixer( a, b, levels, max_level, 0 );
 	}
 

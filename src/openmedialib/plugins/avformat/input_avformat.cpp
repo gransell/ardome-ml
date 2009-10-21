@@ -1424,6 +1424,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( found < 0 )
 				return 0;
 
+			if ( found < get_position( ) - 25 )
+				return 0;
+
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;
 			int frequency = codec_context->sample_rate;

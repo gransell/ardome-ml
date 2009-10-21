@@ -35,7 +35,7 @@ extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int 
 extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &a, int channel );
 
 // Convenience functions to mix a channel without changing the audio sample type in the first object
-extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b );
+extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, int channel );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > & );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double & );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, int );
