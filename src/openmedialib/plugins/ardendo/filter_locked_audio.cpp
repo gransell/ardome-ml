@@ -138,12 +138,12 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					{
 						boost::int16_t *ptr = ( boost::int16_t *)audio_span_->pointer( );
                         if ( frames_.size( ) == table.size( ) )
+						{
                             ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
+						}
                         
                         std::vector< double > weights;
 						double max_level;
-
-						memset( audio_span_->pointer( ), 0, audio_span_->size( ) );
 
 						for ( int j = 0; j < channels_; j ++ )
                             weights.push_back( 1.0 );
@@ -154,7 +154,6 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 							{
 								ml::frame_type_ptr conform = ml::frame_type_ptr( new ml::frame_type( ) );
 								ml::audio::pcm16_ptr aud = ml::audio::pcm16_ptr( new ml::audio::pcm16( 48000, channels_, table[ i ] ) );
-								memset( aud->pointer( ), 0, aud->size( ) );
 								conform->set_audio( aud );
 								mix_channel( conform, frames_[ i ], weights, max_level, 0 );
 								memcpy( ptr, conform->get_audio( )->pointer( ), conform->get_audio( )->size( ) );

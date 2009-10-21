@@ -41,9 +41,8 @@ inline int sqrti( int n )
 }
 
 // Frame audio utilities
-extern void apply_volume( ml::frame_type_ptr &result, double volume, double end );
+extern void apply_volume( ml::frame_type_ptr &result, float volume, float end );
 extern void extract_channel( ml::frame_type_ptr &result, int channel );
-extern std::vector< double > extract_levels( ml::frame_type_ptr &result );
 extern void change_pitch( ml::frame_type_ptr &result, int required );
 extern bool mix_channel( ml::frame_type_ptr &result, ml::frame_type_ptr &channel, const std::vector< double > &volume, double &, int mute );
 extern void join_peaks( ml::frame_type_ptr &result, std::vector< double > & );

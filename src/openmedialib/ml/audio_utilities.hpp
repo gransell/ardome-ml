@@ -9,6 +9,7 @@
 
 #include <openmedialib/ml/types.hpp>
 #include <string>
+#include <vector>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
@@ -28,19 +29,28 @@ extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_typ
 extern ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source );
 
 // Convenience function to convert to another channel arrangement without changing type
-extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels );
+extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int channels );
 
 // Convenience function to extract a specific channel wihtout changing type
-extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &audio, int channel );
+extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &a, int channel );
 
-// Convenience function to change the pitch of an audio object without changing sample type
-extern ML_DECLSPEC audio_type_ptr pitch( const audio_type_ptr &audio, int samples );
+// Convenience functions to mix a channel without changing the audio sample type in the first object
+extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b );
+extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > & );
+extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double & );
+extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, int );
 
 // Convenience function to mix two objects without changing the audio sample type in the first object
-extern ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr& input_a, const audio_type_ptr& input_b );
+extern ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr &b );
+
+// Convenience function to change the pitch of an audio object without changing sample type
+extern ML_DECLSPEC audio_type_ptr pitch( const audio_type_ptr &a, int samples );
 
 // Convenience function to reverse the order of the samples in an audio object without changing type
-extern ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr & );
+extern ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr &a );
+
+// Convenience function to change the volume of the samples in an audio object without changing type
+extern ML_DECLSPEC audio_type_ptr volume( const audio_type_ptr &ra, float start, float end );
 
 // Factory method for creating an audio reseat instance
 extern ML_DECLSPEC reseat_ptr create_reseat( );

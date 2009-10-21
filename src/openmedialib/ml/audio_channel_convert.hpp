@@ -272,9 +272,9 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 	typename T::sample_type max_sample = output_audio->max_sample( );
 	
 	// upfront filter calcs
-	const double	cutoff_to_fs_ratio	= 0.5;
-	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
-	const double	one_minus_exponent	= 1 - exponent;
+	const float	cutoff_to_fs_ratio	= 0.5f;
+	const float	exponent			= exp(-2.0f * M_PI * cutoff_to_fs_ratio);
+	const float	one_minus_exponent	= 1.0f - exponent;
 	
 	typename T::sample_type *output = output_audio->data( );
 	typename T::sample_type *input = input_audio->data( );
