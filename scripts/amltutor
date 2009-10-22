@@ -1,0 +1,57 @@
+#!/usr/bin/env amlbatch
+
+amltutor.aml
+
+: --help
+    {     
+        $ "Usage: amlbatch <graph> [ -- ( <store> )* ]" ,
+        $ "" ,
+        $ "Use --simple for examples of player use" ,
+        $ "Use --test for some testing tools" ,
+    }
+;
+
+: --simple
+    {
+        $ "Examples of player use:" ,
+        $ "" ,
+        $ "amlbatch video.mpg" ,
+        $ "amlbatch audio.mp2" ,
+        $ "" ,
+        $ "See --editing for some basic editing info" ,
+    }
+;
+
+: --editing
+    {
+        $ "Examples of clipping:" ,
+        $ "" ,
+        $ "amlbatch video.mpg filter:clip in=100 out=200" ,
+        $ "amlbatch video.mpg video.mp2 filter:compositor" ,
+        $ "" ,
+        $ "See --huh? for using amlbatch as a calculator" ,
+    }
+;
+
+: --huh?
+    {
+        1 2 + 
+        $ "1 2 + = %s" ,
+        1 2 3 * + 
+        $ "1 2 3 * + = %s" ,
+    }
+;
+
+: --test
+    {
+        $ "Test cases:" ,
+        $ "" ,
+        $ "--sanity to test video/audio playout capabilities" ,
+    }
+;
+
+: --sanity
+    test:
+    play
+;
+

@@ -36,7 +36,6 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			acquire_values( );
 			result = fetch_from_slot( );
 
 			if ( prop_enable_.value< int >( ) )

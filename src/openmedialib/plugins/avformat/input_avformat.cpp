@@ -1686,7 +1686,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				int samples = samples_for_frame( frequency, current );
 				audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
 				aud->set_position( current );
-				memset( aud->pointer( ), 0, aud->size( ) );
 				frame->set_audio( aud );
 				frame->set_duration( double( samples ) / double( frequency ) );
 			}

@@ -11,6 +11,7 @@ options = local_env.optional(  'libswscale' )
 
 srcs = [ 'aml_ardendo.cpp',
          'filter_aml.cpp',
+         'filter_audio_convert.cpp',
          'filter_charcoal.cpp',
          'filter_chroma_key.cpp',
          'filter_colour_space.cpp',

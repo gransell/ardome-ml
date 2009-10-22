@@ -85,7 +85,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			if ( prop_enable_.value< int >( ) == 0 || !current_frame )
 				return;
 		
-			ml::audio_type_ptr current_audio = current_frame->get_audio();
+			ml::audio_type_ptr current_audio = audio::coerce( audio::FORMAT_PCM16, current_frame->get_audio( ) );
 			if(!current_audio)
 				return;
 

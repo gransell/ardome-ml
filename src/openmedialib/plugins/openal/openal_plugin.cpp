@@ -166,7 +166,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			if ( context != NULL )
 			{
 				// Create the requested number of preroll buffers
-				for ( size_t i = 0; i < prop_preroll_.value< int >( ); i ++ )
+				for ( size_t i = 0; i < size_t( prop_preroll_.value< int >( ) ); i ++ )
 				{
 					ALuint buffer;
 					alGenBuffers( 1, &buffer );
@@ -198,7 +198,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 		virtual bool push( frame_type_ptr frame )
 		{
 			// Get the audio from the frame
-			audio_type_ptr aud = frame->get_audio( );
+			audio_type_ptr aud = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
 
 			// Recover any played out buffers
 			recover( );
@@ -250,7 +250,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			// Recover all buffers
    			ALenum state;
    			alGetSourcei( source_, AL_SOURCE_STATE, &state );
-			while ( state == AL_PLAYING && buffers_.size( ) < prop_preroll_.value< int >( ) )
+			while ( state == AL_PLAYING && buffers_.size( ) < size_t( prop_preroll_.value< int >( ) ) )
 			{
 				recover( );
 	   			alGetSourcei( source_, AL_SOURCE_STATE, &state );

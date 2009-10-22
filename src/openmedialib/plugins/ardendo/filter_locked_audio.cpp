@@ -153,7 +153,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 							}
 							else
 							{
-								//memset( ptr, 0, size );
+								memset( ptr, 0, size );
 							}
 
 							ptr += size;

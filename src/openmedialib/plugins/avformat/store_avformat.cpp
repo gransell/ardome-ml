@@ -933,7 +933,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Queue audio - audio is carved up here to match the number of bytes required by the audio codec
 			if ( audio_stream_.size( ) && frame->get_audio( ) )
 			{
-				audio_type_ptr current = frame->get_audio( );
+				audio_type_ptr current = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
 
 				// Create an audio block if we haven't done so already
 				if ( audio_block_ == 0 )
