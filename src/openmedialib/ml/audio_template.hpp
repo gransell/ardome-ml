@@ -15,7 +15,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // The template which provides all the types
 template< typename T, identity B, int min_val, int max_val >
-class ML_DECLSPEC template_ : public interface
+class ML_DECLSPEC template_ : public base
 {
 	public:
 		typedef T sample_type;
@@ -31,7 +31,7 @@ class ML_DECLSPEC template_ : public interface
 			memset( data( ), 0, size( ) );
 		}
 
-		template_( const interface &other )
+		template_( const base &other )
 			: id_( B )
 			, frequency_( other.frequency( ) )
 			, channels_( other.channels( ) )

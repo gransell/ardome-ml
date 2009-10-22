@@ -97,14 +97,14 @@ namespace detail {
 
 void py_audio( )
 {
-	py::class_<ml::audio::interface, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
-		.def( "frequency", &ml::audio::interface::frequency )
-		.def( "channels", &ml::audio::interface::channels )
-		.def( "samples", &ml::audio::interface::samples )
-		.def( "af", &ml::audio::interface::af, py::return_value_policy< py::return_by_value >( ) )
-		.def( "position", &ml::audio::interface::position )
-		.def( "set_position", &ml::audio::interface::set_position )
-		.def( "size", &ml::audio::interface::size )
+	py::class_<ml::audio::base, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
+		.def( "frequency", &ml::audio::base::frequency )
+		.def( "channels", &ml::audio::base::channels )
+		.def( "samples", &ml::audio::base::samples )
+		.def( "af", &ml::audio::base::af, py::return_value_policy< py::return_by_value >( ) )
+		.def( "position", &ml::audio::base::position )
+		.def( "set_position", &ml::audio::base::set_position )
+		.def( "size", &ml::audio::base::size )
 	;
 }
 

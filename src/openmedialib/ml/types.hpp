@@ -27,7 +27,7 @@ typedef ML_DECLSPEC boost::shared_ptr< filter_type > filter_type_ptr;
 typedef ML_DECLSPEC boost::shared_ptr< store_type > store_type_ptr;
 
 // Declaration of the neutral audio_type_ptr
-typedef ML_DECLSPEC boost::shared_ptr < audio::interface > audio_type_ptr;
+typedef ML_DECLSPEC boost::shared_ptr < audio::base > audio_type_ptr;
 
 // Exception handling types
 typedef ML_DECLSPEC boost::shared_ptr< std::exception > exception_ptr;

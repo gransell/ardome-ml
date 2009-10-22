@@ -34,7 +34,7 @@ typedef enum
 identity;
 
 // Forward declaration to the base audio interface which all formats share
-class ML_DECLSPEC interface;
+class ML_DECLSPEC base;
 
 // Forward declaration to the template which implements the various types
 template< typename T, identity B, int min_val, int max_val > class ML_DECLSPEC template_;

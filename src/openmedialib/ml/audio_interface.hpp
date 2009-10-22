@@ -12,10 +12,10 @@
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Definitions of the the pure virtual interface which all audio types provide
-class ML_DECLSPEC interface
+class ML_DECLSPEC base
 {
 	public:
-		virtual ~interface( ) { }
+		virtual ~base( ) { }
 
 		/// The identity of the audio type
 		virtual identity id( ) const = 0;
