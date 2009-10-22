@@ -399,9 +399,6 @@ int main( int argc, char *argv[ ] )
        	pl::init( );
     #endif
 
-	// Initialise the indexer
-	ml::indexer_init( );
-
 	if ( argc > 1 || uses_stdin( ) )
 	{
 		bool interactive = false;
