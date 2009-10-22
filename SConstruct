@@ -120,8 +120,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
-			self.Append( LINKFLAGS = '-undefined dynamic_lookup' )
-			self.Append( OBJCFLAGS = [ '-fobjc-gc'] )
+			self.Append( LINKFLAGS = [ '-undefined', 'dynamic_lookup', '-arch', 'i386', '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
+			self.Append( CCFLAGS = [ '-arch', 'i386', '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk' ] )
 		elif self['PLATFORM'] == 'posix':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
 		elif self['PLATFORM'] == 'win32':
@@ -221,7 +221,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
+	#plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
 
