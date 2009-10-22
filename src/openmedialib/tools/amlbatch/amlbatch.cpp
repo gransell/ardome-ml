@@ -416,8 +416,9 @@ int main( int argc, char *argv[ ] )
 
 		pl::wstring_list tokens;
 
-		if ( uses_stdin( ) && !( argc > 1 && std::string( argv[ 1 ] ) == "--pass-stdin" ) )
-			tokens.push_back( L"stdin:" );
+		if ( !( argc > 1 && std::string( argv[ 1 ] ) == "--pass-stdin" ) )
+			if ( uses_stdin( ) )
+				tokens.push_back( L"stdin:" );
 
 		while( index < argc )
 		{
