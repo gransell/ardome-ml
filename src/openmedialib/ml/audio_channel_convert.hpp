@@ -10,6 +10,11 @@
 #include <openmedialib/ml/audio.hpp>
 #include <cmath>
 
+// Windows work around
+#ifndef M_PI
+#	define M_PI 3.14159265358979323846
+#endif
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 namespace {

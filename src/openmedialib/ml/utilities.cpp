@@ -26,6 +26,11 @@ namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 
+// Windows work around
+#ifndef M_PI
+#	define M_PI 3.14159265358979323846
+#endif
+
 namespace olib { namespace openmedialib { namespace ml {
 
 // Locate the largest common denominator of a and b
