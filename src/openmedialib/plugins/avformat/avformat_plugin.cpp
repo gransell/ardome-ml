@@ -195,9 +195,11 @@ namespace
 			ml::avformat_opts = avformat_alloc_context( );
 			if ( getenv( "AML_AVFORMAT_DEBUG" ) == 0 )
 				av_log_set_level( -1 );
-
+			
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2" );
+			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/30" );
+			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/50" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/mpeg2hd_1080i" );
 			ml::register_lookup( CODEC_ID_H264, "h264" );
 			ml::register_lookup( CODEC_ID_MPEG4, "mpeg4" );
