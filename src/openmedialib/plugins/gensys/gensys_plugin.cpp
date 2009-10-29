@@ -1020,6 +1020,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				filter = il::POINT_SAMPLING;
 			else if ( prop_interp_.value< pl::wstring >( ) == L"bicubic" )
 				filter = il::BICUBIC_SAMPLING;
+			if ( background->get_image( )->field_order( ) == il::progressive ) 
+			    foreground->set_image( il::deinterlace( foreground->get_image( ) ) );
+			
 			foreground = f_rescale( foreground, geom.w, geom.h, filter );
 
 			// We're going to update both image and alpha here
