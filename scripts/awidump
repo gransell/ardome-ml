@@ -19,6 +19,9 @@ try:
 
 	if id == 'AWI' and ver == '2':
 		print id, ver, created
+	elif id == 'AWI' and ver == '3':
+		# Read past the header for now
+		file.read( 56 )
 	else:
 		raise( Exception( 'Unsupported index type' ) )
 
@@ -26,7 +29,7 @@ try:
 		data = file.read( 20 )
 		if len( data ) == 20:
 			( reserved, ) = struct.unpack( '!h', data[ 0 : 2 ] )
-			if reserved != 0: break
+			if ver == '2' and reserved != 0: break
 			( frames, frame, offset, length ) = struct.unpack( '!hlql', data[ 2 : ] )
 			print frame, frames, offset, length
 		else:
