@@ -254,7 +254,7 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 	}
 
 	// Calculate the max level
-	max_level = max_value / max_sample;
+	max_level = double( max_value ) / max_sample;
 
 	return output;
 }
