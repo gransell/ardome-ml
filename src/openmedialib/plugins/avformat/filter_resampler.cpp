@@ -85,14 +85,14 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			if ( prop_enable_.value< int >( ) == 0 || !current_frame )
 				return;
 		
-			ml::audio_type_ptr current_audio = current_frame->get_audio();
+			ml::audio_type_ptr current_audio = audio::coerce( audio::FORMAT_PCM16, current_frame->get_audio( ) );
 			if(!current_audio)
 				return;
 
 			// Small hack to allow resampler for channel conversion only
 			if(	prop_output_sample_freq_.value<int>( ) == -1 )
 			{
-				current_audio = audio_channel_convert( current_audio, prop_output_channels_.value<int>( ) );
+				current_audio = audio::channel_convert( current_audio, prop_output_channels_.value<int>( ) );
 				if ( current_audio )
 					current_frame->set_audio( current_audio );
 				return;
@@ -101,7 +101,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			// since ffmpeg resampler will only accept 2 channels or less, force any input with more than 2 channels to conform
 			if(current_audio->channels() > 2)
 			{
-				current_audio = audio_channel_convert(current_audio, 2);
+				current_audio = audio::channel_convert(current_audio, 2);
 				current_frame->set_audio( current_audio );
 			}
 
@@ -164,7 +164,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			int tmp = 0;
 			
 			tmp = input_channels_ * current_audio->samples();
-			memcpy((void*)(&in_buffer_[ offset ]), (void*)current_audio->data(), tmp * sizeof(short));
+			memcpy((void*)(&in_buffer_[ offset ]), (void*)current_audio->pointer(), tmp * sizeof(short));
 			offset += tmp;
 			
 			// Determine size of output buffer - can be a little bigger than necessary, but can never be too small!
@@ -183,15 +183,12 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			int output_samples = audio_resample(context_, &out_buffer_[ 0 ], &in_buffer_[ 0 ], input_samples_per_chan);
 			
 			// Create a new audio object to hold the determined portion of the output buffer
-			audio_type_ptr output_audio = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(
-																			prop_output_sample_freq_.value<int>(), 
-																			prop_output_channels_.value<int>(), 
-																			output_samples) ) );
+			audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16( prop_output_sample_freq_.value<int>(), prop_output_channels_.value<int>(), output_samples) );
 			if(!output_audio)
 				return;
 		
 			// Copy data from output buffer to audio object
-			memcpy(	(void*)output_audio->data(), 
+			memcpy(	(void*)output_audio->pointer(), 
 					(void*)(&out_buffer_[ 0 ]), 
 					output_samples * prop_output_channels_.value<int>() * sizeof(short));
 	

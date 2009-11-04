@@ -9,12 +9,14 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 	public:
 		input_silence( ) 
 			: ml::input_type( ) 
+			, prop_af_( pcos::key::from_string( "af" ) )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_channels_( pcos::key::from_string( "channels" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
 		{
+			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_FLOAT ) );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
@@ -58,35 +60,26 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 		// Fetch method
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Obtain property values
-			acquire_values( );
-
-			ml::frame_type *frame = new ml::frame_type( );
+			// Construct a frame and populate with basic information
+			result = ml::frame_type_ptr( new ml::frame_type( ) );
 
 			int fps_num = prop_fps_num_.value< int >( );
 			int fps_den = prop_fps_den_.value< int >( );
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
-			int samples = ml::audio_samples_for_frame( get_position( ), frequency, fps_num, fps_den );
+			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den );
 
-			if ( channels )
-			{
-				ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( frequency, channels, samples ) ) );
-				memset( aud->data( ), 0, aud->size( ) );
-				frame->set_audio( aud );
-			}
+			if ( channels && samples )
+				result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples ) );
 
-			// Construct a frame and populate with basic information
-			frame->set_fps( fps_num, fps_den );
-			frame->set_pts( get_position( ) * 1.0 / fps( ) );
-			frame->set_duration( double( samples ) / frequency );
-			frame->set_position( get_position( ) );
-
-			// Return a frame
-			result = ml::frame_type_ptr( frame );
+			result->set_fps( fps_num, fps_den );
+			result->set_pts( get_position( ) * 1.0 / fps( ) );
+			result->set_duration( double( samples ) / frequency );
+			result->set_position( get_position( ) );
 		}
 
 	private:
+		pcos::property prop_af_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_frequency_;

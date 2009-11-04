@@ -34,13 +34,7 @@ frame_type_ptr frame_type::shallow( )
 	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
 	copy->properties_ = *clone.get( );
 	if ( audio_ )
-	{
-		typedef audio< unsigned char, pcm16 > pcm16;
-		audio_type *aud = new audio_type( pcm16( audio_->frequency( ), audio_->channels( ), audio_->samples( ) ) );
-		memcpy( aud->data( ), audio_->data( ), aud->size( ) );
-		aud->set_position( audio_->position( ) );
-		copy->audio_ = ml::audio_type_ptr( aud );
-	}
+		copy->audio_ = audio_->clone( );
 	copy->queue_.clear( );
 	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
 		copy->queue_.push_back( ( *iter )->shallow( ) );
@@ -59,13 +53,7 @@ frame_type_ptr frame_type::deep( )
 	if ( alpha_ )
 		copy->alpha_ = il::image_type_ptr( alpha_->clone( ) );
 	if ( audio_ )
-	{
-		typedef audio< unsigned char, pcm16 > pcm16;
-		audio_type *aud = new audio_type( pcm16( audio_->frequency( ), audio_->channels( ), audio_->samples( ) ) );
-		memcpy( aud->data( ), audio_->data( ), aud->size( ) );
-		aud->set_position( audio_->position( ) );
-		copy->audio_ = ml::audio_type_ptr( aud );
-	}
+		copy->audio_ = audio_->clone( );
 	copy->queue_.clear( );
 	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
 		copy->queue_.push_back( ( *iter )->shallow( ) );

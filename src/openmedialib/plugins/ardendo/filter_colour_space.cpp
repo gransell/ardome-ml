@@ -1,4 +1,4 @@
-// Misplaced colour space filter (needs a proper home and name)
+// Colour space filter 
 //
 // Copyright (C) 2007 Ardendo
 //
@@ -9,6 +9,7 @@
 //
 // 	pf = colour space to generate
 // 		Defaults to r8g8b8a8
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 
@@ -35,9 +36,6 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Acquire values
-			acquire_values( );
-
 			// Frame to return
 			result = fetch_from_slot( );
 

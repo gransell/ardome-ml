@@ -399,9 +399,6 @@ int main( int argc, char *argv[ ] )
        	pl::init( );
     #endif
 
-	// Initialise the indexer
-	ml::indexer_init( );
-
 	if ( argc > 1 || uses_stdin( ) )
 	{
 		bool interactive = false;
@@ -416,8 +413,9 @@ int main( int argc, char *argv[ ] )
 
 		pl::wstring_list tokens;
 
-		if ( uses_stdin( ) )
-			tokens.push_back( L"stdin:" );
+		if ( !( argc > 1 && std::string( argv[ 1 ] ) == "--pass-stdin" ) )
+			if ( uses_stdin( ) )
+				tokens.push_back( L"stdin:" );
 
 		while( index < argc )
 		{
@@ -425,6 +423,8 @@ int main( int argc, char *argv[ ] )
 
 			if ( arg == L"--seek" )
 				seek_to = atoi( argv[ ++ index ] );
+			else if ( arg == L"--pass-stdin" )
+				;
 			else if ( arg == L"--no-stats" )
 				stats = false;
 			else if ( arg == L"--interactive" )

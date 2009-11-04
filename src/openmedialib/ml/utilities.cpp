@@ -13,6 +13,8 @@
 
 #include <limits>
 #include <cmath>
+#include <openmedialib/ml/types.hpp>
+#include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
@@ -23,6 +25,11 @@
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
+
+// Windows work around
+#ifndef M_PI
+#	define M_PI 3.14159265358979323846
+#endif
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -68,365 +75,6 @@ namespace
 
 	inline boost::int64_t abs( boost::int64_t value )
 	{ return value < 0 ? - value : value; }
-	
-	int calculate_cycle_size(double frames_per_second, int samplefreq, double samples_per_frame, int &deficit)
-	{
-		int 	cycle_size	 	= int(floor(frames_per_second + 0.5));
-		double 	extra_samples	= (int(floor(samples_per_frame + 0.5)) * int(floor(frames_per_second + 0.5))) - (samplefreq * int(floor(frames_per_second + 0.5)) / frames_per_second);
-		
-		while(int(extra_samples*1000) % 1000 != 0 && cycle_size <= 3000)
-		{
-			cycle_size *= 10;
-			extra_samples *= 10;
-		}
-		
-		if(int(floor(extra_samples + 0.5)) == 0)
-			cycle_size = 1;
-		else
-			cycle_size /= int( gcd(cycle_size, int(floor(extra_samples + 0.5))) );
-	
-		deficit = int(extra_samples) < 0 ? -1 : 1;
-
-		return cycle_size;
-	}
-
-	class audio_reseat_impl : public audio_reseat
-	{
-		public:
-			audio_reseat_impl( ) 
-				: queue( )
-				, offset( 0 )
-				, samples( 0 )
-			{ 
-			}
-
-			virtual ~audio_reseat_impl( ) 
-			{ 
-			}
-
-			virtual bool append( audio_type_ptr audio )
-			{
-				// TODO: ensure that all audio packets are consistent and reject if not
-				if ( audio )
-				{
-					queue.push_back( audio );
-					samples += audio->samples( );
-				}
-
-				return true;
-			}
-
-			virtual audio_type_ptr retrieve( int requested, bool pad )
-			{
-				audio_type_ptr result;
-				if ( has( requested ) )
-				{
-					int index = 0;
-					typedef audio< unsigned char, pcm16 > pcm16;
-
-					audio_type_ptr audio = queue[ 0 ];
-					int channels = audio->channels( );
-
-					result = audio_type_ptr( new audio_type( pcm16( audio->frequency( ), channels, requested ) ) );
-					short *dst = ( short * )result->data( );
-
-					while( index != requested && queue.size( ) > 0 )
-					{
-						audio = queue[ 0 ];
-						short *src = ( short * )audio->data( ) + offset * channels;
-
-						int remainder = audio->samples( ) - offset;
-						int samples_from_packet = requested - index < remainder ? requested - index : remainder;
-
-						for ( int i = 0; i < samples_from_packet * channels; i ++ )
-							*dst ++ = *src ++;
-
-						if ( samples_from_packet == remainder )
-						{
-							samples -= samples_from_packet;
-							queue.pop_front( );
-							offset = 0;
-						}
-						else
-						{
-							offset += samples_from_packet;
-							samples -= samples_from_packet;
-						}
-
-						index += samples_from_packet;
-					}
-				}
-				return result;
-			}
-
-			virtual void clear( )
-			{
-				queue.clear( );
-				offset = 0;
-				samples = 0;
-			}
-
-			bool has( int requested )
-			{
-				return requested <= samples;
-			}
-
-			virtual iterator begin( )
-			{
-				return queue.begin( );
-			}
-
-			virtual const_iterator begin( ) const
-			{
-				return queue.begin( );
-			}
-
-			virtual iterator end( )
-			{
-				return queue.end( );
-			}
-
-			virtual const_iterator end( ) const
-			{
-				return queue.end( );
-			}
-
-		private:
-			bucket queue;
-			int offset;
-			int samples;
-	};
-
-	inline bool is_channel_convertion_supported(int channels_in, int channels_out)
-	{
-		switch(channels_out)
-		{
-		case 1:
-			switch(channels_in)
-			{
-			case 2:
-			case 3:
-			case 4:
-			case 6:
-				return true;
-			}
-			break;
-		case 2:
-			return true;
-		case 4:
-			switch(channels_in)
-			{
-			//case 1:
-			case 2:
-			//case 3:
-			case 6:
-				return true;
-			}
-			break;
-		}
-		
-		return false;
-	}
-	
-	inline void mix_sample( const short *input, int channels_in, int channels_out, std::vector< float > &sum)
-	{
-		switch(channels_out)
-		{
-		case 1:
-			switch( channels_in )
-			{
-			case 2:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 		= 0;
-					const unsigned char CHANNEL_IDX_RIGHT		= 1;
-					
-					sum[0] = ( float( input[ CHANNEL_IDX_LEFT ] ) + float( input[ CHANNEL_IDX_RIGHT ] ) );
-				}
-				break;
-			case 3:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 	= 0;
-					const unsigned char CHANNEL_IDX_CENTRE	= 1;
-					const unsigned char CHANNEL_IDX_RIGHT	= 2;
-					
-					sum[0] = 		( 	float(input[ CHANNEL_IDX_LEFT ]) 
-								+ 		float(input[ CHANNEL_IDX_RIGHT ]) )
-								+ 	  	float(input[ CHANNEL_IDX_CENTRE ]);
-				}
-				break;
-			case 4:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 			= 0;
-					const unsigned char CHANNEL_IDX_RIGHT			= 1;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND	= 2;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND	= 3;
-
-					sum[0] =		(	float(input[ CHANNEL_IDX_LEFT ])
-								+		float(input[ CHANNEL_IDX_RIGHT ]) )
-								+	(	float(input[ CHANNEL_IDX_LEFT_SURROUND ])
-								+		float(input[ CHANNEL_IDX_RIGHT_SURROUND ]) );
-				}
-				break;
-			case 6:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 				= 0;
-					const unsigned char CHANNEL_IDX_CENTRE				= 1;
-					const unsigned char CHANNEL_IDX_RIGHT				= 2;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND		= 3;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND		= 4;
-					const unsigned char CHANNEL_IDX_LOW_FREQ_EFFECTS	= 5;
-
-					sum[0] =		(	float(input[ CHANNEL_IDX_LEFT ])
-								+		float(input[ CHANNEL_IDX_RIGHT ]) )
-								+	(	float(input[ CHANNEL_IDX_LEFT_SURROUND ])
-								+		float(input[ CHANNEL_IDX_RIGHT_SURROUND ]) )
-								+		float(input[ CHANNEL_IDX_CENTRE ])
-								+		float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
-				}
-				break;
-			}		
-			break;
-		case 2:
-			switch( channels_in )
-			{
-			case 1:
-				sum[0] = float( input[ 0 ] );
-				sum[1] = sum[0];
-				break;
-			case 3:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 	= 0;
-					const unsigned char CHANNEL_IDX_CENTRE	= 1;
-					const unsigned char CHANNEL_IDX_RIGHT	= 2;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-			
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-				}
-				break;
-			case 4:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 			= 0;
-					const unsigned char CHANNEL_IDX_RIGHT			= 1;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND	= 2;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND	= 3;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+ 	float(input[ CHANNEL_IDX_LEFT_SURROUND ]);
-			
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+ 	float(input[ CHANNEL_IDX_RIGHT_SURROUND ]);
-				}
-				break;
-			case 5:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 			= 0;
-					const unsigned char CHANNEL_IDX_RIGHT			= 1;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND	= 2;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND	= 3;
-					const unsigned char CHANNEL_IDX_CENTRE	        = 4;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+ 	float(input[ CHANNEL_IDX_LEFT_SURROUND ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+ 	float(input[ CHANNEL_IDX_RIGHT_SURROUND ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-				}
-				break;
-			case 6:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 				= 0;
-					const unsigned char CHANNEL_IDX_CENTRE				= 1;
-					const unsigned char CHANNEL_IDX_RIGHT				= 2;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND		= 3;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND		= 4;
-					const unsigned char CHANNEL_IDX_LOW_FREQ_EFFECTS	= 5;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+ 	float(input[ CHANNEL_IDX_LEFT_SURROUND ])
-								+	float(input[ CHANNEL_IDX_CENTRE ])
-								+	float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
-
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+ 	float(input[ CHANNEL_IDX_RIGHT_SURROUND ])
-								+	float(input[ CHANNEL_IDX_CENTRE ])
-								+	float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
-				}
-				break;
-
-			default:
-				{
-					sum[ 0 ] = sum[ 1 ] = 0.0f;
-					for ( int i = 0; i < channels_in; i ++ )
-						sum[ i % 2 ] += float( input[ i ] );
-				}
-			}
-			break;
-		case 4:
-			switch( channels_in )
-			{
-			case 1:
-				sum[0] = float( input[ 0 ] );
-				sum[1] = sum[0];
-				sum[2] = 0;
-				sum[3] = 0;
-				break;
-			case 2:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 	= 0;
-					const unsigned char CHANNEL_IDX_RIGHT	= 1;
-					
-					sum[0] = float(input[ CHANNEL_IDX_LEFT ]);
-					sum[1] = float(input[ CHANNEL_IDX_RIGHT ]);
-					sum[2] = 0;
-					sum[3] = 0;
-				}
-				break;
-			case 3:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 	= 0;
-					const unsigned char CHANNEL_IDX_CENTRE	= 1;
-					const unsigned char CHANNEL_IDX_RIGHT	= 2;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-			
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+	float(input[ CHANNEL_IDX_CENTRE ]);
-					sum[2] = 0;
-					sum[3] = 0;
-				}
-				break;
-			case 6:
-				{
-					const unsigned char CHANNEL_IDX_LEFT 				= 0;
-					const unsigned char CHANNEL_IDX_CENTRE				= 1;
-					const unsigned char CHANNEL_IDX_RIGHT				= 2;
-					const unsigned char CHANNEL_IDX_LEFT_SURROUND		= 3;
-					const unsigned char CHANNEL_IDX_RIGHT_SURROUND		= 4;
-					const unsigned char CHANNEL_IDX_LOW_FREQ_EFFECTS	= 5;
-
-					sum[0] =		float(input[ CHANNEL_IDX_LEFT ])
-								+ 	float(input[ CHANNEL_IDX_CENTRE ])
-								+	float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
-			
-					sum[1] =		float(input[ CHANNEL_IDX_RIGHT ])
-								+ 	float(input[ CHANNEL_IDX_CENTRE ])
-								+	float(input[ CHANNEL_IDX_LOW_FREQ_EFFECTS ]);
-								
-					sum[2] =		float(input[ CHANNEL_IDX_LEFT_SURROUND ]);
-					sum[3] =		float(input[ CHANNEL_IDX_RIGHT_SURROUND ]);
-	
-				}
-				break;
-			}
-			break;
-		}
-	}
 }
 
 // Query structure used
@@ -552,15 +200,15 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	double	num_samples			= (double(samples_in) * sampling_freq) / input_audio->frequency();
 	int		num_samples_rounded	= int(0.5 + num_samples);
 	
-	audio_type_ptr output_audio = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(sampling_freq, channels_in, num_samples_rounded)));
+	audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16(sampling_freq, channels_in, num_samples_rounded));
 	
 	double ratio = double(samples_in) / num_samples;
 	
 	// This means of interpolation assumes that the first sample of input and output are in sync
 	// The reality is that this is unlikely.
 	
-	short	*in_ptr		= ((short*)input_audio->data()),
-			*out_ptr	= ((short*)output_audio->data());
+	short	*in_ptr		= ((short*)input_audio->pointer()),
+			*out_ptr	= ((short*)output_audio->pointer());
 			
 	double	offset			= 0.0,
 			delta_offset	= 0.0;
@@ -610,221 +258,6 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	}
 	
 	return output_audio;
-}
-
-ML_DECLSPEC int audio_samples_for_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
-{
-	// Work around: some video files report frame rates with a common denominator (ie: 25000:1000)
-	// Without factoring that out upfront (in this implementation), the results are incorrect
-	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
-	framerate_numerator /= int( common );
-	framerate_denominator /= int( common ); 
-
-	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
-	double	samples_per_frame	= double(samplefreq) / frames_per_second;
-	
-	int	deficit;
-	int frames_per_cycle = calculate_cycle_size(frames_per_second, samplefreq, samples_per_frame, deficit);
-
-	int		samples_per_frame_base	= int((( long long )samplefreq * framerate_denominator) / framerate_numerator);
-	double	extra_sample_spread		= samples_per_frame - double(samples_per_frame_base);
-	int		cycle_idx				= frameoffset % frames_per_cycle;
-
-	if(cycle_idx == 0)
-		return samples_per_frame_base + (extra_sample_spread > 0.5 ? deficit : 0);
-	else
-		return samples_per_frame_base + (int(floor((extra_sample_spread * cycle_idx) + 0.5)) > int(floor(extra_sample_spread * (cycle_idx - 1) + 0.5)) ? deficit : 0);
-}
-
-ML_DECLSPEC long long audio_samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
-{
-	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
-	framerate_numerator /= int( common );
-	framerate_denominator /= int( common ); 
-
-	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
-	double	samples_per_frame	= double(samplefreq) / frames_per_second;
-	
-	int deficit;
-	int frames_per_cycle = calculate_cycle_size(frames_per_second, samplefreq, samples_per_frame, deficit);
-	
-	int		samples_per_frame_base	= (samplefreq * framerate_denominator) / framerate_numerator;
-	int		samples_per_cycle		= int(float(samples_per_frame * double(frames_per_cycle)));
-	double	extra_sample_spread		= samples_per_frame - double(samples_per_frame_base);
-	int		cycle_idx				= frameoffset % frames_per_cycle;
-	
-	long long offset = ((long long)(frameoffset / frames_per_cycle) * samples_per_cycle);
-	
-	if(cycle_idx > 0)
-	{
-		offset += cycle_idx * samples_per_frame_base;
-		
-		if(extra_sample_spread > 0.5)
-			offset += deficit;
-		
-		offset += deficit * int(floor((extra_sample_spread * cycle_idx) - extra_sample_spread + 0.5));
-	}
-
-	return offset;
-}
-
-ML_DECLSPEC audio_reseat_ptr create_audio_reseat( )
-{
-	return audio_reseat_ptr( new audio_reseat_impl( ) );
-}
-
-ML_DECLSPEC audio_type_ptr audio_mix(const audio_type_ptr& a, const audio_type_ptr& b)
-{
-	// Reject if audio input frequencies differ
-	if(a->frequency() != b->frequency())
-		return audio_type_ptr();
-	
-	// Reject if number of audio samples differ
-	if(a->samples() != b->samples())
-		return audio_type_ptr();
-	
-	// Reject if number of audio channels differ
-	if(a->channels() != b->channels())
-		return audio_type_ptr();
-	
-	// Reject if audio format isn't 16-bit PCM
-	if(		(a->af().compare(AUDIO_FORMAT_PCM16) != 0)
-		||	(b->af().compare(AUDIO_FORMAT_PCM16) != 0) )
-		return audio_type_ptr();
-	
-	const audio_type::size_type samples_out  = a->samples();   // a & b are the same.
-	const audio_type::size_type channels_out = a->channels();
-	
-	audio_type_ptr mix = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(a->frequency(), channels_out, samples_out)));
-
-	// upfront filter calcs
-	const double	cutoff_to_fs_ratio	= 0.5;
-	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
-	const double	one_minus_exponent	= 1 - exponent;
-	
-	long  sample_summation = 0;
-	short clipped_sample   = 0;
-
-	short *po = (short*)mix->data();
-	short *pa = (short*)a->data();
-	short *pb = (short*)b->data();
-
-	for(audio_type::size_type sample_idx = 0; sample_idx < samples_out; sample_idx++)
-	{
-		for(audio_type::size_type channel_idx = 0; channel_idx < channels_out; ++channel_idx)
-		{
-			// Add a & b together
-			sample_summation = long( *pa ++ ) + long( *pb ++ );
-			
-			// clip appropriately
-			if(sample_summation < min_short)
-				clipped_sample = min_short; 
-			else if(sample_summation > max_short)
-				clipped_sample = max_short;
-			else
-				clipped_sample = short(sample_summation);
-			
-			// low pass filter to counter any effects from clipping
-			if(sample_idx == 0)
-				*po = short(one_minus_exponent * clipped_sample);
-			else
-				*po = short(one_minus_exponent * clipped_sample + exponent * ( *( po - channels_out ) ) );
-
-			po ++;
-		}
-	}
-	
-	return mix;
-}
-
-ML_DECLSPEC audio_type_ptr audio_channel_convert(const audio_type_ptr& input_audio, int channels)
-{
-	// Reject if given dodgy input
-	if(input_audio == audio_type_ptr())
-		return audio_type_ptr();
-
-	// Return input if already in desired form
-	if(input_audio->channels() == channels)
-		return input_audio;
-
-	// Reject if convertion isn't supported
-	if(!is_channel_convertion_supported(input_audio->channels(), channels))
-		return audio_type_ptr();
-
-	// Reject if audio format isn't 16-bit PCM
-	if(input_audio->af().compare(AUDIO_FORMAT_PCM16) != 0)
-		return audio_type_ptr();
-
-	// Create audio object for output
-	const audio_type::size_type	samples = input_audio->samples();
-	audio_type_ptr output_audio = audio_type_ptr(new audio_type(audio<unsigned char, pcm16>(input_audio->frequency(), channels, samples)));
-	
-	// upfront filter calcs
-	const double	cutoff_to_fs_ratio	= 0.5;
-	const double	exponent			= exp(-2.0 * M_PI * cutoff_to_fs_ratio);
-	const double	one_minus_exponent	= 1 - exponent;
-	
-	short *output = (short*)output_audio->data();
-	short *input = (short*)input_audio->data();
-	int channels_in = input_audio->channels( );
-	
-	std::vector< float > sum( channels );
-	std::vector< float > clipped( channels );
-
-	for(audio_type::size_type sample_idx = 0; sample_idx < samples; ++sample_idx)
-	{
-		// Add appropriate channels together with appropriate weightings requested channels
-		mix_sample( input, channels_in, channels, sum );
-		input += channels_in;
-
-		for(int ch = 0; ch < channels; ++ch)
-		{
-			// clip channels appropriately
-			if(sum[ch] < min_short)
-				clipped[ch] = min_short; 
-			else if(sum[ch] > max_short)
-				clipped[ch] = max_short;
-			else
-				clipped[ch] = sum[ch];
-
-			// low pass filter to counter any effects from clipping
-			if(sample_idx == 0)
-				*output = short( one_minus_exponent * clipped[ch] );
-			else
-				*output = short( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
-
-			output ++;
-		}
-	}
-	
-	return output_audio;
-}
-
-ML_DECLSPEC audio_type_ptr audio_reverse( audio_type_ptr audio )
-{
-	if ( audio )
-	{
-		const audio_type::size_type	channels = audio->channels( );
-		const audio_type::size_type	samples = audio->samples( );
-
-		short *in = ( short * )audio->data( );
-		short *out = in + channels * samples - channels;
-		audio_type::size_type c;
-
-		while ( in < out )
-		{
-			c = channels;
-			while( c -- )
-			{
-				short t = *in;
-				*in ++ = *out;
-				*out ++ = t;
-			}
-			out -= 2 * channels;
-		}
-	}
-
-	return audio;
 }
 
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const openpluginlib::wstring &pf )
@@ -897,11 +330,12 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 	if ( frame && frame->get_audio( ) )
 	{
 		audio_type_ptr audio = frame->get_audio( );
+		audio = audio::coerce( audio::FORMAT_PCM16, audio );
 
-		const audio_type::size_type	channels = audio->channels( );
-		const audio_type::size_type	samples = audio->samples( );
+		const int channels = audio->channels( );
+		const int samples = audio->samples( );
 
-		short *data = ( short * )audio->data( );
+		short *data = ( short * )audio->pointer( );
 		size_t count = ( channels * samples );
 
 		while( count -- )
@@ -909,6 +343,8 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 			*data = short( volume * *data );
 			data ++;
 		}
+
+		frame->set_audio( audio );
 	}
 	return frame;
 }

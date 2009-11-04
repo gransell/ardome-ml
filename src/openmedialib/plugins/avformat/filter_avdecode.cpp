@@ -47,8 +47,6 @@ static bool is_imx( const std::string &codec )
 class stream_queue
 {
 	public:
-		typedef audio< unsigned char, pcm16 > pcm16_audio_type;
-
 		stream_queue( ml::input_type_ptr input, int gop_open )
 			: input_( input )
 			, gop_open_( gop_open )
@@ -372,8 +370,8 @@ class stream_queue
 						int channels = context_->channels;
 						int frequency = context_->sample_rate;
 
-						audio_type_ptr audio = audio_type_ptr( new audio_type( pcm16_audio_type( frequency, channels, audio_size / channels / 2 ) ) );
-						memcpy( audio->data( ), audio_buf_, audio->size( ) );
+						audio::pcm16_ptr audio = audio::pcm16_ptr( new audio::pcm16( frequency, channels, audio_size / channels / 2 ) );
+						memcpy( audio->pointer( ), audio_buf_, audio->size( ) );
 						audio->set_position( pkt->position( ) );
 						result->set_audio( audio );
 

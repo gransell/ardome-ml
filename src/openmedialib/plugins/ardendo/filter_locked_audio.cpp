@@ -6,6 +6,8 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+#include <openpluginlib/pl/log.hpp>
+
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/log_defines.hpp>
 
@@ -65,40 +67,9 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< pl::wstring >( ) ) != profiles_.end( ) && get_position( ) < get_frames( ) )
 			{
 				ml::input_type_ptr input = fetch_slot( 0 );
-				std::vector< int > table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
+				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
 				int start = get_position( ) - get_position( ) % table.size( );
 				int final = start + table.size( );
-				ml::frame_type_ptr frame = fetch_from_slot( );
-
-				// Allocate a single audio object to accomodate the number of samples specified in the table
-				if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
-				{
-					if ( frame && frame->get_audio( ) )
-					{
-						frame->get_fps( fps_num_, fps_den_ );
-						frequency_ = frame->get_audio( )->frequency( );
-						channels_ = frame->get_audio( )->channels( );
-						if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
-						{
-							int total = 0;
-							for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
-							audio_span_ = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, total ) ) );
-							memset( audio_span_->data( ), 0, audio_span_->size( ) );
-							// Make sure to clear the frame vector so that we use the new audio span allocated and refetch our 5 frame span
-                            frames_.clear( );
-						}
-						else
-						{
-							result = frame;
-							return;
-						}
-					}
-					else
-					{
-						result = frame;
-						return;
-					}
-				}
 
 				// Populate the audio_span for the number of the frames in the table each time we move to another group of frames
 				if ( frames_.size( ) == 0 || frames_[ 0 ]->get_position( ) != start )
@@ -106,6 +77,35 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					int start_audio = -1;
 					int final_audio = -1;
 					int samples = 0;
+
+					ml::frame_type_ptr frame = fetch_from_slot( );
+
+					// Allocate a single audio object to accomodate the number of samples specified in the table
+					if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
+					{
+						if ( frame && frame->get_audio( ) )
+						{
+							frame->get_fps( fps_num_, fps_den_ );
+							frequency_ = frame->get_audio( )->frequency( );
+							channels_ = frame->get_audio( )->channels( );
+							if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
+							{
+								int total = 0;
+								for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
+								audio_span_ = ml::audio::allocate( frame->get_audio( ), 48000, channels_, total );
+							}
+							else
+							{
+								result = frame;
+								return;
+							}
+						}
+						else
+						{
+							result = frame;
+							return;
+						}
+					}
 
 					// Erase the previously collected frames
 					frames_.erase( frames_.begin( ), frames_.end( ) );
@@ -127,59 +127,52 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					// but if there is a short fall, then we pitch shift to make sure we have what we want
 					if ( samples == audio_span_->samples( ) )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = ( boost::uint8_t * )audio_span_->pointer( );
 						for( std::vector< ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); iter ++ )
 						{
-							memcpy( ptr, ( *iter )->get_audio( )->data( ), ( *iter )->get_audio( )->size( ) );
+							memcpy( ptr, ( *iter )->get_audio( )->pointer( ), ( *iter )->get_audio( )->size( ) );
 							ptr += ( *iter )->get_audio( )->size( );
 						}
 					}
 					else if ( start_audio != -1 )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = ( boost::uint8_t *)audio_span_->pointer( );
                         if ( frames_.size( ) == table.size( ) )
-                            ARLOG_WARN( _CT( "We do not have enough samples in our 5 frame cycle. Need to pitch shift." ) );
+						{
+                            PL_LOG( pl::level::warning, "We do not have enough samples in our 5 frame cycle. Need to pitch shift." );
+						}
                         
-                        std::vector< double > weights;
-						double max_level;
-
-						memset( audio_span_->data( ), 0, audio_span_->size( ) );
-
-						for ( int j = 0; j < channels_; j ++ )
-                            weights.push_back( 1.0 );
-
 						for ( size_t i = 0; i < table.size( ); i ++ )
 						{
-							if ( ( int )i >= start_audio && ( int )i <= final_audio )
+							int size = table[ i ] * channels_ * audio_span_->sample_size( );
+
+							if ( int( i ) >= start_audio && int( i ) <= final_audio )
 							{
-								ml::frame_type_ptr conform = ml::frame_type_ptr( new ml::frame_type( ) );
-								ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, table[ i ] ) ) );
-								memset( aud->data( ), 0, aud->size( ) );
-								conform->set_audio( aud );
-								mix_channel( conform, frames_[ i ], weights, max_level, 0 );
-								memcpy( ptr, conform->get_audio( )->data( ), conform->get_audio( )->size( ) );
-								ptr += conform->get_audio( )->size( );
+								ml::audio_type_ptr temp = ml::audio::pitch( frames_[ i ]->get_audio( ), table[ i ] );
+								memcpy( ptr, temp->pointer( ), temp->size( ) );
 							}
 							else
 							{
-								ptr += table[ i ] * channels_ * 2;
+								memset( ptr, 0, size );
 							}
+
+							ptr += size;
 						}
 					}
 				}
 
 				// Now we collect the frame we want - this may, or may not, have audio samples - if it has none, we just return it otherwise we collect the 
 				// samples from the span.
-				if ( get_position( ) - start < frames_.size( ) )
+				if ( get_position( ) - start < int( frames_.size( ) ) )
 				{
 					result = frames_[ get_position( ) - start ];
 					if ( result && result->get_audio( ) )
 					{
-						boost::uint8_t *ptr = audio_span_->data( );
+						boost::uint8_t *ptr = ( boost::uint8_t *)audio_span_->pointer( );
 						for ( int index = start; index < get_position( ); index ++ )
-							ptr += table[ index - start ] * channels_ * 2;
-						ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( 48000, channels_, table[ get_position( ) - start ] ) ) );
-						memcpy( aud->data( ), ptr, aud->size( ) );
+							ptr += table[ index - start ] * channels_ * audio_span_->sample_size( );
+						ml::audio_type_ptr aud = ml::audio::allocate( audio_span_, -1, -1, table[ get_position( ) - start ] );
+						memcpy( aud->pointer( ), ptr, aud->size( ) );
 						result->set_audio( aud );
 					}
 				}

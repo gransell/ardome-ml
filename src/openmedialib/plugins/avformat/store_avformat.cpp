@@ -933,15 +933,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Queue audio - audio is carved up here to match the number of bytes required by the audio codec
 			if ( audio_stream_.size( ) && frame->get_audio( ) )
 			{
-				typedef audio< unsigned char, pcm16 > pcm16;
-
-				audio_type_ptr current = frame->get_audio( );
+				audio_type_ptr current = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
 
 				// Create an audio block if we haven't done so already
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
-					audio_block_ = audio_type_ptr( new audio_type( pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) ) );
+					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -951,24 +949,24 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					audio_block_->set_position( push_count_ );
 		
 				int bytes = audio_input_frame_size_ * current->channels( ) * 2;
-				int available = current->allocsize( );
+				int available = current->size( );
 				int offset = 0;
 
 				while ( bytes > 0 && audio_block_used_ + available >= bytes )
 				{
-					memcpy( audio_block_->data( ) + audio_block_used_, current->data( ) + offset, bytes - audio_block_used_ );
+					memcpy( ( boost::uint8_t * )audio_block_->pointer( ) + audio_block_used_, ( boost::uint8_t * )current->pointer( ) + offset, bytes - audio_block_used_ );
 					audio_queue_.push_back( audio_block_ );
 					available -= bytes - audio_block_used_;
 					offset += bytes - audio_block_used_;
 					audio_block_used_ = 0;
-					audio_block_ = audio_type_ptr( new audio_type( pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) ) );
+					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
 					audio_block_->set_position( push_count_ );
 				}
 
-				if ( offset < current->allocsize( ) )
+				if ( offset < current->size( ) )
 				{
-					memcpy( audio_block_->data( ) + audio_block_used_, current->data( ) + offset, current->allocsize( ) - offset );
-					audio_block_used_ += current->allocsize( ) - offset;
+					memcpy( ( boost::uint8_t * )audio_block_->pointer( ) + audio_block_used_, ( boost::uint8_t * )current->pointer( ) + offset, current->size( ) - offset );
+					audio_block_used_ += current->size( ) - offset;
 				}
 			}
 
@@ -1118,7 +1116,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
-				data = ( short * )( audio->data( ) );
+				data = ( short * )( audio->pointer( ) );
 
 				if ( !video_stream_ && audio->position( ) != last_audio_ && audio->position( ) % prop_gop_size_.value< int >( ) == 0 )
 				{

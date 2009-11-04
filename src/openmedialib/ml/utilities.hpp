@@ -9,8 +9,11 @@
 #define OPENMEDIALIB_UTILITIES_INC_
 
 #include <deque>
+#include <openimagelib/il/basic_image.hpp>
 #include <openimagelib/il/utility.hpp>
 #include <boost/cstdint.hpp>
+#include <openmedialib/ml/frame.hpp>
+#include <openmedialib/ml/audio_utilities.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -27,12 +30,7 @@ ML_DECLSPEC store_type_ptr create_store( const openpluginlib::wstring &, frame_t
 ML_DECLSPEC store_type_ptr create_store( const openpluginlib::string &, frame_type_ptr );
 ML_DECLSPEC filter_type_ptr create_filter( const openpluginlib::wstring & );
 
-ML_DECLSPEC int audio_samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
-ML_DECLSPEC long long audio_samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
-ML_DECLSPEC audio_type_ptr audio_mix( const audio_type_ptr& input_a, const audio_type_ptr& input_b );
-ML_DECLSPEC audio_type_ptr audio_channel_convert( const audio_type_ptr &input_audio, int channels );
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );
-ML_DECLSPEC audio_type_ptr audio_reverse( audio_type_ptr );
 
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const openpluginlib::wstring & );
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, olib::openimagelib::il::rescale_filter filter );
@@ -41,29 +39,6 @@ ML_DECLSPEC frame_type_ptr frame_crop( frame_type_ptr, int, int, int, int );
 
 // Convenience function to change volume on a frame
 extern ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr, float );
-
-class ML_DECLSPEC audio_reseat
-{
-	public:
-		typedef std::deque< audio_type_ptr > bucket;
-		typedef bucket::const_iterator const_iterator;
-		typedef bucket::iterator iterator;
-
-	public:
-		virtual ~audio_reseat( ) { }
-		virtual bool append( audio_type_ptr ) = 0;
-		virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
-		virtual void clear( ) = 0;
-		virtual bool has( int ) = 0;
-		virtual iterator begin( ) = 0;
-		virtual const_iterator begin( ) const = 0;
-		virtual iterator end( ) = 0;
-		virtual const_iterator end( ) const = 0;
-};
-
-typedef boost::shared_ptr< audio_reseat > audio_reseat_ptr;
-
-extern ML_DECLSPEC audio_reseat_ptr create_audio_reseat( );
 
 // A general abstraction for callback based reading and writing - this allows applications
 // to provide their own mechanism for stream reception and output (depending on the 
@@ -99,6 +74,28 @@ extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const
 inline bool is_yuv_planar( const frame_type_ptr &frame )
 {
 	return frame ? olib::openimagelib::il::is_yuv_planar( frame->get_image( ) ) : false;
+}
+
+namespace audio
+{
+	class ML_DECLSPEC reseat
+	{
+		public:
+			typedef std::deque< audio_type_ptr > bucket;
+			typedef bucket::const_iterator const_iterator;
+			typedef bucket::iterator iterator;
+	
+		public:
+			virtual ~reseat( ) { }
+			virtual bool append( audio_type_ptr ) = 0;
+			virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
+			virtual void clear( ) = 0;
+			virtual bool has( int ) = 0;
+			virtual iterator begin( ) = 0;
+			virtual const_iterator begin( ) const = 0;
+			virtual iterator end( ) = 0;
+			virtual const_iterator end( ) const = 0;
+	};
 }
 
 } } }

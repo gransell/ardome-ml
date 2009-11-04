@@ -219,9 +219,8 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 				// Generate audio if required
 				if ( prop_pad_audio_.value< int >( ) && src_frequency_ && !result->get_audio( ) )
 				{
-					int samples = ml::audio_samples_for_frame( get_position( ), src_frequency_, src_fps_num_, src_fps_den_ );
-					ml::audio_type_ptr aud = ml::audio_type_ptr( new ml::audio_type( ml::pcm16_audio_type( src_frequency_, src_channels_, samples ) ) );
-					memset( aud->data( ), 0, src_channels_ * aud->samples( ) * sizeof( short ) );
+					int samples = ml::audio::samples_for_frame( get_position( ), src_frequency_, src_fps_num_, src_fps_den_ );
+					ml::audio::pcm16_ptr aud = ml::audio::pcm16_ptr( new ml::audio::pcm16( src_frequency_, src_channels_, samples ) );
 					result->set_audio( aud );
 				}
 			}

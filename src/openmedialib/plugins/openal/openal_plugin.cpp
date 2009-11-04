@@ -166,7 +166,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			if ( context != NULL )
 			{
 				// Create the requested number of preroll buffers
-				for ( size_t i = 0; i < prop_preroll_.value< int >( ); i ++ )
+				for ( size_t i = 0; i < size_t( prop_preroll_.value< int >( ) ); i ++ )
 				{
 					ALuint buffer;
 					alGenBuffers( 1, &buffer );
@@ -198,7 +198,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 		virtual bool push( frame_type_ptr frame )
 		{
 			// Get the audio from the frame
-			audio_type_ptr aud = frame->get_audio( );
+			audio_type_ptr aud = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
 
 			// Recover any played out buffers
 			recover( );
@@ -213,7 +213,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				}
 				else
 				{
-					aud = audio_channel_convert( aud, 2 );
+					aud = audio::channel_convert( aud, 2 );
 					format_ = AL_FORMAT_STEREO16;
 				}
 
@@ -223,7 +223,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				for( int i = 0; i < aud->size( ) / sizeof( short ); ++i )
 					buf[ i ] = ( buf[ i ] >> 8 ) | ( buf[ i ] << 8 );
 #			endif
- 				alBufferData( *buffers_.begin( ), format_, aud->data( ), aud->size( ), aud->frequency( ) );
+ 				alBufferData( *buffers_.begin( ), format_, aud->pointer( ), aud->size( ), aud->frequency( ) );
 				alSourceQueueBuffers( source_, 1, &( *buffers_.begin( ) ) );
 				buffers_.pop_front( );
 			}
@@ -250,7 +250,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			// Recover all buffers
    			ALenum state;
    			alGetSourcei( source_, AL_SOURCE_STATE, &state );
-			while ( state == AL_PLAYING && buffers_.size( ) < prop_preroll_.value< int >( ) )
+			while ( state == AL_PLAYING && buffers_.size( ) < size_t( prop_preroll_.value< int >( ) ) )
 			{
 				recover( );
 	   			alGetSourcei( source_, AL_SOURCE_STATE, &state );

@@ -97,21 +97,14 @@ namespace detail {
 
 void py_audio( )
 {
-	py::class_<ml::audio_type, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
-		.def( "frequency", &ml::audio_type::frequency )
-		.def( "channels", &ml::audio_type::channels )
-		.def( "samples", &ml::audio_type::samples )
-		.def( "af", &ml::audio_type::af )
-		.def( "pts", &ml::audio_type::pts )
-		.def( "set_pts", &ml::audio_type::set_pts )
-		.def( "position", &ml::audio_type::position )
-		.def( "set_position", &ml::audio_type::set_position )
-		.def( "size", &ml::audio_type::size )
-		.def( "is_cropped", &ml::audio_type::is_cropped )
-		.def( "crop_clear", &ml::audio_type::crop_clear )
-		.def( "crop", &ml::audio_type::crop )
-		.def( "get_som", &ml::audio_type::get_som )
-		.def( "get_eom", &ml::audio_type::get_eom )
+	py::class_<ml::audio::base, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
+		.def( "frequency", &ml::audio::base::frequency )
+		.def( "channels", &ml::audio::base::channels )
+		.def( "samples", &ml::audio::base::samples )
+		.def( "af", &ml::audio::base::af, py::return_value_policy< py::return_by_value >( ) )
+		.def( "position", &ml::audio::base::position )
+		.def( "set_position", &ml::audio::base::set_position )
+		.def( "size", &ml::audio::base::size )
 	;
 }
 
@@ -206,11 +199,11 @@ void py_filter( )
 
 void py_audio_reseat( )
 {
-	py::class_<ml::audio_reseat, boost::noncopyable, ml::audio_reseat_ptr>( "audio_reseat", py::no_init )
-		.def( "append", &ml::audio_reseat::append )
-		.def( "retrieve", &ml::audio_reseat::retrieve )
-		.def( "clear", &ml::audio_reseat::clear )
-		.def( "has", &ml::audio_reseat::has )
+	py::class_<ml::audio::reseat, boost::noncopyable, ml::audio::reseat_ptr>( "audio_reseat", py::no_init )
+		.def( "append", &ml::audio::reseat::append )
+		.def( "retrieve", &ml::audio::reseat::retrieve )
+		.def( "clear", &ml::audio::reseat::clear )
+		.def( "has", &ml::audio::reseat::has )
 	;
 }
 
@@ -248,6 +241,16 @@ bool is( ml::input_type_ptr a, ml::input_type_ptr b )
 	return a == b;
 }
 
+audio_type_ptr audio_allocate0( const std::wstring &af, int frequency, int channels, int samples )
+{
+	return audio::allocate( af, frequency, channels, samples );
+}
+
+audio_type_ptr audio_allocate1( const audio_type_ptr &audio, int frequency, int channels, int samples )
+{
+	return audio::allocate( audio, frequency, channels, samples );
+}
+
 void py_plugin( )
 {
 	py::def( "create_input", &detail::create_input0 );
@@ -255,11 +258,19 @@ void py_plugin( )
 	py::def( "create_store", &detail::create_store );
 	py::def( "create_filter", &detail::create_filter );
 	py::def( "audio_resample", &ml::audio_resample );
-	py::def( "audio_samples_for_frame", &ml::audio_samples_for_frame );
-	py::def( "audio_samples_to_frame", &ml::audio_samples_to_frame );
-	py::def( "create_audio_reseat", &ml::create_audio_reseat );
-	py::def( "audio_mix", &ml::audio_mix );
-	py::def( "audio_channel_convert", &ml::audio_channel_convert );
+	py::def( "audio_allocate", &detail::audio_allocate0 );
+	py::def( "audio_allocate", &detail::audio_allocate1 );
+	py::def( "audio_channel_convert", &ml::audio::channel_convert );
+	py::def( "audio_channel_extract", &ml::audio::channel_extract );
+	py::def( "audio_mixer", &ml::audio::mixer );
+	py::def( "audio_pitch", &ml::audio::pitch );
+	py::def( "audio_reverse", &ml::audio::reverse );
+	py::def( "audio_volume", &ml::audio::volume );
+	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
+	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
+	py::def( "create_audio_reseat", &ml::audio::create_reseat );
+	py::def( "audio_mix", &ml::audio::mixer );
+	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "frame_convert", &ml::frame_convert );
 	py::def( "frame_rescale", &ml::frame_rescale );
 	py::def( "frame_crop_clear", &ml::frame_crop_clear );

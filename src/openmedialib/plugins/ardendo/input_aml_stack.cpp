@@ -2765,7 +2765,11 @@ static void op_render( aml_stack *stack )
 	if ( input->get_frames( ) )
 	{
 		for ( int i = 0; i < input->get_frames( ); i ++ )
-			input->fetch( i );
+		{
+			ml::frame_type_ptr frame = input->fetch( i );
+			if ( frame->in_error( ) )
+				break;
+		}
 	}
 	else
 	{

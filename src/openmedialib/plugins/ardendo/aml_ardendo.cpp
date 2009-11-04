@@ -23,6 +23,7 @@ extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( );
 
 // OML Filter plugins
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const pl::wstring & );
@@ -86,6 +87,8 @@ public:
 	{
 		if ( resource == L"aml" )
 			return create_aml( resource );
+		if ( resource == L"audio_convert" )
+			return create_audio_convert( resource );
 		if ( resource == L"charcoal" )
 			return create_charcoal( resource );
 		if ( resource == L"chroma_key" )

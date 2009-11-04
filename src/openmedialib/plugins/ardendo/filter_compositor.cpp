@@ -498,8 +498,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			acquire_values( );
-
 			if ( prop_enable_.value< int >( ) )
 			{
 				size_t i = prop_track_.value< int >( ) == 0 ? 1 : 0;
@@ -595,7 +593,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					else
 					{
 						if ( audio && ( *iter )->get_audio( ) )
-							audio = ml::audio_mix( audio, ( *iter )->get_audio( ) );
+							audio = ml::audio::mixer( audio, ( *iter )->get_audio( ) );
 						else if ( !audio && ( *iter )->get_audio( ) )
 							audio = ( *iter )->get_audio( );
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )

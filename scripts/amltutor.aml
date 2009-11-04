@@ -1,0 +1,9 @@
+#!/usr/bin/env amlbatch
+
+: print iter_start render iter_slots drop ;
+: play filter:store store=preview: render ;
+: { 0 pack ;
+: , pack& ;
+: } $ "" , print ;
+
+
