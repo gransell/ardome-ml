@@ -1,6 +1,11 @@
-// Store filter
+// Slots filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:slots
+//
+// Similar to clip, but for slots in a playlist.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

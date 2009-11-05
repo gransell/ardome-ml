@@ -1,6 +1,13 @@
 // Mono filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:mono
+//
+// Provides a mono video effect (converts all samples over a certain threshold
+// to white and all those under to black).
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

@@ -1,9 +1,12 @@
-
 // openal - A openal plugin to ml.
-
+//
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+//
+// #store:openal:
+//
+// Provides an audio playout store based on openal.
 
 #ifdef HAVE_CONFIG_H
 #include <openlibraries_global_config.hpp>

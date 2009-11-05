@@ -1,3 +1,12 @@
+// avformat - A avformat plugin to ml.
+//
+// Copyright (C) 2005-2006 VM Inc.
+// Released under the LGPL.
+// For more information, see http://www.openlibraries.org.
+//
+// #store:avformat:
+//
+// Encodes many video, audio and image formats via the libavformat API.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>

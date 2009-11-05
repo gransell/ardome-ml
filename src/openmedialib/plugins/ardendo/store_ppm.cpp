@@ -1,3 +1,12 @@
+// A PPM Store
+//
+// Copyright (C) 2009 Ardendo
+// Released under the LGPL.
+//
+// #store:ppm:
+// 
+// Writes an image or series of images as a PPM file.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

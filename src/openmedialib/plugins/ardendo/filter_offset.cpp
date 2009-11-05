@@ -1,17 +1,25 @@
 // Offset filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:offset
 //
 // This filter provides a mechanism to allow clips to offset their start time.
 // Although it seems a rather simplistic filter, it is a critical one.
 //
 // For example, to have a composited video come in after 250 frames:
 //
-// <video1> <video2> filter:offset in=250 filter:composite <geometry>
+// colour:
+// video1.mpg 
+// video2.mpg 
+// filter:offset in=250 
+// filter:compositor slots=3
 //
 // Assuming video2 is shorter than video1, you could conceptualise this as a 
-// two track arrangement like:
+// track arrangement like:
 //
+// T0: |---------background----------|
 // T1: |----------video1-------------|
 // T2: |     |----video2----|
 //
@@ -102,6 +110,7 @@
 // To work around some issues in the current frame_rate and resampler filters, 
 // audio is always provided as the same type as the input slot (if the input slot
 // is actually providing audio anyway).
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 

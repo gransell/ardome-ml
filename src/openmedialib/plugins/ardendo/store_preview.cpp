@@ -1,6 +1,12 @@
 // preview store
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #store:preview:
+// 
+// Provides a simple/configurable audio/video playout store.
+
 #include "precompiled_headers.hpp"
 
 #ifdef WIN32

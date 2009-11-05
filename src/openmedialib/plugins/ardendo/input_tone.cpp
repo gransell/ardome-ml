@@ -1,6 +1,9 @@
 // Tone generator
 //
 // Copyright (C) 2009 Ardendo
+// Released under the LGPL.
+//
+// #input:tone:
 //
 // This input creates a sine-wave based tone which is aligned to the frame 
 // rate specified - it generates a number of full sine waves based on the

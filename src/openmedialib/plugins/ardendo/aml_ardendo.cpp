@@ -1,6 +1,14 @@
-// AMF Filter plugin
+// Ardendo AML Filter plugin
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #plugin:ardendo
+//
+// This plugin provides a number of specific extensions to the AML system.
+//
+// Principally, it provides various plugins specific to video editing graphs
+// such as the filter:compositor and the input:aml_stack:.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

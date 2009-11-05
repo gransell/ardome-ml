@@ -1,6 +1,5 @@
-/* -*- mode: C++; c-basic-offset: 4; tab-width: 4; indent-tabs-mode: t -*- */
 // avformat - A avformat plugin to ml.
-
+//
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.

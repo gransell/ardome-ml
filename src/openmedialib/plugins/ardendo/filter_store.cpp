@@ -1,6 +1,11 @@
 // Store filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:store
+// 
+// Allows stores to be introduced into graphs as filters.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

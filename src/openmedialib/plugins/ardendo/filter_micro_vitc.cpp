@@ -1,6 +1,15 @@
 // Micro VITC filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:mvitc_write
+//
+// Generates a micro VITC signal.
+//
+// #filter:mvitc_decode
+//
+// Decodes a micro VITC signal.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

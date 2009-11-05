@@ -1,6 +1,9 @@
 // Pitch filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:pitch
 //
 // This is a very useful filter - can be used in a number of situations.
 //
@@ -8,7 +11,7 @@
 // alteration - this is very useful for converting telecine (24000:1001) to 
 // PAL (25:1) since it doesn't involve the generation of additional frames.
 //
-// Example: amfbatch <movie.avi> filter:pitch 
+// Example: amlbatch <movie.avi> filter:pitch 
 //
 // In a general case, it can be used for speed up/slow down of video by 
 // altering the fps_num/fps_den or speed accordingly.

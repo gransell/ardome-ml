@@ -1,6 +1,20 @@
-// AMF filter
+// AML filter
 //
-// This filter generates aml files on request.
+// Copyright (C) 2008 Ardendo
+// Released under the LGPL.
+//
+// #filter:aml
+//
+// This filter generates aml files on request. AML files are a serialisation of
+// the graph they're connected to - they can be reloaded as valid video clips for
+// reuse in other projects via input:aml_stack.
+//
+// Example:
+//
+// <graph>
+// filter:aml filename=-
+//
+// Writes a serialisation of the graph to stdout.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

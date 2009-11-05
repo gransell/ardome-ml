@@ -1,9 +1,16 @@
-
 // sdl - An sdl plugin to ml.
-
+//
 // Copyright (C) 2006 Visual Media FX Ltd.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+//
+// #store:sdl_video:
+//
+// Provides a store for video playout.
+//
+// #store:sdl_audio:
+//
+// Provides a store for audio playout.
 
 #ifdef WIN32
     #pragma warning(push)

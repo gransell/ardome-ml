@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+import os
+import re
+import sys
+
+class switch_list:
+	def __init__( self ):
+		self.switches = { }
+		self.order = [ ]
+		self.index = 0
+		self.add( '--help' )
+
+	def add( self, switch ):
+		if switch not in self.switches.keys( ):
+			self.switches[ switch ] = [ ]
+			self.order.append( switch )
+
+	def finished( self ):
+		return self.index >= len( self.order )
+
+	def next( self ):
+		switch = self.order[ self.index ]
+		html = self.switches[ switch ]
+		self.index += 1
+		return switch, html
+
+	def contents( self ):
+		for switch in self.order:
+			yield switch, self.switches[ switch ]
+
+switches = switch_list( )
+
+while not switches.finished( ):
+	key, html = switches.next( )
+	for line in os.popen( 'amltutor %s' % key, 'r' ).readlines( ):
+		output = ''
+		line = line.replace( '<', '&lt;' )
+		line = line.replace( '>', '&gt;' )
+		for token in re.split( '([^-a-zA-Z0-9_*:?]+)', line.rstrip( '\n' ) ):
+			if token.startswith( '--' ) and token != '--' and token[ 3 ] != '-':
+				switches.add( token )
+				token = '<a href="#%s">%s</a>' % ( token, token )
+			elif len( html ) > 0 and token.startswith( 'filter:' ) and token != 'filter:':
+				pointer = '--%s' % token.replace( ':', '-', 1 )
+				if pointer != key:
+					token = '<a href="#%s">%s</a>' % ( pointer, token )
+				else:
+					token = '<b>%s</b>' % token
+			output += token
+		output = output.replace( '  ', '&nbsp;&nbsp;' )
+		if len( html ) == 0:
+			html.append( '<h1><a name="%s">%s</a></h1>' % ( key, output ) )
+			html.append( '<ul>' )
+		else:
+			html.append( output + '<br>' )
+	if len( html ):
+		html.append( '</ul>' )
+
+print '<html>'
+print '<title>AML Tutorial</title>'
+print '<body>'
+
+for key, html in switches.contents( ):
+	if len( html ):
+		print '<tt>'
+		for line in html: 
+			print line
+		if key != '--help':
+			print '<ul>[ <a href="#--help">Top</a> ]</ul>'
+		print '</tt>'
+
+print '</body>'
+print '</html>'

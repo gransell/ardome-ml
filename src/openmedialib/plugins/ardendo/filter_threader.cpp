@@ -1,7 +1,12 @@
 // Threading filter
 //
-// This filter provides a more intelligent but compatible rewrite of the vm
-// threader filter.
+// Copyright (C) 2008 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:threader
+// 
+// This filter provides a read ahead component into a graph.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

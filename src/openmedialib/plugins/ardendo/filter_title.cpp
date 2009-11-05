@@ -1,6 +1,9 @@
 // Title filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// ##filter:title
 //
 // This filter provides a titling mechanism. It provides properties for the
 // title, font, font size and geometry. Internally, it generates an SVG doc

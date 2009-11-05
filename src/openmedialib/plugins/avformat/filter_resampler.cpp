@@ -1,8 +1,12 @@
 // avformat - A avformat plugin to ml.
-
+//
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+//
+// #filter:resampler
+//
+// Provides an audio resampler based on the libavformat provided resampler.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>

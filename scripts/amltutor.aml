@@ -5,5 +5,7 @@
 : { 0 pack ;
 : , pack& ;
 : } $ "" , print ;
-
+: swap 1 roll ;
+: report_props { $ "Properties:" , $ "" ,  swap iter_start $ "%s: %s: %s" , iter_props drop } ;
+: report donor report_props ;
 

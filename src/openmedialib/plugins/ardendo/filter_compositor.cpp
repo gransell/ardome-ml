@@ -1,21 +1,11 @@
 // Compositor filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #filter:compositor
 //
 // Provides an n-ary compositing, mixing and muxing operation.
-//
-// Properties:
-//
-//	enable = 0 or 1 [default]
-//		turns the filter on or off
-//
-//	slots = 1 to n [default: 2]
-//		the maximum number of input slots (not all need to be connected)
-//
-//	mono = 0 to n [default: 0]
-//		the slot to use when the compositor is disabled
-//
-// Assumptions:
 //
 // Inputs are connected between 0 and 'slots - 1'.
 //
@@ -36,6 +26,17 @@
 //
 // Audio will automatically be mixed in z order and the result will be deposited
 // on the each frame fetched.
+//
+// Example:
+//
+// colour:
+// file1.mpg
+// filter:lerp @@x=0.0 @@w=0.5
+// file2.mpg
+// filter:lerp @@x=0.5 @@w=0.5
+// filter:compositor slots=3
+//
+// Will play both file1.mpg and file2.mpg side by side in the same window.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

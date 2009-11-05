@@ -1,14 +1,19 @@
 // Colour space filter 
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #filter:colour_space
 //
 // This filter provides a very basic mechanism which attempts to ensure that
 // the image in the fetched frame is in a specific colour space.
 //
-// Properties:
+// Example:
 //
-// 	pf = colour space to generate
-// 		Defaults to r8g8b8a8
+// file.mpg
+// filter:colour_space pf=yuv422p
+//
+// Will convert the incoming images from file.mpg to a yuv422p picture format.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

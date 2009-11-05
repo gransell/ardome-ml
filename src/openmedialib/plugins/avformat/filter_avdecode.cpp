@@ -1,3 +1,16 @@
+// Stream packet decoder and encoder filters
+//
+// Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:avdecode
+//
+// Provides stream/packet based decoding. This is typically used for non-avformat:
+// input implementations to provide a means to decode the packets retrieved.
+// 
+// #filter:avencode
+// 
+// Provides stream packet encoding.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
@@ -534,20 +547,18 @@ class avformat_decode_filter : public filter_type
 			{
 				result = fetch_from_slot( 0 );
 
-				if ( result->get_stream( ) )
+				if ( result && result->get_stream( ) )
 				{
 					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ) ) );
-					//ml::frame_type_ptr( new frame_avformat( queue_->fetch( 0 ), queue_ ) )->get_image( );
-					//ml::frame_type_ptr( new frame_avformat( queue_->fetch( 1 ), queue_ ) )->get_image( );
+					initialised_ = true;
 				}
-
-				initialised_ = true;
 			}
 
 			if ( queue_ )
 			{
 				result = queue_->fetch( get_position( ) );
-				result = ml::frame_type_ptr( new frame_avformat( result, queue_ ) );
+				if ( result )
+					result = ml::frame_type_ptr( new frame_avformat( result, queue_ ) );
 			}
 			else
 			{

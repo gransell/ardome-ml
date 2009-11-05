@@ -1,3 +1,20 @@
+// Step filter
+//
+// Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:step
+//
+// Steps through the connected input at the specified speed.
+//
+// Example:
+//
+// file.mpg
+// filter:step speed=2
+//
+// reduces the length the graph by half and shows every second frame from
+// file.mpg.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

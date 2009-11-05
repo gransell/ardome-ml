@@ -1,6 +1,8 @@
 // General purpose utility functionality
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

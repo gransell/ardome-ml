@@ -1,6 +1,14 @@
-// Misplaced loop filter (needs a proper home)
+// Loop filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:loop
+//
+// Similar to offset - provides a way to connect subgraphs to a compositor 
+// or mixer and have the inputs loop for the length of the longest input
+// on that connected node.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 

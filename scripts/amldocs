@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+def extract_comments( file ):
+	fd = open( file, 'r' )
+	comments = [ ]
+	collecting = [ ]
+	for line in fd.readlines( ):
+		if line.startswith( '//' ):
+			line = line[ 2: ].rstrip( '\n' )
+			if line != "" and line[ 0 ] == ' ': line = line[ 1 : ]
+			if line.startswith( '#filter:' ) or line.startswith( '#input:' ) or line.startswith( '#store:' ):
+				collecting = [ line[ 1 : ] ]
+				comments.append( collecting )
+			elif len( collecting ) > 0:
+				collecting.append( line )
+		else:
+			break
+	return comments
+
+def write_words( file, comments ):
+	result = [ ]
+	for comment in comments:
+		if len( comment ) == 0: break
+		name = '--' + comment[ 0 ].replace( ':', '-', 1 )
+		result.append( name )
+		print ': %s' % name
+		print '    {'
+		for line in comment:
+			print '    $ "%s" ,' % line
+		print '    }'
+		if name.startswith( '--filter-' ):
+			print '    $ "%s" report' % name[ 2 : ].replace( '-', ':', 1 )
+		print ';'
+		print
+	return result
+
+def write_summary( words, name, starts, title ):
+	print ': %s' % name
+	print '    {'
+	print '    $ "%s:" ,' % title
+	print '    $ "" ,'
+	for word in words:
+		if word.startswith( starts ):
+			print '    $ \"%s\" ,' % word
+	print '    }'
+	print ';'
+	print
+
+def main( ):
+	files = [ ]
+	words = [ ]
+
+	for dir in sys.argv[ 1 : ]:
+		for root, dirs, list in os.walk( dir ):
+			for file in list:
+				if file.endswith( '.cpp' ): 
+					files.append( os.path.join( root, file ) )
+
+	print "#!/usr/bin/env amlbatch"
+	print
+
+	for file in files:
+		comments = extract_comments( file )
+		words += write_words( file, comments )
+
+	words.sort( )
+
+	write_summary( words, '--filter', '--filter-', 'Available filters' )
+	write_summary( words, '--input', '--input-', 'Available inputs' )
+	write_summary( words, '--store', '--store-', 'Available stores' )
+
+if __name__ == '__main__':
+	main( )
+

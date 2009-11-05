@@ -1,9 +1,109 @@
-/* -*- tab-width: 4; indent-tabs-mode: t -*- */ 
 // gensys - Generic plugin functionality
-
+//
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+//
+// #input:colour:
+//
+// A frame generator which provides a fixed image.
+//
+// The colour: input is used to provide the first input to a filter:compositor
+// and doing so ensures that all subsequently connected inputs are scaled and
+// composited correctly. 
+//
+// For example, say we wish to have a graph which generates an output of 640x480
+// square pixels at an NTSC frame rate, we would construct our graph as follows:
+//
+// colour: width=640 height=480 sar_num=1 sar_den=1 fps_num=30000 fps_den=1001
+// file.mpg 
+// filter:frame_rate fps_num=30000 fps_den=1001
+// filter:compositor slots=2
+//
+// Note that this will provide a correct output, regardless of the resolution
+// and frame rate of file.mpg.
+//
+// #input:pusher:
+//
+// A generic frame pusher input
+//
+// Doesn't do much - frames that are pushed in are retrieved on the fetch. 
+// See filter:tee for an example of use.
+//
+// #filter:conform
+//
+// Ensures all frames which pass through have image and/or audio components
+// as requested.
+//
+// #filter:crop
+//
+// Requires a single input - crops an image to the specified relative 
+// coordinates.
+//
+// #filter:composite
+//
+// Requires 2 connected inputs - by default, it composites the second input
+// on to the first - this is mainly seen as a mechanism to provide letter/pillar
+// boxing type of functionality.
+//
+// It provides a number of modes - these are mainly for the purposes of simplifying
+// the usage from the applications point of view. 
+//
+// When the application provides control over the geometry of the overlay, it can 
+// specify the physical pixel geometry (which needs to be background aware) or it can
+// specify relative position (which typically gives more flexibility in terms of the
+// background resolution and aspect ratio).
+//
+// Coordinates of 0,0 specify the top left hand corner.
+//
+// #filter:correction
+//
+// Requires a single connected input.
+//
+// Carries out typical colour correction operations (hue, contrast, brightness
+// and saturation).
+//
+// Works in the YCbCr colour space only.
+//
+// #filter:frame_rate
+//
+// Changes the frame rate to the requested value.
+//
+// #filter:clip
+//
+// Clip the connected input to the specified in/out points.
+//
+// The default values of in/out are 0 and -1 respectively. Negative values are
+// treated as 'relative to the length of the input', so an out point of -1 is
+// interpreted as the last frame in the input. Similarly, in=-100 out=-1 will
+// provide a clip of the last 100 frames of the connected input.
+//
+// Note that if in > out, the clip will be played in reverse, so to play a
+// clip backwards, it is sufficient to use:
+//
+// file.mpg filter:clip in=-1 out=0
+//
+// #filter:deinterlace
+//
+// Deinterlaces an image on demand.
+//
+// #filter:lerp
+//
+// Linear interpolation keyframing filter.
+//
+// #filter:visualise
+//
+// Provides a wave visualisation of the audio.
+//
+// #filter:playlist
+//
+// A simple n-ary filter - the number of possibly connected slots is
+// defined by the 'slots' property. The number of frames reported by the filter
+// is defined as the sum of the frames in all the connected slots. 
+// 
+// It is not this filters responsibility to ensure that all connected slots 
+// have the same frame rate/sample information - that is left as an exercise
+// for the filter graph builder to deal with.
 
 // TODO: Split file up - source file per plugin needed.
 
@@ -744,7 +844,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 // specify relative position (which typically gives more flexibility in terms of the
 // background resolution and aspect ratio).
 //
-// Coordinates of 0,0 in both pixel and relative mode specify the top left hand corner.
+// Coordinates of 0,0 specify the top left hand corner.
 //
 // Property usage:
 //
@@ -1728,7 +1828,7 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
 
 // Lerp
 //
-// Experimental linear interpolation
+// Linear interpolation keyframing filter.
 
 static bool key_sort( const pcos::key &k1, const pcos::key &k2 )
 {
@@ -2229,7 +2329,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 
 // Playlist filter
 //
-// Experimental n-ary filter - the number of possibly connected slots is
+// A simple n-ary filter - the number of possibly connected slots is
 // defined by the 'slots' property. The number of frames reported by the filter
 // is defined as the sum of the frames in all the connected slots. 
 // 

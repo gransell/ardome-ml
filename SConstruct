@@ -225,6 +225,9 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
 
+	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
+	os.system( "chmod +x scripts/amldocs.aml" )
+
 	if env.have_boost_python( ):
 		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
 		env.build( 'src/openimagelib/py', [ cl, pl, il ] )

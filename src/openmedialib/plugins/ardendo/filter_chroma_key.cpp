@@ -1,6 +1,12 @@
 // Chroma Key filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #filter:chroma
+//
+// Experimental - provides a chroma keying filter (maps colours to alpha).
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

@@ -88,7 +88,7 @@ class indexer : public indexer_type
 			if ( map_.find( url ) == map_.end( ) )
 			{
 				indexer_job_ptr job = indexer_job_factory( url );
-				if ( !job->finished( ) )
+				if ( !job->finished( ) && ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) ) )
 				{
 					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
 					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );

@@ -1,9 +1,17 @@
-
 // template - A template plugin to ml.
-
+//
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+//
+// #input:test:
+//
+// Provides a basic input which is useful for testing.
+//
+// #store:packets:
+//
+// Provides a basic packet writing store for the generation of elementary
+// video and audio files.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>

@@ -1,6 +1,11 @@
 // Locked Audio Filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:locked_audio
+//
+// Locks audio for DV and IMX sample deliver.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

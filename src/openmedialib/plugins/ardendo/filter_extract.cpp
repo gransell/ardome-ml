@@ -1,3 +1,19 @@
+// Extract filter
+//
+// Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #filter:extract
+//
+// Reduces the length of the input to the frame count specified.
+//
+// Example:
+//
+// file.mpg
+// filter:extract frames=3
+//
+// Will provide 3 frames from file.mpg (first, middle and last).
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

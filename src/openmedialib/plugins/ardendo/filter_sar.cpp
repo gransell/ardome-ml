@@ -1,9 +1,13 @@
 // Sample Aspect Ratio filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:sar
 //
 // This filter provides a very basic mechanism to allow sample aspect ratio
-// to be overridden 
+// to be overridden.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 

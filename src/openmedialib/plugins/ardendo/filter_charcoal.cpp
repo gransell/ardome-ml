@@ -1,6 +1,20 @@
 // Charcoal filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #filter:charcoal
+//
+// Provides a charcoal video effect.
+//
+// Example:
+//
+// file.mpg
+// filter:charcoal mix=0.5
+//
+// Will provide a colourised charcoal rendering of file.mpg - the mix level
+// dictates how the charcoal rendering is mixed with the source.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

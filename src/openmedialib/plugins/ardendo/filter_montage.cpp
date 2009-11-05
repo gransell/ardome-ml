@@ -1,3 +1,22 @@
+// Montage filter
+//
+// Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:montage
+//
+// Produces a montage of video frames from the input as a vertical, horizontal
+// or grid pattern.
+//
+// Example:
+//
+// file.mpg
+// filter:extract frames=16
+// filter:montage orient=2
+//
+// Provides a single frame containing 16 frames from file.mpg, with each image scaled to
+// a thumbnail and arranged in a 4x4 grid.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

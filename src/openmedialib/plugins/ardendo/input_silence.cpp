@@ -1,3 +1,12 @@
+// A silence provider
+//
+// Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #input:silence:
+//
+// Produces frames with silence at a specified frame rate and audio make up.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

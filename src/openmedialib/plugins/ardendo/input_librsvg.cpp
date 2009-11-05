@@ -1,6 +1,11 @@
-// An svg reader
+// An SVG reader
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #input:svg:
+//
+// An SVG input based on librsvg.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

@@ -1,7 +1,20 @@
 // Muxer filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
 //
+// #filter:muxer
+//
+// Joins video and audio graphs.
+//
+// Example:
+//
+// file.mpg
+// file.mp2
+// filter:muxer
+//
+// Will display the video from file.mpg and provide the audio from file.mp2.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

@@ -1,12 +1,19 @@
 // Invert filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
 //
-// This filter creates an inverted yuv planar image - alpha is currently left 
-// alone, but it can localise the region of the invert via the relative
-// crop geometry offered.
+// #filter:invert
 //
-// TODO: Sanitise geometry prior to cropping
+// This filter creates an inverted yuv planar image.
+//
+// Example:
+//
+// file.mpg
+// filter:invert
+//
+// Will invert the images coming from file.mpg.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 

@@ -1,14 +1,21 @@
 // Audio conversion filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the LGPL.
+//
+// #filter:audio_convert
 //
 // This filter provides a very basic mechanism which attempts to ensure that
 // the audio in the fetched frame is in a specific format.
 //
-// Properties:
+// Example:
 //
-// 	af = audio format to output
-// 		Defaults to float
+// file.mp2
+// filter:audio_convert af=float
+//
+// Converts the audio from file.mp2 to a floating point representation.
+//
+// Note, this filter is rarely useful other than for testing.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

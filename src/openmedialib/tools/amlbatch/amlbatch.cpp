@@ -334,18 +334,6 @@ void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_ty
 	}
 }
 
-bool uses_stdin( )
-{
-#ifndef WIN32
-	return !isatty( fileno( stdin ) );
-#else
-	// NB: while this is correct, it doesn't work under cygwin, so for now, stdin can only be explicity parsed by 
-	// specifying stdin: on the stack itself
-	// return !_isatty( fileno( stdin ) );
-	return false;
-#endif
-}
-
 int main( int argc, char *argv[ ] )
 {
     #ifdef WIN32
@@ -399,7 +387,7 @@ int main( int argc, char *argv[ ] )
        	pl::init( );
     #endif
 
-	if ( argc > 1 || uses_stdin( ) )
+	if ( argc > 1 )
 	{
 		bool interactive = false;
 		ml::input_type_ptr input = ml::create_input( pl::wstring( L"aml_stack:" ) );
@@ -413,18 +401,12 @@ int main( int argc, char *argv[ ] )
 
 		pl::wstring_list tokens;
 
-		if ( !( argc > 1 && std::string( argv[ 1 ] ) == "--pass-stdin" ) )
-			if ( uses_stdin( ) )
-				tokens.push_back( L"stdin:" );
-
 		while( index < argc )
 		{
 			pl::wstring arg = pl::to_wstring( argv[ index ] );
 
 			if ( arg == L"--seek" )
 				seek_to = atoi( argv[ ++ index ] );
-			else if ( arg == L"--pass-stdin" )
-				;
 			else if ( arg == L"--no-stats" )
 				stats = false;
 			else if ( arg == L"--interactive" )

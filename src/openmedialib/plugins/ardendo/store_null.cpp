@@ -1,11 +1,15 @@
 // null store - useful for testing
 //
 // Copyright (C) 2007 Ardendo
+// Released under the LGPL.
+//
+// #store:null:
 //
 // Produces a report of the pushed frame to stderr. Returns false on a push to
 // simplify the generation of a report on a single frame in a normal push to 
 // store loop, but the return can be ignored and the store is fine for multiple
 // use.
+
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"

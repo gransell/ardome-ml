@@ -1,7 +1,11 @@
 // AWI Input handler - generates an input from a ts_auto generated awi file
-
+//
 // Copyright (C) 2009 Ardendo
 // Released under the LGPL.
+//
+// #input:awi:
+//
+// Allows direct playback of indexed files.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

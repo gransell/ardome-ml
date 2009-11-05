@@ -1,7 +1,11 @@
 // Transport filter
 //
 // Copyright (C) 2008 Ardendo
+// Released under the terms of the LGPL.
 //
+// #filter:transport
+//
+// A transport filter to allow independent play out control over subgraphs.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

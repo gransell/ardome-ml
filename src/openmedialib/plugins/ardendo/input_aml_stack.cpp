@@ -1,6 +1,9 @@
 // AMF Stack Input
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
+//
+// #input:aml_stack:
 //
 // Provides a simplistic Reverse Polish Notation parser for filter graph 
 // generation. 
@@ -18,12 +21,12 @@
 //
 // Where:
 //
-// <input> is a rule which creates any oml input object (eg. a file name or 
+// <input> is a rule which creates any aml input object (eg. a file name or 
 // url). When included in a .aml file, any file name which includes spaces 
 // should be enclosed in double quotes.
 //
 // <filter> takes the format filter:<name> where name is a rule which creates
-// any oml filter object.
+// any aml filter object.
 //
 // <property> takes the form of <name>=<value> where:
 //
@@ -605,6 +608,7 @@ static void op_iter_slots( aml_stack * );
 static void op_iter_frames( aml_stack * );
 static void op_iter_range( aml_stack * );
 static void op_iter_popen( aml_stack * );
+static void op_iter_props( aml_stack * );
 
 // Variables
 static void op_variable( aml_stack * );
@@ -637,15 +641,40 @@ static void op_dict( aml_stack * );
 static void op_define( aml_stack * );
 static void op_log_level( aml_stack * );
 static void op_render( aml_stack * );
+static void op_donor( aml_stack * );
+static void op_transplant( aml_stack * );
 
 // OS operatots
 static void op_path( aml_stack * );
 static void op_popen( aml_stack * );
 
+typedef void ( *operation )( aml_stack * );
+
+struct aml_operation
+{
+	aml_operation( )
+		: operation_( 0 )
+		, description_( "" )
+	{ }
+
+	aml_operation( operation oper, const std::string &description = "" )
+		: operation_( oper )
+		, description_( description )
+	{ }
+
+	void run( aml_stack *stack )
+	{ operation_( stack ); }
+
+	const std::string &description( ) const
+	{ return description_; }
+
+	operation operation_;
+	std::string description_;
+};
+
 class aml_stack 
 {
 	public:
-		typedef void ( *operation )( aml_stack * );
 
 		aml_stack( ml::input_type *parent, pl::pcos::property &prop_stdout )
 			: parent_( parent )
@@ -664,108 +693,111 @@ class aml_stack
 		{
 			paths_.push_back( fs::initial_path< olib::t_path >( ) );
 
-			operations_[ L"." ] = op_dot;
-			operations_[ L"dot" ] = op_dot;
+			operations_[ L"." ] = aml_operation( op_dot, "Use the input at the top of the stack (<input> . ==)" );
+			operations_[ L"dot" ] = aml_operation( op_dot, "Use the input at the top of the stack (<input> dot ==)" );
 
-			operations_[ L":" ] = op_colon;
-			operations_[ L";" ] = op_semi_colon;
+			operations_[ L":" ] = aml_operation( op_colon, "Start a word definition" );
+			operations_[ L";" ] = aml_operation( op_semi_colon, "End a word definition" );
 
-			operations_[ L"forget" ] = op_forget;
-			operations_[ L"$" ] = op_str;
-			operations_[ L"str" ] = op_str;
-			operations_[ L"execute" ] = op_execute;
-			operations_[ L"throw" ] = op_throw;
-			operations_[ L"parse" ] = op_parse;
-			operations_[ L"parseable" ] = op_parseable;
+			operations_[ L"forget" ] = aml_operation( op_forget, "Removes the following word definition" );
+			operations_[ L"$" ] = aml_operation( op_str, "Places the following string on the stack" );
+			operations_[ L"str" ] = aml_operation( op_str, "Places the following string on the stack" );
+			operations_[ L"execute" ] = aml_operation( op_execute, "Execute the packed strings (<packed-array> execute ==)" );
+			operations_[ L"throw" ] = aml_operation( op_throw, "Throws an exception containing the following string" );
+			operations_[ L"parse" ] = aml_operation( op_parse, "Puts the next string from the input stream on the stack" );
+			operations_[ L"parseable" ] = aml_operation( op_parseable, "Indicates that a word definition provides an input stream to called words which invoke parse" );
 
-			operations_[ L"+" ] = op_plus;
-			operations_[ L"-" ] = op_minus;
-			operations_[ L"/" ] = op_div;
-			operations_[ L"*" ] = op_mult;
-			operations_[ L"**" ] = op_pow;
-			operations_[ L"mod" ] = op_mod;
-			operations_[ L"abs" ] = op_abs;
-			operations_[ L"floor" ] = op_floor;
-			operations_[ L"ceil" ] = op_ceil;
-			operations_[ L"sin" ] = op_sin;
-			operations_[ L"cos" ] = op_cos;
-			operations_[ L"tan" ] = op_tan;
+			operations_[ L"+" ] = aml_operation( op_plus, "Adds two numbers (<a> <b> + == <a+b>)" );
+			operations_[ L"-" ] = aml_operation( op_minus, "Subtracts two numbers (<a> <b> - == <a+b>)" );
+			operations_[ L"/" ] = aml_operation( op_div, "Divides two numbers (<a> <b> * == <a+b>)" );
+			operations_[ L"*" ] = aml_operation( op_mult, "Multiplies two numbers (<a> <b> / == <a+b>)" );
+			operations_[ L"**" ] = aml_operation( op_pow, "Raises to the power of (<a> <b> ** == <a**b>" );
+			operations_[ L"mod" ] = aml_operation( op_mod, "Modulo of two numbers (<a> <b> mod == <a mod b>" );
+			operations_[ L"abs" ] = aml_operation( op_abs, "Absolute value (<a> abs == <abs a>" );
+			operations_[ L"floor" ] = aml_operation( op_floor, "Largest integral value not greater than TOS (<a> floor == <floor a>)"  );
+			operations_[ L"ceil" ] = aml_operation( op_ceil, "Smallest integral value not less than TOS (<a> ceil == <ceil a>)" );
+			operations_[ L"sin" ] = aml_operation( op_sin, "Sine of TOS (<a> sin == <sin a>" );
+			operations_[ L"cos" ] = aml_operation( op_cos, "Cosine of TOS (<a> cos == <cos a>" );
+			operations_[ L"tan" ] = aml_operation( op_tan, "Tangent of TOS (<a> tan == <tan a>" );
 
-			operations_[ L"eval" ] = op_eval;
-			operations_[ L"drop" ] = op_drop;
-			operations_[ L"pick" ] = op_pick;
-			operations_[ L"roll" ] = op_roll;
-			operations_[ L"shift" ] = op_shift;
-			operations_[ L"depth?" ] = op_depth;
+			operations_[ L"eval" ] = aml_operation( op_eval, "Forces a pop/push evaluation (<a> eval == <a>" );
+			operations_[ L"drop" ] = aml_operation( op_drop, "Drops the item at the top of the stack (<a> drop ==)" );
+			operations_[ L"pick" ] = aml_operation( op_pick, "Picks the Nth item from the stack (<N> .. <n> pick == <N> ... <N>)" );
+			operations_[ L"roll" ] = aml_operation( op_roll, "Moves the Nth item to the top of the stack (<N> .. <n> roll == ... <N>)" );
+			operations_[ L"shift" ] = aml_operation( op_shift, "Moves the TOS to the Nth item (<N> ... <a> <n> shift == <a> <N> ...)"  );
+			operations_[ L"depth?" ] = aml_operation( op_depth, "Places the number of items on the stack at the TOS (... depth? == ... <n>)" );
 
-			operations_[ L">r" ] = op_rpush;
-			operations_[ L"r>" ] = op_rpop;
-			operations_[ L"r@" ] = op_rdup;
-			operations_[ L"rdrop" ] = op_rdrop;
-			operations_[ L"rdepth?" ] = op_rdepth;
-			operations_[ L"rpick" ] = op_rpick;
-			operations_[ L"rroll" ] = op_rroll;
+			operations_[ L">r" ] = aml_operation( op_rpush, "Moves TOS to the return stack" );
+			operations_[ L"r>" ] = aml_operation( op_rpop, "Moves TOS of the return stack to stack" );
+			operations_[ L"r@" ] = aml_operation( op_rdup, "Copies TOS of the return stack to the stack" );
+			operations_[ L"rdrop" ] = aml_operation( op_rdrop, "Drops the TOS of the return stack" );
+			operations_[ L"rdepth?" ] = aml_operation( op_rdepth, "Puts the number of items on the return stack on top of the stack" );
+			operations_[ L"rpick" ] = aml_operation( op_rpick );
+			operations_[ L"rroll" ] = aml_operation( op_rroll );
 
-			operations_[ L"if" ] = op_if;
-			operations_[ L"else" ] = op_else;
-			operations_[ L"then" ] = op_then;
-			operations_[ L"=" ] = op_equal;
-			operations_[ L"is" ] = op_is;
-			operations_[ L"<" ] = op_lt;
-			operations_[ L">" ] = op_gt;
-			operations_[ L"<=" ] = op_lt_equal;
-			operations_[ L">=" ] = op_gt_equal;
-			operations_[ L">=" ] = op_gt_equal;
-			operations_[ L"begin" ] = op_begin;
-			operations_[ L"until" ] = op_until;
-			operations_[ L"while" ] = op_while;
-			operations_[ L"repeat" ] = op_repeat;
+			operations_[ L"if" ] = aml_operation( op_if, "Start of a logic branch (<a> if ... ==)" );
+			operations_[ L"else" ] = aml_operation( op_else, "Optional else clause for a logic branch" );
+			operations_[ L"then" ] = aml_operation( op_then, "Closure of a logic branch" );
+			operations_[ L"=" ] = aml_operation( op_equal, "Equality check (<a> <b> = == <result>)" );
+			operations_[ L"is" ] = aml_operation( op_is );
+			operations_[ L"<" ] = aml_operation( op_lt );
+			operations_[ L">" ] = aml_operation( op_gt );
+			operations_[ L"<=" ] = aml_operation( op_lt_equal );
+			operations_[ L">=" ] = aml_operation( op_gt_equal );
+			operations_[ L">=" ] = aml_operation( op_gt_equal );
+			operations_[ L"begin" ] = aml_operation( op_begin );
+			operations_[ L"until" ] = aml_operation( op_until );
+			operations_[ L"while" ] = aml_operation( op_while );
+			operations_[ L"repeat" ] = aml_operation( op_repeat );
 
-			operations_[ L"pack" ] = op_pack;
-			operations_[ L"pack&" ] = op_pack_append;
-			operations_[ L"pack&&" ] = op_pack_append_list;
-			operations_[ L"pack+" ] = op_pack_insert;
-			operations_[ L"pack-" ] = op_pack_remove;
-			operations_[ L"pack@" ] = op_pack_query;
-			operations_[ L"pack!" ] = op_pack_assign;
+			operations_[ L"pack" ] = aml_operation( op_pack );
+			operations_[ L"pack&" ] = aml_operation( op_pack_append );
+			operations_[ L"pack&&" ] = aml_operation( op_pack_append_list );
+			operations_[ L"pack+" ] = aml_operation( op_pack_insert );
+			operations_[ L"pack-" ] = aml_operation( op_pack_remove );
+			operations_[ L"pack@" ] = aml_operation( op_pack_query );
+			operations_[ L"pack!" ] = aml_operation( op_pack_assign );
 
-			operations_[ L"iter_start" ] = op_iter_start;
-			operations_[ L"iter_slots" ] = op_iter_slots;
-			operations_[ L"iter_frames" ] = op_iter_frames;
-			operations_[ L"iter_range" ] = op_iter_range;
-			operations_[ L"iter_popen" ] = op_iter_popen;
+			operations_[ L"iter_start" ] = aml_operation( op_iter_start );
+			operations_[ L"iter_slots" ] = aml_operation( op_iter_slots );
+			operations_[ L"iter_frames" ] = aml_operation( op_iter_frames );
+			operations_[ L"iter_range" ] = aml_operation( op_iter_range );
+			operations_[ L"iter_popen" ] = aml_operation( op_iter_popen );
+			operations_[ L"iter_props" ] = aml_operation( op_iter_props );
 
-			operations_[ L"variable" ] = op_variable;
-			operations_[ L"variable!" ] = op_variable_assign;
-			operations_[ L"!" ] = op_assign;
-			operations_[ L"@" ] = op_deref;
+			operations_[ L"variable" ] = aml_operation( op_variable );
+			operations_[ L"variable!" ] = aml_operation( op_variable_assign );
+			operations_[ L"!" ] = aml_operation( op_assign );
+			operations_[ L"@" ] = aml_operation( op_deref );
 
-			operations_[ L"prop_query" ] = op_prop_query;
-			operations_[ L"prop_exists" ] = op_prop_exists;
-			operations_[ L"prop_matches" ] = op_prop_matches;
-			operations_[ L"?" ] = op_prop_query_parse;
-			operations_[ L"has?" ] = op_has_prop_parse;
-			operations_[ L"length?" ] = op_length;
-			operations_[ L"decap" ] = op_decap;
-			operations_[ L"slots?" ] = op_slots;
-			operations_[ L"connect" ] = op_connect;
-			operations_[ L"slot" ] = op_slot;
-			operations_[ L"recover" ] = op_recover;
-			operations_[ L"fetch" ] = op_fetch;
+			operations_[ L"prop_query" ] = aml_operation( op_prop_query );
+			operations_[ L"prop_exists" ] = aml_operation( op_prop_exists );
+			operations_[ L"prop_matches" ] = aml_operation( op_prop_matches );
+			operations_[ L"?" ] = aml_operation( op_prop_query_parse );
+			operations_[ L"has?" ] = aml_operation( op_has_prop_parse );
+			operations_[ L"length?" ] = aml_operation( op_length );
+			operations_[ L"decap" ] = aml_operation( op_decap );
+			operations_[ L"slots?" ] = aml_operation( op_slots );
+			operations_[ L"connect" ] = aml_operation( op_connect );
+			operations_[ L"slot" ] = aml_operation( op_slot );
+			operations_[ L"recover" ] = aml_operation( op_recover );
+			operations_[ L"fetch" ] = aml_operation( op_fetch );
 
-			operations_[ L"available" ] = op_available;
-			operations_[ L"dump" ] = op_dump;
-			operations_[ L"rdump" ] = op_rdump;
-			operations_[ L"tos" ] = op_tos;
-			operations_[ L"trace" ] = op_trace;
-			operations_[ L"words" ] = op_words;
-			operations_[ L"dict" ] = op_dict;
-			operations_[ L"define" ] = op_define;
-			operations_[ L"log_level" ] = op_log_level;
-			operations_[ L"render" ] = op_render;
+			operations_[ L"available" ] = aml_operation( op_available );
+			operations_[ L"dump" ] = aml_operation( op_dump );
+			operations_[ L"rdump" ] = aml_operation( op_rdump );
+			operations_[ L"tos" ] = aml_operation( op_tos );
+			operations_[ L"trace" ] = aml_operation( op_trace );
+			operations_[ L"words" ] = aml_operation( op_words );
+			operations_[ L"dict" ] = aml_operation( op_dict );
+			operations_[ L"define" ] = aml_operation( op_define );
+			operations_[ L"log_level" ] = aml_operation( op_log_level );
+			operations_[ L"render" ] = aml_operation( op_render );
+			operations_[ L"donor" ] = aml_operation( op_donor );
+			operations_[ L"transplant" ] = aml_operation( op_transplant );
 
-			operations_[ L"popen" ] = op_popen;
-			operations_[ L"path" ] = op_path;
+			operations_[ L"popen" ] = aml_operation( op_popen );
+			operations_[ L"path" ] = aml_operation( op_path );
 
 			conds_.push_back( true );
 			variables_push( );
@@ -1117,10 +1149,10 @@ class aml_stack
 		void print_words( )
 		{
 			*output_ << "# Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
-					*output_ << "# " << pl::to_string( i->first ) << std::endl;
+					*output_ << "# " << pl::to_string( i->first ) << ": " << i->second.description( ) << std::endl;
 			}
 
 			*output_ << std::endl << "# Defined Words:" << std::endl << std::endl;
@@ -1140,7 +1172,7 @@ class aml_stack
 		void dict( )
 		{
 			*output_ << "Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 				{
@@ -1272,8 +1304,8 @@ class aml_stack
 			if ( state_ == 0 && !empty( ) ) push( pop( ) );
 			if ( next_op_.size( ) == 0 )
 			{
-				operation function = operations_[ name ];
-				function( this );
+				aml_operation op = operations_[ name ];
+				op.run( this );
 			}
 			else
 			{
@@ -1496,35 +1528,44 @@ class aml_stack
 		{
 			std::string token;
 			std::vector< pl::wstring > tokens;
+			std::string line;
 
-			while( file.good( ) && !file.eof( ) )
+			while ( std::getline( file, line ) ) 
 			{
-				std::string sub;
-				file >> sub;
+				std::istringstream iss;
+				iss.str( line );
 
-				if ( token == "" && sub[ 0 ] == '#' )
+				while( iss.good( ) && !iss.eof( ) )
+				{
+					std::string sub;
+					iss >> std::skipws >> sub;
+
+					if ( token == "" && sub[ 0 ] == '#' )
+						break;
+
+					if ( token != "" )
+						token += std::string( " " ) + sub;
+					else
+						token = sub;
+
+					while ( iss.good( ) && !iss.eof( ) && count_quotes( token ) % 2 != 0 )
+					{
+						char t;
+						iss >> std::noskipws >> t;
+						token += t;
+					}
+
+					if ( token != "" )
+					{
+						tokens.push_back( pl::to_wstring( token ) );
+						token = "";
+					}
+				}
+
+				if ( token == "" )
 				{
 					run( tokens, true );
 					tokens.erase( tokens.begin( ), tokens.end( ) );
-					file.ignore( 1024, '\n' );
-					continue;
-				}
-
-				if ( token != "" )
-					token += std::string( " " ) + sub;
-				else
-					token = sub;
-
-				if ( count_quotes( token ) % 2 == 0 )
-				{
-					if ( token != "" )
-						tokens.push_back( pl::to_wstring( token ) );
-					if ( token == "\n" )
-					{
-						run( tokens, true );
-						tokens.erase( tokens.begin( ), tokens.end( ) );
-					}
-					token = "";
 				}
 			}
 
@@ -1553,7 +1594,7 @@ class aml_stack
 		std::deque < ml::input_type_ptr > inputs_;
 		std::deque < ml::input_type_ptr > rstack_;
 		std::deque < olib::t_path > paths_;
-		std::map < pl::wstring, operation > operations_;
+		std::map < pl::wstring, aml_operation > operations_;
 		std::map < pl::wstring, std::vector< pl::wstring > > words_;
 		std::map < pl::wstring, std::vector< pl::wstring > > inline_;
 		std::vector< pl::wstring > loops_;
@@ -2630,6 +2671,90 @@ static void op_iter_popen( aml_stack *stack )
 	}
 }
 
+static bool key_sort( const pcos::key &k1, const pcos::key &k2 )
+{
+	return strcmp( k1.as_string( ), k2.as_string( ) ) < 0;
+}
+
+static std::string prop_type( const pl::pcos::property &p )
+{
+	if ( p.is_a< double >( ) )
+		return "double";
+	else if ( p.is_a< int >( ) )
+		return "int";
+	else if ( p.is_a< boost::int64_t >( ) )
+		return "int64_t";
+	else if ( p.is_a< boost::uint64_t >( ) )
+		return "uint64_t";
+	else if ( p.is_a< pl::wstring >( ) )
+		return "wstring";
+	else if ( p.is_a< std::vector< double > >( ) )
+		return "vector<double>";
+	else if ( p.is_a< std::vector< int > >( ) )
+		return "vector<int>";
+	else
+		return "<unknown>";
+}
+
+static std::string prop_value( const pl::pcos::property &p )
+{
+	std::ostringstream stream;
+	if ( p.is_a< double >( ) )
+		stream << p.value< double >( );
+	else if ( p.is_a< int >( ) )
+		stream << p.value< int >( );
+	else if ( p.is_a< boost::int64_t >( ) )
+		stream << p.value< boost::int64_t >( );
+	else if ( p.is_a< boost::uint64_t >( ) )
+		stream << p.value< boost::uint64_t >( );
+	else if ( p.is_a< pl::wstring >( ) )
+		stream << "\"" << pl::to_string( p.value< pl::wstring >( ) ) << "\"";
+	else if ( p.is_a< std::vector< double > >( ) )
+		stream << "<unsupported>";
+	else if ( p.is_a< std::vector< int > >( ) )
+		stream << "<unsupported>";
+	else
+		stream << "<unknown>";
+	return stream.str( );
+}
+
+static void op_iter_props( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+
+		ml::input_type_ptr input = stack->pop( );
+
+		const pl::pcos::property_container &props = input->properties( );
+		pl::pcos::key_vector keys = props.get_keys( );
+
+		std::sort( keys.begin( ), keys.end( ), key_sort );
+
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+		{
+			std::string name( ( *it ).as_string( ) );
+			pl::pcos::property p = props.get_property_with_string( name.c_str( ) );
+			if ( name == "debug" || name.find( ".aml_" ) == 0 ) continue;
+
+			seq->start( );
+			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( name ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( prop_type( p ) ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( prop_value( p ) ) ) ) );
+			stack->run( seq );
+		}
+
+		stack->push( input );
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_props" );
+	}
+}
+
 static void op_depth( aml_stack *stack )
 {
 	stack->push( double( stack->inputs_.size( ) ) );
@@ -2775,6 +2900,35 @@ static void op_render( aml_stack *stack )
 	{
 		*( stack->output_ ) << pl::to_string( input->get_uri( ) ) << std::endl;
 	}
+}
+
+static void op_donor( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	if ( a->get_uri( ).find( L"filter:" ) == 0 )
+	{
+		ml::filter_type_ptr filter = ml::create_filter( a->get_uri( ).substr( 7 ) );
+		for( int i = 0; i < int( filter->slot_count( ) ); i ++ )
+			stack->push( i );
+		stack->push( filter );
+	}
+	else if ( a->get_uri( ).find( L"input:" ) == 0 )
+	{
+		ml::input_type_ptr input = ml::create_delayed_input( a->get_uri( ).substr( 6 ) );
+		stack->push( input );
+	}
+	else
+	{
+		stack->push( ml::create_input( "nothing:" ) );
+	}
+}
+
+static void op_transplant( aml_stack *stack )
+{
+	ml::input_type_ptr a = stack->pop( );
+	for( int i = 0; i < int( a->slot_count( ) ); i ++ )
+		a->connect( ml::input_type_ptr( ), size_t( i ) );
+	stack->push( a );
 }
 
 static void op_popen( aml_stack *stack )

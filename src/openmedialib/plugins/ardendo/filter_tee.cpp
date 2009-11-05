@@ -1,6 +1,17 @@
 // Tee filter
 //
 // Copyright (C) 2009 Ardendo
+// Released under the terms of the LGPL.
+//
+// #filter:tee
+// 
+// Allow complex graphs to be connected at multiple points to the same input.
+// This is used in conjunction with a pusher: input in the following way:
+//
+// <input> colour: pusher: filter:compositor filter:store store=out.dv filter:tee 
+//
+// The graph can then be continued, adding additional effects, or providing
+// addition tee graphs which are encoding to another form of output.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"

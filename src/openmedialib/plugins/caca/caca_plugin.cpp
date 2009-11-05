@@ -1,6 +1,5 @@
-
 // caca - A caca plugin to ml.
-
+//
 // Copyright (C) 2005 Visual Media FX Ltd.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.

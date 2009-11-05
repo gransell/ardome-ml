@@ -1,10 +1,12 @@
 // Volume filter
 //
 // Copyright (C) 2007 Ardendo
+// Released under the terms of the LGPL.
 //
-// This filter provides a very basic mechanism to volume control 
+// #filter:volume
 //
-// TODO: Proper volume specification
+// This filter provides a very basic mechanism to control volume.
+
 #include "precompiled_headers.hpp"
 #include <limits>
 #include <cmath>
@@ -39,12 +41,6 @@ class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Reset the ramp
-			prop_ramp_ = std::vector< double >( );
-
-			// Acquire values
-			acquire_values( );
-
 			// Frame to return
 			result = fetch_from_slot( );
 
