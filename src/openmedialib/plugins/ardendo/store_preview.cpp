@@ -218,6 +218,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
             , prop_sync_( pcos::key::from_string( "sync" ) )
             , prop_preroll_( pcos::key::from_string( "preroll" ) )
             , prop_keys_wanted_( pcos::key::from_string( "keys_wanted" ) )
+			, prop_deinterlace_( pcos::key::from_string( "deinterlace" ) )
 			, key_box_( pcos::key::from_string( "box" ) )
 			, key_deferrable_( pcos::key::from_string( "deferrable" ) )
 			, key_preroll_( pcos::key::from_string( "preroll" ) )
@@ -257,6 +258,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			properties( ).append( prop_sync_ = 0 );
 			properties( ).append( prop_preroll_ = 1 );
 			properties( ).append( prop_keys_wanted_ = 1 );
+			properties( ).append( prop_deinterlace_ = 1 );
 			prop_box_.attach( obs_box_ );
 			prop_grab_audio_.attach( obs_grab_audio_ );
 			prop_sync_.attach( obs_sync_ );
@@ -331,6 +333,10 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 
 		virtual bool init( )
 		{
+			ARENFORCE( internal_pusher_ = ml::create_input( "pusher:" ) );
+			ARENFORCE( deinterlace_filter_ = ml::create_filter( L"deinterlace" ) );
+			deinterlace_filter_->connect(internal_pusher_);
+			
 			if ( !video_ )
 			{
 				pl::wstring store = prop_video_.value< pl::wstring >( );
@@ -418,6 +424,12 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
             bool result = false;
 			{
+				if ( prop_deinterlace_.value<int>() == 1 )
+				{
+					internal_pusher_->push(frame);
+					ARENFORCE( frame = deinterlace_filter_->fetch() );
+				}
+
 				if ( first_ && frame && frame->get_image( ) )
 				{
 					video_->push( frame );
@@ -617,7 +629,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			if ( frame && frame->get_image( ) )
 			{
 				last_frame_shown_ = frame;
-            	return video_->push( frame );
+            			return video_->push( frame );
 			}
 			return true;
 		}
@@ -665,14 +677,15 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		pl::pcos::property prop_box_;
 		pl::pcos::property prop_threaded_;
 		pl::pcos::property prop_grab_audio_;
-        pl::pcos::property prop_video_store_;
-        pl::pcos::property prop_audio_store_;
-        pl::pcos::property prop_deferrable_;
-        pl::pcos::property prop_timed_;
-        pl::pcos::property prop_ttn_;
-        pl::pcos::property prop_sync_;
-        pl::pcos::property prop_preroll_;
-        pl::pcos::property prop_keys_wanted_;
+		pl::pcos::property prop_video_store_;
+		pl::pcos::property prop_audio_store_;
+		pl::pcos::property prop_deferrable_;
+		pl::pcos::property prop_timed_;
+		pl::pcos::property prop_ttn_;
+		pl::pcos::property prop_sync_;
+		pl::pcos::property prop_preroll_;
+		pl::pcos::property prop_keys_wanted_;
+		pl::pcos::property prop_deinterlace_;
 		pl::pcos::key key_box_;
 		pl::pcos::key key_deferrable_;
 		pl::pcos::key key_preroll_;
@@ -682,6 +695,8 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		boost::shared_ptr< pl::pcos::observer > obs_grab_audio_;
 		boost::shared_ptr< pl::pcos::observer > obs_sync_;
 		ml::store_type_ptr video_, audio_;
+		ml::input_type_ptr internal_pusher_;
+		ml::filter_type_ptr deinterlace_filter_;
 		std::deque< ml::frame_type_ptr > cache_;
 		int count_;
 		double start_;
