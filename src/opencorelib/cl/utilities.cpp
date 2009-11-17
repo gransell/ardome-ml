@@ -354,7 +354,7 @@ namespace olib
 			CORE_API multivalue_property_map parse_multivalue_property( const t_string &prop_str)
             {
                 typedef boost::char_separator< TCHAR > charsep_type;
-                typedef boost::tokenizer< charsep_type > tok_type;
+                typedef boost::tokenizer< charsep_type, t_string::const_iterator, t_string > tok_type;
                 multivalue_property_map result;
 
                 charsep_type pipe_tok_func( _CT("|") );
