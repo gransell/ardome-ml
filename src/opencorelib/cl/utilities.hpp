@@ -162,6 +162,8 @@ namespace olib
 			/// Get information about all currently loaded .so or .dll files.
 			/** @return A list of information about each file. */
 			CORE_API std::vector< library_info_ptr > get_loaded_libraries();
+
+            CORE_API multivalue_property_map parse_multivalue_property( const olib::t_string &prop_str);
 		}
 	}
 }

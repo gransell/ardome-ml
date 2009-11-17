@@ -18,6 +18,7 @@
 #include "enforce_defines.hpp"
 #include "assert.hpp"
 #include "assert_defines.hpp"
+#include "machine_readable_errors.hpp"
 
 // wx_widgets stackwalk implementation
 #ifndef OLIB_ON_LINUX
@@ -34,6 +35,7 @@
 #endif
 
 //#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 
 #ifdef OLIB_ON_MAC
 	#include "mac/stack_dump.hpp"
@@ -339,17 +341,54 @@ namespace olib
             }
 
 			
-			CORE_API std::vector< library_info_ptr > get_loaded_libraries()
-			{
-				#ifdef OLIB_ON_WINDOWS
-					return win::enum_process_modules();
-				#else
-					return std::vector< library_info_ptr >();
-				#endif
+            CORE_API std::vector< library_info_ptr > get_loaded_libraries()
+            {
+                #ifdef OLIB_ON_WINDOWS
+                        return win::enum_process_modules();
+                #else
+                        return std::vector< library_info_ptr >();
+                #endif
 
-			}
+            }
 
-			
+			CORE_API multivalue_property_map parse_multivalue_property( const t_string &prop_str)
+            {
+                typedef boost::char_separator< TCHAR > charsep_type;
+                typedef boost::tokenizer< charsep_type > tok_type;
+                multivalue_property_map result;
+
+                charsep_type pipe_tok_func( _CT("|") );
+                tok_type pipe_tokenizer( prop_str, pipe_tok_func );
+
+                tok_type::const_iterator pipe_iter;
+                for( pipe_iter=pipe_tokenizer.begin(); pipe_iter!=pipe_tokenizer.end(); pipe_iter++ )
+                {
+                    size_t equals_pos = pipe_iter->find( _CT("=") );
+                    ARENFORCE_MSG_ERR( equals_pos != t_string::npos, 
+                        _CT("Missing \"=\". A multivalue property string component must be of the form \"key=value\"." ), 
+                        olib::error::parse_error() );
+                    ARENFORCE_MSG_ERR( equals_pos > 0, 
+                        _CT("Zero-length key. A multivalue property string component must be of the form \"key=value\"." ), 
+                        olib::error::parse_error() );
+                    ARENFORCE_MSG_ERR( equals_pos < pipe_iter->size()-1 , 
+                        _CT("Zero-length value. A multivalue property string component must be of the form \"key=value\"." ), 
+                        olib::error::parse_error() );
+                   
+                    t_string key = pipe_iter->substr(0, equals_pos);
+                    t_string value = pipe_iter->substr(equals_pos+1);
+
+                    ARENFORCE_MSG_ERR( value.find(_CT("=")) == t_string::npos, 
+                        _CT("Multiple \"=\" found.A multivalue property string component must be of the form \"key=value\"." ),
+                        olib::error::parse_error() );
+
+                    //Insert the key-value pair into the result map
+                    result.insert( make_pair(key, value) );
+
+                    //std::cout << "KV Pair: " << pipe_iter->substr(0, equals_pos) << "=" << pipe_iter->substr(equals_pos+1) << std::endl;
+                }
+
+                return result;
+            }
 		}
 	}
 }

@@ -65,6 +65,7 @@ namespace olib
 		typedef boost::rational< boost::int64_t > rational_time;
 
         typedef std::map< t_string, olib::t_path > schema_map;
+        typedef std::map< t_string, t_string > multivalue_property_map;
 
     }
 }
