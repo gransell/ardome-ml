@@ -273,6 +273,8 @@ void report_props( std::ostream &stream, const pl::pcos::property_container &pro
 				stream << name << "=" << p.value< double >( ) << endl;
 			else if ( p.is_a< int >( ) )
 				stream << name << "=" << p.value< int >( ) << endl;
+			else if ( p.is_a< long long >( ) )
+				stream << name << "=" << p.value< long long >( ) << endl;
 			else if ( p.is_a< pl::wstring >( ) )
 				stream << name << "=" << pl::to_string( p.value< pl::wstring >( ) ) << endl;
 			else if ( p.is_a< vector< double > >( ) )
