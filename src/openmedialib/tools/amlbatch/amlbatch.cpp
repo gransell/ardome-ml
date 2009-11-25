@@ -20,9 +20,12 @@
 #include <openpluginlib/pl/timer.hpp>
 #include <boost/thread.hpp>
 
+#include <opencorelib/cl/special_folders.hpp>
+
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
+namespace cl = olib::opencorelib;
 
 #define NANO_SECS 1000000000
 #define MICRO_SECS 1000000
@@ -382,6 +385,10 @@ int main( int argc, char *argv[ ] )
             return -1;
         }
         
+    #elif defined( __APPLE__ )
+        olib::t_path plugins_path = cl::special_folder::get( cl::special_folder::plugins );
+        std::cerr << plugins_path.string( ) << std::endl;
+        pl::init( plugins_path.string( ) );
     #else
 		setlocale(LC_CTYPE, "");
        	pl::init( );

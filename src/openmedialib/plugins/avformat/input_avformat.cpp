@@ -58,6 +58,10 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 
+namespace {
+    static const pcos::key source_tc_key = pcos::key::from_string( "source_timecode" );
+}
+
 class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 {
 	public:
@@ -377,20 +381,25 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			return error == 0;
 		}
 
-		void do_fetch( frame_type_ptr &result )
-		{
-			ARENFORCE_MSG( context_, "Invalid media" );
+        void do_fetch( frame_type_ptr &result )
+        {
+            ARENFORCE_MSG( context_, "Invalid media" );
 
-			// Check for updates in the index
-			if ( check_indexer_ )
-				sync_with_index( );
+            // Check for updates in the index
+            if ( check_indexer_ )
+                sync_with_index( );
 
-			// Route to either decoded or packet extraction mechanisms
-			if ( prop_packet_stream_.value< int >( ) )
-				do_packet_fetch( result );
-			else
-				do_decode_fetch( result );
-		}
+            // Route to either decoded or packet extraction mechanisms
+            if ( prop_packet_stream_.value< int >( ) )
+                do_packet_fetch( result );
+            else
+                do_decode_fetch( result );
+            
+            // Add the source_timecode prop
+            pcos::property tc_prop( source_tc_key );
+            tc_prop = (int)result->get_position( );
+            result->properties().append( tc_prop );
+        }
 
 		// Fetch method
 		void do_decode_fetch( frame_type_ptr &result )
