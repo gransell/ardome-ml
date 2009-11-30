@@ -22,6 +22,7 @@
 #endif
 
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <openpluginlib/pl/openplugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
@@ -119,7 +120,14 @@ bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstrin
 
 	for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
 	{
-		resolver.dl_handle = dlopen_( fs::path( to_string( *I ).c_str( ), fs::native ) );
+		//Check if the file exists before trying to dlopen it
+		fs::path lib_path(to_string( *I ).c_str( ), fs::native);
+		if( !fs::exists(lib_path) )
+		{
+			continue;
+		}
+        
+		resolver.dl_handle = dlopen_( lib_path );
 		if( resolver.dl_handle )
 		{
 			if( !resolve_plugin_symbols( resolver ) ) continue;
