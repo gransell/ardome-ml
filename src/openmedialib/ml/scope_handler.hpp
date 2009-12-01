@@ -3,15 +3,18 @@
 // Released under the LGPL.
 
 #ifndef OPENMEDIALIB_SCOPE_HANDLER_H_
-#define OPENMEDIALIB_SCOPE_HANDLER_H_ value
+#define OPENMEDIALIB_SCOPE_HANDLER_H_
 
 #define LOKI_CLASS_LEVEL_THREADING
 #include <loki/Singleton.h>
-#include <frame.hpp>
+#include <openmedialib/ml/frame.hpp>
+#include <list>
+#include <map>
+#include <boost/thread.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
-    
-class lru_cache_type
+
+class lru_cache_type : public boost::noncopyable
 {
 public:
     
@@ -20,42 +23,79 @@ public:
     virtual ~lru_cache_type( )
     {}
     
-    const frame_type_ptr& frame_for_position( boost::int32_t pos );
-    void push_frame_for_position( boost::int32_t pos, const frame_type& f );
-    const audio_type_ptr& audio_for_position( boost::int32_t pos );
-    void push_audio_for_position( boost::int32_t pos, const frame_type& f );
-    const openimagelib::il::image_type_ptr& image_for_position( boost::int32_t pos );
-    void push_image_for_position( boost::int32_t pos, const frame_type& f );
+    typedef std::pair< boost::int32_t, olib::openpluginlib::wstring > key_type;
+    
+    frame_type_ptr frame_for_position( const key_type &pos );
+    void insert_frame_for_position( const key_type &pos, const frame_type_ptr& f );
+    audio_type_ptr audio_for_position( const key_type &pos );
+    void insert_audio_for_position( const key_type &pos, const audio_type_ptr& f );
+    openimagelib::il::image_type_ptr image_for_position( const key_type &pos );
+    void insert_image_for_position( const key_type &pos, const openimagelib::il::image_type_ptr& f );
 
 private:
-    std::map< int, ml::frame_type_ptr > frames_;
-    std::map< int, openimagelib::il::image_type_ptr > images_;
-    std::map< int, ml::audio_type_ptr > audios_;
+    
+    void used( const key_type & pos );
+    
+    template< typename T >
+    void insert_resource( const key_type &pos, const T& resource, std::map< key_type, T > &resource_map )
+    {
+        boost::mutex::scoped_lock lck( mutex_ );
+        
+        used( pos );
+        resource_map[pos] = resource;
+    }
+    
+    template< typename T >
+    T get_resource( const key_type & pos, const std::map< key_type, T > &resource_map  )
+    {
+        boost::mutex::scoped_lock lck( mutex_ );
+        
+        typename std::map< key_type, T >::const_iterator map_it = resource_map.find( pos );
+            
+        if( map_it == resource_map.end() )
+        {
+            return T();
+        }
+        else
+        {
+            used( pos );
+            return map_it->second;
+        }
+    }
+    
+    
+    std::map< key_type, ml::frame_type_ptr > frames_;
+    std::map< key_type, openimagelib::il::image_type_ptr > images_;
+    std::map< key_type, ml::audio_type_ptr > audios_;
+    
+    std::list< key_type > lru_;
+    
+    boost::mutex mutex_;
     
 };
+
+typedef boost::shared_ptr< lru_cache_type > lru_cache_type_ptr;
 
 class scope_handler;
 
 typedef Loki::SingletonHolder< scope_handler, Loki::CreateUsingNew, Loki::DefaultLifetime,
                                Loki::ClassLevelLockable > the_scope_handler;
     
-class scope_handler
+class scope_handler : public boost::noncopyable
 {
 public:
     virtual ~scope_handler( )
     {}
     
-    lru_cache_type& create_lru_cache( const std::string &scope );
-    lru_cache_type& lru_cache( const std::string &scope );
+    lru_cache_type_ptr lru_cache( const std::wstring &scope );
     
-    friend class Loki::SingletonHolder< scope_handler, Loki::CreateUsingNew, 
-                                        Loki::DefaultLifetime, Loki::ClassLevelLockable >;
+    template <typename T> friend class Loki::CreateUsingNew;
     
 private:
     scope_handler()
     {}
     
-    std::map< std::string, lru_cache_type > lru_cache_;
+    std::map< std::wstring, lru_cache_type_ptr > lru_cache_;
 };
 
     
