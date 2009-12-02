@@ -1682,6 +1682,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			, last_position_( -1 )
 			, prop_in_( pcos::key::from_string( "in" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
+			, src_frames_( -1 )
 		{
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_out_ = -1 );
@@ -1692,7 +1693,15 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		virtual int get_frames( ) const
 		{
-			int frames = get_out( ) - get_in( );
+			// Get input
+			ml::input_type_ptr input = fetch_slot( 0 );
+
+			// Get frames
+			src_frames_ = input ? input->get_frames( ) : 0;
+
+			// Calculate from input_frames
+			int frames = get_out( src_frames_ ) - get_in( src_frames_ );
+
 			return ( frames <= 0 ? - frames : frames );
 		}
 
@@ -1715,20 +1724,21 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		void do_fetch( frame_type_ptr &result )
 		{
-			acquire_values( );
+			if ( src_frames_ == -1 )
+				get_frames( );
 
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
 			{
-				if ( get_in( ) < get_out( ) )
+				if ( get_in( src_frames_ ) < get_out( src_frames_ ) )
 				{
-					input->seek( get_in( ) + get_position( ) );
+					input->seek( get_in( src_frames_ ) + get_position( ) );
 					result = input->fetch( );
 				}
 				else
 				{
-					input->seek( get_in( ) - get_position( ) );
+					input->seek( get_in( src_frames_ ) - get_position( ) );
 					result = input->fetch( );
 					if ( result && result->get_audio( ) )
 						result->set_audio( audio::reverse( result->get_audio( ) ) );
@@ -1737,41 +1747,35 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 				if ( result )
 					result->set_position( get_position( ) );
 			}
+
+			src_frames_ = -1;
 		}
 
 	private:
-		inline int get_in( ) const
+		inline int get_in( const int &frames ) const
 		{
 			int in = prop_in_.value< int >( );
-			input_type_ptr input = fetch_slot( );
-			if ( input )
-			{
-				if ( in >= input->get_frames() )
-					in = input->get_frames( ) - 1;
-				if ( in < 0 )
-					in = input->get_frames( ) + in;
-				if ( in < 0 )
-					in = 0;
-			}
+			if ( in >= frames )
+				in = frames - 1;
+			if ( in < 0 )
+				in = frames + in;
+			if ( in < 0 )
+				in = 0;
 			return in;
 		}
 
-		inline int get_out( ) const
+		inline int get_out( const int &frames ) const
 		{
-			int in = get_in( );
+			int in = get_in( frames );
 			int out = prop_out_.value< int >( );
-			input_type_ptr input = fetch_slot( );
-			if ( input )
-			{
-				if ( out >= input->get_frames() )
-					out = input->get_frames( );
-				if ( out < 0 )
-					out = input->get_frames( ) + out + 1;
-				if ( out < 0 )
-					out = 0;
-				if ( out < in )
-					out --;
-			}
+			if ( out >= frames )
+				out = frames;
+			if ( out < 0 )
+				out = frames + out + 1;
+			if ( out < 0 )
+				out = 0;
+			if ( out < in )
+				out --;
 			return out;
 		}
 
@@ -1779,6 +1783,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 		int last_position_;
 		pcos::property prop_in_;
 		pcos::property prop_out_;
+		mutable int src_frames_;
 };
 
 // Deinterlace
