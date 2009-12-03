@@ -84,32 +84,30 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					int samples = 0;
 
 					ml::frame_type_ptr frame = fetch_from_slot( );
+                    
+                    if( !frame || !(frame->get_audio( )) )
+                    {
+                        result = frame;
+                        return;
+                    }
 
 					// Allocate a single audio object to accomodate the number of samples specified in the table
 					if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
 					{
-						if ( frame && frame->get_audio( ) )
-						{
-							frame->get_fps( fps_num_, fps_den_ );
-							frequency_ = frame->get_audio( )->frequency( );
-							channels_ = frame->get_audio( )->channels( );
-							if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
-							{
-								int total = 0;
-								for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
-								audio_span_ = ml::audio::allocate( frame->get_audio( ), 48000, channels_, total );
-							}
-							else
-							{
-								result = frame;
-								return;
-							}
-						}
-						else
-						{
-							result = frame;
-							return;
-						}
+                        frame->get_fps( fps_num_, fps_den_ );
+                        frequency_ = frame->get_audio( )->frequency( );
+                        channels_ = frame->get_audio( )->channels( );
+                        if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
+                        {
+                            int total = 0;
+                            for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
+                            audio_span_ = ml::audio::allocate( frame->get_audio( ), 48000, channels_, total );
+                        }
+                        else
+                        {
+                            result = frame;
+                            return;
+                        }
 					}
 
 					// Erase the previously collected frames
@@ -151,7 +149,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 						{
 							int size = table[ i ] * channels_ * audio_span_->sample_size( );
 
-							if ( int( i ) >= start_audio && int( i ) <= final_audio )
+							if ( frames_[ i ] && frames_[ i ]->get_audio( ) && int( i ) >= start_audio && int( i ) <= final_audio )
 							{
 								ml::audio_type_ptr temp = ml::audio::pitch( frames_[ i ]->get_audio( ), table[ i ] );
 								memcpy( ptr, temp->pointer( ), temp->size( ) );
