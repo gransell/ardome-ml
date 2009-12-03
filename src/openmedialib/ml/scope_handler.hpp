@@ -14,7 +14,7 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-class lru_cache_type : public boost::noncopyable
+class ML_DECLSPEC lru_cache_type : public boost::noncopyable
 {
 public:
     
@@ -74,14 +74,14 @@ private:
     
 };
 
-typedef boost::shared_ptr< lru_cache_type > lru_cache_type_ptr;
+typedef ML_DECLSPEC boost::shared_ptr< lru_cache_type > lru_cache_type_ptr;
 
 class scope_handler;
 
-typedef Loki::SingletonHolder< scope_handler, Loki::CreateUsingNew, Loki::DefaultLifetime,
+typedef ML_DECLSPEC Loki::SingletonHolder< scope_handler, Loki::CreateUsingNew, Loki::DefaultLifetime,
                                Loki::ClassLevelLockable > the_scope_handler;
     
-class scope_handler : public boost::noncopyable
+class ML_DECLSPEC scope_handler : public boost::noncopyable
 {
 public:
     virtual ~scope_handler( )
