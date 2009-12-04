@@ -54,9 +54,7 @@ def determine_target( ):
 		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': target = 'lsb_3_1_64'
 		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': target = 'lsb_3_1_32'
 		else: target = 'vs2003'
-	elif os.name == 'win32':
+	elif os.name == 'win32' or os.name == 'nt':
 		if utils.vs() is not None : target = utils.vs()
 		else: target = 'vs2003'
-	elif os.name == 'nt':
-		target = 'vs2003'
 	return target
