@@ -12,8 +12,12 @@
 // 
 // Provides stream packet encoding.
 
+#include <sstream>
+#include <algorithm>
+
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
+#include <opencorelib/cl/profile.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -25,8 +29,10 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "avformat_wrappers.hpp"
 #include "avformat_stream.hpp"
 
+namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
@@ -95,7 +101,7 @@ class stream_queue
 			lru_map_[ position ] = int( lru_.size( ) );
 			lru_.push_back( position );
 
-			if ( lru_.size( ) > 100 )
+			if ( lru_.size( ) > 24 )
 			{
 				int oldest = lru_.front( );
 				lru_.pop_front( );
@@ -587,6 +593,170 @@ class avformat_decode_filter : public filter_type
 		stream_queue_ptr queue_;
 };
 
+class avformat_video_streamer : public ml::stream_type
+{
+	public:
+		avformat_video_streamer( avformat_video *wrapper )
+			: ml::stream_type( )
+			, wrapper_( wrapper )
+			, pending_( 0 )
+		{
+		}
+
+		virtual ~avformat_video_streamer( )
+		{
+			delete wrapper_;
+		}
+
+		void push( ml::stream_type_ptr stream )
+		{
+			if ( pending_ )
+			{
+				while( pending_ )
+				{
+					push( ml::frame_type_ptr( ) );
+					pending_ --;
+				}
+				avcodec_flush_buffers( wrapper_->context( ) );
+			}
+
+			if ( stream )
+				queue_.push_back( stream );
+		}
+
+		void push( ml::frame_type_ptr frame )
+		{
+			ml::stream_type_ptr stream = wrapper_->encode( frame );
+			queue_.push_back( stream );
+			if ( frame && frame->has_image( ) && stream->length( ) == 0 )
+				pending_ ++;
+		}
+
+		bool more( )
+		{
+			return queue_.size( ) > 0 || pending_ > 0;
+		}
+
+		bool next( )
+		{
+			if ( queue_.size( ) )
+			{
+				stream_ = queue_[ 0 ];
+				queue_.pop_front( );
+			}
+			else if ( pending_ )
+			{
+				push( ml::stream_type_ptr( ) );
+				stream_ = queue_[ 0 ];
+				queue_.pop_front( );
+			}
+			else
+			{
+				stream_ = ml::stream_type_ptr( );
+			}
+			return stream_ != ml::stream_type_ptr( );
+		}
+
+		/// Return the properties associated to this frame.
+		virtual olib::openpluginlib::pcos::property_container &properties( )
+		{
+			return stream_ ? stream_->properties( ) : dummy_props_;
+		}
+
+		/// Indicates the container format of the input
+		virtual const std::string &container( ) const
+		{
+			return stream_ ? stream_->container( ) : dummy_;
+		}
+
+		/// Indicates the codec used to decode the stream
+		virtual const std::string &codec( ) const
+		{
+			return stream_ ? stream_->codec( ) : dummy_;
+		}
+
+		/// Returns the id of the stream (so that we can select a codec to decode it)
+		virtual const enum ml::stream_id id( ) const
+		{
+			return stream_ ? stream_->id( ) : ml::stream_unknown;
+		}
+
+		/// Returns the length of the data in the stream
+		virtual size_t length( )
+		{
+			return stream_ ? stream_->length( ) : 0;
+		}
+
+		/// Returns a pointer to the first byte of the stream
+		virtual boost::uint8_t *bytes( )
+		{
+			return stream_ ? stream_->bytes( ) : 0;
+		}
+
+		/// Returns the position of the key frame associated to this packet
+		virtual const int key( ) const
+		{
+			return stream_ ? stream_->key( ) : 0;
+		}
+
+		/// Returns the position of this packet
+		virtual const int position( ) const
+		{
+			return stream_ ? stream_->position( ) : 0;
+		}
+
+		/// Returns the bitrate of the stream this packet belongs to
+		virtual const int bitrate( ) const
+		{
+			return stream_ ? stream_->bitrate( ) : 0;
+		}
+
+		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
+		virtual const dimensions size( ) const 
+		{
+			return stream_ ? stream_->size( ) : dimensions( 0, 0 );
+		}
+
+		/// Returns the sar of the image associated to this packet (1,1 if n/a)
+		virtual const fraction sar( ) const 
+		{ 
+			return stream_ ? stream_->sar( ) : fraction( 1, 1 );
+		}
+
+		/// Returns the frequency associated to the audio in the packet (0 if n/a)
+		virtual const int frequency( ) const 
+		{ 
+			return stream_ ? stream_->frequency( ) : 0;
+		}
+
+		/// Returns the channels associated to the audio in the packet (0 if n/a)
+		virtual const int channels( ) const 
+		{ 
+			return stream_ ? stream_->channels( ) : 0;
+		}
+
+		/// Returns the samples associated to the audio in the packet (0 if n/a)
+		virtual const int samples( ) const 
+		{ 
+			return stream_ ? stream_->samples( ) : 0;
+		}
+	
+		virtual const olib::openpluginlib::wstring pf( ) const 
+		{ 
+			return stream_ ? stream_->pf( ) : pl::wstring( L"" );
+		}
+
+	private:
+		avformat_video *wrapper_;
+		int pending_;
+		std::deque< ml::stream_type_ptr > queue_;
+		ml::stream_type_ptr stream_;
+		std::string dummy_;
+		pl::pcos::property_container dummy_props_;
+};
+
+typedef boost::shared_ptr< avformat_video_streamer > avformat_video_streamer_ptr;
+
 class avformat_encode_filter : public filter_type
 {
 	public:
@@ -595,17 +765,15 @@ class avformat_encode_filter : public filter_type
 			: ml::filter_type( )
 			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, prop_force_( pl::pcos::key::from_string( "force" ) )
-			, prop_codec_( pl::pcos::key::from_string( "codec" ) )
+			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
 			, initialised_( false )
 			, encoding_( false )
-			, context_( 0 )
-			, instance_( 0 )
-			, key_( 0 )
+			, video_wrapper_( 0 )
 			, pf_( L"" )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
-			properties( ).append( prop_codec_ = pl::wstring( L"mpeg2" ) );
+			properties( ).append( prop_profile_ = pl::wstring( L"profiles/vcodec/dv25" ) );
 		}
 
 		virtual ~avformat_encode_filter( )
@@ -620,9 +788,8 @@ class avformat_encode_filter : public filter_type
 
 		virtual int get_frames( ) const
 		{
-			if ( fetch_slot( 0 ) ) 
-				return fetch_slot( 0 )->get_frames( );
-			return 0;
+			ml::input_type_ptr input = fetch_slot( 0 );
+			return input ? input->get_frames( ) : 0;
 		}
 
 	protected:
@@ -644,6 +811,13 @@ class avformat_encode_filter : public filter_type
 					if ( render_ )
 						render_->connect( pusher_ );
 	
+					// Load the profile
+					video_wrapper_ = new avformat_video( result );
+					video_streamer_ = avformat_video_streamer_ptr( new avformat_video_streamer( video_wrapper_ ) );
+					manager_.enroll( video_wrapper_ );
+					manager_.load( pl::to_string( prop_profile_.value< pl::wstring >( ) ) );
+
+					// State is initialised now
 					initialised_ = true;
 					pf_ = result->pf( );
 				}
@@ -651,6 +825,7 @@ class avformat_encode_filter : public filter_type
 				if ( !last_frame_ || get_position( ) != last_frame_->get_position( ) )
 				{
 					int gop_closed = 0;
+					bool stream_types_match = true;
 
 					if ( source->get_stream( ) && source->get_stream( )->properties( ).get_property_with_key( key_gop_closed_ ).valid( ) )
 					{
@@ -677,7 +852,7 @@ class avformat_encode_filter : public filter_type
 						std::cerr << "case 2: " << get_position( ) << " first frame not an i frame" << std::endl;
 						encoding_ = true;
 					}
-					else if ( !encoding_ && source->get_stream( )->codec( ) != pl::to_string( prop_codec_.value< pl::wstring >( ) ) )
+					else if ( !encoding_ && !stream_types_match )
 					{
 						std::cerr << "case 3: " << get_position( ) << " stream of different type" << std::endl;
 						encoding_ = true;
@@ -687,15 +862,15 @@ class avformat_encode_filter : public filter_type
 						std::cerr << "case 4: " << get_position( ) << " started encoding due to non-contiguous packets" << std::endl;
 						encoding_ = true;
 					}
-					else if ( encoding_ && ( source->get_stream( )->codec( ) != pl::to_string( prop_codec_.value< pl::wstring >( ) ) || source->get_stream( )->key( ) != source->get_stream( )->position( ) ) )
+					else if ( encoding_ && ( !stream_types_match || source->get_stream( )->key( ) != source->get_stream( )->position( ) ) )
 					{
-						std::cerr << "case 5: " << get_position( ) << " already encoding and stream component does not indicate that we have reached the next key frame yet" << std::endl;
+						std::cerr << "case 5: " << get_position( ) << " already encoding and stream component does not indicate that we have reached the next key frame yet " << gop_closed << " " << source->get_stream( )->codec( ) << " " << video_wrapper_->serialise( "video_codec" ) << " " << source->get_stream( )->key( ) << " " << source->get_stream( )->position( ) << std::endl;
 					}
 					else if ( encoding_ && source->get_stream( )->key( ) == source->get_stream( )->position( ) && gop_closed )
 					{
 						std::cerr << "case 6: " << get_position( ) << " encoding turned off as next key is reached" << std::endl;
 						encoding_ = false;
-						avcodec_flush_buffers( context_ );
+						
 					}
 	
 					if ( encoding_ )
@@ -703,16 +878,20 @@ class avformat_encode_filter : public filter_type
 						result = render( source );
 						result->set_position( source->get_position( ) );
 						if ( result->get_image( ) )
-							encode( result );
+							video_streamer_->push( result );
 						else
 							std::cerr << "Stream: no image after render" << std::endl;
 					}
 					else
 					{
+						video_streamer_->push( source->get_stream( ) );
 						result = source;
 					}
-	
+
+					result->set_stream( video_streamer_ );
 					last_frame_ = result;
+					result = result->shallow( );
+					video_streamer_->next( );
 				}
 				else
 				{
@@ -764,136 +943,19 @@ class avformat_encode_filter : public filter_type
 			return result;
 		}
 
-		void encode( const ml::frame_type_ptr &result )
-		{
-			if ( context_ == 0 )
-			{
-				context_ = avcodec_alloc_context( );
-				picture_ = avcodec_alloc_frame( );
-
-				if ( is_mpeg2( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
-				{
-					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
-					context_->qmin = 1;
-					context_->lmin = FF_QP2LAMBDA;
-					context_->bit_rate = 50000000;
-					context_->rc_max_available_vbv_use = 1.0;
-					context_->rc_min_vbv_overflow_use = 1.0;
-					context_->rc_min_rate = context_->bit_rate;
-					context_->rc_max_rate = context_->bit_rate;
-					context_->rc_buffer_size = 36408333;
-					context_->gop_size = 12;
-					context_->max_b_frames = 0;
-					context_->pix_fmt = oil_to_avformat( result->pf( ) );
-					context_->flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME | CODEC_FLAG_INTERLACED_DCT;
-					context_->flags2 |= CODEC_FLAG2_INTRA_VLC;
-					context_->scenechange_threshold = 1000000000;
-					context_->intra_dc_precision = 1;
-					context_->thread_count = 4;
-				}
-				else if ( is_imx( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
-				{
-					instance_ = avcodec_find_encoder( CODEC_ID_MPEG2VIDEO );
-					context_->qmin = 1;
-					context_->lmin = FF_QP2LAMBDA;
-					context_->bit_rate = 50000;
-					context_->rc_max_available_vbv_use = 1.0;
-					context_->rc_min_vbv_overflow_use = 1.0;
-					context_->rc_min_rate = context_->bit_rate;
-					context_->rc_max_rate = context_->bit_rate;
-					context_->rc_buffer_size = 36408333;
-					context_->gop_size = 1;
-					context_->max_b_frames = 0;
-					context_->pix_fmt = oil_to_avformat( result->pf( ) );
-					context_->flags |= CODEC_FLAG_INTERLACED_ME | CODEC_FLAG_INTERLACED_DCT;
-					context_->flags2 |= CODEC_FLAG2_INTRA_VLC;
-					context_->intra_dc_precision = 1;
-					context_->thread_count = 4;
-				}
-				else if ( is_dv( pl::to_string( prop_codec_.value< pl::wstring >( ) ) ) )
-				{
-					std::string codec =  pl::to_string( prop_codec_.value< pl::wstring >( ) );
-					instance_ = avcodec_find_encoder( CODEC_ID_DVVIDEO );
-					context_->pix_fmt = oil_to_avformat( result->pf( ) );
-					if ( codec == "dv25" )
-						context_->bit_rate = 25000000;
-					else if ( codec == "dv50" )
-						context_->bit_rate = 50000000;
-					else if ( codec == "dvcprohd_1080i" )
-						context_->bit_rate = 25000000;
-				}
-				else
-				{
-					std::cerr << "Failed to create a codec of " << pl::to_string( prop_codec_.value< pl::wstring >( ) ) << std::endl;
-					return;
-				}
-
-				context_->width = result->width( );
-				context_->height = result->height( );
-				AVRational avr = { result->get_fps_den( ), result->get_fps_num( ) };
-				context_->time_base = avr;
-				AVRational sar = { result->get_sar_num( ), result->get_sar_den( ) };
-				context_->sample_aspect_ratio = sar;
-
-				if ( avcodec_open( context_, instance_ ) < 0 ) 
-				{
-					std::cerr << "Unable to open codec" << std::endl;
-					return;
-				}
-
-				if ( context_->thread_count )
-					avcodec_thread_init( context_, context_->thread_count );
-
-				outbuf_size_ = 5000000;
-				outbuf_ = ( boost::uint8_t * )malloc( outbuf_size_ );
-			}
-
-			picture_->data[ 0 ] = result->get_image( )->data( 0 );
-			picture_->data[ 1 ] = result->get_image( )->data( 1 );
-			picture_->data[ 2 ] = result->get_image( )->data( 2 );
-			picture_->linesize[ 0 ] = result->get_image( )->pitch( 0 );
-			picture_->linesize[ 1 ] = result->get_image( )->pitch( 1 );
-			picture_->linesize[ 2 ] = result->get_image( )->pitch( 2 );
-
-			if ( result->get_image( )->field_order( ) != il::progressive )
-			{
-				picture_->interlaced_frame  = 1;
-				picture_->top_field_first = result->get_image( )->field_order( ) != il::top_field_first;
-			}
-
-			int out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
-
-			if ( context_->coded_frame && context_->coded_frame->key_frame )
-				key_ = get_position( );
-
-			ml::stream_type_ptr packet = ml::stream_type_ptr( new stream_avformat( pl::to_string( prop_codec_.value< pl::wstring >( ) ), 
-																				   out_size, 
-																				   get_position( ), 
-																				   key_, 
-																				   context_->bit_rate, 
-																				   ml::dimensions( result->width( ), result->height( ) ), 
-																				   ml::fraction( result->get_sar_num( ), result->get_sar_den( ) ), 
-																				   result->get_image()->pf() ) );
-			memcpy( packet->bytes( ), outbuf_, out_size );
-			result->set_stream( packet );
-		}
-
 	private:
 		pl::pcos::property prop_enable_;
 		pl::pcos::property prop_force_;
-		pl::pcos::property prop_codec_;
+		pl::pcos::property prop_profile_;
 		bool initialised_;
 		ml::frame_type_ptr last_frame_;
 		ml::input_type_ptr pusher_;
 		ml::filter_type_ptr render_;
 		bool encoding_;
-		AVCodecContext *context_;
-		AVCodec *instance_;
-		AVFrame *picture_;
-		int outbuf_size_;
-		boost::uint8_t *outbuf_;
-		int key_;
+		cl::profile_manager manager_;
+		avformat_video *video_wrapper_;
 		pl::wstring pf_;
+		avformat_video_streamer_ptr video_streamer_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
