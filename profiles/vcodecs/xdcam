@@ -1,0 +1,22 @@
+video_codec = mpeg2video
+video_qmin = 1
+# video_lmin = FF_QP2LAMBDA
+video_lmin = 118
+video_bit_rate = 50000000
+video_rc_min_rate = 50000000
+video_rc_max_rate = 50000000
+video_rc_max_available_vbv_use = 1.0
+video_rc_min_vbv_overflow_use = 1.0
+video_rc_buffer_size = 36408333
+video_gop_size = 12
+video_max_b_frames = 0
+# video_flags |= CODEC_FLAG_CLOSED_GOP | CODEC_FLAG_INTERLACED_ME | CODEC_FLAG_INTERLACED_DCT;
+video_flags |= 0x80000000
+video_flags |= 0x20000000
+video_flags |= 0x00040000
+# video_flags2 |= CODEC_FLAG2_INTRA_VLC;
+video_flags2 |= 0x00000800
+video_scenechange_threshold = 1000000000
+video_intra_dc_precision = 1
+video_thread_count = 4
+

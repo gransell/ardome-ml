@@ -1,0 +1,40 @@
+# Based on: http://www.itbroadcastanddigitalcinema.com/ffmpeg_howto.html#Encoding_D10
+#
+# which advises the following:
+#
+# ffmpeg -i <input_file> -vcodec mpeg2video -r 25 -pix_fmt yuv422p -minrate 50000k -maxrate 50000k -b 50000k -intra \
+# -flags +ildct+low_delay -dc 10 -flags2 +ivlc+non_linear_q -ps 1 -qmin 1 -qmax 3 -top 1 -bufsize 2000000 \
+# -rc_init_occupancy 2000000 -rc_buf_aggressivity 0.25 -an output.m2v
+# 
+# Notes :
+# - Only works for 25 fps content.
+# - Change minrate, maxrate and b values to 30000k / 40000k / 50000k in order to produce 30/40/50 Mbps D10 essence.
+# - Set bufsize and rc_init_occupancy values to 1200000 / 1600000 / 2000000 for 30/40/50 Mbps D10 essence.
+# - Add the -padtop 32 option if you want to produce a 720x608 D10 image size from a 720x576 source.
+#
+# AML integration notes: 
+# - It is assumed that the PAL restriction intimated there relates to the -r 25 switch
+# - the -dc 10 combination should correlate to 'video_intra_dc_precision = 10', but this is causing the encoder to seg
+#   fault more investigation is needed for this one
+
+video_codec = mpeg2video
+video_bit_rate = 50000000
+video_rc_min_rate = 50000000
+video_rc_max_rate = 50000000
+video_gop_size = 0
+video_rc_max_available_vbv_use = 1
+# video_flags |= CODEC_FLAG_INTERLACED_DCT | CODEC_FLAG_LOW_DELAY
+video_flags |= 0x00040000
+video_flags |= 0x00080000
+video_intra_dc_precision = 1
+# video_flags2 |= CODEC_FLAG2_INTRA_VLC | CODEC_FLAG2_NON_LINEAR_QUANT
+video_flags2 |= 0x00000800
+video_flags2 |= 0x00010000
+video_qmin = 1
+video_qmax = 3
+video_rtp_payload_size = 1
+video_rc_buffer_size = 2000000
+video_rc_initial_buffer_occupancy = 2000000
+video_rc_buffer_aggressivity = 0.25
+video_thread_count = 4
+

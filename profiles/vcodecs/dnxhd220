@@ -1,0 +1,19 @@
+# Based on: http://www.itbroadcastanddigitalcinema.com/ffmpeg_howto.html#Encoding_VC-3
+#
+# which advises the following:
+#
+# ffmpeg -i <input_file> -vcodec dnxhd -b <bitrate> -an output.mov
+#
+# Notes :
+# - <bitrate> can take the following values : 36Mb, 60Mb, 90Mb, 120Mb, 185Mb ( please refer to the following table ).
+# - Add the following option for interlaced modes : -flags +ildct
+# - Add the following option for best quality mode ( very slow ! ) : -mbd rd
+#
+# AML Integration Notes:
+# - Interlaced is assumed
+
+video_codec = dnxhd
+video_bit_rate = 220000000
+# video_flags |= CODEC_FLAG_INTERLACED_DCT
+video_flags |= 0x00040000
+
