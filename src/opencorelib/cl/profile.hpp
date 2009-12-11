@@ -46,7 +46,7 @@ class CORE_API profile_wrapper
 		typedef std::map< std::string, profile_property * > map;
 
 		/// Constructor for the wrapper
-		profile_wrapper( );
+		profile_wrapper( bool managed = true );
 
 		/// Destructor for the wrapper
 		virtual ~profile_wrapper( );
@@ -55,7 +55,7 @@ class CORE_API profile_wrapper
 		virtual void init( ) = 0;
 
 		/// Work around to allow easy callbacks into objects which aren't managed (deleted) by the profile_manager
-		virtual const bool managed_wrapper( ) const { return true; }
+		bool managed_wrapper( ) const { return managed_; }
 
 		/// Enroll an int property
 		void enroll( const std::string &name, int &ref );
@@ -91,6 +91,7 @@ class CORE_API profile_wrapper
 		map::iterator find( const std::string &name );
 		
 	protected:
+		bool managed_;
 		map map_;
 };
 
@@ -106,7 +107,7 @@ class CORE_API profile_manager
 		profile_manager( );
 
 		/// Destructor for the manager
-		~profile_manager( );
+		virtual ~profile_manager( );
 
 		/// Register a wrapper with the manager
 		void enroll( profile_wrapper *wrapper );

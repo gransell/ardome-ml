@@ -58,6 +58,11 @@ struct profile_entry
 class CORE_API profile_property
 {
 	public:
+		// Ctor indicates if this instance should be managed or not
+		profile_property( bool managed = true )
+			: managed_( managed )
+		{ }
+
 		/// Virual destructor
 		virtual ~profile_property( ) 
 		{ }
@@ -72,7 +77,10 @@ class CORE_API profile_property
 		virtual std::string serialise( const std::string & ) const = 0;
 
 		/// Work around to allow easy callbacks into objects which aren't managed (deleted) by the profile_wrapper
-		virtual const bool managed_property( ) const { return true; }
+		bool managed_property( ) const { return managed_; }
+
+	private:
+		const bool managed_;
 };
 
 } }

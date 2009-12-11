@@ -133,7 +133,8 @@ profile_ptr profile_load( const std::string &profile )
 }
 
 // Wrapper implementation
-profile_wrapper::profile_wrapper( )
+profile_wrapper::profile_wrapper( bool managed )
+	: managed_( managed )
 { }
 
 profile_wrapper::~profile_wrapper( ) 
@@ -232,7 +233,9 @@ void profile_manager::load( const std::string &id )
 			}
 		}
 		if ( !found )
+		{
 			throw std::runtime_error( "Unable to handle " + ( *i ).name );
+		}
 	}
 }
 
