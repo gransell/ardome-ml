@@ -233,6 +233,8 @@ class unindexed_job_type : public indexer_job
 			, size_( 0 )
 			, finished_( false )
 		{
+			if ( url_.find( L":cache:" ) != pl::wstring::npos )
+				url_ = url.substr( 0, url.find( L"cache:" ) ) + url.substr( url.find( L"cache:" ) + 6 );
 			check_size( );
 		}
 
