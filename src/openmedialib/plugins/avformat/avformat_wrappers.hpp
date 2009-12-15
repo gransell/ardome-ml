@@ -46,7 +46,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 		virtual ~avformat_video( )
 		{
-			if ( context_ && context_->thread_count > 1 )
+			if ( codec_ && context_ && context_->thread_count > 1 )
 				avcodec_thread_free( context_ );
 
 			av_free( context_ );
