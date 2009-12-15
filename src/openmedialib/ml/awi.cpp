@@ -1155,7 +1155,7 @@ bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 			footer.type = 0xffff;
 			footer.closed = 0;
 			memcpy( footer.id, "AWI", 3 );
-			memcpy( footer.ver, "2", 1 );
+			memcpy( footer.ver, "3", 1 );
 			set( footer );
 		}
 	}

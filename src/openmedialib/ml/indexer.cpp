@@ -360,18 +360,21 @@ class generating_job_type : public indexer_job
 		void analyse_gop( )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			int registered = 0;
 			while ( input_ && start_ < input_->get_frames( ) )
 			{
+				registered ++;
 				last_frame_ = input_->fetch( start_ ++ );
 				if ( last_frame_->get_stream( )->position( ) == last_frame_->get_stream( )->key( ) )
 				{
 					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
-					break;
+					if ( registered >= 12 )
+						break;
 				}
 			}
 
 			if ( last_frame_ && start_ == input_->get_frames( ) )
-				index_->close( last_frame_->get_position( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );
+				index_->close( last_frame_->get_position( ) + 1, input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );
 		}
 
 		mutable boost::recursive_mutex mutex_;
