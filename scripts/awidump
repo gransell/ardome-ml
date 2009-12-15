@@ -2,6 +2,7 @@
 
 import sys
 import struct
+from datetime import datetime
 
 if sys.argv[ 1 ] != '-':
 	file = open( sys.argv[ 1 ], 'rb' )
@@ -28,10 +29,20 @@ try:
 	while True:
 		data = file.read( 20 )
 		if len( data ) == 20:
-			( reserved, ) = struct.unpack( '!h', data[ 0 : 2 ] )
-			if ver == '2' and reserved != 0: break
-			( frames, frame, offset, length ) = struct.unpack( '!hlql', data[ 2 : ] )
-			print frame, frames, offset, length
+			( footercheck, ) = struct.unpack( '!Q', data[ 0 : 8 ] )
+			if footercheck == 0xffffffffffffffff:
+				print '\n-= AWI footer =-'
+				( creationtimestamp, ) = struct.unpack( '!L', data[ 8 : 12 ] )
+				creationdatetime = datetime.fromtimestamp( creationtimestamp )
+				print "File was closed on: ", creationdatetime
+				( maxframe, ) = struct.unpack( '!h', data[ 12 : 14 ] )
+				print 'Longest GOP in file:', maxframe
+				break
+			else:
+				( reserved, ) = struct.unpack( '!h', data[ 0 : 2 ] )
+				if ver == '2' and reserved != 0: break
+				( frames, frame, offset, length ) = struct.unpack( '!hlql', data[ 2 : ] )
+				print frame, frames, offset, length
 		else:
 			break
 
