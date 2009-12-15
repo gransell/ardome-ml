@@ -39,8 +39,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'ubuntu64':
 			if os.path.exists( 'bcomp/ffmpeg' ):
-				for package in [ 'libavcodec.pc', 'libavdevice.pc', 'libavformat.pc', 'libavutil.pc' ]:
-					self.install_config( 'config/ubuntu64/' + package, 'bcomp/ffmpeg' )
+				self.install_config( 'config/ubuntu64/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'lsb_3_1_32':
 			self.install_config( 'config/lsb_3_1_32/boost.pc', 'bcomp/boost' )
 			self.install_config( 'config/lsb_3_1_32/boost_date_time.pc', 'bcomp/boost' )
@@ -227,6 +226,8 @@ if env.check_externals( ):
 	#plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, il, ml ] ) )
+	#plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
 
 	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
 	os.system( "chmod +x scripts/amldocs.aml" )

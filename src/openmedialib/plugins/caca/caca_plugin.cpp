@@ -4,7 +4,7 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
-#include <caca.h>
+#include <caca0.h>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
@@ -45,7 +45,7 @@ class ML_PLUGIN_DECLSPEC caca_store : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
-			image_type_ptr img = frame->get_image( );
+			il::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
 				img = il::convert( img, L"r8g8b8a8" );
