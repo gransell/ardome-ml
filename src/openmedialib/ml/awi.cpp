@@ -148,7 +148,7 @@ boost::int64_t awi_index_v2::bytes( )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	std::map< boost::int32_t, awi_item >::iterator iter = -- items_.end( );
-	return ( *iter ).second.offset;
+	return ( *iter ).second.offset + ( *iter ).second.length;
 }
 
 // Derive the frame count from the file size given
@@ -654,7 +654,7 @@ boost::int64_t awi_index_v3::bytes( )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	std::map< boost::int32_t, awi_item_v3 >::iterator iter = -- items_.end( );
-	return ( *iter ).second.offset;
+	return ( *iter ).second.offset + ( *iter ).second.length;
 }
 
 // Derive the frame count from the file size given
