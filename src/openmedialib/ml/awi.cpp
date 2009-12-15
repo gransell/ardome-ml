@@ -156,7 +156,7 @@ int awi_index_v2::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	int result = -1;
-	if ( eof_ && size == bytes( ) )
+	if ( eof_ && size >= bytes( ) )
 	{
 		result = frames_;
 	}
@@ -663,7 +663,7 @@ int awi_index_v3::calculate( boost::int64_t size )
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
 	int result = -1;
 
-	if ( eof_ && size == bytes( ) )
+	if ( eof_ && size >= bytes( ) )
 	{
 		result = frames_;
 	}
