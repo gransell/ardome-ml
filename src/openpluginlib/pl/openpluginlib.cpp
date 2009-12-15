@@ -39,6 +39,7 @@
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/str_util.hpp>
+#include <opencorelib/cl/profile.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/registry.hpp>
@@ -136,6 +137,7 @@ namespace
 	void reflib( int init, const string& lookup_path = "" )
 	{
 		static long refs = 0;
+		string profile_base = lookup_path;
 
 		assert( refs >= 0 && L"openpluginlib::refinit: refs is negative." );
 
@@ -149,7 +151,8 @@ namespace
 
 				if ( cl::str_util::env_var_exists( var ) )
 				{
-					el_reg.insert_std( cl::str_util::to_string( cl::str_util::get_env_var( var ) ) );
+					profile_base = cl::str_util::get_env_var( var );
+					el_reg.insert_std( cl::str_util::to_string( profile_base ) );
 				}
 #ifndef WIN32
 				else
@@ -165,6 +168,18 @@ namespace
 
 			if( !lookup_path.empty( ) )
 				el_reg.insert_custom( lookup_path );
+
+			// Ugh - must find a better way to handle path info (do we really need platform specific here at all?)
+#ifdef WIN32
+			profile_base += "/../profiles/";
+#elif __APPLE__
+			profile_base += "/../Resources/profiles/";
+#else
+			profile_base += "/../../../../share/aml/profiles/";
+#endif
+
+			// Register the derived directory for the profiles
+			cl::profile_init( profile_base );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

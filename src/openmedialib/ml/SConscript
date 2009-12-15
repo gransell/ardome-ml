@@ -20,6 +20,8 @@ object = local_env.shared_library( 'openmedialib_ml', [
 
 local_env.release( object )
 
+local_env.copy_files( local_env[ 'stage_profiles' ], Dir('#').abspath + '/profiles', perms = 0755 )
+
 if local_env[ 'PLATFORM' ] != 'win32' :
 	local_env.copy_project_files( local_env[ 'ml_include' ], 
 		[ 	'audio.hpp', 

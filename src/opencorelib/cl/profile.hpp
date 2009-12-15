@@ -33,6 +33,9 @@ class profile
 		virtual list::const_iterator end( ) const = 0;
 };
 
+/// Specify the root directory for the profiles for this process instance
+extern CORE_API void profile_init( const std::string &directory );
+
 /// Free function to load a profile
 extern CORE_API profile_ptr profile_load( const std::string &profile );
 

@@ -5,7 +5,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <boost/regex.hpp>
+
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace olib { namespace opencorelib {
 
@@ -122,13 +125,27 @@ class profile_impl : public profile
 		std::vector< profile_entry > entries_;
 };
 
+static std::string base_directory;
+
+void profile_init( const std::string &directory )
+{
+	base_directory = directory;
+}
+
 profile_ptr profile_load( const std::string &profile )
 {
-	// TODO: map profile id to file location
 	typedef boost::shared_ptr< profile_impl > profile_impl_ptr;
 	profile_impl_ptr result( new profile_impl( ) );
-	std::ifstream file( profile.c_str( ), std::ifstream::in );
-	result->parse( file );
+	if ( fs::exists( profile ) )
+	{
+		std::ifstream stream( profile.c_str( ), std::ifstream::in );
+		result->parse( stream );
+	}
+	else
+	{
+		std::ifstream stream( ( base_directory + profile ).c_str( ), std::ifstream::in );
+		result->parse( stream );
+	}
 	return result;
 }
 
