@@ -1,6 +1,6 @@
 # See imx50 for base settings and info
 
-include profiles/vcodecs/imx50
+include vcodecs/imx50
 
 video_bit_rate = 30000000
 video_rc_min_rate = 30000000

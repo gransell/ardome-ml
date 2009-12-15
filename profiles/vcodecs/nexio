@@ -1,7 +1,7 @@
 include vcodecs/imx50
 
 video_bit_rate = 150000000
-video_rc_min_rate = 100000000
+video_rc_min_rate = 150000000
 video_rc_max_rate = 150000000
 video_rc_buffer_size = 6000000
 video_rc_initial_buffer_occupancy = 6000000
