@@ -258,6 +258,16 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 				{
 					input->seek( 0 - speed );
 				}
+				else if ( key == 'g' )
+				{
+					int position = input->get_position( ) - 1000;
+					input->seek( position < 0 ? 0 : position );
+				}
+				else if ( key == 'h' )
+				{
+					int position = input->get_position( ) + 1000;
+					input->seek( position >= input->get_frames( ) ? input->get_frames( ) - 1 : position );
+				}
 				else if ( key == 273 )
 				{
 					int position = input->get_position( ) - 100;
