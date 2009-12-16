@@ -41,6 +41,10 @@
 #include <opencorelib/cl/str_util.hpp>
 #include <opencorelib/cl/profile.hpp>
 
+#include <opencorelib/cl/logger.hpp>
+#include <opencorelib/cl/loghandler.hpp>
+#include <opencorelib/cl/logtarget.hpp>
+
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/registry.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
@@ -56,6 +60,33 @@ namespace
 	string g_kernels_path("");
 	string g_shaders_path("");
 #endif
+
+	class pl_logtarget : public cl::logtarget
+	{
+		public:
+			virtual ~pl_logtarget( ) { }
+	
+			virtual void log( cl::invoke_assert& a, const TCHAR* log_source)
+			{
+				olib::t_stringstream ss;
+				a.pretty_print_one_line( ss, cl::print::output_default );
+				std::cerr << "invoke assert: " << ss.str( ) << std::endl;
+			}
+			
+			virtual void log( cl::base_exception& e, const TCHAR* log_source)
+			{
+				olib::t_stringstream ss;
+				e.pretty_print_one_line( ss, cl::print::output_default );
+				std::cerr << "base exception: " << ss.str( ) << std::endl;
+			}
+	
+			virtual void log( cl::logger& log_msg, const TCHAR* log_source)
+			{
+				olib::t_stringstream ss;
+				log_msg.pretty_print_one_line( ss, cl::print::output_default );
+				std::cerr << "log message: " << ss.str( ) << std::endl;
+			}
+	};
 
 	class add_to_filter_string : public std::unary_function<detail::registry::container::value_type, void>
 	{
@@ -140,6 +171,9 @@ namespace
 		string profile_base = lookup_path;
 
 		assert( refs >= 0 && L"openpluginlib::refinit: refs is negative." );
+
+		if ( refs == 0 )
+			cl::the_log_handler::instance( ).add_target( cl::logtarget_ptr( new pl_logtarget( ) ) );
 
 		detail::registry& el_reg = detail::registry::instance( );
 

@@ -1,7 +1,12 @@
 #include <iostream>
 #include "log.hpp"
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/logger.hpp>
+#include <opencorelib/cl/loghandler.hpp>
+
 using namespace std;
 using namespace olib::openpluginlib;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openpluginlib {
 
@@ -24,6 +29,7 @@ void set_log_callback( logger callback )
 // Set the log level
 void set_log_level( int level )
 {
+	cl::the_log_handler::instance( ).set_global_log_level( static_cast< cl::log_level::severity >( level ) );
 	log_level_ = level;
 }
 
