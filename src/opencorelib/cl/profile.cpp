@@ -241,11 +241,11 @@ void profile_manager::load( const std::string &id )
 	for( profile::list::const_iterator i = profile->begin( ); i != profile->end( ); i ++ )
 	{
 		bool found = false;
-		for( targets::const_iterator j = targets_.begin( ); j != targets_.end( ); j ++ )
+		for( size_t j = 0; j != targets_.size( ); j ++ )
 		{
-			if ( ( *j )->find( ( *i ).name ) != ( *j )->end( ) )
+			if ( targets_[ j ]->find( ( *i ).name ) != targets_[ j ]->end( ) )
 			{
-				( *j )->find( ( *i ).name )->second->assign( *i );
+				targets_[ j ]->find( ( *i ).name )->second->assign( *i );
 				found = true;
 			}
 		}
