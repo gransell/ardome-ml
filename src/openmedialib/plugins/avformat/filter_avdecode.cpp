@@ -20,6 +20,7 @@
 #include <opencorelib/cl/profile.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
+#include <openmedialib/ml/scope_handler.hpp>
 
 #include <vector>
 
@@ -66,7 +67,7 @@ static bool is_imx( const std::string &codec )
 class stream_queue
 {
 	public:
-		stream_queue( ml::input_type_ptr input, int gop_open )
+		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope )
 			: input_( input )
 			, gop_open_( gop_open )
 			, keys_( 0 )
@@ -85,35 +86,6 @@ class stream_queue
 			if ( context_ )
 				avcodec_close( context_ );
 			av_free( frame_ );
-		}
-
-		void used( int position )
-		{
-			if ( lru_map_.find( position ) != lru_map_.end( ) )
-			{
-				int offset = lru_map_[ position ];
-				lru_.erase( lru_.begin( ) + offset );
-				lru_map_.erase( lru_map_.find( position ) );
-				for ( std::deque< int >::iterator iter = lru_.begin( ) + offset; iter != lru_.end( ); iter ++ )
-					lru_map_[ *iter ] --;
-			}
-
-			lru_map_[ position ] = int( lru_.size( ) );
-			lru_.push_back( position );
-
-			if ( lru_.size( ) > 24 )
-			{
-				int oldest = lru_.front( );
-				lru_.pop_front( );
-				lru_map_.erase( lru_map_.find( oldest ) );
-				frames_.erase( frames_.find( oldest ) );
-				if ( images_.find( oldest ) != images_.end( ) )
-					images_.erase( images_.find( oldest ) );
-				if ( audios_.find( oldest ) != audios_.end( ) )
-					audios_.erase( audios_.find( oldest ) );
-				for ( std::deque< int >::iterator iter = lru_.begin( ); iter != lru_.end( ); iter ++ )
-					lru_map_[ *iter ] --;
-			}
 		}
 
 		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
@@ -174,8 +146,13 @@ class stream_queue
 		ml::frame_type_ptr fetch( int position )
 		{
 			ml::frame_type_ptr result;
-
-			if ( frames_.find( position ) == frames_.end( ) && position < input_->get_frames( ) )
+			
+			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
+			lru_cache_type::key_type my_key( position, input_->get_uri() );
+						
+			result = lru_cache->frame_for_position( my_key );
+			
+			if( !result && position < input_->get_frames( ) )
 			{
 				//std::cerr << "fetching from input " << position << std::endl;
 				input_->seek( position );
@@ -185,18 +162,14 @@ class stream_queue
 					//std::cerr << "obtained from input " << result->get_position( ) << " for " << position << std::endl;
 					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
 						look_for_closed( result );
-					frames_[ result->get_position( ) ] = result;
-					used( result->get_position( ) );
+						
+					lru_cache->insert_frame_for_position( my_key, result );
+					
 					if ( result->get_position( ) == position )
 						break;
 					input_->seek( result->get_position( ) + 1 );
 					result = input_->fetch( );
 				}
-			}
-			else if ( position < input_->get_frames( ) )
-			{
-				used( position );
-				result = frames_[ position ];
 			}
 
 			return result;
@@ -204,12 +177,16 @@ class stream_queue
 
 		il::image_type_ptr decode_image( int position )
 		{
-			if ( images_.find( position ) != images_.end( ) )
+			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
+			lru_cache_type::key_type my_key( position, input_->get_uri() );
+						
+			il::image_type_ptr img = lru_cache->image_for_position( my_key );
+			
+			if( img )
 			{
-				used( position );
-				return images_[ position ];
+				return img;
 			}
-
+		
 			ml::frame_type_ptr frame = fetch( position );
 
 			if ( frame && frame->get_stream( ) )
@@ -263,7 +240,8 @@ class stream_queue
 							image->set_position( input_->get_frames( ) - 1 );
 							if ( frame_->interlaced_frame )
 								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
-							images_[ input_->get_frames( ) - 1 ] = image;
+								
+							lru_cache->insert_image_for_position( lru_cache_type::key_type( image->position(), input_->get_uri() ), image );
 						}
 						expected_ ++;
 						return image;
@@ -276,12 +254,14 @@ class stream_queue
 
 		ml::audio_type_ptr decode_audio( int position )
 		{
-			if ( audios_.find( position ) != audios_.end( ) )
-			{
-				used( position );
-				return audios_[ position ];
-			}
-
+			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
+			lru_cache_type::key_type my_key( position, input_->get_uri() );
+			
+			audio_type_ptr aud = lru_cache->audio_for_position( my_key );
+			
+			if( aud )
+				return aud;
+			
 			ml::frame_type_ptr frame = fetch( position );
 
 			if ( frame && frame->get_stream( ) )
@@ -367,7 +347,8 @@ class stream_queue
 							}
 
 							image->set_position( result->get_position( ) - offset_ );
-							images_[ result->get_position( ) - offset_ ] = image;
+							lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
+							lru_cache->insert_image_for_position( lru_cache_type::key_type( image->position( ), input_->get_uri( ) ), image );
 
 							if ( result->get_position( ) >= position + offset_ )
 								found = true;
@@ -384,7 +365,7 @@ class stream_queue
 					break;
 
 				case ml::stream_audio:
-		   			if ( avcodec_decode_audio2( context_, ( short * )( audio_buf_ ), &audio_size, pkt->bytes( ), pkt->length( ) ) >= 0 )
+					if ( avcodec_decode_audio2( context_, ( short * )( audio_buf_ ), &audio_size, pkt->bytes( ), pkt->length( ) ) >= 0 )
 					{
 						int channels = context_->channels;
 						int frequency = context_->sample_rate;
@@ -411,13 +392,7 @@ class stream_queue
 	private:
 		ml::input_type_ptr input_;
 		int gop_open_;
-
-		std::map< int, ml::frame_type_ptr > frames_;
-		std::map< int, il::image_type_ptr > images_;
-		std::map< int, ml::audio_type_ptr > audios_;
-
-		std::deque< int > lru_;
-		std::map< int, int > lru_map_;
+		std::wstring scope_;
 
 		int keys_;
 		AVCodecContext *context_;
@@ -534,10 +509,12 @@ class avformat_decode_filter : public filter_type
 		avformat_decode_filter( )
 			: ml::filter_type( )
 			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
+			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, initialised_( false )
 			, queue_( )
 		{
 			properties( ).append( prop_gop_open_ = 1 );
+			properties( ).append( prop_scope_ = pl::wstring(L"default_scope") );
 		}
 
 		virtual ~avformat_decode_filter( )
@@ -558,6 +535,7 @@ class avformat_decode_filter : public filter_type
 		}
 
 	protected:
+		
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
@@ -567,7 +545,7 @@ class avformat_decode_filter : public filter_type
 
 				if ( result && result->get_stream( ) )
 				{
-					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ) ) );
+					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value<pl::wstring>() ) );
 					initialised_ = true;
 				}
 			}
@@ -589,6 +567,7 @@ class avformat_decode_filter : public filter_type
 
 	private:
 		pl::pcos::property prop_gop_open_;
+		pl::pcos::property prop_scope_;
 		bool initialised_;
 		stream_queue_ptr queue_;
 };
@@ -854,7 +833,7 @@ class avformat_encode_filter : public filter_type
 					}
 					else if ( !encoding_ && !stream_types_match )
 					{
-						std::cerr << "case 3: " << get_position( ) << " stream of different type" << std::endl;
+						std::cerr << "case 3: " << get_position( ) << " stream of different type: " << source->get_stream( )->codec( ) << " vs. " << pl::to_string( prop_codec_.value< pl::wstring >( ) ) << std::endl;
 						encoding_ = true;
 					}
 					else if ( !encoding_ && !continuous( last_frame_, source ) )

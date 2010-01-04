@@ -67,14 +67,15 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 	protected:
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
-		{
+        {
+            const int frames = get_frames( );
 			// Locked audio generation
-			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< pl::wstring >( ) ) != profiles_.end( ) && get_position( ) < get_frames( ) )
+			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< pl::wstring >( ) ) != profiles_.end( ) && get_position( ) < frames )
 			{
 				ml::input_type_ptr input = fetch_slot( 0 );
 				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
-				int start = get_position( ) - get_position( ) % table.size( );
-				int final = start + table.size( );
+				const int start = get_position( ) - get_position( ) % table.size( );
+				const int final = start + table.size( );
 
 				// Populate the audio_span for the number of the frames in the table each time we move to another group of frames
 				if ( frames_.size( ) == 0 || frames_[ 0 ]->get_position( ) != start )
@@ -84,39 +85,37 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 					int samples = 0;
 
 					ml::frame_type_ptr frame = fetch_from_slot( );
+                    
+                    if( !frame || !(frame->get_audio( )) )
+                    {
+                        result = frame;
+                        return;
+                    }
 
 					// Allocate a single audio object to accomodate the number of samples specified in the table
 					if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
 					{
-						if ( frame && frame->get_audio( ) )
-						{
-							frame->get_fps( fps_num_, fps_den_ );
-							frequency_ = frame->get_audio( )->frequency( );
-							channels_ = frame->get_audio( )->channels( );
-							if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
-							{
-								int total = 0;
-								for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
-								audio_span_ = ml::audio::allocate( frame->get_audio( ), 48000, channels_, total );
-							}
-							else
-							{
-								result = frame;
-								return;
-							}
-						}
-						else
-						{
-							result = frame;
-							return;
-						}
+                        frame->get_fps( fps_num_, fps_den_ );
+                        frequency_ = frame->get_audio( )->frequency( );
+                        channels_ = frame->get_audio( )->channels( );
+                        if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
+                        {
+                            int total = 0;
+                            for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
+                            audio_span_ = ml::audio::allocate( frame->get_audio( ), 48000, channels_, total );
+                        }
+                        else
+                        {
+                            result = frame;
+                            return;
+                        }
 					}
 
 					// Erase the previously collected frames
 					frames_.erase( frames_.begin( ), frames_.end( ) );
 
 					// Collect and analyse all frames needed to match the table size
-					for( int index = start; index < final && index < get_frames( ); index ++ )
+					for( int index = start; index < final && index < frames; index ++ )
 					{
 						ml::frame_type_ptr frame = input->fetch( index );
 						if ( frame && frame->get_audio( ) )
@@ -144,14 +143,14 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 						boost::uint8_t *ptr = ( boost::uint8_t *)audio_span_->pointer( );
                         if ( frames_.size( ) == table.size( ) )
 						{
-                            PL_LOG( pl::level::warning, "We do not have enough samples in our 5 frame cycle. Need to pitch shift." );
+                            PL_LOG( pl::level::warning, boost::format("We do not have enough samples in our 5 frame cycle at position %1%. Need to pitch shift.") % get_position( ) );
 						}
                         
 						for ( size_t i = 0; i < table.size( ); i ++ )
 						{
 							int size = table[ i ] * channels_ * audio_span_->sample_size( );
 
-							if ( int( i ) >= start_audio && int( i ) <= final_audio )
+							if ( int( i ) >= start_audio && int( i ) <= final_audio && frames_[ i ] && frames_[ i ]->get_audio( ) )
 							{
 								ml::audio_type_ptr temp = ml::audio::pitch( frames_[ i ]->get_audio( ), table[ i ] );
 								memcpy( ptr, temp->pointer( ), temp->size( ) );
@@ -170,7 +169,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 				// samples from the span.
 				if ( get_position( ) - start < int( frames_.size( ) ) )
 				{
-					result = frames_[ get_position( ) - start ];
+					result = frames_[ get_position( ) - start ]->shallow( );
 					if ( result && result->get_audio( ) )
 					{
 						boost::uint8_t *ptr = ( boost::uint8_t *)audio_span_->pointer( );

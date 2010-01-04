@@ -21,7 +21,8 @@ void test_timecode()
     // Convert back to media time
     BOOST_CHECK( from_time_code( frame_rate::pal, tc2).to_time_code( frame_rate::pal ) == tc2 );
     BOOST_CHECK( mt1.to_frame_nr( frame_rate::pal ) == 500 );
-    BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc ) == 599 );
+    BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc_drop_frame ) == 599 );
+    BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc ) == 600 );
 
     media_time mt3( rational_time(3600) );
 
@@ -63,4 +64,7 @@ void test_timecode()
     
     BOOST_CHECK_THROW(mt4.to_time_code( frame_rate::pal ), olib::opencorelib::base_exception);
     
+    // Make sure that we take into account the drift when using ntsc
+    media_time mt5 = from_frame_number( frame_rate::ntsc, 3630 );
+    BOOST_CHECK( mt5.to_time_code( frame_rate::pal ) == time_code( 0, 2, 1, 0 ) );
 }

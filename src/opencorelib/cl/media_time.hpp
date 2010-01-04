@@ -17,10 +17,13 @@ namespace olib
         /** Use this class to represent a point on a media timeline. 
         The internal representation stores the number of seconds of media
         that has been passed. It uses a rational number which makes it possible
-        to exactly represent positions even in NTSC (where a frame is 1001/30000 sec long).
+        to exactly represent positions even in NTSC_DROP_FRAME (where a frame is 1001/30000 sec long).
         Depending onolib::opencorelib::frame_rate::type the time should be displayed 
         differently as time_codes. The to_time_code member takes care of this conversion
         properly.
+         
+        Mind that when using normal ntsc as the frame_rate this class will include the drift
+        that you compensate for when using ntsc drop frame.
 
         Instances of this class supports <, <=, >, >=, ==, +, -.
 

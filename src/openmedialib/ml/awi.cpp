@@ -135,10 +135,11 @@ int awi_index_v2::frames( int current )
 	// indicated by the index 
 	if ( !eof_ && current < frames_ )
 	{
-		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( frames_ - 100 );
+		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( frames_ - 1000 );
 		if ( iter != items_.begin( ) ) iter --;
-		result = ( *iter ).first >= current ? ( *iter ).first + 1 : current + 1;
-	}
+        if ( iter != items_.begin( ) ) iter --;
+        result = ( *iter ).first >= current ? ( *iter ).first - 1 : current;
+    }
 
 	return result;
 }
@@ -164,7 +165,7 @@ int awi_index_v2::calculate( boost::int64_t size )
 	{
 		std::map< boost::int64_t, awi_item >::iterator iter = offsets_.upper_bound( size );
 		if ( iter != offsets_.begin( ) ) iter --;
-		result = ( *iter ).second.frame + ( *iter ).second.frames - 1;
+		result = std::max< int >( ( *iter ).second.frame - 1, 0 );
 	}
 	return result;
 }
@@ -643,7 +644,7 @@ int awi_index_v3::frames( int current )
 	{
 		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( frames_ - 100 );
 		if ( iter != items_.begin( ) ) iter --;
-		result = ( *iter ).first >= current ? ( *iter ).first + 1 : current + 1;
+		result = ( *iter ).first >= current ? ( *iter ).first - 1 : current;
 	}
 
 	return result;
@@ -671,7 +672,7 @@ int awi_index_v3::calculate( boost::int64_t size )
 	{
 		std::map< boost::int64_t, awi_item_v3 >::iterator iter = offsets_.upper_bound( size );
 		if ( iter != offsets_.begin( ) ) iter --;
-		result = ( *iter ).second.frame + ( *iter ).second.frames - 1;
+		result = std::max< int >( ( *iter ).second.frame - 1, 0 );
 	}
 	return result;
 }

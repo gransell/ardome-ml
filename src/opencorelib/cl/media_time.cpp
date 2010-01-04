@@ -147,6 +147,8 @@ namespace olib
         media_time& media_time::from_frame_number(olib::opencorelib::frame_rate::type ft,  const rational_time& fr_nr )
         {
             rational_time fps(frame_rate::get_fps(ft));
+            // If its ntsc then we should use 30 fps since it should include the drift when converting to seconds
+            if( ft == frame_rate::ntsc ) fps = rational_time( 30 );
             m_time = fr_nr * (1 / fps);
             return *this;
         }
@@ -154,6 +156,8 @@ namespace olib
         boost::int32_t media_time::to_frame_nr(olib::opencorelib::frame_rate::type ft ) const
         {
             rational_time fps(frame_rate::get_fps(ft));
+            // If its ntsc then we should use 30 fps since it should include the drift when converting to seconds
+            if( ft == frame_rate::ntsc ) fps = rational_time( 30 );
             rational_time frm_count = m_time * fps;
             return static_cast<boost::int32_t>( frm_count.numerator() / frm_count.denominator() );
         }
