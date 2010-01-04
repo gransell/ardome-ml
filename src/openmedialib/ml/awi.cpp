@@ -642,7 +642,7 @@ int awi_index_v3::frames( int current )
 	// indicated by the index 
 	if ( !eof_ && current < frames_ )
 	{
-		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( frames_ - 100 );
+		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( frames_ - 1000 );
 		if ( iter != items_.begin( ) ) iter --;
 		result = ( *iter ).first >= current ? ( *iter ).first - 1 : current;
 	}
