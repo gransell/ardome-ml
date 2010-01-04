@@ -19,6 +19,7 @@
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/worker.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 
 #include <vector>
 #include <map>
@@ -482,6 +483,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				last_packet_pos_ = url_ftell( context_->pb );
 				error = av_read_frame( context_, &pkt_ );
+                if ( error < 0)
+                {
+                    ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+					break;
+                }
 				if ( error >= 0 && is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
 				else if ( error >= 0 && is_audio_stream( pkt_.stream_index ) )
@@ -490,13 +496,20 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					frames_ = get_position( );
 				else if ( prop_genpts_.value< int >( ) == 1 && error < 0 )
 					frames_ = get_position( );
-				else if ( error < 0 )
-					break;
+                
 				av_free_packet( &pkt_ );
+				
+                if ( error < 0 )
+                {
+                    ARLOG_ERR( "Failed to decode frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+					break;
+                }
 			}
 
 			// Special case for eof - last video frame is retrieved via a null packet
-			if ( frames_ != 1 && has_video( ) && url_feof( context_->pb ) )
+            // If we have an index then it has to be completed for us to do this
+			if ( frames_ != 1 && has_video( ) && url_feof( context_->pb ) && 
+                 ( aml_index_ == 0 || ( aml_index_ != 0 && aml_index_->finished( ) ) ) )
 			{
 				bool temp = false;
 
@@ -504,8 +517,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
         		pkt_.data = NULL;
         		pkt_.size = 0;
 
-				decode_image( temp, &pkt_ );
-				if ( !temp ) error =-1;
+				int ret = decode_image( temp, &pkt_ );
+				if ( !temp )
+                {
+                    error =-1;
+                    ARLOG_ERR( "Failed to decode null packet at eof. Error = %1%" )( ret );
+                } 
 			}
 
 			// Hmmph
@@ -673,12 +690,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( aml_index_ )
 			{
-				if ( get_position( ) >= frames_ && aml_index_->frames( frames_ ) > frames_ )
+				if ( get_position( ) >= frames_ - 16 && aml_index_->frames( frames_ ) > frames_ )
 				{
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
 					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
 					frames_ = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
+                    ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->frames( frames_ ) );
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
 				}
