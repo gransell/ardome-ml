@@ -10,7 +10,7 @@ Import(['local_env'])
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_regex', 'boost_python' )
 
 prefix = sys.exec_prefix
-if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008':
+if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008' or local_env[ 'target' ] == 'vs2008express' :
 	local_env.Append( CPPPATH = [ '%s/include' % prefix ] )
 	local_env.Append( LIBPATH = [ '%s/libs' % prefix ] )
 else:

@@ -198,6 +198,7 @@ class VS2008 :
 def create_visual_studio( ver ) :
 	if ver == "vs2003" : return VS2003()
 	if ver == "vs2008" : return VS2008()
+	if ver == "vs2008express" : return VS2008()
 	raise Exception, "Unsupported vs version %s " % ver
 		
 

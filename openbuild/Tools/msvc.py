@@ -17,7 +17,7 @@ class VisualStudio:
 	def __init__(self, version, regpath, install_path, vsvars_sub_path ):
 		self.version = version
 		self.registry_path = regpath
-		self.registry_base_path = "Software\\Microsoft\\VisualStudio\\"
+		self.registry_base_path = "Software\\Microsoft\\"
 		self.base_install_path = os.path.join( SCons.Platform.win32.get_program_files_dir(), install_path)
 		self.vsvars_sub_path = vsvars_sub_path
 		self.install_path_internal = None
@@ -60,22 +60,27 @@ class VSVersions:
 	""" Provides all known versions of visual studio.
 		Add more versions here as we find new ones. """
 	vs2003 = VisualStudio( version = "vs2003",	
-									regpath = "7.1\\Setup\\VS", 
+									regpath = "VisualStudio\\7.1\\Setup\\VS", 
 									install_path = "Microsoft Visual Studio .NET 2003",
 									vsvars_sub_path	= "Common7\\Tools")
 									
 	vs2005 = VisualStudio( version = "vs2005",	
-									regpath = "8.0\\Setup\\VS", 
+									regpath = "VisualStudio\\8.0\\Setup\\VS", 
 									install_path = "Microsoft Visual Studio 8",
 									vsvars_sub_path	= "Common7\\Tools")
 									
 	vs2008 = VisualStudio( version = "vs2008",	
-									regpath = "9.0\\Setup\\VS", 
+									regpath = "VisualStudio\\9.0\\Setup\\VS", 
+									install_path = "Microsoft Visual Studio 9.0",
+									vsvars_sub_path	= "Common7\\Tools")
+
+	vs2008express = VisualStudio( version = "vs2008express",	
+									regpath = "VCExpress\\9.0\\Setup\\VS", 
 									install_path = "Microsoft Visual Studio 9.0",
 									vsvars_sub_path	= "Common7\\Tools")
 									
 	def all_versions( self ) : 
-		return [ self.vs2008, self.vs2005, self.vs2003 ]
+		return [ self.vs2008, self.vs2005, self.vs2003, self.vs2008express ]
 		
 	def find_version( self, version ) :
 		for ver in self.all_versions() :

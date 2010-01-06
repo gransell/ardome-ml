@@ -6,7 +6,7 @@ import SCons.Options
 import utils
 import os
 
-valid_vs_targets =['vs2003', 'vs2005', 'vs2008', '' ]
+valid_vs_targets =['vs2003', 'vs2005', 'vs2008', 'vs2008express', '' ]
 valid_mac_targets = ['osx']
 valid_32bit_unix_targets = ['lsb_3_1_32', 'ubuntu32']
 valid_64bit_unix_targets = ['lsb_3_1_64', 'ubuntu64' ]
