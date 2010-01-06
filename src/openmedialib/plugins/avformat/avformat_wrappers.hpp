@@ -46,8 +46,10 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 		virtual ~avformat_video( )
 		{
+			#ifndef WIN32
 			if ( codec_ && context_ && context_->thread_count > 1 )
 				avcodec_thread_free( context_ );
+			#endif
 
 			av_free( context_ );
 			av_free( picture_ );
@@ -230,10 +232,12 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 					codec_ = 0;
 				}
 
+				#ifndef WIN32
 				if ( codec_ && context_->thread_count > 1 )
 				{
 					avcodec_thread_init( context_, context_->thread_count );
 				}
+				#endif
 			}
 
 			return codec_;

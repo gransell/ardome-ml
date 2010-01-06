@@ -876,8 +876,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Open the codec safely
 				ret = codec != NULL && avcodec_open( video_enc, codec ) >= 0;
 
+				#ifndef WIN32
 				if ( ret && prop_thread_count_.value< int >( ) > 1 )
 					avcodec_thread_init( video_enc, prop_thread_count_.value< int >( ) );
+				#endif
 			}
 
 			return ret;

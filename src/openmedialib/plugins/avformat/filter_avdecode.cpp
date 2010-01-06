@@ -306,7 +306,9 @@ class stream_queue
 				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				avcodec_open( context_, codec_ );
+				#ifndef WIN32
 				avcodec_thread_init( context_, 4 );
+				#endif
 				avcodec_flush_buffers( context_ );
 			}
 
