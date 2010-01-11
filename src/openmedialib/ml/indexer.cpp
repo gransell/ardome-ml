@@ -320,6 +320,12 @@ class generating_job_type : public indexer_job
 				{
 					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
 					start_ += 1;
+
+					//Analyze two full gops here, since the calculate() method
+					//disregards the last gop if the file is incomplete.
+					//This ensures that calculate() always returns at least
+					//one frame right away.
+					analyse_gop( );
 					analyse_gop( );
 				}
 			}
