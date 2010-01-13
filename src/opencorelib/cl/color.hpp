@@ -39,22 +39,22 @@ namespace olib
             rgba_color& operator=( const rgba_color& other ); 
 
             /// Get the red component.
-            boost::uint8_t get_red() const { return m_components[0]; }
+            boost::uint8_t get_r() const { return m_components[0]; }
 
             /// Set the red component.
-            void set_red( boost::uint8_t r ) { m_components[0] = r ; }
+            void set_r( boost::uint8_t r ) { m_components[0] = r ; }
             
             /// Get the green component.
-            boost::uint8_t get_green() const { return m_components[1]; }
+            boost::uint8_t get_g() const { return m_components[1]; }
 
             /// Set the green component.
-            void set_green( boost::uint8_t g ) { m_components[1] = g ; }
+            void set_g( boost::uint8_t g ) { m_components[1] = g ; }
             
             /// Get the blue component.
-            boost::uint8_t get_blue() const { return m_components[2]; }
+            boost::uint8_t get_b() const { return m_components[2]; }
 
             /// Set the blue component.
-            void set_blue( boost::uint8_t b ) { m_components[2] = b ; }
+            void set_b( boost::uint8_t b ) { m_components[2] = b ; }
 
             /// Get the alpha component.
             /** A value of 0 means that the pixel is totally transparent, 

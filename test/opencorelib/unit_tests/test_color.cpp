@@ -32,14 +32,14 @@ void test_color()
 
     rgba_color c3( rgba_color::aliceblue());
 
-    BOOST_REQUIRE( c1.get_red() == 255 );
-    BOOST_REQUIRE( c1.get_green() == 0 );
-    BOOST_REQUIRE( c1.get_blue() == 0 );
+    BOOST_REQUIRE( c1.get_r() == 255 );
+    BOOST_REQUIRE( c1.get_g() == 0 );
+    BOOST_REQUIRE( c1.get_b() == 0 );
     BOOST_REQUIRE( c1.get_alpha() == 0 );
 
-    BOOST_REQUIRE( c2.get_red() == 128 );
-    BOOST_REQUIRE( c2.get_green() == 10 );
-    BOOST_REQUIRE( c2.get_blue() == 10 );
+    BOOST_REQUIRE( c2.get_r() == 128 );
+    BOOST_REQUIRE( c2.get_g() == 10 );
+    BOOST_REQUIRE( c2.get_b() == 10 );
     BOOST_REQUIRE( c2.get_alpha() == 10 );
 
     BOOST_REQUIRE( c2.to_string() == _CT("(128,10,10,10)"));
