@@ -29,7 +29,7 @@ template< typename T > class profile_strings;
 
 /// Implementations of various standard types
 typedef profile_number< int > profile_int;
-typedef profile_number< boost::uint32_t > profile_uint;
+typedef profile_number< unsigned int > profile_uint;
 typedef profile_number< boost::int64_t > profile_int64;
 typedef profile_number< boost::uint64_t > profile_uint64;
 typedef profile_floating< float > profile_float;

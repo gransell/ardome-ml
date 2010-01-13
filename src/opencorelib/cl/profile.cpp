@@ -167,7 +167,7 @@ void profile_wrapper::enroll( const std::string &name, int &ref )
 	map_[ name ] = new profile_int( ref ); 
 }
 
-void profile_wrapper::enroll( const std::string &name, boost::uint32_t &ref )
+void profile_wrapper::enroll( const std::string &name, unsigned int &ref )
 { 
 	map_[ name ] = new profile_uint( ref ); 
 }

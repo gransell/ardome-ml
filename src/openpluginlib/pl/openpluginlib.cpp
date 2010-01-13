@@ -70,21 +70,21 @@ namespace
 			{
 				olib::t_stringstream ss;
 				a.pretty_print_one_line( ss, cl::print::output_default );
-				std::cerr << "invoke assert: " << ss.str( ) << std::endl;
+				std::cerr << "invoke assert: " << cl::str_util::to_string( ss.str( ) ) << std::endl;
 			}
 			
 			virtual void log( cl::base_exception& e, const TCHAR* log_source)
 			{
 				olib::t_stringstream ss;
 				e.pretty_print_one_line( ss, cl::print::output_default );
-				std::cerr << "base exception: " << ss.str( ) << std::endl;
+				std::cerr << "base exception: " << cl::str_util::to_string( ss.str( ) ) << std::endl;
 			}
 	
 			virtual void log( cl::logger& log_msg, const TCHAR* log_source)
 			{
 				olib::t_stringstream ss;
 				log_msg.pretty_print_one_line( ss, cl::print::output_default );
-				std::cerr << "log message: " << ss.str( ) << std::endl;
+				std::cerr << "log message: " << cl::str_util::to_string( ss.str( ) ) << std::endl;
 			}
 	};
 
@@ -185,7 +185,7 @@ namespace
 
 				if ( cl::str_util::env_var_exists( var ) )
 				{
-					profile_base = cl::str_util::get_env_var( var );
+					profile_base = cl::str_util::to_string( cl::str_util::get_env_var( var ) );
 					el_reg.insert_std( cl::str_util::to_string( profile_base ) );
 				}
 #ifndef WIN32

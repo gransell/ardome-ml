@@ -64,7 +64,7 @@ class CORE_API profile_wrapper
 		void enroll( const std::string &name, int &ref );
 
 		/// Enroll an unsigned int property
-		void enroll( const std::string &name, boost::uint32_t &ref );
+		void enroll( const std::string &name, unsigned int &ref );
 
 		/// Enroll an int64 property
 		void enroll( const std::string &name, boost::int64_t &ref );
