@@ -835,7 +835,7 @@ class avformat_encode_filter : public filter_type
 					}
 					else if ( !encoding_ && !stream_types_match )
 					{
-						std::cerr << "case 3: " << get_position( ) << " stream of different type: " << source->get_stream( )->codec( ) << " vs. " << pl::to_string( prop_codec_.value< pl::wstring >( ) ) << std::endl;
+						std::cerr << "case 3: " << get_position( ) << " stream of different type: " << source->get_stream( )->codec( ) << " vs. " << pl::to_string( prop_profile_.value< pl::wstring >( ) ) << std::endl;
 						encoding_ = true;
 					}
 					else if ( !encoding_ && !continuous( last_frame_, source ) )
