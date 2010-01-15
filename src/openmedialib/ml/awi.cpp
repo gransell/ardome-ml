@@ -4,6 +4,7 @@
 // Released under the LGPL.
 
 #include "awi.hpp"
+#include <algorithm>
 
 #define awi_header_size 8
 #define awi_item_size 20
