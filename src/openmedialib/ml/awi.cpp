@@ -139,7 +139,7 @@ int awi_index_v2::frames( int current )
 		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( frames_ - 1000 );
 		if ( iter != items_.begin( ) ) iter --;
         if ( iter != items_.begin( ) ) iter --;
-        result = ( *iter ).first >= current ? std::max( 0, ( *iter ).first - 1 ) : current;
+        result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;
     }
 
 	return result;
@@ -645,7 +645,7 @@ int awi_index_v3::frames( int current )
 	{
 		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( frames_ - 1000 );
 		if ( iter != items_.begin( ) ) iter --;
-		result = ( *iter ).first >= current ? std::max( 0, ( *iter ).first - 1 ) : current;
+		result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;
 	}
 
 	return result;
