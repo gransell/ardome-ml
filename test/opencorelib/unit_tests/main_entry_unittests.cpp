@@ -9,6 +9,7 @@
 
 // Forward declarations:
 void test_assert();
+void test_multivalue_property_parsing();
 void test_invoker();
 void test_logprint();
 void test_messagequeue();
@@ -85,6 +86,7 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
 	typedef std::map< std::string, boost::function< void () > > TestMap;
 	TestMap myTests;
 	myTests["test_assert"] = &test_assert;
+    myTests["test_multivalue_property_parsing"] = &test_multivalue_property_parsing;
     myTests["test_invoker"] = &test_invoker;
 	myTests["test_logprint"] = &test_logprint;
 	myTests["test_messagequeue"] = &test_messagequeue;
