@@ -666,7 +666,7 @@ class Environment( BaseEnvironment ):
 		if "qt_library" in dir(self.build_manager) : 
 			return self.build_manager.qt_library( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
 
-		qt_common(  lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
+		self.qt_common(  lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
