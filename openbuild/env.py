@@ -642,13 +642,8 @@ class Environment( BaseEnvironment ):
 		moc_cpp.write('\n')
 		moc_cpp.close()
 		return moc_cpp_path
-				
-	def qt_program( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
-		"""	Build a qt program. See shared_library in this class for a detailed description. """
-
-		if "qt_program" in dir(self.build_manager) : 
-			return self.build_manager.qt_program( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
-
+	
+	def qt_common( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
 		depfiles = []
 		if nopre == None : nopre = []
 	
@@ -664,6 +659,28 @@ class Environment( BaseEnvironment ):
 		sources.append( self.create_moc_cpp( depfiles, pre, output_path ) )
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
+		
+	def qt_library( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
+		"""	Build a qt library. See shared_library in this class for a detailed description. """
+
+		if "qt_library" in dir(self.build_manager) : 
+			return self.build_manager.qt_library( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
+
+		qt_common(  lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
+		
+		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
+			self.setup_clr_compilation()
+				
+		return self.SharedLibrary( lib, sources, *keywords )
+		
+	def qt_program( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
+		"""	Build a qt program. See shared_library in this class for a detailed description. """
+
+		if "qt_program" in dir(self.build_manager) : 
+			return self.build_manager.qt_program( self, lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
+
+		self.qt_common( lib, moc_files, sources, resources, headers, pre, nopre, *keywords )
 
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
