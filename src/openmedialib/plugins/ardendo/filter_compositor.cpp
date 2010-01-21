@@ -61,6 +61,7 @@ static pl::pcos::key key_in_( pcos::key::from_string( "in" ) );
 static pl::pcos::key key_track_item_in_( pcos::key::from_string( "track_item_in" ) );
 static pl::pcos::key key_track_item_duration_( pcos::key::from_string( "track_item_duration" ) );
 static pl::pcos::key key_events_( pcos::key::from_string( "events" ) );
+static pl::pcos::key key_vitc_image_( pcos::key::from_string( "vitc_image" ) );
 
 static pl::pcos::key key_x_( pcos::key::from_string( "x" ) );
 static pl::pcos::key key_y_( pcos::key::from_string( "y" ) );
@@ -577,6 +578,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 				// Ignore deferred when running in muxer mode
 				bool deferred = prop_deferred_.value< int >( ) != 0 && resource_ == L"compositor";
+				pl::pcos::property vitc( key_vitc_image_ );
 
 				// Composite in z order
 				for( std::vector< ml::frame_type_ptr >::iterator iter = frames.begin( ); iter != frames.end( ); iter ++ )
@@ -603,6 +605,17 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							result->set_audio( audio );
 						join_peaks( result, *iter );
 					}
+
+					if ( ( *iter )->property_with_key( key_vitc_image_ ).valid( ) )
+						vitc = ( *iter )->property_with_key( key_vitc_image_ ).value< il::image_type_ptr >( );
+				}
+
+				if ( vitc.is_a< il::image_type_ptr >( ) )
+				{
+					if ( result->property_with_key( key_vitc_image_ ).valid( ) )
+						result->property_with_key( key_vitc_image_ ) = vitc.value< il::image_type_ptr >( );
+					else
+						result->properties( ).append( vitc );
 				}
 
 				if ( deferred && frames.size() && prop_track_.value<int>() == 0 )

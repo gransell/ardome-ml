@@ -280,6 +280,7 @@ public:
 			int factor = i > 0 ? 2 : 1;
 
 			plane &p = crop[ i ];
+			int original = p.offset;
 			p.width = w / factor;
 			p.height = h;
 			p.linesize = w / factor;
@@ -294,7 +295,7 @@ public:
 			else
 				p.offset += ( width_ - w - x );
 
-			p.offset = surface_format<T, storage>::offset( i ) + ( p.offset / factor );
+			p.offset = original + p.offset;
 		}
 	}
 
