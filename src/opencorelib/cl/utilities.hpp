@@ -80,8 +80,8 @@ namespace olib
 
 			#endif
             
-			CORE_API template< typename T >
-			T clamp( const T& to_clamp, const T& min, const T& max ) { return std::min<T>( std::max<T>( to_clamp, min ), max ); }
+			template< typename T >
+			CORE_API T clamp( const T& to_clamp, const T& min, const T& max ) { return std::min<T>( std::max<T>( to_clamp, min ), max ); }
 
             /// Fetch the current thread's id.
             /** @return The thread-id of the thread that calls this function. */
