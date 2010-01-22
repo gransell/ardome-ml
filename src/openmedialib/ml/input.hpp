@@ -17,6 +17,7 @@
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/base_exception.hpp>
+#include <opencorelib/cl/utilities.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -125,11 +126,11 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 				position_ = ( position_ + position );
 			else
 				position_ = position;
-
-			if ( position_ < 0 ) 
+				
+			position_ = opencorelib::utilities::clamp( position, 0, int( get_frames( ) - 1 ) );
+			
+			if( position_ < 0 )
 				position_ = 0;
-			else if ( position_ >= int( get_frames( ) ) ) 
-				position_ = int( get_frames( ) - 1 );
 		}
 
 		// Query the current position

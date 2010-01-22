@@ -379,8 +379,8 @@ class generating_job_type : public indexer_job
 				}
 			}
 
-			if ( last_frame_ && start_ == input_->get_frames( ) )
-				index_->close( last_frame_->get_position( ) + 1, input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );
+			if ( last_frame_ && start_ >= input_->get_frames( ) )
+                index_->close( last_frame_->get_position( ) + 1, input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
 		}
 
 		mutable boost::recursive_mutex mutex_;

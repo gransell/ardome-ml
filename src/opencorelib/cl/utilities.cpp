@@ -257,7 +257,6 @@ namespace olib
 
 				return stack_trace;	
 			}
-
              
             CORE_API boost::uint32_t get_current_thread_id() 
             {
