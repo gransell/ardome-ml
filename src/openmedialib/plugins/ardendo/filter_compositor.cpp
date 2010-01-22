@@ -591,7 +591,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							pusher_1_->push( *iter );
 							result = composite_->fetch( );
 						}
-						join_peaks( result, *iter );
 					}
 					else
 					{
@@ -603,7 +602,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							result->push( *iter );
 						if ( audio )
 							result->set_audio( audio );
-						join_peaks( result, *iter );
 					}
 
 					if ( ( *iter )->property_with_key( key_vitc_image_ ).valid( ) )
