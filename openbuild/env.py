@@ -9,6 +9,7 @@ from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
 import SCons.Tool
 import SCons.Script
 import utils
+import subprocess
 
 if utils.vs( ):
 	import vsbuild
@@ -687,7 +688,39 @@ class Environment( BaseEnvironment ):
 			self.Append( LINKFLAGS="/SUBSYSTEM:WINDOWS" )
 		
 		return self.Program( lib, sources, *keywords )
+	
+	def qt_run_idc_tool( self, prog ) :
 		
+		temp_path = self.qt_build_path( prog )
+		
+		# "path/to/file.exe" -> "file"
+		base_name = prog[0].name.split('/')[-1].split('.')[0]
+		
+		#Find the IDC tool
+		command = self[ 'QT4_IDC' ].replace( '/', os.sep )
+		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
+		
+		#The idc tool requires that all the necessary dynamic libraries that the executable depends on are present
+		working_dir = self.subst( self[ 'stage_bin' ] )
+		
+		#Create the IDL file
+		idl_command = command + ' ' + os.path.join(self.temporary_build_path(prog[0].name), prog[0].name) + ' /idl ' + os.path.join(temp_path, base_name + '.idl') + ' -version 1.0'
+		return_code = subprocess.call( idl_command, cwd=working_dir )
+		if return_code != 0 :
+			raise Exception, "IDL generation failed with code %s, command line was: %s" % (return_code, idl_command)
+		
+		#Create a type library (TLB) from the IDL
+		midl_command = 'midl ' + os.path.join(temp_path, base_name + '.idl') + ' /nologo /tlb ' + os.path.join(temp_path, base_name + '.tlb')
+		return_code = subprocess.call( midl_command )
+		if return_code != 0 :
+			raise Exception, "TLB generation failed with code %s, command line was: %s" % (return_code, midl_command)
+		
+		#Replace the type library in the executable with the new TLB
+		tlb_command = command + ' ' + os.path.join(self.temporary_build_path(prog[0].name), prog[0].name) + ' /tlb ' + os.path.join(temp_path, base_name + '.tlb')
+		return_code = subprocess.call( tlb_command, cwd=working_dir )
+		if return_code != 0 :
+			raise Exception, "TLB application to binary failed with code %s, command line was: %s" % (return_code, tlb_command)
+	
 	def done( self, project_name = None ) :
 		"""Called by SConscruct when the sconscripts are parsed."""
 		if "done" in dir(self.build_manager) : 
