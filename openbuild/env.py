@@ -108,6 +108,9 @@ class Environment( BaseEnvironment ):
 		self[ 'win_target_path' ] = '$stage_bin'
 
 		self.Builder( action = '$RCCOM', suffix = '.rc' )
+		
+		idc_builder = self.Builder(action = qt_run_idc_tool)
+		self.Append( BUILDERS= {'Idc_tool' : idc_builder} )
 
 		self.install_packages( )
 		self.package_list = self.package_manager.walk( self )
@@ -689,38 +692,6 @@ class Environment( BaseEnvironment ):
 		
 		return self.Program( lib, sources, *keywords )
 	
-	def qt_run_idc_tool( self, prog ) :
-		
-		temp_path = self.qt_build_path( prog )
-		
-		# "path/to/file.exe" -> "file"
-		base_name = prog[0].name.split('/')[-1].split('.')[0]
-		
-		#Find the IDC tool
-		command = self[ 'QT4_IDC' ].replace( '/', os.sep )
-		if command.startswith( 'bcomp' ): command = self.root + os.sep + command
-		
-		#The idc tool requires that all the necessary dynamic libraries that the executable depends on are present
-		working_dir = self.subst( self[ 'stage_bin' ] )
-		
-		#Create the IDL file
-		idl_command = command + ' ' + os.path.join(self.temporary_build_path(prog[0].name), prog[0].name) + ' /idl ' + os.path.join(temp_path, base_name + '.idl') + ' -version 1.0'
-		return_code = subprocess.call( idl_command, cwd=working_dir )
-		if return_code != 0 :
-			raise Exception, "IDL generation failed with code %s, command line was: %s" % (return_code, idl_command)
-		
-		#Create a type library (TLB) from the IDL
-		midl_command = 'midl ' + os.path.join(temp_path, base_name + '.idl') + ' /nologo /tlb ' + os.path.join(temp_path, base_name + '.tlb')
-		return_code = subprocess.call( midl_command )
-		if return_code != 0 :
-			raise Exception, "TLB generation failed with code %s, command line was: %s" % (return_code, midl_command)
-		
-		#Replace the type library in the executable with the new TLB
-		tlb_command = command + ' ' + os.path.join(self.temporary_build_path(prog[0].name), prog[0].name) + ' /tlb ' + os.path.join(temp_path, base_name + '.tlb')
-		return_code = subprocess.call( tlb_command, cwd=working_dir )
-		if return_code != 0 :
-			raise Exception, "TLB application to binary failed with code %s, command line was: %s" % (return_code, tlb_command)
-	
 	def done( self, project_name = None ) :
 		"""Called by SConscruct when the sconscripts are parsed."""
 		if "done" in dir(self.build_manager) : 
@@ -974,3 +945,44 @@ class Environment( BaseEnvironment ):
 
 			if not silent and file_count >= 1: print 'Copied', file_count, 'files and', link_count, 'links to', dst
 
+
+#Runs the QT IDC tool on a built ActiveQT binary. This is required in order for it to recognize the -regserver and -unregserver command line options.
+#Usage in SConscript:
+#bin = local_env.Idc_tool( 'target.exe', 'source.exe' )
+def qt_run_idc_tool( target, source, env ) :
+	
+	#SCons requires that each buildstep creates a new file, so make a copy of the source and modify it in place
+	shutil.copyfile( str(source[0]), str(target[0]) )
+	
+	temp_path = env.qt_build_path( source )
+	
+	prog_name = str(target[0])
+	
+	# "path/to/file.exe" -> "file"
+	base_name = os.path.basename(prog_name).split('.')[0]
+	
+	#Find the IDC tool
+	command = env[ 'QT4_IDC' ].replace( '/', os.sep )
+	if command.startswith( 'bcomp' ): command = env.root + os.sep + command
+	
+	#The idc tool requires that all the necessary dynamic libraries that the executable depends on are present
+	working_dir = env.subst( env[ 'stage_bin' ] )
+	
+	#Create the IDL file
+	idl_command = command + ' ' + os.path.join(env.root, prog_name) + ' /idl ' + os.path.join(temp_path, base_name + '.idl') + ' -version 1.0'
+	return_code = subprocess.call( idl_command, cwd=working_dir )
+	if return_code != 0 :
+		raise Exception, "IDL generation failed with code %s, command line was: %s" % (return_code, idl_command)
+	
+	#Create a type library (TLB) from the IDL
+	midl_command = 'midl ' + os.path.join(temp_path, base_name + '.idl') + ' /nologo /tlb ' + os.path.join(temp_path, base_name + '.tlb')
+	return_code = subprocess.call( midl_command )
+	if return_code != 0 :
+		raise Exception, "TLB generation failed with code %s, command line was: %s" % (return_code, midl_command)
+	
+	#Replace the type library in the executable with the new TLB
+	tlb_command = command + ' ' + os.path.join(env.root, prog_name) + ' /tlb ' + os.path.join(temp_path, base_name + '.tlb')
+	return_code = subprocess.call( tlb_command, cwd=working_dir )
+	if return_code != 0 :
+		raise Exception, "TLB application to binary failed with code %s, command line was: %s" % (return_code, tlb_command)
+			
