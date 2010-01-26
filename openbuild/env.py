@@ -948,7 +948,7 @@ class Environment( BaseEnvironment ):
 
 #Runs the QT IDC tool on a built ActiveQT binary. This is required in order for it to recognize the -regserver and -unregserver command line options.
 #Usage in SConscript:
-#bin = local_env.Idc_tool( 'target.exe', 'source.exe' )
+#bin = local_env.Idc_tool( 'target', 'source' )
 def qt_run_idc_tool( target, source, env ) :
 	
 	#SCons requires that each buildstep creates a new file, so make a copy of the source and modify it in place
