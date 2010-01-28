@@ -660,10 +660,15 @@ class Environment( BaseEnvironment ):
 			for res in resources :
 				nopre.append( self.create_resource_cpp_file( res, output_path) )
 
+
 		#Only generate moc.cpp files when we have moc:ed a header file
+		dep_headers = []
 		for i in range(len(moc_files)):
 			if moc_files[i][-4:] != '.cpp':
-				sources.append( self.create_moc_cpp( [depfiles[i]], pre, output_path ) )
+				dep_headers.append( depfiles[i] )
+
+		sources.append( self.create_moc_cpp( dep_headers, pre, output_path ) )
+
 		
 		self.setup_precompiled_headers( sources, pre, nopre )
 		
