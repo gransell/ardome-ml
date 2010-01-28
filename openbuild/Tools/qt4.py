@@ -24,6 +24,9 @@ SCons.Warnings.enableWarningClass(ToolQtWarning)
 def detect_qt4(env):
 	"""Not really safe, but fast method to detect the QT library"""
 	
+	try: return env['QTDIR']
+	except KeyError: pass
+
 	if env['PLATFORM'] == 'win32' : 
 		for r, d, f in os.walk( 'bcomp' ):
 			if 'moc.exe' in f : 
@@ -31,13 +34,13 @@ def detect_qt4(env):
 				if env['target'] in r.split(os.sep) :
 					qtpath = os.path.join( env.root, r[ : r.rfind(os.sep)] )
 					return qtpath
+	else:
+		for r, d, f in os.walk( 'bcomp' ):
+			if 'moc' in f :
+				qtpath = os.path.join( env.root, r[ : r.rfind(os.sep)] )
+				print 'Found QT at path=', qtpath
+				return qtpath
 					
-	try: return env['QTDIR']
-	except KeyError: pass
-
-	try: return os.environ['QTDIR']
-	except KeyError: pass
-
 	moc = env.WhereIs('moc-qt4') or env.WhereIs('moc4') or env.WhereIs('moc')
 	if moc:
 		QTDIR = os.path.dirname(os.path.dirname(moc))
@@ -46,14 +49,6 @@ def detect_qt4(env):
 			"QTDIR variable is not defined, using moc executable as a hint (QTDIR=%s)" % QTDIR)
 		return QTDIR
 		
-	if self['PLATFORM'] == 'win32' : 
-		for r, d, f in os.walk( 'bcomp' ):
-			if 'moc.exe' in f : 
-				# Want vs2003 subfolder for target vs2003, vs2005 for 2005 etc.
-				if env['target'] in r.split(os.sep) :
-					qtpath = os.path.join( self.root, r[ : r.rfind(os.sep)] )
-					return qtpath
-
 	raise SCons.Errors.StopError( QtdirNotFound, "Could not detect Qt 4 installation")
 	return None
 
@@ -78,7 +73,8 @@ def generate( env ) :
 	env['QT4_MOC'] = locate_qt4_command(env, 'moc', env['QTDIR'])
 	env['QT4_UIC'] = locate_qt4_command(env, 'uic', env['QTDIR'])
 	env['QT4_RCC'] = locate_qt4_command(env, 'rcc', env['QTDIR'])
-	env['QT4_IDC'] = locate_qt4_command(env, 'idc', env['QTDIR'])
+	if env['PLATFORM'] == 'win32':
+		env['QT4_IDC'] = locate_qt4_command(env, 'idc', env['QTDIR'])
 
 def exists(env):
 	return detect_qt4(env)
