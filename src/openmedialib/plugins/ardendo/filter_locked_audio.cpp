@@ -26,6 +26,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 			: ml::filter_type( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
+			, prop_offset_( pcos::key::from_string( "offset" ) )
+			, obs_offset_changed_( new fn_observer< filter_locked_audio >( const_cast< filter_locked_audio * >( this ), &filter_locked_audio::offset_changed ) )
 			, fps_num_( -1 )
 			, fps_den_( -1 )
 			, frequency_( -1 )
@@ -33,7 +35,10 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
-
+			properties( ).append( prop_offset_ = 0 );
+			
+			prop_offset_.attach( obs_offset_changed_ );
+			
 			std::vector< int > dv_samples;
 			dv_samples.push_back( 1600 );
 			dv_samples.push_back( 1602 );
@@ -56,6 +61,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 			profiles_[ pl::wstring( L"dvcpro50" ) ] = dv_samples;
 			profiles_[ pl::wstring( L"imx" ) ] = imx_samples;
 			profiles_[ pl::wstring( L"imx50" ) ] = imx_samples;
+			profiles_[ pl::wstring( L"mpeg" ) ] = imx_samples;
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -63,6 +69,12 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"locked_audio"; }
+		
+		void offset_changed( )
+		{
+			// Clear the cache if the offset changed
+			frames_.clear( );
+		}
 
 	protected:
 		// The main access point to the filter
@@ -74,7 +86,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 			{
 				ml::input_type_ptr input = fetch_slot( 0 );
 				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
-				const int start = get_position( ) - get_position( ) % table.size( );
+				const int start = ( get_position( ) + prop_offset_.value< int >( ) ) - ( get_position( ) % table.size( ) );
 				const int final = start + table.size( );
 
 				// Populate the audio_span for the number of the frames in the table each time we move to another group of frames
@@ -190,6 +202,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
 
 		pcos::property prop_enable_;
 		pcos::property prop_profile_;
+		pcos::property prop_offset_;
+		boost::shared_ptr< pl::pcos::observer > obs_offset_changed_;
 		int fps_num_;
 		int fps_den_;
 		int frequency_;

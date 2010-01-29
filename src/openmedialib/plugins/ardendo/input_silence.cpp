@@ -24,6 +24,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_channels_( pcos::key::from_string( "channels" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
+			, prop_profile_( pcos::key::from_string( "profile" ) )
 		{
 			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_FLOAT ) );
 			properties( ).append( prop_fps_num_ = 25 );
@@ -31,6 +32,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_out_ = 25 );
+			properties( ).append( prop_profile_ = pl::wstring( L"" ) );
 		}
 
 		virtual ~input_silence( ) { }
@@ -76,7 +78,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			int fps_den = prop_fps_den_.value< int >( );
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
-			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den );
+			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, prop_profile_.value< pl::wstring >( ) );
 
 			if ( channels && samples )
 				result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples ) );
@@ -94,6 +96,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 		pcos::property prop_frequency_;
 		pcos::property prop_channels_;
 		pcos::property prop_out_;
+		pcos::property prop_profile_;
 };
 
 ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring &resource )

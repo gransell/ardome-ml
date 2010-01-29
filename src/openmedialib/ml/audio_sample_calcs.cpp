@@ -7,14 +7,20 @@
 #include <openmedialib/ml/utilities.hpp>
 #include <cmath>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 // Windows work around
 #ifndef M_PI
 #	define M_PI 3.14159265358979323846
 #endif
 
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
-namespace {
+namespace {	
+	
+    static const int ntsc_dv_sample_seq[5] = {1600, 1602, 1602, 1602, 1602};
+    static const int ntsc_imx_sample_seq[5] = {1602, 1601, 1602, 1601, 1602};
 
 	int calculate_cycle_size(double frames_per_second, int samplefreq, double samples_per_frame, int &deficit)
 	{
@@ -36,15 +42,29 @@ namespace {
 
 		return cycle_size;
 	}
+	
+	int locked_samples_for_frame( int frameoffset, const std::wstring& locked_profile )
+	{
+		const int *seq = ntsc_dv_sample_seq;
+		if( boost::algorithm::starts_with( locked_profile, L"imx" ) )
+			seq = ntsc_imx_sample_seq;
+		return seq[ frameoffset % 5 ];
+	}
 }
 
-ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
+ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator, const std::wstring& locked_profile )
 {
 	// Work around: some video files report frame rates with a common denominator (ie: 25000:1000)
 	// Without factoring that out upfront (in this implementation), the results are incorrect
 	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
 	framerate_numerator /= int( common );
 	framerate_denominator /= int( common ); 
+	
+	// If this is NTSC and locked audio samples are requested
+	if( framerate_numerator == 30000 && framerate_denominator == 1001 && locked_profile != L"" )
+	{
+		return locked_samples_for_frame( frameoffset, locked_profile );
+	}
 
 	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
 	double	samples_per_frame	= double(samplefreq) / frames_per_second;
