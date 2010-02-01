@@ -26,7 +26,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			, prop_out_( pcos::key::from_string( "out" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
 		{
-			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_FLOAT ) );
+			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_PCM16 ) );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
