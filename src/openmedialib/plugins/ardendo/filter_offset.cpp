@@ -113,6 +113,7 @@
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
+#include "utility.hpp"
 
 namespace aml { namespace openmedialib {
 
@@ -128,6 +129,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_channels_( pcos::key::from_string( "channels" ) )
+			, obs_in_changed_( new fn_observer< filter_offset >( const_cast< filter_offset * >( this ), &filter_offset::in_changed ) )
 			, src_fps_num_( 25 )
 			, src_fps_den_( 1 )
 			, src_frequency_( 48000 )
@@ -194,6 +196,12 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 				}
 			}
 		}
+		
+		void in_changed( )
+		{
+			// Walk the graph to update any filters that depend on the offset
+			update_offset_properties( fetch_slot( ), prop_in_.value< int >( ) );
+		}
 
 	protected:
 		// The main access point to the filter
@@ -234,6 +242,22 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 				}
 			}
 		}
+		
+		void update_offset_properties( const ml::input_type_ptr& to_update, int new_offset )
+		{
+			// Break recursion if we hit one more offset filter
+			if( to_update->get_uri( ) == L"offset" ) return;
+			
+			// Check if the input has a offset prop and if so update
+			pcos::property p = to_update->properties( ).get_property_with_string( "offset" );
+			if( p.valid( ) ) p = new_offset;
+			
+			// Walk all children
+			for( int i = 0; i < to_update->slot_count( ); ++i )
+			{
+				update_offset_properties( to_update->fetch_slot( i ), new_offset );
+			}
+		}
 
 		pcos::property prop_in_;
 		pcos::property prop_pad_audio_;
@@ -241,6 +265,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 		pcos::property prop_fps_den_;
 		pcos::property prop_frequency_;
 		pcos::property prop_channels_;
+		boost::shared_ptr< pl::pcos::observer > obs_in_changed_;
 		int src_fps_num_;
 		int src_fps_den_;
 		int src_frequency_;

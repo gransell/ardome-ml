@@ -56,7 +56,12 @@ extern ML_DECLSPEC audio_type_ptr volume( const audio_type_ptr &ra, float start,
 extern ML_DECLSPEC reseat_ptr create_reseat( );
 
 // Method to determine number of samples per channel required for a given frame offset at a specified frequency and frame rate
-extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den );
+// locked_profile is used to lock the audio sample pattern down to conform with some i frame only material in NTSC.
+// This should be set to either "dv" or "imx" and will produce the following patterns:
+// dv:  1600, 1602, 1602, 1602, 1602
+// imx: 1602, 1601, 1602, 1601, 1600
+// This is only used for NTSC
+extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den, const std::wstring& locked_profile = L"" );
 
 // Method to determine number of samples provided per channel required up to a given frame offset at a specified frequency and frame rate
 extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
