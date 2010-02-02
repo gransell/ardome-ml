@@ -10,15 +10,23 @@ from wrappers.objective_c import core_objc_bind_options
 Import(['local_env'])
 
 local_env.packages( 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'boost_regex', 'loki' )
-# Add core to the include path
-local_env.Append( CPPPATH = ['#/external'])
+
+owl_output_dir = os.path.join( 'generated_wrappers', 'src' )
+	
+local_env.Append( CPPPATH = [ os.path.join(local_env.root, 'wrappers'), os.path.join(local_env.root, 'wrappers', owl_output_dir), 'objective_c/src', os.path.join( local_env.root, 'bcomp')] )
+
+if local_env['PLATFORM'] == 'win32' :
+	doxygen_path = os.path.join( local_env.root, 'bcomp', local_env['target'], 'doxygen.exe' )
+else :
+	doxygen_path = os.path.join( local_env.root, 'bcomp', 'doxygen', 'bin', 'doxygen' )
 
 dep_asses = []
 dep_headers = [ os.path.join( local_env.root, 'wrappers', 'built_in_types.hpp' ),]
 dep_hfs = []
 for dh in dep_headers :
 	dep_hfs.append(header_file(str(dh)))
-dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, [], [] ), [] ))
+	
+dep_asses.append(assembly( 'dep_ass', header_files( dep_hfs, doxygen_path, [], [] ), [] ))
 
 defines = [('CORE_API', ''), ]
 if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
@@ -26,32 +34,18 @@ if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 elif local_env['PLATFORM'] == 'win32' :
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ])
 
-local_env.Append( CPPPATH = [ '#/wrappers/objective_c/src', '#/../AMF/trunk/layout/include', '#/../AMF/trunk/render/include' ] )
+cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
 
-# cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
-
-		
-# headers = [ #header_file( os.path.join( project_root , 'wrappers', 'bind_typedefs.hpp' ) ),
-			# header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'span.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'point.hpp') ),
-			# header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),]
-			# header_file( os.path.join( cl_src_dir, 'base_exception.hpp') ),]
-
-files = header_files( headers, defines, [] )
-
-core_assembly = assembly( 'Core', files, dep_asses )
-
-fd = open( 'assembly.xml', "w" )
-fd.write( core_assembly.xml_str() )
-
-obj = None;
+headers = [ header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_definitions.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'time_code.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'media_time.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'frames.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'span.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'point.hpp') ),
+			header_file( os.path.join( cl_src_dir, 'exception_context.hpp') ),]
 
 owl_output_dir = os.path.join( local_env.root, 'wrappers', 'src' )
 
@@ -62,23 +56,23 @@ if local_env['debug'] == '1' :
 	generate_files = False
 	
 		
-if generate_files :
-	print 'Building AST...'
-
-	files = header_files( cl_headers, defines, [] )
-
-	core_assembly = assembly( 'AMF', files, dep_asses )
-
-	fd = open( 'assembly.xml', "w" )
-	fd.write( core_assembly.xml_str() )
-	
+# if generate_files :
+print 'Building AST...'
+files = header_files( headers, doxygen_path, defines, [] )
+core_assembly = assembly( 'ArdomeML', files, dep_asses )
 
 if local_env['PLATFORM'] == 'darwin' : 
+	# if generate_files:
 	objc_wrapper = owl.wrapper.objc.objc()
 	objc_options = core_objc_bind_options( os.path.join( local_env.root, 'bcomp' ), 'output', [core_assembly] )
 
 	wrapper_files = objc_wrapper.bind( core_assembly, objc_options, 'objective_c/src' )
-	obj = local_env.framework( 'Aml', sources = wrapper_files['source_files'], headers = wrapper_files['header_files'], info_plist = 'objective_c/src/Info.plist' )
+	# else:
+	# 	wrapper_files = {'source_files' : [], 'header_files' : [] }
+	# 	wrapper_files['header_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.hpp'), True, False, True)
+	# 	wrapper_files['source_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.mm'), True, False, True)
+	
+	obj = local_env.framework( 'ArdomeML', sources = wrapper_files['source_files'], headers = wrapper_files['header_files'], info_plist = 'objective_c/src/Info.plist' )
 elif local_env['PLATFORM'] == 'win32' :    
 
 	script_location = os.path.dirname( os.path.abspath( os.getcwd( ) ) )
@@ -93,7 +87,6 @@ elif local_env['PLATFORM'] == 'win32' :
 		wrapper_files = {'source_files' : [], 'header_files' : [] }
 		wrapper_files['header_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.hpp'), True, False, True)
 		wrapper_files['source_files'] = local_env.Glob(os.path.join(owl_output_dir, '*.cpp'), True, False, True)
-		
 	
 	aux_dir = os.path.join( local_env.root, 'external', 'owl', 'wrapper', 'c_sharp', 'cppsrc' )
 	aux_headers = local_env.Glob(os.path.join(aux_dir, '*.hpp'), True, False, True)

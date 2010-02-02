@@ -5,7 +5,7 @@
 #import <Foundation/NSObject.h>
 
 
-@interface OlibOpencorelibRationalTime : NSObject {
+@interface OlibRationalTime : NSObject {
 @private
     NSInteger _numerator;
     NSInteger _denominator;

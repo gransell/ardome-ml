@@ -59,12 +59,12 @@ namespace olib
             typedef boost::function< bool ( const span& lhs, const span& rhs ) > compare_function;
 
             /// Create a span from an in-point and a duration.
-            /** @param in_t The in-point of the span on the timeline.
-                @param duration_t The duration of the span, must be greater than 0.
+            /** @param in The in-point of the span on the timeline.
+                @param duration The duration of the span, must be greater than 0.
                 @throws A base_exception if the duration is smaller than zero. */
-            span(   boundary_type in_t, 
-                    boundary_type duration_t ) 
-                : m_in(in_t), m_duration(duration_t) 
+            span(   boundary_type in, 
+                    boundary_type duration ) 
+                : m_in(in), m_duration(duration) 
             {
 				ARENFORCE_MSG( m_duration >= boundary_type(0), "Can not have a negative duration" );
             }
@@ -83,18 +83,18 @@ namespace olib
 
             /// Set the in-point of the span
             /** @param in_t The new in-point.*/
-            void set_in( const boundary_type& in_t) 
+            void set_in( const boundary_type& in) 
             {
-                m_in = in_t; 
+                m_in = in; 
             }
 
             /// Set the duration of the span
             /** @param duration_t The new duration of the span.
                 @throws A base_exception if the new duration is smaller than 0. */
-            void set_duration( const boundary_type& duration_t )
+            void set_duration( const boundary_type& duration )
             {
 				ARENFORCE_MSG( m_duration >= boundary_type(0), "Can not have a negative duration" );
-                m_duration = duration_t; 
+                m_duration = duration;
             }
 
             /// Translate the time span by an offset, i.e. move the time span.

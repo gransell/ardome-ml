@@ -200,6 +200,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
+opts.Add( 'wrappers', 'Create wrappers.', 'yes' )
 
 # Add bcomp to the python path so that we can use owl
 sys.path.append( os.path.join( os.getcwd( ), 'external' ) )
@@ -241,8 +242,9 @@ if env.check_externals( ):
 	if env[ 'PLATFORM' ] != 'win32':
 		env.install_openbuild( )
 		env.package_install( )
-
-	#env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
+	
+	if env[ 'wrappers' ] == 'yes':
+		env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
 	
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 

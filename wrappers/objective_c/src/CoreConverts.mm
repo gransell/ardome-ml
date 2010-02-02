@@ -19,15 +19,15 @@
 #undef id
 
 #import "CoreConverts.h"
-#import "OlibOpencorelibRationalTime.h"
+#import "OlibRationalTime.h"
 
 
-OlibOpencorelibRationalTime *Convert( const olib::opencorelib::rational_time& rt )
+OlibRationalTime *Convert( const olib::opencorelib::rational_time& rt )
 {
-    return [[[OlibOpencorelibRationalTime alloc] initWithNumerator:rt.numerator() andDenominator:rt.denominator()] autorelease];
+    return [[[OlibRationalTime alloc] initWithNumerator:rt.numerator() andDenominator:rt.denominator()] autorelease];
 }
 
-olib::opencorelib::rational_time Convert( OlibOpencorelibRationalTime *rt )
+olib::opencorelib::rational_time Convert( OlibRationalTime *rt )
 {
     return olib::opencorelib::rational_time( [rt numerator], [rt denominator] );
 }
@@ -42,12 +42,12 @@ olib::opencorelib::point Convert( NSPoint p )
     return olib::opencorelib::point( p.x, p.y );
 }
 
-NSString *Convert( const std::string& str )
+NSString *ConvertString( const std::string& str )
 {
     return [[[NSString alloc] initWithUTF8String:str.c_str()] autorelease];
 }
 
-std::string Convert( NSString *str )
+std::string ConvertString( NSString *str )
 {
     return std::string([str UTF8String]);
 }

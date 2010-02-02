@@ -43,3 +43,5 @@ tar -jxf ffmpeg.tar.bz2 || exit 1
 echo Extracting loki...
 tar -xjf loki.tbz2
 
+echo 'Extracting doxygen'
+tar xjf doxygen.tbz2

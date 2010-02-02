@@ -10,19 +10,19 @@
 
 #import <Foundation/Foundation.h>
 
-@class OlibOpencorelibRationalTime;
+@class OlibRationalTime;
 
-OlibOpencorelibRationalTime *Convert( const olib::opencorelib::rational_time& rt );
-olib::opencorelib::rational_time Convert( OlibOpencorelibRationalTime *rt );
+OlibRationalTime *ConvertRationalTime( const olib::opencorelib::rational_time& rt );
+olib::opencorelib::rational_time ConvertRationalTime( OlibRationalTime *rt );
 
-NSPoint Convert( const olib::opencorelib::point& rt );
-olib::opencorelib::point Convert( NSPoint rt );
+NSPoint ConvertPoint( const olib::opencorelib::point& rt );
+olib::opencorelib::point ConvertPoint( NSPoint rt );
 
-NSString *Convert( const std::string& str );
-std::string Convert( NSString *str );
+NSString *ConvertString( const std::string& str );
+std::string ConvertString( NSString *str );
 
-NSUInteger Convert( const olib::opencorelib::frames& f );
-olib::opencorelib::frames Convert( NSUInteger f );
+NSUInteger ConvertFrames( const olib::opencorelib::frames& f );
+olib::opencorelib::frames ConvertFrames( NSUInteger f );
 
 
 #endif // _CORE_CONVERTS_H_
