@@ -131,7 +131,7 @@ class VsBuilder :
 		if isinstance(env[env_var_name], list) :
 			for p in env[env_var_name] :
 				strval = p
-				if p.find('\\') != -1 :
+				if p.find('\\') != -1 and not p.startswith('"') :
 					strval = '"' + strval + '"'
 				
 				res += strval.replace('"', '&quot;') + ' ' 
