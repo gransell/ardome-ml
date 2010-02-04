@@ -74,7 +74,11 @@ def generate( env ) :
 	env['QT4_UIC'] = locate_qt4_command(env, 'uic', env['QTDIR'])
 	env['QT4_RCC'] = locate_qt4_command(env, 'rcc', env['QTDIR'])
 	if env['PLATFORM'] == 'win32':
-		env['QT4_IDC'] = locate_qt4_command(env, 'idc', env['QTDIR'])
+		try :
+			env['QT4_IDC'] = locate_qt4_command(env, 'idc', env['QTDIR'])
+		except Exception:
+			#Not a critical tool, ok if it's missing
+			pass
 
 def exists(env):
 	return detect_qt4(env)
