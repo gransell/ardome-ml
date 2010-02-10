@@ -1,6 +1,7 @@
 
 #include "precompiled_headers.hpp"
 #include "./string_conversions.hpp"
+#include "./xerces_typedefs.hpp"
 
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/OutOfMemoryException.hpp>
@@ -154,11 +155,11 @@ namespace olib
 					}
 
 					std::vector< boost::uint8_t> buf( src_size * 6);
-					unsigned int chars_eaten(0);
+					xerces_size_type chars_eaten(0);
 					unsigned int target_size = 
 						trans->transcodeTo(   (const XMLCh*)src, 
-												static_cast<unsigned int>(src_size), &buf[0], 
-												static_cast<unsigned int>(buf.size()), 
+												static_cast<xerces_size_type>(src_size), &buf[0], 
+												static_cast<xerces_size_type>(buf.size()), 
 												chars_eaten, XMLTranscoder::UnRep_Throw);
 					if( chars_eaten != static_cast<unsigned int>(src_size) ) 
 					{
@@ -214,12 +215,13 @@ namespace olib
 
 					std::vector< boost::uint8_t > char_sizes(src_size);
 					std::vector< boost::uint16_t > buf( src_size );
-					unsigned int chars_eaten(0);
+
+					xerces_size_type chars_eaten(0);
 					unsigned int target_size = 
 						trans->transcodeFrom( (const XMLByte*)src, 
-                                                static_cast<unsigned int>(src_size), (XMLCh*)&buf[0], 
-                                                static_cast<unsigned int>(buf.size()), 
-												chars_eaten, &char_sizes[0] );
+                                           		static_cast<xerces_size_type>(src_size), (XMLCh*)&buf[0], 
+                                           		static_cast<xerces_size_type>(buf.size()), 
+										   		chars_eaten, &char_sizes[0] );
 					
 					if( chars_eaten != src_size ) {
 						std::stringstream ss;

@@ -42,8 +42,10 @@ def create_options( file, args ):
 		opts.Add( 'vs', desc, '', validate_vs_value )
 
 	if target == 'osx':
-		opts.Add( 'install_name', 'Bundle install name', '@loader_path/../lib/' )
+		opts.Add( 'install_name', 'Bundle install name', '@executable_path/../lib/' )
 		opts.Add( 'generate_xcode', 'Do not build. Generate XCode projects instead', 'no' )
+		opts.Add( 'arch', 'What architecture to build for. Alternatives are i386, x86_64 and combined', 'i386' )
+		opts.Add( 'min_osx_ver', 'What OSX version to target. Default is 10.5', '10.5' )
 
 	return opts
 

@@ -9,6 +9,7 @@
 
 #include "./typedefs.hpp"
 #include "./core_enums.hpp"
+#include "./xerces_typedefs.hpp"
 
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning( push )
@@ -41,9 +42,6 @@ namespace olib
 {
    namespace opencorelib
     {
-
-		typedef std::basic_string<XMLCh> xerces_string;
-
 		/// Convert a char array to xml string
 		/** Uses str_util::to_wstring */
 		CORE_API xerces_string to_x_string(const char *source, unsigned int length);
@@ -96,15 +94,19 @@ namespace olib
 
             /// Which byte-pos are we on?
             /** Required to implement by BinInputStream. */
-            virtual unsigned int curPos() const
+            virtual xerces_file_pos curPos() const
             {
                 return m_is.tellg();
             }
 
             /// Read a number of bytes from the stream
             /** Required to implement by BinInputStream. */
-            virtual unsigned int readBytes( XMLByte* const toFill,
-                                            const unsigned int maxToRead );
+            virtual xerces_size_type readBytes( XMLByte* const toFill,
+                                         		xerces_size_type maxToRead );
+			
+			/// It is ok to return 0 here for streams that we do not know the mime type for
+			/// This method is only needed when runnign xerces 3.x
+			virtual const XMLCh* getContentType() const { return 0; }
             
         private:
             std::istream& m_is;

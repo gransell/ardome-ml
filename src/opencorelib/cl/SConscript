@@ -189,6 +189,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'worker.hpp',
 		'xerces_sax_handler.hpp',
 		'xerces_sax_traverser.hpp',
+		'xerces_typedefs.hpp',
 		'xml_sax_parser.hpp'
 	] )
 

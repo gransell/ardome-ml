@@ -2,7 +2,7 @@
 #define _CORE_LOGHANDLER_H_
 
 #include "./typedefs.hpp"
-#include <boost/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <vector>
 
 namespace olib

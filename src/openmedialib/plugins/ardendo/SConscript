@@ -1,7 +1,7 @@
 Import(['local_env'])
 import os
 
-local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'libavformat' )
+local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system', 'libavformat' )
 local_env.optional( 'ffmpeg' )
 
 #options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale' )

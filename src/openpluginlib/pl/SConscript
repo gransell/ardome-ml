@@ -12,6 +12,9 @@ local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env[ 
 libxml2_sources = [ 'content_handler_libxml.cpp' ]
 msxml_sources = [ 'content_handler_msxml.cpp' ]
 
+if local_env[ 'PLATFORM' ] == 'darwin' :
+	local_env[ 'FRAMEWORKS' ] = 'CoreServices'
+
 extras = { 'posix' : libxml2_sources, 'darwin' : libxml2_sources, 'win32' : msxml_sources }
 
 object = local_env.shared_library( 'openpluginlib_pl', [ 	

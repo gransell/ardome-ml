@@ -85,7 +85,7 @@ namespace olib
 
             /// Fetch the current thread's id.
             /** @return The thread-id of the thread that calls this function. */
-            CORE_API boost::uint32_t get_current_thread_id();
+            CORE_API boost::uint64_t get_current_thread_id();
 
 			/// Removes the path from a string containing both path and file
 			/** Should work ok on both unix and windows paths since

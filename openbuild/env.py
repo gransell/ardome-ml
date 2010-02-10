@@ -10,6 +10,7 @@ import SCons.Tool
 import SCons.Script
 import utils
 import subprocess
+import opt
 
 if utils.vs( ):
 	import vsbuild
@@ -114,6 +115,30 @@ class Environment( BaseEnvironment ):
 
 		self.install_packages( )
 		self.package_list = self.package_manager.walk( self )
+		
+		if self[ 'PLATFORM' ] == 'darwin':
+			self.Append( LINKFLAGS = [ '-undefined', 'dynamic_lookup', ] )
+			if self[ 'arch' ] == 'i386' :
+				self.Append( CCFLAGS = [ '-arch', 'i386' ] )
+				self.Append( LINKFLAGS = [ '-arch', 'i386' ] )
+			elif self[ 'arch' ] == 'x86_64' :
+				self.Append( CCFLAGS = [ '-arch', 'x86_64' ] )
+				self.Append( LINKFLAGS = [ '-arch', 'x86_64' ] )
+			elif self[ 'arch' ] == 'combined_x86' :
+				self.Append( CCFLAGS = [ '-arch', 'x86_64', '-arch', 'i386', ] )
+				self.Append( LINKFLAGS = [ '-arch', 'x86_64', '-arch', 'i386', ] )
+			else :
+				raise Exception( "Invalid arch flag " + str(self['arch']) )
+			
+			if self[ 'min_osx_ver' ] == '10.5' :
+				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
+			elif self[ 'min_osx_ver' ] == '10.6' :
+				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
+			else :
+				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
+			
 
 	def install_config( self, src, dst ):
 		"""	Installs config files for bcomp usage.
@@ -518,7 +543,7 @@ class Environment( BaseEnvironment ):
 		bundle_resources = Environment.bundle_resources[ int( self.debug ) ]
 		build = [ Environment.prep_release, Environment.prep_debug ][ int( self.debug ) ]
 
-		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@loader_path/../Frameworks/%s.framework/%s' % (fmwk_name, fmwk_name) ] )
+		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@executable_path/../Frameworks/%s.framework/%s' % (fmwk_name, fmwk_name) ] )
 
 		lib = None
 		for item in self.build_deps:

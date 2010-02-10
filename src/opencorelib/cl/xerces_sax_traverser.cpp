@@ -82,8 +82,8 @@ namespace olib
 			return str_util::to_string(x_to_wstring(source));
 		}
 
-        unsigned int std_bin_input_stream::readBytes(   XMLByte* const toFill,
-                                                        const unsigned int maxToRead )
+        xerces_size_type std_bin_input_stream::readBytes( XMLByte* const toFill,
+                                                   		  xerces_size_type maxToRead )
         { 
             m_is.read( (char*)toFill, maxToRead);
             return m_is.gcount();

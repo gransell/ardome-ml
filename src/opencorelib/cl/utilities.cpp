@@ -258,14 +258,14 @@ namespace olib
 				return stack_trace;	
 			}
              
-            CORE_API boost::uint32_t get_current_thread_id() 
+            CORE_API boost::uint64_t get_current_thread_id() 
             {
                 #ifdef OLIB_ON_WINDOWS
                     return ::GetCurrentThreadId();
                 #elif OLIB_ON_LINUX
-                    return boost::uint32_t(pthread_self());
+                    return boost::uint64_t(pthread_self());
                 #else
-                    return reinterpret_cast<boost::uint32_t>(pthread_self());
+                    return reinterpret_cast<boost::uint64_t>(pthread_self());
                 #endif
             }
 

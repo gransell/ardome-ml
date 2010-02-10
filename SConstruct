@@ -121,9 +121,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
 		if self['PLATFORM'] == 'darwin':
-			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] ) 
-			self.Append( LINKFLAGS = [ '-undefined', 'dynamic_lookup', '-arch', 'i386', '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
-			self.Append( CCFLAGS = [ '-arch', 'i386', '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk' ] )
+			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )
 		elif self['PLATFORM'] == 'posix':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
 		elif self['PLATFORM'] == 'win32':

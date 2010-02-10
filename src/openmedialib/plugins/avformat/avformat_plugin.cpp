@@ -208,6 +208,8 @@ namespace
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dv25" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dv50" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "dvcprohd_1080i" );
+			ml::register_lookup( CODEC_ID_DNXHD, "vc3" );
+			ml::register_lookup( CODEC_ID_DNXHD, "dnxhd" );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

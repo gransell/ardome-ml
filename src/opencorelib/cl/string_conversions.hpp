@@ -35,7 +35,6 @@ namespace olib
 			/// Convert a UTF-8 string to a UTF-16 string
 			utf16_string from_utf8_to_utf16( const char* src, size_t src_size );
 		}
-			
 	}
 }
 

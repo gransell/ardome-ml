@@ -17,7 +17,7 @@
 #ifndef BOOST_THREAD_DYN_DLL
     #define BOOST_THREAD_DYN_DLL
 #endif
-#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
 #include <vector>
 
 namespace olib { namespace openpluginlib {
