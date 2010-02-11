@@ -1005,9 +1005,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
 
-
-				if ( boost::uint64_t( c->reordered_opaque ) != AV_NOPTS_VALUE)
-					pkt.dts = av_rescale_q(c->reordered_opaque, c->time_base, video_stream_->time_base );
 				if( oc_->pb && c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{
 					ts_generator_.enroll( c->coded_frame->pts, oc_->pb->pos );

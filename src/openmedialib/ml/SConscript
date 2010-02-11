@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki', 'ffmpeg' )
 
 object = local_env.shared_library( 'openmedialib_ml', [ 
 		'audio_channel_convert.cpp', 
