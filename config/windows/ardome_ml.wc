@@ -31,6 +31,11 @@ def install( env, prefix ):
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'swscale-0.dll') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'SDL.dll') ] )
 
+	if env['target'] == 'vs2008' :
+		#.NET wrappers
+		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'OWL.dll') ] )
+		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'AML.dll') ] )
+
 	env.install_dir( os.path.join( env[ 'stage_libdir' ], 'site-packages' ), [ os.path.join( prefix, 'lib', folder_name, 'site-packages') ] )
 	env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlbatch.exe' ) ] )
 	if folder_name == 'release':
