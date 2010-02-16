@@ -68,5 +68,17 @@ if [ ! $? == 0 ]; then
   exit
 fi
 
+cd ..
+
+if [ ! -d owl ]; then
+	
+	echo "Extracting OWL [~3 MB]..."
+	unzip -oq tmp/owl-vs2008.zip
+
+	if [ ! $? == 0 ]; then
+          echo "Failed to run unzip unzip -oq tmp/owl-vs2008.zip. Terminating."
+          exit
+        fi
+fi
 
 echo "Postgrab succeeded!"
