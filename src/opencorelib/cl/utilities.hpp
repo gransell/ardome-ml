@@ -81,11 +81,11 @@ namespace olib
 			#endif
             
 			template< typename T >
-			CORE_API T clamp( const T& to_clamp, const T& min, const T& max ) { return std::min<T>( std::max<T>( to_clamp, min ), max ); }
+			T clamp( const T& to_clamp, const T& min, const T& max ) { return std::min<T>( std::max<T>( to_clamp, min ), max ); }
 
-            /// Fetch the current thread's id.
-            /** @return The thread-id of the thread that calls this function. */
-            CORE_API boost::uint64_t get_current_thread_id();
+			/// Fetch the current thread's id.
+			/** @return The thread-id of the thread that calls this function. */
+			CORE_API boost::uint64_t get_current_thread_id();
 
 			/// Removes the path from a string containing both path and file
 			/** Should work ok on both unix and windows paths since
