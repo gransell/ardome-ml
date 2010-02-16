@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Amf</string>
+	<string>ArdomeML</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.vizrt.Amf</string>
+	<string>com.vizrt.ArdomeML</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

@@ -10,6 +10,9 @@ import openbuild.env
 import openbuild.utils
 
 sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
+sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'external', 'Mako-0.2.3', 'lib' ) )
+sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'release', 'py' ) )
+sys.path.append( os.path.join(os.getcwd(), 'wrappers', 'py' ) )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp/aml/release/lib/openbuild') )
 
 class AMLEnvironment( openbuild.env.Environment ):
@@ -72,6 +75,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/lsb_3_1_64/sdl.pc', 'bcomp/sdl' )
 
 	def configure_platform( self ):
+		self[ 'stage_ast' ] = os.path.join( '$stage_prefix', 'asts' )
 		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
 			if self[ 'PLATFORM' ] == 'darwin':
 				self[ 'il_plugin' ] = ''
@@ -80,6 +84,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'Resources', 'examples' )
 				self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'lib' )
 				self[ 'stage_profiles' ] = os.path.join( '$stage_prefix', 'Resources', 'profiles' )
+				self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
 			else:
 				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
 				self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
@@ -107,6 +112,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'schemas' )
 			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', '$examples' )
 			self[ 'stage_profiles' ] = os.path.join( '$stage_prefix', 'bin', 'profiles' )
+			self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
 
 		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
 		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
@@ -198,9 +204,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		return has_python
 
 opts = openbuild.opt.create_options( 'options.conf', ARGUMENTS )
-
-# Add bcomp to the python path so that we can use owl
-sys.path.append( os.path.join( os.getcwd( ), 'external' ) )
+opts.Add( 'wrappers', 'Create wrappers.', 'yes' )
 
 env = AMLEnvironment( opts )
 
@@ -239,8 +243,9 @@ if env.check_externals( ):
 	if env[ 'PLATFORM' ] != 'win32':
 		env.install_openbuild( )
 		env.package_install( )
-
-	#env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
+	
+	if env[ 'wrappers' ] == 'yes':
+		env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
 	
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 

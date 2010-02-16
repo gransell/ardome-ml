@@ -2,8 +2,27 @@
 #ifndef _BUILT_IN_TYPES_H_
 #define _BUILT_IN_TYPES_H_
 
+namespace owl {
+    /** 
+        <bindgen>
+		    <attribute name="visibility" value="private"></attribute>
+	    </bindgen>
+    */
+    class private_dummy
+    {
+        
+    };
+}
+
 namespace boost
 {
+    
+    /** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+    */
+    class any {};
     
     /** 
         <bindgen>
@@ -20,14 +39,6 @@ namespace boost
     */
     template< class T >
     class weak_ptr {};
-	
-	/** 
-        <bindgen>
-    		<attribute name="visibility" value="private"></attribute>
-    	</bindgen>
-    */
-    template< class T >
-    class function {};
 
     /** 
         <bindgen>
@@ -68,34 +79,7 @@ namespace boost
     	</bindgen>
     */
     template< class T >
-    class rational 
-	{
-		public: 
-			rational( const T& nom, const T& den ) : _nom(nom), _den(den) {}
-			T denominator() const { return _den; }
-		private:
-			T _nom, _den;
-	};
-	
-		
-	/** 
-        <bindgen>
-    		<attribute name="visibility" value="private"></attribute>
-    	</bindgen>
-    */
-    class noncopyable {};
-	
-	namespace tuples
-	{
-		/** 
-	        <bindgen>
-	    		<attribute name="visibility" value="private"></attribute>
-	    		<attribute name="convert" value="yes"></attribute>
-	    	</bindgen>
-	    */
-	    template< class T, class U >
-	    class tuple {};
-	}
+    class rational {};
 	
     /** 
         <bindgen>
@@ -106,7 +90,13 @@ namespace boost
 	
 	typedef int int32_t;
     typedef unsigned int uint32_t;
+#ifdef OLIB_ON_WINDOWS
     typedef __int64 int64_t;
+    typedef unsigned __int64 uint64_t;
+#else
+    typedef int64_t int64_t;
+    typedef uint64_t uint64_t;
+#endif
 	typedef unsigned char uint8_t;
     typedef unsigned short uint16_t;
 	
@@ -122,12 +112,10 @@ namespace boost
 	
 	/** 	<bindgen><attribute name="visibility" value="private"></attribute></bindgen> */
     class wformat {};
-	
-	namespace posix_time
-	{
-		/** 	<bindgen><attribute name="visibility" value="private"></attribute></bindgen> */
-		class time_duration {}
-	}
+
+	/** 	<bindgen><attribute name="visibility" value="private"></attribute></bindgen> */
+	template< class T >
+    class function {};
 	
 	namespace filesystem {
 		
@@ -178,13 +166,15 @@ namespace boost
 	    /** 
 	        <bindgen>
 	    		<attribute name="visibility" value="private"></attribute>
+    	    	<attribute name="convert" value="yes"></attribute>
 	    	</bindgen>
 	    */
 	    class path {};
 		
 		/** 
 	        <bindgen>
-	    		<attribute name="visibility" value="private"></attribute>
+	            <attribute name="visibility" value="private"></attribute>
+	            <attribute name="convert" value="yes"></attribute>
 	    	</bindgen>
 	    */
 	    class wpath {};
@@ -202,6 +192,15 @@ namespace boost
 	    	</bindgen>
 	    */
 	    class wdirectory_iterator {};
+	}
+	
+	namespace posix_time {
+	    /** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    	</bindgen>
+        */
+        class time_duration {};
 	}
 }
 
@@ -250,7 +249,27 @@ namespace std
     	</bindgen>
     */
     template< class T >
-    class vector {};
+    class vector 
+	{
+	public:
+		// typedef int size_type;
+		// typedef T* iterator;
+		// typedef const T* const_iterator;
+		// typedef const T* const_reverse_iterator;
+		// typedef T* reverse_iterator;
+		// typedef T value_type;
+	};
+	
+	/** 
+        <bindgen>
+    		<attribute name="visibility" value="private"></attribute>
+    		<attribute name="convert" value="yes"></attribute>
+    	</bindgen>
+    */
+    template< class T >
+    class list
+	{
+	};
     
     /** 
         <bindgen>
@@ -259,7 +278,16 @@ namespace std
     	</bindgen>
     */
     template< class K, class V >
-    class map {};
+    class map 
+    {
+    public:
+//        typedef owl::private_dummy iterator;
+//        typedef owl::private_dummy const_iterator;
+//        typedef owl::private_dummy reverse_iterator;
+//        typedef owl::private_dummy const_reverse_iterator;
+//        typedef V value_type;
+//        typedef K key_type;
+    };
 
     /** 
         <bindgen>
@@ -394,8 +422,8 @@ namespace std
     		<attribute name="visibility" value="private"></attribute>
     	</bindgen>
     */
-    class wistream {};    
-	
+    class wistream {};
+
 	/** 
         <bindgen>
     		<attribute name="visibility" value="private"></attribute>

@@ -1,15 +1,16 @@
 
-#import "OlibOpencorelibRational.h"
+#import "OlibRationalTime.h"
 
 #import <Foundation/Foundation.h>
 
-@implementation OlibOpencorelibRational
+@implementation OlibRationalTime
 
 @synthesize numerator = _numerator;
 @synthesize denominator = _denominator;
 
 - (id)initWithNumerator:(NSInteger)num andDenominator:(NSInteger)den;
 {
+    NSAssert( den != 0, @"Invalid denominator" );
     self = [super init];
     if (self != nil) {
         _numerator = num;

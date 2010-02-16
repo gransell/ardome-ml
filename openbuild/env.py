@@ -341,7 +341,7 @@ class Environment( BaseEnvironment ):
 				paths.remove( incdir )
 		return result
 
-	def build( self, path, deps = [], tools = [], externals = [] ):
+	def build( self, path, deps = [], tools = [], externals = [], dot_net_deps = [] ):
 		"""	Invokes a SConscript, cloning the environment and linking against any inter
 			project dependencies specified.
 			
@@ -370,6 +370,8 @@ class Environment( BaseEnvironment ):
 			local_env = self.Clone( tools = tools, LIBPATH = [ ] )
 			local_env.full_path = os.path.join( local_env.root, path )
 			local_env.relative_path = path
+			
+			local_env.dot_net_deps = map( lambda x: x[build_type], dot_net_deps )
 			
 			build_type( local_env )
 
@@ -496,6 +498,32 @@ class Environment( BaseEnvironment ):
 
 		new_lib = self.SharedLibrary( lib, sources, *keywords )
 		return new_lib
+		
+	def dot_net_library( self, lib, sources, headers=None, dot_net_assemblies=[], pre=None, nopre=None, *keywords ) :
+	
+		for dna in dot_net_assemblies :
+			self.Append( CPPFLAGS = [ '/FU "' + dna + '"' ] )
+		
+		if self.dot_net_deps is not None :
+			for dna in self.dot_net_deps :
+				self.Append( CPPFLAGS = [ '/FU "' + str(dna[0]) + '"' ] )
+			
+			for source in sources :
+				self.Depends( source, self.dot_net_deps )
+			
+			for p in pre :
+				self.Depends( p, self.dot_net_deps )
+	
+		obj = self.shared_library( lib, sources, headers, pre, nopre, *keywords )
+		
+		#This is a .NET assembly DLL, it doesn't have .lib or .exp files
+		#We also need to check if we got path objects or strings back
+		if 'path' in dir( obj[0] ):
+			obj = filter(lambda x: not x.path.endswith('lib') and not x.path.endswith('.exp'), obj)
+		else:
+			obj = filter(lambda x: not x.endswith('lib') and not x.endswith('.exp'), obj)
+		
+		return obj
 		
 #	def framework( self, fmwk, sources, headers=None, public_headers=None, resources=None, pre=None, nopre=None, *keywords):
 #		"""	Build a Framework (darwin only)

@@ -1,16 +1,17 @@
 import os
 import owl.wrapper.c_sharp.c_sharp_bind_options
 
-conversion_dict = {'olib::opencorelib::frames' : 'System::Int32',
-					'olib::opencorelib::rational_time' : 'Olib::Opencorelib::RationalTime',
-					'boost::rational<long>' : 'Olib::Opencorelib::RationalTime',
-					'olib::opencorelib::point' : 'System::Windows::Point' }
 
 class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 	
 	def __init__( self, owl_path, output_path, assemblies ):
 		super(core_c_sharp_bind_options, self).__init__( owl_path, output_path, assemblies )	
 		self.precompiled_header_info = ( True, 'precompiled_headers.hpp',  'precompiled_headers.cpp' )
+		
+		self._conversion_dict.update( {'olib::opencorelib::frames' : 'System::Int32',
+					'olib::opencorelib::rational_time' : 'Olib::Opencorelib::RationalTime',
+					'boost::rational<long>' : 'Olib::Opencorelib::RationalTime',
+					'olib::opencorelib::point' : 'System::Windows::Point', } )
 	
 	def get_standard_header_includes(self, type_instance):
 		ret = super(core_c_sharp_bind_options, self).get_standard_header_includes( type_instance )
@@ -35,12 +36,12 @@ class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 						'opencorelib/cl/log_defines.hpp',
 						'opencorelib/cl/logtarget.hpp',
 						'opencorelib/cl/base_exception.hpp',
-						'owl/wrapper/c_sharp/cppsrc/SharedPtr.hpp',
-						'owl/wrapper/c_sharp/cppsrc/wrap_manager.hpp',
-						'owl/wrapper/c_sharp/cppsrc/ref_wrapper.hpp',
-						'owl/wrapper/c_sharp/cppsrc/CommonDefines.hpp',
-						'owl/wrapper/c_sharp/cppsrc/RationalTime.hpp', 
-						'owl/wrapper/c_sharp/cppsrc/ConversionFunctions.hpp',
+						'src/c_sharp/RationalTime.hpp', 
+						'src/c_sharp/AMLConversionFunctions.hpp',
+						'owl/SharedPtr.hpp',
+						'owl/owl_wrap_manager.hpp',
+						'owl/ref_wrapper.hpp',
+						'owl/CommonDefines.hpp',
 						]
 						
 		
@@ -60,12 +61,6 @@ class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 		
 	def get_precompiled_header_info( self ) :
 		return self.precompiled_header_info
-		
-	def get_conversion_dictionary( self ):
-		ret = super(core_c_sharp_bind_options, self).get_conversion_dictionary( )
-		for k in conversion_dict.keys() :
-			ret[k] = conversion_dict[k]
-		return ret
 		
 	def get_standard_source_includes(self, type_instance):
 		ret =  super(core_c_sharp_bind_options, self).get_standard_source_includes( type_instance )
