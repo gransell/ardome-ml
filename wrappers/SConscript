@@ -151,6 +151,7 @@ elif local_env['PLATFORM'] == 'win32' :
 									],
 									pre = [ os.path.join('generated_src', 'precompiled_headers.cpp'), 'precompiled_headers.hpp' ] )
 	
+	local_env.copy_files( os.path.join( local_env[ 'stage_bin' ] ), os.path.join( local_env.root, 'bcomp', 'owl', build_mode_str, 'bin', 'OWL.dll' ) )
 	local_env.copy_project_files( os.path.join( local_env[ 'stage_wrapper_py' ] ), os.path.join( 'py' ) )
 	
 	
