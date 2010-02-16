@@ -14,6 +14,8 @@ mkdir TMPZIP/aml/bin/debug || exit 1
 mkdir TMPZIP/aml/lib/release || exit 1
 mkdir TMPZIP/aml/lib/debug || exit 1
 mkdir TMPZIP/aml/lib/winconfig || exit 1
+mkdir TMPZIP/aml/asts || exit 1
+mkdir TMPZIP/aml/py || exit 1
 
 echo "Adding release files..."
 cp -r build/release/vs2008/bin/* TMPZIP/aml/bin/release/
@@ -32,6 +34,10 @@ if [ ! $? == 0 ]; then
 	echo "Failed to copy debug files"
 	exit 1
 fi
+
+echo "Adding ASTs and python files for wrappers..."
+cp -r build/debug/vs2008/asts/* TMPZIP/aml/asts/
+cp -r build/debug/vs2008/py/* TMPZIP/aml/py/
 
 echo "Adding include files"
 cp -r src/opencorelib  TMPZIP/aml/include/ardome-ml/
@@ -60,6 +66,7 @@ find TMPZIP/aml/bin/release/ -name "*.lib" -type f -print0 | xargs -0 rm -f
 
 echo "Purging .pyc-files "
 find TMPZIP/openbuild/ -name "*.pyc" -type f -print0 | xargs -0 rm -f
+find TMPZIP/aml/py  -name "*.pyc" -type f -print0 | xargs -0 rm -f
 
 rm -rf TMPZIP/aml/bin/debug/plugins
 rm -rf TMPZIP/aml/bin/debug/examples

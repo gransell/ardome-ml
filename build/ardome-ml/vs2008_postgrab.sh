@@ -61,4 +61,12 @@ if [ ! -d  loki-0.1.6/include ]; then
 	fi
 fi
 
+echo "Extracting Doxygen..."
+unzip -oq ../tmp/doxygen.zip
+if [ ! $? == 0 ]; then
+  echo "Failed to run unzip -oq ../tmp/doxygen.zip. Terminating."
+  exit
+fi
+
+
 echo "Postgrab succeeded!"
