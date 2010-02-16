@@ -143,7 +143,6 @@ elif local_env['PLATFORM'] == 'win32' :
 	if local_env['debug'] == '1' :
 		build_mode_str = 'debug'
 	
-	local_env.Append( CPPFLAGS = [ '/EHa', '/clr' ] ) 
 	obj = local_env.dot_net_library( 'AML', sources = wrapper_files['source_files'], 
 									headers = wrapper_files['header_files'], 
 									dot_net_assemblies = [ 

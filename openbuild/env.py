@@ -501,6 +501,8 @@ class Environment( BaseEnvironment ):
 		
 	def dot_net_library( self, lib, sources, headers=None, dot_net_assemblies=[], pre=None, nopre=None, *keywords ) :
 	
+		self.Append( CPPFLAGS = [ '/EHa', '/clr' ] ) 
+	
 		for dna in dot_net_assemblies :
 			self.Append( CPPFLAGS = [ '/FU "' + dna + '"' ] )
 		
@@ -510,9 +512,10 @@ class Environment( BaseEnvironment ):
 			
 			for source in sources :
 				self.Depends( source, self.dot_net_deps )
-			
-			for p in pre :
-				self.Depends( p, self.dot_net_deps )
+
+			if pre is not None :
+				for p in pre :
+					self.Depends( p, self.dot_net_deps )
 	
 		obj = self.shared_library( lib, sources, headers, pre, nopre, *keywords )
 		
