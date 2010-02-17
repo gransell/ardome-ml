@@ -31,7 +31,7 @@ if local_env['debug'] == '1' :
 	generate_files = False
 	
 dep_ass_bo_map ={}
-	
+
 if generate_files :
 
 	if local_env['PLATFORM'] == 'win32' :
@@ -40,19 +40,23 @@ if generate_files :
 		doxygen_path = os.path.join( local_env.root, 'bcomp', 'doxygen', 'bin', 'doxygen' )
 
 
-	dependant_assembly_paths = [ os.path.join( local_env.root, 'bcomp', 'owl', 'release', 'asts', 'OWL.assembly' ) ]
+	dependant_assembly_paths = [ 
+								( 
+									os.path.join( local_env.root, 'bcomp', 'owl', 'release', 'asts', 'OWL.assembly' ), 
+									os.path.join( local_env.root, 'bcomp', 'owl', 'release', 'include' )
+								) ]
 
 	dep_asses = []
-	for dap in dependant_assembly_paths :
+	for (dap, header_path) in dependant_assembly_paths :
 		fd = open(dap, "r")
 		(ass, bind_opts) = pickle.load( fd )
+		ass.make_header_paths_absolute( header_path )
 		dep_asses.append( ass )
 		dep_ass_bo_map[ass.get_name()] = (ass, bind_opts)
 		fd.close()
 
-
 	cl_src_dir = os.path.join( local_env.root, 'src', 'opencorelib', 'cl' )
-
+	
 	headers = [ header_file( os.path.join( cl_src_dir, 'core_enums.hpp') ),
 				header_file( os.path.join( cl_src_dir, 'basic_enums.hpp') ),
 				header_file( os.path.join( cl_src_dir, 'minimal_string_defines.hpp') ),
@@ -72,8 +76,6 @@ if generate_files :
 				
 	if local_env['target'] == 'vs2008' :
 		headers.append(header_file( os.path.join(cl_src_dir, 'base_exception.hpp' ) ) )
-		headers.append(header_file( os.path.join(cl_src_dir, 'msw', 'windows_invoker.hpp' ) ) )
-
 
 
 	print 'Building AST...'
@@ -88,14 +90,12 @@ if generate_files :
 
 	af = open( os.path.join( owl_output_dir, '../AML.assembly'), 'w' )
 	bo_dict = { 'c_sharp' : ( 'aml.wrapper.c_sharp.core_c_sharp_bind_options', 'core_c_sharp_bind_options' ) }
+	
+	#Make the paths relative so that the pickled assembly can easily be reused on another machine
+	aml_assembly.make_header_paths_relative( cl_src_dir )
 	pickle.dump( (aml_assembly, bo_dict), af )
 	af.close( )
 	
-	
-else:
-	af = open( os.path.join( owl_output_dir, '../AML.assembly'), 'r' )
-	(aml_assembly, dummy) = pickle.load( af )
-	af.close()
 
 local_env.copy_files( local_env[ 'stage_ast' ], os.path.join( local_env.root, 'bcomp', 'owl', 'release', 'asts', 'OWL.assembly') )
 local_env.copy_files( local_env[ 'stage_ast' ], os.path.join( owl_output_dir, '../AML.assembly') )
