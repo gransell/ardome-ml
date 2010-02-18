@@ -219,7 +219,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 			{
 				int key = keydown.value< int >( );
 
-				if ( key == 27 )
+				if ( key == SDLK_ESCAPE )
 				{
 					error = true;
 				}
@@ -268,31 +268,31 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 					int position = input->get_position( ) + 1000;
 					input->seek( position >= input->get_frames( ) ? input->get_frames( ) - 1 : position );
 				}
-				else if ( key == 273 )
+				else if ( key == SDLK_UP )
 				{
 					int position = input->get_position( ) - 100;
 					input->seek( position < 0 ? 0 : position );
 				}
-				else if ( key == 274 )
+				else if ( key == SDLK_DOWN )
 				{
 					int position = input->get_position( ) + 100;
 					input->seek( position >= input->get_frames( ) ? input->get_frames( ) - 1 : position );
 				}
-				else if ( key == 275 )
+				else if ( key == SDLK_RIGHT )
 				{
 					if ( speed != 0 )
 						speed = 0;
 					else
 						input->seek( 1, true );
 				}
-				else if ( key == 276 )
+				else if ( key == SDLK_LEFT )
 				{
 					if ( speed != 0 )
 						speed = 0;
 					else if ( input->get_position( ) > 0 )
 						input->seek( -1, true );
 				}
-				else if ( key == 279 )
+				else if ( key == SDLK_END )
 				{
 					input->seek( input->get_frames( ) - 1 );
 				}
