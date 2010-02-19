@@ -1,7 +1,7 @@
 
-#ifdef NEEDS_SDL
-#	include <SDL.h>
-#endif
+//#ifdef NEEDS_SDL
+#include <SDL/SDL_keysym.h>
+//#endif
 
 #include <iostream>
 #include <fstream>
