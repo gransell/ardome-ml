@@ -241,12 +241,18 @@ namespace olib
 				}
 				catch ( XMLException& e)
 				{
+					xerces_string str( e.getMessage() );
 					// We can't use our standard assertions and stuff here since that will trigger a utf8 ->
 					// utf16 convert and we will end up here again
 					#ifdef OLIB_ON_WINDOWS
 						std::wcerr << L"XMLExeption::getMessage: " << e.getMessage() << std::endl;
-					#else
-					#warning find a way to output the message?
+					#else	
+						char *ptr = const_cast< char * >( reinterpret_cast< const char * >( str.c_str( ) ) );
+						for( int i = 0; i < str.size( ) * 2; ++i )
+						{
+							if( ptr[ i ] == 0 ) ptr[ i ] = '.';
+						}
+						std::cerr <<  "XMLExeption::getMessage: " << ptr << std::endl;
 					#endif
 					std::string err_msg(src, src_size);
 					err_msg = "UTF-8 -> UTF-16 conversion failed src=" + err_msg;
