@@ -244,7 +244,7 @@ if env.check_externals( ):
 		env.install_openbuild( )
 		env.package_install( )
 	
-	if env[ 'wrappers' ] == 'yes':
+	if env[ 'wrappers' ] == 'yes' and env['PLATFORM'] == 'win32':
 		env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
 	
 	# Makes it possible for the visual studio builder to terminate scons.
