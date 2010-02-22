@@ -113,6 +113,7 @@
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
+#include "utility.hpp"
 
 namespace aml { namespace openmedialib {
 
@@ -234,7 +235,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 				}
 			}
 		}
-
+		
 		pcos::property prop_in_;
 		pcos::property prop_pad_audio_;
 		pcos::property prop_fps_num_;
