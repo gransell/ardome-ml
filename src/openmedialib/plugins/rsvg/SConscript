@@ -1,0 +1,24 @@
+Import(['local_env'])
+import os
+
+options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale' )
+
+if options[ 'have_librsvg-2.0' ]: 
+	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
+
+	srcs = [ 'rsvg_plugin.cpp',
+         'filter_title.cpp',
+         'input_librsvg.cpp' ]
+ 
+	if local_env[ 'PLATFORM' ] == 'win32':
+		local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
+
+	# Make sure we place the binary correctly on windows
+	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+
+	bin = local_env.plugin( 'openmedialib_rsvg', srcs )
+
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'aml_rsvg.opl' ])
+
+	Return( 'bin' )
+

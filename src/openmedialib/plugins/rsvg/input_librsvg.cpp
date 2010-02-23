@@ -7,14 +7,21 @@
 //
 // An SVG input based on librsvg.
 
-#include "precompiled_headers.hpp"
-#include "amf_filter_plugin.hpp"
+#include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openpluginlib/pl/utf8_utils.hpp>
+#include <openpluginlib/pl/pcos/isubject.hpp>
+#include <openpluginlib/pl/pcos/observer.hpp>
+
 #include <iostream>
 #include <boost/thread.hpp>
 
-#ifdef HAVE_LIBRSVG
-
 #include <librsvg/rsvg.h>
+
+namespace ml = olib::openmedialib::ml;
+namespace pl = olib::openpluginlib;
+namespace il = olib::openimagelib::il;
+namespace cl = olib::opencorelib;
+namespace pcos = olib::openpluginlib::pcos;
 
 namespace aml { namespace openmedialib { 
 
@@ -225,15 +232,3 @@ ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring &r
 
 } }
 
-#else
-
-namespace aml { namespace openmedialib { 
-
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & )
-{
-	return ml::input_type_ptr( );
-}
-
-} }
-
-#endif

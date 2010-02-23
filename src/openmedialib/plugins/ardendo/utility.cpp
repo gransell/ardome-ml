@@ -141,7 +141,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	if ( frame->has_audio( ) )
 		stream << "Audio Info  : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
-		stream << "Has Stream  : Yes, pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( ) << endl;
+		stream << "Has Stream  : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( ) << endl;
 	else
 		stream << "Has Stream  : No" << endl;
 

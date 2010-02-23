@@ -20,7 +20,6 @@ namespace aml { namespace openmedialib {
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring & );
 extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring & );
 
@@ -53,7 +52,6 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring & )
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const pl::wstring & );
 
@@ -67,10 +65,6 @@ public:
 
 	virtual ml::input_type_ptr input( const pl::wstring &resource )
 	{
-		if ( resource.find( L"svg:" ) == 0 )
-			return create_input_librsvg( resource );
-		if ( resource.find( L".svg" ) != pl::wstring::npos )
-			return create_input_librsvg( resource );
 		if ( resource.find( L".awi" ) != pl::wstring::npos )
 			return create_input_awi( resource );
 		if ( resource.find( L"aml_stack:" ) == 0 || ( resource.find( L"=" ) == pl::wstring::npos && resource.find( L".aml" ) != pl::wstring::npos ) )
@@ -139,8 +133,6 @@ public:
 			return create_tee( resource );
 		if ( resource == L"threader" )
 			return create_threader( resource );
-		if ( resource == L"title" )
-			return create_title( resource );
 		if ( resource == L"transport" )
 			return create_transport( resource );
 		if ( resource == L"volume" )
