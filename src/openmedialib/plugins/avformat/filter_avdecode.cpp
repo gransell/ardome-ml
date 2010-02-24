@@ -88,63 +88,9 @@ class stream_queue
 			av_free( frame_ );
 		}
 
-		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
-		{
-			boost::uint8_t *result = 0;
-			boost::uint8_t *ptr = stream->bytes( );
-			unsigned int index = 0;
-			unsigned int length = stream->length( );
-			while ( result == 0 && index + 10 < length )
-			{
-				if ( ptr[ index ] == 0 && ptr[ index + 1 ] == 0 && ptr[ index + 2 ] == 1 )
-				{
-					if ( ptr[ index + 3 ] == 0xb8 )
-					{
-						if ( ptr[ index + 8 ] == 0 && ptr[ index + 9 ] == 0 && ptr[ index + 10 ] == 1 )
-							result = ptr + index;
-						else
-							index += 4;
-					}
-					else if ( ptr[ index + 3 ] == 0x00 )
-						index += 3;
-					else
-						index += 4;
-				}
-				else
-				{
-					index ++;
-				}
-				if ( !result && ptr[ index ] != 0x00 )
-				{
-					boost::uint8_t *t = ( boost::uint8_t * )memchr( ptr + index, 0x00, length - index );
-					if ( t == 0 ) break;
-					index = t - ptr;
-				}
-			}
-	
-			return result;
-		}
-
-		void look_for_closed( const ml::frame_type_ptr &frame )
-		{
-			pl::pcos::property gop_closed( key_gop_closed_ );
-			if ( is_dv( frame->get_stream( )->codec( ) ) || is_imx( frame->get_stream( )->codec( ) ) )
-			{
-				frame->get_stream( )->properties( ).append( gop_closed = 1 );
-			}
-			else if ( is_mpeg2( frame->get_stream( )->codec( ) ) )
-			{
-				boost::uint8_t *ptr = find_mpeg2_gop( frame->get_stream( ) );
-				if ( ptr ) frame->get_stream( )->properties( ).append( gop_closed = int( ( ptr[ 7 ] & 64 ) >> 6 ) );
-			}
-			else
-			{
-				frame->get_stream( )->properties( ).append( gop_closed = -1 );
-			}
-		}
-
 		ml::frame_type_ptr fetch( int position )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::frame_type_ptr result;
 			
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
@@ -177,6 +123,7 @@ class stream_queue
 
 		il::image_type_ptr decode_image( int position )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key( position, input_->get_uri() );
 						
@@ -254,6 +201,7 @@ class stream_queue
 
 		ml::audio_type_ptr decode_audio( int position )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key( position, input_->get_uri() );
 			
@@ -294,6 +242,63 @@ class stream_queue
 				result.den = context_->sample_aspect_ratio.den;
 			}
 			return result;
+		}
+
+	private:
+
+		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
+		{
+			boost::uint8_t *result = 0;
+			boost::uint8_t *ptr = stream->bytes( );
+			unsigned int index = 0;
+			unsigned int length = stream->length( );
+			while ( result == 0 && index + 10 < length )
+			{
+				if ( ptr[ index ] == 0 && ptr[ index + 1 ] == 0 && ptr[ index + 2 ] == 1 )
+				{
+					if ( ptr[ index + 3 ] == 0xb8 )
+					{
+						if ( ptr[ index + 8 ] == 0 && ptr[ index + 9 ] == 0 && ptr[ index + 10 ] == 1 )
+							result = ptr + index;
+						else
+							index += 4;
+					}
+					else if ( ptr[ index + 3 ] == 0x00 )
+						index += 3;
+					else
+						index += 4;
+				}
+				else
+				{
+					index ++;
+				}
+				if ( !result && ptr[ index ] != 0x00 )
+				{
+					boost::uint8_t *t = ( boost::uint8_t * )memchr( ptr + index, 0x00, length - index );
+					if ( t == 0 ) break;
+					index = t - ptr;
+				}
+			}
+	
+			return result;
+		}
+
+		void look_for_closed( const ml::frame_type_ptr &frame )
+		{
+			pl::pcos::property gop_closed( key_gop_closed_ );
+			if ( is_dv( frame->get_stream( )->codec( ) ) || is_imx( frame->get_stream( )->codec( ) ) )
+			{
+				frame->get_stream( )->properties( ).append( gop_closed = 1 );
+			}
+			else if ( is_mpeg2( frame->get_stream( )->codec( ) ) )
+			{
+				boost::uint8_t *ptr = find_mpeg2_gop( frame->get_stream( ) );
+				if ( ptr ) frame->get_stream( )->properties( ).append( gop_closed = int( ( ptr[ 7 ] & 64 ) >> 6 ) );
+			}
+			else
+			{
+				frame->get_stream( )->properties( ).append( gop_closed = -1 );
+			}
 		}
 
 		bool decode( ml::frame_type_ptr &result, int position )
@@ -392,6 +397,7 @@ class stream_queue
 		}
 
 	private:
+		boost::recursive_mutex mutex_;
 		ml::input_type_ptr input_;
 		int gop_open_;
 		std::wstring scope_;

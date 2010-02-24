@@ -229,6 +229,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
 
 	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )

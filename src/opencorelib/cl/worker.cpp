@@ -246,11 +246,13 @@ namespace olib
             // Give the worker a chance to start.
             boost::thread::yield();
 
-            boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
-            if( m_thread_running ) return;
-            boost::system_time wt = boost::get_system_time() + boost::posix_time::seconds(5); 
-            ARENFORCE( m_thread_started.timed_wait(mtx, wt) );
-            ARASSERT( m_thread_running );
+			{
+            	boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
+            	if( m_thread_running ) return;
+            	boost::system_time wt = boost::get_system_time() + boost::posix_time::seconds(5); 
+            	ARENFORCE( m_thread_started.timed_wait(mtx, wt) );
+            	ARASSERT( m_thread_running );
+			}
         }
 
         void worker::worker_thread_procedure()
@@ -280,10 +282,12 @@ namespace olib
                 // maintaining state.
             }
 
-            boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
+			{
+            	boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
 
-            m_thread_running = false;
-            m_thread_exit_success.notify_all();
+            	m_thread_running = false;
+            	m_thread_exit_success.notify_all();
+			}
         }
 
         void worker::reset_current_job()
@@ -424,6 +428,8 @@ namespace olib
 
 				if( !m_current_job->get_should_reschedule( ) )
 					remove_reoccurring_job( m_current_job );
+
+				on_job_done( this, m_current_job );
             }
         }
 

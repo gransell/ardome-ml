@@ -4,6 +4,7 @@
 #include "typedefs.hpp"
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
+#include "event_handler.hpp"
 #include "time_helpers.hpp"
 
 #undef add_job
@@ -25,6 +26,8 @@ namespace olib
         class CORE_API worker : public boost::noncopyable
 		{
 		public:
+			typedef olib::opencorelib::event_handler< worker *, base_job_ptr > job_done_event;
+
 			/// default constructor
 			worker();
 			/// Calls stop and cleans up the internal state.
@@ -88,6 +91,10 @@ namespace olib
                 @return true if all jobs were completed within the 
                         given time out value, false otherwise. */
             bool wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out );
+
+			/// Event that's triggered when a job is completed
+			/** Note that this event will block when used in the context of a thread pool. */
+			job_done_event on_job_done;
 
 		protected:
 

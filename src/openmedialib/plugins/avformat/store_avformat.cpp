@@ -619,7 +619,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, CODEC_TYPE_VIDEO );
 			}
 			if ( prop_debug_.value< int >( ) )
- 				std::cerr << L"obtain_video_codec_id: found: " << codec_id << " for "
+ 				std::cerr << "obtain_video_codec_id: found: " << codec_id << " for "
 						  << pl::to_string( prop_vcodec_.value< pl::wstring >( ) ) << std::endl;
 			return codec_id;
 		}
@@ -634,7 +634,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( codec != NULL )
 					codec_id = codec->id;
 				else if ( prop_debug_.value< int >( ) )
-					std::cerr << L"obtain_audio_codec_id: failed to find codec for value: "
+					std::cerr << "obtain_audio_codec_id: failed to find codec for value: "
 							   << pl::to_string( prop_acodec_.value< pl::wstring >( ) )
 							   << std::endl;
 			}
@@ -644,7 +644,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 
 			if ( prop_debug_.value< int >( ) )
- 				std::cerr << L"obtain_audio_codec_id: found: " << codec_id << " for "
+ 				std::cerr << "obtain_audio_codec_id: found: " << codec_id << " for "
  						  << pl::to_string( prop_acodec_.value< pl::wstring >( ) ) << std::endl;
 
 			return codec_id;
@@ -950,6 +950,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
+					std::cerr << "allocating audio block: " << audio_input_frame_size_ << std::endl;
 					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
 					audio_block_->set_position( push_count_ );
 				}

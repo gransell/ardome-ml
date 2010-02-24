@@ -199,8 +199,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Pure virtual do_fetch
 		virtual void do_fetch( frame_type_ptr & ) = 0;
 
-	private:
 		olib::openpluginlib::pcos::property_container properties_;
+
+	private:
 		bool initialized_;
 		olib::openpluginlib::pcos::property prop_debug_;
 		int position_;

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="Decode plugin" type="filter" extension='"aml_rescale", "decode", "encode", "lazy:.*", "map_reduce", "rescale"' merit="50" filename='"libopenmedialib_decode.so", "libopenmedialib_decode.dylib", "openmedialib_decode.dll"'/>
+	</openmedialib>
+</openlibraries>

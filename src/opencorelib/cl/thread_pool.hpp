@@ -2,6 +2,9 @@
 #define _CORE_THREAD_POOL_H_
 
 #include <vector>
+#include <deque>
+#include <boost/bind.hpp>
+#include <boost/tuple/tuple.hpp>
 #include "worker.hpp"
 
 namespace olib
@@ -53,9 +56,22 @@ namespace olib
                 @return true if all jobs were completed, false otherwise. */
             bool wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out );
 
+			/// Callback which occurs when a job is finished - automatically assigns a pending
+			/// job if there are any available
+			void job_done( worker *, boost::shared_ptr< base_job > );
+
+			/// Reports number of pending jobs
+			int jobs_pending( );
+
+			void clear_jobs( );
+
 		protected:
 
 			typedef std::vector< boost::shared_ptr< worker >  > worker_vec;
+			std::vector< boost::tuples::tuple< event_connection_ptr, bool> > callbacks_;
+			std::deque< boost::shared_ptr< base_job > > jobs_;
+			int idle_;
+
 			worker_vec m_workers;
 			unsigned int m_i_max_workers;
             boost::posix_time::time_duration m_thread_termination_timeout;
@@ -67,6 +83,9 @@ namespace olib
 
             /// Override this function to provide classes derived from worker.
             virtual boost::shared_ptr< worker > create_worker();
+
+            /// Condition var to notify a job completion
+            boost::condition_variable_any cond_;
 		};
 	}
 }

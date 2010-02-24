@@ -14,11 +14,13 @@ namespace olib
 	{
 		thread_pool::thread_pool(	unsigned int max_nrOf_workers,  
 								    const boost::posix_time::time_duration& tto)
-									:	m_i_max_workers(max_nrOf_workers), 
-                                        m_thread_termination_timeout(tto)
+									: idle_( m_i_max_workers )
+									, m_i_max_workers(max_nrOf_workers) 
+                                    , m_thread_termination_timeout(tto)
 										
 		{
-			if(m_i_max_workers <= 0) m_i_max_workers = 5;
+			if(m_i_max_workers <= 0) 
+				m_i_max_workers = 5;
 		}
 
 		thread_pool::~thread_pool()
@@ -54,7 +56,7 @@ namespace olib
 			worker_vec::iterator it(m_workers.begin()), end_it(m_workers.end());
 			for( ; it != end_it; ++it)
 			{
-				if((*it)->job_count() == 0 ) 
+				if((*it)->job_count() == 0 && !(*it)->get_is_running_job() ) 
 				{
 					(*it)->add_job(p_job);
 					return true;
@@ -88,20 +90,58 @@ namespace olib
 			(*min_it)->add_job(p_job);
 		}
 
+		void thread_pool::job_done( worker *work, base_job_ptr job )
+		{
+            boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+
+			while( true )
+			{
+				if ( jobs_.size( ) == 0 )
+				{
+					cond_.wait( lock );
+				}
+
+				if ( jobs_.size( ) )
+				{
+					base_job_ptr next = jobs_.front( );
+					jobs_.pop_front( );
+					work->add_job( next );
+					break;
+				}
+			}
+		}
+
         boost::shared_ptr< worker > thread_pool::create_worker() 
         {
             boost::shared_ptr< worker > p_worker( new worker() );
+			boost::tuples::tuple< event_connection_ptr, bool> callback = p_worker->on_job_done.connect( boost::bind( &thread_pool::job_done, this, _1, _2 ) );
+			callbacks_.push_back( callback );
             return p_worker;
         }
 
 		void thread_pool::add_job( boost::shared_ptr< base_job > p_job ) 
 		{
-            boost::recursive_mutex::scoped_lock lock(m_this_mtx);
-			if( add_to_empty_worker(p_job) ) return;
 			if( add_to_new_worker(p_job) ) return;
-			add_to_least_loaded_worker(p_job);
+			//if( add_to_empty_worker(p_job) ) return;
+			{
+            	boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+				jobs_.push_back( p_job );
+				cond_.notify_one( );
+			}
 		}
 		
+		int thread_pool::jobs_pending( )
+		{
+            boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+			return jobs_.size( );
+		}
+
+		void thread_pool::clear_jobs( )
+		{
+            boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+			jobs_.erase( jobs_.begin( ), jobs_.end( ) );
+		}
+
 		unsigned int thread_pool::get_number_of_workers() const 
 		{
 			return m_i_max_workers;
