@@ -19,7 +19,6 @@ if utils.xcode():
 	
 from pkgconfig import PkgConfig as PkgConfig
 from winconfig import WinConfig as WinConfig
-from sets import Set
 import types
 
 class Environment( BaseEnvironment ):
@@ -321,7 +320,7 @@ class Environment( BaseEnvironment ):
 		
 		existing_deps = self.dependencies.get( res_min, None)
 		if existing_deps == None :
-			new_set = Set()
+			new_set = set()
 			new_set.add( dep_min )
 			self.dependencies[ res_min ] = new_set
 		else :

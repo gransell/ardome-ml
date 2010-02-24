@@ -2,7 +2,7 @@
 #
 # Released under the LGPL
 
-import SCons.Options
+import SCons.Variables
 import utils
 import os
 
@@ -29,7 +29,7 @@ def validate_target( key, value, environment ) :
 		raise SCons.Errors.InternalError, "Unsupported operating system: %s" % (os.name) 
 	
 def create_options( file, args ):
-	opts = SCons.Options.Options( file, args )
+	opts = SCons.Variables.Variables( file, args )
 
 	opts.file = file
 	target = determine_target( )
