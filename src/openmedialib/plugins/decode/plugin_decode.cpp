@@ -43,9 +43,6 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			, filter_( filter )
 			, pushed_( pushed )
 		{
-			image_ = il::image_type_ptr( );
-			audio_ = ml::audio_type_ptr( );
-			stream_ = ml::stream_type_ptr( );
 		}
 
 		/// Destructor
@@ -59,7 +56,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		{
 			if ( filter_ )
 			{
-				ml::frame_type_ptr frame = parent_;
+				ml::frame_type_ptr other = parent_;
 
 				if ( !pushed_ )
 				{
@@ -72,12 +69,22 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 					filter_->fetch_slot( 0 )->push( parent_ );
 					filter_->seek( get_position( ) );
-					frame = filter_->fetch( );
+					other = filter_->fetch( );
 				}
 
-				image_ = frame->get_image( );
-				audio_ = frame->get_audio( );
-				stream_ = frame->get_stream( );
+				image_ = other->get_image( );
+				alpha_ = other->get_alpha( );
+				audio_ = other->get_audio( );
+				properties_ = other->properties( );
+				stream_ = other->get_stream( );
+				pts_ = other->get_pts( );
+				duration_ = other->get_duration( );
+				sar_num_ = other->get_sar_num( );
+				sar_den_ = other->get_sar_den( );
+				fps_num_ = other->get_fps_num( );
+				fps_den_ = other->get_fps_den( );
+				exceptions_ = other->exceptions( );
+
 				pool_->filter_release( filter_ );
 				filter_ = ml::filter_type_ptr( );
 			}
@@ -128,14 +135,6 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		{
 			evaluate( );
 			return stream_;
-		}
-
-		// Calculate the duration of the frame
-		virtual double get_duration( ) const
-		{
-			int num, den;
-			get_fps( num, den );
-			return double( den ) / double( num );
 		}
 
 	private:
@@ -193,15 +192,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::filter_type_ptr result;
-			if ( decoder_.size( ) )
-			{
-				result = decoder_.back( );
-				decoder_.pop_back( );
-			}
-			else
-			{
-				result = filter_create( );
-			}
+			if ( decoder_.size( ) == 0 )
+				decoder_.push_back( filter_create( ) );
+			result = decoder_.back( );
+			decoder_.pop_back( );
 			return result;
 		}
 
@@ -211,11 +205,11 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 			decoder_.push_back( filter );
 		}
 
-		bool create_pushers( ml::frame_type_ptr &frame )
+		bool determine_decode_use( ml::frame_type_ptr &frame )
 		{
-			bool rc = true;
+			bool rc = frame && frame->get_stream( );
 
-			if ( frame->get_stream( )->codec( ) == "mpeg2" )
+			if ( rc && frame->get_stream( )->codec( ) == "mpeg2" )
 			{
 				gop_decoder_ = ml::create_filter( L"avdecode" );
 				gop_decoder_->connect( fetch_slot( 0 ) );
@@ -234,7 +228,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 				if ( last_frame_ == 0 )
 				{
 					frame = fetch_from_slot( );
-					create_pushers( frame );
+					determine_decode_use( frame );
 				}
 
 				if ( gop_decoder_ )
