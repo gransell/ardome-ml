@@ -51,7 +51,7 @@ IL_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field );
 IL_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im );
 IL_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im );
 
-enum IL_DECLSPEC rescale_filter { POINT_SAMPLING, BILINEAR_SAMPLING, BICUBIC_SAMPLING, TRILINEAR_SAMPLING };
+enum IL_DECLSPEC rescale_filter { POINT_SAMPLING, BILINEAR_SAMPLING, BICUBIC_SAMPLING };
 
 IL_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_d = 1, rescale_filter filter = POINT_SAMPLING );
 

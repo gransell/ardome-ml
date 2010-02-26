@@ -383,11 +383,17 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_type
 	public:
 		filter_rescale( )
 			: filter_type( )
+			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
+			, prop_progressive_( pl::pcos::key::from_string( "progressive" ) )
+			, prop_interp_( pl::pcos::key::from_string( "interp" ) )
 			, prop_width_( pl::pcos::key::from_string( "width" ) )
 			, prop_height_( pl::pcos::key::from_string( "height" ) )
 			, prop_sar_num_( pl::pcos::key::from_string( "sar_num" ) )
 			, prop_sar_den_( pl::pcos::key::from_string( "sar_den" ) )
 		{
+			properties( ).append( prop_enable_ = 1 );
+			properties( ).append( prop_progressive_ = 1 );
+			properties( ).append( prop_interp_ = 1 );
 			properties( ).append( prop_width_ = 640 );
 			properties( ).append( prop_height_ = 360 );
 			properties( ).append( prop_sar_num_ = 1 );
@@ -410,17 +416,21 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_type
 		void do_fetch( frame_type_ptr &frame )
 		{
 			frame = fetch_from_slot( );
-			if ( frame && frame->has_image( ) )
+			if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 			{
 				il::image_type_ptr image = frame->get_image( );
-				image = il::deinterlace( image );
-				image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ) );
+				if ( prop_progressive_.value< int >( ) )
+					image = il::deinterlace( image );
+				image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
 				frame->set_image( image );
 				frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
 			}
 		}
 
 	private:
+		pl::pcos::property prop_enable_;
+		pl::pcos::property prop_progressive_;
+		pl::pcos::property prop_interp_;
 		pl::pcos::property prop_width_;
 		pl::pcos::property prop_height_;
 		pl::pcos::property prop_sar_num_;
@@ -615,9 +625,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_type
 				// Wait for the requested frame to finish
 				frame = wait_for_available( get_position( ) );
   
-				// create a new job
-				// TODO: Allocate more jobs based on idle workers
-				//while ( frameno_ < get_frames( ) && frameno_ <= get_position( ) + idle * 2 )
+				// Add more jobs to the pool
 				int fillable = threads_ * 2 - pool_->jobs_pending( );
 
 				if ( frameno_ < get_frames( ) && fillable -- > 0 )

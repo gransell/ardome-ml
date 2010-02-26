@@ -2196,6 +2196,8 @@ image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, in
 	if( !new_im )
 		return im;
 
+	new_im->set_field_order( im->field_order( ) );
+
 	for ( int p = 0; p < im->plane_count( ); p ++ )
 	{
 		int src_w = im->width( p );
