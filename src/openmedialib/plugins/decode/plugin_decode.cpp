@@ -437,6 +437,97 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_type
 		pl::pcos::property prop_sar_den_;
 };
 
+class ML_PLUGIN_DECLSPEC filter_field_order : public filter_type
+{
+	public:
+		filter_field_order( )
+			: filter_type( )
+			, prop_order_( pl::pcos::key::from_string( "order" ) )
+		{
+			properties( ).append( prop_order_ = 2 );
+		}
+
+		~filter_field_order( )
+		{
+		}
+    
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return true; }
+
+		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"field_order" ); }
+
+		virtual const size_t slot_count( ) const { return 1; }
+
+	protected:
+
+		void do_fetch( frame_type_ptr &frame )
+		{
+			frame = fetch_from_slot( );
+
+			if ( prop_order_.value< int >( ) && frame && frame->has_image( ) )
+			{
+            // Fetch image
+            il::image_type_ptr image = frame->get_image( );
+
+            if ( image->field_order( ) != il::progressive && image->field_order( ) != il::field_order_flags( prop_order_.value< int >( ) ) )
+            {
+               // Do we have a previous frame and is it the one preceding this request?
+               // If not, we'll just provide the current frame as the result
+               if ( previous_ && previous_->position( ) == get_position( ) - 1 )
+               {
+                  // Image is definitely in the wrong order - guessing here :-)
+                  il::image_type_ptr merged = merge( image, 0, previous_, 1 );
+                  merged->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+                  merged->set_position( get_position( ) );
+                  frame->set_image( merged );
+               }
+               else
+               {
+                  image->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+               }
+
+               // We need to remember this frame for reuse on the next request
+               previous_ = image;
+            }
+			}
+		}
+
+      il::image_type_ptr merge( il::image_type_ptr image1, int scan1, il::image_type_ptr image2, int scan2 )
+      {
+         // Create a new image which has the same dimensions
+         // NOTE: we assume that image dimensions are consistent (should we?)
+         il::image_type_ptr result = il::allocate( image1 );
+
+         for ( int i = 0; i < result->plane_count( ); i ++ )
+         {
+            boost::uint8_t *dst_row = result->data( i );
+            boost::uint8_t *src1_row = image1->data( i ) + image1->pitch( i ) * scan1;
+            boost::uint8_t *src2_row = image2->data( i ) + image2->pitch( i ) * scan2;
+            int dst_linesize = result->linesize( i );
+            int dst_stride = result->pitch( i );
+            int src_stride = image1->pitch( i ) * 2;
+            int height = result->height( i ) / 2;
+
+            while( height -- )
+            {
+               memcpy( dst_row, src1_row, dst_linesize );
+               dst_row += dst_stride;
+               src1_row += src_stride;
+
+               memcpy( dst_row, src2_row, dst_linesize );
+               dst_row += dst_stride;
+               src2_row += src_stride;
+            }
+         }
+
+         return result;
+      }
+
+	private:
+		pl::pcos::property prop_order_;
+      il::image_type_ptr previous_;
+};
+
 class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 {
 	public:
@@ -664,6 +755,8 @@ public:
 			return filter_type_ptr( new filter_decode( ) );
 		if ( spec == L"encode" )
 			return filter_type_ptr( new filter_encode( ) );
+		if ( spec == L"field_order" )
+			return filter_type_ptr( new filter_field_order( ) );
 		if ( spec.find( L"lazy:" ) == 0 )
 			return filter_type_ptr( new filter_lazy( spec ) );
 		if ( spec == L"map_reduce" )
