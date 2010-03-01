@@ -21,3 +21,4 @@ typedef std::basic_string<XMLCh> xerces_string;
 
 
 #endif // _CORE_XERCES_TYPEDEFS_H_
+
