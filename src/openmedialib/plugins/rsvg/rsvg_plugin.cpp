@@ -26,6 +26,8 @@ extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wst
 // OML Filter plugins
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const pl::wstring & );
 
+extern void olib_rsvg_init();
+
 //
 // Plugin object
 //
@@ -53,6 +55,7 @@ public:
 
 } }
 
+
 //
 // Access methods for openpluginlib
 //
@@ -61,6 +64,8 @@ extern "C"
 {
 	ML_PLUGIN_DECLSPEC bool openplugin_init( void )
 	{
+		aml::openmedialib::olib_rsvg_init( );
+
 		return true;
 	}
 

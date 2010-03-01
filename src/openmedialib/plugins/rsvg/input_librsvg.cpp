@@ -25,7 +25,16 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace aml { namespace openmedialib { 
 
-static boost::recursive_mutex mutex;
+void olib_rsvg_init( )
+{
+	static bool rsvg_initted = false;
+	if ( !rsvg_initted )
+	{
+		rsvg_initted = true;
+		rsvg_init( );
+		atexit( rsvg_term );
+	}
+}
 
 class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 {
@@ -43,7 +52,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			, prop_render_height_( pcos::key::from_string( "render_height" ) )
 			, frame_( )
 		{
-			olib_rsvg_init( );
 			properties( ).append( prop_resource_ = resource );
 			properties( ).append( prop_fps_num_ = 1 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -55,17 +63,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			//When set to 0, the default size given in the SVG data will be used.
 			properties( ).append( prop_render_width_ = 0);
 			properties( ).append( prop_render_height_ = 0);
-		}
-
-		void olib_rsvg_init( )
-		{
-			static bool rsvg_initted = false;
-			if ( !rsvg_initted )
-			{
-				rsvg_initted = true;
-				rsvg_init( );
-				atexit( rsvg_term );
-			}
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -119,8 +116,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 			if ( prop_resource_.value< pl::wstring >( ) == L"svg:" )
 			{
-				boost::recursive_mutex::scoped_lock lock( mutex );
-
 				std::string doc = pl::to_string( prop_doc_.value< pl::wstring >( ) );
 
 				if ( doc != "" && ( prop_doc_.value< pl::wstring >( ) != loaded_ || !matches_deferred( frame_ ) ) )
@@ -151,7 +146,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			}
 			else if ( prop_resource_.value< pl::wstring >( ) != loaded_ )
 			{
-				boost::recursive_mutex::scoped_lock lock( mutex );
 				loaded_ = prop_resource_.value< pl::wstring >( );
 				pixbuf = rsvg_pixbuf_from_file( pl::to_string( loaded_ ).c_str( ), NULL );
 			}

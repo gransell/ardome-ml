@@ -1,7 +1,7 @@
 Import(['local_env'])
 import os
 
-options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale', 'boost_thread' )
+options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'gthread-2.0', 'libswscale', 'boost_thread' )
 
 if options[ 'have_librsvg-2.0' ]: 
 	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
