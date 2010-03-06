@@ -4,11 +4,27 @@
 
 #include "profile_types.hpp"
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <string>
 #include <sstream>
 #include <stdexcept>
 
 namespace olib { namespace opencorelib {
+
+template< typename T >
+struct larger_type
+{
+	typedef boost::int64_t type;
+};
+
+template< >
+struct larger_type< boost::uint64_t >
+{
+	typedef boost::uint64_t type;
+};
+
 
 /// Templated form for ints
 template< typename T >
@@ -55,11 +71,20 @@ class CORE_API profile_number : public profile_property
 	protected:
 		T deserialise( const std::string &value ) const
 		{
-			T temp;
 			std::istringstream iss;
 			iss.str( value );
+			if( value.find( 'x' ) != std::string::npos )
+			{
+				iss >> std::hex;
+			}
+
+			//Needed to parse 0x80000000 and larger into an int
+			typename larger_type<T>::type temp;
 			iss >> temp;
-			return temp;
+			
+			ARENFORCE_MSG( !iss.fail(), "Could not interpret profile value string \"%1%\"" )( value );
+
+			return static_cast<T>(temp);
 		}
 
 		T &ref_;
