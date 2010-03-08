@@ -68,7 +68,8 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 					first_ = ml::frame_type_ptr( );
 
 					ARENFORCE_MSG(store_->push( result->shallow( ) ),
-						"Pushing to store failed. A possible cause could be insufficient disk space.");
+						"Pushing to store %1% failed. A possible cause could be insufficient disk space.")
+						(prop_store_.value<pl::wstring>());
 				}
 			}
 		}
