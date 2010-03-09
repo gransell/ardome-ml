@@ -58,7 +58,6 @@ void equals_sign_test()
     BOOST_CHECK( did_throw(_CT("prop")) );
     BOOST_CHECK( did_throw(_CT("prop1=rgba|prop2")) );
     BOOST_CHECK( did_throw(_CT("prop1=rgba|=yuv420p")) );
-    BOOST_CHECK( did_throw(_CT("prop1=|prop2=yuv420p")) );
     BOOST_CHECK( did_throw(_CT("prop1=rgba=|prop2=yuv420p")) );
 }
 
@@ -68,15 +67,21 @@ void missing_key_test()
     BOOST_CHECK( did_throw(_CT("foo=rgba|=bar")) );
 }
 
-void missing_value_test()
+void empty_value_test()
 {
-    BOOST_CHECK( did_throw(_CT("foo=")) );
-    BOOST_CHECK( did_throw(_CT("foo=rgba|bar=")) );
+	//An empty value is ok, this should not throw
+    BOOST_CHECK( ! did_throw(_CT("foo=")) );
+    BOOST_CHECK( ! did_throw(_CT("bar=|foo=rgba")) );
+
+	multivalue_property_map result = utilities::parse_multivalue_property(_CT("foo=rgba|bar="));
+	BOOST_CHECK_EQUAL( result[_CT("foo")], _CT("rgba") );
+	BOOST_CHECK_EQUAL( result[_CT("bar")], _CT("") );
 }
 void test_multivalue_property_parsing()
 {
     basic_test();
     equals_sign_test();
     missing_key_test();
-    missing_value_test();
+    empty_value_test();
 }
+

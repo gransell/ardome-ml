@@ -369,9 +369,6 @@ namespace olib
                     ARENFORCE_MSG_ERR( equals_pos > 0, 
                         _CT("Zero-length key. A multivalue property string component must be of the form \"key=value\"." ), 
                         olib::error::parse_error() );
-                    ARENFORCE_MSG_ERR( equals_pos < pipe_iter->size()-1 , 
-                        _CT("Zero-length value. A multivalue property string component must be of the form \"key=value\"." ), 
-                        olib::error::parse_error() );
                    
                     t_string key = pipe_iter->substr(0, equals_pos);
                     t_string value = pipe_iter->substr(equals_pos+1);
