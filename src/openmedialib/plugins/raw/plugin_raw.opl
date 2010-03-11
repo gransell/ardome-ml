@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="raw plugin" type="input" extension='".*\.raw"' merit="0" filename='"libopenmedialib_raw.so", "libopenmedialib_raw.dylib", "openmedialib_raw.dll"'/>
+		<plugin name="raw plugin" type="output" extension='".*\.raw"' merit="0" filename='"libopenmedialib_raw.so", "libopenmedialib_raw.dylib", "openmedialib_raw.dll"'/>
+	</openmedialib>
+</openlibraries>
