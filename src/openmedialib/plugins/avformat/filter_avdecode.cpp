@@ -898,6 +898,8 @@ class avformat_encode_filter : public filter_type
 			if ( render_ )
 			{
 				pusher_->push( frame );
+				//Ensure that the position of the rendered frame matches the source frame
+				render_->seek( frame->get_position() );
 				result = render_->fetch( );
 			}
 			else
