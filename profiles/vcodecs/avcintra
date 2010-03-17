@@ -1,0 +1,4 @@
+low_delay = 1
+interlace_mode = 0
+detach_thread = 0
+fast_rd_optimization = 1

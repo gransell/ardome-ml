@@ -8,6 +8,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include "opencorelib/cl/enforce_defines.hpp"
+
 namespace fs = boost::filesystem;
 
 namespace olib { namespace opencorelib {
@@ -249,10 +251,7 @@ void profile_manager::load( const std::string &id )
 				found = true;
 			}
 		}
-		if ( !found )
-		{
-			throw std::runtime_error( "Unable to handle " + ( *i ).name );
-		}
+		ARENFORCE_MSG( found, "Failed to find a place to store progfile entry. Make sure you have enrolled this value" )( ( *i ).name );
 	}
 }
 

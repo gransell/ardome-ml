@@ -85,6 +85,11 @@ def _add_build_configuration( target, target_type, env, pre=None ):
 	if len(macros):
 		conf.build_settings()['GCC_PREPROCESSOR_DEFINITIONS'] = '(' + str(macros).strip('[]').replace(', ', ',\n') + ')'
 	
+	fmwk_path = _evaluate_paths_for_key( env, 'FRAMEWORKPATH' )
+	if len( fmwk_path ) :
+		conf.build_settings()['FRAMEWORK_SEARCH_PATHS'] = '(' + str(fmwk_path).strip('[]').replace(', ', ',\n') + ')'
+
+	
 	libs = _evaluate_paths_for_key( env, 'LIBS' )
 	fmwks = _evaluate_paths_for_key( env, 'FRAMEWORKS' )
 	if len(libs) or len(fmwks):
