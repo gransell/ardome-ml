@@ -42,6 +42,10 @@ class ML_DECLSPEC template_ : public base
 			other.convert( *this );
 		}
 
+		// No definition to make sure that we don't call this by mistake when we
+		// intended the above copy constructor.
+		template_( const template_< T, B, min_val, max_val > &other );
+
 		virtual ~template_( )
 		{ }
 
@@ -52,7 +56,7 @@ class ML_DECLSPEC template_ : public base
 		{ return sample_type( max_val ); }
 
 		audio_type_ptr clone( ) const
-		{ return audio_type_ptr( new template_< sample_type, B, min_val, max_val >( *this ) ); }
+		{ return audio_type_ptr( new template_< sample_type, B, min_val, max_val >( static_cast<const base&>(*this) ) ); }
 
 		identity id( ) const 
 		{ return id_; }
