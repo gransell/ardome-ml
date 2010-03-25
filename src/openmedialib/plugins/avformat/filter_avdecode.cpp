@@ -697,6 +697,12 @@ class avformat_video_streamer : public ml::stream_type
 		{
 			return stream_ ? stream_->bitrate( ) : 0;
 		}
+		
+		/// We dont know the gop size atm
+		virtual const int estimated_gop_size( ) const
+		{
+			return 0;
+		}
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
 		virtual const dimensions size( ) const 
@@ -819,6 +825,9 @@ class avformat_encode_filter : public filter_type
 						if ( source->get_stream( )->properties( ).get_property_with_key( key_gop_closed_ ).value< int >( ) == 1 )
 							gop_closed = 1;
 					}
+					
+					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->video_codec( ) ) )
+					   stream_types_match = false;
 	
 					if ( prop_force_.value< int >( ) )
 					{

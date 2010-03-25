@@ -8,6 +8,10 @@
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/thread_pool.hpp>
 #include <opencorelib/cl/function_job.hpp>
+#include <opencorelib/cl/profile.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/uuid_16b.hpp>
+#include <opencorelib/cl/str_util.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -114,7 +118,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( )
 		{
-			evaluate( );
+			if( !image_ ) evaluate( );
 			return image_;
 		}
 
@@ -127,13 +131,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Get the audio associated to the frame.
 		virtual audio_type_ptr get_audio( )
 		{
-			evaluate( );
+			if( !audio_ ) evaluate( );
 			return audio_;
 		}
 
 		virtual stream_type_ptr get_stream( )
 		{
-			evaluate( );
+			if( !stream_ ) evaluate( );
 			return stream_;
 		}
 
@@ -150,19 +154,29 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
+		pl::pcos::property prop_scope_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
+		cl::profile_ptr codec_to_decoder_;
+		bool initialized_;
  
 	public:
 		filter_decode( )
 			: filter_type( )
 			, prop_inner_threads_( pl::pcos::key::from_string( "inner_threads" ) )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
+			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, decoder_( )
+			, codec_to_decoder_( )
+			, initialized_( false )
 		{
 			properties( ).append( prop_inner_threads_ = 0 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
+			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
+			
+			// Load the profile that contains the mappings between codec string and codec filter name
+			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
 		}
 
 		~filter_decode( )
@@ -182,9 +196,13 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 		{
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
 			fg->property( "length" ) = 1 << 30;
+			
 			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 			if ( decode->property( "threads" ).valid( ) ) decode->property( "threads" ) = prop_inner_threads_.value< int >( );
+			if ( decode->property( "scope" ).valid( ) ) decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+			
 			decode->connect( fg );
+			
 			return decode;
 		}
 
@@ -207,15 +225,14 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 
 		bool determine_decode_use( ml::frame_type_ptr &frame )
 		{
-			bool rc = frame && frame->get_stream( );
-
-			if ( rc && frame->get_stream( )->codec( ) == "mpeg2" )
+			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
 			{
-				gop_decoder_ = ml::create_filter( L"avdecode" );
+				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 				gop_decoder_->connect( fetch_slot( 0 ) );
+				
+				return true;
 			}
-
-			return rc;
+			return false;
 		}
 
 		void do_fetch( frame_type_ptr &frame )
@@ -228,6 +245,13 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 				if ( last_frame_ == 0 )
 				{
 					frame = fetch_from_slot( );
+					
+					if( !initialized_ )
+					{
+						initialize( frame );
+						initialized_ = true;
+					}
+					
 					determine_decode_use( frame );
 				}
 
@@ -254,6 +278,17 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 				frame = last_frame_;
 			}
 		}
+		
+		void initialize( const ml::frame_type_ptr &first_frame )
+		{
+			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
+			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
+			
+			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
+			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
+			
+			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+		}
 };
 
 class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
@@ -261,17 +296,34 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 	private:
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_filter_;
+		pl::pcos::property prop_profile_;
+		pl::pcos::property prop_force_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
+		cl::profile_ptr profile_to_encoder_mappings_;
  
 	public:
 		filter_encode( )
 			: filter_type( )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
+			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
+			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, decoder_( )
+			, gop_decoder_( )
+			, last_frame_( )
+			, profile_to_encoder_mappings_( )
 		{
+			// Default to something. Will be overriden anyway as soon as we init
 			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
+			// Default to something. Should be overriden anyway.
+			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
+			properties( ).append( prop_force_ = int( 0 ) );
+			
+			// Load the profile that contains the mappings between codec string and codec filter name
+			profile_to_encoder_mappings_ = cl::profile_load( "encoder_mappings" );
+			
+			initialize_encoder_mapping( );
 		}
 
 		~filter_encode( )
@@ -289,8 +341,18 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 
 		ml::filter_type_ptr filter_create( )
 		{
-			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			return decode;
+			// Create the encoder that we have mapped from our profile
+			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
+			
+			// Set the profile property on the encoder
+			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
+				"Encode filter must have a profile property" );
+			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< pl::wstring >( );
+			
+			if( encode->properties( ).get_property_with_string( "force" ).valid( ) ) 
+				encode->properties( ).get_property_with_string( "force" ) = prop_force_.value< int >( );
+			
+			return encode;
 		}
 
  		ml::filter_type_ptr filter_obtain( )
@@ -332,15 +394,14 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 
 		bool create_pushers( ml::frame_type_ptr &frame )
 		{
-			bool rc = true;
-
-			if ( frame->get_stream( )->codec( ) != "h264" )
+			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
 			{
-				gop_decoder_ = ml::create_filter( L"avdecode" );
+				gop_decoder_ = filter_create( );
 				gop_decoder_->connect( fetch_slot( 0 ) );
+				
+				return gop_decoder_.get( ) != 0;
 			}
-
-			return rc;
+			return false;
 		}
 
 		void do_fetch( frame_type_ptr &frame )
@@ -355,7 +416,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 					frame = fetch_from_slot( );
 					create_pushers( frame );
 				}
-
+				
 				if ( gop_decoder_ )
 				{
 					gop_decoder_->seek( frameno );
@@ -375,6 +436,17 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			{
 				frame = last_frame_;
 			}
+		}
+		
+		void initialize_encoder_mapping( )
+		{
+			ARENFORCE_MSG( profile_to_encoder_mappings_, "Need mappings from profile string to name of encoder" );
+			
+			std::string prof = cl::str_util::to_string( prop_profile_.value< pl::wstring >( ).c_str( ) );
+			cl::profile::list::const_iterator it = profile_to_encoder_mappings_->find( prof );
+			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate codec" )( prof );
+			
+			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
 		}
 };
 

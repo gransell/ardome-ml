@@ -289,6 +289,11 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 			return ml::stream_type_ptr( stream );
 		}
+	
+		const std::string& video_codec( ) const
+		{
+			return video_codec_;
+		}
 
 	private:
 		AVCodecContext *context_;

@@ -1,0 +1,5 @@
+dv = avdecode
+mpeg2 = avdecode
+avc = mcdecode
+vc3 = avdecode
+

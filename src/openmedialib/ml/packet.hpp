@@ -54,6 +54,10 @@ class ML_DECLSPEC stream_type
 
 		/// Returns the bitrate of the packet
 		virtual const int bitrate( ) const = 0;
+		
+		/// Returns a estimated gop size of the file this stream is part of
+		/// A value of 0 means unknown
+		virtual const int estimated_gop_size( ) const = 0;
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
 		virtual const dimensions size( ) const { return dimensions( 0, 0 ); }
