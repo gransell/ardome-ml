@@ -15,6 +15,7 @@
 #include <openpluginlib/pl/pcos/observer.hpp>
 
 #include <vector>
+#include <algorithm>
 
 #ifdef WIN32
 #	include <windows.h>
@@ -829,7 +830,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					// Specify sample parameters
 					c->sample_rate = prop_frequency_.value< int >( );
-					c->channels = std::min( channels_per_stream, channels - i * channels_per_stream );;
+					c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
 
 					//FIXME: What is actually to be expected here?
 					c->bit_rate = prop_audio_bit_rate_.value< int >( ) * c->channels;
