@@ -1553,7 +1553,11 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			{
 				src_frames_ = input->get_frames( );
 
-				int requested = map_dest_to_source( position_ );
+				double pos_in_source = map_dest_to_source( position_ );
+				int requested = (int)pos_in_source;
+				double pos_in_source_frame = pos_in_source - requested;
+
+				//int requested = map_dest_to_source( position_ );
 				int next = requested;
 
 				if ( src_frequency_ == 0 || ( fps_num == src_fps_num_ && fps_den == src_fps_den_ ) )
@@ -1567,7 +1571,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					int samples = audio::samples_for_frame( position_, src_frequency_, fps_num, fps_den );
 
 					while ( map_.find( next ) != map_.end( ) ) 
+					{
 						next ++;
+					}
 
 					while ( next < src_frames_ && ( !reseat_->has( samples ) || map_.find( requested ) == map_.end( ) ) )
 					{
@@ -1576,8 +1582,15 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 						src_frames_ = input->get_frames( );
 						if ( frame )
 						{
+							int source_frame_sample_offset = 0;
+							if( map_.empty( ) )
+							{
+								int samples_in_source_frame = audio::samples_for_frame( position_, src_frequency_, src_fps_num_, src_fps_den_ );
+
+								source_frame_sample_offset = pos_in_source_frame * samples_in_source_frame;
+							}
+							reseat_->append( frame->get_audio( ), source_frame_sample_offset );
 							map_[ next ] = frame;
-							reseat_->append( frame->get_audio( ) );
 							next ++;
 						}
 						else
@@ -1635,11 +1648,11 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			return int( position * ( double( ( 1024 * t2 / t1 ) ) / 1024 ) );
 		}
 
-		inline int map_dest_to_source( int position ) const
+		inline double map_dest_to_source( int position ) const
 		{
-			boost::int64_t t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
-			boost::int64_t t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
-			return int( position * ( double( ( 1024 * t1 / t2 ) ) / 1024 ) );
+			double t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
+			double t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
+			return position * ( t1 / t2 );
 		}
 
 		int position_;

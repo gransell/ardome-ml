@@ -139,6 +139,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
 			, prop_ts_auto_( pcos::key::from_string( "ts_auto" ) )
 			, prop_audio_split_( pcos::key::from_string( "audio_split" ) )
+			, ts_generator_video_( 1 )
+			, ts_generator_audio_( 2, false ) //Will not write index header/footer
 			, ts_context_( 0 )
 			, ts_last_position_( -1 )
 			, ts_last_offset_( 0 )
@@ -147,6 +149,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, frame_pos_( 0 )
 			, push_count_( 0 )
 			, last_audio_( -1 )
+			, audio_packet_num_( 0 )
 			, audio_variable_( false )
 		{
 			// Show stats
@@ -437,9 +440,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Finalize encode for video
 			if ( audio_stream_.size( ) )
 			{
-				if ( audio_variable_ || audio_input_frame_size_ == audio_block_used_ / ( prop_channels_.value< int >( ) * 2 ) )
+				if( audio_block_used_ != 0 )
+				{
 					audio_queue_.push_back( audio_block_ );
+				}
+
 				while( audio_queue_.size( ) && process_audio( ) ) ;
+				process_audio( true );
 			}
 
 			// Write the trailer, if any
@@ -449,7 +456,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( ts_context_ )
 			{
 				boost::int64_t final = oc_->pb->pos;
-				ts_generator_.close( push_count_, final );
 				write_ts_index( );
 				url_close( ts_context_ );
 			}
@@ -469,7 +475,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( ts_context_ )
 			{
 				std::vector< boost::uint8_t > buffer;
-				ts_generator_.flush( buffer );
+				ts_generator_audio_.flush( buffer );
+				url_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+
+
+				ts_generator_video_.flush( buffer );
 				url_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 			}
 		}
@@ -782,13 +792,24 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			int streams = 1;
 			int channels = prop_channels_.value< int >( );
+			int channels_per_stream = channels;
+			int audio_split = prop_audio_split_.value< int >( );
+			if( audio_split > 0 )
+			{
+				channels_per_stream = audio_split;
+				streams = channels / channels_per_stream;
+				if( channels % channels_per_stream != 0 )
+					streams++;
+			}
 
+			/*
 			if ( prop_audio_split_.value< int >( ) ) // || channels > 2 )
 			{
 				prop_audio_split_ = 1;
 				streams = channels;
 				channels = 1;
 			}
+			*/
 
 			for( int i = 0; i < streams; i ++ )
 			{
@@ -807,9 +828,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					c->reordered_opaque = AV_NOPTS_VALUE;
 
 					// Specify sample parameters
-					c->bit_rate = prop_audio_bit_rate_.value< int >( );
 					c->sample_rate = prop_frequency_.value< int >( );
-					c->channels = channels;
+					c->channels = std::min( channels_per_stream, channels - i * channels_per_stream );;
+
+					//FIXME: What is actually to be expected here?
+					c->bit_rate = prop_audio_bit_rate_.value< int >( ) * c->channels;
 	
 					if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
 						c->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -950,7 +973,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
-					std::cerr << "allocating audio block: " << audio_input_frame_size_ << std::endl;
 					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
 					audio_block_->set_position( push_count_ );
 				}
@@ -1008,7 +1030,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if( oc_->pb && c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{
-					ts_generator_.enroll( c->coded_frame->pts, oc_->pb->pos );
+					ts_generator_video_.enroll( c->coded_frame->pts, oc_->pb->pos );
 					write_ts_index( );
 					pkt.flags |= PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
@@ -1114,25 +1136,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		}
 
 		// Process and output a block of audio samples (see comments in queue above)
-		bool process_audio( )
+		// if do_flush is set, we will encode a NULL packet in order to empty the encoder buffer
+		bool process_audio( bool do_flush = false )
 		{
 			bool ret = true;
 
 			audio_type_ptr audio;
-			short *data = 0;
+			const short *data = 0;
 
 			if ( audio_queue_.size( ) )
 			{
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
 				data = ( short * )( audio->pointer( ) );
-
-				if ( !video_stream_ && audio->position( ) != last_audio_ && audio->position( ) % prop_gop_size_.value< int >( ) == 0 )
-				{
-					last_audio_ = audio->position( );
-					ts_generator_.enroll( audio->position( ), oc_->pb->pos );
-					write_ts_index( );
-				}
 			}
 			else
 			{
@@ -1141,48 +1157,74 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			int stream = 0;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ret && data && iter != audio_stream_.end( ); iter ++, stream ++ )
+			static int first = true;
+			int encode_tries = 1;
+
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); (do_flush || ret && data) && iter != audio_stream_.end( ); iter ++, stream ++ )
 			{
-				AVCodecContext *c = ( *iter )->codec;
-
-				AVPacket pkt;
-				av_init_packet( &pkt );
-
-				if ( prop_audio_split_.value< int >( ) )
+				for( int ec=0; ec<encode_tries; ec++ )
 				{
-					short *dst = ( short * )audio_tmpbuf_;
-					short *src = data + stream;
-					int samples = audio->samples( );
-					int channels = audio->channels( );
-					while( samples -- )
+					AVCodecContext *c = ( *iter )->codec;
+
+					AVPacket pkt;
+					av_init_packet( &pkt );
+
+					if ( prop_audio_split_.value< int >( ) && !do_flush )
 					{
-						*dst ++ = *src;
-						src += channels;
+						int samples = audio->samples( );
+						int channels = audio->channels( );
+						int channels_to_write = c->channels;
+						int start_channel = stream * prop_audio_split_.value< int >( );
+
+						short *dst = ( short * )audio_tmpbuf_;
+						const short *src = data + start_channel;
+						while( samples -- )
+						{
+							memcpy( dst, src, sizeof(short) * channels_to_write );
+							dst += channels_to_write;
+							src += channels;
+						}
+						pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, ( short * )audio_tmpbuf_ );
 					}
-					pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, ( short * )audio_tmpbuf_ );
-				}
-				else
-				{
-					pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, data );
-				}
+					else
+					{
+						pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, data );
+					}
 
-				// Write the compressed frame in the media file
-				if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
-					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, ( *iter )->time_base );
+					// Write the compressed frame in the media file
+					if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
+						pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, ( *iter )->time_base );
 
-				pkt.flags |= PKT_FLAG_KEY;
-				pkt.stream_index = ( *iter )->index;
-				pkt.data = audio_outbuf_;
+					pkt.flags |= PKT_FLAG_KEY;
+					pkt.stream_index = ( *iter )->index;
+					pkt.data = audio_outbuf_;
 
-				if ( pkt.size )
-				{
-					ret = av_interleaved_write_frame( oc_, &pkt ) == 0;
-				}
-				else if ( data == 0 )
-				{
-					ret = false;
-				}
+					if ( pkt.size )
+					{
+						if( stream == 0)
+						{
+							if( !first || ec == encode_tries -1 )
+							{
+								if( audio_packet_num_ % 8 == 0 )
+								{
+									ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
+									write_ts_index( );
+								}
+								audio_packet_num_++;
+							}
+						}
+
+						ret = av_interleaved_write_frame( oc_, &pkt ) == 0;
+						if( !first )
+							break;
+					}
+					else if ( data == 0 )
+					{
+						ret = false;
+					}
+				}	
 			}
+			first = false;
 
 			return ret;
 		}
@@ -1298,7 +1340,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_ts_auto_;
 		pcos::property prop_audio_split_;
 
-		awi_generator_v2 ts_generator_;
+		awi_generator_v4 ts_generator_video_;
+		awi_generator_v4 ts_generator_audio_;
 		URLContext *ts_context_;
 		int ts_last_position_;
 		boost::uint64_t ts_last_offset_;
@@ -1309,6 +1352,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int frame_pos_;
 		int push_count_;
 		int last_audio_;
+		boost::uint32_t audio_packet_num_;
 		bool audio_variable_;
 };
 

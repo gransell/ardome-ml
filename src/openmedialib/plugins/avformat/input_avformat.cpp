@@ -129,6 +129,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, unreliable_container_( false )
 			, check_indexer_( true )
 			, image_type_( false )
+			, first_audio_dts_( -1.0 )
+			, aac_first_packet_after_seek_( true )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -297,10 +299,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Try to obtain the index specified
 			if ( !prop_gen_index_.value< int >( ) )
 			{
+				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
 				if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ) );
+					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
 				else
-					indexer_item_ = ml::indexer_request( resource );
+					indexer_item_ = ml::indexer_request( resource, index_entry_type );
 
 				if ( indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
@@ -496,7 +499,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					frames_ = get_position( );
 				else if ( prop_genpts_.value< int >( ) == 1 && error < 0 )
 					frames_ = get_position( );
-                
+
 				av_free_packet( &pkt_ );
 				
                 if ( error < 0 )
@@ -1183,6 +1186,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( is_seekable_ )
 			{
+				aac_first_packet_after_seek_ = true;
+
 				int position = get_position( );
 
 				if ( aml_index_ && aml_index_->usable( ) )
@@ -1214,6 +1219,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				// (see populate for identification of unreliable_container_)
 				if ( unreliable_container_ )
 				{
+					std::cerr << "unreliable container" << std::endl;
 					if ( has_video( ) )
 					{
 						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_video_stream( )->time_base ) );
@@ -1228,7 +1234,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				// Use the index to get an absolute byte position in the data when available/usable
 				if ( aml_index_ && aml_index_->usable( ) )
+				{
 					byte = aml_index_->find( position );
+				}
 
 				if ( must_reopen_ )
 					reopen( );
@@ -1435,9 +1443,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			double dts = av_q2d( get_audio_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) );
 			int64_t packet_idx = 0;
 
+			if( first_audio_dts_ < 0.0 )
+			{
+				if( dts >= 0.0 )
+				{
+					first_audio_dts_ = dts;
+					dts = 0.0;
+				}
+			}
+			else
+			{
+				dts -= first_audio_dts_;
+			}
+
 			if ( uint64_t( pkt_.dts ) != AV_NOPTS_VALUE )
 			{
-		   		if ( pkt_.duration > 0 && samples_duration_ == pkt_.duration && samples_per_frame_ > 0 )
+				if ( pkt_.duration > 0 && samples_duration_ == pkt_.duration && samples_per_frame_ > 0 )
 				{
 					packet_idx = ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) ) / pkt_.duration;
 					int64_t total = packet_idx * samples_per_packet_;
@@ -1446,6 +1467,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else
 				{
 					found = int( dts * avformat_input::fps( ) );
+
+					//Hack - the AAC decoder gives back the data for the previous frame
+					//that it was fed, so we have to subtract one from the dts here
+					if( codec_context->codec_id == CODEC_ID_AAC )
+					{
+						found = int( dts * avformat_input::fps( ) + 0.5 ) - 1;
+					}
 				}
 			}
 
@@ -1502,7 +1530,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( samples_to_packet > samples_to_frame )
 				{
 					audio_buf_used_ = size_t( samples_to_packet - samples_to_frame ) * channels * bps;
-					if ( audio_buf_used_ < audio_buf_size_ / 2 )
+					if ( audio_buf_used_ < audio_buf_size_ / 2 && codec_context->codec_id != CODEC_ID_AAC )
 					{
 						memset( audio_buf_, 0, audio_buf_used_ );
 						ignore = found < get_position( );
@@ -1573,10 +1601,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						break;
 
 					// Create an audio frame
-					if ( !ignore )
+					if ( !( ignore || codec_context->codec_id == CODEC_ID_AAC && aac_first_packet_after_seek_ ) )
 					{
 						index += store_audio( audio_buf_offset_, audio_buf_ + index, samples );
-
 						audio_buf_offset_ = audio_.back( )->position( );
 
 						if ( audio_buf_offset_ ++  >= get_position( ) )
@@ -1585,6 +1612,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					else
 					{
 						index += samples * channels * 2;
+					}
+
+					if( aac_first_packet_after_seek_ )
+					{
+						aac_first_packet_after_seek_ = false;
 					}
 				}
 
@@ -1705,7 +1737,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( result != audio_.end( ) && ( *result )->position( ) == current )
 			{
-				frame->set_audio( ( *result )->clone( ) );
+				ml::audio_type_ptr audio_clone = (*result)->clone();
+				frame->set_audio( audio_clone );
 				frame->set_duration( double( ( *result )->samples( ) ) / double( ( *result )->frequency( ) ) );
 				exact = true;
 			}
@@ -1844,6 +1877,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool unreliable_container_;
 		bool check_indexer_;
 		bool image_type_;
+
+		double first_audio_dts_;
+		bool aac_first_packet_after_seek_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )

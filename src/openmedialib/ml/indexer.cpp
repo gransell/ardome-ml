@@ -42,7 +42,7 @@ class indexer_job : public indexer_item
 typedef ML_DECLSPEC boost::shared_ptr< indexer_job > indexer_job_ptr;
 
 // Forward declaration to local factory method
-static indexer_job_ptr indexer_job_factory( const pl::wstring &url );
+static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
 
 // Possibly redundant?
 class ML_DECLSPEC indexer_type
@@ -51,7 +51,7 @@ class ML_DECLSPEC indexer_type
 		/// Obtain the item associated to the url
 		virtual ~indexer_type( ) { }
 		virtual void init( ) = 0;
-		virtual indexer_item_ptr request( const openpluginlib::wstring &url ) = 0;
+		virtual indexer_item_ptr request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type = 0 ) = 0;
 		virtual void shutdown( ) = 0;
 };
 
@@ -82,20 +82,31 @@ class indexer : public indexer_type
 		}
 
 		/// Request an index item for the specified url
-		indexer_item_ptr request( const pl::wstring &url )
+		indexer_item_ptr request( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			if ( map_.find( url ) == map_.end( ) )
+
+			//Decorate the lookup key with the type of index entry, so that we don't
+			//reuse the same index job for a different entry type
+			std::wstringstream map_key_str;
+			map_key_str << url;
+			if( v4_index_entry_type != 0)
 			{
-				indexer_job_ptr job = indexer_job_factory( url );
+				map_key_str << L":" << v4_index_entry_type;
+			}
+			pl::wstring map_key = map_key_str.str();
+
+			if ( map_.find( map_key ) == map_.end( ) )
+			{
+				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
 				if ( !job->finished( ) && ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) ) )
 				{
 					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
 					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
 				}
-				map_[ url ] = job;
+				map_[ map_key ] = job;
 			}
-			return map_[ url ];
+			return map_[ map_key ];
 		}
 
 		void shutdown( )
@@ -115,6 +126,12 @@ class indexer : public indexer_type
 		opencorelib::worker index_read_worker_;
 };
 
+template < class T >
+class aml_index_reader;
+
+template < class T >
+void aml_index_read_impl( aml_index_reader<T> *target );
+
 /// Index reading template
 template < class T > class aml_index_reader : public T
 {
@@ -127,51 +144,97 @@ template < class T > class aml_index_reader : public T
 			read( );
 		}
 
-		virtual ~aml_index_reader( )
-		{
-		}
+		virtual ~aml_index_reader( ) {}
 
-		/// Read any pending data in the index
 		void read( )
 		{
-			if ( T::finished( ) ) return;
-	
-			URLContext *ts_context;
-			boost::uint8_t temp[ 16384 ];
-	
-			if ( url_open( &ts_context, file_.c_str( ), URL_RDONLY ) < 0 )
-				return;
-	
-			url_seek( ts_context, position_, SEEK_SET );
-	
-			while ( T::valid( ) )
-			{
-				int actual = url_read( ts_context, ( unsigned char * )temp, sizeof( temp ) );
-				if ( actual <= 0 ) break;
-				position_ += actual;
-				T::parse( temp, actual );
-			}
-	
-			url_close( ts_context );
+			aml_index_read_impl< T >( this );
 		}
+
+		friend void aml_index_read_impl<T>( aml_index_reader<T> *target );
 
 	protected:
 		std::string file_;
 		boost::int64_t position_;
 };
 
+/// Index reading template
+template < > class aml_index_reader< awi_parser_v4 > : public awi_parser_v4
+{
+	public:
+		aml_index_reader( const std::string &indexname, boost::uint16_t index_entry_type )
+			: awi_parser_v4( index_entry_type )
+			, file_( indexname )
+			, position_( 0 )
+		{
+			read( );
+		}
+
+		virtual ~aml_index_reader( ) {}
+		
+		void read( )
+		{
+			aml_index_read_impl< awi_parser_v4 >( this );
+		}	
+
+		friend void aml_index_read_impl< awi_parser_v4 >( aml_index_reader<awi_parser_v4> *target );
+
+	protected:
+		std::string file_;
+		boost::int64_t position_;
+};
+
+/// Helper function for the aml_index_reader
+/// Read any pending data in the index
+template < class T >
+void aml_index_read_impl( aml_index_reader<T> *target )
+{
+	if ( target->T::finished( ) ) return;
+
+	URLContext *ts_context;
+	boost::uint8_t temp[ 16384 ];
+
+	if ( url_open( &ts_context, target->file_.c_str( ), URL_RDONLY ) < 0 )
+		return;
+
+	url_seek( ts_context, target->position_, SEEK_SET );
+
+	while ( target->T::valid( ) )
+	{
+		int actual = url_read( ts_context, ( unsigned char * )temp, sizeof( temp ) );
+		if ( actual <= 0 ) break;
+		target->position_ += actual;
+		target->T::parse( temp, actual );
+	}
+
+	url_close( ts_context );
+}
+
 // Shared pointer wrapper for index reader
 typedef ML_DECLSPEC boost::shared_ptr< awi_index > aml_index_reader_ptr;
 
 // Factory method for creating the index reader
-aml_index_reader_ptr create( const std::string& indexname )
+aml_index_reader_ptr create( const std::string& indexname, boost::uint16_t v4_index_entry_type = 0 )
 {
 	aml_index_reader_ptr result;
 
-	// Try V3 Index
-	result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v3 >( indexname ) );
-	if ( result->frames( 0 ) == 0 )
-		result = aml_index_reader_ptr( );
+	if ( v4_index_entry_type != 0 )
+	{
+		// Try V4 Index
+		result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v4 >( indexname, v4_index_entry_type ) );
+		if ( result->frames( 0 ) == 0 )
+		{
+			result = aml_index_reader_ptr( );
+		}
+	}
+
+	if ( !result )
+	{
+		// Try V3 Index
+		result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v3 >( indexname ) );
+		if ( result->frames( 0 ) == 0 )
+			result = aml_index_reader_ptr( );
+	}
 
 	if ( !result )
 	{
@@ -391,11 +454,11 @@ class generating_job_type : public indexer_job
 		frame_type_ptr last_frame_;
 };
 
-static indexer_job_ptr indexer_job_factory( const pl::wstring &url )
+static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint16_t v4_index_entry_type )
 {
 	if ( url.find( L"index:" ) != 0 )
 	{
-		aml_index_reader_ptr index = create( pl::to_string( url ) );
+		aml_index_reader_ptr index = create( pl::to_string( url ), v4_index_entry_type );
 		if ( index )
 			return indexer_job_ptr( new indexed_job_type( url, index ) );
 		else
@@ -412,9 +475,9 @@ void ML_DECLSPEC indexer_init( )
 	return indexer::instance( )->init( );
 }
 
-indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url )
+indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type )
 {
-	return indexer::instance( )->request( url );
+	return indexer::instance( )->request( url, v4_index_entry_type );
 }
 
 void ML_DECLSPEC indexer_shutdown( )
