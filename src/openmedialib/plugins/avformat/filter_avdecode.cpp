@@ -342,7 +342,9 @@ class stream_queue
 							const int height = context_->height;
 							image = convert_to_oil( frame_, fmt, width, height );
 							image->set_position( pkt->position( ) );
-							result->set_image( image );
+							//We set decoded to true, since the image is a decoded version
+							//of the stream in the frame, and we don't want to remove the stream.
+							result->set_image( image, true );
 
 							if ( frame_->interlaced_frame )
 								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
