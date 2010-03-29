@@ -409,6 +409,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		pusher_input( ) 
 			: input_type( ) 
 			, prop_length_( pcos::key::from_string( "length" ) )
+			, last_frame_( )
 		{ 
 			properties( ).append( prop_length_ = -1 );
 		}
@@ -454,6 +455,12 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		// Fetch method
 		void do_fetch( frame_type_ptr &result )
 		{
+			if( last_frame_ && last_frame_->get_position( ) == get_position( ) )
+			{
+				result = last_frame_;
+				return;
+			}
+			
 			// Obtain property values
 			acquire_values( );
 
@@ -463,11 +470,14 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 				result = *( queue_.begin( ) );
 				queue_.pop_front( );
 			}
+			
+			last_frame_ = result;
 		}
 
 	private:
 		pcos::property prop_length_;
 		std::deque< frame_type_ptr > queue_;
+		ml::frame_type_ptr last_frame_;
 };
 
 // Chroma replacer.

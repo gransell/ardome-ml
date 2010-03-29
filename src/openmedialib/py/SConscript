@@ -13,6 +13,8 @@ prefix = sys.exec_prefix
 if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008' or local_env[ 'target' ] == 'vs2008express' :
 	local_env.Append( CPPPATH = [ '%s/include' % prefix ] )
 	local_env.Append( LIBPATH = [ '%s/libs' % prefix ] )
+elif local_env['target'] == 'osx':
+	pass
 else:
 	version = sys.version_info
 	local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )

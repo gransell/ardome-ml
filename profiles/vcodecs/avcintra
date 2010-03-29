@@ -1,3 +1,4 @@
+video_codec = avc
 low_delay = 1
 detach_thread = 0
 fast_rd_optimization = 1

@@ -160,6 +160,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr codec_to_decoder_;
 		bool initialized_;
+		std::string video_codec_;
  
 	public:
 		filter_decode( )
@@ -302,6 +303,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr profile_to_encoder_mappings_;
+		std::string video_codec_;
  
 	public:
 		filter_encode( )
@@ -313,15 +315,13 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			, gop_decoder_( )
 			, last_frame_( )
 			, profile_to_encoder_mappings_( )
+			, video_codec_( )
 		{
 			// Default to something. Will be overriden anyway as soon as we init
 			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
 			// Default to something. Should be overriden anyway.
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
 			properties( ).append( prop_force_ = int( 0 ) );
-			
-			// Load the profile that contains the mappings between codec string and codec filter name
-			profile_to_encoder_mappings_ = cl::profile_load( "encoder_mappings" );
 			
 			initialize_encoder_mapping( );
 		}
@@ -426,6 +426,11 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 				{
 					ml::filter_type_ptr graph = filter_obtain( );
 					frame = fetch_from_slot( );
+					
+					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
+					if( frame->get_stream( ) && frame->get_stream( )->codec( ) != video_codec_ )
+						frame->set_stream( stream_type_ptr() );
+					   
 					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
 				}
 			
@@ -440,13 +445,26 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 		
 		void initialize_encoder_mapping( )
 		{
+			// Load the profile that contains the mappings between codec string and codec filter name
+			profile_to_encoder_mappings_ = cl::profile_load( "encoder_mappings" );
+			
+			// First figure out what encoder to use based on our profile
 			ARENFORCE_MSG( profile_to_encoder_mappings_, "Need mappings from profile string to name of encoder" );
 			
 			std::string prof = cl::str_util::to_string( prop_profile_.value< pl::wstring >( ).c_str( ) );
 			cl::profile::list::const_iterator it = profile_to_encoder_mappings_->find( prof );
-			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate codec" )( prof );
+			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate encoder" )( prof );
 			
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+			
+			// Now load the actual profile to find out what video codec string we will produce
+			cl::profile_ptr encoder_profile = cl::profile_load( prof );
+			ARENFORCE_MSG( encoder_profile, "Failed to load encode profile" )( prof );
+			
+			cl::profile::list::const_iterator vc_it = encoder_profile->find( "video_codec" );
+			ARENFORCE_MSG( vc_it != encoder_profile->end( ), "Failed to find a apropriate encoder" )( prof );
+			
+			video_codec_ = vc_it->value;
 		}
 };
 
