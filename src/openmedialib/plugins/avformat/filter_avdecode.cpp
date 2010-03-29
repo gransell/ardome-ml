@@ -453,18 +453,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 			return audio_ || ( stream_ && stream_->id( ) == ml::stream_audio );
 		}
 
-		/// Set the image associated to the frame.
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image )
-		{
-			image_ = image;
-			//Destroy the existing video stream, since it is not a correct
-			//representation of the image anymore
-			if( stream_ && stream_->id() == stream_video )
-			{
-				stream_.reset();
-			}
-		}
-
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( )
 		{
@@ -481,13 +469,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		/// Set the audio associated to the frame.
 		virtual void set_audio( audio_type_ptr audio )
 		{
-			audio_ = audio;
-			//Destroy the existing audio stream, since it is not a correct
-			//representation of the audio anymore
-			if( stream_ && stream_->id() == stream_audio )
-			{
-				stream_.reset();
-			}
 		}
 
 		/// Get the audio associated to the frame.
