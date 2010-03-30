@@ -10,9 +10,6 @@ projectTemplate = """
 	objects = {
 	
 	/* Begin PBXBuildFile section */
-		<%
-			from types import ListType
-		%>
 		%for s in project.sources():
 		%if s.format() == 'source':
 		<%
@@ -20,12 +17,7 @@ projectTemplate = """
 			if len(s.build_settings()):
 				settings_string = 'settings = {'
 				for setting_key in s.build_settings().keys():
-					setting_val = s.build_settings()[setting_key]
-					if isinstance( setting_val, ListType ) :
-						settings_string += setting_key + ' = \"' + ' '.join(setting_val) + '\";'
-					else :
-					settings_string += setting_key + ' = \"' + setting_val + '\";'
-
+					settings_string += setting_key + ' = \"' + s.build_settings()[setting_key] + '\";'
 				settings_string += '};'
 		%>
 			${s.build_file_uuid()} = {isa = PBXBuildFile; fileRef = ${s.uuid()} /* ${s.name()} */; ${settings_string} };
