@@ -609,6 +609,7 @@ static void op_iter_frames( aml_stack * );
 static void op_iter_range( aml_stack * );
 static void op_iter_popen( aml_stack * );
 static void op_iter_props( aml_stack * );
+static void op_iter_aml( aml_stack * );
 
 // Variables
 static void op_variable( aml_stack * );
@@ -690,6 +691,7 @@ class aml_stack
 			, trace_( 0 )
 			, next_op_( )
 			, next_exec_op_( 0 )
+			, ignore_( 0 )
 		{
 			paths_.push_back( fs::initial_path< olib::t_path >( ) );
 
@@ -764,6 +766,7 @@ class aml_stack
 			operations_[ L"iter_range" ] = aml_operation( op_iter_range );
 			operations_[ L"iter_popen" ] = aml_operation( op_iter_popen );
 			operations_[ L"iter_props" ] = aml_operation( op_iter_props );
+			operations_[ L"iter_aml" ] = aml_operation( op_iter_aml );
 
 			operations_[ L"variable" ] = aml_operation( op_variable );
 			operations_[ L"variable!" ] = aml_operation( op_variable_assign );
@@ -863,6 +866,7 @@ class aml_stack
 
 		void reset( )
 		{
+			state_ = 0;
 			word_count_ = 0;
 			loop_count_ = 0;
 			word_.erase( word_.begin( ), word_.end( ) );
@@ -913,8 +917,9 @@ class aml_stack
 			if ( inputs_.size( ) )
 				properties = inputs_.back( )->properties( );
 
-			if ( ( arg != L":" && arg != L";" ) && state_ == 1 )
+			if ( ( ( arg != L":" && arg != L";" ) || ignore_ ) && state_ == 1 )
 			{
+				ignore_ = !ignore_ && arg == L"$" ? ignore_ = 1 : ignore_ = 0;
 				if ( arg != L"" )
 					word_.push_back( arg );
 				else
@@ -1507,14 +1512,14 @@ class aml_stack
 				if ( !file.is_open( ) )
 					throw std::string( "Unable to find " ) + pl::to_string( filename );
 
-            	parse_file( file );
+            	parse_stream( file );
 
 				paths_.pop_back( );
 			}
 			else
 			{
 				paths_.push_back( fs::system_complete( _CT( "" ) ).parent_path( ) );
-            	parse_file( std::cin );
+            	parse_stream( std::cin );
 				paths_.pop_back( );
 			}
 		}
@@ -1524,7 +1529,7 @@ class aml_stack
 			throw std::string( "Unable to access http at this point" );
 		}
 
-		void parse_file( std::istream &file )
+		void parse_stream( std::istream &file )
 		{
 			std::string token;
 			std::vector< pl::wstring > tokens;
@@ -1609,6 +1614,7 @@ class aml_stack
 		std::vector< sequence_ptr > execution_stack_;
 		std::vector< bool > loop_cond_;
 		operation next_exec_op_;
+		int ignore_;
 };
 
 static void op_dot( aml_stack *stack )
@@ -2637,6 +2643,9 @@ static void op_iter_popen( aml_stack *stack )
 {
 	if ( -- stack->loop_count_ == 0 )
 	{
+		boost::regex pattern( " " );
+		std::string replace( "\\\\ " );
+
 		stack->state_ = 0;
 
 		ml::input_type_ptr input = stack->pop( );
@@ -2644,11 +2653,14 @@ static void op_iter_popen( aml_stack *stack )
 		for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
 		{
 			if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
-				command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
+			{
+				std::string in = pl::to_string( input->fetch_slot( i )->get_uri( ) );
+				command += pl::to_wstring( boost::regex_replace( in, pattern, replace, boost::match_default | boost::format_all ) ) + L" ";
+			}
 			else
 				command += input->fetch_slot( i )->get_uri( ) + L" ";
 		}
-	
+
 		FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
 		char temp[ 1024 ];
 	
@@ -2668,6 +2680,44 @@ static void op_iter_popen( aml_stack *stack )
 	else
 	{
 		stack->loops_.push_back( L"iter_popen" );
+	}
+}
+
+static void op_iter_aml( aml_stack *stack )
+{
+	if ( -- stack->loop_count_ == 0 )
+	{
+		stack->state_ = 0;
+
+		ml::input_type_ptr input = stack->pop( );
+		pl::wstring command;
+		for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
+		{
+			if ( command != L"" && input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+				command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
+			else
+				command += input->fetch_slot( i )->get_uri( ) + L" ";
+		}
+	
+
+		std::ostringstream stream;
+		FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
+		char temp[ 1024 ];
+	
+		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
+		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+
+		while( fgets( temp, 1024, pipe ) )
+			stream << temp;
+
+		std::istringstream file( stream.str( ) );
+		stack->parse_stream( file );
+
+		stack_pclose( pipe );
+	}
+	else
+	{
+		stack->loops_.push_back( L"iter_aml" );
 	}
 }
 
@@ -2979,6 +3029,7 @@ class input_aml_stack : public ml::input_type
 			, tos_( )
 			, resource_( resource )
 			, prop_command_( pcos::key::from_string( "command" ) )
+			, prop_parse_( pcos::key::from_string( "parse" ) )
 			, prop_commands_( pcos::key::from_string( "commands" ) )
 			, prop_result_( pcos::key::from_string( "result" ) )
 			, prop_redirect_( pcos::key::from_string( "redirect" ) )
@@ -2988,10 +3039,12 @@ class input_aml_stack : public ml::input_type
 			, prop_handled_( pcos::key::from_string( "handled" ) )
 			, prop_token_( pcos::key::from_string( "token" ) )
 			, obs_command_( new observer( const_aml_stack( this ), &input_aml_stack::push ) )
+			, obs_parse_( new observer( const_aml_stack( this ), &input_aml_stack::parse ) )
 			, obs_commands_( new observer( const_aml_stack( this ), &input_aml_stack::push_commands ) )
 			, obs_deferred_( new observer( const_aml_stack( this ), &input_aml_stack::deferred ) )
 		{
 			properties( ).append( prop_command_ = pl::wstring( L"" ) );
+			properties( ).append( prop_parse_ = pl::wstring( L"" ) );
 			properties( ).append( prop_commands_ = pl::wstring_list( ) );
 			properties( ).append( prop_result_ = pl::wstring( L"OK" ) );
 			properties( ).append( prop_redirect_ = 0 );
@@ -3000,12 +3053,14 @@ class input_aml_stack : public ml::input_type
 			properties( ).append( prop_threaded_ = int( 0 ) );
 			properties( ).append( prop_query_ = pl::wstring( L"" ) );
 			prop_command_.set_always_notify( true );
+			prop_parse_.set_always_notify( true );
 			prop_commands_.set_always_notify( true );
 			prop_query_.set_always_notify( true );
 			prop_stdout_.set_always_notify( true );
 			properties( ).append( prop_handled_ = int( 0 ) );
 			properties( ).append( prop_token_ = pl::wstring( L"" ) );
 			prop_command_.attach( obs_command_ );
+			prop_parse_.attach( obs_parse_ );
 			prop_commands_.attach( obs_commands_ );
 			prop_deferred_.attach( obs_deferred_ );
 
@@ -3044,6 +3099,33 @@ class input_aml_stack : public ml::input_type
 			try
 			{
 				stack_.push( prop_command_.value< pl::wstring >( ) );
+				prop_result_ = pl::to_wstring( "OK" );
+			}
+			catch( std::string exc )
+			{
+				stack_.reset( );
+				prop_result_ = pl::to_wstring( exc );
+			}
+
+			if ( stream_.str( ) != "" )
+			{
+				if ( prop_redirect_.value< int >( ) )
+					prop_stdout_ = stream_.str( );
+				else
+					std::cout << stream_.str( );
+
+				stream_.str( "" );
+			}
+		}
+
+		void parse( )
+		{
+			stack_.set_output( &stream_ );
+
+			try
+			{
+				std::istringstream stream( pl::to_string( prop_parse_.value< pl::wstring >( ) ) );
+				stack_.parse_stream( stream );
 				prop_result_ = pl::to_wstring( "OK" );
 			}
 			catch( std::string exc )
@@ -3150,6 +3232,7 @@ class input_aml_stack : public ml::input_type
 		ml::input_type_ptr tos_;
 		pl::wstring resource_;
 		pl::pcos::property prop_command_;
+		pl::pcos::property prop_parse_;
 		pl::pcos::property prop_commands_;
 		pl::pcos::property prop_result_;
 		pl::pcos::property prop_redirect_;
@@ -3159,6 +3242,7 @@ class input_aml_stack : public ml::input_type
 		pl::pcos::property prop_handled_;
 		pl::pcos::property prop_token_;
 		boost::shared_ptr< pcos::observer > obs_command_;
+		boost::shared_ptr< pcos::observer > obs_parse_;
 		boost::shared_ptr< pcos::observer > obs_commands_;
 		boost::shared_ptr< pcos::observer > obs_deferred_;
 };

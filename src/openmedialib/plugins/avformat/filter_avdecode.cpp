@@ -140,7 +140,7 @@ class stream_queue
 			{
 				int start = expected_;
 
-				if ( frame->get_stream( )->codec( ).find( "dv" ) != 0 )
+				if ( frame->get_stream( )->estimated_gop_size( ) != 1 )
 				{
 					if ( position + offset_ != expected_ )
 						start = frame->get_stream( )->key( );
@@ -909,6 +909,8 @@ class avformat_encode_filter : public filter_type
 			if ( render_ )
 			{
 				pusher_->push( frame );
+				//Ensure that the position of the rendered frame matches the source frame
+				render_->seek( frame->get_position() );
 				result = render_->fetch( );
 			}
 			else

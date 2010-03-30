@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="Sox plugin" type="filter" extension='"sox_.*"' merit="50" filename='"libopenmedialib_sox.so", "libopenmedialib_sox.dylib", "openmedialib_sox.dll"'/>
+	</openmedialib>
+</openlibraries>

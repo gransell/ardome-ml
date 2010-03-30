@@ -1,3 +1,4 @@
+video_codec = avc
 setting_preset = 18
 
 include vcodecs/avcintra

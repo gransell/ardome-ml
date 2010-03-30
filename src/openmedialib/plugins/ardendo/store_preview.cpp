@@ -427,6 +427,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				if ( prop_deinterlace_.value<int>() == 1 )
 				{
 					internal_pusher_->push(frame);
+					deinterlace_filter_->seek( frame->get_position( ) );
 					ARENFORCE( frame = deinterlace_filter_->fetch() );
 				}
 
@@ -498,9 +499,6 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				}
                 else if ( frame->get_audio( ) && ( audio_owner == boost::int64_t( this ) || scrub.valid() )  )
 				{
-					boost::int64_t this_val = boost::int64_t( this );
-					bool is_scrubframe = scrub.valid();
-
 					if( audio_owner !=  boost::int64_t( this ) && scrub.valid() ) 
 					{
 						grab_audio();

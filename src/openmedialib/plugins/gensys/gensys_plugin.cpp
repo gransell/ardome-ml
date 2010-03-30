@@ -411,7 +411,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			, prop_length_( pcos::key::from_string( "length" ) )
 			, last_frame_( )
 		{ 
-			properties( ).append( prop_length_ = -1 );
+			properties( ).append( prop_length_ = 1 << 30 );
 		}
 
 		virtual ~pusher_input( ) { }

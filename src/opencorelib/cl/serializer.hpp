@@ -9,7 +9,7 @@ namespace olib
     {
         /// An interface implemented by a class that can serialize an object to a byte stream.
         /** @author Mats Lindel&ouml;f */
-        class CORE_API serializer 
+        class serializer 
         {
         public:
             virtual ~serializer() {}

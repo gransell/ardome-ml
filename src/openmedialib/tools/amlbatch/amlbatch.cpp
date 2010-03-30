@@ -5,17 +5,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <deque>
 
 #ifdef WIN32
 #include <io.h>
 #endif
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/indexer.hpp>
+#include <openmedialib/ml/audio_channel_extract.hpp>
 
 #include <openpluginlib/pl/timer.hpp>
 #include <boost/thread.hpp>
@@ -428,6 +432,36 @@ int main( int argc, char *argv[ ] )
 				stats = false;
 			else if ( arg == L"--interactive" )
 				interactive = true;
+			else if ( arg == L"--log-level" )
+			{
+				if ( index < argc - 1 )
+				{
+					index++;
+					std::istringstream level_str( (std::string( argv[index] ) ) );
+					int log_level;
+					level_str >> log_level;
+					if ( level_str.fail() )
+					{
+						std::cerr << "--log-level must be followed by a number" << std::endl;
+						return -1;
+					}
+
+					if ( log_level >= 0 && log_level <= 9 )
+					{
+						cl::the_log_handler::instance().set_global_log_level( (cl::log_level::severity)(log_level + (int)cl::log_level::info) );
+					}
+					else
+					{
+						std::cerr << "The log level must be a number between 0 (info) and 9 (debug9)" << std::endl;
+						return -1;
+					}
+				}
+				else
+				{
+					std::cerr << "--log-level must be followed by a number" << std::endl;
+					return -1;
+				}
+			}
 			else if ( arg == L"--" )
 				break;
 			else

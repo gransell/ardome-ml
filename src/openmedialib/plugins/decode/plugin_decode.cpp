@@ -14,12 +14,16 @@
 #include <opencorelib/cl/str_util.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 #include <string>
-#include <sstream>
+#include <set>
+
+#define LOKI_CLASS_LEVEL_THREADING
+#include <loki/Singleton.h>
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
@@ -36,14 +40,54 @@ class filter_pool
 		virtual void filter_release( ml::filter_type_ptr ) = 0;
 };
 
+namespace {
+	
+class shared_filter_pool
+{
+public:
+	void filter_release( ml::filter_type_ptr filter, boost::int64_t pool_token )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		std::set< boost::int64_t >::iterator it = pools_.find( pool_token );
+		if( it != pools_.end( ) )
+		{
+			filter_pool *pool = reinterpret_cast< filter_pool * >(*it);
+			pool->filter_release( filter );
+		}
+	}
+	
+	void add_pool( filter_pool *pool )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		std::cout << "Adding pool " << pool << std::endl;
+		pools_.insert( boost::int64_t( pool ) );
+	}
+	
+	void remove_pool( filter_pool * pool )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		std::cout << "Removing pool " << pool << std::endl;
+		pools_.erase( boost::int64_t( pool ) );
+	}
+		
+private:
+	std::set< boost::int64_t > pools_;
+	boost::recursive_mutex mtx_;
+		   
+};
+	
+typedef Loki::SingletonHolder< shared_filter_pool > the_shared_filter_pool;
+
+}
+
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, filter_pool *pool, ml::filter_type_ptr filter, bool pushed = false )
+		frame_lazy( const frame_type_ptr &other, boost::int64_t pool_token, ml::filter_type_ptr filter, bool pushed = false )
 			: ml::frame_type( *other )
 			, parent_( other )
-			, pool_( pool )
+			, pool_( pool_token )
 			, filter_( filter )
 			, pushed_( pushed )
 		{
@@ -52,8 +96,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Destructor
 		virtual ~frame_lazy( )
 		{
-			if ( filter_ )
-				pool_->filter_release( filter_ );
+			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 		}
 
 		void evaluate( )
@@ -89,7 +132,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				fps_den_ = other->get_fps_den( );
 				exceptions_ = other->exceptions( );
 
-				pool_->filter_release( filter_ );
+				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 				filter_ = ml::filter_type_ptr( );
 			}
 		}
@@ -110,8 +153,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image )
 		{
 			image_ = image;
-			if ( filter_ )
-				pool_->filter_release( filter_ );
+			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 			filter_ = ml::filter_type_ptr( );
 		}
 
@@ -143,12 +185,12 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	private:
 		ml::frame_type_ptr parent_;
-		filter_pool *pool_;
+		boost::int64_t pool_;
 		ml::filter_type_ptr filter_;
 		bool pushed_;
 };
 
-class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
+class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
 {
 	private:
 		boost::recursive_mutex mutex_;
@@ -178,10 +220,13 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 			
 			// Load the profile that contains the mappings between codec string and codec filter name
 			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_decode( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -242,11 +287,15 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 			if ( last_frame_ == 0 || last_frame_->get_position( ) != get_position( ) )
 			{
 				int frameno = get_position( );
+				
+				frame = fetch_from_slot( );
+				
+				// If there is nothing to decode just return frame
+				if( !frame->get_stream( ) )
+					return;
 			
 				if ( last_frame_ == 0 )
 				{
-					frame = fetch_from_slot( );
-					
 					if( !initialized_ )
 					{
 						initialize( frame );
@@ -268,7 +317,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 					graph->fetch_slot( 0 )->push( frame );
 					graph->seek( get_position( ) );
 					frame = graph->fetch( );
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, true ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph, true ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -324,10 +373,13 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			properties( ).append( prop_force_ = int( 0 ) );
 			
 			initialize_encoder_mapping( );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_encode( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -431,7 +483,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 					if( frame->get_stream( ) && frame->get_stream( )->codec( ) != video_codec_ )
 						frame->set_stream( stream_type_ptr() );
 					   
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -628,10 +680,13 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		{
 			filter_ = filter_create( );
 			properties_ = filter_->properties( );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_lazy( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -678,7 +733,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			if ( filter_ )
 			{
 				ml::filter_type_ptr filter = filter_obtain( );
-				frame = ml::frame_type_ptr( new frame_lazy( frame, this, filter ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), filter ) );
 			}
 		}
 

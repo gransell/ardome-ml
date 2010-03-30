@@ -204,22 +204,22 @@ ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr &audio )
 }
 
 // Convenience function to mix two audio objects together
-ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr &b )
+ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr &b, const audio_type_ptr &c )
 {
 	audio_type_ptr result;
 
 	if ( a )
 	{
 		if ( a->id( ) == pcm8_id )
-			result = mixer< pcm8 >( a, b );
+			result = mixer< pcm8 >( a, b, c );
 		else if ( a->id( ) == pcm16_id )
-			result = mixer< pcm16 >( a, b );
+			result = mixer< pcm16 >( a, b, c );
 		else if ( a->id( ) == pcm24_id )
-			result = mixer< pcm24 >( a, b );
+			result = mixer< pcm24 >( a, b, c );
 		else if ( a->id( ) == pcm32_id )
-			result = mixer< pcm32 >( a, b );
+			result = mixer< pcm32 >( a, b, c );
 		else if ( a->id( ) == float_id )
-			result = mixer< floats >( a, b );
+			result = mixer< floats >( a, b, c );
 	}
 
 	return result;
@@ -248,29 +248,29 @@ ML_DECLSPEC audio_type_ptr volume( const audio_type_ptr &a, float start, float e
 }
 
 // Convenience functions to mix a channel without changing the audio sample type in the first object
-ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels, double &max_level, int mute )
+ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels, double &max_level, int mute, const audio_type_ptr &c )
 {
 	audio_type_ptr result = a;
 
 	if ( b )
 	{
 		if ( ( a && a->id( ) == pcm8_id ) || b->id( ) == pcm8_id )
-			result = channel_mixer< pcm8 >( a, b, levels, max_level, mute );
+			result = channel_mixer< pcm8 >( a, b, levels, max_level, mute, c );
 		else if ( ( a && a->id( ) == pcm16_id ) || b->id( ) == pcm16_id )
-			result = channel_mixer< pcm16 >( a, b, levels, max_level, mute );
+			result = channel_mixer< pcm16 >( a, b, levels, max_level, mute, c );
 		else if ( ( a && a->id( ) == pcm24_id ) || b->id( ) == pcm24_id )
-			result = channel_mixer< pcm24 >( a, b, levels, max_level, mute );
-		else if ( ( a && a->id( ) == pcm32_id ) || b->id( ) == pcm32_id )
-			result = channel_mixer< pcm32 >( a, b, levels, max_level, mute );
+			result = channel_mixer< pcm24 >( a, b, levels, max_level, mute, c );
+		else if ( ( a && a->id( ) == pcm32_id ) || b->id( ) == pcm32_id, c )
+			result = channel_mixer< pcm32 >( a, b, levels, max_level, mute, c );
 		else if ( ( a && a->id( ) == float_id ) || b->id( ) == float_id )
-			result = channel_mixer< floats >( a, b, levels, max_level, mute );
+			result = channel_mixer< floats >( a, b, levels, max_level, mute, c );
 	}
 
 	return result;
 }
 
 // Provides a quick method to mix b with a specific channel of a
-ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, int channel )
+ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, int channel, const audio_type_ptr &c )
 {
 	audio_type_ptr result = a;
 
@@ -285,21 +285,21 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 			else
 				levels.push_back( 0.0 );
 		}
-		result = channel_mixer( a, b, levels, max_level, 0 );
+		result = channel_mixer( a, b, levels, max_level, 0, c );
 	}
 
 	return result;
 }
 
-ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels )
+ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels, const audio_type_ptr &c )
 {
 	double max_level = 0.0;
-	return channel_mixer( a, b, levels, max_level, 0 );
+	return channel_mixer( a, b, levels, max_level, 0, c );
 }
 
-ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels, double &max_level )
+ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &levels, double &max_level, const audio_type_ptr &c )
 {
-	return channel_mixer( a, b, levels, max_level, 0 );
+	return channel_mixer( a, b, levels, max_level, 0, c );
 }
 
 // Factory method for creating an audio reseat instance

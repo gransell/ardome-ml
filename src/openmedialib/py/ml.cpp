@@ -252,6 +252,11 @@ audio_type_ptr audio_allocate1( const audio_type_ptr &audio, int frequency, int 
 	return audio::allocate( audio, frequency, channels, samples );
 }
 
+int audio_samples_for_frame( int frame, int frequency, int fps_num, int fps_den )
+{
+	return ml::audio::samples_for_frame( frame, frequency, fps_num, fps_den );
+}
+
 void py_plugin( )
 {
 	py::def( "create_input", &detail::create_input0 );
@@ -267,7 +272,7 @@ void py_plugin( )
 	py::def( "audio_pitch", &ml::audio::pitch );
 	py::def( "audio_reverse", &ml::audio::reverse );
 	py::def( "audio_volume", &ml::audio::volume );
-	py::def( "audio_samples_for_frame", &ml::audio::samples_for_frame );
+	py::def( "audio_samples_for_frame", &detail::audio_samples_for_frame );
 	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
 	py::def( "create_audio_reseat", &ml::audio::create_reseat );
 	py::def( "audio_mix", &ml::audio::mixer );
