@@ -22,6 +22,7 @@ defines = [('CORE_API', ''), ]
 if local_env['PLATFORM'] == 'darwin' or local_env['PLATFORM'] == 'posix' :
 	defines.extend([('OLIB_USE_UTF8', '1'), ('TCHAR', 'char'), ])
 elif local_env['PLATFORM'] == 'win32' :
+	local_env.Append( CCFLAGS = '/Zm150' )
 	defines.extend([('OLIB_USE_UTF16', '1'), ('TCHAR', 'wchar_t'), ('OLIB_ON_WINDOWS', '1') ])
 
 generate_files = True

@@ -79,7 +79,9 @@ class ML_DECLSPEC frame_type
 		virtual bool has_audio( );
 
 		/// Set the image associated to the frame.
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image );
+		/// decoded should only be set to true if the image
+		/// object is a decoded representation of the stream in the frame
+		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded = false );
 
 		/// Set the packet associated to the frame.
 		virtual void set_stream( olib::openmedialib::ml::stream_type_ptr );
@@ -97,7 +99,9 @@ class ML_DECLSPEC frame_type
 		virtual olib::openimagelib::il::image_type_ptr get_alpha( );
 
 		/// Set the audio associated to the frame.
-		virtual void set_audio( audio_type_ptr audio );
+		/// decoded should only be set to true if the audio
+		/// object is a decoded representation of the stream in the frame
+		virtual void set_audio( audio_type_ptr audio, bool decoded = false );
 
 		/// Get the audio associated to the frame.
 		virtual audio_type_ptr get_audio( );

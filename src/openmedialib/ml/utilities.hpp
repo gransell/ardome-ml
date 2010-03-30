@@ -87,7 +87,7 @@ namespace audio
 	
 		public:
 			virtual ~reseat( ) { }
-			virtual bool append( audio_type_ptr ) = 0;
+			virtual bool append( audio_type_ptr, boost::uint32_t sample_offset = 0 ) = 0;
 			virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
 			virtual void clear( ) = 0;
 			virtual bool has( int ) = 0;

@@ -2,6 +2,10 @@
 #include "precompiled_headers.hpp"
 #include "profile.hpp"
 #include "profile_properties.hpp"
+
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -164,10 +168,14 @@ profile_ptr profile_load( const std::string &profile )
 		std::ifstream stream( profile.c_str( ), std::ifstream::in );
 		result->parse( stream );
 	}
-	else
+	else if ( fs::exists( base_directory + profile ) )
 	{
 		std::ifstream stream( ( base_directory + profile ).c_str( ), std::ifstream::in );
 		result->parse( stream );
+	}
+	else
+	{
+		ARENFORCE_MSG( false, "Could not find the profile %1% (also tried %2%)" )( profile )( base_directory + profile );
 	}
 	return result;
 }

@@ -88,7 +88,16 @@ void frame_type::set_stream( stream_type_ptr stream )
 
 stream_type_ptr frame_type::get_stream( ) { return stream_; }
 
-void frame_type::set_image( il::image_type_ptr image ) { image_ = image; }
+void frame_type::set_image( il::image_type_ptr image, bool decoded )
+{
+	image_ = image;
+	//Destroy the existing video stream, since it is not a correct
+	//representation of the image anymore
+	if( !decoded && image && stream_ && stream_->id() == stream_video )
+	{
+		stream_.reset();
+	}
+}
 
 il::image_type_ptr frame_type::get_image( ) 
 { 
@@ -97,7 +106,18 @@ il::image_type_ptr frame_type::get_image( )
 
 void frame_type::set_alpha( il::image_type_ptr image ) { alpha_ = image; }
 il::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
-void frame_type::set_audio( audio_type_ptr audio ) { audio_ = audio; }
+
+void frame_type::set_audio( audio_type_ptr audio, bool decoded )
+{
+	audio_ = audio;
+	//Destroy the existing audio stream, since it is not a correct
+	//representation of the audio anymore
+	if( !decoded && audio && stream_ && stream_->id() == stream_audio )
+	{
+		stream_.reset();
+	}
+}
+
 audio_type_ptr frame_type::get_audio( ) { return audio_; }
 void frame_type::set_pts( double pts ) { pts_ = pts; }
 double frame_type::get_pts( ) const { return pts_; }

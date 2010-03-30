@@ -96,6 +96,33 @@ struct awi_footer_v3
 	char ver[ 1 ];
 };
 
+struct awi_header_v4
+{
+	boost::uint16_t type;
+	char id[ 3 ];
+	char ver[ 1 ];
+	boost::int32_t created;
+	char reserved[ 10 ]; //Pad out to match the item size
+};
+
+struct awi_item_v4
+{
+	boost::uint16_t type;
+	boost::int16_t frames;
+	boost::int32_t frame;
+	boost::int64_t offset;
+	boost::int32_t length; 
+};
+
+struct awi_footer_v4
+{
+	boost::uint16_t type;
+	boost::int32_t closed;
+	char id[ 3 ];
+	char ver[ 1 ];
+	char reserved[ 10 ]; //Pad out to match the item size
+};
+
 /// Parsing state enumeration
 enum awi_state
 {
@@ -326,9 +353,84 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 
 	private:
 		std::map< boost::int32_t, awi_item_v3 >::iterator current_;
+		std::map< boost::int32_t, awi_item_v3 >::iterator current_audio_;
 		size_t flushed_;
 		boost::int32_t position_;
 		boost::int64_t offset_;
+};
+
+class ML_DECLSPEC awi_index_v4 : public awi_index
+{
+	public:
+		awi_index_v4( );
+		virtual ~awi_index_v4( );
+		void set( const awi_header_v4 &value );
+		void set( const awi_item_v4 &value );
+		void set( const awi_footer_v4 &value );
+		virtual bool finished( );
+		virtual boost::int64_t find( int position );
+		virtual int frames( int current );
+		virtual boost::int64_t bytes( );
+		virtual int calculate( boost::int64_t size );
+		virtual bool usable( );
+		virtual void set_usable( bool value );
+		virtual int key_frame_of( int position );
+		virtual int key_frame_from( boost::int64_t offset );
+		virtual int total_frames( ) const;
+
+	protected:
+		mutable boost::recursive_mutex mutex_;
+		int position_;
+		bool eof_;
+		int frames_;
+		bool usable_;
+
+		awi_header_v4 header_;
+		std::map< boost::int32_t, awi_item_v4 > items_;
+		std::map< boost::int64_t, awi_item_v4 > offsets_;
+		awi_footer_v4 footer_;
+};
+
+class ML_DECLSPEC awi_parser_v4 : public awi_index_v4
+{
+	public:
+		awi_parser_v4( boost::uint16_t entry_type_to_read );
+		virtual ~awi_parser_v4( );
+		bool parse( const boost::uint8_t *data, const size_t length );
+
+	private:
+		void append( const boost::uint8_t *data, const size_t length );
+		bool entry_is_type( boost::uint16_t type );
+		bool parse_header( );
+		bool parse_item( );
+		bool parse_footer( );
+		bool read( char *data, size_t length );
+		bool read( boost::int16_t &value );
+		bool read( boost::uint16_t &value );
+		bool read( boost::int32_t &value );
+		bool read( boost::int64_t &value );
+		bool peek( boost::uint16_t &value );
+		void skip( boost::uint16_t bytes );
+
+		std::vector< boost::uint8_t > buffer_;
+		boost::uint16_t entry_type_to_read_;
+};
+
+class ML_DECLSPEC awi_generator_v4 : public awi_index_v4
+{
+	public:
+		awi_generator_v4( boost::uint16_t type_to_write, bool complete = true );
+		bool enroll( boost::int32_t position, boost::int64_t offset );
+		bool close( boost::int32_t position, boost::int64_t offset );
+		bool flush( std::vector< boost::uint8_t > &buffer );
+
+	private:
+		std::map< boost::int32_t, awi_item_v4 >::iterator current_;
+		size_t flushed_;
+		boost::int32_t position_;
+		boost::int64_t offset_;
+		boost::uint16_t type_to_write_;
+		bool complete_;
 };
 
 } } }

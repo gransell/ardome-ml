@@ -8,6 +8,8 @@
 #define AML_AUDIO_RESEAT_H_
 
 #include <openmedialib/ml/types.hpp>
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 #include <string.h>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
@@ -26,13 +28,19 @@ class reseat_impl : public reseat
 		{ 
 		}
 
-		virtual bool append( audio_type_ptr audio )
+		virtual bool append( audio_type_ptr audio, boost::uint32_t sample_offset = 0 )
 		{
 			// TODO: ensure that all audio packets are consistent and reject if not
 			if ( audio )
 			{
+				ARENFORCE_MSG( !( sample_offset > 0 && queue.size() > 0 ), "Cannot push partial audio object into an audio_reseat if the queue is non-empty" )( sample_offset );
+
 				queue.push_back( audio );
-				samples += audio->samples( );
+				if( sample_offset > 0 )
+				{
+					offset = sample_offset;
+				}
+				samples += ( audio->samples( ) - sample_offset ) ;
 			}
 
 			return true;
