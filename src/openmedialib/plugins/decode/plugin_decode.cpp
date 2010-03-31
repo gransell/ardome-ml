@@ -59,14 +59,12 @@ public:
 	void add_pool( filter_pool *pool )
 	{
 		boost::recursive_mutex::scoped_lock lck( mtx_ );
-		std::cout << "Adding pool " << pool << std::endl;
 		pools_.insert( boost::int64_t( pool ) );
 	}
 	
 	void remove_pool( filter_pool * pool )
 	{
 		boost::recursive_mutex::scoped_lock lck( mtx_ );
-		std::cout << "Removing pool " << pool << std::endl;
 		pools_.erase( boost::int64_t( pool ) );
 	}
 		
@@ -131,7 +129,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				fps_num_ = other->get_fps_num( );
 				fps_den_ = other->get_fps_den( );
 				exceptions_ = other->exceptions( );
-
+				
 				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 				filter_ = ml::filter_type_ptr( );
 			}
@@ -197,6 +195,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_scope_;
+		pl::pcos::property prop_source_uri_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
@@ -210,6 +209,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, prop_inner_threads_( pl::pcos::key::from_string( "inner_threads" ) )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
+			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
 			, decoder_( )
 			, codec_to_decoder_( )
 			, initialized_( false )
@@ -217,6 +217,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			properties( ).append( prop_inner_threads_ = 0 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
 			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
+			properties( ).append( prop_source_uri_ = pl::wstring( L"" ) );
 			
 			// Load the profile that contains the mappings between codec string and codec filter name
 			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
@@ -244,8 +245,12 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			fg->property( "length" ) = 1 << 30;
 			
 			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			if ( decode->property( "threads" ).valid( ) ) decode->property( "threads" ) = prop_inner_threads_.value< int >( );
-			if ( decode->property( "scope" ).valid( ) ) decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+			if ( decode->property( "threads" ).valid( ) ) 
+				decode->property( "threads" ) = prop_inner_threads_.value< int >( );
+			if ( decode->property( "scope" ).valid( ) ) 
+				decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+			if ( decode->property( "source_uri" ).valid( ) ) 
+				decode->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
 			
 			decode->connect( fg );
 			

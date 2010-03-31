@@ -67,9 +67,11 @@ static bool is_imx( const std::string &codec )
 class stream_queue
 {
 	public:
-		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope )
+		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope, const std::wstring& source_uri )
 			: input_( input )
 			, gop_open_( gop_open )
+			, scope_( scope )
+			, scope_uri_key_( source_uri )
 			, keys_( 0 )
 			, context_( 0 )
 			, codec_( 0 )
@@ -94,7 +96,7 @@ class stream_queue
 			ml::frame_type_ptr result;
 			
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-			lru_cache_type::key_type my_key( position, input_->get_uri() );
+			lru_cache_type::key_type my_key = lru_key_for_position( position );
 						
 			result = lru_cache->frame_for_position( my_key );
 			
@@ -125,7 +127,7 @@ class stream_queue
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-			lru_cache_type::key_type my_key( position, input_->get_uri() );
+			lru_cache_type::key_type my_key = lru_key_for_position( position );
 						
 			il::image_type_ptr img = lru_cache->image_for_position( my_key );
 			
@@ -187,10 +189,11 @@ class stream_queue
 							image->set_position( input_->get_frames( ) - 1 );
 							if ( frame_->interlaced_frame )
 								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
-								
-							lru_cache->insert_image_for_position( lru_cache_type::key_type( image->position(), input_->get_uri() ), image );
+							
+							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 						}
 						expected_ ++;
+
 						return image;
 					}
 				}
@@ -203,7 +206,7 @@ class stream_queue
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-			lru_cache_type::key_type my_key( position, input_->get_uri() );
+			lru_cache_type::key_type my_key = lru_key_for_position( position );
 			
 			audio_type_ptr aud = lru_cache->audio_for_position( my_key );
 			
@@ -357,7 +360,7 @@ class stream_queue
 
 							image->set_position( result->get_position( ) - offset_ );
 							lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-							lru_cache->insert_image_for_position( lru_cache_type::key_type( image->position( ), input_->get_uri( ) ), image );
+							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 
 							if ( result->get_position( ) >= position + offset_ )
 								found = true;
@@ -397,12 +400,22 @@ class stream_queue
 
 			return !found;
 		}
+	
+	lru_cache_type::key_type lru_key_for_position( boost::int32_t pos )
+	{
+		lru_cache_type::key_type my_key( pos, input_->get_uri() );
+		if( !scope_uri_key_.empty( ) )
+			my_key.second = scope_uri_key_;
+		
+		return my_key;
+	}
 
 	private:
 		boost::recursive_mutex mutex_;
 		ml::input_type_ptr input_;
 		int gop_open_;
 		std::wstring scope_;
+		std::wstring scope_uri_key_;
 
 		int keys_;
 		AVCodecContext *context_;
@@ -501,11 +514,13 @@ class avformat_decode_filter : public filter_type
 			: ml::filter_type( )
 			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
+			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
 			, initialised_( false )
 			, queue_( )
 		{
 			properties( ).append( prop_gop_open_ = 1 );
 			properties( ).append( prop_scope_ = pl::wstring(L"default_scope") );
+			properties( ).append( prop_source_uri_ = pl::wstring(L"") );
 		}
 
 		virtual ~avformat_decode_filter( )
@@ -536,7 +551,14 @@ class avformat_decode_filter : public filter_type
 
 				if ( result && result->get_stream( ) )
 				{
-					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value<pl::wstring>() ) );
+					// If the source_uri has not been set for this decode filter then try to use the uri for the first input
+					pl::wstring uri = fetch_slot( 0 )->get_uri( );
+					if( !prop_source_uri_.value< pl::wstring >( ).empty( ) )
+					{
+						uri = prop_source_uri_.value< pl::wstring >( );
+					}
+					
+					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< pl::wstring >( ), uri ) );
 					initialised_ = true;
 				}
 			}
@@ -561,6 +583,7 @@ class avformat_decode_filter : public filter_type
 	private:
 		pl::pcos::property prop_gop_open_;
 		pl::pcos::property prop_scope_;
+		pl::pcos::property prop_source_uri_;
 		bool initialised_;
 		stream_queue_ptr queue_;
 };
