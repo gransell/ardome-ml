@@ -11,6 +11,9 @@
 #include <sstream>
 
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
+
+#include "opencorelib/cl/enforce_defines.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -91,6 +94,26 @@ class profile_impl : public profile
 
 		virtual std::vector< profile_entry >::const_iterator end( ) const
 		{
+			return entries_.end( );
+		}
+
+		virtual list::iterator find( const std::string& key )
+		{
+			for( list::iterator it = entries_.begin( ); it != entries_.end( ); ++it )
+			{
+				if( it->name == key ) return it;
+			}
+
+			return entries_.end( );
+		}
+
+		virtual list::const_iterator find( const std::string& key ) const
+		{
+			for( list::const_iterator it = entries_.begin( ); it != entries_.end( ); ++it )
+			{
+				if( it->name == key ) return it;
+			}
+			
 			return entries_.end( );
 		}
 
@@ -257,10 +280,7 @@ void profile_manager::load( const std::string &id )
 				found = true;
 			}
 		}
-		if ( !found )
-		{
-			throw std::runtime_error( "Unable to handle " + ( *i ).name );
-		}
+		ARENFORCE_MSG( found, "Failed to find a place to store progfile entry. Make sure you have enrolled this value" )( ( *i ).name );
 	}
 }
 

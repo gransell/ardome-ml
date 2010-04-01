@@ -1,0 +1,4 @@
+video_codec = avc
+setting_preset = 19
+
+include vcodecs/avcintra

@@ -8,14 +8,22 @@
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/thread_pool.hpp>
 #include <opencorelib/cl/function_job.hpp>
+#include <opencorelib/cl/profile.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/uuid_16b.hpp>
+#include <opencorelib/cl/str_util.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <cstdlib>
 #include <vector>
 #include <string>
-#include <sstream>
+#include <set>
+
+#define LOKI_CLASS_LEVEL_THREADING
+#include <loki/Singleton.h>
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
@@ -32,14 +40,52 @@ class filter_pool
 		virtual void filter_release( ml::filter_type_ptr ) = 0;
 };
 
+namespace {
+	
+class shared_filter_pool
+{
+public:
+	void filter_release( ml::filter_type_ptr filter, boost::int64_t pool_token )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		std::set< boost::int64_t >::iterator it = pools_.find( pool_token );
+		if( it != pools_.end( ) )
+		{
+			filter_pool *pool = reinterpret_cast< filter_pool * >(*it);
+			pool->filter_release( filter );
+		}
+	}
+	
+	void add_pool( filter_pool *pool )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		pools_.insert( boost::int64_t( pool ) );
+	}
+	
+	void remove_pool( filter_pool * pool )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		pools_.erase( boost::int64_t( pool ) );
+	}
+		
+private:
+	std::set< boost::int64_t > pools_;
+	boost::recursive_mutex mtx_;
+		   
+};
+	
+typedef Loki::SingletonHolder< shared_filter_pool > the_shared_filter_pool;
+
+}
+
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, filter_pool *pool, ml::filter_type_ptr filter, bool pushed = false )
+		frame_lazy( const frame_type_ptr &other, boost::int64_t pool_token, ml::filter_type_ptr filter, bool pushed = false )
 			: ml::frame_type( *other )
 			, parent_( other )
-			, pool_( pool )
+			, pool_( pool_token )
 			, filter_( filter )
 			, pushed_( pushed )
 		{
@@ -48,8 +94,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Destructor
 		virtual ~frame_lazy( )
 		{
-			if ( filter_ )
-				pool_->filter_release( filter_ );
+			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 		}
 
 		void evaluate( )
@@ -84,8 +129,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				fps_num_ = other->get_fps_num( );
 				fps_den_ = other->get_fps_den( );
 				exceptions_ = other->exceptions( );
-
-				pool_->filter_release( filter_ );
+				
+				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 				filter_ = ml::filter_type_ptr( );
 			}
 		}
@@ -106,15 +151,14 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image )
 		{
 			image_ = image;
-			if ( filter_ )
-				pool_->filter_release( filter_ );
+			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 			filter_ = ml::filter_type_ptr( );
 		}
 
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( )
 		{
-			evaluate( );
+			if( !image_ ) evaluate( );
 			return image_;
 		}
 
@@ -127,46 +171,63 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Get the audio associated to the frame.
 		virtual audio_type_ptr get_audio( )
 		{
-			evaluate( );
+			if( !audio_ ) evaluate( );
 			return audio_;
 		}
 
 		virtual stream_type_ptr get_stream( )
 		{
-			evaluate( );
+			if( !stream_ ) evaluate( );
 			return stream_;
 		}
 
 	private:
 		ml::frame_type_ptr parent_;
-		filter_pool *pool_;
+		boost::int64_t pool_;
 		ml::filter_type_ptr filter_;
 		bool pushed_;
 };
 
-class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
+class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
 {
 	private:
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
+		pl::pcos::property prop_scope_;
+		pl::pcos::property prop_source_uri_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
+		cl::profile_ptr codec_to_decoder_;
+		bool initialized_;
+		std::string video_codec_;
  
 	public:
 		filter_decode( )
 			: filter_type( )
 			, prop_inner_threads_( pl::pcos::key::from_string( "inner_threads" ) )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
+			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
+			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
 			, decoder_( )
+			, codec_to_decoder_( )
+			, initialized_( false )
 		{
 			properties( ).append( prop_inner_threads_ = 0 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
+			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
+			properties( ).append( prop_source_uri_ = pl::wstring( L"" ) );
+			
+			// Load the profile that contains the mappings between codec string and codec filter name
+			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_decode( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -182,9 +243,17 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 		{
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
 			fg->property( "length" ) = 1 << 30;
+			
 			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			if ( decode->property( "threads" ).valid( ) ) decode->property( "threads" ) = prop_inner_threads_.value< int >( );
+			if ( decode->property( "threads" ).valid( ) ) 
+				decode->property( "threads" ) = prop_inner_threads_.value< int >( );
+			if ( decode->property( "scope" ).valid( ) ) 
+				decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+			if ( decode->property( "source_uri" ).valid( ) ) 
+				decode->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
+			
 			decode->connect( fg );
+			
 			return decode;
 		}
 
@@ -207,15 +276,14 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 
 		bool determine_decode_use( ml::frame_type_ptr &frame )
 		{
-			bool rc = frame && frame->get_stream( );
-
-			if ( rc && frame->get_stream( )->codec( ) == "mpeg2" )
+			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
 			{
-				gop_decoder_ = ml::create_filter( L"avdecode" );
+				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 				gop_decoder_->connect( fetch_slot( 0 ) );
+				
+				return true;
 			}
-
-			return rc;
+			return false;
 		}
 
 		void do_fetch( frame_type_ptr &frame )
@@ -224,10 +292,21 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 			if ( last_frame_ == 0 || last_frame_->get_position( ) != get_position( ) )
 			{
 				int frameno = get_position( );
+				
+				frame = fetch_from_slot( );
+				
+				// If there is nothing to decode just return frame
+				if( !frame->get_stream( ) )
+					return;
 			
 				if ( last_frame_ == 0 )
 				{
-					frame = fetch_from_slot( );
+					if( !initialized_ )
+					{
+						initialize( frame );
+						initialized_ = true;
+					}
+					
 					determine_decode_use( frame );
 				}
 
@@ -243,7 +322,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 					graph->fetch_slot( 0 )->push( frame );
 					graph->seek( get_position( ) );
 					frame = graph->fetch( );
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, true ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph, true ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -254,6 +333,17 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 				frame = last_frame_;
 			}
 		}
+		
+		void initialize( const ml::frame_type_ptr &first_frame )
+		{
+			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
+			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
+			
+			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
+			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
+			
+			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+		}
 };
 
 class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
@@ -261,21 +351,40 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 	private:
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_filter_;
+		pl::pcos::property prop_profile_;
+		pl::pcos::property prop_force_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::frame_type_ptr last_frame_;
+		cl::profile_ptr profile_to_encoder_mappings_;
+		std::string video_codec_;
  
 	public:
 		filter_encode( )
 			: filter_type( )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
+			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
+			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, decoder_( )
+			, gop_decoder_( )
+			, last_frame_( )
+			, profile_to_encoder_mappings_( )
+			, video_codec_( )
 		{
+			// Default to something. Will be overriden anyway as soon as we init
 			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
+			// Default to something. Should be overriden anyway.
+			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
+			properties( ).append( prop_force_ = int( 0 ) );
+			
+			initialize_encoder_mapping( );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_encode( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -289,8 +398,18 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 
 		ml::filter_type_ptr filter_create( )
 		{
-			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			return decode;
+			// Create the encoder that we have mapped from our profile
+			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
+			
+			// Set the profile property on the encoder
+			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
+				"Encode filter must have a profile property" );
+			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< pl::wstring >( );
+			
+			if( encode->properties( ).get_property_with_string( "force" ).valid( ) ) 
+				encode->properties( ).get_property_with_string( "force" ) = prop_force_.value< int >( );
+			
+			return encode;
 		}
 
  		ml::filter_type_ptr filter_obtain( )
@@ -332,15 +451,14 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 
 		bool create_pushers( ml::frame_type_ptr &frame )
 		{
-			bool rc = true;
-
-			if ( frame->get_stream( )->codec( ) != "h264" )
+			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
 			{
-				gop_decoder_ = ml::create_filter( L"avdecode" );
+				gop_decoder_ = filter_create( );
 				gop_decoder_->connect( fetch_slot( 0 ) );
+				
+				return gop_decoder_.get( ) != 0;
 			}
-
-			return rc;
+			return false;
 		}
 
 		void do_fetch( frame_type_ptr &frame )
@@ -355,7 +473,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 					frame = fetch_from_slot( );
 					create_pushers( frame );
 				}
-
+				
 				if ( gop_decoder_ )
 				{
 					gop_decoder_->seek( frameno );
@@ -365,7 +483,12 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 				{
 					ml::filter_type_ptr graph = filter_obtain( );
 					frame = fetch_from_slot( );
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
+					
+					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
+					if( frame->get_stream( ) && frame->get_stream( )->codec( ) != video_codec_ )
+						frame->set_stream( stream_type_ptr() );
+					   
+					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -375,6 +498,30 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			{
 				frame = last_frame_;
 			}
+		}
+		
+		void initialize_encoder_mapping( )
+		{
+			// Load the profile that contains the mappings between codec string and codec filter name
+			profile_to_encoder_mappings_ = cl::profile_load( "encoder_mappings" );
+			
+			// First figure out what encoder to use based on our profile
+			ARENFORCE_MSG( profile_to_encoder_mappings_, "Need mappings from profile string to name of encoder" );
+			
+			std::string prof = cl::str_util::to_string( prop_profile_.value< pl::wstring >( ).c_str( ) );
+			cl::profile::list::const_iterator it = profile_to_encoder_mappings_->find( prof );
+			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate encoder" )( prof );
+			
+			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+			
+			// Now load the actual profile to find out what video codec string we will produce
+			cl::profile_ptr encoder_profile = cl::profile_load( prof );
+			ARENFORCE_MSG( encoder_profile, "Failed to load encode profile" )( prof );
+			
+			cl::profile::list::const_iterator vc_it = encoder_profile->find( "video_codec" );
+			ARENFORCE_MSG( vc_it != encoder_profile->end( ), "Failed to find a apropriate encoder" )( prof );
+			
+			video_codec_ = vc_it->value;
 		}
 };
 
@@ -538,10 +685,13 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		{
 			filter_ = filter_create( );
 			properties_ = filter_->properties( );
+			
+			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
 		~filter_lazy( )
 		{
+			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -588,7 +738,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			if ( filter_ )
 			{
 				ml::filter_type_ptr filter = filter_obtain( );
-				frame = ml::frame_type_ptr( new frame_lazy( frame, this, filter ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), filter ) );
 			}
 		}
 

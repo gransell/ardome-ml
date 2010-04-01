@@ -12,7 +12,7 @@
 # AML Integration Notes:
 # - Interlaced is assumed
 
-video_codec = dnxhd
+video_codec = vc3
 video_bit_rate = 220000000
 # video_flags |= CODEC_FLAG_INTERLACED_DCT
 video_flags |= 0x00040000

@@ -133,6 +133,12 @@ class stream_avformat : public ml::stream_type
 		{
 			return bitrate_;
 		}
+		
+		/// Gop size is currently unknown for avformat inputs
+		virtual const int estimated_gop_size( ) const
+		{ 
+			return 0;
+		}
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
 		virtual const dimensions size( ) const 

@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_system' )
+local_env.packages( 'loki', 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_system' )
 object = local_env.plugin( 'openmedialib_decode', [ 'plugin_decode.cpp' ] )
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_decode.opl' ] )
 Return( 'object' )

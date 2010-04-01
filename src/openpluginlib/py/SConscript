@@ -18,7 +18,8 @@ else:
 	version = sys.version_info
 	local_env.Append( CPPPATH = [ '%s/include/python%d.%d' % ( prefix, version[ 0 ], version[ 1 ] ) ] )
 	local_env.Append( LIBPATH = [ '%s/lib' % prefix ] )
-	local_env.Append( LIBS = [ 'python%d.%d' % ( version[ 0 ], version[ 1 ] ) ] )
+	if local_env['target'] != 'osx':
+		local_env.Append( LIBS = [ 'python%d.%d' % ( version[ 0 ], version[ 1 ] ) ] )
 
 local_env[ 'SHLIBPREFIX' ] = ''
 

@@ -31,6 +31,11 @@ class profile
 
 		/// Const iterator end
 		virtual list::const_iterator end( ) const = 0;
+		
+		/// Find a entry by key
+		virtual list::iterator find( const std::string& key ) = 0;
+		
+		virtual list::const_iterator find( const std::string& key ) const = 0;
 };
 
 /// Specify the root directory for the profiles for this process instance
