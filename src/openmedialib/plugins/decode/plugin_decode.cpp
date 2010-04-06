@@ -32,57 +32,62 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
-
+	
 class filter_pool
 {
-	public:
-		virtual ~filter_pool( ) { }
-		virtual void filter_release( ml::filter_type_ptr ) = 0;
+public:
+	virtual ~filter_pool( ) { }
+	
+	friend class shared_filter_pool;
+	
+protected:
+	virtual void filter_release( ml::filter_type_ptr ) = 0;
+	
 };
 
-namespace {
-	
 class shared_filter_pool
 {
 public:
-	void filter_release( ml::filter_type_ptr filter, boost::int64_t pool_token )
+	void filter_release( ml::filter_type_ptr filter, filter_pool *pool_token )
 	{
+		ARENFORCE_MSG( filter, "Releasing null filter" );
+		
 		boost::recursive_mutex::scoped_lock lck( mtx_ );
-		std::set< boost::int64_t >::iterator it = pools_.find( pool_token );
-		if( it != pools_.end( ) )
+		std::set< filter_pool * >::iterator it = pools_.begin( );
+		for( ; it != pools_.end( ); ++it )
 		{
-			filter_pool *pool = reinterpret_cast< filter_pool * >(*it);
-			pool->filter_release( filter );
+			if( *it == pool_token )
+			{
+				(*it)->filter_release( filter );
+			}
 		}
 	}
 	
 	void add_pool( filter_pool *pool )
 	{
 		boost::recursive_mutex::scoped_lock lck( mtx_ );
-		pools_.insert( boost::int64_t( pool ) );
+		pools_.insert( pool );
 	}
 	
 	void remove_pool( filter_pool * pool )
 	{
 		boost::recursive_mutex::scoped_lock lck( mtx_ );
-		pools_.erase( boost::int64_t( pool ) );
+		pools_.erase( pool );
 	}
 		
 private:
-	std::set< boost::int64_t > pools_;
+	std::set< filter_pool * > pools_;
 	boost::recursive_mutex mtx_;
 		   
 };
 	
 typedef Loki::SingletonHolder< shared_filter_pool > the_shared_filter_pool;
 
-}
-
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, boost::int64_t pool_token, ml::filter_type_ptr filter, bool pushed = false )
+		frame_lazy( const frame_type_ptr &other, filter_pool *pool_token, ml::filter_type_ptr filter, bool pushed = false )
 			: ml::frame_type( *other )
 			, parent_( other )
 			, pool_( pool_token )
@@ -94,7 +99,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Destructor
 		virtual ~frame_lazy( )
 		{
-			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
+			if( filter_ )
+				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 		}
 
 		void evaluate( )
@@ -183,7 +189,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	private:
 		ml::frame_type_ptr parent_;
-		boost::int64_t pool_;
+		filter_pool *pool_;
 		ml::filter_type_ptr filter_;
 		bool pushed_;
 };
@@ -261,13 +267,20 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::filter_type_ptr result;
+			
 			if ( decoder_.size( ) == 0 )
-				decoder_.push_back( filter_create( ) );
+			{
+				result = filter_create( );
+				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
+				decoder_.push_back( result );
+			}
+			
 			result = decoder_.back( );
 			decoder_.pop_back( );
+			
 			return result;
 		}
-
+	
 		void filter_release( ml::filter_type_ptr filter )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
@@ -322,7 +335,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 					graph->fetch_slot( 0 )->push( frame );
 					graph->seek( get_position( ) );
 					frame = graph->fetch( );
-					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph, true ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, true ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -488,7 +501,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 					if( frame->get_stream( ) && frame->get_stream( )->codec( ) != video_codec_ )
 						frame->set_stream( stream_type_ptr() );
 					   
-					frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), graph ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
 				}
 			
 				// Keep a reference to the last frame in case of a duplicated request
@@ -738,7 +751,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			if ( filter_ )
 			{
 				ml::filter_type_ptr filter = filter_obtain( );
-				frame = ml::frame_type_ptr( new frame_lazy( frame, boost::int64_t( this ), filter ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, this, filter ) );
 			}
 		}
 
