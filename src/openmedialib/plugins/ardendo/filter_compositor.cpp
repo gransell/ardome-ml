@@ -589,6 +589,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						{
 							pusher_0_->push( result );
 							pusher_1_->push( *iter );
+							composite_->seek( get_position( ) );
 							result = composite_->fetch( );
 						}
 					}
