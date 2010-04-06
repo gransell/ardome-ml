@@ -377,8 +377,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
 			properties( ).append( prop_force_ = int( 0 ) );
 			
-			initialize_encoder_mapping( );
-			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
@@ -470,6 +468,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			
 				if ( last_frame_ == 0 )
 				{
+					initialize_encoder_mapping( );
+					
 					frame = fetch_from_slot( );
 					create_pushers( frame );
 				}

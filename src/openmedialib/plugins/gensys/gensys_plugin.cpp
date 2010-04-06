@@ -674,6 +674,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 						// Push and fetch here
 						result->set_image( il::image_type_ptr( ) );
 						input_pusher_->push( result );
+						input_default_->seek( get_position( ) );
 						result = input_default_->fetch( );
 					}
 					else if ( input_default_->get_frames( ) > 0 )
