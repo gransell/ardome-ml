@@ -1,4 +1,4 @@
-video_codec = mpeg2
+video_codec = mpeg2video
 video_qmin = 1
 # video_lmin = FF_QP2LAMBDA
 video_lmin = 118
