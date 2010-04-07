@@ -18,6 +18,7 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <opencorelib/cl/profile.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <openmedialib/ml/scope_handler.hpp>
@@ -313,6 +314,7 @@ class stream_queue
 				context_ = avcodec_alloc_context( );
 				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
+				ARENFORCE_MSG( codec_, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ result->get_stream( )->codec( ) ] )( result->get_stream( )->codec( ) );
 				avcodec_open( context_, codec_ );
 				#ifndef WIN32
 				avcodec_thread_init( context_, 4 );
@@ -622,6 +624,7 @@ class avformat_video_streamer : public ml::stream_type
 		void push( ml::frame_type_ptr frame )
 		{
 			ml::stream_type_ptr stream = wrapper_->encode( frame );
+			ARENFORCE_MSG( stream, "Encoding failed" );
 			queue_.push_back( stream );
 			if ( frame && frame->has_image( ) && stream->length( ) == 0 )
 				pending_ ++;
