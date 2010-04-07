@@ -10,6 +10,7 @@
 #include <opencorelib/cl/function_job.hpp>
 #include <opencorelib/cl/profile.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 #include <opencorelib/cl/uuid_16b.hpp>
 #include <opencorelib/cl/str_util.hpp>
 
@@ -85,13 +86,40 @@ typedef Loki::SingletonHolder< shared_filter_pool > the_shared_filter_pool;
 
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {
+	private:
+
+		//Helper class that will make sure that the filter is returned to the
+		//filter pool, once all users of it are gone.
+		class filter_pool_holder
+		{
+		public:
+			filter_pool_holder( const ml::filter_type_ptr &filter, filter_pool *pool )
+			: filter_(filter)
+			, pool_( pool )
+			{ }
+
+			~filter_pool_holder()
+			{
+				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
+			}
+
+			ml::filter_type_ptr filter()
+			{
+				return filter_;
+			}
+
+		private:
+			ml::filter_type_ptr filter_;
+			filter_pool *pool_;
+		};
+
+
 	public:
 		/// Constructor
 		frame_lazy( const frame_type_ptr &other, filter_pool *pool_token, ml::filter_type_ptr filter, bool pushed = false )
 			: ml::frame_type( *other )
 			, parent_( other )
-			, pool_( pool_token )
-			, filter_( filter )
+			, pool_holder_( new filter_pool_holder( filter, pool_token ) )
 			, pushed_( pushed )
 		{
 		}
@@ -99,28 +127,27 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Destructor
 		virtual ~frame_lazy( )
 		{
-			if( filter_ )
-				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 		}
 
 		void evaluate( )
 		{
-			if ( filter_ )
+			filter_type_ptr filter;
+			if ( pool_holder_ && ( filter = pool_holder_->filter( ) ) )
 			{
 				ml::frame_type_ptr other = parent_;
 
 				if ( !pushed_ )
 				{
-					if ( filter_->fetch_slot( 0 ) == 0 )
+					if ( filter->fetch_slot( 0 ) == 0 )
 					{
 						ml::input_type_ptr fg = ml::create_input( L"pusher:" );
 						fg->property( "length" ) = 1 << 30;
-						filter_->connect( fg );
+						filter->connect( fg );
 					}
 
-					filter_->fetch_slot( 0 )->push( parent_ );
-					filter_->seek( get_position( ) );
-					other = filter_->fetch( );
+					filter->fetch_slot( 0 )->push( parent_ );
+					filter->seek( get_position( ) );
+					other = filter->fetch( );
 				}
 
 				image_ = other->get_image( );
@@ -136,29 +163,41 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				fps_den_ = other->get_fps_den( );
 				exceptions_ = other->exceptions( );
 				
-				the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
-				filter_ = ml::filter_type_ptr( );
+				//We will not have any use for the filter now
+				pool_holder_.reset();
 			}
+		}
+
+		/// Provide a shallow copy of the frame (and all attached frames)
+		virtual frame_type_ptr shallow( )
+		{
+			return frame_type_ptr( new frame_lazy( parent_->shallow(), pool_holder_, pushed_ ) );
+		}
+
+		/// Provide a shallow copy of the frame (and all attached frames)
+		virtual frame_type_ptr deep( )
+		{
+			ARENFORCE_MSG( false, "A frame of type frame_lazy cannot be deep copied" );
+			return frame_type_ptr();
 		}
 
 		/// Indicates if the frame has an image
 		virtual bool has_image( )
 		{
-			return ( filter_ && parent_->has_image( ) ) || image_;
+			return ( pool_holder_ && parent_->has_image( ) ) || image_;
 		}
 
 		/// Indicates if the frame has audio
 		virtual bool has_audio( )
 		{
-			return ( filter_ && parent_->has_audio( ) ) || audio_;
+			return ( pool_holder_ && parent_->has_audio( ) ) || audio_;
 		}
 
 		/// Set the image associated to the frame.
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image )
 		{
 			image_ = image;
-			the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
-			filter_ = ml::filter_type_ptr( );
+			pool_holder_.reset();
 		}
 
 		/// Get the image associated to the frame.
@@ -187,10 +226,19 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			return stream_;
 		}
 
+	protected:
+		
+		frame_lazy( const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
+			: ml::frame_type( *other )
+			, parent_( other )
+			, pool_holder_( pool_holder )
+			, pushed_( pushed )
+		{
+		}
+
 	private:
 		ml::frame_type_ptr parent_;
-		filter_pool *pool_;
-		ml::filter_type_ptr filter_;
+		boost::shared_ptr< filter_pool_holder > pool_holder_;
 		bool pushed_;
 };
 
@@ -524,6 +572,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			std::string prof = cl::str_util::to_string( prop_profile_.value< pl::wstring >( ).c_str( ) );
 			cl::profile::list::const_iterator it = profile_to_encoder_mappings_->find( prof );
 			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate encoder" )( prof );
+
+			ARLOG_DEBUG3( "Will use encode filter \"%1%\" for profile \"%2%\"" )( it->value )( prop_profile_.value< pl::wstring >( ) );
 			
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
 			
