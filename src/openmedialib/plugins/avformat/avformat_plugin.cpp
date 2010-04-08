@@ -195,21 +195,18 @@ namespace
 			if ( getenv( "AML_AVFORMAT_DEBUG" ) == 0 )
 				av_log_set_level( -1 );
 			
-			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "mpeg1" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/30" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/50" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "mpeg2/mpeg2hd_1080i" );
-			ml::register_lookup( CODEC_ID_H264, "h264" );
-			ml::register_lookup( CODEC_ID_MPEG4, "mpeg4" );
-			ml::register_lookup( CODEC_ID_MP2, "mp2" );
-			ml::register_lookup( CODEC_ID_MP3, "mp3" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "dv" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "dv25" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "dv50" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "dvcprohd_1080i" );
-			ml::register_lookup( CODEC_ID_DNXHD, "vc3" );
-			ml::register_lookup( CODEC_ID_DNXHD, "dnxhd" );
+
+			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg1" );
+			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg2" );
+			ml::register_lookup( CODEC_ID_MPEG4, "http://www.ardendo.com/apf/codec/mpeg/mpeg4" );
+			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/imx/imx" );
+			ml::register_lookup( CODEC_ID_H264, "http://www.ardendo.com/apf/codec/h264/h264" );
+			ml::register_lookup( CODEC_ID_MP2, "http://www.ardendo.com/apf/codec/mp2" );
+			ml::register_lookup( CODEC_ID_MP3, "http://www.ardendo.com/apf/codec/mp3" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv25" );
+			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dvcpro" );
+			ml::register_lookup( CODEC_ID_DNXHD, "http://www.ardendo.com/apf/codec/vc3/vc3" );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

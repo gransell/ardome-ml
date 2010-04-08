@@ -1,3 +1,5 @@
 low_delay = 1
 detach_thread = 0
 fast_rd_optimization = 1
+
+stream_codec_id = http://www.ardendo.com/apf/codec/avc/avc

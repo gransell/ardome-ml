@@ -7,4 +7,3 @@ video_rc_min_rate = 30000000
 video_rc_max_rate = 30000000
 video_rc_buffer_size = 1200000
 video_rc_initial_buffer_occupancy = 1200000
-

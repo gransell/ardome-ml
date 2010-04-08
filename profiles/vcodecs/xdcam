@@ -20,3 +20,4 @@ video_scenechange_threshold = 1000000000
 video_intra_dc_precision = 1
 video_thread_count = 4
 
+stream_codec_id = http://www.ardendo.com/apf/codec/mpeg/mpeg2

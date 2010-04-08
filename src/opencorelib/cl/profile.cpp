@@ -280,7 +280,7 @@ void profile_manager::load( const std::string &id )
 				found = true;
 			}
 		}
-		ARENFORCE_MSG( found, "Failed to find a place to store progfile entry. Make sure you have enrolled this value" )( ( *i ).name );
+		ARENFORCE_MSG( found, "Failed to find a place to store profile entry. Make sure you have enrolled this value" )( ( *i ).name );
 	}
 }
 

@@ -18,10 +18,12 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <opencorelib/cl/profile.hpp>
-#include <opencorelib/cl/enforce_defines.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <openmedialib/ml/scope_handler.hpp>
+
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <vector>
 

@@ -38,3 +38,4 @@ video_rc_initial_buffer_occupancy = 2000000
 video_rc_buffer_aggressivity = 0.25
 video_thread_count = 4
 
+stream_codec_id = http://www.ardendo.com/apf/codec/imx/imx

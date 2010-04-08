@@ -403,6 +403,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
 			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
 			
+			ARLOG_INFO( "Stream itentifier is %1%. Using decode filter %2%" )( first_frame->get_stream( )->codec( ) )( it->value );
+			
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
 		}
 };
@@ -584,7 +586,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			cl::profile_ptr encoder_profile = cl::profile_load( prof );
 			ARENFORCE_MSG( encoder_profile, "Failed to load encode profile" )( prof );
 			
-			cl::profile::list::const_iterator vc_it = encoder_profile->find( "video_codec" );
+			cl::profile::list::const_iterator vc_it = encoder_profile->find( "stream_codec_id" );
 			ARENFORCE_MSG( vc_it != encoder_profile->end( ), "Failed to find a apropriate encoder" )( prof );
 			
 			video_codec_ = vc_it->value;

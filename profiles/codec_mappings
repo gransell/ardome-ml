@@ -1,5 +1,13 @@
-dv = avdecode
-mpeg2 = avdecode
-avc = mcdecode
-vc3 = avdecode
+http://www.ardendo.com/apf/codec/dv/dv25 = avdecode
+http://www.ardendo.com/apf/codec/dv/dv = avdecode
+http://www.ardendo.com/apf/codec/dv/dvcpro = avdecode
+http://www.ardendo.com/apf/codec/flv/flv = avdecode
+http://www.ardendo.com/apf/codec/h264/h264 = avdecode
+http://www.ardendo.com/apf/codec/imx/imx = avdecode
+http://www.ardendo.com/apf/codec/mpeg/mpeg1 = avdecode
+http://www.ardendo.com/apf/codec/mpeg/mpeg2 = avdecode
+http://www.ardendo.com/apf/codec/mpeg/mpeg4 = avdecode
+http://www.ardendo.com/apf/codec/vc3/vc3 = avdecode
+
+http://www.ardendo.com/apf/codec/avc/avc = mcdecode
 

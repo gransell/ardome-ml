@@ -17,3 +17,5 @@ video_bit_rate = 220000000
 # video_flags |= CODEC_FLAG_INTERLACED_DCT
 video_flags |= 0x00040000
 
+stream_codec_id = http://www.ardendo.com/apf/codec/vc3/vc3
+

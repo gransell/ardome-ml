@@ -34,6 +34,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			, context_( 0 )
 			, codec_( 0 )
 			, picture_( 0 )
+			, video_codec_( "" )
+			, stream_codec_id_( "" )
 			, outbuf_size_( 0 )
 			, outbuf_( 0 )
 			, position_( 0 )
@@ -79,6 +81,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			picture_ = avcodec_alloc_frame( );
 			context_ = avcodec_alloc_context( );
 			enroll( "video_codec", this );
+			enroll( "stream_codec_id", this );
 			enroll( "video_bit_rate", context_->bit_rate );
 			enroll( "video_bit_rate_tolerance", context_->bit_rate_tolerance );
 			enroll( "video_flags", context_->flags );
@@ -204,6 +207,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		void assign( const std::string &name, const cl::profile_op &op, const std::string &value )
 		{
 			if ( name == "video_codec" ) video_codec_ = value;
+			if( name == "stream_codec_id" ) stream_codec_id_ = value;
 		}
 
 		/// String serialisation courtesy function
@@ -211,6 +215,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		{
 			std::string result;
 			if ( name == "video_codec" ) result = video_codec_;
+			if ( name == "stream_codec_id" ) result = stream_codec_id_;
 			return result;
 		}
 
@@ -278,7 +283,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
 					key_ = position_;
 
-				stream = new stream_avformat( video_codec_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_ );
+				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_ );
 
 				if ( out_size )
 					memcpy( stream->bytes( ), outbuf_, out_size );
@@ -294,12 +299,18 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		{
 			return video_codec_;
 		}
+		
+		const std::string& stream_codec_id( ) const
+		{
+			return stream_codec_id_;
+		}
 
 	private:
 		AVCodecContext *context_;
 		AVCodec *codec_;
 		AVFrame *picture_;
 		std::string video_codec_;
+		std::string stream_codec_id_;
 		int outbuf_size_;
 		boost::uint8_t *outbuf_;
 		int position_;
