@@ -171,7 +171,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			return frame_type_ptr( new frame_lazy( this, parent_->shallow(), pool_holder_, pushed_ ) );
+			return frame_type_ptr( new frame_lazy( frame_type::shallow(), parent_->shallow(), pool_holder_, pushed_ ) );
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
@@ -228,7 +228,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	protected:
 		
-		frame_lazy( const frame_lazy *org, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
+		frame_lazy( const frame_type_ptr &org, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
 			: ml::frame_type( *org )
 			, parent_( other )
 			, pool_holder_( pool_holder )
