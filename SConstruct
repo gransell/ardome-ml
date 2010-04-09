@@ -195,6 +195,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
 
 	def have_boost_python( self ):
+		return False
 		clone = self.Clone( )
 		clone.prep_release( )
 		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
@@ -232,6 +233,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
 
 	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
 	os.system( "chmod +x scripts/amldocs.aml" )

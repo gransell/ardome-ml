@@ -1,7 +1,7 @@
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/boost-1_37-osx-1.5-universal.tar.bz2 -> boost.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/ffmpeg-r22429-mac-osx-10.5-intel.tar.bz2 -> ffmpeg.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/SDL-1.3.0-r5545-mac-osx-10.5-intel-64_32.tbz2 -> SDL.tar.bz2
-
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/sox-14.3.0-osx-10.5-intel-32_64.tbz2 -> sox.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/xercesc-2.8-macosx-10.5-universal.tar.bz2 -> xercesc.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/loki-0.1.6.tbz2 -> loki.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/doxygen-1.5.7.1.tbz2 -> doxygen.tbz2

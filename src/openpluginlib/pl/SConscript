@@ -13,7 +13,7 @@ libxml2_sources = [ 'content_handler_libxml.cpp' ]
 msxml_sources = [ 'content_handler_msxml.cpp' ]
 
 if local_env[ 'PLATFORM' ] == 'darwin' :
-	local_env[ 'FRAMEWORKS' ] = 'CoreServices'
+	local_env.Append( FRAMEWORKS  = 'CoreServices' )
 
 extras = { 'posix' : libxml2_sources, 'darwin' : libxml2_sources, 'win32' : msxml_sources }
 
