@@ -41,7 +41,11 @@ echo Extracting ffmpeg...
 tar -jxf ffmpeg.tar.bz2 || exit 1
 
 echo Extracting loki...
-tar -xjf loki.tbz2
+tar -xjf loki.tbz2 || exit 1
 
 echo 'Extracting doxygen'
-tar xjf doxygen.tbz2
+tar xjf doxygen.tbz2 || exit 1
+
+echo 'Extracing sox'
+tar xjf sox.tbz2 || exit 1
+

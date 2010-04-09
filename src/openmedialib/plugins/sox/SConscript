@@ -4,6 +4,7 @@
 
 Import(['local_env'])
 
+local_env.packages( 'boost' )
 options = local_env.optional( 'sox' )
 build = options[ 'have_sox' ]
 
