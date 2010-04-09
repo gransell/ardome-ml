@@ -8,6 +8,9 @@
 //
 // Encodes many video, audio and image formats via the libavformat API.
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <openmedialib/ml/awi.hpp>
@@ -457,6 +460,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( ts_context_ )
 			{
 				boost::int64_t final = oc_->pb->pos;
+				ts_generator_audio_.close(audio_packet_num_, final);
+				ts_generator_video_.close(push_count_, final);
 				write_ts_index( );
 				url_close( ts_context_ );
 			}
@@ -832,8 +837,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					c->sample_rate = prop_frequency_.value< int >( );
 					c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
 
-					//FIXME: What is actually to be expected here?
-					c->bit_rate = prop_audio_bit_rate_.value< int >( ) * c->channels;
+					// The bitrate property sets the bitrate for one stream. If we have fewer channels than
+					// channels_per_stream in the stream, we'll have to lower the bitrate accordingly.
+					int stream_bitrate = prop_audio_bit_rate_.value< int >( ) * c->channels / channels_per_stream;
+					c->bit_rate = stream_bitrate;
 	
 					if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
 						c->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -924,35 +931,34 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodec *codec = avcodec_find_encoder( c->codec_id );
 
 				// Continue if codec found and we can open it
-				if ( codec != NULL && avcodec_open( c, codec ) >= 0 )
+				ARENFORCE( codec != NULL && avcodec_open( c, codec ) >= 0 );
+
+				if ( c->frame_size <= 1 ) 
 				{
-					if ( c->frame_size <= 1 ) 
-					{
-						audio_input_frame_size_ = audio_outbuf_size_ / c->channels;
-						switch( ( *iter )->codec->codec_id ) 
-						{
-							case CODEC_ID_PCM_S16LE:
-							case CODEC_ID_PCM_S16BE:
-							case CODEC_ID_PCM_U16LE:
-							case CODEC_ID_PCM_U16BE:
-								audio_input_frame_size_ >>= 1;
-								break;
-							default:
-								break;
-						}
-						audio_variable_ = true;
-					} 
-					else 
-					{
-						audio_input_frame_size_ = c->frame_size;
-					}
-
-					// Some formats want stream headers to be seperate
-					if( oc_->oformat->flags & AVFMT_GLOBALHEADER )
-						c->flags |= CODEC_FLAG_GLOBAL_HEADER;
-
-					ret = audio_input_frame_size_ != 0;
+				   audio_input_frame_size_ = audio_outbuf_size_ / c->channels;
+				   switch( ( *iter )->codec->codec_id ) 
+				   {
+					  case CODEC_ID_PCM_S16LE:
+					  case CODEC_ID_PCM_S16BE:
+					  case CODEC_ID_PCM_U16LE:
+					  case CODEC_ID_PCM_U16BE:
+						 audio_input_frame_size_ >>= 1;
+						 break;
+					  default:
+						 break;
+				   }
+				   audio_variable_ = true;
+				} 
+				else 
+				{
+				   audio_input_frame_size_ = c->frame_size;
 				}
+
+				// Some formats want stream headers to be seperate
+				if( oc_->oformat->flags & AVFMT_GLOBALHEADER )
+				   c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+				ret = audio_input_frame_size_ != 0;
 			}
 
 			return ret;
