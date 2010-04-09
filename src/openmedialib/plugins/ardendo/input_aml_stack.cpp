@@ -532,6 +532,8 @@ static sequence_ptr dummy_sequence_ = sequence_ptr( new sequence( ) );
 
 class aml_stack;
 
+static void mc_workaround( aml_stack * );
+
 // Word definition operators
 static void op_dot( aml_stack * );
 static void op_colon( aml_stack * );
@@ -694,6 +696,8 @@ class aml_stack
 			, ignore_( 0 )
 		{
 			paths_.push_back( fs::initial_path< olib::t_path >( ) );
+
+			operations_[ L"mc_workaround" ] = aml_operation( mc_workaround, "Initialise mainconcept workaround" );
 
 			operations_[ L"." ] = aml_operation( op_dot, "Use the input at the top of the stack (<input> . ==)" );
 			operations_[ L"dot" ] = aml_operation( op_dot, "Use the input at the top of the stack (<input> dot ==)" );
@@ -1616,6 +1620,12 @@ class aml_stack
 		operation next_exec_op_;
 		int ignore_;
 };
+
+static void mc_workaround( aml_stack *stack )
+{
+	ml::input_type_ptr colour_input = ml::create_input( "colour:" );
+	ml::store_type_ptr dummy = ml::create_store( "mc:high:mc_workaround_dummy.ts", colour_input->fetch() );
+}
 
 static void op_dot( aml_stack *stack )
 {
