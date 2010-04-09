@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'libavformat', 'boost_date_time', 'boost_system', 'loki' )
+local_env.packages( 'boost_thread', 'libavformat', 'boost_date_time', 'boost_system', 'boost_filesystem', 'loki' )
 local_env.optional( 'ffmpeg', 'libavformat', 'libavcodec', 'libavutil' )
 options = local_env.optional( 'libswscale' )
 
