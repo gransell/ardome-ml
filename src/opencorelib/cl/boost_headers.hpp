@@ -43,8 +43,6 @@
     #pragma warning(pop)
 #endif
 
-#include <boost/thread.hpp>
-
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning (push)
     #pragma warning (disable:4512)

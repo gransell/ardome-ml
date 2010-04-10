@@ -1,6 +1,7 @@
 #include "precompiled_headers.hpp"
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/time_formatters.hpp>
+#include <boost/thread.hpp>
 #include <limits>
 
 #include "worker.hpp"

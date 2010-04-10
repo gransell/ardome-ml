@@ -82,7 +82,7 @@ private:
 		   
 };
 	
-typedef Loki::SingletonHolder< shared_filter_pool > the_shared_filter_pool;
+typedef Loki::SingletonHolder< shared_filter_pool, Loki::CreateUsingNew, Loki::PhoenixSingleton > the_shared_filter_pool;
 
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {

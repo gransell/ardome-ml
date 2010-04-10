@@ -1,5 +1,6 @@
 #include "precompiled_headers.hpp"
 #include "message_queue.hpp"
+
 #include <boost/bind.hpp>
 
 namespace olib

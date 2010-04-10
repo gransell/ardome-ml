@@ -8,6 +8,7 @@
 #include <loki/Singleton.h>
 
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 #include "create_selection_dialog.hpp"
 

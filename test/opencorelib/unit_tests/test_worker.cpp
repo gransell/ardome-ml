@@ -6,6 +6,7 @@
 #include "opencorelib/cl/thread_pool.hpp"
 
 #include <boost/test/test_tools.hpp> 
+#include <boost/thread.hpp>
 
 using namespace boost;
 using namespace olib;

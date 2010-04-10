@@ -3,9 +3,15 @@
 
 #include "typedefs.hpp"
 #include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/condition.hpp>
 #include "event_handler.hpp"
 #include "time_helpers.hpp"
+
+namespace boost
+{
+	class thread;
+}
 
 #undef add_job
 

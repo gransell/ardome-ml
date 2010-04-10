@@ -3,6 +3,8 @@
 
 #include "./minimal_string_defines.hpp"
 
+#include <boost/thread/mutex.hpp>
+
 namespace olib
 {
 	namespace opencorelib

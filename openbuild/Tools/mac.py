@@ -93,8 +93,8 @@ def TOOL_BUNDLE(env):
 
 			env.Install(abs_bundle_path + '/Versions/A/', lib)
 			
-			for item in ext_libs:
-				env.Install( abs_bundle_path + '/Versions/A/lib/' + item[ 0 ], item[ 1 ] )
+#			for item in ext_libs:
+#				env.Install( abs_bundle_path + '/Versions/A/lib/' + item[ 0 ], item[ 1 ] )
 			
 			if not os.path.exists(abs_bundle_path):
 				os.makedirs( abs_bundle_path )
@@ -102,13 +102,13 @@ def TOOL_BUNDLE(env):
 				os.utime( abs_bundle_path, None )
 			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions') ):
 				os.makedirs( os.path.join(abs_bundle_path, 'Versions') )
-			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions/A/lib') ):
-				os.makedirs( os.path.join(abs_bundle_path, 'Versions/A/lib') )
+#			if not os.path.exists( os.path.join(abs_bundle_path, 'Versions/A/lib') ):
+#				os.makedirs( os.path.join(abs_bundle_path, 'Versions/A/lib') )
 			
 			# Set up links
 			#Hack to get the paths correct
-			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/lib')):
-				os.symlink( 'Current/lib', os.path.join(abs_bundle_path, 'Versions/lib') )
+#			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/lib')):
+#				os.symlink( 'Current/lib', os.path.join(abs_bundle_path, 'Versions/lib') )
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Versions/Resources')):
 				os.symlink( 'Current/Resources', os.path.join(abs_bundle_path, 'Versions/Resources') )
 			
@@ -121,18 +121,18 @@ def TOOL_BUNDLE(env):
 			if not os.path.islink(os.path.join(abs_bundle_path, 'Resources')):
 				os.symlink( 'Versions/Current/Resources', os.path.join(abs_bundle_path, 'Resources') )
 			
-			links = {}
-			for item in ext_libs:
-				try:
-					collect_sym_links( links, item )
-				except Exception, e:
-					continue
+#			links = {}
+#			for item in ext_libs:
+#				try:
+#					collect_sym_links( links, item )
+#				except Exception, e:
+#					continue
 			
-			for link in links.keys( ):
-				full = abs_bundle_path+'/Versions/A/lib/' + links[ link ]
-				if not os.path.islink( full ):
-					if not os.path.islink( full ) :
-						os.symlink( os.readlink( link ), full )
+#			for link in links.keys( ):
+#				full = abs_bundle_path+'/Versions/A/lib/' + links[ link ]
+#				if not os.path.islink( full ):
+#					if not os.path.islink( full ) :
+#						os.symlink( os.readlink( link ), full )
 
 			for item in resources:
 				env.Install( abs_bundle_path + '/Versions/A/Resources/' + item[ 0 ], item[ 1 ] )

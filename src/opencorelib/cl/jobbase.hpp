@@ -3,6 +3,7 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/thread/condition.hpp>
 #include "./event_handler.hpp"
 #include "./time_helpers.hpp"
 #include "./typedefs.hpp"

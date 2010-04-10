@@ -4,7 +4,7 @@
 #include "./typedefs.hpp"
 #include "./object.hpp"
 
-#include <boost/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/bind.hpp>

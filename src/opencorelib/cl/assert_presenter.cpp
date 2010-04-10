@@ -9,6 +9,7 @@
 #include <loki/Singleton.h>
 
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 
 #ifdef OLIB_ON_MAC
 #include <CoreServices/CoreServices.h>

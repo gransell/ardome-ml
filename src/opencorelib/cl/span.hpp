@@ -62,9 +62,10 @@ namespace olib
             /** @param in The in-point of the span on the timeline.
                 @param duration The duration of the span, must be greater than 0.
                 @throws A base_exception if the duration is smaller than zero. */
-            span(   boundary_type in, 
+            span(   boundary_type in_point, 
                     boundary_type duration ) 
-                : m_in(in), m_duration(duration) 
+                : m_in( in_point )
+				, m_duration( duration ) 
             {
 				ARENFORCE_MSG( m_duration >= boundary_type(0), "Can not have a negative duration" );
             }
@@ -83,9 +84,9 @@ namespace olib
 
             /// Set the in-point of the span
             /** @param in_t The new in-point.*/
-            void set_in( const boundary_type& in) 
+            void set_in( const boundary_type& in_point ) 
             {
-                m_in = in; 
+                m_in = in_point; 
             }
 
             /// Set the duration of the span

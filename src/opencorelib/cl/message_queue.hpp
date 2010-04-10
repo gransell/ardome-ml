@@ -2,6 +2,8 @@
 #define _CORE_MESSAGE_QUEUE_H_
 
 #include <queue>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/condition.hpp>
 
 namespace olib
 {

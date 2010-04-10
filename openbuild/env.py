@@ -570,7 +570,7 @@ class Environment( BaseEnvironment ):
 		openbuild.Tools.mac.TOOL_BUNDLE( self )
 
 		libs = Environment.bundle_libraries[ int( self.debug ) ]
-		bundle_resources = Environment.bundle_resources[ int( self.debug ) ]
+		bundle_resources = [] #Environment.bundle_resources[ int( self.debug ) ]
 		build = [ Environment.prep_release, Environment.prep_debug ][ int( self.debug ) ]
 
 		self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,@executable_path/../Frameworks/%s.framework/%s' % (fmwk_name, fmwk_name) ] )

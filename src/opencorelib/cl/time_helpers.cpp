@@ -4,6 +4,8 @@
 #include "log_defines.hpp"
 #include "logger.hpp"
 
+#include <boost/thread/condition.hpp>
+
 namespace olib 
 { 
    namespace opencorelib 

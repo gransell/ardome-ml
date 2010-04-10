@@ -1,6 +1,8 @@
 #ifndef _CORE_ASSERT_PRESENTER_H_
 #define _CORE_ASSERT_PRESENTER_H_
 
+#include <boost/thread/mutex.hpp>
+
 namespace olib
 {
 	namespace opencorelib

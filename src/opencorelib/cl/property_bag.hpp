@@ -4,6 +4,8 @@
 #include <boost/any.hpp>
 #include "./minimal_string_defines.hpp"
 
+#include <map>
+
 namespace olib
 {
    namespace opencorelib

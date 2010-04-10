@@ -6,6 +6,8 @@
 
 #include <set>
 
+#include <boost/thread/mutex.hpp>
+
 namespace olib
 {
 	namespace opencorelib
