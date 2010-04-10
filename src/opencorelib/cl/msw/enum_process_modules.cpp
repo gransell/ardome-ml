@@ -4,6 +4,7 @@
 #include "opencorelib/cl/enforce_defines.hpp"
 #include "opencorelib/cl/guard_define.hpp"
 #include "opencorelib/cl/base_exception.hpp"
+#include <boost/bind.hpp>
 #include <Psapi.h>
 
 namespace olib
@@ -175,3 +176,4 @@ namespace olib
 		}
 	}
 }
+
