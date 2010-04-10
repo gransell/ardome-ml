@@ -195,7 +195,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
 
 	def have_boost_python( self ):
-		return False
 		clone = self.Clone( )
 		clone.prep_release( )
 		has_python = clone.optional( 'boost_python' )[ 'have_boost_python' ]
