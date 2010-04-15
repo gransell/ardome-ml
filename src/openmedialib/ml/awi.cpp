@@ -1314,7 +1314,7 @@ int awi_index_v4::frames( int current )
 	// indicated by the index 
 	if ( !eof_ && current < frames_ )
 	{
-		std::map< boost::int32_t, awi_item_v4 >::iterator iter = items_.upper_bound( frames_ - 1000 );
+		std::map< boost::int32_t, awi_item_v4 >::iterator iter = items_.upper_bound( frames_ - 100 );
 		if ( iter != items_.begin( ) ) iter --;
         if ( iter != items_.begin( ) ) iter --;
         result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;

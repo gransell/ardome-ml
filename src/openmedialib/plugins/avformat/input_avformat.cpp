@@ -43,6 +43,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
@@ -885,22 +886,34 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else if ( has_audio( ) )
 			{
-				AVStream *stream = video_indexes_.size( ) > 0 ? context_->streams[ 0 ] : 0;
-
+				AVStream *video_stream = video_indexes_.size( ) > 0 ? context_->streams[ 0 ] : 0;
+				AVStream *audio_stream = get_audio_stream();
+				ARENFORCE_MSG( audio_stream != 0, "Invalid audio stream index: %1%" )( prop_audio_index_.value< int >( ) );
+				
 				if ( prop_fps_num_.value< int >( ) > 0 && prop_fps_den_.value< int >( ) > 0 )
 				{
 					fps_num_ = prop_fps_num_.value< int >( );
 					fps_den_ = prop_fps_den_.value< int >( );
 				}
-				else if ( stream )
+				else if( audio_stream->codec->codec_id == CODEC_ID_AAC && aml_index_ )
 				{
-					get_fps_from_stream( stream );
+					//If we're reading AAC with index, the index "frames" will be
+					//one AAC packet. 1024 samples per packet is 375/8 fps at 48 KHz.
+					int freq = audio_stream->codec->sample_rate;
+					cl::rational_time aac_fps( freq, 1024 );
+					fps_num_ = aac_fps.numerator();
+					fps_den_ = aac_fps.denominator();
+				}
+				else if ( video_stream )
+				{
+					get_fps_from_stream( video_stream );
 				}
 				else
 				{
 					fps_num_ = 25;
 					fps_den_ = 1;
 				}
+
 				sar_num_ = 1;
 				sar_den_ = 1;
 			}
@@ -1520,7 +1533,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					samples_to_packet = int64_t( samples_per_packet_ * packet_idx );
 				else
 					samples_to_packet = int64_t( dts * frequency + 0.5 );
-
+				
 				samples_to_frame = ml::audio::samples_to_frame( found, frequency, fps_num_, fps_den_ );
 
 				if ( samples_to_packet < samples_to_frame )
