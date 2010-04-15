@@ -1659,9 +1659,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 	private:
 		inline int map_source_to_dest( int position ) const
 		{
-			boost::int64_t t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
-			boost::int64_t t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
-			return int( position * ( double( ( 1024 * t2 / t1 ) ) / 1024 ) );
+			double t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
+			double t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
+			return position * ( t2 / t1 );
 		}
 
 		inline double map_dest_to_source( int position ) const
