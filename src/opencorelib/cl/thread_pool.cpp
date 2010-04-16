@@ -14,13 +14,15 @@ namespace olib
 	{
 		thread_pool::thread_pool(	unsigned int max_nrOf_workers,  
 								    const boost::posix_time::time_duration& tto)
-									: idle_( m_i_max_workers )
-									, m_i_max_workers(max_nrOf_workers) 
-                                    , m_thread_termination_timeout(tto)
+									: m_i_max_workers(max_nrOf_workers) 
+									, m_thread_termination_timeout(tto)
+									, is_terminating_(false)
 										
 		{
 			if(m_i_max_workers <= 0) 
 				m_i_max_workers = 5;
+
+			m_idle_workers = m_i_max_workers;
 		}
 
 		thread_pool::~thread_pool()
@@ -30,7 +32,12 @@ namespace olib
 
 		void thread_pool::terminate_all_threads(const boost::posix_time::time_duration& time_out) 
 		{
-            boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+			{
+				boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+				is_terminating_ = true;
+				cond_.notify_all();
+			}
+
 			std::for_each(m_workers.begin(), m_workers.end(), 
                                 boost::bind(&worker::stop, _1, time_out ));
 		}
@@ -38,16 +45,13 @@ namespace olib
         bool thread_pool::wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out )
         {
             boost::recursive_mutex::scoped_lock lock(m_this_mtx);
-            worker_vec::iterator it(m_workers.begin()), end_it(m_workers.end());
-            boost::posix_time::time_duration time_waited;
-            for( ; it != end_it; ++it)
-            {
-                utilities::timer a_timer;
-                if(!(*it)->wait_for_all_jobs_completed( time_out - time_waited )) return false;
-                time_waited += a_timer.elapsed();
-                if( time_waited > time_out ) return false;
-            }
-            
+
+			while( m_idle_workers < m_i_max_workers )
+			{
+				if( !idle_worker_cond_.timed_wait(lock, time_out) )
+					return false;
+			}
+
             return true;
         }
 
@@ -67,7 +71,12 @@ namespace olib
 
 		bool thread_pool::add_to_new_worker(boost::shared_ptr< base_job > p_job)
 		{
+			boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+
 			if( m_workers.size() >= m_i_max_workers ) return false;
+			
+			ARENFORCE( m_idle_workers > 0 );
+			--m_idle_workers;
             boost::shared_ptr< worker > worker = create_worker();
 			worker->add_job(p_job);
 			worker->start();
@@ -90,6 +99,8 @@ namespace olib
 			(*min_it)->add_job(p_job);
 		}
 
+		//This method will be called on the worker thread when a worker
+		//has finished its current job.
 		void thread_pool::job_done( worker *work, base_job_ptr job )
 		{
             boost::recursive_mutex::scoped_lock lock(m_this_mtx);
@@ -98,7 +109,25 @@ namespace olib
 			{
 				if ( jobs_.size( ) == 0 )
 				{
+					//The worker that called job_done is now in waiting state
+					++m_idle_workers;
+					
+					//Let the thread pool know that m_idle_workers has changed
+					idle_worker_cond_.notify_all();
+
+					//Wait for new jobs to pop into the job queue
 					cond_.wait( lock );
+
+					//Sanity check
+					ARENFORCE( m_idle_workers > 0 );
+
+					//If the thread pool is terminating, we should
+					//break out here, so that the calling worker thread
+					//can have stop() called on it.
+					if( is_terminating_ )
+						break;
+
+					--m_idle_workers;
 				}
 
 				if ( jobs_.size( ) )
@@ -122,7 +151,6 @@ namespace olib
 		void thread_pool::add_job( boost::shared_ptr< base_job > p_job ) 
 		{
 			if( add_to_new_worker(p_job) ) return;
-			//if( add_to_empty_worker(p_job) ) return;
 			{
             	boost::recursive_mutex::scoped_lock lock(m_this_mtx);
 				jobs_.push_back( p_job );
@@ -150,20 +178,7 @@ namespace olib
 		unsigned int thread_pool::get_number_of_idle_workers() const 
 		{
 			boost::recursive_mutex::scoped_lock lock(m_this_mtx);
-			unsigned int not_created = m_i_max_workers - m_workers.size();
-			unsigned int idle_workers(0);
-
-			worker_vec::const_iterator it(m_workers.begin()), end_it(m_workers.end());
-
-			for( ; it != end_it; ++it)
-			{
-				if((*it)->job_count() == 0 && !(*it)->get_is_running_job() ) 
-				{
-					idle_workers += 1;
-				}
-			}
-
-			return not_created + idle_workers;
+			return m_idle_workers;
 		}
 	}
 }

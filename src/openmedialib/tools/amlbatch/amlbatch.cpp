@@ -542,6 +542,8 @@ int main( int argc, char *argv[ ] )
 		std::cerr << "Usage: amlbatch <graph> [ -- ( <store> )* ]" << std::endl;
 	}
 
+	ml::indexer_shutdown();
+
 	return 0;
 }
 
