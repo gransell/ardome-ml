@@ -5,6 +5,7 @@
 
 #include "awi.hpp"
 #include <algorithm>
+#include <string.h>
 
 #define awi_header_size 8
 #define awi_item_size 20
