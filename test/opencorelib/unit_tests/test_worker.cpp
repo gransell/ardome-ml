@@ -21,7 +21,11 @@ using namespace boost::posix_time;
 class MyJobClass : public base_job
 {
 public:
-    MyJobClass( long nrOfMSToRun ) : m_NrOfMSToRun(nrOfMSToRun) {}
+	MyJobClass( long nrOfMSToRun, boost::uint32_t *job_counter )
+		: m_NrOfMSToRun(nrOfMSToRun)
+		, job_counter_( job_counter )
+	{
+	}
     
     int do_work()
     {
@@ -29,7 +33,6 @@ public:
         //std::cout << "Running job " << m_dwNumber << std::endl;
         for(int i = 0; i < (m_NrOfMSToRun / 50) ; ++i )
         {   
-			
             boost::thread::sleep( boost::get_system_time() + boost::posix_time::milliseconds(50) );
 			
             if( get_should_terminate_job() )
@@ -40,10 +43,15 @@ public:
             }
         }
 
+		boost::recursive_mutex::scoped_lock lock( m_Mtx );
+		if( job_counter_ )
+			++(*job_counter_);
+
         return 1;
     }
 private:
     long m_NrOfMSToRun;
+	boost::uint32_t *job_counter_;
     static boost::recursive_mutex m_Mtx;
 };
 
@@ -64,7 +72,7 @@ boost::recursive_mutex MyJobClass::m_Mtx;
 void TestWorker()
 {
     worker aWorker;
-    boost::shared_ptr< MyJobClass > aJob( new MyJobClass(500) );
+    boost::shared_ptr< MyJobClass > aJob( new MyJobClass(500, NULL) );
     
     aWorker.start();
     aWorker.add_job(aJob);
@@ -82,7 +90,7 @@ void TestWorker2()
 
     for(int i = 0; i < 10; ++i)
     {
-        boost::shared_ptr< MyJobClass > aJob( new MyJobClass(200) );
+        boost::shared_ptr< MyJobClass > aJob( new MyJobClass(200, NULL) );
         aWorker.add_job(aJob);
     }
 
@@ -96,7 +104,7 @@ void TestTerminateWorker()
     worker aWorker;
     aWorker.start();
 
-    boost::shared_ptr< MyJobClass > aJob( new MyJobClass(20000) );
+    boost::shared_ptr< MyJobClass > aJob( new MyJobClass(20000, NULL) );
     aWorker.add_job(aJob);
 	
 	// Sleep so that the job has time to start
@@ -130,17 +138,30 @@ void TestWorkerError()
 
 void TestThreadPool()
 {
-    thread_pool myPool(10, boost::posix_time::seconds(5) );
-    for(int i = 0; i < 50; ++i)
+	const boost::uint32_t num_workers = 10;
+	const boost::uint32_t num_jobs_to_run = 50;
+	const boost::uint32_t job_duration = 200;
+	const boost::uint32_t time_to_wait = 2 * num_jobs_to_run / num_workers * job_duration / 1000;
+	std::cout << "Will wait max " << time_to_wait << " seconds for thread pool to complete." << std::endl;
+
+    thread_pool myPool(num_workers, boost::posix_time::seconds(5) );
+
+	
+	//Check that the correct number of jobs were actually run
+	boost::uint32_t job_counter = 0;
+	
+
+    for(int i = 0; i < num_jobs_to_run; ++i)
     {
-        boost::shared_ptr< MyJobClass > aJob( new MyJobClass(200) );
+        boost::shared_ptr< MyJobClass > aJob( new MyJobClass(job_duration, &job_counter) );
         myPool.add_job(aJob);
     }
 
     // Starting to wait for 50 jobs (á 200 ms) to terminate (max 15 sec)
     olib::opencorelib::utilities::timer aTimer;
-    BOOST_CHECK( myPool.wait_for_all_jobs_completed( boost::posix_time::seconds(15) ) );
-    BOOST_CHECK( aTimer.elapsed() < boost::posix_time::seconds(15) );
+    BOOST_CHECK( myPool.wait_for_all_jobs_completed( boost::posix_time::seconds(time_to_wait) ) );
+    BOOST_CHECK( aTimer.elapsed() < boost::posix_time::seconds(time_to_wait) );
+    BOOST_CHECK_EQUAL( job_counter, num_jobs_to_run );
 }
 
 class my_reoccurring_job : public base_job

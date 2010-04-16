@@ -70,12 +70,13 @@ namespace olib
 			typedef std::vector< boost::shared_ptr< worker >  > worker_vec;
 			std::vector< boost::tuples::tuple< event_connection_ptr, bool> > callbacks_;
 			std::deque< boost::shared_ptr< base_job > > jobs_;
-			int idle_;
 
 			worker_vec m_workers;
 			unsigned int m_i_max_workers;
+			unsigned int m_idle_workers;
             boost::posix_time::time_duration m_thread_termination_timeout;
             mutable boost::recursive_mutex m_this_mtx;
+			bool is_terminating_;
 
 			bool add_to_empty_worker(boost::shared_ptr< base_job > p_job);
 			bool add_to_new_worker(boost::shared_ptr< base_job > p_job);
@@ -86,6 +87,8 @@ namespace olib
 
             /// Condition var to notify a job completion
             boost::condition_variable_any cond_;
+
+			boost::condition_variable_any idle_worker_cond_;
 		};
 	}
 }

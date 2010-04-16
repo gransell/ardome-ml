@@ -385,6 +385,7 @@ namespace olib
                 // T_CERR << "Nr of jobs in worker: " << done_counter.m_nr_of_jobs_to_wait_for << std::endl;
             }
 
+			std::cout << "done_counter waits for: " << done_counter.m_nr_of_jobs_to_wait_for << std::endl;
             return done_counter.wait_for_all_jobs_completed(time_out);
         }
 
