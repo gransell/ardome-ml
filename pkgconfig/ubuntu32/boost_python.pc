@@ -5,5 +5,5 @@ Version: 0.0.1
 
 Requires: boost
 
-Libs:	-lboost_python-mt
+Libs:	-lboost_python-mt-py26
 

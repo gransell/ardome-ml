@@ -1,0 +1,11 @@
+Name: boost_system
+Description: boost system lib
+Version: 0.0.1
+debug=
+
+Requires: boost
+
+prefix=/usr
+libdir=${prefix}/lib
+
+Libs:	-lboost_system-mt
