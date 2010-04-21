@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="Rubberband plugin" type="filter" extension='"rubberband"' merit="50" filename='"libopenmedialib_rubberband.so", "libopenmedialib_rubberband.dylib", "openmedialib_rubberband.dll"'/>
+	</openmedialib>
+</openlibraries>

@@ -233,6 +233,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml ] ) )
 
 	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
 	os.system( "chmod +x scripts/amldocs.aml" )
