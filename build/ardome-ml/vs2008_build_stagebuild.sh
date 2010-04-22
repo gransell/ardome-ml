@@ -33,9 +33,9 @@ mkdir build
 mv aml/bin/debug build/Debug
 mv aml/bin/release build/Release
 mv aml/include build/include
+mv aml/doc build/docs
 mv aml build/aml
 mv openbuild build/openbuild
-mv aml/doc build/docs
 
 
 #Generic package building things
