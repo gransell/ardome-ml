@@ -7,6 +7,14 @@ if [ ! $? == 0 ]; then
   exit 1
 fi
 
+echo "Running doxygen..."
+bcomp/vs2008/doxygen.exe doc/aml_windows.dox
+
+if [ ! $? == 0 ]; then
+    echo "Building of ducumentation failed. Terminating."
+    exit 1
+fi
+
 echo "Building succeeded!"
 
 

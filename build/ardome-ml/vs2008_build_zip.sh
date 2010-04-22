@@ -16,6 +16,7 @@ mkdir TMPZIP/aml/lib/debug || exit 1
 mkdir TMPZIP/aml/lib/winconfig || exit 1
 mkdir TMPZIP/aml/asts || exit 1
 mkdir TMPZIP/aml/py || exit 1
+mkdir TMPZIP/aml/doc/ || exit 1
 
 echo "Adding release files..."
 cp -r build/release/vs2008/bin/* TMPZIP/aml/bin/release/
@@ -50,6 +51,10 @@ cp  config/windows/ardome_ml.wc TMPZIP/aml/lib/winconfig/
 
 echo "Adding openbuild"
 cp -r openbuild TMPZIP/
+
+echo "Adding documentation: AMF.chm "
+mv doc/html/AMF.chm TMPZIP/aml/doc/
+mv doc/html TMPZIP/aml/doc/html
 
 echo "Purging .svn folders"
 find TMPZIP -name \.svn -type d -prune -print0 | xargs -0 rm -rf

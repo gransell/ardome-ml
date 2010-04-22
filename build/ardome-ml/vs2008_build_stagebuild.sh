@@ -35,6 +35,8 @@ mv aml/bin/release build/Release
 mv aml/include build/include
 mv aml build/aml
 mv openbuild build/openbuild
+mv aml/doc build/docs
+
 
 #Generic package building things
 cp ../build/$PRODUCT/Package.info build/Package.info
