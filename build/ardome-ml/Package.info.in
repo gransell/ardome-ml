@@ -1,0 +1,11 @@
+Package: $PRODUCT
+Section: DotNet
+Architecture: vs2008
+Version: $MAJORVER.$MINORVER
+Maintainer: AMF Team Stockholm
+Developer: Mikael Gransell <mikael.gransell@vizrt.com>
+Developer: John Talling <JTalling@vizrt.com>
+Repository: bzr://oof.ardendo.se/data/bzr/ardome-ml/
+RepositoryPath: trunk
+Keywords: amf, client
+Summary: Contains the Ardome Media Library for the $BAGTARGET platform

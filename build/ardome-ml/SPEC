@@ -54,3 +54,8 @@ ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
 ubuntu32_POSTGRAB: TARGETPLATFORM=ubuntu32 build/ardome-ml/ubuntu_postgrab.sh
 ubuntu32_BUILDSCRIPT: build/ardome-ml/ubuntu_build_step.sh
 ubuntu32_BUILDSCRIPT2: build/ardome-ml/ubuntu32_build_zip.sh
+
+### Buildsteps related to the Visual Studio 2008 compiler:
+vs2008sb_TARGET: ardome-ml-vs2008.zip
+vs2008sb_BUILDSCRIPT: build/ardome-ml/vs2008_build_stagebuild.sh
+vs2008sb_STAGEBUILD: 1
