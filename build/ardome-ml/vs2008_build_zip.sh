@@ -53,7 +53,7 @@ echo "Adding openbuild"
 cp -r openbuild TMPZIP/
 
 echo "Adding documentation: AMF.chm "
-mv doc/html/AMF.chm TMPZIP/aml/doc/
+#mv doc/html/AML.chm TMPZIP/aml/doc/
 mv doc/html TMPZIP/aml/doc/html
 
 echo "Purging .svn folders"
