@@ -92,8 +92,16 @@ class rubber
 			return result;
 		}
 
+		// Sync with changes to the speed and pitch
 		void sync( double speed, double pitch )
 		{
+			if ( 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) )
+			{
+				rubber_->setTimeRatio( 1.0 / speed );
+				rubber_->setPitchScale( pitch );
+				rubber_->reset( );
+				source_ = expected_;
+			}
 		}
 
 		ml::frame_type_ptr fetch( int position )
@@ -106,6 +114,7 @@ class rubber
 			if ( position != expected_ )
 			{
 				rubber_->reset( );
+				frames_.clear( );
 				expected_ = position;
 				source_ = position;
 			}
@@ -116,7 +125,8 @@ class rubber
 			// Loop until we have the requisite samples
 			while( rubber_->available( ) < samples && source_ < input_->get_frames( ) )
 			{
-				ml::frame_type_ptr frame = input_->fetch( source_ ++ );
+				ml::frame_type_ptr frame = input_->fetch( source_ );
+				frames_[ source_ ++ ] = frame;
 				ml::audio_type_ptr audio = frame ? frame->get_audio( ) : ml::audio_type_ptr( );
 				ARENFORCE_MSG( audio, "Audio required for rubberband" );
 				ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
@@ -127,7 +137,7 @@ class rubber
 			}
 
 			// Create the result frame
-			ml::frame_type_ptr result = ml::frame_type_ptr( new frame_type( ) );
+			ml::frame_type_ptr result = frames_[ expected_ ];
 			result->set_fps( fps_num_, fps_den_ );
 			result->set_pts( position * double( fps_den_ ) / fps_num_ );
 			result->set_duration( double( fps_den_ ) / fps_num_ );
@@ -135,6 +145,15 @@ class rubber
 
 			// Obtain the samples required
 			result->set_audio( retrieve( position, samples ) );
+
+			// Clean up the frame cache
+			for ( std::map< int, ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); )
+			{
+				if ( iter->first <= expected_ )
+					frames_.erase( iter ++ );
+				else
+					iter ++;
+			}
 
 			// We expect the next frame to follow...
 			expected_ ++;
@@ -164,8 +183,8 @@ class rubber
 		void clean( float_ptr *channels )
 		{
 			for ( int c = 0; c < channels_; c ++ )
-				delete channels[ c ];
-			delete channels;
+				delete [ ] channels[ c ];
+			delete [ ] channels;
 		}
 
 		ml::audio_type_ptr retrieve( int position, int samples )
@@ -178,6 +197,7 @@ class rubber
 				for ( int c = 0; c < channels_; c ++ )
 					*dst ++ = array[ c ][ s ];
 			output->set_position( position );
+			clean( array );
 			return output;
 		}
 
@@ -190,6 +210,7 @@ class rubber
 		int channels_;
 		int expected_;
 		int source_;
+		std::map< int, ml::frame_type_ptr > frames_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
@@ -242,6 +263,54 @@ private:
 	rubber rubber_;
 };
 
+class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
+{
+	public:
+		// Filter_type overloads
+		filter_pitch( )
+			: ml::filter_type( )
+			, filter_( ml::create_filter( L"rubberband" ) )
+			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
+			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
+			, prop_speed_( filter_->property( "speed" ) )
+			, prop_samples_( pcos::key::from_string( "samples" ) )
+		{
+			properties( ).append( prop_fps_num_ = 25 );
+			properties( ).append( prop_fps_den_ = 1 );
+			properties( ).append( prop_speed_ = 1.0 );
+			properties( ).append( prop_samples_ = 0 );
+		}
+
+		// Indicates if the input will enforce a packet decode
+		virtual bool requires_image( ) const { return false; }
+
+		// This provides the name of the plugin (used in serialisation)
+		virtual const pl::wstring get_uri( ) const { return L"pitch"; }
+
+	protected:
+		// The main access point to the filter
+		void do_fetch( ml::frame_type_ptr &result )
+		{
+			if ( prop_speed_.value< double >( ) > 0.0 )
+			{
+				if ( filter_->fetch_slot( ) != fetch_slot( ) )
+					filter_->connect( fetch_slot( ) );
+				filter_->seek( get_position( ) );
+				result = filter_->fetch( );
+			}
+			else
+			{
+				result = fetch_from_slot( );
+			}
+		}
+
+		ml::filter_type_ptr filter_;
+		pcos::property prop_fps_num_;
+		pcos::property prop_fps_den_;
+		pcos::property prop_speed_;
+		pcos::property prop_samples_;
+};
+
 //
 // Plugin object
 //
@@ -259,9 +328,12 @@ public:
 		return store_type_ptr( );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring & )
+	virtual filter_type_ptr filter( const pl::wstring &spec )
 	{
-		return filter_type_ptr( new filter_rubberband( ) );
+		if ( spec == L"pitch" )
+			return filter_type_ptr( new filter_pitch( ) );
+		else
+			return filter_type_ptr( new filter_rubberband( ) );
 	}
 };
 
