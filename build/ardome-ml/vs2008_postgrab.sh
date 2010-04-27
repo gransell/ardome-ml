@@ -17,6 +17,15 @@ if [ ! -d boost_1_37_0 ]; then
 	fi
 fi
 
+if [ ! -d rubberband ]; then
+	echo "Extracting rubberband..."
+	unzip ../tmp/rubberband-1.5.0.zip	
+	if [ ! $? == 0 ]; then
+		echo "Failed to run: unzip rubberband.zip. Terminating."
+		exit
+	fi
+fi
+
 if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
