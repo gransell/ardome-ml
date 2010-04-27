@@ -91,6 +91,14 @@ stream_type_ptr frame_type::get_stream( ) { return stream_; }
 void frame_type::set_image( il::image_type_ptr image, bool decoded )
 {
 	image_ = image;
+
+	//Set sample aspect ratio from the image if valid
+	if( image_ && image_->get_sar_num( ) != -1 )
+	{
+		sar_num_ = image_->get_sar_num( );
+		sar_den_ = image_->get_sar_den( );
+	}
+
 	//Destroy the existing video stream, since it is not a correct
 	//representation of the image anymore
 	if( !decoded && image && stream_ && stream_->id() == stream_video )

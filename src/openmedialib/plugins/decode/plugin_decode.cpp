@@ -194,9 +194,9 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Set the image associated to the frame.
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image )
+		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded )
 		{
-			image_ = image;
+			frame_type::set_image( image, decoded );
 			pool_holder_.reset();
 		}
 
