@@ -49,3 +49,6 @@ tar xjf doxygen.tbz2 || exit 1
 echo 'Extracing sox'
 tar xjf sox.tbz2 || exit 1
 
+echo 'Extracting Rubberband'
+tar xjf rubberband.tbz2 || exit 1
+
