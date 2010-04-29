@@ -873,7 +873,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 //	mix_in, mix_mid, mix_out = double, double, double (1,1,1)
 //		Proposed/unimplemented: 3 point audio mixing for the current frame 
 //
-//	mode = fill [default], distort, letter, pillar, smart
+//	mode = fill [default], distort, letter, pillar, smart, ardendo
 //		fill ensures that the overlay is scaled to fit in the specied geometry 
 //		whilst maintaining aspect ratio
 //		distort ensures the overlay is scaled to fit the specified geometry
@@ -884,6 +884,9 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 //		aspect ratio (cropping may occur)
 //		smart scales and crops to ensure that the full destination resolution
 //		is used
+//		ardendo uses the same sizing as distort, but the rx and ry are measured
+//		in pixels and give the relative displacement from a centered position
+//		rather than from the top left corners of the images
 //
 //	halign = 0, 1 or 2 (for left, centre, right)
 //	valign = 0, 1 or 2 (for left, centre, right)
@@ -1077,6 +1080,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			{
 				result.w = int( 0.5 + ( src_w * src_sar_num * dst_sar_den ) / ( src_sar_den * dst_sar_num ) );
 				result.h = src_h;
+			}
+			else if ( prop_mode_.value< pl::wstring >( ).find( L"ardendo" ) == 0 )
+			{
+				result.x = (src_w - result.w ) / 2 + prop_rx_.value< double >( );
+				result.y = (src_h - result.h ) / 2 + prop_ry_.value< double >( );
 			}
 
 			// Correct the cropping as required
