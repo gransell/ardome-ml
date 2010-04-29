@@ -226,6 +226,18 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			return stream_;
 		}
 
+		virtual void set_position( int position )
+		{
+			frame_type::set_position( position );
+
+			//Need to set the position on the inner frame as well
+			//in order to preserve it across shallow copies.
+			if( parent_ )
+			{
+				parent_->set_position( position );
+			}
+		}
+
 	protected:
 		
 		frame_lazy( const frame_type_ptr &org, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
@@ -349,50 +361,41 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			/// TODO: Check for changes in position requests
-			if ( last_frame_ == 0 || last_frame_->get_position( ) != get_position( ) )
+			int frameno = get_position( );
+			
+			frame = fetch_from_slot( );
+			
+			// If there is nothing to decode just return frame
+			if( !frame->get_stream( ) )
+				return;
+		
+			if ( last_frame_ == 0 )
 			{
-				int frameno = get_position( );
-				
-				frame = fetch_from_slot( );
-				
-				// If there is nothing to decode just return frame
-				if( !frame->get_stream( ) )
-					return;
-			
-				if ( last_frame_ == 0 )
+				if( !initialized_ )
 				{
-					if( !initialized_ )
-					{
-						initialize( frame );
-						initialized_ = true;
-					}
-					
-					determine_decode_use( frame );
+					initialize( frame );
+					initialized_ = true;
 				}
+				
+				determine_decode_use( frame );
+			}
 
-				if ( gop_decoder_ )
-				{
-					gop_decoder_->seek( frameno );
-					frame = gop_decoder_->fetch( );
-				}
-				else
-				{
-					ml::filter_type_ptr graph = filter_obtain( );
-					frame = fetch_from_slot( );
-					graph->fetch_slot( 0 )->push( frame );
-					graph->seek( get_position( ) );
-					frame = graph->fetch( );
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, true ) );
-				}
-			
-				// Keep a reference to the last frame in case of a duplicated request
-				last_frame_ = frame;
+			if ( gop_decoder_ )
+			{
+				gop_decoder_->seek( frameno );
+				frame = gop_decoder_->fetch( );
 			}
 			else
 			{
-				frame = last_frame_;
+				ml::filter_type_ptr graph = filter_obtain( );
+				frame = fetch_from_slot( );
+				graph->fetch_slot( 0 )->push( frame );
+				graph->seek( get_position( ) );
+				frame = graph->fetch( );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, true ) );
 			}
+		
+			last_frame_ = frame;
 		}
 		
 		void initialize( const ml::frame_type_ptr &first_frame )
@@ -417,7 +420,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 		pl::pcos::property prop_profile_;
 		pl::pcos::property prop_force_;
 		std::deque< ml::filter_type_ptr > decoder_;
-		ml::filter_type_ptr gop_decoder_;
+		ml::filter_type_ptr gop_encoder_;
+		bool is_long_gop_;
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr profile_to_encoder_mappings_;
 		std::string video_codec_;
@@ -429,7 +433,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
 			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, decoder_( )
-			, gop_decoder_( )
+			, gop_encoder_( )
+			, is_long_gop_( false )
 			, last_frame_( )
 			, profile_to_encoder_mappings_( )
 			, video_codec_( )
@@ -476,7 +481,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
  		ml::filter_type_ptr filter_obtain( )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			ml::filter_type_ptr result = gop_decoder_;
+			ml::filter_type_ptr result = gop_encoder_;
 			if ( !result )
 			{
 				if ( decoder_.size( ) )
@@ -495,7 +500,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 		void filter_release( ml::filter_type_ptr filter )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			if ( filter != gop_decoder_ )
+			if ( filter != gop_encoder_ )
 				decoder_.push_back( filter );
 		}
 
@@ -512,58 +517,57 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 
 		bool create_pushers( ml::frame_type_ptr &frame )
 		{
-			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
+			if( is_long_gop_ )
 			{
-				gop_decoder_ = filter_create( );
-				gop_decoder_->connect( fetch_slot( 0 ) );
+				ARLOG_DEBUG3( "Creating gop_encoder in encode filter" );
+				gop_encoder_ = filter_create( );
+				gop_encoder_->connect( fetch_slot( 0 ) );
 				
-				return gop_decoder_.get( ) != 0;
+				return gop_encoder_.get( ) != 0;
 			}
 			return false;
 		}
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			/// TODO: Check for changes in position requests
-			if ( last_frame_ == 0 || last_frame_->get_position( ) != get_position( ) )
+			int frameno = get_position( );
+		
+			if ( last_frame_ == 0 )
 			{
-				int frameno = get_position( );
-			
-				if ( last_frame_ == 0 )
-				{
-					initialize_encoder_mapping( );
-					
-					frame = fetch_from_slot( );
-					create_pushers( frame );
-				}
+				initialize_encoder_mapping( );
 				
-				if ( gop_decoder_ )
-				{
-					gop_decoder_->seek( frameno );
-					frame = gop_decoder_->fetch( );
-				}
-				else
-				{
-					ml::filter_type_ptr graph = filter_obtain( );
-					frame = fetch_from_slot( );
-					
-					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
-					if( frame->get_stream( ) && frame->get_stream( )->codec( ) != video_codec_ )
-					{
-						ARLOG_DEBUG3( "Mismatching stream types: %1% and %2%, resetting stream." )( frame->get_stream( )->codec( ) )( video_codec_ );
-						frame->set_stream( stream_type_ptr() );
-					}
-					   
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
-				}
-			
-				// Keep a reference to the last frame in case of a duplicated request
-				last_frame_ = frame;
+				frame = fetch_from_slot( );
+				create_pushers( frame );
+			}
+
+			if ( gop_encoder_ )
+			{
+				gop_encoder_->seek( frameno );
+				frame = gop_encoder_->fetch( );
 			}
 			else
 			{
-				frame = last_frame_;
+				ml::filter_type_ptr graph = filter_obtain( );
+				frame = fetch_from_slot( );
+				
+				if( prop_force_.value<int>() != 0 )
+				{
+					 ARLOG_DEBUG3( "Resetting stream on frame in decode filter, since the force property is set" );
+					 frame->set_stream( stream_type_ptr() );
+				}
+				else if( frame->get_stream( ) && ( frame->get_stream( )->codec( ) != video_codec_ ) )
+				{
+					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
+					ARLOG_DEBUG3( "Mismatching stream types: %1% and %2%, resetting stream." )( frame->get_stream( )->codec( ) )( video_codec_ );
+					frame->set_stream( stream_type_ptr() );
+				}
+				
+				   
+				frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
 			}
+		
+			// Keep a reference to the last frame in case of a duplicated request
+			last_frame_ = frame;
 		}
 		
 		void initialize_encoder_mapping( )
@@ -588,8 +592,15 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			
 			cl::profile::list::const_iterator vc_it = encoder_profile->find( "stream_codec_id" );
 			ARENFORCE_MSG( vc_it != encoder_profile->end( ), "Failed to find a apropriate encoder" )( prof );
-			
+
 			video_codec_ = vc_it->value;
+
+			vc_it = encoder_profile->find( "video_gop_size" );
+			if( vc_it != encoder_profile->end() && vc_it->value != "1" )
+			{
+				ARLOG_DEBUG3( "Video codec profile %1% is long gop, since video_gop_size is %2%" )( prof )( vc_it->value );
+				is_long_gop_ = true;
+			}
 		}
 };
 
@@ -913,41 +924,33 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_type
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			/// TODO: Check for changes in position requests
-			if ( last_frame_ == 0 || last_frame_->get_position( ) != get_position( ) )
+			threads_ = prop_threads_.value< int >( );
+
+			if ( last_frame_ == 0 )
 			{
-				threads_ = prop_threads_.value< int >( );
+				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+				pool_ = new cl::thread_pool( threads_, timeout );
+			}
 
-				if ( last_frame_ == 0 )
-				{
-					boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
-					pool_ = new cl::thread_pool( threads_, timeout );
-				}
-
-				if ( last_frame_ == 0 || get_position( ) != last_frame_->get_position( ) + 1 )
-				{
-					clear( );
-					frameno_ = get_position( );
-					for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ); i ++)
-						add_job( frameno_ ++ );
-				}
-			
-				// Wait for the requested frame to finish
-				frame = wait_for_available( get_position( ) );
-
-				// Add more jobs to the pool
-				int fillable = threads_ * 2 - pool_->jobs_pending( );
-
-				if ( frameno_ < get_frames( ) && fillable -- > 0 )
+			if ( last_frame_ == 0 || get_position( ) != last_frame_->get_position( ) + 1 )
+			{
+				clear( );
+				frameno_ = get_position( );
+				for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ); i ++)
 					add_job( frameno_ ++ );
+			}
+		
+			// Wait for the requested frame to finish
+			frame = wait_for_available( get_position( ) );
 
-				// Keep a reference to the last frame in case of a duplicated request
-				last_frame_ = frame;
-			}
-			else
-			{
-				frame = last_frame_;
-			}
+			// Add more jobs to the pool
+			int fillable = threads_ * 2 - pool_->jobs_pending( );
+
+			if ( frameno_ < get_frames( ) && fillable -- > 0 )
+				add_job( frameno_ ++ );
+
+			// Keep a reference to the last frame in case of a duplicated request
+			last_frame_ = frame;
 		}
 };
 

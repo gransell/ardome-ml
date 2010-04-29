@@ -27,8 +27,6 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 
 		virtual ~filter_store( )
 		{
-			if ( first_ && store_ )
-				store_->push( first_->shallow( ) );
 			if ( store_ )
 				store_->complete( );
 		}
@@ -47,8 +45,6 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 			{
 				if ( store_ == 0 && prop_store_.value< pl::wstring >( ) != L"" )
 				{
-					first_ = result;
-
 					store_ = ml::create_store( prop_store_.value< pl::wstring >( ), result );
 
 					if ( store_ )
@@ -62,11 +58,6 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 
 				if ( store_ )
 				{
-					if ( first_ && first_->get_position( ) != result->get_position( ) )
-						store_->push( first_->shallow( ) );
-
-					first_ = ml::frame_type_ptr( );
-
 					ARENFORCE_MSG(store_->push( result->shallow( ) ),
 						"Pushing to store %1% failed. A possible cause could be insufficient disk space.")
 						(prop_store_.value<pl::wstring>());
@@ -113,7 +104,6 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 		pcos::property prop_store_;
 
 		ml::store_type_ptr store_;
-		ml::frame_type_ptr first_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring &resource )
