@@ -304,6 +304,8 @@ public:
 		, writable_( true )
 		, pts_( 0 )
 		, position_( 0 )
+		, sar_num_( -1 )
+		, sar_den_( 1 )
 		, field_order_( progressive )
 	{ crop_clear( ); }
 
@@ -316,6 +318,8 @@ public:
 		, writable_( true )
 		, pts_( other.pts( ) )
 		, position_( other.position( ) )
+		, sar_num_( -1 )
+		, sar_den_( 1 )
 		, field_order_( other.field_order( ) )
 	{ crop_clear( ); }
 
@@ -329,6 +333,8 @@ private:
 		, writable_( true )
 		, pts_( other.pts( ) )
 		, position_( other.position( ) )
+		, sar_num_( -1 )
+		, sar_den_( 1 )
 		, field_order_( other.field_order( ) )
 	{
 		// We need to initialise the new instance crop info - this ignores
@@ -472,6 +478,12 @@ public:
 	int position( )				const { return position_; }
 	void set_position( int position ) { position_ = position; }
 
+	int get_sar_num( )			const { return sar_num_; }
+	int get_sar_den( )			const { return sar_den_; }
+
+	void set_sar_num( int sar_num )	  { sar_num_ = sar_num; }
+	void set_sar_den( int sar_den )	  { sar_den_ = sar_den; }
+
 	field_order_flags field_order( ) const { return field_order_; }
 	void set_field_order( field_order_flags flags ) { field_order_ = flags; }
 
@@ -579,6 +591,11 @@ private:
 	bool writable_;
 	double pts_;
 	int position_;
+
+	//Sample aspect ratio
+	int sar_num_;
+	int sar_den_;
+
 	field_order_flags field_order_;
 };
 
