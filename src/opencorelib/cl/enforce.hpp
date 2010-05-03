@@ -74,11 +74,6 @@ namespace olib
 
 		inline invoke_enforce make_enforcer() 
 		{
-			if( str_util::env_var_exists(_CT("AML_USE_ASSERT_ARENFORCE")) )
-			{
-				//Don't throw an exception, just assert to break into the debugger
-				assert( false && "ARENFORCE is implemented as assert since AML_USE_ASSERT_ARENFORCE is set" );
-			}
 			return invoke_enforce();
 		}
 	}	

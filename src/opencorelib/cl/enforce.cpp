@@ -44,7 +44,19 @@ namespace olib
 			try
 			{
 				base_exception excep(*m_exception_context);
-                the_log_handler::instance().log(excep, _CT("olib::opencorelib::invoke_enforce::~invoke_enforce"));
+
+				if( str_util::env_var_exists(_CT("AML_USE_ASSERT_ARENFORCE")) )
+				{
+					olib::t_string enforce_msg = excep.what();
+
+					//Don't throw an exception, just assert to break into the debugger
+					assert( false && "ARENFORCE is implemented as assert since AML_USE_ASSERT_ARENFORCE is set. Details are available in the enforce_msg string above." );
+				}
+				else
+				{
+					the_log_handler::instance().log(excep, _CT("olib::opencorelib::invoke_enforce::~invoke_enforce"));
+				}
+
 				try
 				{
 					m_exception_context.reset();
