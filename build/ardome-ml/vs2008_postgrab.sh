@@ -19,7 +19,7 @@ fi
 
 if [ ! -d rubberband ]; then
 	echo "Extracting rubberband..."
-	unzip ../tmp/rubberband-1.5.0.zip	
+	unzip -oq ../tmp/rubberband-1.5.0.zip	
 	if [ ! $? == 0 ]; then
 		echo "Failed to run: unzip rubberband.zip. Terminating."
 		exit
