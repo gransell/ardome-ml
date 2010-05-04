@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost', 'boost_date_time', 'boost_system' )
+local_env.packages( 'boost', 'boost_date_time', 'boost_system', 'loki', )
 options = local_env.optional( 'rubberband' )
 build = options[ 'have_rubberband' ]
 
