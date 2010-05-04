@@ -72,23 +72,22 @@ class rubber
 								  RubberBandStretcher::OptionWindowStandard;
 
 					// Create the rubberband
-					rubber_ = new RubberBandStretcher( frequency, channels, options, 1.0 / speed, pitch );
+					rubber_ = new RubberBandStretcher( frequency, channels, options, 1.0, 1.0 );
 
-					// Determine the resultant frame rate
-					boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * frame->get_fps_num( ) ) * speed );
-					boost::int64_t d = boost::int64_t( 10000LL * frame->get_fps_den( ) );
-					ml::remove_gcd( n, d );
+					// Store the source frame rate
+					source_fps_num_ = frame->get_fps_num( );
+					source_fps_den_ = frame->get_fps_den( );
 
 					// Needed in order to determine how many samples are expected for each frame
 					input_ = input;
 					frequency_ = audio->frequency( );
 					channels_ = audio->channels( );
-					fps_num_ = n;
-					fps_den_ = d;
 
 					// Current seek state
 					expected_ = 0;
-					source_ = 0;
+
+					// Sync to requested params
+					sync( speed, pitch, true );
 				}
 			}
 
@@ -96,14 +95,24 @@ class rubber
 		}
 
 		// Sync with changes to the speed and pitch
-		void sync( double speed, double pitch )
+		void sync( double speed, double pitch, bool force = false )
 		{
-			if ( 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) )
+			if ( force || 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) )
 			{
+				// Sync rubberband state
 				rubber_->setTimeRatio( 1.0 / speed );
 				rubber_->setPitchScale( pitch );
 				rubber_->reset( );
+
+				// Sync source to expected frame
 				source_ = expected_;
+
+				// Determine the resultant frame rate
+				boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * source_fps_num_ ) * speed );
+				boost::int64_t d = boost::int64_t( 10000LL * source_fps_den_ );
+				ml::remove_gcd( n, d );
+				fps_num_ = n;
+				fps_den_ = d;
 			}
 		}
 
@@ -208,6 +217,8 @@ class rubber
 	private:
 		ml::input_type_ptr input_;
 		RubberBandStretcher *rubber_;
+		int source_fps_num_;
+		int source_fps_den_;
 		int fps_num_;
 		int fps_den_;
 		int frequency_;
