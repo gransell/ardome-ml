@@ -36,3 +36,10 @@ if [ ! $? == 0 ]; then
   echo "Failed to unpack SDL. Terminating."
   exit 1
 fi
+
+echo "Extracting rubberband..."
+tar xjf rubberband.tbz2
+if [ ! $? == 0 ]; then
+  echo "Failed to unpack rubberband. Terminating."
+  exit 1
+fi
