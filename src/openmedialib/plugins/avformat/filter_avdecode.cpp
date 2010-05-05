@@ -246,11 +246,52 @@ class stream_queue
 			{
 				result.num = context_->sample_aspect_ratio.num;
 				result.den = context_->sample_aspect_ratio.den;
+
+				result = extended_res_sar_workaround( result, context_->width, context_->height );
 			}
 			return result;
 		}
 
 	private:
+
+		//Workaround for media with extended resolution lines
+		ml::fraction extended_res_sar_workaround( const ml::fraction& org_sar, boost::int32_t width, boost::int32_t height )
+		{
+			boost::rational<boost::int32_t> result( org_sar.num, org_sar.den );
+			
+			if( result.numerator() && result.denominator() && width == 720 && ( height == 608 || height == 512 ) )
+			{
+				const boost::rational<boost::int32_t> aspect4_3( 4, 3 );
+				const boost::rational<boost::int32_t> aspect16_9( 16, 9 );
+
+				const boost::rational<boost::int32_t> dim( width, height );
+
+				if( result * dim == aspect4_3 )
+				{
+					if( height == 608 ) //PAL
+					{
+						result.assign( 59, 54 );
+					}
+					else if( height == 512 ) //NTSC
+					{
+						result.assign( 10, 11 );
+					}
+				}
+				else if( result * dim == aspect16_9 )
+				{
+					if( height == 608 ) //PAL
+					{
+						result.assign( 118, 81 );
+					}
+					else if( height == 512 ) //NTSC
+					{
+						result.assign( 40, 33 );
+					}
+				}
+			}
+
+			return ml::fraction( result.numerator(), result.denominator() );
+		}
 
 		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
 		{
@@ -847,7 +888,7 @@ class avformat_encode_filter : public filter_type
 							gop_closed = 1;
 					}
 					
-					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->video_codec( ) ) )
+					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->stream_codec_id( ) ) )
 					   stream_types_match = false;
 	
 					if ( prop_force_.value< int >( ) )
