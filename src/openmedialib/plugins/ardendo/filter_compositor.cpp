@@ -574,7 +574,11 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				}
 
 				// Provide basic mixing capabilities in deferred mode
-				ml::audio_type_ptr audio = result->get_audio( );
+				ml::audio_type_ptr audio;
+				if( result->has_audio( ) )
+				{
+					audio = result->get_audio( );
+				}
 
 				// Ignore deferred when running in muxer mode
 				bool deferred = prop_deferred_.value< int >( ) != 0 && resource_ == L"compositor";
