@@ -25,6 +25,8 @@ using namespace RubberBand;
 
 namespace olib { namespace openmedialib { namespace ml { namespace rubberband {
 
+static pl::pcos::key key_audio_reverse_ =  pl::pcos::key::from_string( "reverse_audio" );
+
 class rubber
 {
 	public:
@@ -125,9 +127,11 @@ class rubber
 
 		ml::frame_type_ptr fetch( int position )
 		{
+			ml::frame_type_ptr result;
+
 			// Ensure that we have something to work with
 			if ( !started( ) )
-				return ml::frame_type_ptr( );
+				return result;
 
 			// Reset the state if necessary
 			if ( position != expected_ )
@@ -138,40 +142,83 @@ class rubber
 				source_ = position;
 			}
 
-			// Determine how many samples we need for this frame
-			int samples = ml::audio::samples_for_frame( position, frequency_, fps_num_, fps_den_ );
+			double speed = 1.0 / rubber_->getTimeRatio( );
 
-			// Loop until we have the requisite samples
-			while( rubber_->available( ) < samples && source_ < input_->get_frames( ) )
+			if ( speed > 2.0 )
 			{
-				ml::frame_type_ptr frame = input_->fetch( source_ );
-				cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
-				source_ += increment_;
-				ml::audio_type_ptr audio = frame ? frame->get_audio( ) : ml::audio_type_ptr( );
-				ARENFORCE_MSG( audio, "Audio required for rubberband" );
-				if ( increment_ < 0 ) audio = ml::audio::reverse( audio );
-				ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
-				ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
-				float_ptr *channels = convert( floats );
-				rubber_->process( channels, size_t( floats->samples( ) ), source_ == input_->get_frames( ) );
-				clean( channels );
+				input_->seek( position );
+				result = input_->fetch( );
+				int samples = result->get_audio( )->samples( );
+				int required = int( samples / speed );
+				ml::audio_type_ptr audio = reverse_audio( result, increment_ );
+				result->set_audio( ml::audio::pitch( audio, required ) );
+				result->set_fps( int( fps_num_ ), int( fps_den_ ) );
+				result->set_pts( position * double( fps_den_ ) / fps_num_ );
+				result->set_duration( double( fps_den_ ) / fps_num_ );
+				result->set_position( position );
 			}
+			else if ( speed != 1.0 )
+			{
+				// Determine how many samples we need for this frame
+				int samples = ml::audio::samples_for_frame( position, frequency_, fps_num_, fps_den_ );
 
-			// Create the result frame
-			ml::frame_type_ptr result = cache_->frame_for_position( lru_key_for_position( position ) );
-			ARENFORCE_MSG( result, "Frame inaccessible from cache" );
-			result->set_fps( fps_num_, fps_den_ );
-			result->set_pts( position * double( fps_den_ ) / fps_num_ );
-			result->set_duration( double( fps_den_ ) / fps_num_ );
-			result->set_position( position );
+				// Loop until we have the requisite samples
+				while( rubber_->available( ) < samples && source_ < input_->get_frames( ) )
+				{
+					ml::frame_type_ptr frame = input_->fetch( source_ );
+					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
+					source_ += increment_;
+					ml::audio_type_ptr audio = frame ? frame->get_audio( ) : ml::audio_type_ptr( );
+					ARENFORCE_MSG( audio, "Audio required for rubberband" );
+					audio = reverse_audio( frame, increment_ );
+					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
+					ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
+					float_ptr *channels = convert( floats );
+					rubber_->process( channels, size_t( floats->samples( ) ), source_ == input_->get_frames( ) );
+					clean( channels );
+				}
 
-			// Obtain the samples required
-			result->set_audio( retrieve( position, samples ) );
+				// Create the result frame
+				result = cache_->frame_for_position( lru_key_for_position( position ) );
+				ARENFORCE_MSG( result, "Frame inaccessible from cache" );
+				result->set_fps( fps_num_, fps_den_ );
+				result->set_pts( position * double( fps_den_ ) / fps_num_ );
+				result->set_duration( double( fps_den_ ) / fps_num_ );
+				result->set_position( position );
+
+				// Obtain the samples required
+				result->set_audio( retrieve( position, samples ) );
+			}
+			else
+			{
+				input_->seek( position );
+				result = input_->fetch( );
+			}
 
 			// We expect the next frame to follow...
 			expected_ += increment_;
 
 			return result;
+		}
+
+		ml::audio_type_ptr reverse_audio( ml::frame_type_ptr &frame, int increment_ )
+		{
+			ml::audio_type_ptr audio = frame->get_audio( );
+
+			// Make sure we have a propery on the frame
+			if ( !frame->property_with_key( key_audio_reverse_ ).valid( ) )
+				frame->properties( ).append( pl::pcos::property( key_audio_reverse_ ) = 0 );
+
+			// Obtain the reverse audio property
+			pl::pcos::property reverse = frame->property_with_key( key_audio_reverse_ );
+
+			if ( ( increment_ < 0 && reverse.value< int >( ) == 0 ) || ( increment_ > 0 && reverse.value< int >( ) == 1 ) )
+			{
+				audio = ml::audio::reverse( audio );
+				reverse = !reverse.value< int >( );
+			}
+
+			return audio;
 		}
 
 		float_ptr *allocate( int samples )
@@ -290,13 +337,11 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_speed_( filter_->property( "speed" ) )
 			, prop_samples_( pcos::key::from_string( "samples" ) )
-			, prop_step_( pcos::key::from_string( "step" ) )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_speed_ = 1.0 );
 			properties( ).append( prop_samples_ = 0 );
-			properties( ).append( prop_step_ = 1 );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -313,65 +358,8 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			if ( filter_->fetch_slot( ) != fetch_slot( ) )
 				filter_->connect( fetch_slot( ) );
 
-			// We may need more that one frame here (depending on the step value)
-			std::vector < ml::frame_type_ptr > frames;
-
-			// State for obtaining frames
-			int step = abs( prop_step_.value< int >( ) );
-			int inc = prop_step_.value< int >( ) < 0 ? -1 : 1;
-			int position = get_position( );
-			int samples = 0;
-
-			// We always need one frame
-			result = get( position );
-
-			// Obtain the number of frames specified in the step
-			while( -- step > 0 )
-			{
-				position += inc;
-				result = get( position );
-				samples += result->get_audio( )->samples( );
-				frames.push_back( result );
-			}
-
-			// Merge if we have multiple frames
-			if ( frames.size( ) > 1 )
-				result = merge( frames, inc, samples );
-		}
-
-		ml::frame_type_ptr get( int position )
-		{
-			ml::frame_type_ptr result;
-
-			if ( prop_speed_.value< double >( ) > 0.0 )
-			{
-				filter_->seek( position );
-				result = filter_->fetch( );
-			}
-			else
-			{
-				fetch_slot( )->seek( position );
-				result = fetch_slot( )->fetch( );
-			}
-
-			return result;
-		}
-
-		ml::frame_type_ptr merge( const std::vector< ml::frame_type_ptr > &frames, int inc, int samples )
-		{
-			ml::audio_type_ptr sample = frames[ 0 ]->get_audio( );
-			int frequency = sample->frequency( );
-			int channels = sample->channels( );
-			ml::audio_type_ptr audio = ml::audio::allocate( frames[ 0 ]->get_audio( ), frequency, channels, samples );
-			int position = 0;
-			for ( std::vector< ml::frame_type_ptr >::const_iterator iter = frames.begin( ); iter != frames.end( ); iter ++ )
-			{
-				memcpy( ( boost::uint8_t * )audio->pointer( ) + position, ( *iter )->get_audio( )->pointer( ), ( *iter )->get_audio( )->size( ) );
-				position += ( *iter )->get_audio( )->size( );
-			}
-			frame_type_ptr result = frames[ 0 ]->shallow( );
-			result->set_audio( audio );
-			return result;
+			filter_->seek( get_position( ) );
+			result = filter_->fetch( );
 		}
 
 		ml::filter_type_ptr filter_;
@@ -379,7 +367,6 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 		pcos::property prop_fps_den_;
 		pcos::property prop_speed_;
 		pcos::property prop_samples_;
-		pcos::property prop_step_;
 };
 
 //
