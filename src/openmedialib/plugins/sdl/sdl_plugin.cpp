@@ -609,7 +609,10 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
         	bool result = frame && frame->get_audio( );
 			if ( result )
+			{
+				frame->get_audio( )->set_position( frame->get_position( ) );
 				result = queue_audio( frame->get_audio( ), lock );
+			}
 
 			return result;
 		}
@@ -675,7 +678,10 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			audio_type_ptr audio = audio::coerce( audio::FORMAT_PCM16, input );
 
 			if ( audio->channels( ) > 2 )
-				audio = audio::channel_convert( audio, 2 );
+			{
+				audio = audio::channel_convert( audio, 2, last_channels_ );
+				last_channels_ = audio;
+			}
 
 			result = acquire_audio( audio, lck );
 
@@ -831,6 +837,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
         boost::shared_ptr< pcos::observer > obs_pause_;
         bool is_paused_;
 		int frame_duration_;
+		audio_type_ptr last_channels_;
 };
 
 //

@@ -96,7 +96,8 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			// Small hack to allow resampler for channel conversion only
 			if(	prop_output_sample_freq_.value<int>( ) == -1 )
 			{
-				current_audio = audio::channel_convert( current_audio, prop_output_channels_.value<int>( ) );
+				current_audio = audio::channel_convert( current_audio, prop_output_channels_.value<int>( ), last_channels_ );
+				last_channels_ = current_audio;
 				if ( current_audio )
 					current_frame->set_audio( current_audio );
 				return;
@@ -105,7 +106,8 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 			// since ffmpeg resampler will only accept 2 channels or less, force any input with more than 2 channels to conform
 			if(current_audio->channels() > 2)
 			{
-				current_audio = audio::channel_convert(current_audio, 2);
+				current_audio = audio::channel_convert(current_audio, 2, last_channels_);
+				last_channels_ = current_audio;
 				current_frame->set_audio( current_audio );
 			}
 
@@ -234,6 +236,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
 	
 		std::vector< short > in_buffer_;
 		std::vector< short > out_buffer_;
+		audio_type_ptr last_channels_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring &resource )

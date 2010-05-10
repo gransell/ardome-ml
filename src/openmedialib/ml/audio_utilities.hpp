@@ -29,7 +29,7 @@ extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_typ
 extern ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source );
 
 // Convenience function to convert to another channel arrangement without changing type
-extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int channels );
+extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int channels, const audio_type_ptr &c = audio_type_ptr( ) );
 
 // Convenience function to extract a specific channel wihtout changing type
 extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &a, int channel );
@@ -39,6 +39,9 @@ extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, int, const audio_type_ptr &c = audio_type_ptr( ) );
+
+// Place the specified channel from b in the channel from b
+extern ML_DECLSPEC audio_type_ptr channel_place( audio_type_ptr &a, const audio_type_ptr &b, int out, int in );
 
 // Convenience function to mix two objects without changing the audio sample type in the first object
 extern ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr &b, const audio_type_ptr &c = audio_type_ptr( ) );

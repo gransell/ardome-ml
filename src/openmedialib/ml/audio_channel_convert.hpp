@@ -252,9 +252,10 @@ namespace {
 }
 
 template < typename T >
-ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, int channels )
+ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, int channels, const audio_type_ptr &last = audio_type_ptr( ) )
 {
 	const boost::shared_ptr< T > input_audio = coerce< T >( in );
+	const boost::shared_ptr< T > last_audio = coerce< T >( last );
 
 	// Reject if given dodgy input
 	if( input_audio == boost::shared_ptr< T >( ) )
@@ -283,6 +284,8 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 	
 	typename T::sample_type *output = output_audio->data( );
 	typename T::sample_type *input = input_audio->data( );
+	typename T::sample_type *previous = last_audio ? last_audio->data( ) : 0;
+	
 	int channels_in = input_audio->channels( );
 
 	std::vector< float > sum( channels );
@@ -306,7 +309,9 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 
 			// low pass filter to counter any effects from clipping
 			if(sample_idx == 0)
-				*output = ( typename T::sample_type )( one_minus_exponent * clipped[ch] );
+				*output = !previous ? ( typename T::sample_type )( one_minus_exponent * clipped[ch] ) :
+									  ( typename T::sample_type )( one_minus_exponent * clipped[ch] + exponent * ( *( previous + last->samples( ) * last->channels( ) - channels + ch ) ) );
+					
 			else
 				*output = ( typename T::sample_type )( one_minus_exponent * clipped[ch] + exponent * ( *( output - channels ) ) );
 
