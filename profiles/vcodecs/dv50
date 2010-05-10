@@ -1,4 +1,5 @@
 video_codec = dvvideo
 video_bit_rate = 50000000
+video_gop_size = 1
 
 stream_codec_id = http://www.ardendo.com/apf/codec/dv/dv

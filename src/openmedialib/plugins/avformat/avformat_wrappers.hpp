@@ -283,7 +283,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
 					key_ = position_;
 
-				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_ );
+				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, context_->gop_size );
 
 				if ( out_size )
 					memcpy( stream->bytes( ), outbuf_, out_size );

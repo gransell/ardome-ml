@@ -388,7 +388,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			else
 			{
 				ml::filter_type_ptr graph = filter_obtain( );
-				frame = fetch_from_slot( );
 				graph->fetch_slot( 0 )->push( frame );
 				graph->seek( get_position( ) );
 				frame = graph->fetch( );
@@ -548,7 +547,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			else
 			{
 				ml::filter_type_ptr graph = filter_obtain( );
-				frame = fetch_from_slot( );
+				if( !frame )
+					frame = fetch_from_slot( );
 				
 				if( prop_force_.value<int>() != 0 )
 				{

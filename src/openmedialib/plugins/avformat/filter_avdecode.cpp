@@ -24,6 +24,7 @@
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 
 #include <vector>
 
@@ -89,7 +90,10 @@ class stream_queue
 		virtual ~stream_queue( )
 		{
 			if ( context_ )
+			{
+				ARLOG_DEBUG5( "Destroying decoder context" );
 				avcodec_close( context_ );
+			}
 			av_free( frame_ );
 		}
 
@@ -359,6 +363,7 @@ class stream_queue
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				ARENFORCE_MSG( codec_, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ result->get_stream( )->codec( ) ] )( result->get_stream( )->codec( ) );
 				avcodec_open( context_, codec_ );
+				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 				#ifndef WIN32
 				avcodec_thread_init( context_, 4 );
 				#endif
@@ -763,7 +768,7 @@ class avformat_video_streamer : public ml::stream_type
 		/// We dont know the gop size atm
 		virtual const int estimated_gop_size( ) const
 		{
-			return 0;
+			return stream_ ? stream_->estimated_gop_size( ) : 0;
 		}
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)

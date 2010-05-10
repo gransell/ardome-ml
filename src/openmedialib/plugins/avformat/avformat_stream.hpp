@@ -18,7 +18,7 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, length_( length )
@@ -32,13 +32,14 @@ class stream_avformat : public ml::stream_type
 			, channels_( 0 )
 			, samples_( 0 )
 			, pf_( pf )
+			, estimated_gop_size_( estimated_gop_size )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
 				codec_ = codec_name_lookup_[ codec ];
 		}
 
 		// Constructor with known codec name
-		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf )
+		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, codec_( codec )
@@ -53,11 +54,12 @@ class stream_avformat : public ml::stream_type
 			, channels_( 0 )
 			, samples_( 0 )
 			, pf_( pf )
+			, estimated_gop_size_( estimated_gop_size )
 		{
 		}
 
 		/// Constructor for a audio packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf  )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
 			, length_( length )
@@ -71,6 +73,7 @@ class stream_avformat : public ml::stream_type
 			, channels_( channels )
 			, samples_( samples )
 			, pf_( pf )
+			, estimated_gop_size_( estimated_gop_size )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
 				codec_ = codec_name_lookup_[ codec ];
@@ -137,7 +140,7 @@ class stream_avformat : public ml::stream_type
 		/// Gop size is currently unknown for avformat inputs
 		virtual const int estimated_gop_size( ) const
 		{ 
-			return 0;
+			return estimated_gop_size_;
 		}
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
@@ -191,6 +194,7 @@ class stream_avformat : public ml::stream_type
 		int channels_;
 		int samples_;
 		olib::openpluginlib::wstring pf_;
+		int estimated_gop_size_;
 };
 
 } } }
