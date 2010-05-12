@@ -52,6 +52,7 @@ extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 static const pl::pcos::key key_gop_closed_ = pl::pcos::key::from_string( "gop_closed" );
+static const pl::pcos::key key_fixed_sar_ = pl::pcos::key::from_string( "fixed_sar" );
 
 static bool is_dv( const std::string &codec )
 {
@@ -396,11 +397,25 @@ class stream_queue
 							image = convert_to_oil( frame_, fmt, width, height );
 							image->set_position( pkt->position( ) );
 
-							ml::fraction img_sar = sar();
-							if( img_sar.num != 0)
+							pl::pcos::property fixed_sar_prop = pkt->properties().get_property_with_key( key_fixed_sar_ );
+							if( fixed_sar_prop.valid() && fixed_sar_prop.value<int>() )
 							{
-								image->set_sar_num( img_sar.num );
-								image->set_sar_den( img_sar.den );
+								//Use the sample aspect ratio from the frame, 
+								//not the one from the video essence.
+								ml::fraction stream_sar = pkt->sar();
+								image->set_sar_num( stream_sar.num );
+								image->set_sar_den( stream_sar.den );
+							}
+							else
+							{
+								//Check the codec context for the sample aspect
+								//ratio of the video essence.
+								ml::fraction img_sar = sar();
+								if( img_sar.num != 0)
+								{
+									image->set_sar_num( img_sar.num );
+									image->set_sar_den( img_sar.den );
+								}
 							}
 
 							//We set decoded to true, since the image is a decoded version
@@ -532,9 +547,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
 				set_image( queue_->decode_image( stream_->position( ) ) , true );
-				ml::fraction sar = queue_->sar( );
-				if ( sar.num && sar.den )
-					set_sar( sar.num, sar.den );
 			}
 			return image_;
 		}
