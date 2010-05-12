@@ -16,15 +16,17 @@ namespace olib { namespace openmedialib { namespace ml {
     
     lru_cache_type_ptr scope_handler::lru_cache( const std::wstring &scope )
     {
-        if( lru_cache_.find( scope ) == lru_cache_.end() )
+		std::map< std::wstring, weak_lru_cache_type_ptr >::iterator found = lru_cache_.find( scope );
+		lru_cache_type_ptr locked;
+        if( found == lru_cache_.end( ) || !(locked = found->second.lock( ) ) )
         {
-            lru_cache_[scope] = lru_cache_type_ptr( new lru_cache_type() );
+			locked = lru_cache_type_ptr( new lru_cache_type() );
+			lru_cache_[scope] = locked; 
         }
         
-        return lru_cache_[scope];
+        return locked;
     }
-    
-    
+        
     void lru_cache_type::used( const key_type &pos )
     {
         list< key_type >::iterator lru_it = std::find( lru_.begin(), lru_.end(), pos );

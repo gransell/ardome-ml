@@ -11,6 +11,7 @@
 #include <list>
 #include <map>
 #include <boost/thread.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -75,6 +76,7 @@ private:
 };
 
 typedef ML_DECLSPEC boost::shared_ptr< lru_cache_type > lru_cache_type_ptr;
+typedef ML_DECLSPEC boost::weak_ptr< lru_cache_type > weak_lru_cache_type_ptr;
 
 class scope_handler;
 
@@ -95,7 +97,7 @@ private:
     scope_handler()
     {}
     
-    std::map< std::wstring, lru_cache_type_ptr > lru_cache_;
+    std::map< std::wstring, weak_lru_cache_type_ptr > lru_cache_;
 };
 
     

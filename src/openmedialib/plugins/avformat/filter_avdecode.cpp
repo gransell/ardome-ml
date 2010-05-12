@@ -83,9 +83,12 @@ class stream_queue
 			, expected_( 0 )
 			, frame_( avcodec_alloc_frame( ) )
 			, offset_( 0 )
+			, lru_cache_( )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( audio_buf_size_ );
+
+			lru_cache_ = ml::the_scope_handler::Instance().lru_cache( scope_ );
 		}
 
 		virtual ~stream_queue( )
@@ -103,10 +106,9 @@ class stream_queue
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::frame_type_ptr result;
 			
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
-						
-			result = lru_cache->frame_for_position( my_key );
+
+			result = lru_cache_->frame_for_position( my_key );
 			
 			if( !result && position < input_->get_frames( ) )
 			{
@@ -119,7 +121,7 @@ class stream_queue
 					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
 						look_for_closed( result );
 						
-					lru_cache->insert_frame_for_position( my_key, result );
+					lru_cache_->insert_frame_for_position( my_key, result );
 					
 					if ( result->get_position( ) == position )
 						break;
@@ -134,10 +136,9 @@ class stream_queue
 		il::image_type_ptr decode_image( int position )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 						
-			il::image_type_ptr img = lru_cache->image_for_position( my_key );
+			il::image_type_ptr img = lru_cache_->image_for_position( my_key );
 			
 			if( img )
 			{
@@ -198,7 +199,7 @@ class stream_queue
 							if ( frame_->interlaced_frame )
 								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
 
-							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
+							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 						}
 						expected_ ++;
 
@@ -213,10 +214,9 @@ class stream_queue
 		ml::audio_type_ptr decode_audio( int position )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 			
-			audio_type_ptr aud = lru_cache->audio_for_position( my_key );
+			audio_type_ptr aud = lru_cache_->audio_for_position( my_key );
 			
 			if( aud )
 				return aud;
@@ -432,8 +432,7 @@ class stream_queue
 							}
 
 							image->set_position( result->get_position( ) - offset_ );
-							lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
+							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 
 							if ( result->get_position( ) >= position + offset_ )
 								found = true;
@@ -498,6 +497,7 @@ class stream_queue
 		int audio_buf_size_;
 		boost::uint8_t *audio_buf_;
 		int offset_;
+		lru_cache_type_ptr lru_cache_;
 };
 
 typedef boost::shared_ptr< stream_queue > stream_queue_ptr;
