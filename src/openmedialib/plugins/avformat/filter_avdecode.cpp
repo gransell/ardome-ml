@@ -69,6 +69,8 @@ static bool is_imx( const std::string &codec )
 	return codec == "mpeg2/30" || codec == "mpeg2/50";
 }
 
+boost::recursive_mutex avformat_video::avcodec_open_lock_; 
+
 class stream_queue
 {
 	public:
