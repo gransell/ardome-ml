@@ -148,6 +148,13 @@ def _add_target( project, env, lib, name, target_type, sources, headers, pre=Non
 	resolved_pre = None
 	# if pre is not None and len(pre):
 	# 	resolved_pre = _resolve_precompiled_header_file( env, pre, headers )
+
+	#Set the library version and compatibility version to 0 to make
+	#the XCode built libraries compatible with Scons built ones
+	for t in project.targets():
+		for bc in t.build_configurations():
+			bc.build_settings()["DYLIB_CURRENT_VERSION"] = 0
+			bc.build_settings()["DYLIB_COMPATIBILITY_VERSION"] = 0
 	
 	_add_build_configuration( target, target_type, env, resolved_pre )
 	
