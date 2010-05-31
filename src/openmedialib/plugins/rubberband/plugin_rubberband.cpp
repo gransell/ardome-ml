@@ -55,8 +55,10 @@ class rubber
 
 			if ( result )
 			{
+				input_ = input;
+
 				// Obtain a frame
-				ml::frame_type_ptr frame = input->fetch( );
+				ml::frame_type_ptr frame = input_->fetch( );
 
 				// Check that we have audio
 				result = frame && frame->has_audio( );
@@ -81,7 +83,6 @@ class rubber
 					source_fps_den_ = frame->get_fps_den( );
 
 					// Needed in order to determine how many samples are expected for each frame
-					input_ = input;
 					frequency_ = audio->frequency( );
 					channels_ = audio->channels( );
 
@@ -131,7 +132,11 @@ class rubber
 
 			// Ensure that we have something to work with
 			if ( !started( ) )
+			{
+				input_->seek( position );
+				result = input_->fetch( );
 				return result;
+			}
 
 			// Reset the state if necessary
 			if ( position != expected_ )
