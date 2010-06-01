@@ -305,12 +305,6 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
-			result = last_frame_;
-
-			// If we have a duplicated request, return the last frame
-			if( last_frame_ && last_frame_->get_position( ) == get_position( ) )
-				return;
-
 			// Make sure we have the correct state
 			if ( !rubber_.started( ) )
 				rubber_.start( fetch_slot( 0 ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
@@ -319,15 +313,11 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
 
 			// Obtain the current frame
 			result = rubber_.fetch( get_position( ) );
-
-			// Hold a reference in case of reuse
-			last_frame_ = result;
 		}
 	
 private:
 	pl::pcos::property prop_speed_;
 	pl::pcos::property prop_pitch_;
-	ml::frame_type_ptr last_frame_;
 	rubber rubber_;
 };
 
