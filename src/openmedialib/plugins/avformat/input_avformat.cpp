@@ -658,11 +658,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"" ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"", 0 ) );
 						break;
 
 					case ml::stream_audio:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0, L"" ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0, L"", 0 ) );
 						break;
 
 					default:

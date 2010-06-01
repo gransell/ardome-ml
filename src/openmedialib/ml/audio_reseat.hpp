@@ -101,6 +101,11 @@ class reseat_impl : public reseat
 			return requested <= samples;
 		}
 
+		virtual int size( )
+		{
+			return samples;
+		}
+
 		virtual iterator begin( )
 		{
 			return queue.begin( );

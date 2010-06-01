@@ -9,6 +9,7 @@
 #include <openmedialib/ml/audio_channel_convert.hpp>
 #include <openmedialib/ml/audio_channel_extract.hpp>
 #include <openmedialib/ml/audio_pitch.hpp>
+#include <openmedialib/ml/audio_place.hpp>
 #include <openmedialib/ml/audio_reverse.hpp>
 #include <openmedialib/ml/audio_mixer.hpp>
 #include <openmedialib/ml/audio_reseat.hpp>
@@ -116,22 +117,22 @@ ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &s
 }
 
 // Convenience function to convert to another channel arrangement without changing type
-ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels )
+ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int channels, const audio_type_ptr &last )
 {
 	audio_type_ptr result;
 
 	if ( audio )
 	{
 		if ( audio->id( ) == pcm8_id )
-			result = channel_convert< pcm8 >( audio, channels );
+			result = channel_convert< pcm8 >( audio, channels, last );
 		else if ( audio->id( ) == pcm16_id )
-			result = channel_convert< pcm16 >( audio, channels );
+			result = channel_convert< pcm16 >( audio, channels, last );
 		else if ( audio->id( ) == pcm24_id )
-			result = channel_convert< pcm24 >( audio, channels );
+			result = channel_convert< pcm24 >( audio, channels, last );
 		else if ( audio->id( ) == pcm32_id )
-			result = channel_convert< pcm32 >( audio, channels );
+			result = channel_convert< pcm32 >( audio, channels, last );
 		else if ( audio->id( ) == float_id )
-			result = channel_convert< floats >( audio, channels );
+			result = channel_convert< floats >( audio, channels, last );
 	}
 
 	return result;
@@ -198,6 +199,28 @@ ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr &audio )
 			result = reverse< pcm32 >( audio );
 		else if ( audio->id( ) == float_id )
 			result = reverse< floats >( audio );
+	}
+
+	return result;
+}
+
+// Convenience function to place a channel from b directly in place into b
+ML_DECLSPEC audio_type_ptr channel_place( audio_type_ptr &a, const audio_type_ptr &b, int out, int in )
+{
+	audio_type_ptr result;
+
+	if ( a )
+	{
+		if ( a->id( ) == pcm8_id )
+			result = place< pcm8 >( a, b, out, in );
+		else if ( a->id( ) == pcm16_id )
+			result = place< pcm16 >( a, b, out, in );
+		else if ( a->id( ) == pcm24_id )
+			result = place< pcm24 >( a, b, out, in );
+		else if ( a->id( ) == pcm32_id )
+			result = place< pcm32 >( a, b, out, in );
+		else if ( a->id( ) == float_id )
+			result = place< floats >( a, b, out, in );
 	}
 
 	return result;

@@ -91,6 +91,7 @@ namespace audio
 			virtual audio_type_ptr retrieve( int samples, bool pad = false ) = 0;
 			virtual void clear( ) = 0;
 			virtual bool has( int ) = 0;
+			virtual int size( ) = 0;
 			virtual iterator begin( ) = 0;
 			virtual const_iterator begin( ) const = 0;
 			virtual iterator end( ) = 0;

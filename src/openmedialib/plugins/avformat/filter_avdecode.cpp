@@ -24,6 +24,7 @@
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 
 #include <vector>
 
@@ -51,6 +52,7 @@ extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 static const pl::pcos::key key_gop_closed_ = pl::pcos::key::from_string( "gop_closed" );
+static const pl::pcos::key key_fixed_sar_ = pl::pcos::key::from_string( "fixed_sar" );
 
 static bool is_dv( const std::string &codec )
 {
@@ -67,6 +69,8 @@ static bool is_imx( const std::string &codec )
 	return codec == "mpeg2/30" || codec == "mpeg2/50";
 }
 
+boost::recursive_mutex avformat_video::avcodec_open_lock_; 
+
 class stream_queue
 {
 	public:
@@ -81,15 +85,21 @@ class stream_queue
 			, expected_( 0 )
 			, frame_( avcodec_alloc_frame( ) )
 			, offset_( 0 )
+			, lru_cache_( )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( audio_buf_size_ );
+
+			lru_cache_ = ml::the_scope_handler::Instance().lru_cache( scope_ );
 		}
 
 		virtual ~stream_queue( )
 		{
 			if ( context_ )
+			{
+				ARLOG_DEBUG5( "Destroying decoder context" );
 				avcodec_close( context_ );
+			}
 			av_free( frame_ );
 		}
 
@@ -98,10 +108,9 @@ class stream_queue
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::frame_type_ptr result;
 			
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
-						
-			result = lru_cache->frame_for_position( my_key );
+
+			result = lru_cache_->frame_for_position( my_key );
 			
 			if( !result && position < input_->get_frames( ) )
 			{
@@ -114,7 +123,7 @@ class stream_queue
 					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
 						look_for_closed( result );
 						
-					lru_cache->insert_frame_for_position( my_key, result );
+					lru_cache_->insert_frame_for_position( my_key, result );
 					
 					if ( result->get_position( ) == position )
 						break;
@@ -129,10 +138,9 @@ class stream_queue
 		il::image_type_ptr decode_image( int position )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 						
-			il::image_type_ptr img = lru_cache->image_for_position( my_key );
+			il::image_type_ptr img = lru_cache_->image_for_position( my_key );
 			
 			if( img )
 			{
@@ -193,7 +201,7 @@ class stream_queue
 							if ( frame_->interlaced_frame )
 								image->set_field_order( frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
 
-							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
+							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 						}
 						expected_ ++;
 
@@ -208,10 +216,9 @@ class stream_queue
 		ml::audio_type_ptr decode_audio( int position )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 			
-			audio_type_ptr aud = lru_cache->audio_for_position( my_key );
+			audio_type_ptr aud = lru_cache_->audio_for_position( my_key );
 			
 			if( aud )
 				return aud;
@@ -246,11 +253,52 @@ class stream_queue
 			{
 				result.num = context_->sample_aspect_ratio.num;
 				result.den = context_->sample_aspect_ratio.den;
+
+				result = extended_res_sar_workaround( result, context_->width, context_->height );
 			}
 			return result;
 		}
 
 	private:
+
+		//Workaround for media with extended resolution lines
+		ml::fraction extended_res_sar_workaround( const ml::fraction& org_sar, boost::int32_t width, boost::int32_t height )
+		{
+			boost::rational<boost::int32_t> result( org_sar.num, org_sar.den );
+			
+			if( result.numerator() && result.denominator() && width == 720 && ( height == 608 || height == 512 ) )
+			{
+				const boost::rational<boost::int32_t> aspect4_3( 4, 3 );
+				const boost::rational<boost::int32_t> aspect16_9( 16, 9 );
+
+				const boost::rational<boost::int32_t> dim( width, height );
+
+				if( result * dim == aspect4_3 )
+				{
+					if( height == 608 ) //PAL
+					{
+						result.assign( 59, 54 );
+					}
+					else if( height == 512 ) //NTSC
+					{
+						result.assign( 10, 11 );
+					}
+				}
+				else if( result * dim == aspect16_9 )
+				{
+					if( height == 608 ) //PAL
+					{
+						result.assign( 118, 81 );
+					}
+					else if( height == 512 ) //NTSC
+					{
+						result.assign( 40, 33 );
+					}
+				}
+			}
+
+			return ml::fraction( result.numerator(), result.denominator() );
+		}
 
 		boost::uint8_t *find_mpeg2_gop( const ml::stream_type_ptr &stream )
 		{
@@ -318,6 +366,7 @@ class stream_queue
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				ARENFORCE_MSG( codec_, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ result->get_stream( )->codec( ) ] )( result->get_stream( )->codec( ) );
 				avcodec_open( context_, codec_ );
+				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 				#ifndef WIN32
 				avcodec_thread_init( context_, 4 );
 				#endif
@@ -350,11 +399,25 @@ class stream_queue
 							image = convert_to_oil( frame_, fmt, width, height );
 							image->set_position( pkt->position( ) );
 
-							ml::fraction img_sar = sar();
-							if( img_sar.num != 0)
+							pl::pcos::property fixed_sar_prop = pkt->properties().get_property_with_key( key_fixed_sar_ );
+							if( fixed_sar_prop.valid() && fixed_sar_prop.value<int>() )
 							{
-								image->set_sar_num( img_sar.num );
-								image->set_sar_den( img_sar.den );
+								//Use the sample aspect ratio from the frame, 
+								//not the one from the video essence.
+								ml::fraction stream_sar = pkt->sar();
+								image->set_sar_num( stream_sar.num );
+								image->set_sar_den( stream_sar.den );
+							}
+							else
+							{
+								//Check the codec context for the sample aspect
+								//ratio of the video essence.
+								ml::fraction img_sar = sar();
+								if( img_sar.num != 0)
+								{
+									image->set_sar_num( img_sar.num );
+									image->set_sar_den( img_sar.den );
+								}
 							}
 
 							//We set decoded to true, since the image is a decoded version
@@ -371,8 +434,7 @@ class stream_queue
 							}
 
 							image->set_position( result->get_position( ) - offset_ );
-							lru_cache_type_ptr lru_cache = ml::the_scope_handler::Instance().lru_cache( scope_ );
-							lru_cache->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
+							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 
 							if ( result->get_position( ) >= position + offset_ )
 								found = true;
@@ -437,6 +499,7 @@ class stream_queue
 		int audio_buf_size_;
 		boost::uint8_t *audio_buf_;
 		int offset_;
+		lru_cache_type_ptr lru_cache_;
 };
 
 typedef boost::shared_ptr< stream_queue > stream_queue_ptr;
@@ -486,9 +549,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
 				set_image( queue_->decode_image( stream_->position( ) ) , true );
-				ml::fraction sar = queue_->sar( );
-				if ( sar.num && sar.den )
-					set_sar( sar.num, sar.den );
 			}
 			return image_;
 		}
@@ -722,7 +782,7 @@ class avformat_video_streamer : public ml::stream_type
 		/// We dont know the gop size atm
 		virtual const int estimated_gop_size( ) const
 		{
-			return 0;
+			return stream_ ? stream_->estimated_gop_size( ) : 0;
 		}
 
 		/// Returns the dimensions of the image associated to this packet (0,0 if n/a)
@@ -847,7 +907,7 @@ class avformat_encode_filter : public filter_type
 							gop_closed = 1;
 					}
 					
-					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->video_codec( ) ) )
+					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->stream_codec_id( ) ) )
 					   stream_types_match = false;
 	
 					if ( prop_force_.value< int >( ) )

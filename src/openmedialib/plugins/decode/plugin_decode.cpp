@@ -388,7 +388,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			else
 			{
 				ml::filter_type_ptr graph = filter_obtain( );
-				frame = fetch_from_slot( );
 				graph->fetch_slot( 0 )->push( frame );
 				graph->seek( get_position( ) );
 				frame = graph->fetch( );
@@ -466,7 +465,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 		{
 			// Create the encoder that we have mapped from our profile
 			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			
+			ARENFORCE_MSG( encode, "Failed to create encoder" )( prop_filter_.value< pl::wstring >( ) );
+
 			// Set the profile property on the encoder
 			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
 				"Encode filter must have a profile property" );
@@ -548,7 +548,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			else
 			{
 				ml::filter_type_ptr graph = filter_obtain( );
-				frame = fetch_from_slot( );
+				if( !frame )
+					frame = fetch_from_slot( );
 				
 				if( prop_force_.value<int>() != 0 )
 				{

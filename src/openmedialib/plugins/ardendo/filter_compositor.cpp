@@ -560,7 +560,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 get_prop< double >( frame, key_w_, 1.0 ) == 1.0 &&
 						 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
 						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
-						 get_prop< pl::wstring >( frame, key_mode_, pl::wstring( L"fill" ) ) == get_prop< pl::wstring >( result, key_mode_, pl::wstring( L"fill" ) ) )
+						 matching_modes( frame, result ) )
 					{
 						result = frames[ 0 ];
 						frames.erase( frames.begin( ) );
@@ -574,7 +574,11 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				}
 
 				// Provide basic mixing capabilities in deferred mode
-				ml::audio_type_ptr audio = result->get_audio( );
+				ml::audio_type_ptr audio;
+				if( result->has_audio( ) )
+				{
+					audio = result->get_audio( );
+				}
 
 				// Ignore deferred when running in muxer mode
 				bool deferred = prop_deferred_.value< int >( ) != 0 && resource_ == L"compositor";
@@ -640,6 +644,24 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 			if ( result )
 				result->set_position( get_position( ) );
+		}
+
+		bool matching_modes( ml::frame_type_ptr frame1, ml::frame_type_ptr frame2 )
+		{
+			pl::wstring mode1 = get_prop< pl::wstring >( frame1, key_mode_, pl::wstring( L"fill" ) );
+			pl::wstring mode2 = get_prop< pl::wstring >( frame2, key_mode_, pl::wstring( L"fill" ) );
+
+			if( mode1 == mode2 )
+			{
+				return true;
+			}
+			else if( ( mode1 == L"ardendo" && mode2 == L"fill" ) || 
+					( mode1 == L"fill" && mode2 == L"ardendo" ) )
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		pl::wstring resource_;

@@ -25,6 +25,7 @@ extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
+
 class avformat_video : public cl::profile_wrapper, public cl::profile_property
 {
 	public:
@@ -231,10 +232,13 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			{
 				codec_ = avcodec_find_encoder_by_name( video_codec_.c_str( ) );
 
-				if ( codec_ && avcodec_open( context_, codec_ ) < 0 ) 
 				{
-					std::cerr << "Unable to open codec" << std::endl;
-					codec_ = 0;
+					boost::recursive_mutex::scoped_lock lck( avcodec_open_lock_ );
+					if ( codec_ && avcodec_open( context_, codec_ ) < 0 ) 
+					{
+						std::cerr << "Unable to open codec" << std::endl;
+						codec_ = 0;
+					}
 				}
 
 				#ifndef WIN32
@@ -283,7 +287,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
 					key_ = position_;
 
-				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_ );
+				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, context_->gop_size );
 
 				if ( out_size )
 					memcpy( stream->bytes( ), outbuf_, out_size );
@@ -318,6 +322,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		ml::dimensions dim_;
 		ml::fraction sar_;
 		pl::wstring pf_;
+
+		static boost::recursive_mutex avcodec_open_lock_;
 };
 
 } } }
