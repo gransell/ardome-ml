@@ -333,6 +333,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				result = filter_create( );
 				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
 				decoder_.push_back( result );
+                ARLOG_CRIT( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
 			}
 			
 			result = decoder_.back( );
