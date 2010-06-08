@@ -38,7 +38,6 @@ class core_c_sharp_bind_options( owl.wrapper.c_sharp.c_sharp_bind_options ):
 						'opencorelib/cl/base_exception.hpp',
 						'src/c_sharp/RationalTime.hpp', 
 						'src/c_sharp/AMLConversionFunctions.hpp',
-						'owl/SharedPtr.hpp',
 						'owl/owl_wrap_manager.hpp',
 						'owl/ref_wrapper.hpp',
 						'owl/CommonDefines.hpp',
