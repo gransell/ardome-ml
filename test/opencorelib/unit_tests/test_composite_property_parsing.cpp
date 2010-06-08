@@ -1,5 +1,6 @@
 #include "precompiled_headers.hpp"
 #include <boost/test/test_tools.hpp>
+#include "./utils.hpp"
 
 #include "opencorelib/cl/utilities.hpp"
 #include "opencorelib/cl/str_util.hpp"
@@ -8,15 +9,7 @@ using olib::t_string;
 using namespace olib::opencorelib;
 using namespace olib::opencorelib::str_util;
 
-//Required in order to use wstrings with BOOST_CHECK_EQUAL
-namespace std {
-	inline std::ostream &operator<<(std::ostream& output_stream, const std::wstring &the_string)
-	{
-		return output_stream << to_string(the_string);
-	}
-}
-
-bool did_throw( const t_string &test_str )
+bool did_throw( const olib::t_string &test_str )
 {
     bool threw_exception = false;
     

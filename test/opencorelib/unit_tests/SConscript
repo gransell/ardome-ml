@@ -8,6 +8,7 @@ local_env.packages( 'boost_filesystem', 'boost_regex', 'boost_thread', 'boost_sy
 
 test_sources = ['main_entry_unittests.cpp',
 				'test_assert.cpp',
+				'test_base64_conversions.cpp',
 				'test_color.cpp',
                 'test_composite_property_parsing.cpp',
 				'test_event_handler.cpp',

@@ -52,6 +52,7 @@ sources = [
 	'profile.cpp',
 	'rectangle.cpp',
 	'serious_error_handler.cpp',
+	'serialization_helpers.cpp',
 	'size.cpp',
 	'span.cpp',
 	# 'special_folders.cpp', This file is not needed, empty.
@@ -173,6 +174,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'rectangle.hpp',
 		'selection_dialog.hpp',
 		'serializer.hpp',
+		'serialization_helpers.hpp',
 		'serious_error_handler.hpp',
 		'size.hpp',
 		'span.hpp',

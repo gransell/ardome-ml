@@ -25,6 +25,7 @@ void test_string_conversions();
 void test_time_helpers();
 void test_event_handler();
 void test_worker();
+void test_base64_conversions();
  
 namespace olib { 
     namespace opencorelib {
@@ -102,6 +103,7 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
     // myTests["test_time_helpers"] = &test_time_helpers;
     myTests["test_event_handler"] = &test_event_handler;
     myTests["test_worker"] = &test_worker;
+	myTests["test_base64_conversions"] = &test_base64_conversions;
 
 	boost::unit_test_framework::test_suite* ts1 = BOOST_TEST_SUITE("All tests");
     
