@@ -96,6 +96,8 @@ namespace olib
         {
         public:
 
+            non_invoker();
+
             /// Just runs the function on the calling thread, adding exception guards.
             /** @param f The function to run.
                 @return invoke_result::success on success, otherwise invoke_result::failure */

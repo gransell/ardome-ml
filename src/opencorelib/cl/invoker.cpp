@@ -84,6 +84,10 @@ namespace olib
             }
         }
 
+        non_invoker::non_invoker()
+        {
+        }
+
         void non_invoker::non_blocking_invoke(  const invokable_function& f, 
                                                 const invoke_callback_function_ptr& result_cb ) const 
         {
