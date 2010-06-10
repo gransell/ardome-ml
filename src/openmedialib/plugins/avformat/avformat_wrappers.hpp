@@ -64,6 +64,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		{
 			init( ); 
 			pf_ = frame->pf( );
+			frame->get_image( );
 			dim_ = ml::dimensions( frame->width( ), frame->height( ) );
 			sar_ = ml::fraction( frame->get_sar_num( ), frame->get_sar_den( ) );
 			context_->pix_fmt = oil_to_avformat( frame->pf( ) );
