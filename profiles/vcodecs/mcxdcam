@@ -1,0 +1,3 @@
+video_codec = mpeg2video
+setting_preset = 39
+stream_codec_id = http://www.ardendo.com/apf/codec/mpeg/mpeg2
