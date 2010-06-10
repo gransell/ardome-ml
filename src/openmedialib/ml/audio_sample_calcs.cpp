@@ -65,6 +65,11 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 	{
 		return locked_samples_for_frame( frameoffset, locked_profile );
 	}
+	else if( framerate_numerator == 24000 && framerate_denominator == 1001 && locked_profile != L"" )
+	{
+		// 24P material seems to want 2002 samples per frame even though its 23.98 fps
+		return 2002;
+	}
 
 	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
 	double	samples_per_frame	= double(samplefreq) / frames_per_second;
