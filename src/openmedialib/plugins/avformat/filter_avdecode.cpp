@@ -638,7 +638,7 @@ class avformat_decode_filter : public filter_type
 			if ( queue_ )
 			{
 				// If we were initializing then we have already fetched something for this position so dont do it again.
-				if( !result )
+				if( !result || result->get_stream( )->position( ) != get_position( ) )
 					result = queue_->fetch( get_position( ) );
 				if ( result )
 					result = ml::frame_type_ptr( new frame_avformat( result, queue_ ) );
