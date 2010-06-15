@@ -257,8 +257,6 @@ void to_stream( std::ostream &stream, const std::string &name, std::vector< int 
 
 void report_props( std::ostream &stream, const pl::pcos::property_container &props )
 {
-	stream << "Properties Report" << endl << endl;
-
 	// Obtain the keys on the filter
 	pcos::key_vector keys = props.get_keys( );
 
@@ -315,7 +313,14 @@ void frame_report_audio( const ml::frame_type_ptr &frame )
 
 void frame_report_props( const ml::frame_type_ptr &frame )
 {
+	cout << "Frame Properties Report:\n\n";
 	report_props( cout, frame->properties( ) );
+
+	if( frame->get_stream( ) )
+	{
+		cout << "Stream Properties Report:\n\n";
+		report_props( cout, frame->get_stream( )->properties( ) );
+	}
 }
 
 std::string to_multibyte_string( const olib::t_string& str )
