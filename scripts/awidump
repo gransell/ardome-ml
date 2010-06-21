@@ -9,7 +9,7 @@ if sys.argv[ 1 ] != '-':
 else:
 	file = sys.stdin
 
-try:
+if 1:
 	data = file.read( 8 )
 	if len( data ) == 8:
 		id = data[ 0 : 3 ]
@@ -18,7 +18,7 @@ try:
 	else:
 		raise( Exception( 'File too short' ) )
 
-	if id == 'AWI' and ver == '2':
+	if id == 'AWI' and ( ver == '2' or ver == '4' ):
 		print id, ver, created
 	elif id == 'AWI' and ver == '3':
 		# Read past the header for now
@@ -45,7 +45,4 @@ try:
 				print frame, frames, offset, length
 		else:
 			break
-
-except Exception, e:
-	pass
 

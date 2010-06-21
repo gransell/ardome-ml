@@ -138,6 +138,8 @@ class rubber
 				return result;
 			}
 
+			int difference = position - expected_;
+
 			// Reset the state if necessary
 			if ( position != expected_ )
 			{
@@ -149,7 +151,7 @@ class rubber
 
 			double speed = 1.0 / rubber_->getTimeRatio( );
 
-			if ( speed > 2.0 )
+			if ( difference != 0 || speed > 2.0 )
 			{
 				input_->seek( position );
 				result = input_->fetch( );

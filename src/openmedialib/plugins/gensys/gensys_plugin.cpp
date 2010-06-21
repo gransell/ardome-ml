@@ -152,7 +152,7 @@ inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 	int width = img->width( plane );
 	int height = img->height( plane );
 	int diff = img->pitch( plane );
-	if ( ptr && val >= 16 && val <= 240 )
+	if ( ptr ) // && val >= 16 && val <= 240 )
 	{
 		while( height -- )
 		{
@@ -219,6 +219,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_interlace_( pcos::key::from_string( "interlace" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
+			, prop_background_( pcos::key::from_string( "background" ) )
 		{
 			// Default to a black PAL video
 			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
@@ -235,6 +236,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			properties( ).append( prop_interlace_ = 0 );
 			properties( ).append( prop_out_ = 25 );
 			properties( ).append( prop_deferred_ = 0 );
+			properties( ).append( prop_background_ = 1 );
 		}
 
 		virtual ~colour_input( ) { }
@@ -356,7 +358,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 				// Identify image as a background
 				pl::pcos::property prop( key_background_ );
-				result->properties( ).append( prop = 1 );
+				result->properties( ).append( prop = prop_background_.value< int >( ) );
 			}
 		}
 
@@ -389,6 +391,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		pcos::property prop_interlace_;
 		pcos::property prop_out_;
 		pcos::property prop_deferred_;
+		pcos::property prop_background_;
 		il::image_type_ptr deferred_image_;
 		il::image_type_ptr deferred_alpha_;
 };
@@ -594,7 +597,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
-			result = fetch_from_slot( );
+			result = fetch_from_slot( )->shallow( );
 
 			if ( result )
 			{
@@ -1125,6 +1128,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
 			foreground->set_image( il::conform( foreground->get_image( ), il::writable ) );
+			foreground->set_alpha( il::conform( foreground->get_alpha( ), il::writable ) );
 
 			// Crop to computed geometry
 			foreground = frame_crop( foreground, geom.cx, geom.cy, geom.cw, geom.ch );
@@ -1214,8 +1218,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					int src_remainder = src->pitch( p ) - src_width;
 					int dst_remainder = dst->pitch( p ) - src_width;
 					int temp_h = src_height;
-					int mix = int( ( 1 << 8 ) * prop_mix_.value< double >( ) );
-					int xim = ( 1 << 8 ) - mix;
+					int mix = int( 255 * prop_mix_.value< double >( ) );
+					int xim = 255 - mix;
 
 					if ( !background->get_alpha( ) && !foreground->get_alpha( ) )
 					{
@@ -1224,7 +1228,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * xim + *src_ptr * mix ) >> 8 );
+								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * xim + *src_ptr * mix ) / 255 );
 								src_ptr ++;
 								dst_ptr ++;
 							}
@@ -1238,13 +1242,14 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
+						temp_h = src_alpha->height( );
 						while ( temp_h -- )
 						{
-							int temp_w = src_width;
+							int temp_w = src_alpha->width( );
 							while( temp_w -- )
 							{
-								alpha = ( ( ( *src_alpha_ptr ++ << 8 ) / 255 ) * mix ) >> 8;
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( ( 1 << 8 ) - alpha ) + *src_ptr * alpha ) >> 8 );
+								alpha = ( *src_alpha_ptr ++ * mix ) / 255;
+								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( 255 - alpha ) + *src_ptr * alpha ) / 255 );
 								src_ptr ++;
 								dst_ptr ++;
 							}
@@ -1263,8 +1268,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( xim ) + *src_ptr * mix ) >> 8 );
-								*dst_alpha_ptr = 255 + *dst_alpha_ptr - ( ( 255 * *dst_alpha_ptr ) >> 8 );
+								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( xim ) + *src_ptr * mix ) / 255 );
+								*dst_alpha_ptr = 255;
 								src_ptr ++;
 								dst_ptr ++;
 								dst_alpha_ptr ++;
@@ -1288,9 +1293,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								alpha = ( ( ( *src_alpha_ptr << 8 ) / 255 ) * mix ) >> 8;
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( ( 1 << 8 ) - alpha ) + *src_ptr * alpha ) >> 8 );
-								*dst_alpha_ptr = *src_alpha_ptr + *dst_alpha_ptr - ( ( *src_alpha_ptr * *dst_alpha_ptr ) >> 8 );
+								alpha = ( mix * *src_alpha_ptr ) / 255;
+								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( 255 - alpha ) + *src_ptr * alpha ) >> 8 );
+								*dst_alpha_ptr = ( ( *src_alpha_ptr * mix ) / 255 ) | *dst_alpha_ptr;
 								src_alpha_ptr ++;
 								dst_alpha_ptr ++;
 								src_ptr ++;
@@ -1655,6 +1660,10 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				{
 					result->set_position( position_ );
 					result->set_fps( fps_num, fps_den );
+					if ( result->get_image( ) )
+						result->get_image( )->set_writable( false );
+					if ( result->get_alpha( ) )
+						result->get_alpha( )->set_writable( false );
 				}
 			}
 			else if ( input )
@@ -1994,7 +2003,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 				if ( temp == 0 && count > 0 && position >= in && position <= out )
 				{
 					if ( count >= 2 )
-						result = lower + ( double( position - in ) / double( out - in + 1 ) ) * ( upper - lower );
+						result = lower + ( double( position - in ) / double( out - in ) ) * ( upper - lower );
 					else
 						result = double( lower );
 
@@ -2017,7 +2026,18 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
 				}
 				else if ( count == 0 )
 				{
-					assign_property( props, target, value );
+					if ( value.find( L":" ) != pl::wstring::npos )
+					{
+						count = sscanf( pl::to_string( value.substr( value.find( L":" ) ) ).c_str( ), ":%d:%d", &in, &out );
+						if ( in < 0 || out < 0 )
+							correct_in_out( in, out, frames );
+						if ( position >= in && position <= out )
+							assign_property( props, target, value.substr( 0, value.find( L":" ) ) );
+					}
+					else
+					{
+						assign_property( props, target, value );
+					}
 				}
 			}
 		}
@@ -2157,6 +2177,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			, prop_sar_num_(  pcos::key::from_string( "sar_num" ) )
 			, prop_sar_den_(  pcos::key::from_string( "sar_den" ) )
 			, prop_type_( pcos::key::from_string( "type" ) )
+			, prop_hold_( pcos::key::from_string( "hold" ) )
 			, prop_colourspace_( pcos::key::from_string( "colourspace" ) )
 			, previous_( )
 			, previous_sar_num_( 59 )
@@ -2168,6 +2189,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			properties( ).append( prop_sar_num_ = 1 );
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
+			properties( ).append( prop_hold_ = 1 );
 			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
 		}
 
@@ -2199,8 +2221,11 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 			}
 			else if ( result )
 			{
-				previous_ = result->get_image( );
-				result->get_sar( previous_sar_num_, previous_sar_den_ );
+				if ( prop_hold_.value< int >( ) )
+				{
+					previous_ = result->get_image( );
+					result->get_sar( previous_sar_num_, previous_sar_den_ );
+				}
 			}
 		}
 
@@ -2363,6 +2388,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
 		pcos::property prop_sar_num_;
 		pcos::property prop_sar_den_;
 		pcos::property prop_type_;
+		pcos::property prop_hold_;
 		pcos::property prop_colourspace_;
 		il::image_type_ptr previous_;
 		int previous_sar_num_;

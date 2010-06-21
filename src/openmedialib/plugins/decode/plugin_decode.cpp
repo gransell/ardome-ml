@@ -254,6 +254,506 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		bool pushed_;
 };
 
+namespace {
+	
+	static const pl::pcos::key key_temporal_offset_ = pl::pcos::key::from_string( "temporal_offset" );
+	static const pl::pcos::key key_temporal_stream_ = pl::pcos::key::from_string( "temporal_stream" );
+
+	/// Sequence header info
+	static const pl::pcos::key key_frame_rate_code_ = pl::pcos::key::from_string( "frame_rate_code" );
+	static const pl::pcos::key key_bit_rate_value_ = pl::pcos::key::from_string( "bit_rate_value" );
+	static const pl::pcos::key key_vbv_buffer_size_ = pl::pcos::key::from_string( "vbv_buffer_size" );
+	
+	/// Sequence extension info
+	static const pl::pcos::key key_chroma_format_ = pl::pcos::key::from_string( "chroma_format" );
+	
+	// Extended picture params
+	static const pl::pcos::key key_temporal_reference_ = pl::pcos::key::from_string( "temporal_reference" );
+	static const pl::pcos::key key_picture_coding_type_ = pl::pcos::key::from_string( "picture_coding_type" );
+	static const pl::pcos::key key_vbv_delay_ = pl::pcos::key::from_string( "vbv_delay" );
+	static const pl::pcos::key key_top_field_first_ = pl::pcos::key::from_string( "top_field_first" );
+	static const pl::pcos::key key_frame_pred_frame_dct_ = pl::pcos::key::from_string( "frame_pred_frame_dct" );
+	static const pl::pcos::key key_progressive_frame_ = pl::pcos::key::from_string( "progressive_frame" );
+	
+	// GOP header info
+	static const pl::pcos::key key_closed_gop_ = pl::pcos::key::from_string( "closed_gop" );
+	static const pl::pcos::key key_broken_link_ = pl::pcos::key::from_string( "broken_link" );
+	
+	namespace mpeg_start_code
+	{
+		enum type
+		{
+			undefined = -1,
+			picture_start = 0x00,
+			user_data_start = 0xb2,
+			sequence_header = 0xb3,
+			sequence_error = 0xb4,
+			extension_start = 0xb5,
+			sequence_end = 0xb7,
+			group_start = 0xb8			
+		};
+	}
+	
+	namespace mpeg_extension_id {
+		enum type
+		{
+			sequence_extension = 1,
+			sequence_display_extension = 2,
+			quant_matrix_extension = 3,
+			copyright_extension = 4,
+			sequence_scalable_extension = 5,
+			// 6 is reserved
+			picture_display_extension = 7,
+			picture_coding_extension = 8,
+			picture_spatial_scalable_extension = 9,
+			picture_temporal_scalable_extension = 10		
+		};
+	}
+}
+    
+class filter_analyse : public ml::filter_type
+{
+public:
+    // Filter_type overloads
+    filter_analyse( )
+    : ml::filter_type( )
+    {
+		memset( &seq_hdr_, 0, sizeof( sequence_header ) );
+		memset( &seq_ext_, 0, sizeof( sequence_extension ) );
+		memset( &gop_hdr_, 0, sizeof( gop_header ) );
+		memset( &pict_hdr_, 0, sizeof( picture_header ) );
+		memset( &pict_ext_, 0, sizeof( picture_coding_extension ) );
+	}
+    
+    virtual ~filter_analyse( )
+    { }
+    
+    // Indicates if the input will enforce a packet decode
+    virtual bool requires_image( ) const { return false; }
+    
+    // This provides the name of the plugin (used in serialisation)
+    virtual const pl::wstring get_uri( ) const { return L"analyse"; }
+    
+protected:
+    void do_fetch( ml::frame_type_ptr &result )
+	{
+		if ( gop_.find( get_position( ) ) == gop_.end( ) )
+		{
+			// Remove previously cached gop
+			gop_.erase( gop_.begin( ), gop_.end( ) );
+
+			// Fetch the current frame
+			ml::frame_type_ptr temp;
+			inner_fetch( temp, get_position( ) );
+
+			if ( temp->get_stream( ) )
+			{
+				std::map< int, ml::stream_type_ptr > streams;
+				int start = temp->get_stream( )->key( );
+				int index = start;
+
+				// Read the current gop
+				while( index < get_frames( ) )
+				{
+					inner_fetch( temp, index ++ );
+					if ( start != temp->get_stream( )->key( ) ) break;
+					int sorted = start + temp->get_stream( )->properties( ).get_property_with_key( key_temporal_reference_ ).value< int >( );
+					gop_[ temp->get_position( ) ] = temp;
+					streams[ sorted ] = temp->get_stream( );
+				}
+
+				// Ensure that the recipient has access to the temporally sorted frames too
+				for ( std::map< int, ml::frame_type_ptr >::iterator iter = gop_.begin( ); iter != gop_.end( ); iter ++ )
+				{
+					pl::pcos::property temporal_offset( key_temporal_offset_ );
+					pl::pcos::property temporal_stream( key_temporal_stream_ );
+					( *iter ).second->properties( ).append( temporal_offset = streams[ ( *iter ).first ]->position( ) );
+					( *iter ).second->properties( ).append( temporal_stream = streams[ ( *iter ).first ] );
+				}
+
+				result = gop_[ get_position( ) ];
+			}
+			else
+			{
+				result = temp;
+			}
+		}
+		else
+		{
+			result = gop_[ get_position( ) ];
+		}
+	}
+    
+    // The main access point to the filter
+    void inner_fetch( ml::frame_type_ptr &result, int position )
+    {
+		fetch_slot( 0 )->seek( position );
+		result = fetch_slot( 0 )->fetch( );
+		if( !result ) return;
+		
+		ml::stream_type_ptr stream = result->get_stream( );
+		
+		// If the frame has no stream then there is nothing to analyse.
+		if( !stream ) return;
+		
+		if( stream->codec( ) != "http://www.ardendo.com/apf/codec/mpeg/mpeg2" && stream->codec( ) != "http://www.ardendo.com/apf/codec/imx/imx" ) return;
+		        
+        uint8_t *data = stream->bytes( );
+		size_t size = stream->length( );
+		uint8_t *end = data + size;
+		
+		bool done = false;
+		mpeg_start_code::type sc = find_start( data, end );
+		
+		while( sc != mpeg_start_code::undefined && sc != mpeg_start_code::sequence_end && !done  )
+		{
+			switch ( sc )
+			{
+				case mpeg_start_code::picture_start:
+					{
+						parse_picture_header( data );
+						
+						pl::pcos::property temporal_reference_prop( key_temporal_reference_ );
+						stream->properties( ).append( temporal_reference_prop = pict_hdr_.temporal_reference );
+						
+						pl::pcos::property picture_coding_type_prop( key_picture_coding_type_ );
+						stream->properties( ).append( picture_coding_type_prop = pict_hdr_.picture_coding_type );
+
+						pl::pcos::property vbv_delay_prop( key_vbv_delay_ );
+						stream->properties( ).append( vbv_delay_prop = pict_hdr_.vbv_delay );					
+					}					
+					break;
+					
+				case mpeg_start_code::sequence_header:
+					{
+						parse_sequence_header( data );
+						
+						pl::pcos::property frame_rate_code_prop( key_frame_rate_code_ );
+						stream->properties( ).append( frame_rate_code_prop = seq_hdr_.frame_rate_code );
+						
+						pl::pcos::property bit_rate_value_prop( key_bit_rate_value_ );
+						stream->properties( ).append( bit_rate_value_prop = seq_hdr_.bit_rate_value );
+						
+						pl::pcos::property vbv_buffer_size_prop( key_vbv_buffer_size_ );
+						stream->properties( ).append( vbv_buffer_size_prop = seq_hdr_.vbv_buffer_size_value );					
+					}					
+					break;
+					
+				case mpeg_start_code::extension_start:
+					{
+						mpeg_extension_id::type ext_id = (mpeg_extension_id::type)get( data, 0, 4 );
+						if( ext_id == mpeg_extension_id::sequence_extension )
+						{
+							parse_sequence_extension( data );
+							
+							pl::pcos::property chroma_format_prop( key_chroma_format_ );
+							stream->properties( ).append( chroma_format_prop = seq_ext_.chroma_format );
+						}
+						else if( ext_id == mpeg_extension_id::picture_coding_extension )
+						{
+							parse_picture_coding_extension( data );
+							
+							pl::pcos::property top_field_first_prop( key_top_field_first_ );
+							stream->properties( ).append( top_field_first_prop = pict_ext_.top_field_first );
+							
+							pl::pcos::property frame_pred_frame_dct_prop( key_frame_pred_frame_dct_ );
+							stream->properties( ).append( frame_pred_frame_dct_prop = pict_ext_.frame_pred_frame_dct );
+							
+							pl::pcos::property progressive_frame_prop( key_progressive_frame_ );
+							stream->properties( ).append( progressive_frame_prop = pict_ext_.progressive_frame );
+							
+							// When we get here we should be done
+							done = true;
+						}
+					}
+					break;
+					
+				case mpeg_start_code::group_start:
+					{
+						parse_gop_header( data );
+						
+						pl::pcos::property broken_link_prop( key_broken_link_ );
+						stream->properties( ).append( broken_link_prop = gop_hdr_.broken_link );
+						
+						pl::pcos::property closed_gop_prop( key_closed_gop_ );
+						stream->properties( ).append( closed_gop_prop = gop_hdr_.closed_gop );					
+					}
+					break;
+					
+				case mpeg_start_code::sequence_end:
+				case mpeg_start_code::user_data_start:
+				case mpeg_start_code::sequence_error:
+				default:
+					break;
+			}
+			
+			sc = find_start( data, end );
+		}
+    }
+    
+private:
+
+	int get( uint8_t *p, int bit_offset, int bit_count )
+	{
+		int result = 0;
+		while( bit_count -- )
+		{
+			int byte = bit_offset / 8;
+			int bit = 7 - bit_offset % 8;
+			int bit_shifted = 1 << bit;
+			int bit_value = *( p + byte ) & bit_shifted;
+			result <<= 1;
+			result |= bit_value ? 1 : 0;
+			bit_offset ++;
+		}
+		return result;
+	}
+	
+	mpeg_start_code::type find_start( boost::uint8_t *&p, boost::uint8_t *end )
+	{
+		mpeg_start_code::type result = mpeg_start_code::undefined;
+		if ( p + 4 < end )
+		{
+			bool found = false;
+			
+			while( !found && p + 4 < end )
+			{
+				found = ( *p == 0 && *( p + 1 ) == 0 && *( p + 2 ) == 1 );
+				p += found ? 3 : 1;
+			}
+			
+			if ( found )
+			{
+				switch( *p ++ )
+				{
+					case 0x00:    result = mpeg_start_code::picture_start; break;
+					case 0xb2:    result = mpeg_start_code::user_data_start; break;
+					case 0xb3:    result = mpeg_start_code::sequence_header; break;
+					case 0xb4:    result = mpeg_start_code::sequence_error; break;
+					case 0xb5:    result = mpeg_start_code::extension_start; break;
+					case 0xb7:    result = mpeg_start_code::sequence_end; break;
+					case 0xb8:    result = mpeg_start_code::group_start; break;
+				}
+			}
+		}
+		else
+		{
+			p = end;
+		}
+		
+		return result;
+	}
+
+	////////////////////////////////////////////
+	// Sequence header structure	
+	typedef struct sequence_header
+	{
+		int horizontal_size_value;			// 12 bits
+		int vertical_size_value;			// 12 bits
+		int aspect_ratio_information;		// 4 bits
+		int frame_rate_code;				// 4 bits
+		int bit_rate_value;					// 18 bits
+		int marker_bit;					// 1 bits
+		int vbv_buffer_size_value;			// 10 bits
+		int constrained_parameters_flag;	// 1 bits
+	} sequence_header;
+	
+	void parse_sequence_header( boost::uint8_t *&buf )
+	{
+		// Size of this header is at least 64 bits == 8 bytes
+		int size = 8;
+		
+		int bit_offset = 0;
+		seq_hdr_.horizontal_size_value = get( buf, bit_offset, 12 ); bit_offset += 12;
+		seq_hdr_.vertical_size_value = get( buf, bit_offset, 12 ); bit_offset += 12;
+		seq_hdr_.aspect_ratio_information = get( buf, bit_offset, 4 ); bit_offset += 4;
+		seq_hdr_.frame_rate_code = get( buf, bit_offset, 4 ); bit_offset += 4;
+		seq_hdr_.bit_rate_value = get( buf, bit_offset, 18 ); bit_offset += 18;
+		seq_hdr_.marker_bit = get( buf, bit_offset, 1 ); bit_offset += 1;
+		seq_hdr_.vbv_buffer_size_value = get( buf, bit_offset, 10 ); bit_offset += 10;
+		seq_hdr_.constrained_parameters_flag = get( buf, bit_offset, 1 ); bit_offset += 1;
+		
+		bool load_intra_quantiser_matrix = get( buf, bit_offset, 1 ); bit_offset += 1;
+		if( load_intra_quantiser_matrix )
+		{
+			bit_offset += 8*64;
+			size += 64;
+		}
+		
+		bool load_non_intra_quantiser_matrix = get( buf, bit_offset, 1 ); bit_offset += 1;
+		if( load_non_intra_quantiser_matrix )
+		{
+			bit_offset += 8*64;
+			size += 64;
+		}
+		
+		// Update data pointer
+		buf += size;
+	}
+	
+	///////////////////////////////////////////////
+	// Sequence extension structure
+	typedef struct sequence_extension {
+		int extension_start_code_identifier;	// 4 bits
+		int profile_and_level_indication;		// 8 bits
+		int progressive_sequence;				// 1 bit
+		int chroma_format;						// 2 bits
+		int horizontal_size_extension;			// 2 bits
+		int vertical_size_extension;			// 2 bits
+		int bit_rate_extension;					// 12 bits
+		int marker_bit;						// 1 bits
+		int vbv_buffer_size_extension;			// 8 bits
+		int low_delay;							// 1 bits
+		int frame_rate_extension_n;				// 2 bits
+		int frame_rate_extension_d;				// 5 bits
+	} sequence_extension;
+	
+	void parse_sequence_extension( boost::uint8_t *&buf )
+	{
+		// Size of sequence header extension is 48 bits == 6 bytes
+		int size = 6;
+		
+		int bit_offset = 0;
+		seq_ext_.extension_start_code_identifier = get( buf, bit_offset, 4 ); bit_offset += 4;
+		seq_ext_.profile_and_level_indication = get( buf, bit_offset, 8 ); bit_offset += 8;
+		seq_ext_.progressive_sequence = get( buf, bit_offset, 1 ); bit_offset += 1;
+		seq_ext_.chroma_format = get( buf, bit_offset, 2 ); bit_offset += 2;
+		seq_ext_.horizontal_size_extension = get( buf, bit_offset, 2 ); bit_offset += 2;
+		seq_ext_.vertical_size_extension = get( buf, bit_offset, 2 ); bit_offset += 2;
+		seq_ext_.bit_rate_extension = get( buf, bit_offset, 12 ); bit_offset += 12;
+		seq_ext_.marker_bit = get( buf, bit_offset, 1 ); bit_offset += 1;
+		seq_ext_.vbv_buffer_size_extension = get( buf, bit_offset, 8 ); bit_offset += 8;
+		seq_ext_.low_delay = get( buf, bit_offset, 1 ); bit_offset += 1;
+		seq_ext_.frame_rate_extension_n = get( buf, bit_offset, 2 ); bit_offset += 2;
+		seq_ext_.frame_rate_extension_d = get( buf, bit_offset, 5 ); bit_offset += 5;
+		
+		buf += size;
+	}
+	
+	///////////////////////////////////////////
+	// GOP header structure
+	typedef struct gop_header
+	{
+		int time_code;		// 25 bits
+		int closed_gop;	// 1 bit
+		int broken_link;	// 1 bit
+	} gop_header;
+	
+	void parse_gop_header( boost::uint8_t *&buf )
+	{
+		// Size of sequence header extension is 26 bits so increase pointer with 3
+		int size = 3;
+		
+		int bit_offset = 0;
+		gop_hdr_.time_code = get( buf, bit_offset, 25 ); bit_offset += 25;
+		gop_hdr_.closed_gop = get( buf, bit_offset, 1 ); bit_offset += 1;
+		gop_hdr_.broken_link = get( buf, bit_offset, 1 ); bit_offset += 1;
+		
+		buf += size;
+	}
+	
+	typedef struct picture_header
+	{
+		int temporal_reference;			// 10 bits
+		int picture_coding_type;		// 3 bits
+		int vbv_delay;					// 16 bits
+		int full_pel_forward_vector;	// 1 bit
+		int forward_f_code;				// 3 bits
+		int full_pel_backward_vector;	// 1 bit
+		int backward_f_code;			// 3 bits
+	} picture_header;
+	
+	void parse_picture_header( boost::uint8_t *&buf )
+	{
+		int bit_offset = 0;
+		pict_hdr_.temporal_reference = get( buf, bit_offset, 10 ); bit_offset += 10;
+		pict_hdr_.picture_coding_type = get( buf, bit_offset, 3 ); bit_offset += 3;
+		pict_hdr_.vbv_delay = get( buf, bit_offset, 16 ); bit_offset += 16;
+		if ( pict_hdr_.picture_coding_type == 2 || pict_hdr_.picture_coding_type == 3) {
+			pict_hdr_.full_pel_forward_vector = get( buf, bit_offset, 1 ); bit_offset += 1;
+			pict_hdr_.forward_f_code = get( buf, bit_offset, 3 ); bit_offset += 3;
+		}
+		if ( pict_hdr_.picture_coding_type == 3 ) {
+			pict_hdr_.full_pel_backward_vector = get( buf, bit_offset, 1 ); bit_offset += 1;
+			pict_hdr_.backward_f_code = get( buf, bit_offset, 3 ); bit_offset += 3;
+		}
+		// Run through the rest of the header but we done care about the information
+		while ( get( buf, bit_offset++, 1 ) == 1 ) {
+//			extra_bit_picture
+//			extra_information_picture
+		}
+	}
+	
+	typedef struct picture_coding_extension
+	{
+		int extension_start_code_identifier;	// 4 bits
+		int f_code_0_0;							// 4 bits * forward horizontal *
+		int f_code_0_1;							// 4 bits * forward vertical *
+		int f_code_1_0;							// 4 bits * backward horizontal *
+		int f_code_1_1;							// 4 bits * backward vertical *
+		int intra_dc_precision;					// 2 bits
+		int picture_structure;					// 2 bits
+		int top_field_first;					// 1 bit
+		int frame_pred_frame_dct;				// 1 bit
+		int concealment_motion_vectors;			// 1 bit
+		int q_scale_type;						// 1 bit
+		int intra_vlc_format;					// 1 bit
+		int alternate_scan;						// 1 bit
+		int repeat_first_field;					// 1 bit
+		int chroma_420_type;					// 1 bit
+		int progressive_frame;					// 1 bit
+		int composite_display_flag;				// 1 bit
+		int v_axis;								// 1 bit
+		int field_sequence;						// 3 bits
+		int sub_carrier;						// 1 bit
+		int burst_amplitude;					// 7 bits
+		int sub_carrier_phase;					// 8 bits
+	} picture_coding_extension;
+	
+	
+	void parse_picture_coding_extension( boost::uint8_t *&buf )
+	{
+		int bit_offset = 0;
+		pict_ext_.extension_start_code_identifier = get( buf, bit_offset, 4 ); bit_offset += 4;
+		pict_ext_.f_code_0_0 = get( buf, bit_offset, 4 ); bit_offset += 4;
+		pict_ext_.f_code_0_1 = get( buf, bit_offset, 4 ); bit_offset += 4;
+		pict_ext_.f_code_1_0 = get( buf, bit_offset, 4 ); bit_offset += 4;
+		pict_ext_.f_code_1_1 = get( buf, bit_offset, 4 ); bit_offset += 4;
+		pict_ext_.intra_dc_precision = get( buf, bit_offset, 2 ); bit_offset += 2;
+		pict_ext_.picture_structure = get( buf, bit_offset, 2 ); bit_offset += 2;
+		pict_ext_.top_field_first = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.frame_pred_frame_dct = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.concealment_motion_vectors = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.q_scale_type = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.intra_vlc_format = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.alternate_scan = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.repeat_first_field = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.chroma_420_type = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.progressive_frame = get( buf, bit_offset, 1 ); bit_offset += 1;
+		pict_ext_.composite_display_flag = get( buf, bit_offset, 1 ); bit_offset += 1;
+		if ( pict_ext_.composite_display_flag ) {
+			pict_ext_.v_axis = get( buf, bit_offset, 1 ); bit_offset += 1;
+			pict_ext_.field_sequence = get( buf, bit_offset, 3 ); bit_offset += 3;
+			pict_ext_.sub_carrier = get( buf, bit_offset, 1 ); bit_offset += 1;
+			pict_ext_.burst_amplitude = get( buf, bit_offset, 7 ); bit_offset += 7;
+			pict_ext_.sub_carrier_phase = get( buf, bit_offset, 8 ); bit_offset += 8;
+		}
+	}
+    	
+	/// Hold the last sequence header we read
+	sequence_header seq_hdr_;
+	/// Hold the last sequence extension information
+	sequence_extension seq_ext_;
+	/// Hold the last parsed gop header
+	gop_header gop_hdr_;
+	/// Hold the last picture header
+	picture_header pict_hdr_;
+	/// Hold the last extensions to picture header
+	picture_coding_extension pict_ext_;
+
+	std::map< int, ml::frame_type_ptr > gop_;
+};
+
 class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
 {
 	private:
@@ -351,9 +851,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		{
 			if( frame && frame->get_stream() && frame->get_stream( )->estimated_gop_size( ) != 1 )
 			{
+				ml::filter_type_ptr analyse = ml::filter_type_ptr( new filter_analyse( ) );
+				analyse->connect( fetch_slot( 0 ) );
 				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-				gop_decoder_->connect( fetch_slot( 0 ) );
-				
+				gop_decoder_->connect( analyse );
 				return true;
 			}
 			return false;
@@ -363,14 +864,14 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		{
 			int frameno = get_position( );
 			
-			frame = fetch_from_slot( );
-			
-			// If there is nothing to decode just return frame
-			if( !frame->get_stream( ) )
-				return;
-		
 			if ( last_frame_ == 0 )
 			{
+				frame = fetch_from_slot( );
+			
+				// If there is nothing to decode just return frame
+				if( !frame->get_stream( ) )
+					return;
+		
 				if( !initialized_ )
 				{
 					initialize( frame );
@@ -387,6 +888,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			}
 			else
 			{
+				if ( !frame ) frame = fetch_from_slot( );
 				ml::filter_type_ptr graph = filter_obtain( );
 				graph->fetch_slot( 0 )->push( frame );
 				graph->seek( get_position( ) );
@@ -974,6 +1476,8 @@ public:
 
 	virtual filter_type_ptr filter( const pl::wstring &spec )
 	{
+		if ( spec == L"analyse" )
+			return filter_type_ptr( new filter_analyse( ) );
 		if ( spec == L"decode" )
 			return filter_type_ptr( new filter_decode( ) );
 		if ( spec == L"encode" )

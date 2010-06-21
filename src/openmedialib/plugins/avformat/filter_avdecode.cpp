@@ -112,6 +112,8 @@ class stream_queue
 
 			result = lru_cache_->frame_for_position( my_key );
 			
+			if ( position < 0 ) position = 0;
+
 			if( !result && position < input_->get_frames( ) )
 			{
 				//std::cerr << "fetching from input " << position << std::endl;
@@ -123,7 +125,7 @@ class stream_queue
 					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
 						look_for_closed( result );
 						
-					lru_cache_->insert_frame_for_position( my_key, result );
+					lru_cache_->insert_frame_for_position( lru_key_for_position( result->get_position( ) ), result );
 					
 					if ( result->get_position( ) == position )
 						break;
@@ -156,10 +158,12 @@ class stream_queue
 				if ( frame->get_stream( )->estimated_gop_size( ) != 1 )
 				{
 					if ( position + offset_ != expected_ )
+					{
 						start = frame->get_stream( )->key( );
 
-					if ( start == position && position != 0 )
-						start = fetch( start - 1 )->get_stream( )->key( );
+						if ( position < start + 3 && position != 0 )
+							start = fetch( start - 1 )->get_stream( )->key( );
+					}
 				}
 				else
 				{
@@ -436,7 +440,7 @@ class stream_queue
 							image->set_position( result->get_position( ) - offset_ );
 							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
 
-							if ( result->get_position( ) >= position + offset_ )
+							if ( result->get_position( ) == position + offset_ )
 								found = true;
 						}
 						else
