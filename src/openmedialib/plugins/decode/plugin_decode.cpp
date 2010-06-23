@@ -356,7 +356,7 @@ protected:
 				while( index < get_frames( ) )
 				{
 					inner_fetch( temp, index ++ );
-					if ( start != temp->get_stream( )->key( ) ) break;
+					if ( !temp || !temp->get_stream( ) || start != temp->get_stream( )->key( ) ) break;
 					int sorted = start + temp->get_stream( )->properties( ).get_property_with_key( key_temporal_reference_ ).value< int >( );
 					gop_[ temp->get_position( ) ] = temp;
 					streams[ sorted ] = temp->get_stream( );
