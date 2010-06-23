@@ -25,6 +25,9 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace aml { namespace openmedialib { 
 
+typedef boost::recursive_mutex::scoped_lock scoped_lock;
+static boost::recursive_mutex mutex_;
+
 void olib_rsvg_init( )
 {
 	static bool rsvg_initted = false;
@@ -116,6 +119,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 			if ( prop_resource_.value< pl::wstring >( ) == L"svg:" )
 			{
+				scoped_lock lock( mutex_ );
+
 				std::string doc = pl::to_string( prop_doc_.value< pl::wstring >( ) );
 
 				if ( doc != "" && ( prop_doc_.value< pl::wstring >( ) != loaded_ || !matches_deferred( frame_ ) ) )
@@ -152,6 +157,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 			if ( pixbuf )
 			{
+				scoped_lock lock( mutex_ );
 				boost::uint8_t *src = gdk_pixbuf_get_pixels( pixbuf );
 				int src_pitch = gdk_pixbuf_get_rowstride( pixbuf );
 				int w = gdk_pixbuf_get_width( pixbuf );
