@@ -1,5 +1,6 @@
 vcodecs/avcintra100 = mcencode
 vcodecs/avcintra50 = mcencode
+vcodecs/mcxdcam = mcencode
 vcodecs/dv100 = mcencode
 vcodecs/dv25 = avencode
 vcodecs/dv50 = avencode
