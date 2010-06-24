@@ -1037,7 +1037,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			if ( last_frame_ == 0 )
 			{
 				initialize_encoder_mapping( );
-				
 				create_pushers( );
 			}
 
@@ -1046,24 +1045,28 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 				gop_encoder_->seek( frameno );
 				frame = gop_encoder_->fetch( );
 			}
+			else if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
+			{
+				frame = last_frame_;
+			}
 			else
 			{
 				ml::filter_type_ptr graph = filter_obtain( );
-				if( !frame )
-					frame = fetch_from_slot( );
+				frame = fetch_from_slot( );
 				
 				if( prop_force_.value<int>() != 0 )
 				{
 					 ARLOG_DEBUG3( "Resetting stream on frame in decode filter, since the force property is set" );
+					 frame->get_image( );
 					 frame->set_stream( stream_type_ptr() );
 				}
 				else if( frame->get_stream( ) && ( frame->get_stream( )->codec( ) != video_codec_ ) )
 				{
 					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
 					ARLOG_DEBUG3( "Mismatching stream types: %1% and %2%, resetting stream." )( frame->get_stream( )->codec( ) )( video_codec_ );
+					frame->get_image( );
 					frame->set_stream( stream_type_ptr() );
 				}
-				
 				   
 				frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
 			}
