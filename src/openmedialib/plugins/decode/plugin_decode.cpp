@@ -1017,7 +1017,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			}
 		}
 
-		bool create_pushers( ml::frame_type_ptr &frame )
+		bool create_pushers( )
 		{
 			if( is_long_gop_ )
 			{
@@ -1038,8 +1038,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 			{
 				initialize_encoder_mapping( );
 				
-				frame = fetch_from_slot( );
-				create_pushers( frame );
+				create_pushers( );
 			}
 
 			if ( gop_encoder_ )
