@@ -44,19 +44,13 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Only do this while enabled and avoid pushing duplicates
-			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
-			{
-				result = last_frame_;
-				process_output( result );
-			}
-			else if ( prop_enable_.value< int >( ) )
+			if ( prop_enable_.value< int >( ) )
 			{
 				// Keep a queue of 12 frames here and ensure the pushers have some material to work with
 				while ( queue_.size( ) < 12 && position_ < get_frames( ) )
 				{
 					fetch_slot( 0 )->seek( position_ ++ );
-					ml::frame_type_ptr frame = fetch_slot( 0 )->fetch( );
+					ml::frame_type_ptr frame = fetch_slot( 0 )->fetch( )->shallow( );
 					present_to_pushers( frame );
 					queue_.push_back( frame );
 				}
@@ -73,8 +67,6 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 			{
 				result = fetch_from_slot( 0 );
 			}
-
-			last_frame_ = result;
 		}
 
 	private:
@@ -92,20 +84,16 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 		}
 
 		// Pull a frame through the subgraph
-		void process_output( ml::frame_type_ptr result )
+		void process_output( ml::frame_type_ptr &result )
 		{
 			// Seek and fetch from each input
 			for ( size_t i = 1; i < slot_count( ); i ++ )
 			{
 				fetch_slot( i )->seek( result->get_position( ) );
 				ml::frame_type_ptr fr = fetch_slot( i )->fetch( );
-				if ( fr )
-					std::cerr << "request for " << result->get_position( ) << " got " << fr->get_position( ) << std::endl;
-				else
-					std::cerr << "request for " << result->get_position( ) << " got nothing" << std::endl;
 				if (fr && fr->in_error())
 				{
-					for (int i=0; i<fr->exceptions().size(); i++)
+					for ( size_t i=0; i<fr->exceptions().size(); i++)
 					{
 						result->push_exception(fr->exceptions()[i].first, fr->exceptions()[i].second);
 					}
@@ -139,7 +127,6 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
 		pcos::property prop_slots_;
 		int position_;
 		std::deque< ml::frame_type_ptr > queue_;
-		ml::frame_type_ptr last_frame_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring &resource )
