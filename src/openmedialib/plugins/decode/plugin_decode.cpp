@@ -1040,14 +1040,14 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 				create_pushers( );
 			}
 
-			if ( gop_encoder_ )
+			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
+			{
+				frame = last_frame_;
+			}
+			else if ( gop_encoder_ )
 			{
 				gop_encoder_->seek( frameno );
 				frame = gop_encoder_->fetch( );
-			}
-			else if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
-			{
-				frame = last_frame_;
 			}
 			else
 			{
@@ -1056,7 +1056,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_type, public filter_pool
 				
 				if( prop_force_.value<int>() != 0 )
 				{
-					 ARLOG_DEBUG3( "Resetting stream on frame in decode filter, since the force property is set" );
+					 ARLOG_DEBUG3( "Resetting stream on frame in encode filter, since the force property is set" );
 					 frame->get_image( );
 					 frame->set_stream( stream_type_ptr() );
 				}
