@@ -62,7 +62,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			{
 				initialized_ = initialize( ); 
 				if ( !initialized_ )
-					PL_LOG( olib::openpluginlib::level::error, boost::format( "Initialisation of %1% failed" ) % olib::openpluginlib::to_string( get_uri( ) ) );
+					ARLOG_ERR( "Initialisation of %1% failed" )( get_uri( ) );
 			}
 			return initialized_; 
 		}
