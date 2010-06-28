@@ -34,6 +34,8 @@ OPENPLUGINLIB_DECLSPEC bool init( const string& lookup_path = "" );
 OPENPLUGINLIB_DECLSPEC bool init( const string_list& lookup_paths );
 OPENPLUGINLIB_DECLSPEC bool uninit( );
 
+OPENPLUGINLIB_DECLSPEC void init_log( );
+
 // UI construction motivated
 OPENPLUGINLIB_DECLSPEC wstring registered_filters( bool in_filter );
 
