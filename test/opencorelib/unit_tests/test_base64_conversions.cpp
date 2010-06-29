@@ -62,6 +62,27 @@ void test_base64_conversions()
 	std::cout << "Done." << std::endl;
 
 
+	//Check that whitespace in the encoded data is ignored
+	vector<boost::uint8_t> whitespace_expected( test_data, test_data + sizeof(test_data) );
+	vector<boost::uint8_t> whitespace_result;
+	vector<string> whitespace_tests;
+	whitespace_tests.push_back( " AxC4//8ENAAA=" );
+	whitespace_tests.push_back( " A xC4//8ENAAA=" );
+	whitespace_tests.push_back( "AxC4//8E  NAAA=" );
+	whitespace_tests.push_back( "AxC4//8ENAAA = " );
+	whitespace_tests.push_back( "\nAxC4//8ENAAA= " );
+	whitespace_tests.push_back( "\nAxC4//8ENAAA=\n" );
+	whitespace_tests.push_back( "\tAxC4//8ENAAA=\n" );
+	for( size_t i=0; i<whitespace_tests.size(); ++i )
+	{
+		base64_decode( whitespace_tests[i].begin(), whitespace_tests[i].end(), back_inserter( whitespace_result ) );
+
+		BOOST_CHECK( whitespace_result == whitespace_expected );
+
+		whitespace_result.clear();
+	}
+
+
 	vector<boost::uint8_t> result_vec;
 	vector<string> invalid_input_tests;
 	invalid_input_tests.push_back( "A" );

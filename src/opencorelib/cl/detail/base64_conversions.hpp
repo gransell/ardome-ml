@@ -21,6 +21,19 @@ namespace olib{ namespace opencorelib{ namespace detail{
 		0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29, //a-z
 		0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33 };
 
+    inline bool is_whitespace( char c )
+    {
+        switch(c)
+        {
+            case ' ':
+            case '\n':
+            case '\t':
+                return true;
+            default:
+                return false;
+        }
+    }
+
 	template<typename T, typename U>
 	void base64_encode( T start, T end, U output )
 	{
@@ -83,36 +96,50 @@ namespace olib{ namespace opencorelib{ namespace detail{
 		//Since we need to check for the trailing '=' characters, which signals that
 		//the last bytes should be dropped, we must be one batch á 4 bytes ahead of
 		//writing when reading.
-		for(int i=0; i<4; ++i)
+		for(int i=0; i<4; )
 		{
 			ARENFORCE_MSG( iter != end, "Too few characters in base64 encoded data!" );
 	
 			char val = (*iter++);
+            if( is_whitespace(val) )
+                continue;
+
 			ARENFORCE_MSG( val >= 43 && val <= 122 && val != '=', "Invalid character in base64 encoded data, code: %1%" )( (int)val );
 			prev_buf[i] = base64_dec_lookup[val - 43];
+
+            ++i;
 		}
 	
 		bool quit = false;
 	
 		while( !quit )
 		{
-			for(int i=0; i<4; ++i)
+			for(int i=0; i<4;)
 			{
 				if( iter != end )
 				{
 					char val = (*iter++);
+                    if( is_whitespace(val) )
+                        continue;
 	
 					if( val == '=' )
 					{
 						ARENFORCE_MSG( i == 0, "Incorrectly placed '=' in base64 encoded data!" );
 						//The first byte of the previous batch is always valid
 						(*output++) = ( (prev_buf[0] << 2) | ((prev_buf[1] & 0x30) >> 4) );
+
+						while( iter != end && is_whitespace( *iter ) )
+							++iter;
 	
 						if( iter != end )
 						{
 							ARENFORCE_MSG( (*iter) == '=', "'=' followed by illegal character '%1%' in base64 encoded data detected!" )( *iter );
 							++iter;
-							ARENFORCE_MSG( iter == end, "Trailing character '%1%' after '==' detected!" )( *iter );
+
+							while( iter != end && is_whitespace( *iter ) )
+								++iter;
+
+							ARENFORCE_MSG( iter == end, "Trailing non-whitespace character '%1%' after '==' detected!" )( *iter );
 	
 							return;
 						}
@@ -135,6 +162,8 @@ namespace olib{ namespace opencorelib{ namespace detail{
 					quit = true;
 					break;
 				}
+
+                ++i;
 			}
 			
 			(*output++) = ( (prev_buf[0] << 2) | ((prev_buf[1] & 0x30) >> 4) );
