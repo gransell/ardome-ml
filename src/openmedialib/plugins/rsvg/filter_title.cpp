@@ -155,8 +155,11 @@ class filter_title : public ml::filter_type
 				}
 
 				// Offer to the internal compositor graph
+				result->set_position( get_position( ) );
+				fg->set_position( get_position( ) );
 				pusher_bg_->push( result );
 				pusher_fg_->push( fg );
+				compositor_->seek( get_position( ) );
 				result = compositor_->fetch( );
 
 				// Ensure the position matches

@@ -39,29 +39,27 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			result = fetch_from_slot( );
-
-			if ( prop_enable_.value< int >( ) )
+			if ( !last_frame_ || last_frame_->get_position( ) != get_position( ) )
 			{
-				if ( store_ == 0 && prop_store_.value< pl::wstring >( ) != L"" )
-				{
-					store_ = ml::create_store( prop_store_.value< pl::wstring >( ), result );
+				result = fetch_from_slot( );
 
-					if ( store_ )
+				if ( prop_enable_.value< int >( ) )
+				{
+					if ( store_ == 0 )
+					{
+						store_ = ml::create_store( prop_store_.value< pl::wstring >( ), result );
+						ARENFORCE_MSG( store_, "Failed to create a store from %s" )( prop_store_.value< pl::wstring >( ) );
 						pass_properties( store_ );
+						ARENFORCE_MSG( store_->init( ), "Failed to initalise a store from %s" )( prop_store_.value< pl::wstring >( ) );
+					}
 
-					if ( !store_ || !store_->init( ) )
-						store_ = ml::store_type_ptr( );
-					else
-						return;
+					ARENFORCE_MSG(store_->push( result->shallow( ) ), "Pushing to store %1% failed.") (prop_store_.value<pl::wstring>());
 				}
-
-				if ( store_ )
-				{
-					ARENFORCE_MSG(store_->push( result->shallow( ) ),
-						"Pushing to store %1% failed. A possible cause could be insufficient disk space.")
-						(prop_store_.value<pl::wstring>());
-				}
+				last_frame_ = result;
+			}
+			else
+			{
+				result = last_frame_;
 			}
 		}
 
@@ -79,20 +77,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 					pcos::property p = store->properties( ).get_property_with_string( prop.c_str( ) );
 					pcos::property v = properties( ).get_property_with_string( name.c_str( ) );
 					if ( p.valid( ) && v.valid( ) )
-					{
-						if ( p.is_a< int >( ) && v.is_a< int >( ) )
-							p = v.value< int >( );
-						else if ( p.is_a< double >( ) && v.is_a< double >( ) )
-							p = v.value< double >( );
-                        else if ( p.is_a< boost::uint64_t >( ) && v.is_a< boost::uint64_t >( ) )
-                            p = v.value< boost::uint64_t >( );
-                        else if ( p.is_a< boost::int64_t >( ) && v.is_a< boost::int64_t >( ) )
-                            p = v.value< boost::int64_t >( ) ;
-						else if ( v.is_a< pl::wstring >( ) )
-							p.set_from_string( v.value< pl::wstring >( ) );
-						else
-							std::cerr << "Don't know how to match property " << name << std::endl;
-					}
+						p.set_from_property( v );
 					else
 						std::cerr << "Unknown property " << name << std::endl;
 				}
@@ -102,7 +87,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
 	private:
 		pcos::property prop_enable_;
 		pcos::property prop_store_;
-
+		ml::frame_type_ptr last_frame_;
 		ml::store_type_ptr store_;
 };
 

@@ -172,9 +172,6 @@ namespace
 
 		assert( refs >= 0 && L"openpluginlib::refinit: refs is negative." );
 
-//		if ( refs == 0 )
-//			cl::the_log_handler::instance( ).add_target( cl::logtarget_ptr( new pl_logtarget( ) ) );
-
 		detail::registry& el_reg = detail::registry::instance( );
 
 		if( init > 0 && ++refs )
@@ -379,6 +376,11 @@ bool uninit( )
 	reflib( -1 );
 
 	return true;
+}
+
+OPENPLUGINLIB_DECLSPEC void init_log( )
+{
+	cl::the_log_handler::instance( ).add_target( cl::logtarget_ptr( new pl_logtarget( ) ) );
 }
 
 #ifdef WIN32

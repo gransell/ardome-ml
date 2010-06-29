@@ -52,6 +52,7 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace olib { namespace openmedialib { namespace ml {
 
 static pcos::key key_enable_( pcos::key::from_string( "enable" ) );
+static pcos::key key_uri_ = pl::pcos::key::from_string( "uri" );
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -658,7 +659,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"", 0 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 50000000, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"yuv422p", 12 ) );
 						break;
 
 					case ml::stream_audio:
@@ -672,6 +673,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				if ( packet )
 				{
+					pl::pcos::property prop_uri( key_uri_ );
+					packet->properties( ).append( prop_uri = get_uri( ) );
 					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
 					result->set_stream( packet );
 				}
