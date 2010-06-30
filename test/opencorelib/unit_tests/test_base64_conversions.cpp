@@ -23,8 +23,7 @@ void test( const boost::uint8_t *data, size_t length )
 	base64_encode( data, data + length, ostream_iterator<char>(enc_stream) );
 
 	//Check that the encoded string is of the expected length
-	const int num_equals_chars = ( ( 3 - (length % 3) ) % 3 );
-	BOOST_CHECK_EQUAL( enc_stream.str().size(), ( length + 2 ) / 3 * 4 + num_equals_chars );
+	BOOST_CHECK_EQUAL( enc_stream.str().size(), ( length + 2 ) / 3 * 4 );
 
 	vector<boost::uint8_t> result;
 	base64_decode( istream_iterator<char>(enc_stream), istream_iterator<char>(), back_inserter(result) );
@@ -66,13 +65,13 @@ void test_base64_conversions()
 	vector<boost::uint8_t> whitespace_expected( test_data, test_data + sizeof(test_data) );
 	vector<boost::uint8_t> whitespace_result;
 	vector<string> whitespace_tests;
-	whitespace_tests.push_back( " AxC4//8ENAAA=" );
-	whitespace_tests.push_back( " A xC4//8ENAAA=" );
-	whitespace_tests.push_back( "AxC4//8E  NAAA=" );
-	whitespace_tests.push_back( "AxC4//8ENAAA = " );
-	whitespace_tests.push_back( "\nAxC4//8ENAAA= " );
-	whitespace_tests.push_back( "\nAxC4//8ENAAA=\n" );
-	whitespace_tests.push_back( "\tAxC4//8ENAAA=\n" );
+	whitespace_tests.push_back( " AxC4//8ENAA=" );
+	whitespace_tests.push_back( " A xC4//8ENAA=" );
+	whitespace_tests.push_back( "AxC4//8E  NAA=" );
+	whitespace_tests.push_back( "AxC4//8ENAA = " );
+	whitespace_tests.push_back( "\nAxC4//8ENAA= " );
+	whitespace_tests.push_back( "\nAxC4//8ENAA=\n" );
+	whitespace_tests.push_back( "\tAxC4//8ENAA=\n" );
 	for( size_t i=0; i<whitespace_tests.size(); ++i )
 	{
 		base64_decode( whitespace_tests[i].begin(), whitespace_tests[i].end(), back_inserter( whitespace_result ) );
@@ -88,11 +87,9 @@ void test_base64_conversions()
 	invalid_input_tests.push_back( "A" );
 	invalid_input_tests.push_back( "A==" );
 	invalid_input_tests.push_back( "AB" );
-	invalid_input_tests.push_back( "AB==" );
 	invalid_input_tests.push_back( "ABC" );
-	invalid_input_tests.push_back( "ABC=" );
-	invalid_input_tests.push_back( "ABC==" );
 	invalid_input_tests.push_back( "ABCDE" );
+	invalid_input_tests.push_back( "AB=A" );
 	invalid_input_tests.push_back( "=" );
 	invalid_input_tests.push_back( "==" );
 	invalid_input_tests.push_back( "#ABC" );

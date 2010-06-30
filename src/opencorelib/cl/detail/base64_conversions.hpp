@@ -40,7 +40,6 @@ namespace olib{ namespace opencorelib{ namespace detail{
 		T iter = start;
 		
 		boost::uint8_t buf[3];
-		int num_padding_bytes = 0;
 	
 		while( true )
 		{
@@ -52,26 +51,28 @@ namespace olib{ namespace opencorelib{ namespace detail{
 				}
 				else
 				{
-					if( i == 0 )
+					for( int j=i; j<3; j++ )
 					{
-						//Signal how many padding bytes we appended
-						for( int i=0; i<num_padding_bytes; i++ )
-						{
-							(*output++) = ( '=' );
-						}
-	
-						return;
+						buf[j] = 0;
 					}
-					else
+					
+					if( i >= 1 )
 					{
-						//Pad out with zeroes to the nearest multiple of 3 bytes
-						num_padding_bytes = 3-i;
-						for(int j=i; j<3; j++)
+						(*output++) = ( base64_enc_lookup[buf[0] >> 2] );
+						(*output++) = ( base64_enc_lookup[((buf[0] & 0x03) << 4) | ((buf[1] & 0xF0) >> 4)] );
+						if( i >= 2 )
 						{
-							buf[j] = 0;
+							(*output++) = ( base64_enc_lookup[((buf[1] & 0x0F) << 2) | ((buf[2] & 0xC0) >> 6)] );
 						}
-						break;
+						else
+						{
+							(*output++) = '=';
+						}
+
+						(*output++) = '=';
 					}
+
+					return;
 				}
 			}
 	
@@ -81,101 +82,68 @@ namespace olib{ namespace opencorelib{ namespace detail{
 			(*output++) = ( base64_enc_lookup[buf[2] & 0x3F] );
 		}
 	}
-	
+
 	template<typename T, typename U>
 	void base64_decode( T start, T end, U output )
 	{
-		if( start == end )
-			return;
-	
 		T iter = start;
 	
-		boost::uint8_t prev_buf[4];
 		boost::uint8_t buf[4];
-	
-		//Since we need to check for the trailing '=' characters, which signals that
-		//the last bytes should be dropped, we must be one batch á 4 bytes ahead of
-		//writing when reading.
-		for(int i=0; i<4; )
-		{
-			ARENFORCE_MSG( iter != end, "Too few characters in base64 encoded data!" );
-	
-			char val = (*iter++);
-            if( is_whitespace(val) )
-                continue;
 
-			ARENFORCE_MSG( val >= 43 && val <= 122 && val != '=', "Invalid character in base64 encoded data, code: %1%" )( (int)val );
-			prev_buf[i] = base64_dec_lookup[val - 43];
-
-            ++i;
-		}
-	
-		bool quit = false;
-	
-		while( !quit )
-		{
-			for(int i=0; i<4;)
-			{
-				if( iter != end )
+        while( true )
+        {
+            for( int i=0; i<4; )
+            {
+				if( iter == end )
 				{
-					char val = (*iter++);
-                    if( is_whitespace(val) )
-                        continue;
-	
-					if( val == '=' )
-					{
-						ARENFORCE_MSG( i == 0, "Incorrectly placed '=' in base64 encoded data!" );
-						//The first byte of the previous batch is always valid
-						(*output++) = ( (prev_buf[0] << 2) | ((prev_buf[1] & 0x30) >> 4) );
+					ARENFORCE_MSG( i == 0, "base64 encoded data has a character count that is not a multiple of 4" );
+					return;
+				}
 
-						while( iter != end && is_whitespace( *iter ) )
-							++iter;
-	
-						if( iter != end )
-						{
-							ARENFORCE_MSG( (*iter) == '=', "'=' followed by illegal character '%1%' in base64 encoded data detected!" )( *iter );
-							++iter;
+                char val = (*iter++);
+                if( is_whitespace( val ) )
+                    continue;
 
-							while( iter != end && is_whitespace( *iter ) )
-								++iter;
+                if( val == '=' )
+                {
+                    ARENFORCE_MSG( i >= 2, "Incorrectly placed '=' in base64 encoded data!" );
 
-							ARENFORCE_MSG( iter == end, "Trailing non-whitespace character '%1%' after '==' detected!" )( *iter );
-	
-							return;
-						}
-	
-						//We did not get a second '=' character, so the second byte of the previous
-						//batch is valid as well
-						(*output++) = ( ((prev_buf[1] & 0x0F) << 4) | ((prev_buf[2] & 0x3C) >> 2) );
-	
-						return;
-					}
-	
+                    if( i == 2 )
+                    {
+                        while( iter != end && is_whitespace( *iter ) )
+                            ++iter;
+
+                        ARENFORCE_MSG( iter != end, "Incorrectly placed '=' in base64 encoded data!" );
+
+                        ARENFORCE_MSG( (*iter) == '=', "'=' followed by illegal character '%1%' in base64 encoded data detected!" )( *iter );
+
+                        //Only first byte is valid
+                        (*output++) = ( (buf[0] << 2) | ((buf[1] & 0x30) >> 4) );
+                    }
+                    else
+                    {
+                        (*output++) = ( (buf[0] << 2) | ((buf[1] & 0x30) >> 4) );
+                        (*output++) = ( ((buf[1] & 0x0F) << 4) | ((buf[2] & 0x3C) >> 2) );
+                    }
+
+                    return;
+                }
+                else
+                {
 					//Simplified test for efficiency, as there are a few characters in this
 					//interval that are not valid in base64 encoding.
 					ARENFORCE_MSG( val >= 43 && val <= 122, "Invalid character in base64 encoded data, code: %1%" )( (int)val );
-					buf[i] = base64_dec_lookup[val - 43];
-				}
-				else
-				{
-					ARENFORCE_MSG( i == 0, "base64 encoded data has a character count that is not a multiple of 4" );
-					quit = true;
-					break;
-				}
+                    buf[i] = base64_dec_lookup[val - 43];
+                }
 
                 ++i;
-			}
-			
-			(*output++) = ( (prev_buf[0] << 2) | ((prev_buf[1] & 0x30) >> 4) );
-			(*output++) = ( ((prev_buf[1] & 0x0F) << 4) | ((prev_buf[2] & 0x3C) >> 2) );
-			(*output++) = ( ((prev_buf[2] & 0x03) << 6) | prev_buf[3] );
-	
-			for( int i=0; i<4; i++ )
-			{
-				prev_buf[i] = buf[i];
-			}
-		}
-	}
+            }
+
+            (*output++) = ( (buf[0] << 2) | ((buf[1] & 0x30) >> 4) );
+            (*output++) = ( ((buf[1] & 0x0F) << 4) | ((buf[2] & 0x3C) >> 2) );
+            (*output++) = ( ((buf[2] & 0x03) << 6) | buf[3] );
+        }
+    }
 
 } } }
 
