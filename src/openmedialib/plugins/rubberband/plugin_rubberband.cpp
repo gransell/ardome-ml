@@ -155,10 +155,15 @@ class rubber
 			{
 				input_->seek( position );
 				result = input_->fetch( );
-				int samples = result->get_audio( )->samples( );
-				int required = int( samples / speed );
-				ml::audio_type_ptr audio = reverse_audio( result, increment_ );
-				result->set_audio( ml::audio::pitch( audio, required ) );
+				ARENFORCE_MSG( result, "Frame required for rubberband %d" )( position );
+				if ( result->get_audio( ) )
+				{
+					int samples = result->get_audio( )->samples( );
+					int required = int( samples / speed );
+					ml::audio_type_ptr audio = reverse_audio( result, increment_ );
+					audio->set_position( result->get_position( ) );
+					result->set_audio( ml::audio::pitch( audio, required ) );
+				}
 				result->set_fps( int( fps_num_ ), int( fps_den_ ) );
 				result->set_pts( position * double( fps_den_ ) / fps_num_ );
 				result->set_duration( double( fps_den_ ) / fps_num_ );
@@ -173,10 +178,12 @@ class rubber
 				while( rubber_->available( ) < samples && source_ < input_->get_frames( ) )
 				{
 					ml::frame_type_ptr frame = input_->fetch( source_ );
+					ARENFORCE_MSG( frame, "Frame required for rubberband %d" )( source_ );
+					if ( !frame->get_audio( ) )
+						frame->set_audio( ml::audio::allocate( ml::audio::FORMAT_FLOAT, frequency_, channels_, ml::audio::samples_for_frame( source_, frequency_, frame->get_fps_num( ), frame->get_fps_den( ) ) ) );
+					ml::audio_type_ptr audio = frame->get_audio( );
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
 					source_ += increment_;
-					ml::audio_type_ptr audio = frame ? frame->get_audio( ) : ml::audio_type_ptr( );
-					ARENFORCE_MSG( audio, "Audio required for rubberband" );
 					audio = reverse_audio( frame, increment_ );
 					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
 					ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
@@ -195,6 +202,7 @@ class rubber
 
 				// Obtain the samples required
 				result->set_audio( retrieve( position, samples ) );
+				result->get_audio( )->set_position( result->get_position( ) );
 			}
 			else
 			{
