@@ -398,9 +398,9 @@ protected:
 		
 		if( stream->codec( ) != "http://www.ardendo.com/apf/codec/mpeg/mpeg2" && stream->codec( ) != "http://www.ardendo.com/apf/codec/imx/imx" ) return;
 		        
-        uint8_t *data = stream->bytes( );
+        boost::uint8_t *data = stream->bytes( );
 		size_t size = stream->length( );
-		uint8_t *end = data + size;
+		boost::uint8_t *end = data + size;
 		
 		bool done = false;
 		mpeg_start_code::type sc = find_start( data, end );
@@ -493,7 +493,7 @@ protected:
     
 private:
 
-	int get( uint8_t *p, int bit_offset, int bit_count )
+	int get( boost::uint8_t *p, int bit_offset, int bit_count )
 	{
 		int result = 0;
 		while( bit_count -- )
