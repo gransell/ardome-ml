@@ -101,6 +101,7 @@ class stream_queue
 				avcodec_close( context_ );
 			}
 			av_free( frame_ );
+            av_free( audio_buf_ );
 		}
 
 		ml::frame_type_ptr fetch( int position )
