@@ -102,10 +102,19 @@ class rubber
 		{
 			if ( force || 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) )
 			{
-				// Sync rubberband state
-				rubber_->setTimeRatio( 1.0 / speed );
-				rubber_->setPitchScale( pitch );
-				rubber_->reset( );
+				try
+				{
+					// Sync rubberband state
+					rubber_->setTimeRatio( 1.0 / speed );
+					rubber_->setPitchScale( pitch );
+					rubber_->reset( );
+				}
+				catch( const std::exception& e )
+				{
+					ARLOG_ERR( "Failed to sync rubberband. what = %4%, speed = %1%, pitch = %2%, force = %3%" )
+						( speed )( pitch )( force )( e.what( ) );
+					throw;
+				}
 
 				// Sync source to expected frame
 				source_ = expected_;
@@ -188,7 +197,16 @@ class rubber
 					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
 					ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
 					float_ptr *channels = convert( floats );
-					rubber_->process( channels, size_t( floats->samples( ) ), source_ == input_->get_frames( ) );
+					try
+					{
+						rubber_->process( channels, size_t( floats->samples( ) ), source_ == input_->get_frames( ) );
+					}
+					catch( const std::exception& e )
+					{
+						ARLOG_ERR( "Failed to process audio through rubberband. what = %3%, position = %1%, samples = %2%" )
+							( frame->get_position( ) )( floats->samples( ) )( e.what( ) );
+						throw;
+					}
 					clean( channels );
 				}
 
@@ -266,7 +284,16 @@ class rubber
 		{
 			float_ptr *array = allocate( samples );
 			ml::audio_type_ptr output = ml::audio::allocate( L"float", frequency_, channels_, samples );
-			rubber_->retrieve( array, samples );
+			try
+			{
+				rubber_->retrieve( array, samples );	
+			}
+			catch( const std::exception& e )
+			{
+				ARLOG_ERR( "Failed to retrieve samples from rubberband. what = %4% Wanted samples = %1%, channels = %2%, frequence = %3%" )
+					( samples )( channels_ )( frequency_ )( e.what( ) );
+				throw;
+			}
 			float_ptr dst = ( float_ptr )output->pointer( );
 			for ( int s = 0; s < samples; s ++ )
 				for ( int c = 0; c < channels_; c ++ )
@@ -315,6 +342,13 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
+			// If speed is 0 then reset audio object on frame
+			if( prop_speed_.value< double >( ) <= 0.0 )
+			{
+				result = fetch_from_slot( );
+				return;
+			}
+			
 			// Make sure we have the correct state
 			if ( !rubber_.started( ) )
 				rubber_.start( fetch_slot( 0 ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
