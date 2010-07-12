@@ -167,5 +167,8 @@ class stack:
 		"""Returns the input object at the top of the stack"""
 
 		self.push( self.popper )
-		return self.stack.fetch_slot( 0 )
+		result = self.stack.fetch_slot( 0 )
+		if result:
+			result.sync( )
+		return result
 

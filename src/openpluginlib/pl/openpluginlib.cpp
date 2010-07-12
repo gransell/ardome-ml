@@ -223,7 +223,7 @@ namespace
 		}
 	}
 	
-	boost::recursive_mutex mutex;
+	static boost::recursive_mutex mutex;
 }
 
 namespace detail
@@ -324,11 +324,6 @@ namespace detail
 	
 	bool discover_query_impl::operator( )( const wstring& libname, const wstring& type, const wstring& to_match )
 	{
-		typedef detail::registry::container	db_container;
-		typedef boost::recursive_mutex	mutex;
-
-		mutex mtx;
-
 		// Custom db first
 		container plugins = find_plugins( libname, type, to_match, detail::registry::instance( ).get_custom_db( ) );
 

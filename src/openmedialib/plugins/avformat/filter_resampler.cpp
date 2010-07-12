@@ -9,6 +9,7 @@
 // Provides an audio resampler based on the libavformat provided resampler.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/filter_simple.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -26,12 +27,12 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_type
+class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 {
 	public:
 		// filter_type overloads
 		explicit avformat_resampler_filter(const pl::wstring &)
-			: filter_type()
+			: filter_simple()
 			, prop_output_channels_(pcos::key::from_string("channels"))
 			, prop_output_sample_freq_(pcos::key::from_string("frequency"))
 			, prop_enable_( pcos::key::from_string( "enable" ) )

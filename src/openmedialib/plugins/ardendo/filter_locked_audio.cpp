@@ -18,12 +18,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_locked_audio( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
 			, prop_offset_( pcos::key::from_string( "offset" ) )

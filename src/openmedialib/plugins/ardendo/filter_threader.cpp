@@ -76,6 +76,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, last_frame_( )
 			, has_sub_thread_( false )
 			, position_( 0 )
+			, sync_( true )
 		{
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
@@ -98,43 +99,31 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
         int get_frames() const
         {  
             scoped_lock lock( mutex_ );
-            int result = get_frames( lock );
-			return result;
+			return frames_;
         }
 
-		int get_frames( scoped_lock& lck  ) const 
-		{
-			return fetch_slot( 0, lck ) ? fetch_slot( 0, lck )->get_frames( ) : 0;
-		}
-
-        int get_position( scoped_lock& lck  ) const 
+        int get_position( ) const 
         {
+            scoped_lock lock( mutex_ ); 
             return position_;
         }
 
-		virtual int get_position( ) const 
-		{ 
-            
-            scoped_lock lock( mutex_ ); 
-            int result = get_position( lock );
-			return result;
-        }
-
-        bool connect( ml::input_type_ptr input, size_t slot, scoped_lock& lck ) 
+        bool connect( ml::input_type_ptr input, size_t slot = 0 ) 
         { 
-            
+            scoped_lock lock( mutex_ ); 
             return filter_type::connect( input, slot ); 
         }
 
-		virtual bool connect( ml::input_type_ptr input, size_t slot = 0 ) 
-		{ 
-            
+        void sync( ) 
+        { 
             scoped_lock lock( mutex_ ); 
-            return connect( input, slot, lock ); 
+            sync_ = true;
+			cond_.notify_all( );
         }
 
 		void seek( const int position, const bool relative ) 
 		{ 
+            scoped_lock lock( mutex_ ); 
             if ( relative )
 				position_ += position;
 			else
@@ -142,64 +131,47 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 			if ( position_ < 0 )
 				position_ = 0;
-			else if ( position_ >= get_frames( ) )
-				position_ = get_frames( ) - 1;
+			else if ( position_ >= frames_ )
+				position_ = frames_ - 1;
         }
 
-		void on_slot_change( ml::input_type_ptr input, int, scoped_lock& lck  )
+		void on_slot_change( ml::input_type_ptr input, int )
 		{
-            
+            scoped_lock lock( mutex_ ); 
 			if ( input )
 			{
+				input->sync( );
 				frames_ = input->get_frames( );
 				//has_sub_thread_ = contains_sub_thread( input );
 			}
+			else
+			{
+				frames_ = 0;
+			}
 		}
 
-        virtual void on_slot_change( ml::input_type_ptr input, int v )
-        {
-            
-            scoped_lock lock( mutex_ );
-            on_slot_change( input, v, lock );
-        }
-
-        ml::input_type_ptr fetch_slot( size_t slot, scoped_lock& lck ) const
+        ml::input_type_ptr fetch_slot( size_t slot ) const
         {   
-            return filter_type::fetch_slot( slot ); 
-        }
-
-		virtual ml::input_type_ptr fetch_slot( size_t slot ) const
-		{ 
             scoped_lock lock( mutex_ ); 
             return filter_type::fetch_slot( slot ); 
-        }
-
-        bool is_thread_safe( scoped_lock& lck )
-        { 
-            
-            return filter_type::is_thread_safe( ); 
         }
 
 		virtual bool is_thread_safe( )
 		{ 
-            
             scoped_lock lock( mutex_ ); 
-            return is_thread_safe( lock ); 
+			if ( fetch_slot( 0 ) )
+				return fetch_slot( 0 )->is_thread_safe( );
+            return false;
         }
 
 	protected:
 
         void do_fetch( ml::frame_type_ptr &result )
         {
-            scoped_lock lock( mutex_ ); 
-            do_fetch( result, lock );
-        }
-        
-		void do_fetch( ml::frame_type_ptr &result, scoped_lock& lck )
-		{
-			ml::input_type_ptr input = fetch_slot( 0, lck );
+            scoped_lock lck( mutex_ ); 
+			ml::input_type_ptr input = fetch_slot( 0 );
 
-			if ( input && input->get_frames( ) > 0 )
+			if ( input && frames_ > 0 )
 			{
 				int old_speed = speed_;
 				int position = get_position( );
@@ -371,29 +343,31 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
+		void sync_frames( )
+		{
+			ml::input_type_ptr input = fetch_slot( 0 );
+			frames_ = input ? input->get_frames( ) : 0;
+		}
+
         bool is_running( const do_lock_t&  )
         {
-            
             scoped_lock lock( mutex_ );
             return is_running( lock );
         }
 
 		bool is_running( scoped_lock& lck)
 		{			
-            
 			return state_ & thread_running;
 		}
 
         bool is_paused( const do_lock_t&  )
         {
-            
             scoped_lock lock( mutex_ );
             return is_paused( lock );
         }
 
 		bool is_paused( scoped_lock& lck )
 		{
-            
             return (state_ & thread_paused) == 0 ? false : true;
 		}
 
@@ -434,7 +408,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void start( scoped_lock& lck  )
 		{
-			if ( is_thread_safe( lck ) )
+			if ( is_thread_safe( ) )
 			{
 				if ( !is_running( lck ) )
 				{
@@ -463,7 +437,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		void pause( scoped_lock& lck )
 		{
             
-			if ( is_thread_safe( lck ) )
+			if ( is_thread_safe( ) )
 			{
 				if ( is_running( lck ) && !is_paused( lck ) )
 				{
@@ -484,7 +458,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void stop( scoped_lock& lck )
 		{
-			if ( is_thread_safe( lck ) )
+			if ( is_thread_safe( ) )
 			{
 				if ( is_running( lck ) || is_paused( lck ) )
 				{
@@ -517,7 +491,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		void update_active( )
 		{
             scoped_lock lck(mutex_);
-			if ( is_thread_safe( lck ) )
+			if ( is_thread_safe( ) )
 			{
 				active_ = prop_active_.value< int >( );
 				
@@ -531,8 +505,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				{
 					cache_.clear( );
 					last_frame_ = ml::frame_type_ptr( );
-					if ( fetch_slot( 0, lck ) )
-						frames_ = fetch_slot( 0, lck )->get_frames( );
 				}
 			}
 			else
@@ -633,7 +605,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		ml::input_type_ptr wait_for_info( int &position, int &speed, int &max_size, scoped_lock& lck )
 		{
-			ml::input_type_ptr input = fetch_slot( 0, lck );
+			ml::input_type_ptr input = fetch_slot( 0 );
 
 			position = get_position( );
 			speed = speed_;
@@ -664,17 +636,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			{
 				if ( cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) ) )
 				{
-					input = fetch_slot( 0, lck );
-					frames_ = input->get_frames( );
+					input = fetch_slot( 0 );
 					position = get_position( );
 					speed = speed_;
 					max_size = prop_queue_.value< int >( );
 					refresh = false;
+					sync_frames( input );
 				}
 				else
 				{
-					input = fetch_slot( 0, lck );
-					frames_ = input->get_frames( );
+					input = fetch_slot( 0 );
 				}
 			}
 
@@ -698,9 +669,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		bool cache_frame( ml::input_type_ptr input, int position, int max_size, scoped_lock& lck )
 		{
 			ml::frame_type_ptr frame;
-
-			// Pick up changes in input size here
-			frames_ = input->get_frames( );
 
 			// Seek and fetch frame
 			if ( cache_.size( ) > 0 )
@@ -727,6 +695,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						while ( is_running( lck ) && !is_paused( lck ) && static_cast<int>(cache_.size( )) >= max_size )
 						{
                             cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) );
+							sync_frames( input );
 						}
 					}
 		
@@ -777,7 +746,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						break;
 
 				// Ensure that the position is still valid
-				while( is_running( lock ) && position >= 0 && position < input->get_frames( ) )
+				while( is_running( lock ) && position >= 0 && position < sync_frames( input ) )
 				{
 					// Resync on pause condition
 					if ( is_paused( lock ) )
@@ -867,6 +836,24 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			cond_.notify_all( );			
 		}
 
+		int sync_frames( ml::input_type_ptr input )
+		{
+			if ( sync_ )
+			{
+				if ( input )
+				{
+					input->sync( );
+					frames_ = input->get_frames( );
+				}
+				else
+				{
+					frames_ = 0;
+				}
+				sync_ = false;
+			}
+			return frames_;
+		}
+
 	private:
 		reader_thread start_;
 		boost::shared_ptr< pl::pcos::observer > obs_active_;
@@ -885,6 +872,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		ml::frame_type_ptr last_frame_;
 		bool has_sub_thread_;
 		int position_;
+		bool sync_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )

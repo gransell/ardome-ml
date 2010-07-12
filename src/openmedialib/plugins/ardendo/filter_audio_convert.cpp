@@ -22,12 +22,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_audio_convert( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_af_( pcos::key::from_string( "af" ) )
 		{
 			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_FLOAT ) );

@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <opencorelib/cl/profile.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
@@ -393,6 +394,7 @@ class stream_queue
 			switch( pkt->id( ) )
 			{
 				case ml::stream_video:
+					ARLOG_DEBUG3( "Decoding image %d" )( position );
 					if ( avcodec_decode_video( context_, frame_, &got, pkt->bytes( ), pkt->length( ) ) >= 0 )
 					{
 						if ( got )
@@ -583,12 +585,12 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		stream_queue_ptr queue_;
 };
 
-class avformat_decode_filter : public filter_type
+class avformat_decode_filter : public filter_simple
 {
 	public:
 		// Filter_type overloads
 		avformat_decode_filter( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
@@ -609,13 +611,6 @@ class avformat_decode_filter : public filter_type
 
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"avdecode"; }
-
-		virtual int get_frames( ) const
-		{
-			if ( fetch_slot( 0 ) ) 
-				return fetch_slot( 0 )->get_frames( );
-			return 0;
-		}
 
 	protected:
 		
@@ -836,12 +831,12 @@ class avformat_video_streamer : public ml::stream_type
 
 typedef boost::shared_ptr< avformat_video_streamer > avformat_video_streamer_ptr;
 
-class avformat_encode_filter : public filter_type
+class avformat_encode_filter : public filter_simple
 {
 	public:
 		// Filter_type overloads
 		avformat_encode_filter( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
@@ -864,12 +859,6 @@ class avformat_encode_filter : public filter_type
 
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"avencode"; }
-
-		virtual int get_frames( ) const
-		{
-			ml::input_type_ptr input = fetch_slot( 0 );
-			return input ? input->get_frames( ) : 0;
-		}
 
 	protected:
 		// The main access point to the filter

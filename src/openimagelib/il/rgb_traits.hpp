@@ -380,6 +380,44 @@ public:
 	{ return new l8( *this, w, h ); }
 };
 
+template<typename T, class storage = default_storage<T> >
+class f32 : public surface_format<T, storage>
+{
+public:
+	typedef typename storage::const_pointer					const_pointer;
+	typedef typename storage::pointer						pointer;
+	typedef typename surface_format<T, storage>::size_type	size_type;
+	
+private:
+	static const int bs = sizeof( float );
+		
+public:
+	explicit f32( size_type width,
+				 size_type height,
+				 size_type depth,
+				 size_type count		= 1,
+				 bool cubemap			= false )
+		: surface_format<T, storage>( bs, width, height, depth, count, cubemap, L"f32" )
+	{ surface_format<T, storage>::allocate( ); }
+
+	f32( const f32& other, size_type w, size_type h )
+		: surface_format<T, storage>( other.bs, w, h, other.depth( ), other.count( ), other.is_cubemap( ), L"f32" )
+	{ surface_format<T, storage>::allocate( ); }
+		
+	virtual ~f32( )
+	{ }
+	
+public:
+	virtual size_type allocsize( size_type width, size_type height, size_type depth ) const
+	{ return detail::rgb_Allocate_size<T>( )( bs, width, height, depth ); }
+
+	virtual size_type bitdepth( ) const
+	{ return 8; }
+	
+	virtual f32* clone( size_type w, size_type h )
+	{ return new f32( *this, w, h ); }
+};
+
 //
 // surface format to represent L8A8 format.
 //

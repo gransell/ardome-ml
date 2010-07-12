@@ -21,12 +21,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_charcoal( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_scale_( pcos::key::from_string( "scale" ) )
 			, prop_mix_( pcos::key::from_string( "mix" ) )
@@ -46,9 +46,6 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Acquire values
-			acquire_values( );
-
 			// Frame to return
 			result = fetch_from_slot( );
 

@@ -38,6 +38,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'awi.hpp', 
 			'config.hpp', 
 			'filter.hpp', 
+			'filter_simple.hpp', 
 			'frame.hpp', 
 			'input.hpp', 
 			'indexer.hpp', 

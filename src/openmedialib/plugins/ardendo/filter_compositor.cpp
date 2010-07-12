@@ -400,6 +400,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			, pusher_1_( )
 			, composite_( )
 			, priority_list_( )
+			, total_frames_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_slots_ = 2 );
@@ -468,16 +469,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 		virtual int get_frames( ) const
 		{
-			int result = 0;
-			size_t i = prop_track_.value< int >( ) == 0 ? 1 : 0;
-			while ( i < slot_count( ) )
-			{
-				if ( fetch_slot( i ) )
-					result = fetch_slot( i )->get_frames( ) > result ? 
-							 fetch_slot( i )->get_frames( ) : result;
-				i ++;
-			}
-			return result;
+			return total_frames_;
 		}
 
 		virtual void seek( const int position, const bool relative = false )
@@ -506,11 +498,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 				// Stores valid frames from each connected slot
 				std::vector< ml::frame_type_ptr > frames;
+				int position = get_position( );
 
 				// Fetch the frames
 				while( i < slot_count( ) )
 				{
-					if ( fetch_slot( i ) )
+					if ( in_range( position, i ) )
 					{
 						ml::frame_type_ptr overlay = fetch_from_slot( i, false );
 						if ( overlay && ( overlay->has_image( ) || overlay->get_audio( ) ) )
@@ -562,8 +555,13 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
 						 matching_modes( frame, result ) )
 					{
+						ARLOG_DEBUG3( "Foreground match %d" )( get_position( ) );
 						result = frames[ 0 ];
 						frames.erase( frames.begin( ) );
+					}
+					else
+					{
+						ARLOG_DEBUG3( "Foreground mismatch %d" )( get_position( ) );
 					}
 				}
 
@@ -646,6 +644,33 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				result->set_position( get_position( ) );
 		}
 
+		virtual void sync_frames( )
+		{
+			ranges_.erase( ranges_.begin( ), ranges_.end( ) );
+			total_frames_ = 0;
+			size_t i = prop_track_.value< int >( ) == 0 ? 1 : 0;
+			if ( i != 0 )
+				ranges_.push_back( std::pair< int, int >( -1, -1 ) );
+			while ( i < slot_count( ) )
+			{
+				ml::input_type_ptr input = fetch_slot( i );
+				if ( input )
+				{
+					total_frames_ = input->get_frames( ) > total_frames_ ? input->get_frames( ) : total_frames_;
+					ml::input_type_ptr offset = find_offset( input );
+					if ( offset )
+						ranges_.push_back( std::pair< int, int >( offset->property_with_key( key_in_ ).value< int >( ), offset->fetch_slot( 0 )->get_frames( ) ) );
+					else
+						ranges_.push_back( std::pair< int, int >( -1, -1 ) );
+				}
+				else
+				{
+					ranges_.push_back( std::pair< int, int >( 0, 0 ) );
+				}
+				i ++;
+			}
+		}
+
 		bool matching_modes( ml::frame_type_ptr frame1, ml::frame_type_ptr frame2 )
 		{
 			pl::wstring mode1 = get_prop< pl::wstring >( frame1, key_mode_, pl::wstring( L"fill" ) );
@@ -664,6 +689,34 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			return false;
 		}
 
+		inline ml::input_type_ptr find_offset( ml::input_type_ptr input )
+		{
+			ml::input_type_ptr result;
+			while( !result && input->slot_count( ) == 1 && input->fetch_slot( 0 ) )
+			{
+				if ( input->get_uri( ) == L"offset" )
+					result = input;
+				else
+					input = input->fetch_slot( 0 );
+			}
+			return result;
+		}
+
+		inline bool in_range( int position, size_t i )
+		{
+			if ( i < ranges_.size( ) )
+			{
+				std::pair< int, int > &pair = ranges_[ i ];
+				if ( pair.first == 0 && pair.second == 0 )
+					return false;
+				if ( pair.first == -1 && pair.second == -1 )
+					return true;
+				position -= pair.first;
+				return position >= 0 && position < pair.second;
+			}
+			return true;
+		}
+
 		pl::wstring resource_;
 		pcos::property prop_enable_;
 		pcos::property prop_slots_;
@@ -680,6 +733,8 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		ml::input_type_ptr pusher_1_;
 		ml::filter_type_ptr composite_;
 		priority_list priority_list_;
+		int total_frames_;
+		std::vector< std::pair< int, int > > ranges_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const pl::wstring &resource )

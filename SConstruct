@@ -56,7 +56,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/lsb_3_1_32/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/lsb_3_1_32/xerces.pc', 'bcomp/xercesc' )
 			self.install_config( 'config/lsb_3_1_32/ffmpeg.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/lsb_3_1_32/sdl.pc', 'bcomp/sdl' )
+			if os.path.exists( 'bcomp/sdl' ):
+				self.install_config( 'config/lsb_3_1_32/sdl.pc', 'bcomp/sdl' )
 		elif self[ 'target' ] == 'lsb_3_1_64':
 			self.install_config( 'config/lsb_3_1_64/boost.pc', 'bcomp/boost' )
 			self.install_config( 'config/lsb_3_1_64/boost_date_time.pc', 'bcomp/boost' )
