@@ -36,6 +36,7 @@ class rubber
 			: rubber_( 0 )
 			, increment_( 1 )
 			, cache_( ml::the_scope_handler::Instance().lru_cache( L"rubberband" ) )
+			, old_speed_( 1.0 )
 		{
 		}
 
@@ -49,16 +50,13 @@ class rubber
 			return rubber_;
 		}
 
-		bool start( ml::input_type_ptr input, double speed, double pitch )
+		bool start( ml::input_type_ptr input, ml::frame_type_ptr frame, double speed, double pitch )
 		{
 			bool result = input;
 
 			if ( result )
 			{
 				input_ = input;
-
-				// Obtain a frame
-				ml::frame_type_ptr frame = input_->fetch( );
 
 				// Check that we have audio
 				result = frame && frame->has_audio( );
@@ -135,35 +133,49 @@ class rubber
 			return my_key;
 		}
 
-		ml::frame_type_ptr fetch( int position )
+		ml::frame_type_ptr fetch( ml::input_type_ptr input, int position, int total_frames, double speed, double pitch )
 		{
 			ml::frame_type_ptr result;
 
-			// Ensure that we have something to work with
-			if ( !started( ) )
+			if ( !input ) return result;
+
+			if( speed <= 0.0 )
 			{
-				input_->seek( position );
-				result = input_->fetch( );
-				return result;
+				input->seek( position );
+				return input->fetch( );
 			}
 
-			int difference = position - expected_;
+			// Make sure we have the correct state
+			if ( !started( ) )
+			{
+				input->seek( position );
+				result = input->fetch( );
+				if ( result && result->get_audio( ) )
+					start( input, result, speed, pitch );
+			}
+			else
+			{
+				sync( speed, pitch );
+			}
+
+			int difference = abs( position - expected_ );
 
 			// Reset the state if necessary
-			if ( position != expected_ )
+			if ( position != expected_ || speed != old_speed_ )
 			{
 				increment_ = position < expected_ ? -1 : 1;
-				rubber_->reset( );
+				if ( rubber_ ) rubber_->reset( );
 				expected_ = position;
 				source_ = position;
 			}
 
-			double speed = 1.0 / rubber_->getTimeRatio( );
-
-			if ( difference != 0 || speed > 2.0 )
+			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || difference != 0 )
 			{
-				input_->seek( position );
-				result = input_->fetch( );
+				if ( !result )
+				{
+					input_->seek( position );
+					result = input_->fetch( );
+				}
 				ARENFORCE_MSG( result, "Frame required for rubberband %d" )( position );
 				if ( result->get_audio( ) )
 				{
@@ -184,13 +196,15 @@ class rubber
 				int samples = ml::audio::samples_for_frame( position, frequency_, fps_num_, fps_den_ );
 
 				// Loop until we have the requisite samples
-				while( rubber_->available( ) < samples && source_ < input_->get_frames( ) )
+				while( rubber_->available( ) < samples && source_ < total_frames )
 				{
-					ml::frame_type_ptr frame = input_->fetch( source_ );
+					ml::frame_type_ptr frame = result ? result : input_->fetch( source_ );
+					result = ml::frame_type_ptr( );
 					ARENFORCE_MSG( frame, "Frame required for rubberband %d" )( source_ );
 					if ( !frame->get_audio( ) )
 						frame->set_audio( ml::audio::allocate( ml::audio::FORMAT_FLOAT, frequency_, channels_, ml::audio::samples_for_frame( source_, frequency_, frame->get_fps_num( ), frame->get_fps_den( ) ) ) );
 					ml::audio_type_ptr audio = frame->get_audio( );
+					ARLOG_INFO( "Caching frame %d of %d" )( source_ )( total_frames );
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
 					source_ += increment_;
 					audio = reverse_audio( frame, increment_ );
@@ -199,7 +213,7 @@ class rubber
 					float_ptr *channels = convert( floats );
 					try
 					{
-						rubber_->process( channels, size_t( floats->samples( ) ), source_ == input_->get_frames( ) );
+						rubber_->process( channels, size_t( floats->samples( ) ), source_ >= total_frames );
 					}
 					catch( const std::exception& e )
 					{
@@ -212,7 +226,7 @@ class rubber
 
 				// Create the result frame
 				result = cache_->frame_for_position( lru_key_for_position( position ) );
-				ARENFORCE_MSG( result, "Frame inaccessible from cache" );
+				ARENFORCE_MSG( result, "Frame inaccessible from cache %d" )( position );
 				result->set_fps( fps_num_, fps_den_ );
 				result->set_pts( position * double( fps_den_ ) / fps_num_ );
 				result->set_duration( double( fps_den_ ) / fps_num_ );
@@ -222,7 +236,7 @@ class rubber
 				result->set_audio( retrieve( position, samples ) );
 				result->get_audio( )->set_position( result->get_position( ) );
 			}
-			else
+			else if ( !result )
 			{
 				input_->seek( position );
 				result = input_->fetch( );
@@ -230,6 +244,7 @@ class rubber
 
 			// We expect the next frame to follow...
 			expected_ += increment_;
+			old_speed_ = speed;
 
 			return result;
 		}
@@ -316,6 +331,7 @@ class rubber
 		int source_;
 		int increment_;
 		lru_cache_type_ptr cache_;
+		double old_speed_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
@@ -338,31 +354,18 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
 	
 		// Return the number of slots that can be connected to this filter
 		const size_t slot_count( ) const { return 1; }
-	
+
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
-			// If speed is 0 then reset audio object on frame
-			if( prop_speed_.value< double >( ) <= 0.0 )
-			{
-				result = fetch_from_slot( );
-				return;
-			}
-			
-			// Make sure we have the correct state
-			if ( !rubber_.started( ) )
-				rubber_.start( fetch_slot( 0 ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
-			else
-				rubber_.sync( prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
-
 			// Obtain the current frame
-			result = rubber_.fetch( get_position( ) );
+			result = rubber_.fetch( fetch_slot( ), get_position( ), get_frames( ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
 		}
-	
-private:
-	pl::pcos::property prop_speed_;
-	pl::pcos::property prop_pitch_;
-	rubber rubber_;
+
+	private:
+		pl::pcos::property prop_speed_;
+		pl::pcos::property prop_pitch_;
+		rubber rubber_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
