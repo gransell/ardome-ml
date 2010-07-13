@@ -120,9 +120,10 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, filter_pool *pool_token, ml::filter_type_ptr filter, bool pushed = false )
+		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, ml::filter_type_ptr filter, bool pushed = false )
 			: ml::frame_type( *other )
 			, parent_( other )
+			, frames_( frames )
 			, pool_holder_( new filter_pool_holder( filter, pool_token ) )
 			, pushed_( pushed )
 			, evaluated_( false )
@@ -143,22 +144,32 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 				if ( !pushed_ )
 				{
+					pl::pcos::key_vector keys = properties( ).get_keys( );
+					for ( pl::pcos::key_vector::iterator iter = keys.begin( ); iter != keys.end( ); iter ++ )
+						if ( !other->properties( ).get_property_with_key( *iter ).valid( ) )
+							other->properties( ).append( properties( ).get_property_with_key( *iter ) );
+
 					if ( filter->fetch_slot( 0 ) == 0 )
 					{
 						ml::input_type_ptr fg = ml::create_input( L"pusher:" );
-						fg->property( "length" ) = 1 << 30;
+						fg->property( "length" ) = frames_;
 						filter->connect( fg );
+						filter->sync( );
 					}
 
-					filter->fetch_slot( 0 )->push( parent_ );
+					filter->fetch_slot( 0 )->push( other );
 					filter->seek( get_position( ) );
 					other = filter->fetch( );
 				}
 
+				pl::pcos::key_vector keys = other->properties( ).get_keys( );
+				for ( pl::pcos::key_vector::iterator iter = keys.begin( ); iter != keys.end( ); iter ++ )
+					properties( ).append( other->properties( ).get_property_with_key( *iter ) );
+
 				image_ = other->get_image( );
 				alpha_ = other->get_alpha( );
 				audio_ = other->get_audio( );
-				properties_ = other->properties( );
+				//properties_ = other->properties( );
 				stream_ = other->get_stream( );
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
@@ -177,7 +188,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			return frame_type_ptr( new frame_lazy( frame_type::shallow(), parent_->shallow(), pool_holder_, pushed_ ) );
+			return frame_type_ptr( new frame_lazy( frame_type::shallow(), frames_, parent_->shallow(), pool_holder_, pushed_ ) );
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
@@ -191,7 +202,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Indicates if the frame has an image
 		virtual bool has_image( )
 		{
-			return ( !evaluated_ && parent_->has_image( ) ) || image_;
+			return !evaluated_ || image_;
 		}
 
 		/// Indicates if the frame has audio
@@ -204,6 +215,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded )
 		{
 			frame_type::set_image( image, decoded );
+			evaluated_ = true;
 			pool_holder_.reset();
 		}
 
@@ -247,16 +259,19 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	protected:
 		
-		frame_lazy( const frame_type_ptr &org, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
+		frame_lazy( const frame_type_ptr &org, int frames, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool pushed )
 			: ml::frame_type( *org )
 			, parent_( other )
+			, frames_( frames )
 			, pool_holder_( pool_holder )
 			, pushed_( pushed )
+			, evaluated_( false )
 		{
 		}
 
 	private:
 		ml::frame_type_ptr parent_;
+		int frames_;
 		boost::shared_ptr< filter_pool_holder > pool_holder_;
 		bool pushed_;
 		bool evaluated_;
@@ -832,7 +847,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		ml::filter_type_ptr filter_create( )
 		{
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
-			fg->property( "length" ) = 1 << 30;
+			fg->property( "length" ) = get_frames( );
 			
 			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 			if ( decode->property( "threads" ).valid( ) ) 
@@ -915,7 +930,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			{
 				if ( !frame ) frame = fetch_from_slot( );
 				ml::filter_type_ptr graph;
-				frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph, false ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph, false ) );
 			}
 		
 			last_frame_ = frame;
@@ -1090,7 +1105,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 					frame->set_stream( stream_type_ptr() );
 				}
 				   
-				frame = ml::frame_type_ptr( new frame_lazy( frame, this, graph ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
@@ -1321,6 +1336,8 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
 				if ( result->property_with_key( *it ).valid( ) )
 					result->property_with_key( *it ).set_from_property( properties_.get_property_with_key( *it ) );
+				else
+					result->properties( ).append( properties_.get_property_with_key( *it ) );
 
 			return result;
 		}
@@ -1346,7 +1363,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 				frame = fetch_from_slot( 0 );
 				if ( filter_ )
 				{
-					frame = ml::frame_type_ptr( new frame_lazy( frame, this, ml::filter_type_ptr( ) ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, ml::filter_type_ptr( ) ) );
 				}
 			}
 
@@ -1482,7 +1499,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 				incr_ = get_position( ) >= expected_ ? 1 : -1;
 				clear( );
 				frameno_ = get_position( );
-				for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ); i ++)
+				for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ) && frameno_ >= 0; i ++)
 				{
 					add_job( frameno_ );
 					frameno_ += incr_;
@@ -1495,7 +1512,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			// Add more jobs to the pool
 			int fillable = threads_ * 2 - pool_->jobs_pending( );
 
-			if ( frameno_ < get_frames( ) && fillable -- > 0 )
+			if ( frameno_ >= 0 && frameno_ < get_frames( ) && fillable -- > 0 )
 			{
 				add_job( frameno_ );
 				frameno_ += incr_;
