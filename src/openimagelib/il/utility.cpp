@@ -2463,8 +2463,8 @@ static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int
 						di = i >> 8;
 						si = i & 0xff;
 						di0 = (std::min)( di + 1, src_w );
-						di = std::min( std::max( di, 0 ), src_w - 1 );
-						di0 = std::min( std::max( di0, 0 ), src_w - 1 );
+						di = std::min<int>( std::max<int>( di, 0 ), src_w - 1 );
+						di0 = std::min<int>( std::max<int>( di0, 0 ), src_w - 1 );
 						*dst ++ = static_cast<unsigned char>( (
 									( row_upper[ di ] * ( 0x100 - si ) + row_upper[ di0 ] * si ) * ( 0x100 - sj ) + 
 								    ( row_lower[ di ] * ( 0x100 - si ) + row_lower[ di0 ] * si ) * (         sj ) +
@@ -2661,10 +2661,10 @@ static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int
 
 						const std::vector< int > &ri = ratio[ i & 0x7ff ];
 
-						di = std::min( std::max( di, 0 ), src_w - 1 );
-						di0 = std::min( std::max( di0, 0 ), src_w - 1 );
-						di1 = std::min( std::max( di1, 0 ), src_w - 1 );
-						di2 = std::min( std::max( di2, 0 ), src_w - 1 );
+						di = std::min<int>( std::max<int>( di, 0 ), src_w - 1 );
+						di0 = std::min<int>( std::max<int>( di0, 0 ), src_w - 1 );
+						di1 = std::min<int>( std::max<int>( di1, 0 ), src_w - 1 );
+						di2 = std::min<int>( std::max<int>( di2, 0 ), src_w - 1 );
 
 						*dst++ = ( unsigned char ) ( (
 							  ( dj0[ di0 ] * ri[0] +
