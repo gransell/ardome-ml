@@ -49,17 +49,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 {
 	typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
-	struct reader_thread
-	{
-		reader_thread( filter_threader *filter ) : filter_( filter ) { }
-		void operator( )( ) { filter_->run( do_lock_t() ); }
-		filter_threader *filter_;
-	};
-
 	public:
 		filter_threader( )
 			: ml::filter_type( )
-			, start_( this )
 			, obs_active_( new fn_observer< filter_threader >( const_threader( this ), &filter_threader::update_active ) )
 			, prop_active_( pl::pcos::key::from_string( "active" ) )
 			, active_( 0 )
@@ -71,7 +63,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, cond_( )
 			, frames_( 0 )
 			, cache_( )
-			, reader_( 0 )
+			, reader_( )
 			, speed_( 1 )
 			, last_frame_( )
 			, has_sub_thread_( false )
@@ -86,8 +78,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		virtual ~filter_threader( )
 		{ 
-			scoped_lock lck( mutex_ );
-			stop( lck );
+            scoped_lock lock( mutex_ );
+			stop( lock );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -140,6 +132,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
             scoped_lock lock( mutex_ ); 
 			if ( input )
 			{
+				if ( !input->is_thread_safe( ) )
+					stop( lock );
 				input->sync( );
 				frames_ = input->get_frames( );
 				//has_sub_thread_ = contains_sub_thread( input );
@@ -413,7 +407,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( !is_running( lck ) )
 				{
 					state_ |= thread_running;
-					reader_ = new boost::thread( start_ );
+					reader_ = boost::thread( boost::bind( &filter_threader::run, this ) );
 				}
 				else if ( is_paused( lck ) )
 				{
@@ -450,29 +444,21 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
-        void stop( const do_lock_t&  )
-        {
-           	scoped_lock lock( mutex_ );
-           	stop( lock );
-        }
-
-		void stop( scoped_lock& lck )
+		void stop( scoped_lock &lck )
 		{
 			if ( is_thread_safe( ) )
 			{
 				if ( is_running( lck ) || is_paused( lck ) )
 				{
+					state_ = thread_inactive;
+					active_ = thread_inactive;
+					while( !( state_ & thread_accepted ) )
 					{
-						state_ = thread_inactive;
 						cond_.notify_all( );
+						cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) );
 					}
-
-                    if( reader_ ) {
-                        lck.unlock();
-                        reader_->join( );
-                        delete reader_;
-                        reader_ = NULL;
-                    }
+					state_ = thread_inactive;
+					//reader_.join( );
 				}
 			}
 		}
@@ -494,7 +480,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			if ( is_thread_safe( ) )
 			{
 				active_ = prop_active_.value< int >( );
-				
+
 				if ( active_ == 1 && !is_running( lck ) )
 					start( lck );
 				else if ( active_ == 0 && ( is_running( lck ) || is_paused( lck ) ) )
@@ -718,7 +704,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			return frame && is_running( lck );
 		}
 
-		void run( const do_lock_t&   )
+		void run( )
 		{
 			int position = 0;
 			int speed = 0;
@@ -832,6 +818,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 			if ( is_running( lock ) )
 				state_ ^= thread_running;
+			else
+				state_ |= thread_accepted;
+
 			active_ = 0;
 			cond_.notify_all( );			
 		}
@@ -855,7 +844,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		}
 
 	private:
-		reader_thread start_;
 		boost::shared_ptr< pl::pcos::observer > obs_active_;
 		pl::pcos::property prop_active_;
 		int active_;
@@ -867,7 +855,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		boost::condition_variable_any cond_;
 		int frames_;
 		std::map< int, ml::frame_type_ptr > cache_;
-		boost::thread *reader_;
+		boost::thread reader_;
 		int speed_;
 		ml::frame_type_ptr last_frame_;
 		bool has_sub_thread_;
