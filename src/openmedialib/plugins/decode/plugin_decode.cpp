@@ -61,7 +61,9 @@ public:
 		{
 			if( *it == pool_token )
 			{
+				lck.unlock( );
 				(*it)->filter_release( filter );
+				lck.lock( );
 			}
 		}
 	}
@@ -100,7 +102,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			, pool_( pool )
 			{ }
 
-			~filter_pool_holder()
+			virtual ~filter_pool_holder()
 			{
 				if ( filter_ )
 					the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
@@ -169,7 +171,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				image_ = other->get_image( );
 				alpha_ = other->get_alpha( );
 				audio_ = other->get_audio( );
-				//properties_ = other->properties( );
+				properties_ = other->properties( );
 				stream_ = other->get_stream( );
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
@@ -816,7 +818,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
-		~filter_decode( )
+		virtual ~filter_decode( )
 		{
 			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
@@ -986,7 +988,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
-		~filter_encode( )
+		virtual ~filter_encode( )
 		{
 			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
@@ -1168,7 +1170,7 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 			properties( ).append( prop_sar_den_ = 1 );
 		}
 
-		~filter_rescale( )
+		virtual ~filter_rescale( )
 		{
 		}
 
@@ -1215,7 +1217,7 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 			properties( ).append( prop_order_ = 2 );
 		}
 
-		~filter_field_order( )
+		virtual ~filter_field_order( )
 		{
 		}
 
@@ -1304,13 +1306,13 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			: filter_type( )
 			, spec_( spec )
 		{
-			filter_ = filter_create( );
+			filter_ = ml::create_filter( spec_.substr( 5 ) );
 			properties_ = filter_->properties( );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
 
-		~filter_lazy( )
+		virtual ~filter_lazy( )
 		{
 			the_shared_filter_pool::Instance( ).remove_pool( this );
 		}
@@ -1322,10 +1324,27 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 		virtual const size_t slot_count( ) const { return filter_ ? filter_->slot_count( ) : 1; }
 
+		virtual bool is_thread_safe( ) { return filter_ ? filter_->is_thread_safe( ) : false; }
+
+		void on_slot_change( input_type_ptr input, int )
+		{
+			if ( filter_ )
+			{
+				filter_->connect( input );
+				filter_->sync( );
+			}
+		}
+
+		int get_frames( ) const
+		{
+			return filter_ ? filter_->get_frames( ) : 0;
+		}
+
 	protected:
 
  		ml::filter_type_ptr filter_obtain( )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( filters_.size( ) == 0 )
 				filters_.push_back( filter_create( ) );
 
@@ -1344,11 +1363,13 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 		ml::filter_type_ptr filter_create( )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			return ml::create_filter( spec_.substr( 5 ) );
 		}
 
 		void filter_release( ml::filter_type_ptr filter )
 		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			filters_.push_back( filter );
 		}
 
@@ -1368,6 +1389,12 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			}
 
 			last_frame_ = frame;
+		}
+
+		void sync_frames( )
+		{
+			if ( filter_ )
+				filter_->sync( );
 		}
 
 	private:
@@ -1391,6 +1418,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 		ml::frame_type_ptr last_frame_;
 		int expected_;
 		int incr_;
+		bool thread_safe_;
 
 	public:
 		filter_map_reduce( )
@@ -1403,14 +1431,15 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			, cond_( )
 			, expected_( 0 )
 			, incr_( 1 )
+			, thread_safe_( false )
 		{
 			properties( ).append( prop_threads_ = 4 );
 		}
 
-		~filter_map_reduce( )
+		virtual ~filter_map_reduce( )
 		{
 			if ( pool_ )
-				pool_->terminate_all_threads( boost::posix_time::seconds( 1 ) );
+				pool_->terminate_all_threads( boost::posix_time::seconds( 5 ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -1484,13 +1513,22 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 
 			if ( last_frame_ == 0 )
 			{
-				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
-				pool_ = new cl::thread_pool( threads_, timeout );
+				thread_safe_ = fetch_slot( 0 ) && is_thread_safe( );
+				if ( thread_safe_ )
+				{
+					boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+					pool_ = new cl::thread_pool( threads_, timeout );
+				}
 			}
 
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
 				frame = last_frame_;
+				return;
+			}
+			else if ( !thread_safe_ )
+			{
+				last_frame_ = frame = fetch_from_slot( );
 				return;
 			}
 
