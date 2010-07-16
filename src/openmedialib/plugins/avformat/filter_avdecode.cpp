@@ -525,6 +525,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		frame_avformat( const frame_type_ptr &other, const stream_queue_ptr &queue )
 			: ml::frame_type( *other )
 			, queue_( queue )
+			, original_position_( other->get_position( ) )
 		{
 		}
 
@@ -562,7 +563,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		{
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
-				set_image( queue_->decode_image( stream_->position( ) ) , true );
+				set_image( queue_->decode_image( original_position_ ) , true );
 			}
 			return image_;
 		}
@@ -576,7 +577,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		virtual audio_type_ptr get_audio( )
 		{
 			if ( !audio_ && ( stream_ && stream_->id( ) == ml::stream_audio ) )
-				audio_ = queue_->decode_audio( stream_->position( ) );
+				audio_ = queue_->decode_audio( original_position_ );
 			return audio_;
 		}
 
@@ -590,6 +591,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 
 	private:
 		stream_queue_ptr queue_;
+		int original_position_;
 };
 
 class avformat_decode_filter : public filter_simple
