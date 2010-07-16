@@ -51,6 +51,20 @@ protected:
 class shared_filter_pool
 {
 public:
+	ml::filter_type_ptr filter_obtain( filter_pool *pool_token )
+	{
+		boost::recursive_mutex::scoped_lock lck( mtx_ );
+		std::set< filter_pool * >::iterator it = pools_.begin( );
+		for( ; it != pools_.end( ); ++it )
+		{
+			if( *it == pool_token )
+			{
+				return (*it)->filter_obtain( );
+			}
+		}
+		return ml::filter_type_ptr( );
+	}
+
 	void filter_release( ml::filter_type_ptr filter, filter_pool *pool_token )
 	{
 		ARENFORCE_MSG( filter, "Releasing null filter" );
@@ -61,9 +75,7 @@ public:
 		{
 			if( *it == pool_token )
 			{
-				lck.unlock( );
 				(*it)->filter_release( filter );
-				lck.lock( );
 			}
 		}
 	}
@@ -110,7 +122,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 			ml::filter_type_ptr filter()
 			{
-				filter_ = filter_ ? filter_ : pool_->filter_obtain( );
+				filter_ = filter_ ? filter_ : the_shared_filter_pool::Instance().filter_obtain( pool_ );
 				return filter_;
 			}
 
@@ -1021,7 +1033,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 
  		ml::filter_type_ptr filter_obtain( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ml::filter_type_ptr result = gop_encoder_;
 			if ( !result )
 			{
@@ -1040,7 +1051,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 
 		void filter_release( ml::filter_type_ptr filter )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( filter != gop_encoder_ )
 				decoder_.push_back( filter );
 		}
@@ -1344,7 +1354,6 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
  		ml::filter_type_ptr filter_obtain( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( filters_.size( ) == 0 )
 				filters_.push_back( filter_create( ) );
 
@@ -1363,13 +1372,11 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 		ml::filter_type_ptr filter_create( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			return ml::create_filter( spec_.substr( 5 ) );
 		}
 
 		void filter_release( ml::filter_type_ptr filter )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			filters_.push_back( filter );
 		}
 

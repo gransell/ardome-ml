@@ -455,8 +455,8 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			
 			// Work around pushing the same frame multiple times to the store
 			if( last_frame_ && frame->get_position( ) == last_frame_->get_position( ) )
-				last_frame_.reset( );
-			
+				last_frame_ = ml::frame_type_ptr( );
+
 			return true;
 		}
 
@@ -839,6 +839,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 					}
 
 					result = frame_crop( result, px, py, pw, ph );
+					result->set_image( il::image_type_ptr( static_cast<il::image_type*>( result->get_image( )->clone( il::cropped ) ) ) );
 				}
 			}
 		}
