@@ -172,7 +172,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					}
 
 					filter->fetch_slot( 0 )->push( other );
-					filter->seek( get_position( ) );
+					filter->seek( other->get_position( ) );
 					other = filter->fetch( );
 				}
 
@@ -262,13 +262,6 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual void set_position( int position )
 		{
 			frame_type::set_position( position );
-
-			//Need to set the position on the inner frame as well
-			//in order to preserve it across shallow copies.
-			if( parent_ )
-			{
-				parent_->set_position( position );
-			}
 		}
 
 	protected:
