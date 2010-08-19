@@ -555,13 +555,13 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
 						 matching_modes( frame, result ) )
 					{
-						ARLOG_DEBUG3( "Foreground match %d" )( get_position( ) );
+						ARLOG_DEBUG7( "Foreground match %d" )( get_position( ) );
 						result = frames[ 0 ];
 						frames.erase( frames.begin( ) );
 					}
 					else
 					{
-						ARLOG_DEBUG3( "Foreground mismatch %d" )( get_position( ) );
+						ARLOG_DEBUG7( "Foreground mismatch %d" )( get_position( ) );
 					}
 				}
 

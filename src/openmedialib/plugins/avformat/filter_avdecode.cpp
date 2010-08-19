@@ -401,7 +401,7 @@ class stream_queue
 			switch( pkt->id( ) )
 			{
 				case ml::stream_video:
-					ARLOG_DEBUG3( "Decoding image %d" )( position );
+					ARLOG_DEBUG5( "Decoding image %d" )( position );
 					if ( avcodec_decode_video( context_, frame_, &got, pkt->bytes( ), pkt->length( ) ) >= 0 )
 					{
 						if ( got )

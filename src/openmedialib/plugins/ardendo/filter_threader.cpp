@@ -110,7 +110,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
         { 
             scoped_lock lock( mutex_ ); 
             sync_ = true;
-			cond_.notify_all( );
+			// We do this right away and dont wait for the background thread to do it to avoid a possible race condition. If
+			// get_frames is called right after sync the background thread might not have had time to run
+			ml::input_type_ptr i = fetch_slot( 0 );
+			sync_frames( i );
         }
 
 		void seek( const int position, const bool relative ) 
