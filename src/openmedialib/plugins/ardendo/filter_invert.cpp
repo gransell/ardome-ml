@@ -19,12 +19,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_invert( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_planes_( pcos::key::from_string( "planes" ) )
 			, prop_rx_( pcos::key::from_string( "rx" ) )

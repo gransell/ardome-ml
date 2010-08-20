@@ -145,6 +145,8 @@ class player:
 
 		if input is not None:
 
+			position = input.get_position( )
+
 			self.stack.push( input )
 			frame = input.fetch( )
 
@@ -162,6 +164,12 @@ class player:
 					self.register_rule( rule )
 				else:
 					print "Unknown rule", str( rule )
+
+				input = self.stack.pop( )
+				input.sync( )
+				if position < input.get_frames( ):
+					input.seek( position )
+				self.stack.push( input )
 
 			input = self.stack.pop( )
 

@@ -40,6 +40,7 @@
 #include <boost/cstdint.hpp>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/filter_simple.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>

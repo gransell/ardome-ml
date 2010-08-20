@@ -41,12 +41,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_pitch( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_speed_( pcos::key::from_string( "speed" ) )

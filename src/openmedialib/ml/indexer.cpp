@@ -280,7 +280,7 @@ class indexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 1000 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 	private:
@@ -326,7 +326,7 @@ class unindexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 2000 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 	private:
@@ -421,7 +421,7 @@ class generating_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 300 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 

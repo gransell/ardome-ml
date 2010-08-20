@@ -13,12 +13,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_sar( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_sar_num_( pcos::key::from_string( "sar_num" ) )
 			, prop_sar_den_( pcos::key::from_string( "sar_den" ) )

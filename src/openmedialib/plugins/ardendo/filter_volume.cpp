@@ -16,12 +16,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_volume( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_volume_( pcos::key::from_string( "volume" ) )
 			, prop_ramp_( pcos::key::from_string( "ramp" ) )

@@ -36,12 +36,12 @@ static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
 static pl::pcos::key key_mode_( pl::pcos::key::from_string( "mode" ) );
 
-class filter_title : public ml::filter_type
+class filter_title : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_title( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_title_( pcos::key::from_string( "title" ) )
 			, prop_font_( pcos::key::from_string( "font" ) )

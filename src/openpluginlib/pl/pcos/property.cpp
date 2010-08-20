@@ -35,11 +35,13 @@ namespace olib
             class frame_type;
             class store_type;
             class input_type;
+            class audio_type;
             class stream_type;
 
             typedef boost::shared_ptr< frame_type > frame_type_ptr;
             typedef boost::shared_ptr< store_type > store_type_ptr;
             typedef boost::shared_ptr< input_type > input_type_ptr;
+            typedef boost::shared_ptr< audio_type > audio_type_ptr;
             typedef boost::shared_ptr< stream_type > stream_type_ptr;
         }
     }
@@ -339,6 +341,10 @@ template OPENPLUGINLIB_DECLSPEC ml::input_type_ptr property::value< ml::input_ty
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::input_type_ptr >( const ml::input_type_ptr& );
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::input_type_ptr >() const;
 
+template OPENPLUGINLIB_DECLSPEC ml::audio_type_ptr property::value< ml::audio_type_ptr >() const;
+template OPENPLUGINLIB_DECLSPEC void property::set< ml::audio_type_ptr >( const ml::audio_type_ptr& );
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::audio_type_ptr >() const;
+
 template OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr property::value< ml::stream_type_ptr >() const;
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::stream_type_ptr >( const ml::stream_type_ptr& );
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::stream_type_ptr >() const;
@@ -470,6 +476,11 @@ template <> OPENPLUGINLIB_DECLSPEC ml::store_type_ptr parse_string( const wstrin
 template <> OPENPLUGINLIB_DECLSPEC ml::input_type_ptr parse_string( const wstring& )
 {
     return ml::input_type_ptr();
+}
+
+template <> OPENPLUGINLIB_DECLSPEC ml::audio_type_ptr parse_string( const wstring& )
+{
+    return ml::audio_type_ptr();
 }
 
 template <> OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr parse_string( const wstring& )

@@ -13,11 +13,11 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 {
 	public:
 		filter_store( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_store_( pcos::key::from_string( "store" ) )
 		{

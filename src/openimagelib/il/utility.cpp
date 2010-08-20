@@ -97,9 +97,13 @@ namespace
 	}
 }
 
+// Foward declaration to plane scaler
+static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
+
 // The following private functions are a bit rough and shouldn't be exposed publicly
 // All access to the functions are via the public convert and allocate functions
 
+typedef image< unsigned char, f32 >				f32_image_type;
 typedef image< unsigned char, l8 >				l8_image_type;
 typedef image< unsigned char, l8a8 >			l8a8_image_type;
 typedef image< unsigned char, l8a8p >			l8a8p_image_type;
@@ -233,6 +237,8 @@ IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int heig
 		dst_img = image_type_ptr( new image_type( yuv411p_image_type( width, height, 1 ) ) );
 	else if ( pf == L"l8" )
 		dst_img = image_type_ptr( new image_type( l8_image_type( width, height, 1 ) ) );
+	else if ( pf == L"f32" )
+		dst_img = image_type_ptr( new image_type( f32_image_type( width, height, 1 ) ) );
 	else if ( pf == L"l8a8" )
 		dst_img = image_type_ptr( new image_type( l8a8_image_type( width, height, 1 ) ) );
 	else if ( pf == L"l8a8p" )
@@ -387,6 +393,39 @@ IL_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 	return result;
 }
 
+IL_DECLSPEC image_type_ptr merge_alpha( const image_type_ptr &im, const image_type_ptr &alpha )
+{
+	if ( im && alpha )
+	{
+		int offset = locate_alpha_offset( im->pf( ) );
+		if ( offset != -1 && alpha->pf( ) == L"l8" )
+		{
+			pointer s = im->data( );
+			const_pointer a = alpha->data( );
+
+			size_type h = im->height( );
+
+			size_type s_rem = im->pitch( ) - im->linesize( );
+			size_type a_rem = alpha->pitch( ) - alpha->linesize( );
+
+			while( h -- )
+			{
+				size_type w = im->width( );
+
+				while ( w -- )
+				{
+					s[ offset ] = *a ++;
+					s += 4;
+				}
+
+				s += s_rem;
+				a += a_rem;
+			}
+		}
+	}
+	return im;
+}
+
 static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
@@ -395,43 +434,7 @@ static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::ws
 	{
 		for ( int plane = 0; plane < 3; plane ++ )
 		{
-			size_type src_width = src_img->width( plane );
-			size_type src_height = src_img->height( plane );
-
-			size_type dst_width = dst_img->width( plane );
-			size_type dst_height = dst_img->height( plane );
-
-			const_pointer src = src_img->data( plane );
-			pointer dst = dst_img->data( plane );
-
-			size_type src_pitch = src_img->pitch( plane );
-			size_type dst_pitch = dst_img->pitch( plane );
-			size_type dst_rem = dst_pitch - dst_width;
-
-			if ( dst_width == src_width && dst_height == src_height )
-			{
-				while( dst_height -- )
-				{
-					memcpy( dst, src, dst_width );
-					dst += dst_pitch;
-					src += src_pitch;
-				}
-			}
-			else
-			{
-				size_type x_factor = ( src_width << 8 ) / dst_width;
-				size_type y_factor = ( src_height << 8 ) / dst_height;
-
-				for ( size_type y = 0; y < dst_height; y ++ )
-				{
-					const_pointer line = src + ( ( y * y_factor ) >> 8 ) * src_pitch;
-
-					for ( size_type x = 0; x < dst_width; x ++ )
-						*dst ++ = line[ ( x * x_factor ) >> 8 ];
-
-					dst += dst_rem;
-				}
-			}
+			rescale_plane( dst_img, src_img, 1, 1, BILINEAR_SAMPLING, plane );
 		}
 	}
 
@@ -1834,6 +1837,104 @@ static image_type_ptr r32g32b32f_to_b8g8r8a8( image_type_ptr src_img, const opl:
 	return dst_img;
 }
 
+static void fill( image_type_ptr img, int plane, boost::uint8_t value )
+{
+	boost::uint8_t *dst = img->data( plane );
+	size_type width = img->width( plane );
+	size_type height = img->height( plane );
+	size_type pitch = img->pitch( plane );
+
+	while( height -- )
+	{
+		memset( dst, value, width );
+		dst += pitch;
+	}
+}
+
+static image_type_ptr l8_to_yuv_planar( image_type_ptr src_img, const opl::wstring &format )
+{
+	size_type width = src_img->width( );
+	size_type height = src_img->height( );
+
+	image_type_ptr dst_img = allocate( src_img, format );
+	if( dst_img != 0 )
+	{
+		boost::uint8_t *src = src_img->data( );
+		boost::uint8_t *dst = dst_img->data( );
+
+		size_type src_pitch = src_img->pitch( );
+		size_type dst_pitch = dst_img->pitch( );
+
+		while( height -- )
+		{
+			memcpy( dst, src, width );
+			dst += dst_pitch;
+			src += src_pitch;
+		}
+
+		fill( dst_img, 1, 128 );
+		fill( dst_img, 2, 128 );
+	}
+
+	return dst_img;
+}
+
+static image_type_ptr f32_to_yuv_planar( image_type_ptr src_img, const opl::wstring &format )
+{
+	size_type width = src_img->width( );
+	size_type height = src_img->height( );
+
+	image_type_ptr dst_img = allocate( src_img, format );
+	if( dst_img != 0 )
+	{
+		float *src = reinterpret_cast< float * >( src_img->data( ) );
+		boost::uint8_t *dst = dst_img->data( );
+
+		size_type src_pitch = src_img->pitch( ) - src_img->linesize( );
+		size_type dst_pitch = dst_img->pitch( ) - dst_img->linesize( );
+		int width;
+
+		while( height -- )
+		{
+			width = dst_img->width( );
+			while( width -- )
+				*dst ++ = boost::uint8_t( 255 * *src ++ );
+			dst += dst_pitch;
+			src += src_pitch;
+		}
+
+		fill( dst_img, 1, 128 );
+		fill( dst_img, 2, 128 );
+	}
+
+	return dst_img;
+}
+
+static image_type_ptr yuv_planar_to_l8( image_type_ptr src_img )
+{
+	size_type width = src_img->width( );
+	size_type height = src_img->height( );
+
+	image_type_ptr dst_img = allocate( src_img, L"l8" );
+	if( dst_img != 0 )
+	{
+		boost::uint8_t *src = src_img->data( );
+		boost::uint8_t *dst = dst_img->data( );
+
+		size_type src_pitch = src_img->pitch( );
+		size_type dst_pitch = dst_img->pitch( );
+
+		while( height -- )
+		{
+			memcpy( dst, src, width );
+			dst += dst_pitch;
+			src += src_pitch;
+		}
+	}
+
+	return dst_img;
+}
+
 inline bool is_rgb_packed( const opl::wstring &pf )
 {
 	return pf == L"a8b8g8r8" || pf == L"a8r8g8b8" || pf == L"b8g8r8" || pf == L"b8g8r8a8" || pf == L"r8g8b8" || pf == L"r8g8b8a8";
@@ -2182,32 +2283,52 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 		if( dst_pf == L"b8g8r8a8" )
 			return l10_l12_l16p_ushort_with_alpha_to_b8g8r8a8( src, dst_pf );
 	}
+  	else if ( src_pf == L"l8" && is_yuv_planar( dst_pf ) )
+  	{
+  		return l8_to_yuv_planar( src, dst_pf );
+  	}
+  	else if ( src_pf == L"f32" && is_yuv_planar( dst_pf ) )
+  	{
+  		return f32_to_yuv_planar( src, dst_pf );
+  	}
+  	else if ( is_yuv_planar( src_pf ) && dst_pf == L"l8" )
+  	{
+  		return yuv_planar_to_l8( src );
+  	}
 
 #ifndef WIN32
-	fprintf( stderr, "Unknown %s to %s\n", opl::to_string( src_pf ).c_str( ), opl::to_string( dst_pf ).c_str( ) );
+	//fprintf( stderr, "Unknown %s to %s\n", opl::to_string( src_pf ).c_str( ), opl::to_string( dst_pf ).c_str( ) );
 #endif
 
 	return image_type_ptr( );
 }
 
-image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, int new_d, int bs, rescale_filter filter )
+static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p )
 {
-	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h );
-	if( !new_im )
-		return im;
+	int src_w = im->width( p );
+	int src_h = im->height( p );
+	int src_d = im->depth( );
+	int src_p = im->pitch( p );
 
-	new_im->set_field_order( im->field_order( ) );
+	int new_w = new_im->width( p );
+	int new_h = new_im->height( p );
+  		
+	image_type::const_pointer	src = im->data( p );
+	image_type::pointer			dst = new_im->data( p );
 
-	for ( int p = 0; p < im->plane_count( ); p ++ )
+	if ( src_w == new_w && src_h == new_h && src_d == new_d && bs == 1 )
 	{
-		int src_w = im->width( p );
-		int src_h = im->height( p );
-		int src_d = im->depth( );
-		int src_p = im->pitch( p );
-
-		new_w = new_im->width( p );
-		new_h = new_im->height( p );
-		
+		int linesize = new_im->linesize( p );
+		int dst_p = new_im->pitch( p );
+		while( src_h -- )
+		{
+			memcpy( dst, src, linesize );
+			dst += dst_p;
+			src += src_p;
+		}
+	}
+	else
+	{
 		int diff = new_im->pitch( p ) - new_im->linesize( p );
 
 		image_type::const_pointer	src = im->data( p );
@@ -2342,6 +2463,8 @@ image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, in
 						di = i >> 8;
 						si = i & 0xff;
 						di0 = (std::min)( di + 1, src_w );
+						di = std::min<int>( std::max<int>( di, 0 ), src_w - 1 );
+						di0 = std::min<int>( std::max<int>( di0, 0 ), src_w - 1 );
 						*dst ++ = static_cast<unsigned char>( (
 									( row_upper[ di ] * ( 0x100 - si ) + row_upper[ di0 ] * si ) * ( 0x100 - sj ) + 
 								    ( row_lower[ di ] * ( 0x100 - si ) + row_lower[ di0 ] * si ) * (         sj ) +
@@ -2531,12 +2654,17 @@ image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, in
 
 					for( int i = 0; i < mi; i += ddi )
 					{
-						const int di = i >> 11;
-						const int di0 = di > 0 ? di - 1 : 0;
-						const int di1 = di < src_w - 1 ? di + 1 : src_w - 1;
-						const int di2 = di < src_w - 2 ? di + 2 : src_w - 1;
+						int di = i >> 11;
+						int di0 = di > 0 ? di - 1 : 0;
+						int di1 = di < src_w - 1 ? di + 1 : src_w - 1;
+						int di2 = di < src_w - 2 ? di + 2 : src_w - 1;
 
 						const std::vector< int > &ri = ratio[ i & 0x7ff ];
+
+						di = std::min<int>( std::max<int>( di, 0 ), src_w - 1 );
+						di0 = std::min<int>( std::max<int>( di0, 0 ), src_w - 1 );
+						di1 = std::min<int>( std::max<int>( di1, 0 ), src_w - 1 );
+						di2 = std::min<int>( std::max<int>( di2, 0 ), src_w - 1 );
 
 						*dst++ = ( unsigned char ) ( (
 							  ( dj0[ di0 ] * ri[0] +
@@ -2561,6 +2689,18 @@ image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, in
 				}
 			}
 		}
+	}
+}
+
+image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, int new_d, int bs, rescale_filter filter )
+{
+	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h );
+	if( !new_im )
+		return im;
+
+	for ( int p = 0; p < im->plane_count( ); p ++ )
+	{
+		rescale_plane( new_im, im, new_d, bs, filter, p );
 	}
 	
 	return new_im;
@@ -3110,7 +3250,7 @@ bool store_image( const opl::wstring &resource, image_type_ptr image )
 	openimagelib_plugin_ptr plug = get_plug( resource, L"" );
 	if ( !plug )
 	{
-		fprintf( stderr, "store_image: failed to find a plugin\n" );
+		//fprintf( stderr, "store_image: failed to find a plugin\n" );
 		return false;
 	}
 	

@@ -175,8 +175,6 @@ bool filter_type::connect( input_type_ptr input, size_t slot )
 	if ( result )
 	{
 		slots_[ slot ] = input;
-		if ( input )
-			seek( input->get_position( ) );
 		on_slot_change( input, static_cast<int>(slot) );
 	}
 
@@ -209,11 +207,11 @@ void filter_type::acquire_values( )
 
 bool filter_type::is_thread_safe( )
 {
-	bool result = true;
-	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); result && iter < slots_.end( ); iter ++ )
-		if ( *iter )
-			result = ( *iter )->is_thread_safe( );
-	return result;
+	size_t count = 0;
+	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); iter != slots_.end( ); iter ++ )
+		if ( *iter && ( *iter )->is_thread_safe( ) )
+			count ++;
+	return count && count == slots_.size( );
 }
 
 frame_type_ptr filter_type::fetch_from_slot( int index, bool assign )

@@ -33,9 +33,10 @@ void olib_rsvg_init( )
 	static bool rsvg_initted = false;
 	if ( !rsvg_initted )
 	{
-		rsvg_initted = true;
+		g_thread_init( 0 );
 		rsvg_init( );
 		atexit( rsvg_term );
+		rsvg_initted = true;
 	}
 }
 

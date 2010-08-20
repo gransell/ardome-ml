@@ -20,12 +20,12 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
 		explicit filter_colour_space( const pl::wstring & )
-			: ml::filter_type()
+			: ml::filter_simple()
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 		{
 			properties( ).append( prop_pf_ = pl::wstring( L"r8g8b8a8" ) );

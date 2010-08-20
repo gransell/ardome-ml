@@ -50,6 +50,7 @@ IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img );
 IL_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field );
 IL_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im );
 IL_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im );
+IL_DECLSPEC image_type_ptr merge_alpha( const image_type_ptr &im, const image_type_ptr &alpha );
 
 enum IL_DECLSPEC rescale_filter { POINT_SAMPLING, BILINEAR_SAMPLING, BICUBIC_SAMPLING };
 

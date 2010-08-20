@@ -1235,7 +1235,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				// (see populate for identification of unreliable_container_)
 				if ( unreliable_container_ )
 				{
-					std::cerr << "unreliable container" << std::endl;
 					if ( has_video( ) )
 					{
 						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_video_stream( )->time_base ) );
@@ -1498,9 +1497,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Ignore packets before 0
 			if ( found < 0 )
 				return 0;
-
-			//if ( found < get_position( ) - 25 )
-			//	return 0;
 
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;
