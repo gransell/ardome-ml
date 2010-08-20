@@ -127,12 +127,12 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
 		if self['PLATFORM'] == 'darwin':
-			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )
+			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', '__STDC_CONSTANT_MACROS' ] )
 		elif self['PLATFORM'] == 'posix':
-			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX' ] ) 
+			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX', '__STDC_CONSTANT_MACROS' ] ) 
 		elif self['PLATFORM'] == 'win32':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF16' ] ) 
-			self.Append( CPPDEFINES = ['OLIB_USE_UTF16', 'AMF_ON_WINDOWS', 'WIN32', 'UNICODE', '_UNICODE', 'ML_PLUGIN_EXPORTS'] )
+			self.Append( CPPDEFINES = ['OLIB_USE_UTF16', 'AMF_ON_WINDOWS', 'WIN32', 'UNICODE', '_UNICODE', 'ML_PLUGIN_EXPORTS', '__STDC_CONSTANT_MACROS' ] )
 		else:
 			raise( "Unknown platform" )
 
