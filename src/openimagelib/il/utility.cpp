@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <stdio.h>
 
 #include <openimagelib/il/openimagelib_plugin.hpp>
 
