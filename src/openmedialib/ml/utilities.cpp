@@ -13,10 +13,17 @@
 
 #include <limits>
 #include <cmath>
+
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/minimal_string_defines.hpp>
+#include <opencorelib/cl/str_util.hpp>
+
 #include <openmedialib/ml/types.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/input_creator_handler.hpp>
+
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <boost/thread/recursive_mutex.hpp>
@@ -25,6 +32,7 @@
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
+namespace cl = olib::opencorelib;
 
 // Windows work around
 #ifndef M_PI
@@ -128,6 +136,14 @@ ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 {
 	scoped_lock lock( mutex_ );
 	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for: %1%" ) % opl::to_string( resource ) );
+	
+	input_creator_ptr creator = the_input_creator_handler::Instance( ).input_creator_for_id( cl::str_util::to_t_string( resource ) );
+	if( creator )
+	{
+		PL_LOG( pl::level::debug5, "Found input_creator for resource. Overrides plugins." );
+		return creator->create_input( );
+	}
+	
 	openmedialib_plugin_ptr plug = get_plug( resource, L"input" );
 	if ( plug == 0 )
 		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
