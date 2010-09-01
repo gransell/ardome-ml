@@ -157,7 +157,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, audio_variable_( false )
 		{
 			// Show stats
-			properties( ).append( prop_show_stats_ = 100 );
+			properties( ).append( prop_show_stats_ = 0 );
 			properties( ).append( prop_debug_ = 0 );
 
 			// Define the audio output buffer
@@ -936,6 +936,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( c->frame_size <= 1 ) 
 				{
 				   audio_input_frame_size_ = audio_outbuf_size_ / c->channels;
+				   c->sample_fmt = codec->sample_fmts[0];
 				   switch( ( *iter )->codec->codec_id ) 
 				   {
 					  case CODEC_ID_PCM_S16LE:
@@ -1206,7 +1207,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					pkt.stream_index = ( *iter )->index;
 					pkt.data = audio_outbuf_;
 
-					if ( pkt.size )
+					if ( pkt.size > 0 )
 					{
 						if( stream == 0)
 						{

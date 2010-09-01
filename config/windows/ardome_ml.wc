@@ -29,6 +29,7 @@ def install( env, prefix ):
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avcodec-52.dll') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avutil-50.dll') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'swscale-0.dll') ] )
+	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avcore-0.dll') ] )
 	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'SDL.dll') ] )
 
 	if env['target'] == 'vs2008' :

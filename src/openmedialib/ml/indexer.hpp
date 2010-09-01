@@ -26,6 +26,9 @@ class ML_DECLSPEC indexer_item
 
 		/// Indicates if growth has completed or not
 		virtual const bool finished( ) const = 0;
+
+		// V4 indexes can index both audio and video
+		virtual const boost::uint16_t type( ) const { return 0; }
 };
 
 // Initialise the indexer
