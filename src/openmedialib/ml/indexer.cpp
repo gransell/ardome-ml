@@ -472,7 +472,7 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint1
 
 void ML_DECLSPEC indexer_init( )
 {
-	return indexer::instance( )->init( );
+	indexer::instance( )->init( );
 }
 
 indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type )
@@ -482,7 +482,7 @@ indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url,
 
 void ML_DECLSPEC indexer_shutdown( )
 {
-	return indexer::instance( )->shutdown( );
+	indexer::instance( )->shutdown( );
 }
 
 } } }

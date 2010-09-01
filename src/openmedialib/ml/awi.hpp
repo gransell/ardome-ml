@@ -151,6 +151,10 @@ class ML_DECLSPEC awi_index
 		virtual int key_frame_of( int position ) = 0;
 		virtual int key_frame_from( boost::int64_t offset ) = 0;
 
+		// AWI V4 introduces a audio and video indexing - an instance of the index can be used for a single component
+		// and for backward compatability reasons, we need to know which type the index represents
+		virtual const boost::uint16_t type( ) const { return 0; }
+
 		// This should be reimplemented on the parser implementations
 		virtual void read( ) { }
 
@@ -362,7 +366,7 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 class ML_DECLSPEC awi_index_v4 : public awi_index
 {
 	public:
-		awi_index_v4( );
+		awi_index_v4( boost::uint16_t entry_type );
 		virtual ~awi_index_v4( );
 		void set( const awi_header_v4 &value );
 		void set( const awi_item_v4 &value );
@@ -377,6 +381,7 @@ class ML_DECLSPEC awi_index_v4 : public awi_index
 		virtual int key_frame_of( int position );
 		virtual int key_frame_from( boost::int64_t offset );
 		virtual int total_frames( ) const;
+		virtual const boost::uint16_t type( ) const { return entry_type_; }
 
 	protected:
 		mutable boost::recursive_mutex mutex_;
@@ -389,6 +394,7 @@ class ML_DECLSPEC awi_index_v4 : public awi_index
 		std::map< boost::int32_t, awi_item_v4 > items_;
 		std::map< boost::int64_t, awi_item_v4 > offsets_;
 		awi_footer_v4 footer_;
+		boost::uint16_t entry_type_;
 };
 
 class ML_DECLSPEC awi_parser_v4 : public awi_index_v4

@@ -493,13 +493,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
                     ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
 					break;
                 }
-				if ( error >= 0 && is_video_stream( pkt_.stream_index ) )
+				if ( is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
-				else if ( error >= 0 && is_audio_stream( pkt_.stream_index ) )
+				else if ( is_audio_stream( pkt_.stream_index ) )
 					error = decode_audio( got_audio );
-				else if ( error < 0 && !is_seekable_ )
+				else if ( !is_seekable_ )
 					frames_ = get_position( );
-				else if ( prop_genpts_.value< int >( ) == 1 && error < 0 )
+				else if ( prop_genpts_.value< int >( ) == 1 )
 					frames_ = get_position( );
 
 				av_free_packet( &pkt_ );
@@ -526,8 +526,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( !temp )
                 {
                     error =-1;
-                    ARLOG_ERR( "Failed to decode null packet at eof. Error = %1%" )( ret );
+                    ARLOG_WARN( "Failed to decode null packet at eof. Error = %1%" )( ret );
                 } 
+
+				if ( frames_ == 1 << 30 && images_.size( ) )
+				{
+					frames_ = ( *( -- images_.end( ) ) )->position( ) + 1;
+				}
 			}
 
 			// Hmmph
@@ -723,6 +728,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Check if we need to do additional size checks
 			bool sizing = should_size_media( context_->iformat->name );
 
+			// Avoid offsetting audio incorrectly with certain formats
+			if ( !strcmp( context_->iformat->name, "avi" ) || !strcmp( context_->iformat->name, "mkv" ) || !strcmp( context_->iformat->name, "flv" ) )
+				first_audio_dts_ = 0.0;
+
 			// Carry out the media sizing logic
 			if ( !aml_index_ )
 			{
@@ -904,6 +913,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					//one AAC packet. 1024 samples per packet is 375/8 fps at 48 KHz.
 					int freq = audio_stream->codec->sample_rate;
 					cl::rational_time aac_fps( freq, 1024 );
+					fps_num_ = aac_fps.numerator();
+					fps_den_ = aac_fps.denominator();
+				}
+				else if( audio_stream->codec->codec_id == CODEC_ID_MP2 && aml_index_ && aml_index_->type( ) == 2 )
+				{
+					//If we're reading MP2 with index, the index "frames" will be
+					//one MP2 packet. 1152 samples per packet is 125/3 fps at 48 KHz.
+					int freq = audio_stream->codec->sample_rate;
+					cl::rational_time aac_fps( freq, 1152 );
 					fps_num_ = aac_fps.numerator();
 					fps_den_ = aac_fps.denominator();
 				}

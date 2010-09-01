@@ -374,6 +374,7 @@ class stream_queue
 
 			if ( context_ == 0 )
 			{
+				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				context_ = avcodec_alloc_context( );
 				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );

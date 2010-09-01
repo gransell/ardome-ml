@@ -324,6 +324,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		ml::fraction sar_;
 		pl::wstring pf_;
 
+	public:
 		static boost::recursive_mutex avcodec_open_lock_;
 };
 
