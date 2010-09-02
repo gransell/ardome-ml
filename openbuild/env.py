@@ -378,7 +378,7 @@ class Environment( BaseEnvironment ):
 			if not os.path.exists( build_dir ): os.makedirs( build_dir )
 
 			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
-															build_dir=build_dir, 
+															variant_dir=build_dir, 
 															duplicate=0, exports=[ 'local_env' ] )
 
 			for dep in deps:
