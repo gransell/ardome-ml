@@ -1,0 +1,10 @@
+build/debug
+build/release
+bcomp
+.sconsign.dblite
+options.conf
+scripts/amldocs.aml
+./*.zip
+wrappers/generated_src
+wrappers/*.assembly
+wrappers/*.pickle
