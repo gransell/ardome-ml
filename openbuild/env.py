@@ -507,7 +507,9 @@ class Environment( BaseEnvironment ):
 		
 		if self.dot_net_deps is not None :
 			for dna in self.dot_net_deps :
-				self.Append( CPPFLAGS = [ '/FU "' + str(dna[0]) + '"' ] )
+				local_tmp = '/FU "' + self.subst(str(dna[0])) + '"' 
+				# print local_tmp + '\n'
+				self.Append( CPPFLAGS = [ local_tmp ] )
 			
 			for source in sources :
 				self.Depends( source, self.dot_net_deps )

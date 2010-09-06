@@ -123,7 +123,7 @@ class VsBuilder :
 		if not env.has_key(env_var_name) : return []
 		return [] + env[env_var_name]
 		
-	def create_string( self, env_var_name, env) :
+	def create_string( self, env_var_name, env, is_compiler_flag = False ) :
 		if not env.has_key(env_var_name) : 
 			return ""
 		res = ''
@@ -131,9 +131,9 @@ class VsBuilder :
 		if isinstance(env[env_var_name], list) :
 			for p in env[env_var_name] :
 				strval = p
-				if p.find('\\') != -1 and not p.startswith('"') :
+				if p.find('\\') != -1 and not p.startswith('"') and not is_compiler_flag:
 					strval = '"' + strval + '"'
-				
+					
 				res += strval.replace('"', '&quot;') + ' ' 
 		else :
 			res += str( env[env_var_name] ).replace('"', '&quot;') + ' '
@@ -200,8 +200,9 @@ class VsBuilder :
 		if extra_compiler_flags is not None:
 			curr_cfg.compiler_options.additional_options += ' ' + extra_compiler_flags
 		
-		curr_cfg.compiler_options.additional_options += self.create_string('CPPFLAGS', env)
-		curr_cfg.compiler_options.additional_options += self.create_string('CCFLAGS', env)
+		curr_cfg.compiler_options.additional_options += self.create_string('CPPFLAGS', env, True)
+		curr_cfg.compiler_options.additional_options += self.create_string('CCFLAGS', env, True)
+		# print curr_cfg.compiler_options.additional_options + '\n'
 		
 		curr_cfg.compiler_options.additional_options = self.handle_clr_project( curr_cfg.compiler_options.additional_options )
 		curr_cfg.compiler_options.additional_options = self.add_zm_compiler_switch( curr_cfg.compiler_options.additional_options )
