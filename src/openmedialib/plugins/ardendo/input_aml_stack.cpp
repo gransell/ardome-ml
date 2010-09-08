@@ -2925,6 +2925,7 @@ static void op_fetch( aml_stack *stack )
 {
 	int a = int( stack->pop_value( ) );
 	ml::input_type_ptr b = stack->pop( );
+	b->sync( );
 	stack->push( b );
 	if ( a < 0 )
 		a = b->get_frames( ) + a;
@@ -3097,6 +3098,7 @@ class input_aml_stack : public ml::input_type
 
 		void stop_threads( ml::input_type_ptr input )
 		{
+#if 0
 			if ( input )
 			{
 				if ( input->get_uri( ) == L"threader" )
@@ -3104,6 +3106,7 @@ class input_aml_stack : public ml::input_type
 				for ( size_t index = 0; index < input->slot_count( ); index ++ )
 					stop_threads( input->fetch_slot( index ) );
 			}
+#endif
 		}
 
 		void push( )
