@@ -162,6 +162,12 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 			}
 		}
 
+		void sync_frames( )
+		{
+			if ( internal_ )
+				internal_->sync( );
+		}
+
 	private:
 		pl::wstring resource_;
 		pcos::property prop_video_index_;
