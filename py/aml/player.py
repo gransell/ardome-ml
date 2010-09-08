@@ -1,7 +1,7 @@
 from aml import ml, pl, stack
 
 video_filters = []
-video_filters.append( [ 'thread_safe', 'threader', 'active=1' ] )
+video_filters.append( [ 'always', 'threader' ] )
 video_filters.append( [ 'always', 'deinterlace' ] )
 video_filters.append( [ 'always', 'resampler' ] )
 video_filters.append( [ 'always', 'pitch', 'speed=1' ] )
@@ -141,7 +141,7 @@ class player:
 
 		if 'threader' in self.instances.keys( ):
 			filter = self.instances[ 'threader' ]
-			filter.property( 'active' ).set( 2 )
+			filter.property( 'active' ).set( 0 )
 
 		if input is not None:
 
@@ -176,7 +176,7 @@ class player:
 		self.walk_and_assign( input, "deferred", int( self.deferrable ) )
 		#self.walk_and_assign( input, "dropping", int( self.droppable ) )
 
-		if 'threader' in self.instances.keys( ):
+		if 'threader' in self.instances.keys( ) and input.is_thread_safe( ):
 			filter = self.instances[ 'threader' ]
 			filter.property( 'active' ).set( 1 )
 
