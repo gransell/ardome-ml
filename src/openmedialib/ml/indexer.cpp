@@ -3,12 +3,10 @@
 // Copyright (C) 2009 Ardendo
 // Released under the LGPL.
 
+#include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/indexer.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <openmedialib/ml/awi.hpp>
-#include <openmedialib/ml/input.hpp>
-#include <openmedialib/ml/frame.hpp>
-#include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/utilities.hpp>
 
 // includes for openpluginlib string handling
