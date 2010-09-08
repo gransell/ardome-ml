@@ -1105,7 +1105,7 @@ awi_generator_v3::awi_generator_v3( )
 	awi_header_v3 header;
 
 	memcpy( header.id, "AWI", 3 );
-	memcpy( header.ver, "2", 1 );
+	memcpy( header.ver, "3", 1 );
 	header.created = 0;
 
 	set( header );
