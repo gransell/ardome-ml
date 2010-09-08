@@ -33,7 +33,9 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
-	
+
+static pl::pcos::key key_length_ = pl::pcos::key::from_string( "length" );
+
 class filter_pool
 {
 public:
@@ -152,22 +154,27 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		void evaluate( )
 		{
 			filter_type_ptr filter;
+			evaluated_ = true;
 			if ( pool_holder_ && ( filter = pool_holder_->filter( ) ) )
 			{
 				ml::frame_type_ptr other = parent_;
 
 				if ( !pushed_ )
 				{
-					pl::pcos::key_vector keys = properties( ).get_keys( );
-					for ( pl::pcos::key_vector::iterator iter = keys.begin( ); iter != keys.end( ); iter ++ )
-						if ( !other->properties( ).get_property_with_key( *iter ).valid( ) )
-							other->properties( ).append( properties( ).get_property_with_key( *iter ) );
+					ml::input_type_ptr pusher = filter->fetch_slot( 0 );
 
-					if ( filter->fetch_slot( 0 ) == 0 )
+					other->get_image( );
+
+					if ( pusher == 0 )
 					{
-						ml::input_type_ptr fg = ml::create_input( L"pusher:" );
-						fg->property( "length" ) = frames_;
-						filter->connect( fg );
+						pusher = ml::create_input( L"pusher:" );
+						pusher->property_with_key( key_length_ ) = frames_;
+						filter->connect( pusher );
+						filter->sync( );
+					}
+					else if ( pusher->get_uri( ) == L"pusher:" && pusher->get_frames( ) != frames_ )
+					{
+						pusher->property_with_key( key_length_ ) = frames_;
 						filter->sync( );
 					}
 
@@ -176,14 +183,10 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					other = filter->fetch( );
 				}
 
-				pl::pcos::key_vector keys = other->properties( ).get_keys( );
-				for ( pl::pcos::key_vector::iterator iter = keys.begin( ); iter != keys.end( ); iter ++ )
-					properties( ).append( other->properties( ).get_property_with_key( *iter ) );
-
 				image_ = other->get_image( );
 				alpha_ = other->get_alpha( );
 				audio_ = other->get_audio( );
-				properties_ = other->properties( );
+				//properties_ = other->properties( );
 				stream_ = other->get_stream( );
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
@@ -192,11 +195,11 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				fps_num_ = other->get_fps_num( );
 				fps_den_ = other->get_fps_den( );
 				exceptions_ = other->exceptions( );
-				
+				queue_ = other->queue( );
+
 				//We will not have any use for the filter now
 				pool_holder_.reset();
 			}
-			evaluated_ = true;
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
@@ -812,7 +815,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, initialized_( false )
 			, total_frames_( 0 )
 		{
-			properties( ).append( prop_inner_threads_ = 0 );
+			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
 			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
 			properties( ).append( prop_source_uri_ = pl::wstring( L"" ) );
@@ -1329,11 +1332,11 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 		virtual bool is_thread_safe( ) { return filter_ ? filter_->is_thread_safe( ) : false; }
 
-		void on_slot_change( input_type_ptr input, int )
+		void on_slot_change( input_type_ptr input, int slot )
 		{
 			if ( filter_ )
 			{
-				filter_->connect( input );
+				filter_->connect( input, slot );
 				filter_->sync( );
 			}
 		}
@@ -1355,10 +1358,16 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 			pcos::key_vector keys = properties_.get_keys( );
 			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+			{
 				if ( result->property_with_key( *it ).valid( ) )
 					result->property_with_key( *it ).set_from_property( properties_.get_property_with_key( *it ) );
 				else
-					result->properties( ).append( properties_.get_property_with_key( *it ) );
+				{
+					pl::pcos::property prop( *it );
+					prop.set_from_property( properties_.get_property_with_key( *it ) );
+					result->properties( ).append( prop );
+				}
+			}
 
 			return result;
 		}
