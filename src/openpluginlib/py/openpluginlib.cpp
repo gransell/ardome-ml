@@ -53,6 +53,7 @@ void py_openpluginlib( )
 	py::def( "init", &init0 );
 	py::def( "init", &init1 );
 	py::def( "init", &initlist );
+	py::def( "init_log", &opl::init_log );
 	py::def( "uninit", &uninit );
 	py::def( "registered_filters", &registered_filters );
 #ifdef WIN32
