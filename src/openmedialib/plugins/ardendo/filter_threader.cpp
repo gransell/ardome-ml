@@ -109,9 +109,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
         void sync( ) 
         { 
             scoped_lock lock( mutex_ ); 
-            sync_ = true;
-			// We do this right away and dont wait for the background thread to do it to avoid a possible race condition. If
-			// get_frames is called right after sync the background thread might not have had time to run
+			sync_ = true;
+			// FIXME: Temporary non-thread safe use of the input to force a sync
 			ml::input_type_ptr i = fetch_slot( 0 );
 			sync_frames( i );
         }
@@ -156,8 +155,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		virtual bool is_thread_safe( )
 		{ 
             scoped_lock lock( mutex_ ); 
-			if ( fetch_slot( 0 ) )
-				return fetch_slot( 0 )->is_thread_safe( );
+			// FIXME: Disabled threader for the time being
+			// if ( fetch_slot( 0 ) )
+				// return fetch_slot( 0 )->is_thread_safe( );
             return false;
         }
 
@@ -186,7 +186,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "requesting %d from dormant" ) % position );
 					input->seek( position );
 					result = input->fetch( );
-					return;
 				}
 				else if ( !changed || speed_ != old_speed || std::abs( speed_ ) > 16 )
 				{
@@ -391,7 +390,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				{
 					pl::pcos::property audio_reversed( key_audio_reversed_ );
 					if ( speed_ < 0 )
+					{
 						result->set_audio( ml::audio::reverse( result->get_audio( ) ) );
+					}
 					result->properties( ).append( audio_reversed = speed_ < 0 ? 1 : 0 );
 				}
 			}
@@ -673,7 +674,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				frame = input->fetch( );
 			}
 
-			if ( frame )
+			if ( frame && position == frame->get_position( ) )
 			{
 				// Store frame if available
 				if ( frame && is_running( lck ) )
@@ -702,6 +703,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						cond_.notify_all( );
 					}
 				}
+			}
+			else
+			{
+				frame = ml::frame_type_ptr( );
 			}
 
 			return frame && is_running( lck );
@@ -842,6 +847,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					frames_ = 0;
 				}
 				sync_ = false;
+				cond_.notify_all( );			
 			}
 			return frames_;
 		}
