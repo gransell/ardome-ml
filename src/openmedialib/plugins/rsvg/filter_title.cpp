@@ -104,6 +104,10 @@ class filter_title : public ml::filter_simple
 			svg_->init( );
 		}
 
+		virtual ~filter_title( )
+		{
+		}
+
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const 
 		{ return prop_enable_.value< int >( ) == 1 && prop_deferred_.value< int >( ) == 0; }
@@ -113,12 +117,12 @@ class filter_title : public ml::filter_simple
 
 		virtual const size_t slot_count( ) const { return 1; }
 
+		virtual bool is_thread_safe( ) { return false; }
+
 	protected:
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			acquire_values( );
-
 			result = fetch_from_slot( );
 
 			if ( result && result->get_image( ) && prop_enable_.value< int >( ) && prop_title_.value< pl::wstring >( ) != L"" )
