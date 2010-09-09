@@ -34,6 +34,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			, spec_( spec )
 			, prop_fps_num_( pl::pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pl::pcos::key::from_string( "fps_den" ) )
+			, prop_file_size_( pl::pcos::key::from_string( "file_size" ) )
 			, context_( 0 )
 			, channels_( 0 )
 			, frequency_( 0 )
@@ -47,6 +48,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
+			properties( ).append( prop_file_size_ = boost::int64_t( 0 ) );
 		}
 
 		virtual ~input_wav( ) 
@@ -76,7 +78,12 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 		bool initialize( )
 		{
-			int error = url_open( &context_, pl::to_string( spec_ ).c_str( ), URL_RDONLY );
+			pl::wstring resource = spec_;
+
+			if ( resource.find( L"wav:" ) == 0 )
+				resource = resource.substr( 4 );
+
+			int error = url_open( &context_, pl::to_string( resource ).c_str( ), URL_RDONLY );
 			bool found_fmt = false;
 
 			if ( error == 0 )
@@ -158,6 +165,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			else
 				bytes_ = std::min< boost::int64_t >( bytes_, url_filesize( context_ ) - offset_ );
 			frames_ = int( 0.5f + float( bytes_ * prop_fps_num_.value< int >( ) ) / ( bits_ / 8 * channels_ * frequency_ * prop_fps_den_.value< int >( ) ) );
+			prop_file_size_ = boost::int64_t( url_filesize( context_ ) );
 		}
 
 		void seek_to_position( int position )
@@ -232,6 +240,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		pl::wstring spec_;
 		pl::pcos::property prop_fps_num_;
 		pl::pcos::property prop_fps_den_;
+        pl::pcos::property prop_file_size_;
 		URLContext *context_;
 
 		int channels_;
