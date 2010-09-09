@@ -235,7 +235,11 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml, il ] ) )
 
-	os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
+	if env['PLATFORM'] == 'win32' :
+		os.system( "python ./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
+	else :
+		os.system( "./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
+	
 	os.system( "chmod +x scripts/amldocs.aml" )
 
 	if env.have_boost_python( ):
