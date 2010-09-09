@@ -992,7 +992,7 @@ class Environment( BaseEnvironment ):
 					if execute: os.makedirs( dir )
 			for src_file, dst_file in all_files:
 				self.filter_framework( src_file, dst_file )
-				if not os.path.exists( dst_file ) or os.path.getmtime( src_file ) > os.path.getmtime( dst_file ):
+				if not os.path.exists( dst_file ) or int(os.path.getmtime( src_file )) > int(os.path.getmtime( dst_file )):
 					file_count += 1
 					if execute: 
 						shutil.copyfile( src_file, dst_file )
