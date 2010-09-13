@@ -1,14 +1,14 @@
-prefix=/tmp/ffmpeg
+prefix=/opt/ffmpeg
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
-Name: libavdevice
-Description: FFmpeg device handling library
-Version: 52.2.1
+Name: libavfilter
+Description: FFmpeg video filtering library
+Version: 1.38.1
 Requires: 
-Requires.private: libavformat = 52.78.3
+Requires.private: libavcore = 0.6.0
 Conflicts:
-Libs: -L${libdir} -lavdevice.aml 
+Libs: -L${libdir} -lavfilter.aml 
 Libs.private: -lasound -lvpx -lvpx -lvorbisenc -lvorbis -logg -lm -pthread -lz
 Cflags: -I${includedir}

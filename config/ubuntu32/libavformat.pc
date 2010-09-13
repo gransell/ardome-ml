@@ -1,12 +1,13 @@
 prefix=/tmp/ffmpeg
 exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
+libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: libavformat
 Description: FFmpeg container format library
-Version: 52.7.0
-Requires:  libavcodec = 51.50.1
+Version: 52.78.3
+Requires: libavcodec = 52.87.0
 Conflicts:
-Libs: -L${libdir} -lavformat   -lz -lm    -ldl -ldl
+Libs: -L${libdir} -lavformat.aml 
+Libs.private: -lasound -lvpx -lvpx -lvorbisenc -lvorbis -logg -lm -pthread -lz
 Cflags: -I${includedir}
