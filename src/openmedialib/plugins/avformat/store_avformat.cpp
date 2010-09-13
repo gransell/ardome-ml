@@ -835,6 +835,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					// Specify sample parameters
 					c->sample_rate = prop_frequency_.value< int >( );
+					//The codec uses some strange default values that will 
+					//not work for atleast the vorbis case. 
+					// 1/sample_rate is a better guess 
+					if (c->time_base.num == 0 && c->time_base.den == 1) {
+						c->time_base.num = 1;
+						c->time_base.den = c->sample_rate;
+					}
 					c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
 
 					// The bitrate property sets the bitrate for one stream. If we have fewer channels than
