@@ -8,3 +8,4 @@ scripts/amldocs.aml
 wrappers/generated_src
 wrappers/*.assembly
 wrappers/*.pickle
+ardome_ml.pc
