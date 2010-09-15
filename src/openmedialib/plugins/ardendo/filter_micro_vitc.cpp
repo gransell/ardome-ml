@@ -17,11 +17,11 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_simple
 {
 	public:
 		filter_mvitc_write( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 		{
 			properties( ).append( prop_enable_ = 1 );

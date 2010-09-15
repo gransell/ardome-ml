@@ -160,6 +160,8 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 
 	walk_and_assign( input, "deferred", defer ? 1 : 0 );
 	walk_and_assign( input, "dropping", drop ? 1 : 0 );
+	if ( input->is_thread_safe( ) )
+		walk_and_assign( input, "active", 1 );
 }
 
 void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, bool interactive, int speed, bool stats )
@@ -186,6 +188,9 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 	double last_fps(0.0f);
 	int store_position = 0;
     bool fullscreen = false;
+	int sync_check = 0;
+	bool syncing = true;
+	int total_frames = 0;
 
 	ml::frame_type_ptr frame;
 
@@ -202,8 +207,16 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 			last_time = curr_time;
 		}
 
+		if ( syncing && sync_check ++ % 50 == 0 )
+		{
+			input->sync( );
+			int current_frames = input->get_frames( );
+			//syncing = current_frames != total_frames;
+			total_frames = current_frames;
+		}
+
 		if ( stats )
-			std::cerr << input->get_position( ) << "/" << input->get_frames( ) <<  " fps: " << last_fps << '\r';
+			std::cerr << input->get_position( ) << "/" << total_frames <<  " fps: " << last_fps << '\r';
 
 		frame_count += 1;
 
@@ -270,7 +283,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 				else if ( key == 'h' )
 				{
 					int position = input->get_position( ) + 1000;
-					input->seek( position >= input->get_frames( ) ? input->get_frames( ) - 1 : position );
+					input->seek( position >= total_frames ? total_frames - 1 : position );
 				}
 				else if ( key == SDLK_UP )
 				{
@@ -280,7 +293,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 				else if ( key == SDLK_DOWN )
 				{
 					int position = input->get_position( ) + 100;
-					input->seek( position >= input->get_frames( ) ? input->get_frames( ) - 1 : position );
+					input->seek( position >= total_frames ? total_frames - 1 : position );
 				}
 				else if ( key == SDLK_RIGHT )
 				{
@@ -298,7 +311,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 				}
 				else if ( key == SDLK_END )
 				{
-					input->seek( input->get_frames( ) - 1 );
+					input->seek( total_frames - 1 );
 				}
 
 				if ( key != 0 )
@@ -318,13 +331,13 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		{
 			if ( input->get_position( ) < 0 )
 				input->seek( 0 );
-			else if ( input->get_position( ) >= input->get_frames( ) )
-				input->seek( input->get_frames( ) - 1 );
+			else if ( input->get_position( ) >= total_frames )
+				input->seek( total_frames - 1 );
 		}
 		else
 		{
 			if ( !error )
-				error = input->get_position( ) < 0 || input->get_position( ) >= input->get_frames( );
+				error = input->get_position( ) < 0 || input->get_position( ) >= total_frames;
 		}
 	}
 
@@ -478,7 +491,6 @@ int main( int argc, char *argv[ ] )
 			push = pl::wstring( L"filter:deinterlace" );
 			push = pl::wstring( L"filter:threader" );
 			push = pl::wstring( L"queue=50" );
-			push = pl::wstring( L"active=1" );
 		}
 
 		push = pl::wstring( L"." );

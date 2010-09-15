@@ -115,6 +115,7 @@
 #endif // WIN32
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/audio.hpp>
 
 #include <iostream>
@@ -454,8 +455,8 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			
 			// Work around pushing the same frame multiple times to the store
 			if( last_frame_ && frame->get_position( ) == last_frame_->get_position( ) )
-				last_frame_.reset( );
-			
+				last_frame_ = ml::frame_type_ptr( );
+
 			return true;
 		}
 
@@ -465,8 +466,11 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		{
 			if( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				result = last_frame_;
-				return;
+				if ( queue_.size( ) == 0 || queue_[ 0 ]->get_position( ) != get_position( ) )
+				{
+					result = last_frame_;
+					return;
+				}
 			}
 			
 			// Obtain property values
@@ -501,11 +505,11 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 //		Values should be in the range 16 to 240 - not change occurs when the
 //		value is out of range.
 
-class ML_PLUGIN_DECLSPEC chroma_filter : public filter_type
+class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 {
 	public:
 		chroma_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_u_( pcos::key::from_string( "u" ) )
 			, prop_v_( pcos::key::from_string( "v" ) )
@@ -569,11 +573,11 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_type
 //	Downstream filters should be used to conform things further.
 //
 
-class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
+class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 {
 	public:
 		conform_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_image_( pcos::key::from_string( "image" ) )
 			, prop_audio_( pcos::key::from_string( "audio" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
@@ -749,11 +753,11 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_type
 //	rx, ry, rw, rh = double, double, double, double (0,0,1,1 is default)
 //		the visible area of the background is specified in the range of 0.0 to 1.0
 
-class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
+class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 {
 	public:
 		crop_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_absolute_( pcos::key::from_string( "absolute" ) )
 			, prop_pixel_( pcos::key::from_string( "pixel" ) )
@@ -835,6 +839,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_type
 					}
 
 					result = frame_crop( result, px, py, pw, ph );
+					result->set_image( il::image_type_ptr( static_cast<il::image_type*>( result->get_image( )->clone( il::cropped ) ) ) );
 				}
 			}
 		}
@@ -1242,10 +1247,10 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
-						temp_h = src_alpha->height( );
+						if ( temp_h > src_alpha->height( ) ) temp_h = src_alpha->height( );
 						while ( temp_h -- )
 						{
-							int temp_w = src_alpha->width( );
+							int temp_w = src_width;
 							while( temp_w -- )
 							{
 								alpha = ( *src_alpha_ptr ++ * mix ) / 255;
@@ -1370,11 +1375,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 //
 // TODO: Support additional colour images
 
-class ML_PLUGIN_DECLSPEC correction_filter : public filter_type
+class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 {
 	public:
 		correction_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_contrast_( pcos::key::from_string( "contrast" ) )
 			, prop_brightness_( pcos::key::from_string( "brightness" ) )
@@ -1580,8 +1585,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			if ( input && fps_num > 0 && fps_den > 0 )
 			{
-				src_frames_ = input->get_frames( );
-
 				double pos_in_source = map_dest_to_source( position_ );
 				int requested = (int)pos_in_source;
 				double pos_in_source_frame = pos_in_source - requested;
@@ -1593,7 +1596,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				{
 					input->seek( requested );
 					result = input->fetch( );
-					src_frames_ = input->get_frames( );
 				}
 				else
 				{
@@ -1608,7 +1610,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					{
 						input->seek( next );
 						frame_type_ptr frame = input->fetch( );
-						src_frames_ = input->get_frames( );
 						if ( frame )
 						{
 							int source_frame_sample_offset = 0;
@@ -1654,23 +1655,27 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 							iter ++;
 						}
 					}
-				}
 
-				if ( result )
-				{
-					result->set_position( position_ );
-					result->set_fps( fps_num, fps_den );
-					if ( result->get_image( ) )
-						result->get_image( )->set_writable( false );
-					if ( result->get_alpha( ) )
-						result->get_alpha( )->set_writable( false );
+					if ( result )
+					{
+						result->set_position( position_ );
+						result->set_fps( fps_num, fps_den );
+						if ( result->get_image( ) )
+							result->get_image( )->set_writable( false );
+						if ( result->get_alpha( ) )
+							result->get_alpha( )->set_writable( false );
+					}
 				}
 			}
 			else if ( input )
 			{
 				result = fetch_from_slot( );
-				src_frames_ = input->get_frames( );
 			}
+		}
+
+		virtual void sync_frames( )
+		{
+			src_frames_ = fetch_slot( 0 ) ? fetch_slot( 0 )->get_frames( ) : 0;
 		}
 
 	private:
@@ -1728,7 +1733,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			, last_position_( -1 )
 			, prop_in_( pcos::key::from_string( "in" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
-			, src_frames_( -1 )
+			, src_frames_( 0 )
 		{
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_out_ = -1 );
@@ -1739,15 +1744,8 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		virtual int get_frames( ) const
 		{
-			// Get input
-			ml::input_type_ptr input = fetch_slot( 0 );
-
-			// Get frames
-			src_frames_ = input ? input->get_frames( ) : 0;
-
 			// Calculate from input_frames
 			int frames = get_out( src_frames_ ) - get_in( src_frames_ );
-
 			return ( frames <= 0 ? - frames : frames );
 		}
 
@@ -1770,9 +1768,6 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		void do_fetch( frame_type_ptr &result )
 		{
-			if ( src_frames_ == -1 )
-				get_frames( );
-
 			input_type_ptr input = fetch_slot( );
 
 			if ( input )
@@ -1793,8 +1788,11 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 				if ( result )
 					result->set_position( get_position( ) );
 			}
+		}
 
-			src_frames_ = -1;
+		virtual void sync_frames( )
+		{
+			src_frames_ = fetch_slot( 0 ) ? fetch_slot( 0 )->get_frames( ) : 0;
 		}
 
 	private:
@@ -1836,11 +1834,11 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 //
 // Deinterlaces an image on demand.
 
-class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_type
+class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_simple
 {
 	public:
 		deinterlace_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_force_( pcos::key::from_string( "force" ) )
 		{
@@ -1886,11 +1884,11 @@ static bool key_sort( const pcos::key &k1, const pcos::key &k2 )
 	return strcmp( k1.as_string( ), k2.as_string( ) ) < 0;
 }
 
-class ML_PLUGIN_DECLSPEC lerp_filter : public filter_type
+class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 {
 	public:
 		lerp_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_in_( pcos::key::from_string( "in" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
@@ -2166,11 +2164,11 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 //
 // TODO: Better visualisations
 
-class ML_PLUGIN_DECLSPEC visualise_filter : public filter_type
+class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 {
 	public:
 		visualise_filter( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_force_( pcos::key::from_string( "force" ) )
 			, prop_width_( pcos::key::from_string( "width" ) )
 			, prop_height_( pcos::key::from_string( "height" ) )
@@ -2416,6 +2414,7 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 		playlist_filter( )
 			: filter_type( )
 			, prop_slots_( pcos::key::from_string( "slots" ) )
+			, total_frames_( 0 )
 		{
 			properties( ).append( prop_slots_ = 2 );
 		}
@@ -2429,18 +2428,12 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 
 		virtual int get_frames( ) const 
 		{
-			int result = 0;
-			for ( size_t i = 0; i < slot_count( ); i ++ )
-				if ( fetch_slot( i ) )
-					result += fetch_slot( i )->get_frames( );
-			return result;
+			return total_frames_;
 		}
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
 		{
-			acquire_values( );
-
 			size_t slot = slot_for_position( get_position( ) );
 			input_type_ptr input = fetch_slot( slot );
 
@@ -2453,18 +2446,27 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 			}
 		}
 
+		virtual void sync_frames( )
+		{
+			slots_.erase( slots_.begin( ), slots_.end( ) );
+			total_frames_ = 0;
+			for ( size_t i = 0; i < slot_count( ); i ++ )
+			{
+				total_frames_ += fetch_slot( i ) ? fetch_slot( i )->get_frames( ) : 0;
+				slots_.push_back( total_frames_ );
+			}
+		}
+
 	private:
 		size_t slot_for_position( int position )
 		{
 			size_t result = 0;
-			for ( size_t i = 0; i < slot_count( ); i ++ )
+			for ( size_t i = 0; i < slots_.size( ); i ++ )
 			{
 				if ( fetch_slot( i ) )
 				{
 					result = i;
-					if ( position < fetch_slot( i )->get_frames( ) )
-						break;
-					position -= fetch_slot( i )->get_frames( );
+					if ( position < slots_[ i ] ) break;
 				}
 			}
 			return result;
@@ -2472,16 +2474,12 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 
 		int slot_offset( size_t slot )
 		{
-			int result = 0;
-			for ( size_t i = 0; i < slot; i ++ )
-			{
-				if ( fetch_slot( i ) )
-					result += fetch_slot( i )->get_frames( );
-			}
-			return result;
+			return slot == 0 ? 0 : slots_[ slot - 1 ];
 		}
 
 		pcos::property prop_slots_;
+		std::vector< int > slots_;
+		int total_frames_;
 };
 
 //

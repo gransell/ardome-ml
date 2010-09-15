@@ -134,6 +134,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 			, src_frequency_( 48000 )
 			, src_channels_( 2 )
 			, position_( 0 )
+			, total_frames_( 0 )
 		{
 			properties( ).append( prop_in_ = 0 );
 			properties( ).append( prop_pad_audio_ = 0 );
@@ -152,11 +153,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 		// Number of frames provided by this filter is in + frames in connected input
 		virtual int get_frames( ) const
 		{
-			int result = prop_in_.value< int >( );
-			ml::input_type_ptr input = fetch_slot( );
-			if ( input )
-				result += input->get_frames( );
-			return result;
+			return prop_in_.value< int >( ) + total_frames_;
 		}
 
 		// We need to obtain the frame rate and audio properties on a connect - these can be provided
@@ -236,6 +233,13 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 			}
 		}
 		
+		// Number of frames provided by this filter is in + frames in connected input
+		virtual void sync_frames( )
+		{
+			ml::input_type_ptr input = fetch_slot( );
+			total_frames_ = input ? input->get_frames( ) : 0;
+		}
+
 		pcos::property prop_in_;
 		pcos::property prop_pad_audio_;
 		pcos::property prop_fps_num_;
@@ -247,6 +251,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 		int src_frequency_;
 		int src_channels_;
 		int position_;
+		int total_frames_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring &resource )

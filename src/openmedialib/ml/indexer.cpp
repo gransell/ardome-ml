@@ -3,12 +3,10 @@
 // Copyright (C) 2009 Ardendo
 // Released under the LGPL.
 
+#include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/indexer.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <openmedialib/ml/awi.hpp>
-#include <openmedialib/ml/input.hpp>
-#include <openmedialib/ml/frame.hpp>
-#include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/utilities.hpp>
 
 // includes for openpluginlib string handling
@@ -280,7 +278,7 @@ class indexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 1000 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 	private:
@@ -326,7 +324,7 @@ class unindexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 2000 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 	private:
@@ -421,7 +419,7 @@ class generating_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 300 );
+			return boost::posix_time::milliseconds( 100 );
 		}
 
 
@@ -472,7 +470,7 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint1
 
 void ML_DECLSPEC indexer_init( )
 {
-	return indexer::instance( )->init( );
+	indexer::instance( )->init( );
 }
 
 indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type )
@@ -482,7 +480,7 @@ indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url,
 
 void ML_DECLSPEC indexer_shutdown( )
 {
-	return indexer::instance( )->shutdown( );
+	indexer::instance( )->shutdown( );
 }
 
 } } }

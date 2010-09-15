@@ -63,7 +63,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 			{
 				initialized_ = initialize( ); 
 				if ( !initialized_ )
+				{
 					ARLOG_ERR( "Initialisation of %1% failed" )( get_uri( ) );
+				}
 			}
 			return initialized_; 
 		}
@@ -105,6 +107,14 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual const openpluginlib::wstring get_mime_type( ) const = 0;
 
 		// Audio/Visual
+		virtual void sync( )
+		{
+			for ( size_t i = 0; i < slot_count( ); i ++ )
+				if ( fetch_slot( i ) )
+					fetch_slot( i )->sync( );
+			sync_frames( );
+		}
+
 		virtual int get_frames( ) const = 0;
 		virtual bool is_seekable( ) const = 0;
 
@@ -123,15 +133,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Default seek functionality
 		virtual void seek( const int position, const bool relative = false )
 		{
-			if ( relative )
-				position_ = ( position_ + position );
-			else
-				position_ = position;
-				
-			position_ = opencorelib::utilities::clamp( position, 0, int( get_frames( ) - 1 ) );
-			
-			if( position_ < 0 )
-				position_ = 0;
+			position_ = opencorelib::utilities::clamp( relative ? position_ + position : position, 0, int( get_frames( ) - 1 ) );
 		}
 
 		// Query the current position
@@ -169,7 +171,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		}
 
 		// Overloaded convenience fetch method
-		frame_type_ptr fetch( int position )
+		virtual frame_type_ptr fetch( int position )
 		{
 			seek( position );
 			return fetch( );
@@ -199,6 +201,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		// Pure virtual do_fetch
 		virtual void do_fetch( frame_type_ptr & ) = 0;
+
+		// Virtual frame count caching
+		virtual void sync_frames( ) { }
 
 		olib::openpluginlib::pcos::property_container properties_;
 

@@ -206,6 +206,8 @@ class ML_DECLSPEC frame_type
 		/// Indicates if the frame is deferred
 		bool is_deferred( ) const { return queue_.size( ) > 0; }
 
+		std::deque< frame_type_ptr > queue( ) const { return queue_; }
+
 	protected:
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::stream_type_ptr stream_;

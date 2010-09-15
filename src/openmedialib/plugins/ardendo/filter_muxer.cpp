@@ -31,6 +31,9 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 			: ml::filter_type( )
 			, prop_slot_( pcos::key::from_string( "slot" ) )
 			, prop_use_longest_( pcos::key::from_string( "use_longest" ) )
+			, frames_0_( 0 )
+			, frames_1_( 0 )
+			, total_frames_( 0 )
 		{
 			properties( ).append( prop_slot_ = -1 );
 			properties( ).append( prop_use_longest_ = 1 );
@@ -46,21 +49,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 
 		virtual int get_frames( ) const
 		{
-			int frames_0 = 0;
-			int frames_1 = 0;
-
-			if ( fetch_slot( 0 ) )
-				frames_0 = fetch_slot( 0 )->get_frames( );
-			if ( fetch_slot( 1 ) )
-				frames_1 = fetch_slot( 1 )->get_frames( );
-
-			if ( frames_0 == 0 || frames_1 == 0 )
-				return frames_0 != 0 ? frames_0 : frames_1;
-
-			if ( prop_use_longest_.value< int >( ) )
-				return frames_0 > frames_1 ? frames_0 : frames_1;
-
-			return frames_0 < frames_1 ? frames_0 : frames_1;
+			return total_frames_;
 		}
 
 	protected:
@@ -76,7 +65,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 				ml::input_type_ptr input_0 = fetch_slot( 0 );
 				ml::input_type_ptr input_1 = fetch_slot( 1 );
 
-				if ( input_0 && input_1 && input_0->get_frames( ) && input_1->get_frames( ) )
+				if ( input_0 && input_1 && frames_0_ && frames_1_ )
 				{
 					result = fetch_from_slot( 0, false );
 					ml::frame_type_ptr overlay = fetch_from_slot( 1, false );
@@ -87,11 +76,11 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 						join_peaks( result, overlay );
 					}
 				}
-				else if ( input_0 && input_0->get_frames( ) )
+				else if ( input_0 && frames_0_ )
 				{
 					result = fetch_from_slot( 0, false );
 				}
-				else if ( input_1 && input_1->get_frames( ) )
+				else if ( input_1 && frames_1_ )
 				{
 					result = fetch_from_slot( 1, false );
 				}
@@ -105,9 +94,25 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 				result->set_position( get_position( ) );
 		}
 
+		virtual void sync_frames( )
+		{
+			frames_0_ = fetch_slot( 0 ) ?  fetch_slot( 0 )->get_frames( ) : 0;
+			frames_1_ = fetch_slot( 1 ) ?  fetch_slot( 1 )->get_frames( ) : 0;
+
+			if ( frames_0_ == 0 || frames_1_ == 0 )
+				total_frames_ = frames_0_ != 0 ? frames_0_ : frames_1_;
+			else if ( prop_use_longest_.value< int >( ) )
+				total_frames_ = frames_0_ > frames_1_ ? frames_0_ : frames_1_;
+			else
+				total_frames_ = frames_0_ < frames_1_ ? frames_0_ : frames_1_;
+		}
+
 	private:
 		pl::pcos::property prop_slot_;
 		pl::pcos::property prop_use_longest_;
+		int frames_0_;
+		int frames_1_;
+		int total_frames_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & )

@@ -16,6 +16,7 @@
 #include <algorithm>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <opencorelib/cl/profile.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
@@ -112,7 +113,14 @@ class stream_queue
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 
 			result = lru_cache_->frame_for_position( my_key );
-			
+
+			// Use the cached result, but remove a frame if we're connected to a pusher
+			if ( result && input_->get_uri( ) == L"pusher:" )
+			{
+				input_->seek( position );
+				input_->fetch( );
+			}
+
 			if ( position < 0 ) position = 0;
 
 			if( !result && position < input_->get_frames( ) )
@@ -366,6 +374,7 @@ class stream_queue
 
 			if ( context_ == 0 )
 			{
+				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				context_ = avcodec_alloc_context( );
 				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
@@ -393,6 +402,7 @@ class stream_queue
 			switch( pkt->id( ) )
 			{
 				case ml::stream_video:
+					ARLOG_DEBUG5( "Decoding image %d" )( position );
 					if ( avcodec_decode_video( context_, frame_, &got, pkt->bytes( ), pkt->length( ) ) >= 0 )
 					{
 						if ( got )
@@ -516,6 +526,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		frame_avformat( const frame_type_ptr &other, const stream_queue_ptr &queue )
 			: ml::frame_type( *other )
 			, queue_( queue )
+			, original_position_( other->get_position( ) )
 		{
 		}
 
@@ -553,7 +564,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		{
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
-				set_image( queue_->decode_image( stream_->position( ) ) , true );
+				set_image( queue_->decode_image( original_position_ ) , true );
 			}
 			return image_;
 		}
@@ -567,7 +578,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		virtual audio_type_ptr get_audio( )
 		{
 			if ( !audio_ && ( stream_ && stream_->id( ) == ml::stream_audio ) )
-				audio_ = queue_->decode_audio( stream_->position( ) );
+				audio_ = queue_->decode_audio( original_position_ );
 			return audio_;
 		}
 
@@ -581,14 +592,15 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 
 	private:
 		stream_queue_ptr queue_;
+		int original_position_;
 };
 
-class avformat_decode_filter : public filter_type
+class avformat_decode_filter : public filter_simple
 {
 	public:
 		// Filter_type overloads
 		avformat_decode_filter( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
@@ -609,13 +621,6 @@ class avformat_decode_filter : public filter_type
 
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"avdecode"; }
-
-		virtual int get_frames( ) const
-		{
-			if ( fetch_slot( 0 ) ) 
-				return fetch_slot( 0 )->get_frames( );
-			return 0;
-		}
 
 	protected:
 		
@@ -836,12 +841,12 @@ class avformat_video_streamer : public ml::stream_type
 
 typedef boost::shared_ptr< avformat_video_streamer > avformat_video_streamer_ptr;
 
-class avformat_encode_filter : public filter_type
+class avformat_encode_filter : public filter_simple
 {
 	public:
 		// Filter_type overloads
 		avformat_encode_filter( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
@@ -864,12 +869,6 @@ class avformat_encode_filter : public filter_type
 
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"avencode"; }
-
-		virtual int get_frames( ) const
-		{
-			ml::input_type_ptr input = fetch_slot( 0 );
-			return input ? input->get_frames( ) : 0;
-		}
 
 	protected:
 		// The main access point to the filter

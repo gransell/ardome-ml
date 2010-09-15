@@ -14,11 +14,11 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 {
 	public:
 		filter_mono( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_cut_off_( pcos::key::from_string( "cut_off" ) )
 			, prop_chroma_( pcos::key::from_string( "chroma" ) )
@@ -36,8 +36,6 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_type
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			acquire_values( );
-
 			result = fetch_from_slot( );
 
 			if ( prop_enable_.value< int >( ) && result )

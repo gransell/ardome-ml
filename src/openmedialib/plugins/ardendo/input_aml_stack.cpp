@@ -1397,7 +1397,7 @@ class aml_stack
 						if ( result->fetch_slot( -- slots ) == 0 )
 						{
 							ml::input_type_ptr slot = pop( );
-							if ( slot && slot->get_frames( ) >= 0 )
+							if ( slot ) // && slot->get_frames( ) >= 0 )
 								result->connect( slot, slots );
 							else
 								throw std::string( "Unresolved filter or input" );
@@ -1630,6 +1630,7 @@ static void mc_workaround( aml_stack *stack )
 static void op_dot( aml_stack *stack )
 {
 	ml::input_type_ptr tos = stack->pop( );
+	tos->sync( );
 	stack->parent_->connect( tos );
 	stack->parent_->property( "threaded" ) = int( contains_sub_thread( tos ) );
 }
@@ -1955,6 +1956,7 @@ static void op_length( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
 	stack->push( a );
+	a->sync( );
 	stack->push( double( a->get_frames( ) ) );
 }
 
@@ -2598,6 +2600,7 @@ static void op_iter_frames( aml_stack *stack )
 
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
 		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
+		a->sync( );
 
 		for ( int i = 0; i < a->get_frames( ); i ++ )
 		{
@@ -2922,6 +2925,7 @@ static void op_fetch( aml_stack *stack )
 {
 	int a = int( stack->pop_value( ) );
 	ml::input_type_ptr b = stack->pop( );
+	b->sync( );
 	stack->push( b );
 	if ( a < 0 )
 		a = b->get_frames( ) + a;
@@ -2947,6 +2951,7 @@ static void op_log_level( aml_stack *stack )
 static void op_render( aml_stack *stack )
 {
 	ml::input_type_ptr input = stack->pop( );
+	input->sync( );
 	if ( input->get_frames( ) )
 	{
 		for ( int i = 0; i < input->get_frames( ); i ++ )
@@ -3093,6 +3098,7 @@ class input_aml_stack : public ml::input_type
 
 		void stop_threads( ml::input_type_ptr input )
 		{
+#if 0
 			if ( input )
 			{
 				if ( input->get_uri( ) == L"threader" )
@@ -3100,6 +3106,7 @@ class input_aml_stack : public ml::input_type
 				for ( size_t index = 0; index < input->slot_count( ); index ++ )
 					stop_threads( input->fetch_slot( index ) );
 			}
+#endif
 		}
 
 		void push( )

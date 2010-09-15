@@ -33,9 +33,10 @@ void olib_rsvg_init( )
 	static bool rsvg_initted = false;
 	if ( !rsvg_initted )
 	{
-		rsvg_initted = true;
+		g_thread_init( 0 );
 		rsvg_init( );
 		atexit( rsvg_term );
+		rsvg_initted = true;
 	}
 }
 
@@ -68,6 +69,10 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			properties( ).append( prop_render_height_ = 0);
 		}
 
+		virtual ~input_librsvg( )
+		{
+		}
+
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return true; }
 
@@ -80,6 +85,9 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return 1; }
 		virtual int get_audio_streams( ) const { return 0; }
+
+		// FIXME: Currently librsvg breaks in threaded use
+		virtual bool is_thread_safe( ) { return false; }
 
 	protected:
 		bool matches_deferred( ml::frame_type_ptr &frame )
@@ -112,26 +120,22 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Invite a callback here
-			acquire_values( );
-
 			GdkPixbuf *pixbuf = NULL;
 
 			if ( prop_resource_.value< pl::wstring >( ) == L"svg:" )
 			{
-				scoped_lock lock( mutex_ );
-
 				std::string doc = pl::to_string( prop_doc_.value< pl::wstring >( ) );
 
 				if ( doc != "" && ( prop_doc_.value< pl::wstring >( ) != loaded_ || !matches_deferred( frame_ ) ) )
 				{
+					scoped_lock lock( mutex_ );
+
 					RsvgHandle *handle = rsvg_handle_new( );
 					GError *error = NULL;
 
 					rsvg_handle_set_size_callback( handle, &resizerFunc, this, 0);
 
-					if ( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( doc.c_str( ) ), 
-											doc.size( ), &error ) )
+					if ( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( doc.c_str( ) ), doc.size( ), &error ) )
 					{
 						if ( rsvg_handle_close( handle, &error ) )
 						{
@@ -151,13 +155,13 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			}
 			else if ( prop_resource_.value< pl::wstring >( ) != loaded_ )
 			{
+				scoped_lock lock( mutex_ );
 				loaded_ = prop_resource_.value< pl::wstring >( );
 				pixbuf = rsvg_pixbuf_from_file( pl::to_string( loaded_ ).c_str( ), NULL );
 			}
 
 			if ( pixbuf )
 			{
-				scoped_lock lock( mutex_ );
 				boost::uint8_t *src = gdk_pixbuf_get_pixels( pixbuf );
 				int src_pitch = gdk_pixbuf_get_rowstride( pixbuf );
 				int w = gdk_pixbuf_get_width( pixbuf );
@@ -200,6 +204,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 					frame_ = ml::frame_convert( frame_, L"yuv420p" );
 
 				g_object_unref( pixbuf );
+				pixbuf = 0;
 			}
 
 			if ( frame_ )

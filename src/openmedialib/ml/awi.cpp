@@ -1105,7 +1105,7 @@ awi_generator_v3::awi_generator_v3( )
 	awi_header_v3 header;
 
 	memcpy( header.id, "AWI", 3 );
-	memcpy( header.ver, "2", 1 );
+	memcpy( header.ver, "3", 1 );
 	header.created = 0;
 
 	set( header );
@@ -1234,13 +1234,14 @@ bool awi_generator_v3::flush( std::vector< boost::uint8_t > &buffer )
 
 
 
-awi_index_v4::awi_index_v4( )
+awi_index_v4::awi_index_v4( boost::uint16_t entry_type )
 	: awi_index( )
 	, mutex_( )
 	, position_( 0 )
 	, eof_( false )
 	, frames_( 0 )
 	, usable_( true )
+	, entry_type_( entry_type )
 {
 }
 	
@@ -1406,7 +1407,7 @@ int awi_index_v4::total_frames( ) const
 
 
 awi_parser_v4::awi_parser_v4( boost::uint16_t entry_type_to_read ) 
-	: awi_index_v4( )
+	: awi_index_v4( entry_type_to_read )
 	, entry_type_to_read_( entry_type_to_read )
 {
 }
@@ -1628,7 +1629,7 @@ void awi_parser_v4::skip( boost::uint16_t bytes )
 
 
 awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete )
-	: awi_index_v4( )
+	: awi_index_v4( type_to_write )
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )

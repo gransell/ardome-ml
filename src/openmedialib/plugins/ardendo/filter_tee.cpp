@@ -21,11 +21,11 @@ namespace aml { namespace openmedialib {
 
 static pcos::key key_length_( pcos::key::from_string( "length" ) );
 
-class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 {
 	public:
 		filter_tee( )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_slots_( pcos::key::from_string( "slots" ) )
 			, position_( 0 )

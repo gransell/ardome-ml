@@ -236,6 +236,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 					}
 
 					fg = frames_[ index ]->shallow( );
+					fg->set_position( 0 );
 
 					switch( prop_orient_.value< int >( ) )
 					{

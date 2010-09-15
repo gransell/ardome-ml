@@ -14,11 +14,11 @@
 
 namespace aml { namespace openmedialib {
 
-class ML_PLUGIN_DECLSPEC filter_loop : public ml::filter_type
+class ML_PLUGIN_DECLSPEC filter_loop : public ml::filter_simple
 {
 	public:
 		filter_loop( const pl::wstring & )
-			: ml::filter_type( )
+			: ml::filter_simple( )
 		{
 		}
 

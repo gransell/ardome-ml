@@ -153,7 +153,6 @@ ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 // Return the first matching input object
 ML_DECLSPEC input_type_ptr create_input( const pl::wstring &resource )
 {
-	scoped_lock lock( mutex_ );
 	input_type_ptr result = create_delayed_input( resource );
 	if ( result )
 		result->init( );
@@ -163,14 +162,12 @@ ML_DECLSPEC input_type_ptr create_input( const pl::wstring &resource )
 // Return the first matching input object
 ML_DECLSPEC input_type_ptr create_input( const pl::string &resource )
 {
-	scoped_lock lock( mutex_ );
 	return create_input( pl::to_wstring( resource ) );
 }
 
 // Return the first matching store object
 ML_DECLSPEC store_type_ptr create_store( const pl::wstring &resource, frame_type_ptr frame )
 {
-	scoped_lock lock( mutex_ );
 	store_type_ptr result = store_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"output" );
 	if ( plug == 0 )
@@ -181,13 +178,11 @@ ML_DECLSPEC store_type_ptr create_store( const pl::wstring &resource, frame_type
 // Return the first matching store object
 ML_DECLSPEC store_type_ptr create_store( const pl::string &resource, frame_type_ptr frame )
 {
-	scoped_lock lock( mutex_ );
 	return create_store( pl::to_wstring( resource ), frame );
 }
 
 ML_DECLSPEC filter_type_ptr create_filter( const pl::wstring &resource )
 {
-	scoped_lock lock( mutex_ );
 	filter_type_ptr result = filter_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"filter" );
 	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for filter: %1%" ) % opl::to_string( resource ) );

@@ -46,6 +46,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const pl::wst
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pulldown( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring & );
@@ -121,6 +122,8 @@ public:
 			return create_offset( resource );
 		if ( resource == L"pitch" )
 			return create_pitch( resource );
+		if ( resource == L"pulldown" )
+			return create_pulldown( resource );
 		if ( resource == L"sar" )
 			return create_sar( resource );
 		if ( resource == L"slots" )

@@ -34,6 +34,14 @@ class rubber
 
 		rubber( )
 			: rubber_( 0 )
+			, source_fps_num_( -1 )
+			, source_fps_den_( -1 )
+			, fps_num_( -1 )
+			, fps_den_( -1 )
+			, frequency_( -1 )
+			, channels_( -1 )
+			, expected_( -1 )
+			, source_( -1 )
 			, increment_( 1 )
 			, cache_( ml::the_scope_handler::Instance().lru_cache( L"rubberband" ) )
 			, old_speed_( 1.0 )
@@ -52,17 +60,20 @@ class rubber
 
 		bool start( ml::input_type_ptr input, ml::frame_type_ptr frame, double speed, double pitch )
 		{
-			bool result = input;
+			bool result = input && frame;
 
 			if ( result )
 			{
 				input_ = input;
 
 				// Check that we have audio
-				result = frame && frame->has_audio( );
+				result = frame->has_audio( );
 
 				if ( result )
 				{
+					delete rubber_;
+					rubber_ = 0;
+
 					// Need an audio sample
 					ml::audio_type_ptr audio = frame->get_audio( );
 					size_t frequency = size_t( audio->frequency( ) );
@@ -76,20 +87,19 @@ class rubber
 					// Create the rubberband
 					rubber_ = new RubberBandStretcher( frequency, channels, options, 1.0, 1.0 );
 
-					// Store the source frame rate
-					source_fps_num_ = frame->get_fps_num( );
-					source_fps_den_ = frame->get_fps_den( );
-
 					// Needed in order to determine how many samples are expected for each frame
 					frequency_ = audio->frequency( );
 					channels_ = audio->channels( );
-
-					// Current seek state
-					expected_ = 0;
-
-					// Sync to requested params
-					sync( speed, pitch, true );
 				}
+
+				// Force an update of the position
+				expected_ = -1;
+
+				// Store the source frame rate
+				source_fps_num_ = frame->get_fps_num( );
+				source_fps_den_ = frame->get_fps_den( );
+
+				sync( speed, pitch, true );
 			}
 
 			return result;
@@ -98,7 +108,7 @@ class rubber
 		// Sync with changes to the speed and pitch
 		void sync( double speed, double pitch, bool force = false )
 		{
-			if ( force || 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) )
+			if ( rubber_ && ( force || 1.0 / speed != rubber_->getTimeRatio( ) || pitch != rubber_->getPitchScale( ) ) )
 			{
 				try
 				{
@@ -116,14 +126,14 @@ class rubber
 
 				// Sync source to expected frame
 				source_ = expected_;
-
-				// Determine the resultant frame rate
-				boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * source_fps_num_ ) * speed );
-				boost::int64_t d = boost::int64_t( 10000LL * source_fps_den_ );
-				ml::remove_gcd( n, d );
-				fps_num_ = n;
-				fps_den_ = d;
 			}
+
+			// Determine the resultant frame rate
+			boost::int64_t n = boost::int64_t( boost::int64_t( 10000LL * source_fps_num_ ) * speed );
+			boost::int64_t d = boost::int64_t( 10000LL * source_fps_den_ );
+			ml::remove_gcd( n, d );
+			fps_num_ = n;
+			fps_den_ = d;
 		}
 
 		lru_cache_type::key_type lru_key_for_position( boost::int32_t pos )
@@ -146,12 +156,11 @@ class rubber
 			}
 
 			// Make sure we have the correct state
-			if ( !started( ) )
+			if ( input != input_ || !started( ) )
 			{
 				input->seek( position );
 				result = input->fetch( );
-				if ( result && result->get_audio( ) )
-					start( input, result, speed, pitch );
+				start( input, result, speed, pitch );
 			}
 			else
 			{
@@ -235,6 +244,9 @@ class rubber
 				// Obtain the samples required
 				result->set_audio( retrieve( position, samples ) );
 				result->get_audio( )->set_position( result->get_position( ) );
+
+				if ( increment_ < 0 )
+					result->properties( ).append( pl::pcos::property( key_audio_reverse_ ) = 1 );
 			}
 			else if ( !result )
 			{
@@ -334,11 +346,11 @@ class rubber
 		double old_speed_;
 };
 
-class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_type
+class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple
 {
 	public:
 		filter_rubberband( )
-			: filter_type( )
+			: filter_simple( )
 			, prop_speed_( pl::pcos::key::from_string( "speed" ) )
 			, prop_pitch_( pl::pcos::key::from_string( "pitch" ) )
 		{
@@ -379,6 +391,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_speed_( filter_->property( "speed" ) )
 			, prop_samples_( pcos::key::from_string( "samples" ) )
+			, total_frames_( 0 )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -392,6 +405,12 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 		// This provides the name of the plugin (used in serialisation)
 		virtual const pl::wstring get_uri( ) const { return L"pitch"; }
 
+		// Number of frames provided by this filter
+		virtual int get_frames( ) const
+		{
+			return total_frames_;
+		}
+
 	protected:
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
@@ -404,11 +423,20 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			result = filter_->fetch( );
 		}
 
+		virtual void sync_frames( )
+		{
+			if ( filter_->fetch_slot( ) != fetch_slot( ) )
+				filter_->connect( fetch_slot( ) );
+			filter_->sync( );
+			total_frames_ = filter_->get_frames( );
+		}
+
 		ml::filter_type_ptr filter_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_speed_;
 		pcos::property prop_samples_;
+		int total_frames_;
 };
 
 //

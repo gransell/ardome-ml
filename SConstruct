@@ -44,19 +44,21 @@ class AMLEnvironment( openbuild.env.Environment ):
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu64/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'lsb_3_1_32':
-			self.install_config( 'config/lsb_3_1_32/boost.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_date_time.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_filesystem.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_python.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_regex.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_signals.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_system.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_thread.pc', 'bcomp/boost' )
-			self.install_config( 'config/lsb_3_1_32/boost_unit_test_framework.pc', 'bcomp/boost' )
+			if os.path.exists( 'bcomp/boost' ):
+				self.install_config( 'config/lsb_3_1_32/boost.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_date_time.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_filesystem.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_python.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_regex.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_signals.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_system.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_thread.pc', 'bcomp/boost' )
+				self.install_config( 'config/lsb_3_1_32/boost_unit_test_framework.pc', 'bcomp/boost' )
 			self.install_config( 'config/lsb_3_1_32/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/lsb_3_1_32/xerces.pc', 'bcomp/xercesc' )
 			self.install_config( 'config/lsb_3_1_32/ffmpeg.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/lsb_3_1_32/sdl.pc', 'bcomp/sdl' )
+			if os.path.exists( 'bcomp/sdl' ):
+				self.install_config( 'config/lsb_3_1_32/sdl.pc', 'bcomp/sdl' )
 		elif self[ 'target' ] == 'lsb_3_1_64':
 			self.install_config( 'config/lsb_3_1_64/boost.pc', 'bcomp/boost' )
 			self.install_config( 'config/lsb_3_1_64/boost_date_time.pc', 'bcomp/boost' )

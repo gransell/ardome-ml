@@ -40,6 +40,7 @@ from thread_stack import thread_stack
 from thread_shell import thread_shell
 
 pl.init( )
+pl.init_log( )
 pl.set_log_level( -1 )
 
 def init( ):

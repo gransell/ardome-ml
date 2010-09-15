@@ -235,15 +235,18 @@ namespace olib
         void worker::start()
         {
             // This might set m_stop_thread to true
-            stop( boost::posix_time::seconds(5) );
+			if ( m_worker_thread )
+            	stop( boost::posix_time::seconds(5) );
 
             // Make sure we really start the thread here if the worker is
             // restarted for some kind of reason.
             m_stop_thread = false;
+			m_thread_running = true;
 
             m_worker_thread = boost::shared_ptr< boost::thread>( 
                 new boost::thread(boost::bind( &worker::worker_thread_procedure, this)));
 
+/*
             // Give the worker a chance to start.
             boost::thread::yield();
 
@@ -254,6 +257,7 @@ namespace olib
             	ARENFORCE( m_thread_started.timed_wait(mtx, wt) );
             	ARASSERT( m_thread_running );
 			}
+*/
         }
 
         void worker::worker_thread_procedure()
@@ -411,7 +415,10 @@ namespace olib
                     if(!m_current_job) return;
                     on_job_starting(m_current_job);
                     m_current_job->do_work_bootstrapper();
-                    if( m_stop_thread ) break;
+					{
+                    	boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+                    	if( m_stop_thread ) break;
+					}
                 }
                 catch( olib::opencorelib::base_exception& e)
                 {
