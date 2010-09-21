@@ -48,6 +48,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring &
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pulldown( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring & );
@@ -126,6 +127,8 @@ public:
 			return create_pulldown( resource );
 		if ( resource == L"sar" )
 			return create_sar( resource );
+		if ( resource == L"sleep" )
+			return create_sleep( resource );
 		if ( resource == L"slots" )
 			return create_slots( resource );
 		if ( resource == L"store" )
