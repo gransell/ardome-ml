@@ -61,11 +61,11 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 	framerate_denominator /= int( common ); 
 	
 	// If this is NTSC and locked audio samples are requested
-	if( framerate_numerator == 30000 && framerate_denominator == 1001 && locked_profile != L"" )
+	if( samplefreq == 48000 && framerate_numerator == 30000 && framerate_denominator == 1001 && locked_profile != L"" )
 	{
 		return locked_samples_for_frame( frameoffset, locked_profile );
 	}
-	else if( framerate_numerator == 24000 && framerate_denominator == 1001 && locked_profile != L"" )
+	else if( samplefreq == 48000 && framerate_numerator == 24000 && framerate_denominator == 1001 && locked_profile != L"" )
 	{
 		// 24P material seems to want 2002 samples per frame even though its 23.98 fps
 		return 2002;
