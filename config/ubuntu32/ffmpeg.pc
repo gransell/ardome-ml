@@ -6,6 +6,7 @@ includedir=${prefix}/include
 Name: ffmpeg run time
 Version: 0.0.0
 Description: FFmpeg codec library
+Requires: libavformat, libavutil
 Libs: 
 Cflags: 
 

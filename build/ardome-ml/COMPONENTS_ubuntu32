@@ -1,1 +1,2 @@
-ffmpeg: http://releases.ardendo.se/releases/external-source/amf-dependencies/ubuntu32/ffmpeg-ubuntu32-20080225.tbz -> ffmpeg.tbz2
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/lsb_3_1_32/ffmpeg-r25009-lsb_3_1_32.tar.bz2 -> ffmpeg.tbz2
+

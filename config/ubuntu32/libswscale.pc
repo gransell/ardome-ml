@@ -1,12 +1,13 @@
 prefix=/tmp/ffmpeg
 exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
+libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: libswscale
 Description: FFmpeg image rescaling library
-Version: 0.5.0
-Requires:  libavcodec = 51.50.1
+Version: 0.11.0
+Requires: libavutil = 50.24.0
 Conflicts:
-Libs:
+Libs: -L${libdir} -lswscale.aml 
+Libs.private: 
 Cflags: -I${includedir}
