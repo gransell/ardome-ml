@@ -169,7 +169,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 					src_fps_den_ = prop_fps_den_.value< int >( );
 					src_frequency_ = prop_frequency_.value< int >( );
 					src_channels_ = prop_channels_.value< int >( );
-					prop_pad_audio_ = src_frequency_ && src_channels_;
+					prop_pad_audio_ = (int)( ( src_frequency_ && src_channels_ ) ? 1 : 0 );
 				}
 				else
 				{

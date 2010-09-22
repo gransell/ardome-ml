@@ -275,7 +275,7 @@ class rubber
 			if ( ( increment_ < 0 && reverse.value< int >( ) == 0 ) || ( increment_ > 0 && reverse.value< int >( ) == 1 ) )
 			{
 				audio = ml::audio::reverse( audio );
-				reverse = !reverse.value< int >( );
+				reverse = (int)( reverse.value< int >( ) ? 0 : 1 );
 			}
 
 			return audio;
