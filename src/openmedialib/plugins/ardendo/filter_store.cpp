@@ -77,7 +77,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 					pcos::property p = store->properties( ).get_property_with_string( prop.c_str( ) );
 					pcos::property v = properties( ).get_property_with_string( name.c_str( ) );
 					if ( p.valid( ) && v.valid( ) )
-						p.set_from_property( v );
+						p.set_from_string( v.value<pl::wstring>() );
 					else
 						std::cerr << "Unknown property " << name << std::endl;
 				}
