@@ -62,6 +62,7 @@ static pl::pcos::key key_track_item_in_( pcos::key::from_string( "track_item_in"
 static pl::pcos::key key_track_item_duration_( pcos::key::from_string( "track_item_duration" ) );
 static pl::pcos::key key_events_( pcos::key::from_string( "events" ) );
 static pl::pcos::key key_vitc_image_( pcos::key::from_string( "vitc_image" ) );
+static pl::pcos::key key_source_timecode_( pcos::key::from_string( "source_timecode" ) );
 
 static pl::pcos::key key_x_( pcos::key::from_string( "x" ) );
 static pl::pcos::key key_y_( pcos::key::from_string( "y" ) );
@@ -593,6 +594,14 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							pusher_1_->push( *iter );
 							composite_->seek( get_position( ) );
 							result = composite_->fetch( );
+
+							//Relay the source timecode if present
+							pl::pcos::property source_tc_prop = ( *iter )->properties( ).get_property_with_key( key_source_timecode_ );
+							if( source_tc_prop.valid() )
+							{
+								pl::pcos::property prop( key_source_timecode_ );
+								result->properties( ).append( prop = source_tc_prop.value<int>() );
+							}
 						}
 					}
 					else
