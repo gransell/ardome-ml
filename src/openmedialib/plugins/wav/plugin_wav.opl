@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="wav plugin" type="input" extension='"wav:.*", ".*\.wav"' merit="90" filename='"libopenmedialib_wav.so", "libopenmedialib_wav.dylib", "openmedialib_wav.dll"'/>
+	</openmedialib>
+</openlibraries>

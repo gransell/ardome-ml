@@ -138,8 +138,8 @@ class Environment( BaseEnvironment ):
 			else :
 				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
 			
-			self[ 'CC' ] = 'llvm-gcc'
-			self[ 'CXX' ] = 'llvm-g++'
+			#self[ 'CC' ] = 'llvm-gcc'
+			#self[ 'CXX' ] = 'llvm-g++'
 			
 
 	def install_config( self, src, dst ):
