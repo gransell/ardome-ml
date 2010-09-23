@@ -90,7 +90,16 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			{
 				std::vector< boost::uint8_t > buffer( 65536 );
 
-				bool error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8 || memcmp( &buffer[ 0 ], "RIFF", 4 );
+				bool error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
+
+				bool rf64_mode = false;
+				if( memcmp( &buffer[ 0 ], "RIFF", 4 ) == 0 )
+					rf64_mode = false;
+				else if( memcmp( &buffer[ 0 ], "RF64", 4 ) == 0 )
+					rf64_mode = true;
+				else
+					error = true;
+
 				error = !error && ( url_read_complete( context_, &buffer[ 0 ], 4 ) != 4 || memcmp( &buffer[ 0 ], "WAVE", 4 ) );
 
 				while( !error )
@@ -100,7 +109,17 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					{
 						break;
 					}
-					if ( memcmp( &buffer[ 0 ], "fmt ", 4 ) == 0 )
+					if ( memcmp( &buffer[ 0 ], "ds64", 4 ) == 0 )
+					{
+						//DataSize64 chunk
+						boost::uint32_t n = get_ule32( buffer, 4 );
+
+						if ( n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+
+						//64 bit size of data chunk
+						bytes_ = get_ule64( buffer, 8 );
+					}
+					else if ( memcmp( &buffer[ 0 ], "fmt ", 4 ) == 0 )
 					{
 						int n = get_le32( buffer, 4 );
 						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
@@ -119,7 +138,12 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					}
 					else if ( memcmp( &buffer[ 0 ], "data", 4) == 0 ) 
 					{
-						bytes_ = get_ule32( buffer, 4 );
+						//If we have an RF64 WAV, we should already have set the number of bytes from the ds64 chunk
+						if ( !rf64_mode )
+						{
+							bytes_ = get_ule32( buffer, 4 );
+						}
+
 						break;
 					}
 					else
@@ -209,6 +233,17 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 				default:
 					break;
+			}
+
+			return result;
+		}
+
+		inline boost::uint64_t get_ule64( const std::vector< boost::uint8_t > &buffer, int o )
+		{
+			boost::uint64_t result = 0;
+			for( int i = 0; i < 8; ++i )
+			{
+				result |= ( static_cast<boost::uint64_t>( buffer[ o + i ] ) << (8*i) );
 			}
 
 			return result;
