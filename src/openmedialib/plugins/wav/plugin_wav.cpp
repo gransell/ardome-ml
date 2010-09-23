@@ -38,7 +38,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			, context_( 0 )
 			, channels_( 0 )
 			, frequency_( 0 )
-			, store_bits_( 0 )
+			, store_bytes_( 0 )
 			, bits_( 0 )
 			, bytes_( 0 )
 			, offset_( 0 )
@@ -104,13 +104,16 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					{
 						int n = get_le32( buffer, 4 );
 						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
-						int fmt = get_le16( buffer, 0 );
+						boost::uint16_t fmt = get_ule16( buffer, 0 );
 						if ( fmt == 0xfffe && n == 40 )
-							fmt = get_le16( buffer, 24 );
+						{
+							//WAVE_FORMAT_EXTENSIBLE
+							fmt = get_ule16( buffer, 24 );
+						}
 						if ( fmt != 1 ) break;
 						channels_ = get_le16( buffer, 2 );
 						frequency_ = get_le32( buffer, 4 );
-						store_bits_ = get_le16( buffer, 12 );
+						store_bytes_ = get_le16( buffer, 12 );
 						bits_ = get_le16( buffer, 14 );
 						found_fmt = true;
 					}
@@ -221,6 +224,11 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			return int( buffer[ o ] | buffer[ o + 1 ] << 8 | buffer[ o + 2 ] << 16 | buffer[ o + 3 ] << 24 );
 		}
 
+		inline boost::uint16_t get_ule16( const std::vector< boost::uint8_t > &buffer, int o )
+		{
+			return boost::uint16_t( buffer[ o ] | buffer[ o + 1 ] << 8 );
+		}
+
 		inline int get_le16( const std::vector< boost::uint8_t > &buffer, int o )
 		{
 			return boost::int16_t( buffer[ o ] | buffer[ o + 1 ] << 8 );
@@ -245,7 +253,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 		int channels_;
 		int frequency_;
-		int store_bits_;
+		int store_bytes_;
 		int bits_;
 		boost::int64_t bytes_;
 		boost::int64_t offset_;
