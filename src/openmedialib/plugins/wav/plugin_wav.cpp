@@ -5,6 +5,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -22,6 +23,8 @@ namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
+
+static pcos::key key_source_timecode_( pcos::key::from_string( "source_timecode" ) );
 
 namespace olib { namespace openmedialib { namespace ml { namespace wav {
 
@@ -42,6 +45,8 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			, bits_( 0 )
 			, bytes_( 0 )
 			, offset_( 0 )
+			, start_tc_valid_( false )
+			, start_tc_in_samples_( 0 )
 			, size_( 0 )
 			, frames_( 0 )
 			, expected_( 0 )
@@ -109,20 +114,30 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					{
 						break;
 					}
-					if ( memcmp( &buffer[ 0 ], "ds64", 4 ) == 0 )
+
+					//Save the chunk ID
+					std::vector< boost::uint8_t > chunk_id(4);
+					memcpy( &chunk_id[ 0 ], &buffer[ 0 ], 4 );
+					
+					//The next 4 bytes after the chunk ID is the size of the chunk
+					boost::uint32_t n = get_ule32( buffer, 4 );
+					if ( n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+
+					if ( memcmp( &chunk_id[ 0 ], "ds64", 4 ) == 0 )
 					{
-						//DataSize64 chunk
-						boost::uint32_t n = get_ule32( buffer, 4 );
-
-						if ( n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
-
-						//64 bit size of data chunk
+						//DataSize64 chunk, gives the size of the coming "data" chunk
 						bytes_ = get_ule64( buffer, 8 );
 					}
-					else if ( memcmp( &buffer[ 0 ], "fmt ", 4 ) == 0 )
+					else if ( memcmp( &chunk_id[ 0 ], "bext", 4 ) == 0 )
 					{
-						int n = get_le32( buffer, 4 );
-						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+						//BWAV extension chunk
+
+						//Read the start timecode of the audio
+						start_tc_in_samples_ = get_ule64( buffer, 338 );
+						start_tc_valid_ = true;
+					}
+					else if ( memcmp( &chunk_id[ 0 ], "fmt ", 4 ) == 0 )
+					{
 						boost::uint16_t fmt = get_ule16( buffer, 0 );
 						if ( fmt == 0xfffe && n == 40 )
 						{
@@ -136,7 +151,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 						bits_ = get_le16( buffer, 14 );
 						found_fmt = true;
 					}
-					else if ( memcmp( &buffer[ 0 ], "data", 4) == 0 ) 
+					else if ( memcmp( &chunk_id[ 0 ], "data", 4) == 0 ) 
 					{
 						//If we have an RF64 WAV, we should already have set the number of bytes from the ds64 chunk
 						if ( !rf64_mode )
@@ -148,8 +163,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					}
 					else
 					{
-						int n = get_le32( buffer, 4 );
-						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+						//Unknown chunk, ignore
 					}
 				}
 			}
@@ -173,6 +187,20 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			frame->set_pts( double( get_position( ) ) * prop_fps_den_.value< int >( ) / prop_fps_num_.value< int >( ) );
 			frame->set_duration( double( prop_fps_den_.value< int >( ) ) / prop_fps_num_.value< int >( ) );
 			frame->set_position( get_position( ) );
+
+			//Set the source timecode on the frame, if specified by the BWAV extension chunk
+			//Note that this value is specified in samples, since the framerate of a WAV is
+			//its frequency.
+			if( start_tc_valid_ )
+			{
+				pcos::property source_tc_prop( key_source_timecode_ );
+				ARENFORCE( frequency_ > 0 );
+				ARENFORCE( prop_fps_den_.value< int >( ) > 0 );
+				int start_tc_in_frames = 
+					static_cast<int>( start_tc_in_samples_ / frequency_ * prop_fps_num_.value< int >( ) / prop_fps_den_.value< int >( ) );
+
+				frame->properties( ).append( source_tc_prop = (int)( start_tc_in_frames + get_position( ) ) );
+			}
 
 			// Seek to requested position when required
 			if ( get_position( ) != expected_ )
@@ -292,6 +320,8 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		int bits_;
 		boost::int64_t bytes_;
 		boost::int64_t offset_;
+		bool start_tc_valid_;
+		boost::uint64_t start_tc_in_samples_;
 
 		boost::int64_t size_;
 		int frames_;
