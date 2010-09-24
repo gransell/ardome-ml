@@ -42,7 +42,7 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
     olib::t_path log_dir( _CT("tests/test_output/opencore") );
     olib::opencorelib::utilities::make_sure_path_exists( log_dir );
 
-    log_file.open( ( log_dir / olib::t_path( _CT("unit_test_results.xml") ) ).string().c_str() );
+    log_file.open( ( log_dir / olib::t_path( _CT("opencore_test_results.xml") ) ).string().c_str() );
     ARENFORCE( log_file.good() );
 
     unit_test_log.set_format( XML );
