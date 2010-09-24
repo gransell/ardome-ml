@@ -8,7 +8,7 @@ mkdir -p aml/release
 mv build/release/osx/bin build/release/osx/include build/release/osx/lib build/release/osx/Resources build/release/osx/share aml/release
 
 echo Compressing result...
-tar -cjf ardome-ml-osx-10.5.tbz2 aml/ > /dev/null
+tar -cjf $1.tbz2 aml/ > /dev/null
 if [ ! $? == 0 ]; then
 	echo Failed to compress
 	exit 2
