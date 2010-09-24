@@ -62,6 +62,7 @@ static pl::pcos::key key_track_item_in_( pcos::key::from_string( "track_item_in"
 static pl::pcos::key key_track_item_duration_( pcos::key::from_string( "track_item_duration" ) );
 static pl::pcos::key key_events_( pcos::key::from_string( "events" ) );
 static pl::pcos::key key_vitc_image_( pcos::key::from_string( "vitc_image" ) );
+static pl::pcos::key key_active_on_timeline_( pcos::key::from_string( "active_on_timeline" ) );
 static pl::pcos::key key_source_timecode_( pcos::key::from_string( "source_timecode" ) );
 
 static pl::pcos::key key_x_( pcos::key::from_string( "x" ) );
@@ -616,8 +617,21 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							result->set_audio( audio );
 					}
 
-					if ( ( *iter )->property_with_key( key_vitc_image_ ).valid( ) )
+					/* We set the VITC based on the active_on_timeline property and
+					 * the z-order. If the active_on_timeline property is not used
+					 * the z-order will be used alone. */ 
+					bool is_active_on_timeline = false;
+					if  ((*iter )->property_with_key( key_active_on_timeline_ ).valid( )) {
+						is_active_on_timeline = (*iter )->property_with_key( key_active_on_timeline_ ).value< int >() == 1;
+					} else {
+						// If no active_on_timeline is set, just fall back to true
+						// and let the z order rule.
+						is_active_on_timeline = true;
+					}
+
+					if ( ( is_active_on_timeline && ( *iter )->property_with_key( key_vitc_image_ ).valid( ) ) ) {
 						vitc = ( *iter )->property_with_key( key_vitc_image_ ).value< il::image_type_ptr >( );
+					}
 				}
 
 				if ( vitc.is_a< il::image_type_ptr >( ) )
