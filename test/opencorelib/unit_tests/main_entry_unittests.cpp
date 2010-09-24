@@ -27,62 +27,27 @@ void test_event_handler();
 void test_worker();
 void test_base64_conversions();
  
-namespace olib { 
-    namespace opencorelib {
-        std::ostream& operator << (std::ostream& out, const logger& l) {
-			t_stringstream ss;
-            const_cast<logger&>(l).pretty_print_one_line(ss, print::output_default);
-			out << str_util::to_string(ss.str());
-            return out;
-        }
-        std::ostream& operator << (std::ostream& out, const base_exception& e) {
-			t_stringstream ss;
-            e.pretty_print_one_line(ss, print::output_default);
-			out << str_util::to_string(ss.str());
-            return out;
-        }
 
-		std::ostream& operator << (std::ostream& out, const olib::opencorelib::invoke_assert& a) {
-			t_stringstream ss;
-			const_cast<invoke_assert&>(a).pretty_print(ss, print::output_default );
-			out << str_util::to_string(ss.str());
-			return out;
-		}
-    }
-}
-
-class TestingLogTarget : public olib::opencorelib::logtarget {
-public:
-    /// An assertion occurred. log if required.
-    /** @param a The assertion to log
-        @param log_source The name of the class (including namespaces) that
-        requests the log. */
-    virtual void log(olib::opencorelib::invoke_assert& a, const TCHAR* log_source) {
-        BOOST_TEST_MESSAGE(a);
-    }
-    
-    /// An exception occurred. log if required.
-    /** @param e The exception to log
-        @param log_source The name of the class (including namespaces) that
-        requests the log. */
-    virtual void log(olib::opencorelib::base_exception& e, const TCHAR* log_source) {
-        BOOST_TEST_MESSAGE(e);
-    }
-    
-    /// An log request occurred. log if required.
-    /** @param e The log message to log
-        @param log_source The name of the class (including namespaces) that
-        requests the log. */
-    virtual void log(olib::opencorelib::logger& log_msg, const TCHAR* log_source) {
-        BOOST_TEST_MESSAGE(log_msg);
-    }
-};
+std::ofstream log_file;
 
 boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* argv[] ){
     using namespace olib::opencorelib;
-    static boost::shared_ptr<logtarget> target(new TestingLogTarget());
-    the_log_handler::instance().add_target(target);
-    the_log_handler::instance().set_global_log_level(log_level::debug9);
+    using namespace boost::unit_test;
+
+    // NOTE: The unit testing is verbose by design.  It is stored to a temporary
+    // and only dumped to the build log / terminal if there is an error!
+    the_log_handler::instance().set_global_log_level(olib::opencorelib::log_level::debug9);
+
+    
+    olib::t_path log_dir( _CT("tests/test_output/opencore") );
+    olib::opencorelib::utilities::make_sure_path_exists( log_dir );
+
+    log_file.open( ( log_dir / olib::t_path( _CT("unit_test_results.xml") ) ).string().c_str() );
+    ARENFORCE( log_file.good() );
+
+    unit_test_log.set_format( XML );
+    unit_test_log.set_threshold_level( log_test_units );
+    unit_test_log.set_stream( log_file );
     
 	typedef std::map< std::string, boost::function< void () > > TestMap;
 	TestMap myTests;

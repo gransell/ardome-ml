@@ -29,13 +29,15 @@ vs2003_BUILDSCRIPT3: build/ardome-ml/vs2003_build_zip.sh
 osx_TARGET: ardome-ml-osx-10.5.tbz2 
 osx_POSTGRAB: build/ardome-ml/osx_postgrab.sh
 osx_BUILDSCRIPT: build/ardome-ml/osx_build_step.sh
-osx_BUILDSCRIPT2: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-10.5
+osx_BUILDSCRIPT2: build/release/osx/bin/opencore_unit_tests all_tests
+osx_BUILDSCRIPT3: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-10.5
 
 ### Build using with install_name set to @loader_path/../lib/ 
 osx_loader_TARGET: ardome-ml-osx-loader-path-10.5.tbz2 
 osx_loader_POSTGRAB: build/ardome-ml/osx_postgrab.sh
 osx_loader_BUILDSCRIPT: build/ardome-ml/osx_build_step_loader.sh
-osx_loader_BUILDSCRIPT2: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-loader-path-10.5
+osx_loader_BUILDSCRIPT2: build/release/osx/bin/opencore_unit_tests all_tests
+osx_loader_BUILDSCRIPT3: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-loader-path-10.5
 
 ### Build for 64 bit LSB 3.1 system
 lsb_3_1_64_TARGET: ardome-ml-lsb_3_1_64.tbz2
@@ -47,7 +49,8 @@ lsb_3_1_64_BUILDSCRIPT2: build/ardome-ml/lsb_3_1_64_build_zip.sh
 lsb_3_1_32_TARGET: ardome-ml-lsb_3_1_32.tbz2
 lsb_3_1_32_POSTGRAB: build/ardome-ml/lsb_3_1_32_postgrab.sh
 lsb_3_1_32_BUILDSCRIPT: build/ardome-ml/lsb_3_1_32_build_step.sh
-lsb_3_1_32_BUILDSCRIPT2: build/ardome-ml/lsb_3_1_32_build_zip.sh
+lsb_3_1_32_BUILDSCRIPT2: build/release/lsb_3_1_32/bin/opencore_unit_tests all_tests
+lsb_3_1_32_BUILDSCRIPT3: build/ardome-ml/lsb_3_1_32_build_zip.sh
 
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
