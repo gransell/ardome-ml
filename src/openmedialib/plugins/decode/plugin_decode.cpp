@@ -244,9 +244,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Set the audio associated to the frame.
-		virtual void set_audio( audio_type_ptr audio )
+		virtual void set_audio( audio_type_ptr audio, bool decoded )
 		{
-			audio_ = audio;
+			frame_type::set_audio( audio );
+			//We need to set the audio object on the inner frame as well to avoid
+			//our own audio object being overwritten incorrectly on an evaulate() call
+			if( parent_ )
+				parent_->set_audio(audio);
 		}
 
 		/// Get the audio associated to the frame.
