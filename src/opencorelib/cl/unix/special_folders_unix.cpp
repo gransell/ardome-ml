@@ -59,15 +59,12 @@ namespace olib
                 static std::string prefix = get_prefix();
 				static std::string home = get_home();
 
-                ARLOG_DEBUG3("get special folder %1% for %2% (prefix=%3%, home=%4%)")
-                  (folder_type)(app_name)(prefix)(home);
-                
                 if( folder_type == special_folder::data ) 
                     return get_module_path();
                 else if( folder_type == special_folder::local_data ) 
                     return get_module_path();
                 else if( folder_type == special_folder::plugins ) 
-                    return olib::t_path( prefix ) / "lib" / AMF_VERSION / "plugins";
+                    return olib::t_path( prefix ) / "share" / app_name / "plugins";
                 else if( folder_type == special_folder::user_config ) 
                     return olib::t_path( home ) / olib::t_path( "/.amf/" );
                 else if( folder_type == special_folder::user_data ) 
@@ -79,7 +76,6 @@ namespace olib
                 else if( folder_type == special_folder::amf_resources ) 
                     return olib::t_path( prefix ) / "share" / app_name;
                 
-                ARLOG_WARN("get special folder of unnkown kind %1%, app %2%")(folder_type)(app_name);
                 olib::t_path fpath( "" );
                 fpath /= app_name;
                 bfs::create_directory(fpath);

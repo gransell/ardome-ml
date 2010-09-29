@@ -19,11 +19,7 @@ void test_plugin()
     try 
     {  
         olib::t_path schema_path = special_folder::get( special_folder::amf_resources ) / _CT( "schemas/amf-plugin.xsd" );
-		#ifdef	OLIB_ON_LINUX
-			olib::t_path xml_path = fs::initial_path<olib::t_path>() / _CT("prefix/amf_plugin_example.xml");
-		#else
-			olib::t_path xml_path = special_folder::get( special_folder::amf_resources ) / _CT("examples/amf_plugin_example.xml");
-		#endif
+        olib::t_path xml_path = special_folder::get( special_folder::amf_resources ) / _CT("examples/amf_plugin_example.xml");
         
 		schema_map schemas;
         schemas[_CT("http://www.ardendo.com/amf/core/")] = schema_path;

@@ -1,6 +1,6 @@
 #include "precompiled_headers.hpp"
 #include <boost/filesystem/path.hpp>
-
+ 
 #include "opencorelib/cl/logtarget.hpp"
 #include "opencorelib/cl/assembly_class_creator.hpp"
 #include "opencorelib/cl/plugin_class_base_implementation.hpp"
