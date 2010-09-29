@@ -4,7 +4,7 @@
 	<u:assembly_name>
 		<u:windows release="plugin_test_assembly.dll" debug="plugin_test_assembly.dll" />
 		<u:mac release="libplugin_test_assembly.dylib" debug="libplugin_test_assembly.dylib" />
-		<u:linux release="example.so" debug="example_d.so" />
+		<u:linux release="libplugin_test_assembly.so" debug="libplugin_test_assembly.so" />
 	</u:assembly_name>
 	<u:classes>
 		<u:class id="test_plugin">
