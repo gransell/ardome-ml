@@ -1601,6 +1601,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				{
 					int samples = audio::samples_for_frame( position_, src_frequency_, fps_num, fps_den );
 
+					if ( requested >= src_frames_ || position_ >= get_frames( ) )
+						std::cerr << "src: " << src_frames_ << "@" << src_fps_num_ << ":" << src_fps_den_ << " to " << fps_num << ":" << fps_den << " want " << position_ << "/" << get_frames( ) << " coming from " << requested << "/" << src_frames_ << " samples in reseat " << reseat_->size( ) << std::endl;
+
 					while ( map_.find( next ) != map_.end( ) ) 
 					{
 						next ++;
@@ -1629,7 +1632,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 						}
 					}
 
-					result = map_.find( requested )->second->deep( );
+					result = map_.find( requested ) != map_.end( ) ? map_.find( requested )->second->deep( ) : ml::frame_type_ptr( );
 					if ( result && reseat_->has( samples ) )
 					{
 						result->set_audio( reseat_->retrieve( samples ) );

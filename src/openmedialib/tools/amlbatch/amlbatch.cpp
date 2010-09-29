@@ -309,7 +309,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 					else if ( input->get_position( ) > 0 )
 						input->seek( -1, true );
 				}
-				else if ( key == SDLK_END )
+				else if ( key == SDLK_END || key == 'e' )
 				{
 					input->seek( total_frames - 1 );
 				}
@@ -431,7 +431,8 @@ int main( int argc, char *argv[ ] )
 		pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
 		pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
 		pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
-		int seek_to = -1;
+		bool should_seek = false;
+		int seek_to = 0;
 		bool stats = true;
 
 		int index = 1;
@@ -443,7 +444,10 @@ int main( int argc, char *argv[ ] )
 			pl::wstring arg = pl::to_wstring( argv[ index ] );
 
 			if ( arg == L"--seek" )
+			{
 				seek_to = atoi( argv[ ++ index ] );
+				should_seek = true;
+			}
 			else if ( arg == L"--no-stats" )
 				stats = false;
 			else if ( arg == L"--interactive" )
@@ -502,8 +506,14 @@ int main( int argc, char *argv[ ] )
 		pitch->properties( ).get_property_with_string( "speed" ) = 1.0;
 		pitch->connect( input );
 
-		if ( seek_to >= 0 )
-			pitch->seek( seek_to );
+		if ( should_seek )
+		{
+			pitch->sync( );
+			if ( seek_to >= 0 )
+				pitch->seek( seek_to );
+			else
+				pitch->seek( pitch->get_frames( ) + seek_to );
+		}
 
 		ml::frame_type_ptr frame = pitch->fetch( );
 		if ( frame == 0 )
@@ -515,7 +525,7 @@ int main( int argc, char *argv[ ] )
 			if ( store.size( ) == 0 )
 				return 3;
 
-			play( pitch, store, interactive, seek_to < 0 ? 1 : 0, stats );
+			play( pitch, store, interactive, should_seek ? 0 : 1, stats );
 		}
 		else
 		{
