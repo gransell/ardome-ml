@@ -1777,11 +1777,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				AVCodecContext *codec_context = get_audio_stream( )->codec;
 				int channels = codec_context->channels;
 				int frequency = codec_context->sample_rate;
-				int samples = samples_for_frame( frequency, current );
-				audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
-				aud->set_position( current );
-				frame->set_audio( aud );
-				frame->set_duration( double( samples ) / double( frequency ) );
+
+				if( channels != 0 && frequency != 0 )
+				{
+					int samples = samples_for_frame( frequency, current );
+					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
+					aud->set_position( current );
+					frame->set_audio( aud );
+					frame->set_duration( double( samples ) / double( frequency ) );
+				}
 			}
 
 			return exact;

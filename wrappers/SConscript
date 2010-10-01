@@ -74,7 +74,8 @@ if generate_files :
 				header_file( os.path.join( cl_src_dir, 'uuid_16b.hpp') ),
 				header_file( os.path.join( cl_src_dir, 'event_handler.hpp') ),
 				header_file( os.path.join( cl_src_dir, 'property_bag.hpp') ),
-				header_file( os.path.join( cl_src_dir, 'serialization_helpers.hpp') ), ]
+				header_file( os.path.join( cl_src_dir, 'serialization_helpers.hpp') ),
+				header_file( os.path.join( cl_src_dir, 'size.hpp') ) ]
 				
 	if local_env['target'] == 'vs2008' :
 		headers.append(header_file( os.path.join(cl_src_dir, 'base_exception.hpp' ) ) )
