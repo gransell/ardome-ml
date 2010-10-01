@@ -1649,7 +1649,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 						if ( iter->first < requested || iter->first > requested + 25 )
 						{
 							int index = iter->first;
-							int next = ( ++ iter )->first;
+							int next = index + 1;
 							map_.erase( index );
 							iter = map_.find( next );
 						}
