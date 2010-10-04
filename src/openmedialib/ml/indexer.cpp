@@ -104,7 +104,10 @@ class indexer : public indexer_type
 					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
 					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
 				}
-				map_[ map_key ] = job;
+				if ( job->index( ) )
+					map_[ map_key ] = job;
+				else
+					return indexer_item_ptr( );
 			}
 			return map_[ map_key ];
 		}
