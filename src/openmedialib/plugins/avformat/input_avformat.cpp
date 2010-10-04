@@ -309,7 +309,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
-				else
+				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
 					return false;
 			}
 			else if ( url_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0 )
