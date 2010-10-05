@@ -91,13 +91,24 @@ public:
 protected:
 	default_storage( ) 
 		: data_( 0 ) 
+		, original_data_( 0 ) 
 	{ }
 
 	virtual ~default_storage( )
 	{ destroy( ); }
 		
-	void create( size_type siz ) { data_ = ( T * )openpluginlib::pool::realloc( data_, siz * sizeof( T ) ); size_ = data_ ? siz : 0; }
-	void destroy( )				 { openpluginlib::pool::free( ( unsigned char * )data_ ); data_ = 0; size_ = 0; }
+	void create( size_type siz ) { 
+        original_data_ = ( T * )openpluginlib::pool::realloc( original_data_, siz * sizeof( T ) + 16 );
+        size_ = original_data_ ? siz : 0;
+        data_ = (T*)( &((char*)original_data_)[ 16 - ((unsigned long long)&original_data_[0]) % 16 ]);
+    }
+	void destroy( )				 { 
+        openpluginlib::pool::free( ( unsigned char * )original_data_ ); 
+        original_data_ = 0; 
+        data_ = 0; 
+        size_ = 0; 
+    }
+
 			
 public:
 	const_pointer data( ) const	 { return data_; }
@@ -106,6 +117,7 @@ public:
 
 private:
 	container data_;
+	container original_data_;
 	int size_;
 };
 
