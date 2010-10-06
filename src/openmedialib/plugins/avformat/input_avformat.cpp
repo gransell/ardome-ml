@@ -307,8 +307,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else
 					indexer_item_ = ml::indexer_request( resource, index_entry_type );
 
-				if ( indexer_item_->index( ) )
+				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
+				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
+					return false;
 			}
 			else if ( url_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0 )
 			{
@@ -391,9 +393,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
         {
             ARENFORCE_MSG( context_, "Invalid media" );
 
-            // Check for updates in the index
-            if ( check_indexer_ )
-                sync_with_index( );
+			// Just in case
+			if ( get_position( ) >= get_frames( ) )
+				sync( );
 
             // Route to either decoded or packet extraction mechanisms
             if ( prop_packet_stream_.value< int >( ) )
@@ -696,13 +698,18 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 		}
 
+		void sync_frames( )
+		{
+			if ( check_indexer_ )
+				sync_with_index( );
+		}
 
 	private:
 		void sync_with_index( )
 		{
 			if ( aml_index_ )
 			{
-				if ( get_position( ) >= frames_ - 16 && aml_index_->frames( frames_ ) > frames_ )
+				if ( aml_index_->frames( frames_ ) > frames_ )
 				{
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
@@ -715,7 +722,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else if ( indexer_item_ )
 			{
-				if ( get_position( ) > frames_ - 100 && indexer_item_->size( ) > prop_file_size_.value< boost::int64_t >( ) )
+				if ( indexer_item_->size( ) > prop_file_size_.value< boost::int64_t >( ) )
 				{
 					reopen( );
 					last_frame_ = ml::frame_type_ptr( );

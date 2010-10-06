@@ -106,10 +106,13 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					error = true;
 
 				error = !error && ( url_read_complete( context_, &buffer[ 0 ], 4 ) != 4 || memcmp( &buffer[ 0 ], "WAVE", 4 ) );
+				offset_ += 12;
 
 				while( !error )
 				{
 					error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
+					offset_ += 8;
+
 					if ( error )
 					{
 						break;
@@ -122,6 +125,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					//The next 4 bytes after the chunk ID is the size of the chunk
 					boost::uint32_t n = get_ule32( buffer, 4 );
 					if ( n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+					offset_ += n;
 
 					if ( memcmp( &chunk_id[ 0 ], "ds64", 4 ) == 0 )
 					{
@@ -170,7 +174,6 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 			if ( error == 0 && found_fmt )
 			{
-				offset_ = url_seek( context_, 0, SEEK_CUR );
 				size_media( );
 			}
 

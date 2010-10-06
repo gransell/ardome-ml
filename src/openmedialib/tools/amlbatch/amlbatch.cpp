@@ -312,6 +312,8 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 				else if ( key == SDLK_END || key == 'e' )
 				{
 					input->seek( total_frames - 1 );
+					input->sync( );
+					total_frames = input->get_frames( );
 				}
 
 				if ( key != 0 )
