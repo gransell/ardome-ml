@@ -92,10 +92,13 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 				bool error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8 || memcmp( &buffer[ 0 ], "RIFF", 4 );
 				error = !error && ( url_read_complete( context_, &buffer[ 0 ], 4 ) != 4 || memcmp( &buffer[ 0 ], "WAVE", 4 ) );
+				offset_ += 12;
 
 				while( !error )
 				{
 					error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
+					offset_ += 8;
+
 					if ( error )
 					{
 						break;
@@ -104,6 +107,8 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					{
 						int n = get_le32( buffer, 4 );
 						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+						offset_ += n;
+
 						boost::uint16_t fmt = get_ule16( buffer, 0 );
 						if ( fmt == 0xfffe && n == 40 )
 						{
@@ -126,13 +131,13 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					{
 						int n = get_le32( buffer, 4 );
 						if ( n < 0 || n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+						offset_ += n;
 					}
 				}
 			}
 
 			if ( error == 0 && found_fmt )
 			{
-				offset_ = url_seek( context_, 0, SEEK_CUR );
 				size_media( );
 			}
 
