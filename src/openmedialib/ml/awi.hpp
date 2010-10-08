@@ -256,7 +256,9 @@ class ML_DECLSPEC awi_generator_v2 : public awi_index_v2
 {
 	public:
 		awi_generator_v2( );
-		bool enroll( boost::int32_t position, boost::int64_t offset );
+		/// Enroll a position and offset into the index. The length field should only be used
+		/// if you will know the length for all positions enrolled in the index.
+		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
@@ -265,6 +267,7 @@ class ML_DECLSPEC awi_generator_v2 : public awi_index_v2
 		size_t flushed_;
 		boost::int32_t position_;
 		boost::int64_t offset_;
+		bool known_packet_length_;
 };
 
 /// Index holder class - currently assumes v2. Allows look ups by position ->
@@ -351,7 +354,9 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 {
 	public:
 		awi_generator_v3( );
-		bool enroll( boost::int32_t position, boost::int64_t offset );
+		/// Enroll a position and offset into the index. The length field should only be used
+		/// if you will know the length for all positions enrolled in the index.
+		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
@@ -361,6 +366,7 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 		size_t flushed_;
 		boost::int32_t position_;
 		boost::int64_t offset_;
+		bool known_packet_length_;
 };
 
 class ML_DECLSPEC awi_index_v4 : public awi_index
@@ -426,7 +432,9 @@ class ML_DECLSPEC awi_generator_v4 : public awi_index_v4
 {
 	public:
 		awi_generator_v4( boost::uint16_t type_to_write, bool complete = true );
-		bool enroll( boost::int32_t position, boost::int64_t offset );
+		/// Enroll a position and offset into the index. The length field should only be used
+		/// if you will know the length for all positions enrolled in the index.
+		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
@@ -437,6 +445,7 @@ class ML_DECLSPEC awi_generator_v4 : public awi_index_v4
 		boost::int64_t offset_;
 		boost::uint16_t type_to_write_;
 		bool complete_;
+		bool known_packet_length_;
 };
 
 } } }

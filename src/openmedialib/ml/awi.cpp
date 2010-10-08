@@ -7,6 +7,11 @@
 #include <algorithm>
 #include <string.h>
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/logprinter.hpp>
+#include <opencorelib/cl/logger.hpp>
+#include <opencorelib/cl/log_defines.hpp>
+
 #define awi_header_size 8
 #define awi_item_size 20
 #define awi_footer_size 16
@@ -454,13 +459,23 @@ awi_generator_v2::awi_generator_v2( )
 
 // Enroll a key frame and its offset
 
-bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset )
+bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
 	bool result = state_ != error && position > position_ && offset >= offset_;
-
+	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
+	// if length has been specified once then we need it on all calls.
+	if( position_ != -1 && known_packet_length_ && length <= 0 )
+	{
+		ARLOG_ERR( "A packet length has been specified before but this enroll does not have one. Position = %1%, offset = %2%, length = %3%" )
+			( position )( offset )( length );
+		result = false;
+	}
+	
 	if ( result )
 	{
-		if ( position_ == -1 )
+		// If the length field is set then we can enroll the value right away. 
+		// No need to wait for the next i frame to calculate the length
+		if ( position_ == -1 && !length )
 		{
 			position_ = position;
 			offset_ = offset;
@@ -475,9 +490,9 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset )
 
 			item.reserved = 0;
 			item.frames = position - position_;
-			item.frame = position_;
-			item.offset = offset_;
-			item.length = offset - offset_;
+			item.frame = length ? position : position_;
+			item.offset = length ? offset : offset_;
+			item.length = length ? length : offset - offset_;
 			set( item );
 
 			if ( refresh )
@@ -485,6 +500,8 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset )
 
 			position_ = position;
 			offset_ = offset;
+			
+			known_packet_length_ = !length;
 		}
 	}
 	else
@@ -502,7 +519,11 @@ bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 
 	if ( result )
 	{
-		result = enroll( position, offset );
+		// If this is set it means that all offsets have been enrolled
+		if ( !known_packet_length_ )
+		{
+			result = enroll( position, offset );
+		}
 		if ( result )
 		{
 			awi_footer footer;
@@ -1100,7 +1121,8 @@ awi_generator_v3::awi_generator_v3( )
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )
-	, offset_( 0 )
+	, offset_( -1 )
+	, known_packet_length_( false )
 {
 	awi_header_v3 header;
 
@@ -1113,13 +1135,23 @@ awi_generator_v3::awi_generator_v3( )
 
 // Enroll a key frame and its offset
 
-bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset )
+bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
 	bool result = state_ != error && position > position_ && offset >= offset_;
-
+	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
+	// if length has been specified once then we need it on all calls.
+	if( position_ != -1 && known_packet_length_ && length <= 0 )
+	{
+		ARLOG_ERR( "A packet length has been specified before but this enroll does not have one. Position = %1%, offset = %2%, length = %3%" )
+			( position )( offset )( length );
+		result = false;
+	}
+	
 	if ( result )
 	{
-		if ( position_ == -1 )
+		// If the length field is set then we can enroll the value right away. 
+		// No need to wait for the next i frame to calculate the length
+		if ( position_ == -1 && !length )
 		{
 			position_ = position;
 			offset_ = offset;
@@ -1134,9 +1166,9 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset )
 
 			item.type = 0;
 			item.frames = position - position_;
-			item.frame = position_;
-			item.offset = offset_;
-			item.length = offset - offset_;
+			item.frame = length ? position : position_;
+			item.offset = length ? offset : offset_;
+			item.length = length ? length : offset - offset_;
 			set( item );
 
 			if ( refresh )
@@ -1144,6 +1176,8 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset )
 
 			position_ = position;
 			offset_ = offset;
+			
+			known_packet_length_ = !length;
 		}
 	}
 	else
@@ -1161,7 +1195,11 @@ bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 
 	if ( result )
 	{
-		result = enroll( position, offset );
+		// If this is set it means that all offsets have been enrolled
+		if ( !known_packet_length_ )
+		{
+			result = enroll( position, offset );
+		}
 		if ( result )
 		{
 			awi_footer_v3 footer;
@@ -1636,6 +1674,7 @@ awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete
 	, offset_( 0 )
 	, type_to_write_( type_to_write )
 	, complete_( complete )
+	, known_packet_length_( false )
 {
 	awi_header_v4 header;
 
@@ -1650,13 +1689,23 @@ awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete
 
 // Enroll a key frame and its offset
 
-bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset )
+bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
 	bool result = state_ != error && position > position_ && offset >= offset_;
-
+	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
+	// if length has been specified once then we need it on all calls.
+	if( position_ != -1 && known_packet_length_ && length <= 0 )
+	{
+		ARLOG_ERR( "A packet length has been specified before but this enroll does not have one. Position = %1%, offset = %2%, length = %3%" )
+			( position )( offset )( length );
+		result = false;
+	}
+	
 	if ( result )
 	{
-		if ( position_ == -1 )
+		// If the length field is set then we can enroll the value right away. 
+		// No need to wait for the next i frame to calculate the length
+		if ( position_ == -1 && !length )
 		{
 			position_ = position;
 			offset_ = offset;
@@ -1671,9 +1720,9 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset )
 
 			item.type = type_to_write_;
 			item.frames = position - position_;
-			item.frame = position_;
-			item.offset = offset_;
-			item.length = offset - offset_;
+			item.frame = length ? position : position_;
+			item.offset = length ? offset : offset_;
+			item.length = length ? length : offset - offset_;
 			set( item );
 
 			if ( refresh )
@@ -1681,6 +1730,8 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset )
 
 			position_ = position;
 			offset_ = offset;
+			
+			known_packet_length_ = !length;
 		}
 	}
 	else
@@ -1698,7 +1749,12 @@ bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 
 	if ( result )
 	{
-		result = enroll( position, offset );
+		// If this is set it means that all offsets have been enrolled
+		if ( !known_packet_length_ )
+		{
+			result = enroll( position, offset );
+		}
+		
 		if ( result )
 		{
 			awi_footer_v4 footer;
