@@ -140,7 +140,17 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
 	}
 
 	if ( frame->interlaced_frame )
-		image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
+    {
+        if( width > 720 )
+        {
+            //HD material, set top field first
+            image->set_field_order( il::top_field_first );
+        }
+        else
+        {
+            image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
+        }
+    }
 
 	return image;
 }
