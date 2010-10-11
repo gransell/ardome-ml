@@ -1,6 +1,5 @@
 video_codec = avc
 setting_preset = 19
 cppmedia_bit_rate = 100000000
-pf = yuv422
 
 include vcodecs/avcintra
