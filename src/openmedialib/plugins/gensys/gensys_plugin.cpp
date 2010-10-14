@@ -1128,8 +1128,11 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry geom )
 		{
 			// Ensure conformance
+			pl::wstring original_pf = background->pf();
 			if ( !is_yuv_planar( background ) )
-				background = frame_convert( background, L"yuv420p" );
+			{
+				background = frame_convert( background, L"yuv444p" );
+			}
 
 			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
 			foreground->set_image( il::conform( foreground->get_image( ), il::writable ) );
@@ -1326,6 +1329,12 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					dst_width /= plane_x_factor;
 					dst_height /= plane_y_factor;
 				}
+			}
+
+			//If we converted to yuv444p at the top, we convert back to the original here
+			if( original_pf != background->pf( ) )
+			{
+				background = frame_convert( background, original_pf );
 			}
 
 			return background;
