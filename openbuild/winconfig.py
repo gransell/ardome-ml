@@ -8,6 +8,10 @@ import re
 import utils
 import shutil
 
+class PackageNotFoundException :
+	def __init__( self, package_name ):
+		self.package_name = package_name
+
 class WinConfig :
 
 	def __init__( self ):
@@ -59,7 +63,7 @@ class WinConfig :
 			
 			pkg = self.locate_package(env, package)
 			if pkg == None :
-				raise Exception, 'Unable to locate %s' % package
+				raise PackageNotFoundException('Unable to locate ' + package)
 			
 			# This can be used in the wc-file code, its the path to the file itself.
 			prefix = pkg[ 'prefix' ]	
@@ -102,7 +106,7 @@ class WinConfig :
 			try:
 				env.packages( package )
 				result[ 'have_' + package ] = 1
-			except Exception, e:
+			except PackageNotFoundException, e:
 				result[ 'have_' + package ] = 0
 		return result
 
