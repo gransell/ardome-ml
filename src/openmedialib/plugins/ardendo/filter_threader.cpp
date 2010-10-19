@@ -106,16 +106,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
             return filter_type::connect( input, slot ); 
         }
 
-        void sync( ) 
-        { 
-            scoped_lock lock( mutex_ ); 
-            sync_ = true;
-			// We do this right away and dont wait for the background thread to do it to avoid a possible race condition. If
-			// get_frames is called right after sync the background thread might not have had time to run
-			ml::input_type_ptr i = fetch_slot( 0 );
-			sync_frames( i );
-        }
-
 		void seek( const int position, const bool relative ) 
 		{ 
             scoped_lock lock( mutex_ ); 
@@ -160,6 +150,22 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				return fetch_slot( 0 )->is_thread_safe( );
             return false;
         }
+
+		void sync( )
+		{
+			int frames = 0;
+			{
+            	scoped_lock lock( input_mutex_ ); 
+				ml::input_type_ptr input = fetch_slot( 0 );
+				input->sync( );
+				frames = input ? input->get_frames( ) : 0;
+			}
+			std::cerr << "new frame count " << frames << std::endl;
+			{
+            	scoped_lock lock( mutex_ ); 
+				frames_ = frames;
+			}
+		}
 
 	protected:
 
@@ -338,12 +344,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				else
 					handle_reverse_audio( result );
 			}
-		}
-
-		void sync_frames( )
-		{
-			ml::input_type_ptr input = fetch_slot( 0 );
-			frames_ = input ? input->get_frames( ) : 0;
 		}
 
         bool is_running( const do_lock_t&  )
@@ -630,7 +630,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					speed = speed_;
 					max_size = prop_queue_.value< int >( );
 					refresh = false;
-					sync_frames( input );
 				}
 				else
 				{
@@ -663,8 +662,11 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			if ( cache_.size( ) > 0 )
 			{
 				lck.unlock( );
-				input->seek( position );
-				frame = input->fetch( );
+				{
+            		scoped_lock lock( input_mutex_ ); 
+					input->seek( position );
+					frame = input->fetch( );
+				}
 				lck.lock( );
 			}
 			else
@@ -684,7 +686,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						while ( is_running( lck ) && !is_paused( lck ) && static_cast<int>(cache_.size( )) >= max_size )
 						{
                             cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) );
-							sync_frames( input );
 						}
 					}
 		
@@ -735,7 +736,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						break;
 
 				// Ensure that the position is still valid
-				while( is_running( lock ) && position >= 0 && position < sync_frames( input ) )
+				while( is_running( lock ) && position >= 0 && position < get_frames( ) )
 				{
 					// Resync on pause condition
 					if ( is_paused( lock ) )
@@ -828,24 +829,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			cond_.notify_all( );			
 		}
 
-		int sync_frames( ml::input_type_ptr input )
-		{
-			if ( sync_ )
-			{
-				if ( input )
-				{
-					input->sync( );
-					frames_ = input->get_frames( );
-				}
-				else
-				{
-					frames_ = 0;
-				}
-				sync_ = false;
-			}
-			return frames_;
-		}
-
 	private:
 		boost::shared_ptr< pl::pcos::observer > obs_active_;
 		pl::pcos::property prop_active_;
@@ -855,6 +838,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		pl::pcos::property prop_audio_direction_;
 		int last_position_;
 		mutable boost::recursive_mutex mutex_;
+		mutable boost::recursive_mutex input_mutex_;
 		boost::condition_variable_any cond_;
 		int frames_;
 		std::map< int, ml::frame_type_ptr > cache_;
