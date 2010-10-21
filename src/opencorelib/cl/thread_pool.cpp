@@ -46,12 +46,11 @@ namespace olib
         {
             boost::recursive_mutex::scoped_lock lock(m_this_mtx);
 
-			while( m_idle_workers < m_i_max_workers )
+			while( jobs_.size( ) || m_idle_workers < m_i_max_workers )
 			{
 				if( !idle_worker_cond_.timed_wait(lock, time_out) )
 					return false;
 			}
-
             return true;
         }
 
@@ -117,7 +116,6 @@ namespace olib
 
 					//Wait for new jobs to pop into the job queue
 					cond_.wait( lock );
-
 					//Sanity check
 					ARENFORCE( m_idle_workers > 0 );
 
@@ -150,7 +148,11 @@ namespace olib
 
 		void thread_pool::add_job( boost::shared_ptr< base_job > p_job ) 
 		{
-			if( add_to_new_worker(p_job) ) return;
+			if( add_to_new_worker(p_job) ) 
+            {
+                return;
+            }
+
 			{
             	boost::recursive_mutex::scoped_lock lock(m_this_mtx);
 				jobs_.push_back( p_job );

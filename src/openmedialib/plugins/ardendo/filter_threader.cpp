@@ -68,7 +68,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, last_frame_( )
 			, has_sub_thread_( false )
 			, position_( 0 )
-			, sync_( true )
 		{
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
@@ -160,7 +159,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				input->sync( );
 				frames = input ? input->get_frames( ) : 0;
 			}
-			std::cerr << "new frame count " << frames << std::endl;
 			{
             	scoped_lock lock( mutex_ ); 
 				frames_ = frames;
@@ -838,7 +836,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		pl::pcos::property prop_audio_direction_;
 		int last_position_;
 		mutable boost::recursive_mutex mutex_;
-		mutable boost::recursive_mutex input_mutex_;
+		boost::recursive_mutex input_mutex_;
 		boost::condition_variable_any cond_;
 		int frames_;
 		std::map< int, ml::frame_type_ptr > cache_;
@@ -847,7 +845,6 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		ml::frame_type_ptr last_frame_;
 		bool has_sub_thread_;
 		int position_;
-		bool sync_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )
