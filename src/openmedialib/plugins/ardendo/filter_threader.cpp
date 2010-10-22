@@ -68,6 +68,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, last_frame_( )
 			, has_sub_thread_( false )
 			, position_( 0 )
+			, sync_time_( boost::get_system_time( ) )
 		{
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
@@ -153,10 +154,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		void sync( )
 		{
 			int frames = 0;
+			do_lock_t locker;
+			bool should_check = !is_running( locker ) || is_paused( locker );
 			{
             	scoped_lock lock( input_mutex_ ); 
 				ml::input_type_ptr input = fetch_slot( 0 );
-				input->sync( );
+				if ( input && should_check ) input->sync( );
 				frames = input ? input->get_frames( ) : 0;
 			}
 			{
@@ -607,7 +610,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			if ( !is_paused( lck ) && ( state_ & thread_eof ) != 0 )
 			{
 				state_ ^= thread_eof;
-				cond_.wait( lck );
+				sync_thread( lck, input );
+				//cond_.wait( lck );
 				refresh = true;
 			}
 
@@ -624,6 +628,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) ) )
 				{
 					input = fetch_slot( 0 );
+					sync_thread( lck, input );
 					position = get_position( );
 					speed = speed_;
 					max_size = prop_queue_.value< int >( );
@@ -632,6 +637,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				else
 				{
 					input = fetch_slot( 0 );
+					sync_thread( lck, input );
 				}
 			}
 
@@ -650,6 +656,20 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 
 			return input;
+		}
+
+		void sync_thread( scoped_lock& lck, ml::input_type_ptr input )
+		{
+			if ( boost::get_system_time( ) >= sync_time_ && is_running( lck ) && !is_paused( lck ) )
+			{
+				lck.unlock( );
+				{
+            		scoped_lock lock( input_mutex_ ); 
+					input->sync( );
+				}
+				lck.lock( );
+				sync_time_ = boost::get_system_time( ) + boost::posix_time::seconds( 1 );
+			}
 		}
 
 		bool cache_frame( ml::input_type_ptr input, int position, int max_size, scoped_lock& lck )
@@ -683,6 +703,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					{
 						while ( is_running( lck ) && !is_paused( lck ) && static_cast<int>(cache_.size( )) >= max_size )
 						{
+							sync_thread( lck, input );
                             cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) );
 						}
 					}
@@ -739,6 +760,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					// Resync on pause condition
 					if ( is_paused( lock ) )
 						break;
+
+					sync_thread( lock, input );
 
 					// Check if the requested frame is already cached
 					ml::frame_type_ptr cache = cached( position, lock );
@@ -845,6 +868,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		ml::frame_type_ptr last_frame_;
 		bool has_sub_thread_;
 		int position_;
+		boost::system_time sync_time_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )
