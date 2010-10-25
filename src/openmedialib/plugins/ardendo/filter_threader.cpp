@@ -69,6 +69,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, has_sub_thread_( false )
 			, position_( 0 )
 			, sync_time_( boost::get_system_time( ) )
+			, last_sync_count_( 0 )
 		{
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
@@ -153,18 +154,26 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void sync( )
 		{
-			int frames = 0;
 			do_lock_t locker;
 			bool should_check = !is_running( locker ) || is_paused( locker );
+			if ( should_check )
 			{
-            	scoped_lock lock( input_mutex_ ); 
-				ml::input_type_ptr input = fetch_slot( 0 );
-				if ( input && should_check ) input->sync( );
-				frames = input ? input->get_frames( ) : 0;
+				int frames = 0;
+				{
+					scoped_lock lock( input_mutex_ ); 
+					ml::input_type_ptr input = fetch_slot( 0 );
+					if ( input ) input->sync( );
+					frames = input ? input->get_frames( ) : 0;
+				}
+				{
+					scoped_lock lock( mutex_ ); 
+					frames_ = frames;
+				}
 			}
+			else
 			{
-            	scoped_lock lock( mutex_ ); 
-				frames_ = frames;
+				scoped_lock lock( mutex_ ); 
+				frames_ = last_sync_count_;
 			}
 		}
 
@@ -410,6 +419,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			{
 				if ( !is_running( lck ) )
 				{
+					last_sync_count_ = fetch_slot( 0 ) ? fetch_slot( 0 )->get_frames( ) : 0;
 					state_ |= thread_running;
 					reader_ = boost::thread( boost::bind( &filter_threader::run, this ) );
 				}
@@ -662,13 +672,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		{
 			if ( boost::get_system_time( ) >= sync_time_ && is_running( lck ) && !is_paused( lck ) )
 			{
+				int frames = 0;
 				lck.unlock( );
 				{
             		scoped_lock lock( input_mutex_ ); 
 					input->sync( );
+					frames = input->get_frames( );
 				}
 				lck.lock( );
 				sync_time_ = boost::get_system_time( ) + boost::posix_time::seconds( 1 );
+				last_sync_count_ = frames;
 			}
 		}
 
@@ -869,6 +882,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		bool has_sub_thread_;
 		int position_;
 		boost::system_time sync_time_;
+		int last_sync_count_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )
