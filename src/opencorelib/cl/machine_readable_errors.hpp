@@ -16,6 +16,8 @@ namespace olib
         static const TCHAR * dlsym_failed() { return _CT("olib.error.dlsym_failed"); }
         static const TCHAR * filter_not_available() { return _CT("olib.error.filter_not_available"); }
         static const TCHAR * filter_not_defined() { return _CT("olib.error.filter_not_defined"); }
+        static const TCHAR * fetch_from_placeholder_input() { return _CT("olib.error_fetch_from_placeholder_input"); }
+
         /// Issued when a transition can't be found in the_effect_handler.
         static const TCHAR * transition_not_defined() { return _CT("olib.error.transition_not_defined"); }
         /// Something is wrong in the settings of amf
