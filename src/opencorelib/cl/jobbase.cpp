@@ -9,11 +9,13 @@ namespace olib
 {
    namespace opencorelib
     {
+		static boost::recursive_mutex m_static_mtx;
         long base_job::s_dw_counter = 0;
         base_job::base_job() 
             :   m_prio(5), m_terminate_job(false), m_job_done(false), 
                 m_exception_thrown(false), m_run_more_than_once(false), m_result(0), m_reschedule(true)
         {
+			boost::recursive_mutex::scoped_lock lock(m_static_mtx);
             m_dw_number = s_dw_counter++;
         }
 
@@ -21,6 +23,7 @@ namespace olib
             :   m_prio(prio), m_terminate_job(false), m_job_done(false), 
                 m_exception_thrown(false), m_run_more_than_once(false), m_result(0), m_reschedule(true)
         {
+			boost::recursive_mutex::scoped_lock lock(m_static_mtx);
             m_dw_number = s_dw_counter++;
         }
 

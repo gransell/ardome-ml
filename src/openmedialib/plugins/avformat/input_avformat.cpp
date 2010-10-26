@@ -25,6 +25,7 @@
 #include <map>
 
 #include "avformat_stream.hpp"
+#include "avformat_wrappers.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -331,7 +332,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Get the stream info
 			if ( error == 0 )
+			{
+				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				error = av_find_stream_info( context_ ) < 0;
+			}
 			
 			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
 			if ( error && format_ )
@@ -366,7 +370,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 
 				// Align with first frame
-				if ( error == 0 && !image_type_ )
+				if ( !aml_index_ && error == 0 && !image_type_ )
 				{
 					seek_to_position( );
 					fetch( );
@@ -1191,6 +1195,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Opens the video codec associated to the current stream
 		void open_video_codec( )
 		{
+			boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
@@ -1208,6 +1213,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Opens the audio codec associated to the current stream
 		void open_audio_codec( )
 		{
+			boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 			AVStream *stream = get_audio_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			audio_codec_ = avcodec_find_decoder( codec_context->codec_id );

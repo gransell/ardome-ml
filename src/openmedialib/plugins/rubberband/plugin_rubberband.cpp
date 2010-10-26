@@ -411,6 +411,14 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			return total_frames_;
 		}
 
+		virtual void sync( )
+		{
+			if ( filter_->fetch_slot( ) != fetch_slot( ) )
+				filter_->connect( fetch_slot( ) );
+			filter_->sync( );
+			total_frames_ = filter_->get_frames( );
+		}
+
 	protected:
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
@@ -421,14 +429,6 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 
 			filter_->seek( get_position( ) );
 			result = filter_->fetch( );
-		}
-
-		virtual void sync_frames( )
-		{
-			if ( filter_->fetch_slot( ) != fetch_slot( ) )
-				filter_->connect( fetch_slot( ) );
-			filter_->sync( );
-			total_frames_ = filter_->get_frames( );
 		}
 
 		ml::filter_type_ptr filter_;
