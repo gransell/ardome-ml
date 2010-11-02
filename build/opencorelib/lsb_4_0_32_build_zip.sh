@@ -2,11 +2,11 @@
 
 echo "Moving content from debug"
 mkdir -p aml/debug || exit 1
-mv build/debug/lsb_3_1_64/bin build/debug/lsb_3_1_64/include build/debug/lsb_3_1_64/lib build/debug/lsb_3_1_64/share aml/debug || exit 1
+mv build/debug/lsb_4_0_32/bin build/debug/lsb_4_0_32/include build/debug/lsb_4_0_32/lib build/debug/lsb_4_0_32/share aml/debug || exit 1
 
 echo "Moving content from release"
 mkdir -p aml/release || exit 1
-mv build/release/lsb_3_1_64/bin build/release/lsb_3_1_64/include build/release/lsb_3_1_64/lib build/release/lsb_3_1_64/share aml/release || exit 1
+mv build/release/lsb_4_0_32/bin build/release/lsb_4_0_32/include build/release/lsb_4_0_32/lib build/release/lsb_4_0_32/share aml/release || exit 1
 
 echo "Copying AML source"
 cp -r src aml || exit 1

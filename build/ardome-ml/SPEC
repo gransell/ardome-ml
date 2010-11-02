@@ -43,31 +43,38 @@ osx_loader_BUILDSCRIPT3: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-loader-p
 osx_loader_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 64 bit LSB 3.1 system
-lsb_3_1_64_TARGET: ardome-ml-lsb_3_1_64.tbz2
-lsb_3_1_64_POSTGRAB: build/ardome-ml/lsb_3_1_64_postgrab.sh
-lsb_3_1_64_BUILDSCRIPT: build/ardome-ml/lsb_3_1_64_build_step.sh
-lsb_3_1_64_BUILDSCRIPT2: build/ardome-ml/lsb_3_1_64_build_zip.sh
+lsb_4_0_64_TARGET: ardome-ml-lsb_4_0_64.tbz2
+lsb_4_0_64_POSTGRAB: build/ardome-ml/lsb_postgrab.sh
+lsb_4_0_64_BUILDSCRIPT: build/ardome-ml/lsb_build_step.sh
+lsb_4_0_64_BUILDSCRIPT2: build/ardome-ml/lsb_test_step.sh
+lsb_4_0_64_BUILDSCRIPT3: build/ardome-ml/lsb_build_zip.sh
+lsb_4_0_64_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 32 bit LSB 3.1 system
-lsb_3_1_32_TARGET: ardome-ml-lsb_3_1_32.tbz2
-lsb_3_1_32_POSTGRAB: build/ardome-ml/lsb_3_1_32_postgrab.sh
-lsb_3_1_32_BUILDSCRIPT: build/ardome-ml/lsb_3_1_32_build_step.sh
-lsb_3_1_32_BUILDSCRIPT2: build/ardome-ml/lsb_3_1_32_test_step.sh
-lsb_3_1_32_BUILDSCRIPT3: build/ardome-ml/lsb_3_1_32_build_zip.sh
-lsb_3_1_32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+lsb_4_0_32_TARGET: ardome-ml-lsb_4_0_32.tbz2
+lsb_4_0_32_POSTGRAB: build/ardome-ml/lsb_postgrab.sh
+lsb_4_0_32_BUILDSCRIPT: build/ardome-ml/lsb_build_step.sh
+lsb_4_0_32_BUILDSCRIPT2: build/ardome-ml/lsb_test_step.sh
+lsb_4_0_32_BUILDSCRIPT3: build/ardome-ml/lsb_build_zip.sh
+lsb_4_0_32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
-ubuntu64_POSTGRAB: TARGETPLATFORM=ubuntu64 build/ardome-ml/ubuntu_postgrab.sh
-ubuntu64_BUILDSCRIPT: build/ardome-ml/ubuntu_build_step.sh
-ubuntu64_BUILDSCRIPT2: build/ardome-ml/ubuntu64_build_zip.sh
+ubuntu64_PREGRAB: build/ardome-ml/ubuntu_check_deps.sh
+ubuntu64_POSTGRAB: build/ardome-ml/lsb_postgrab.sh
+ubuntu64_BUILDSCRIPT: build/ardome-ml/lsb_build_step.sh
+ubuntu64_BUILDSCRIPT2: build/ardome-ml/lsb_test_step.sh
+ubuntu64_BUILDSCRIPT3: build/ardome-ml/lsb_build_zip.sh
+ubuntu64_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 32 bit system, using standard Makefile on Linux
 ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
-ubuntu32_POSTGRAB: TARGETPLATFORM=ubuntu32 build/ardome-ml/ubuntu_postgrab.sh
-ubuntu32_BUILDSCRIPT: build/ardome-ml/ubuntu_build_step.sh
-ubuntu32_BUILDSCRIPT2: build/ardome-ml/ubuntu32_test_step.sh
-ubuntu32_BUILDSCRIPT3: build/ardome-ml/ubuntu32_build_zip.sh
+ubuntu32_PREGRAB: build/ardome-ml/ubuntu_check_deps.sh
+ubuntu32_POSTGRAB: build/ardome-ml/lsb_postgrab.sh
+ubuntu32_BUILDSCRIPT: build/ardome-ml/lsb_build_step.sh
+ubuntu32_BUILDSCRIPT2: build/ardome-ml/lsb_test_step.sh
+ubuntu32_BUILDSCRIPT3: build/ardome-ml/lsb_build_zip.sh
+ubuntu32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Buildsteps related to the Visual Studio 2008 compiler:
 vs2008sb_TARGET: ardome-ml-vs2008.zip

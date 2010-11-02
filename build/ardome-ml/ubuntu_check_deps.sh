@@ -14,13 +14,3 @@ if [ "$missing" != "" ]
 then	echo "Please install the following packages: $missing"
 		exit 1
 fi
-
-cd bcomp
-
-echo "Extracting ffmpeg..."
-tar xjf ffmpeg.tbz2
-if [ ! $? == 0 ]; then
-  echo "Failed to unpack ffmpeg. Terminating."
-  exit 1
-fi
-

@@ -8,8 +8,8 @@ import os
 
 valid_vs_targets =['vs2003', 'vs2005', 'vs2008', 'vs2008express', '' ]
 valid_mac_targets = ['osx']
-valid_32bit_unix_targets = ['lsb_3_1_32', 'ubuntu32']
-valid_64bit_unix_targets = ['lsb_3_1_64', 'ubuntu64' ]
+valid_32bit_unix_targets = ['lsb_4_0_32', 'ubuntu32']
+valid_64bit_unix_targets = ['lsb_4_0_64', 'ubuntu64' ]
 
 def check_value( key, value, env, correct_values) :
 	if value in correct_values : return
@@ -53,8 +53,8 @@ def determine_target( ):
 	target = 'unknown'
 	if os.name == 'posix':
 		if os.uname( )[ 0 ] == 'Darwin': target = 'osx'
-		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': target = 'lsb_3_1_64'
-		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': target = 'lsb_3_1_32'
+		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'x86_64': target = 'lsb_4_0_64'
+		elif os.uname( )[ 0 ] == 'Linux' and utils.arch( ) == 'i686': target = 'lsb_4_0_32'
 		else: target = 'vs2003'
 	elif os.name == 'win32' or os.name == 'nt':
 		if utils.vs() is not None : target = utils.vs()
