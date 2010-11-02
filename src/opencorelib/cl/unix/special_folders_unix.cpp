@@ -70,7 +70,11 @@ namespace olib
                 else if( folder_type == special_folder::user_data ) 
                     return get(user_config, app_name) / app_name;
                 else if( folder_type == special_folder::temp ) 
-                    return olib::t_path( "/tmp" );
+                    if (getenv("TEMP")) {
+                        return olib::t_path(getenv("TEMP"));
+                    } else {
+                        return olib::t_path( "/tmp" );
+                    }
                 else if( folder_type == special_folder::home ) 
                     return olib::t_path( home );
                 else if( folder_type == special_folder::amf_resources ) 
