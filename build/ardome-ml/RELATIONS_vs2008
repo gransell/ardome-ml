@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<dependencies>
+	<dependency>
+		<product>owl</product>
+		<version>0_2</version>
+		<branch_or_tag>branch</branch_or_tag>
+		<src_or_build>build</src_or_build>
+		<target>vs2008</target>
+		<localname>owl-vs2008.zip</localname>
+		<dir>tmp</dir>
+		<buildtag>B9</buildtag>
+	</dependency>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/vc90-xerces-c-2_8_0.zip</url>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/rubberband-1.5.0.zip</url>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/loki-0.1.6.zip</url>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/vs2008/vc90-boost_1_37-wchar_t-on.tar.bz2</url>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/ffmpeg-win32-r24872-thread-patches.tgz</url>
+		<localname>ffmpeg.tgz</localname>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/sdl-win32.B.tar.bz2</url>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/doxygen-1.5.7.1.windows.bin.zip</url>
+		<localname>doxygen.zip</localname>
+		<dir>tmp</dir>
+	</external>
+	<external>
+		<url>http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/html_help_workshop.zip</url>
+		<dir>tmp</dir>
+	</external>
+</dependencies>
