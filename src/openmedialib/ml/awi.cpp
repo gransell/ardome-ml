@@ -501,7 +501,7 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = !length;
+			known_packet_length_ = length;
 		}
 	}
 	else
@@ -1177,7 +1177,7 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = !length;
+			known_packet_length_ = length;
 		}
 	}
 	else
@@ -1731,7 +1731,7 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = !length;
+			known_packet_length_ = length;
 		}
 	}
 	else
