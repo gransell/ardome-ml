@@ -30,17 +30,17 @@ osx_POSTGRAB: build/opencorelib/osx_postgrab.sh
 osx_BUILDSCRIPT: build/opencorelib/osx_build_step.sh
 osx_BUILDSCRIPT2: build/opencorelib/osx_build_zip.sh
 
-### Build for 64 bit LSB 3.1 system
-lsb_3_1_64_TARGET: opencorelib-lsb_3_1_64.tbz2
-lsb_3_1_64_POSTGRAB: build/opencorelib/lsb_3_1_64_postgrab.sh
-lsb_3_1_64_BUILDSCRIPT: build/opencorelib/lsb_3_1_64_build_step.sh
-lsb_3_1_64_BUILDSCRIPT2: build/opencorelib/lsb_3_1_64_build_zip.sh
+### Build for 64 bit LSB 4.0 system
+linux64_TARGET: opencorelib-linux64.tbz2
+linux64_POSTGRAB: build/opencorelib/linux64_postgrab.sh
+linux64_BUILDSCRIPT: build/opencorelib/linux64_build_step.sh
+linux64_BUILDSCRIPT2: build/opencorelib/linux64_build_zip.sh
 
-### Build for 32 bit LSB 3.1 system
-lsb_3_1_32_TARGET: opencorelib-lsb_3_1_32.tbz2
-lsb_3_1_32_POSTGRAB: build/opencorelib/lsb_3_1_32_postgrab.sh
-lsb_3_1_32_BUILDSCRIPT: build/opencorelib/lsb_3_1_32_build_step.sh
-lsb_3_1_32_BUILDSCRIPT2: build/opencorelib/lsb_3_1_32_build_zip.sh
+### Build for 32 bit LSB 4.0 system
+linux32_TARGET: opencorelib-linux32.tbz2
+linux32_POSTGRAB: build/opencorelib/linux32_postgrab.sh
+linux32_BUILDSCRIPT: build/opencorelib/linux32_build_step.sh
+linux32_BUILDSCRIPT2: build/opencorelib/linux32_build_zip.sh
 
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: opencorelib-ubuntu64.tbz2
