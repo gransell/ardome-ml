@@ -213,7 +213,7 @@ class rubber
 					if ( !frame->get_audio( ) )
 						frame->set_audio( ml::audio::allocate( ml::audio::FORMAT_FLOAT, frequency_, channels_, ml::audio::samples_for_frame( source_, frequency_, frame->get_fps_num( ), frame->get_fps_den( ) ) ) );
 					ml::audio_type_ptr audio = frame->get_audio( );
-					ARLOG_INFO( "Caching frame %d of %d" )( source_ )( total_frames );
+					ARLOG_DEBUG7( "Caching frame %d of %d" )( source_ )( total_frames );
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
 					source_ += increment_;
 					audio = reverse_audio( frame, increment_ );
