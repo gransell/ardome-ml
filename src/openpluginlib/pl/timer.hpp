@@ -271,11 +271,25 @@ public:
 
 	value_type elapsed( ) const
 	{
+		struct timeval y = start_;
 		value_type time;
-		
-		time.tv_sec  = stop_.tv_sec  - start_.tv_sec;
-		time.tv_usec = stop_.tv_usec - start_.tv_usec;
-		
+
+		if ( stop_.tv_usec < y.tv_usec ) 
+		{
+			int nsec = ( y.tv_usec - stop_.tv_usec ) / 1000000 + 1;
+			y.tv_usec -= 1000000 * nsec;
+			y.tv_sec += nsec;
+		}
+		if ( stop_.tv_usec - y.tv_usec > 1000000 ) 
+		{
+			int nsec = ( stop_.tv_usec - y.tv_usec ) / 1000000;
+			y.tv_usec += 1000000 * nsec;
+			y.tv_sec -= nsec;
+		}
+
+		time.tv_sec = stop_.tv_sec - y.tv_sec;
+		time.tv_usec = stop_.tv_usec - y.tv_usec;
+
 		return time;
 	}
 	
