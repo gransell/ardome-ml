@@ -54,7 +54,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				avcodec_thread_free( context_ );
 			#endif
 
-			av_free( context_ );
+			avcodec_close( context_ );
 			av_free( picture_ );
 
 			free( outbuf_ );
