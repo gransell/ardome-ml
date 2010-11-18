@@ -198,9 +198,10 @@ class Environment( BaseEnvironment ):
 			self.Append( CPPDEFINES = [ 'WIN32','_WINDOWS', 'DEBUG', '_DEBUG'])
 			# /W3 = Warning Level 3, 
 			# /Od = Optimization Disabled , 
-			# /GR = Enable Runtime Type Information, 
+			# /GR = Enable Runtime Type Information 
+			# /EHa Enable C++ Exceptions, and make the native destructors run even when called from .NET
 			# /MDd Multi Threaded Debug Dll Runtime
-			self.Append( CCFLAGS = [ '/W3', '/Od', '/GR', '/EHsc', '/MDd' ] )
+			self.Append( CCFLAGS = [ '/W3', '/Od', '/GR', '/EHa', '/MDd' ] )
 			self.Append( LINKFLAGS = [ '/DEBUG' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
@@ -225,9 +226,9 @@ class Environment( BaseEnvironment ):
 			# /W3 = Warning Level 3, 
 			# /O2 = Optimize For Speed, 
 			# /GR = Enable Runtime Type Information, 
-			# /EHsc Enable C++ Exceptions
+			# /EHa Enable C++ Exceptions, and make the native destructors run even when called from .NET
 			# /MD Multithreaded DLL runtime
-			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHsc', '/GR', '/MD' ] )
+			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHa', '/GR', '/MD' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
