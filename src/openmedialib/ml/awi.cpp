@@ -137,6 +137,26 @@ boost::int64_t awi_index_v2::find( int position )
 	return byte;
 }
 
+boost::int64_t awi_index_v2::offset( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.offset;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.offset;
+	return 0;
+}
+
+int awi_index_v2::length( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.length;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.length;
+	return 0;
+}
+
 // Approximate the number of frames in the file - the index may indicate a larger size than
 // the currently available media, and we use the previous frame count [normally derived from the
 // 'calculate' method based on the file size at openning] to ensure that we don't report an 
@@ -512,6 +532,14 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, b
 	return result;
 }
 
+bool awi_generator_v2::detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	awi_detail info( offset, length );
+	details_[ position ] = info;
+	return true;
+}
+
 // Mark the generation as complete
 bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 {
@@ -658,6 +686,26 @@ boost::int64_t awi_index_v3::find( int position )
 	}
 
 	return byte;
+}
+
+boost::int64_t awi_index_v3::offset( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.offset;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.offset;
+	return 0;
+}
+
+int awi_index_v3::length( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.length;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.length;
+	return 0;
 }
 
 // Approximate the number of frames in the file - the index may indicate a larger size than
@@ -1188,6 +1236,14 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, b
 	return result;
 }
 
+bool awi_generator_v3::detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	awi_detail info( offset, length );
+	details_[ position ] = info;
+	return true;
+}
+
 // Mark the generation as complete
 bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 {
@@ -1337,6 +1393,26 @@ boost::int64_t awi_index_v4::find( int position )
 	}
 
 	return byte;
+}
+
+boost::int64_t awi_index_v4::offset( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.offset;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.offset;
+	return 0;
+}
+
+int awi_index_v4::length( int position ) const
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	if ( items_.find( position ) != items_.end( ) )
+		return ( *( items_.find( position ) ) ).second.length;
+	if ( details_.find( position ) != details_.end( ) )
+		return ( *( details_.find( position ) ) ).second.length;
+	return 0;
 }
 
 // Approximate the number of frames in the file - the index may indicate a larger size than
@@ -1740,6 +1816,14 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, b
 	}
 
 	return result;
+}
+
+bool awi_generator_v4::detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
+{
+	boost::recursive_mutex::scoped_lock lock( mutex_ );
+	awi_detail info( offset, length );
+	details_[ position ] = info;
+	return true;
 }
 
 // Mark the generation as complete

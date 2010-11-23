@@ -24,6 +24,15 @@ struct awi_header
 	boost::int32_t created;
 };
 
+// A struct to allow all frame position information to be stored
+struct awi_detail
+{
+	awi_detail( ) { offset = 0; length = 0; }
+	awi_detail( boost::int64_t o, boost::int32_t l ) { offset = o; length = l; }
+	boost::int64_t offset;
+	boost::int32_t length; 
+};
+
 /// Current (v2) item
 struct awi_item
 {
@@ -151,6 +160,12 @@ class ML_DECLSPEC awi_index
 		virtual int key_frame_of( int position ) = 0;
 		virtual int key_frame_from( boost::int64_t offset ) = 0;
 
+		// Method to obtain the length of a packet
+		virtual int length( int position ) const = 0;
+
+		// Method to obtain the offset of a packet
+		virtual boost::int64_t offset( int position ) const = 0;
+
 		// AWI V4 introduces a audio and video indexing - an instance of the index can be used for a single component
 		// and for backward compatability reasons, we need to know which type the index represents
 		virtual const boost::uint16_t type( ) const { return 0; }
@@ -204,6 +219,8 @@ class ML_DECLSPEC awi_index_v2 : public awi_index
 		virtual int key_frame_of( int position );
 		virtual int key_frame_from( boost::int64_t offset );
 		virtual int total_frames( ) const;
+		virtual int length( int position ) const;
+		virtual boost::int64_t offset( int position ) const;
 
 	protected:
 		mutable boost::recursive_mutex mutex_;
@@ -215,6 +232,7 @@ class ML_DECLSPEC awi_index_v2 : public awi_index
 		awi_header header_;
 		std::map< boost::int32_t, awi_item > items_;
 		std::map< boost::int64_t, awi_item > offsets_;
+		std::map< boost::int32_t, awi_detail > details_;
 		awi_footer footer_;
 };
 
@@ -259,6 +277,9 @@ class ML_DECLSPEC awi_generator_v2 : public awi_index_v2
 		/// Enroll a position and offset into the index. The length field should only be used
 		/// if you will know the length for all positions enrolled in the index.
 		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
+		// Optionally, all frames can be added via the detail method (used by the offset and 
+		// length methods)
+		bool detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
@@ -291,6 +312,8 @@ class ML_DECLSPEC awi_index_v3 : public awi_index
 		virtual int key_frame_of( int position );
 		virtual int key_frame_from( boost::int64_t offset );
 		virtual int total_frames( ) const;
+		virtual int length( int position ) const;
+		virtual boost::int64_t offset( int position ) const;
 
 		virtual bool has_index_data( ) const;
 		virtual bool get_index_data( const std::string &, boost::uint8_t & ) const;
@@ -310,6 +333,7 @@ class ML_DECLSPEC awi_index_v3 : public awi_index
 		awi_header_v3 header_;
 		std::map< boost::int32_t, awi_item_v3 > items_;
 		std::map< boost::int64_t, awi_item_v3 > offsets_;
+		std::map< boost::int32_t, awi_detail > details_;
 		awi_footer_v3 footer_;
 };
 
@@ -357,6 +381,9 @@ class ML_DECLSPEC awi_generator_v3 : public awi_index_v3
 		/// Enroll a position and offset into the index. The length field should only be used
 		/// if you will know the length for all positions enrolled in the index.
 		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
+		// Optionally, all frames can be added via the detail method (used by the offset and 
+		// length methods)
+		bool detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
@@ -388,6 +415,8 @@ class ML_DECLSPEC awi_index_v4 : public awi_index
 		virtual int key_frame_from( boost::int64_t offset );
 		virtual int total_frames( ) const;
 		virtual const boost::uint16_t type( ) const { return entry_type_; }
+		virtual int length( int position ) const;
+		virtual boost::int64_t offset( int position ) const;
 
 	protected:
 		mutable boost::recursive_mutex mutex_;
@@ -399,6 +428,7 @@ class ML_DECLSPEC awi_index_v4 : public awi_index
 		awi_header_v4 header_;
 		std::map< boost::int32_t, awi_item_v4 > items_;
 		std::map< boost::int64_t, awi_item_v4 > offsets_;
+		std::map< boost::int32_t, awi_detail > details_;
 		awi_footer_v4 footer_;
 		boost::uint16_t entry_type_;
 };
@@ -434,7 +464,11 @@ class ML_DECLSPEC awi_generator_v4 : public awi_index_v4
 		awi_generator_v4( boost::uint16_t type_to_write, bool complete = true );
 		/// Enroll a position and offset into the index. The length field should only be used
 		/// if you will know the length for all positions enrolled in the index.
+		/// this is used to locate key frames, so only I-frames should be enrolled
 		bool enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length = 0 );
+		// Optionally, all frames can be added via the detail method (used by the offset and 
+		// length methods)
+		bool detail( boost::int32_t position, boost::int64_t offset, boost::int32_t length );
 		bool close( boost::int32_t position, boost::int64_t offset );
 		bool flush( std::vector< boost::uint8_t > &buffer );
 
