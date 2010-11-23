@@ -365,6 +365,7 @@ class unindexed_job_type : public indexer_job
 
 static const pl::pcos::key key_offset_ = pl::pcos::key::from_string( "offset" );
 static const pl::pcos::key key_file_size_ = pl::pcos::key::from_string( "file_size" );
+static const pl::pcos::key key_frame_size_ = pl::pcos::key::from_string( "frame_size" );
 
 class generating_job_type : public indexer_job 
 {
@@ -380,14 +381,14 @@ class generating_job_type : public indexer_job
 				last_frame_ = input_->fetch( 0 );
 				if ( last_frame_ && last_frame_->get_stream( ) )
 				{
-					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
+					int length = 0;
+
+					if ( last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).valid( ) )
+						length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< boost::int64_t >( );
+
+					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ), length );
 					start_ += 1;
 
-					//Analyze two full gops here, since the calculate() method
-					//disregards the last gop if the file is incomplete.
-					//This ensures that calculate() always returns at least
-					//one frame right away.
-					analyse_gop( );
 					analyse_gop( );
 				}
 			}
@@ -408,8 +409,7 @@ class generating_job_type : public indexer_job
 
 		const bool finished( ) const
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			return input_ && input_->get_frames( ) > 0 && index_->finished( );
+			return index_->finished( );
 		}
 
 		void job_request( opencorelib::base_job_ptr job )
@@ -427,17 +427,26 @@ class generating_job_type : public indexer_job
 	private:
 		void analyse_gop( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			boost::posix_time::ptime end_time = boost::posix_time::microsec_clock::local_time( ) + boost::posix_time::milliseconds( 200 );
 			int registered = 0;
 			while ( input_ && start_ < input_->get_frames( ) )
 			{
 				registered ++;
 				last_frame_ = input_->fetch( start_ ++ );
+
+				int length = 0;
+				if ( last_frame_ && last_frame_->get_stream( ) && last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).valid( ) )
+					length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< boost::int64_t >( );
+
 				if ( last_frame_->get_stream( )->position( ) == last_frame_->get_stream( )->key( ) )
 				{
-					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ) );
-					if ( registered >= 12 )
+					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ), length );
+					if (  boost::posix_time::microsec_clock::local_time( ) > end_time && registered > 24 )
 						break;
+				}
+				else
+				{
+					index_->detail( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ), length );
 				}
 			}
 
@@ -445,7 +454,6 @@ class generating_job_type : public indexer_job
                 index_->close( last_frame_->get_position( ) + 1, input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
 		}
 
-		mutable boost::recursive_mutex mutex_;
 		pl::wstring url_;
 		awi_generator_v3_ptr index_;
 		input_type_ptr input_;
