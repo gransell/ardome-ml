@@ -35,6 +35,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'audio_template.hpp', 
 			'audio_types.hpp', 
 			'audio_utilities.hpp', 
+			'audio_volume.hpp', 
 			'awi.hpp', 
 			'config.hpp', 
 			'filter.hpp', 
