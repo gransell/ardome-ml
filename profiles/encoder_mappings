@@ -10,4 +10,4 @@ vcodecs/imx40 = avencode
 vcodecs/imx50 = avencode
 vcodecs/nexio = avencode
 vcodecs/xdcam = avencode
-vcodecs/dnxhd220 = avencode
+vcodecs/dnx_220_1080i = avidencode

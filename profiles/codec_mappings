@@ -7,7 +7,7 @@ http://www.ardendo.com/apf/codec/imx/imx = avdecode
 http://www.ardendo.com/apf/codec/mpeg/mpeg1 = avdecode
 http://www.ardendo.com/apf/codec/mpeg/mpeg2 = avdecode
 http://www.ardendo.com/apf/codec/mpeg/mpeg4 = avdecode
-http://www.ardendo.com/apf/codec/vc3/vc3 = avdecode
+http://www.ardendo.com/apf/codec/vc3/vc3 = aviddecode
 
 http://www.ardendo.com/apf/codec/avc/avc = mcdecode
 
