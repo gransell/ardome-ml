@@ -1157,7 +1157,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					if ( fallback )
 					{
 						double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
-						int result = int( dts * fps( ) + 0.5 ) + 1;
+						int result = int( dts * fps( ) + 0.5 );
 						if ( result > max )
 							max = result;
 					}
@@ -1336,7 +1336,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				return 0;
 
 			// If we have no position, then use the last position + 1
-			if ( ( packet == 0 || position == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
+			if ( ( packet == 0 || packet->data == 0 || position == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
 				position = images_[ images_.size( ) - 1 ]->position( ) + first_video_found_ + 1;
 
 			// Small optimisation - abandon packet now if we can (ie: we don't have to decode and no image is requested for this frame)
@@ -1363,6 +1363,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					}
 					return 0;
 				}
+
+				if ( !got_pict )
+					return 0;
 
 				if ( key_search_ && av_frame_->key_frame == 0 && position < get_position( ) )
 					got_picture = false;

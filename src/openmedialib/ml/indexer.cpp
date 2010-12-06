@@ -56,74 +56,6 @@ class ML_DECLSPEC indexer_type
 // Possibly redundant?
 typedef ML_DECLSPEC boost::shared_ptr< indexer_type > indexer_type_ptr;
 
-// The indexer singleton
-class indexer : public indexer_type
-{
-	public:
-		/// Provides the singleton instance of this object
-		static indexer_type_ptr instance( )
-		{
-			static indexer_type_ptr instance_( new indexer( ) );
-			return instance_;
-		}
-
-		/// Destructor of the singleton
-		~indexer( )
-		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
-		}
-
-		// Force an initialisation of the worker
-		void init( )
-		{
-		}
-
-		/// Request an index item for the specified url
-		indexer_item_ptr request( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
-		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-
-			//Decorate the lookup key with the type of index entry, so that we don't
-			//reuse the same index job for a different entry type
-			std::wstringstream map_key_str;
-			map_key_str << url;
-			if( v4_index_entry_type != 0)
-			{
-				map_key_str << L":" << v4_index_entry_type;
-			}
-			pl::wstring map_key = map_key_str.str();
-
-			if ( map_.find( map_key ) == map_.end( ) )
-			{
-				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
-				if ( !job->finished( ) && ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) ) )
-				{
-					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
-					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
-				}
-				if ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) )
-					map_[ map_key ] = job;
-			}
-			return map_[ map_key ];
-		}
-
-		void shutdown( )
-		{
-			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
-		}
-
-	private:
-		/// Constructor for the indexer collection
-		indexer( )
-		{
-			index_read_worker_.start( );
-		}
-
-		mutable boost::recursive_mutex mutex_;
-		std::map< pl::wstring, indexer_job_ptr > map_;
-		opencorelib::worker index_read_worker_;
-};
 
 template < class T >
 class aml_index_reader;
@@ -194,7 +126,10 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 	boost::uint8_t temp[ 16384 ];
 
 	if ( url_open( &ts_context, target->file_.c_str( ), URL_RDONLY ) < 0 )
+	{
+		ARLOG_ERR( "url_open failed on index file %1%" )( target->file_ );
 		return;
+	}
 
 	url_seek( ts_context, target->position_, SEEK_SET );
 
@@ -476,6 +411,88 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint1
 		return indexer_job_ptr( new generating_job_type( url ) );
 	}
 }
+
+
+// The indexer singleton
+class indexer : public indexer_type
+{
+	public:
+		/// Provides the singleton instance of this object
+		static indexer_type_ptr instance( )
+		{
+			static indexer_type_ptr instance_( new indexer( ) );
+			return instance_;
+		}
+
+		/// Destructor of the singleton
+		~indexer( )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
+		}
+
+		// Force an initialisation of the worker
+		void init( )
+		{
+		}
+
+		/// Request an index item for the specified url
+		indexer_item_ptr request( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			ARLOG_DEBUG5( "Index request for url: %1%" )( url );
+
+			//Decorate the lookup key with the type of index entry, so that we don't
+			//reuse the same index job for a different entry type
+			std::wstringstream map_key_str;
+			map_key_str << url;
+			if( v4_index_entry_type != 0)
+			{
+				map_key_str << L":" << v4_index_entry_type;
+			}
+			pl::wstring map_key = map_key_str.str();
+
+			if ( map_.find( map_key ) == map_.end( ) )
+			{
+				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
+				bool is_indexed_job = static_cast<bool>( boost::dynamic_pointer_cast< indexed_job_type >( job ) );
+				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( is_indexed_job && !job->index( ) && job->size( ) > 0 ) );
+				if ( !job->finished( ) && has_frames_or_size )
+				{
+					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
+					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
+				}
+				if ( job->index( ) && has_frames_or_size )
+				{
+					map_[ map_key ] = job;
+				}
+				else
+				{
+					ARLOG_ERR("Index job creation failed for url %1%")( url );
+					return indexer_item_ptr( );
+				}
+			}
+
+			return map_[ map_key ];
+		}
+
+		void shutdown( )
+		{
+			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
+		}
+
+	private:
+		/// Constructor for the indexer collection
+		indexer( )
+		{
+			index_read_worker_.start( );
+		}
+
+		mutable boost::recursive_mutex mutex_;
+		std::map< pl::wstring, indexer_job_ptr > map_;
+		opencorelib::worker index_read_worker_;
+};
+
 
 void ML_DECLSPEC indexer_init( )
 {

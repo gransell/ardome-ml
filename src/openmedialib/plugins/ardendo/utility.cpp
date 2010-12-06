@@ -69,6 +69,9 @@ static pl::pcos::key key_peaks_( pcos::key::from_string( "peaks" ) );
 
 void join_peaks( ml::frame_type_ptr &result, std::vector< double > &max_levels )
 {
+	if( ! result->get_audio( ) )
+		return;
+
 	if ( max_levels.size( ) < size_t( result->get_audio( )->channels( ) ) )
 	{
 		for( size_t i = max_levels.size( ); i < size_t( result->get_audio( )->channels( ) ); i ++ )
@@ -92,6 +95,9 @@ void join_peaks( ml::frame_type_ptr &result, std::vector< double > &max_levels )
 
 void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input )
 {
+	if( ! result->get_audio( ) || ! input->get_audio( ) )
+		return;
+
 	if ( input->properties( ).get_property_with_key( key_peaks_ ).valid( ) )
 	{
 		std::vector< double > levels = input->properties( ).get_property_with_key( key_peaks_ ).value< std::vector< double > >( );

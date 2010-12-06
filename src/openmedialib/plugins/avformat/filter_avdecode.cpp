@@ -377,6 +377,9 @@ class stream_queue
 				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				ARENFORCE_MSG( codec_, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ result->get_stream( )->codec( ) ] )( result->get_stream( )->codec( ) );
+				// Work around for broken Omneon IMX streams which incorrectly assign the low delay flag in their encoder
+				if ( result->get_stream( )->estimated_gop_size( ) == 1 )
+					context_->flags |= CODEC_FLAG_LOW_DELAY;
 				avcodec_open( context_, codec_ );
 				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 				#ifndef WIN32

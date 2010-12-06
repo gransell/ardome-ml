@@ -70,7 +70,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 					result = fetch_from_slot( 0, false );
 					ml::frame_type_ptr overlay = fetch_from_slot( 1, false );
 
-					if ( result && overlay && overlay->get_audio( ) )
+					if ( result && overlay )
 					{
 						result->set_audio( overlay->get_audio( ) );
 						join_peaks( result, overlay );
