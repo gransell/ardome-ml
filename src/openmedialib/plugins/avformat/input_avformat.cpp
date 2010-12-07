@@ -1157,7 +1157,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					if ( fallback )
 					{
 						double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
-						int result = int( dts * fps( ) + 0.5 );
+						int result = int( dts * fps( ) + 0.5 ) + 1;
 						if ( result > max )
 							max = result;
 					}
