@@ -1,8 +1,8 @@
 stream_codec_id = http://www.ardendo.com/apf/codec/vc3/vc3
 video_gop_size = 1
-cid = 1243
-width = 1920
+cid = 1244
+width = 1440
 height = 1080
-sar_num = 1
-sar_den = 1
+sar_num = 4
+sar_den = 3
 interlace = 1
