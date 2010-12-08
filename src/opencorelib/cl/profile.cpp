@@ -218,6 +218,11 @@ void profile_wrapper::enroll( const std::string &name, double &ref )
 	map_[ name ] = new profile_double( ref ); 
 }
 
+void profile_wrapper::enroll( const std::string &name, std::string &ref )
+{ 
+	map_[ name ] = new profile_string( ref ); 
+}
+
 void profile_wrapper::enroll( const std::string &name, profile_property *property )
 {
 	map_[ name ] = property;

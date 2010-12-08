@@ -80,6 +80,9 @@ class CORE_API profile_wrapper
 		/// Enroll a double property
 		void enroll( const std::string &name, double &ref );
 
+		/// Enroll a string property
+		void enroll( const std::string &name, std::string &ref );
+
 		/// Enroll a custom profile property
 		void enroll( const std::string &name, profile_property *property );
 
