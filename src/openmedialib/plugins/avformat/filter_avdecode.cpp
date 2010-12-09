@@ -562,7 +562,13 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		{
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
-				set_image( queue_->decode_image( original_position_ ) , true );
+				il::image_type_ptr img = queue_->decode_image( original_position_ );
+				if ( img )
+				{
+					img->set_sar_num( sar_num_ );
+					img->set_sar_den( sar_den_ );
+					set_image( img, true );
+				}
 			}
 			return image_;
 		}
