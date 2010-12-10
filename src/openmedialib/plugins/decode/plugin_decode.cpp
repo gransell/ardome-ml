@@ -205,10 +205,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			return frame_type_ptr( new frame_lazy( frame_type::shallow(), frames_, parent_->shallow(), pool_holder_, pushed_ ) );
+			ml::frame_type_ptr parent_copy = parent_->shallow();
+			ml::frame_type_ptr clone( new frame_lazy( parent_copy, frames_, parent_copy, pool_holder_, pushed_ ) );
+			clone->set_position( get_position() );
+			return clone;
 		}
 
-		/// Provide a shallow copy of the frame (and all attached frames)
+		/// Provide a deep copy of the frame (and all attached frames)
 		virtual frame_type_ptr deep( )
 		{
 			frame_type_ptr result = parent_->deep( );
@@ -234,6 +237,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			frame_type::set_image( image, decoded );
 			evaluated_ = true;
 			pool_holder_.reset();
+			if( parent_ )
+				parent_->set_image( image, decoded );
 		}
 
 		/// Get the image associated to the frame.
@@ -258,6 +263,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		{
 			if( !audio_ ) evaluate( );
 			return audio_;
+		}
+
+		virtual void set_stream( stream_type_ptr stream )
+		{
+			frame_type::set_stream( stream );
+			if( parent_ )
+				parent_->set_stream( stream );
 		}
 
 		virtual stream_type_ptr get_stream( )

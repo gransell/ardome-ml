@@ -112,30 +112,17 @@ class stream_queue
 			
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 
-			result = lru_cache_->frame_for_position( my_key );
-
-			// Use the cached result, but remove a frame if we're connected to a pusher
-			if ( result && input_->get_uri( ) == L"pusher:" )
-			{
-				input_->seek( position );
-				input_->fetch( );
-			}
-
 			if ( position < 0 ) position = 0;
 
 			if( !result && position < input_->get_frames( ) )
 			{
-				//std::cerr << "fetching from input " << position << std::endl;
 				input_->seek( position );
 				result = input_->fetch( );
 				while ( result && result->get_stream( ) )
 				{
-					//std::cerr << "obtained from input " << result->get_position( ) << " for " << position << std::endl;
 					if ( result->get_stream( )->position( ) == result->get_stream( )->key( ) )
 						look_for_closed( result );
 						
-					lru_cache_->insert_frame_for_position( lru_key_for_position( result->get_position( ) ), result );
-					
 					if ( result->get_position( ) == position )
 						break;
 					input_->seek( result->get_position( ) + 1 );
