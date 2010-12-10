@@ -205,8 +205,16 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			ml::frame_type_ptr parent_copy = parent_->shallow();
-			ml::frame_type_ptr clone( new frame_lazy( parent_copy, frames_, parent_copy, pool_holder_, pushed_ ) );
+			ml::frame_type_ptr inner_copy;
+			//If we have already been evaluated, we should no use the parent_ frame
+			//anymore, since that will not necessarily have the decoded image set on it,
+			//but we will have that on this frame already.
+			if( evaluated_ )
+				inner_copy = frame_type::shallow();
+			else
+				inner_copy = parent_->shallow();
+
+			ml::frame_type_ptr clone( new frame_lazy( inner_copy, frames_, inner_copy, pool_holder_, pushed_ ) );
 			clone->set_position( get_position() );
 			return clone;
 		}
