@@ -253,8 +253,8 @@ class CompilerOptions:
 		return "2"
 		
 	def exception_handling( self ) :
-        return "2"  #/EHa - Always use /EHa, even when compiling for native. Without it, if the code is called from a .NET module, 
-                    #destructors won't be called if an exception is thrown!
+		return "2"  #/EHa - Always use /EHa, even when compiling for native. Without it, if the code is called from a .NET module, 
+					#destructors won't be called if an exception is thrown!
 
 	def runtime_type_info_as_string( self ) :
 		""" Returns the string 'TRUE' if runtime type info is going to be used, otherwise 'FALSE'"""
