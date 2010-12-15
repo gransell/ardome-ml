@@ -101,7 +101,7 @@ void property::attach( boost::shared_ptr< observer > obs )
 
 void property::detach( boost::shared_ptr< observer > obs )
 {
-	impl_->subject_.attach( obs );
+	impl_->subject_.detach( obs );
 }
 
 void property::update()

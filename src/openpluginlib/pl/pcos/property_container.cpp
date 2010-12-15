@@ -45,9 +45,30 @@ public:
         : propertyObserver( new forwarding_observer( &subject_ ) )
     {}
 
+	~property_container_impl()
+	{
+		//Make sure to remove the observers on the properties, since the observer
+		//callback will be invalid after this container has been destroyed
+		for( property_map::iterator I = propertyMap.begin(); I != propertyMap.end(); ++I )
+		{
+			I->second.detach( propertyObserver );
+		}
+	}
+
     void append( property p )
     {
-        propertyMap.insert( std::make_pair( p.get_key(), p ) );
+		property_map::iterator iter = propertyMap.find( p.get_key() );
+		if( iter != propertyMap.end() )
+		{
+			//If there was a previous property with the same key, we must
+			//detach it from our observer before letting it go. This is 
+			//because the property might live longer than this container, and
+			//could attempt to update or propertyObserver after we've been
+			//destroyed, which will cause a crash.
+			remove( iter->second );
+		}
+
+		propertyMap.insert( std::make_pair( p.get_key(), p ) ).second;
         p.attach( propertyObserver );
     }
 
@@ -120,7 +141,7 @@ void property_container::attach( boost::shared_ptr< observer > obs )
 
 void property_container::detach( boost::shared_ptr< observer > obs )
 {
-	impl_->subject_.attach( obs );
+	impl_->subject_.detach( obs );
 }
 
 void property_container::update()
