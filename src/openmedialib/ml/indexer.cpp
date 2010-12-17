@@ -27,6 +27,8 @@ namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
+static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
+
 // Decorates indexer item with job control functionality
 class indexer_job : public indexer_item
 {
@@ -364,6 +366,9 @@ class generating_job_type : public indexer_job
 		{
 			boost::posix_time::ptime end_time = boost::posix_time::microsec_clock::local_time( ) + boost::posix_time::milliseconds( 200 );
 			int registered = 0;
+
+			input_->sync( );
+
 			while ( input_ && start_ < input_->get_frames( ) )
 			{
 				registered ++;
@@ -385,8 +390,14 @@ class generating_job_type : public indexer_job
 				}
 			}
 
-			if ( last_frame_ && start_ >= input_->get_frames( ) )
-                index_->close( last_frame_->get_position( ) + 1, input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
+			if ( input_->properties( ).get_property_with_key( key_complete_ ).valid( ) && input_->properties( ).get_property_with_key( key_complete_ ).value< int >( ) == 1 )
+			{
+				input_->sync( );
+				if ( last_frame_ && start_ >= input_->get_frames( ) )
+				{
+                	index_->close( input_->get_frames( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
+				}
+			}
 		}
 
 		pl::wstring url_;
