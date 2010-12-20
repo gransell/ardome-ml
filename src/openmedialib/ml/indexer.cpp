@@ -366,6 +366,7 @@ class generating_job_type : public indexer_job
 		{
 			boost::posix_time::ptime end_time = boost::posix_time::microsec_clock::local_time( ) + boost::posix_time::milliseconds( 200 );
 			int registered = 0;
+			pl::pcos::property complete = input_->properties( ).get_property_with_key( key_complete_ );
 
 			input_->sync( );
 
@@ -381,7 +382,7 @@ class generating_job_type : public indexer_job
 				if ( last_frame_->get_stream( )->position( ) == last_frame_->get_stream( )->key( ) )
 				{
 					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ), length );
-					if (  boost::posix_time::microsec_clock::local_time( ) > end_time && registered > 24 )
+					if (  boost::posix_time::microsec_clock::local_time( ) > end_time && registered > 100 && !( complete.valid( ) && complete.value< int >( ) == 1 ) )
 						break;
 				}
 				else
@@ -390,13 +391,11 @@ class generating_job_type : public indexer_job
 				}
 			}
 
-			if ( input_->properties( ).get_property_with_key( key_complete_ ).valid( ) && input_->properties( ).get_property_with_key( key_complete_ ).value< int >( ) == 1 )
+			if ( complete.valid( ) && complete.value< int >( ) == 1 )
 			{
 				input_->sync( );
 				if ( last_frame_ && start_ >= input_->get_frames( ) )
-				{
                 	index_->close( input_->get_frames( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
-				}
 			}
 		}
 
