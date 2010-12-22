@@ -44,6 +44,7 @@
 #include <opencorelib/cl/logger.hpp>
 #include <opencorelib/cl/loghandler.hpp>
 #include <opencorelib/cl/logtarget.hpp>
+#include <opencorelib/cl/logprinter.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/registry.hpp>
@@ -84,7 +85,7 @@ namespace
 			{
 				olib::t_stringstream ss;
 				log_msg.pretty_print_one_line( ss, cl::print::output_default );
-				std::cerr << "log message: " << cl::str_util::to_string( ss.str( ) ) << std::endl;
+				std::cerr << cl::str_util::to_string( cl::log_utilities::get_log_prefix_string( log_msg.level( ), _CT(""), _CT("%H:%M:%S%F"), cl::logoutput::output_default ) ) << " " << cl::str_util::to_string( ss.str( ) ) << std::endl;
 			}
 	};
 
