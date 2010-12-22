@@ -560,6 +560,7 @@ bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 			memcpy( footer.id, "AWI", 3 );
 			memcpy( footer.ver, "2", 1 );
 			set( footer );
+			frames_ = position;
 		}
 	}
 	else
@@ -1264,6 +1265,7 @@ bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 			memcpy( footer.id, "AWI", 3 );
 			memcpy( footer.ver, "3", 1 );
 			set( footer );
+			frames_ = position;
 		}
 	}
 	else
@@ -1849,6 +1851,7 @@ bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 			memcpy( footer.ver, "4", 1 );
 			memset( footer.reserved, 0, sizeof( footer.reserved ) );
 			set( footer );
+			frames_ = position;
 		}
 	}
 	else
