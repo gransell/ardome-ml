@@ -35,6 +35,7 @@ namespace cl = olib::opencorelib;
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
 static pl::pcos::key key_length_ = pl::pcos::key::from_string( "length" );
+static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
 
 class filter_pool
 {
@@ -866,10 +867,17 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 		void sync( )
 		{
+			total_frames_ = 0;
+
 			if ( gop_decoder_ )
 			{
 				gop_decoder_->sync( );
 				total_frames_ = gop_decoder_->get_frames( );
+
+				// Avoid smeared frames due to incomplete sources
+				pl::pcos::property complete = fetch_slot( 0 )->properties( ).get_property_with_key( key_complete_ );
+				if ( complete.valid( ) && complete.value< int >( ) == 0 )
+					total_frames_ -= 2;
 			}
 			else if ( fetch_slot( 0 ) )
 			{
