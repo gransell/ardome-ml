@@ -321,7 +321,7 @@ class generating_job_type : public indexer_job
 					int length = 0;
 
 					if ( last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).valid( ) )
-						length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< boost::int64_t >( );
+						length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< int >( );
 
 					index_->enroll( last_frame_->get_position( ), last_frame_->get_stream( )->properties( ).get_property_with_key( key_offset_ ).value< boost::int64_t >( ), length );
 					start_ += 1;
@@ -377,7 +377,7 @@ class generating_job_type : public indexer_job
 
 				int length = 0;
 				if ( last_frame_ && last_frame_->get_stream( ) && last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).valid( ) )
-					length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< boost::int64_t >( );
+					length = last_frame_->get_stream( )->properties( ).get_property_with_key( key_frame_size_ ).value< int >( );
 
 				if ( last_frame_->get_stream( )->position( ) == last_frame_->get_stream( )->key( ) )
 				{
