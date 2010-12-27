@@ -236,6 +236,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml, il ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/quicktime_decoder', [ cl, pl, ml, il ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/wav', [ cl, pl, ml, il ] ) )
 
 	if env['PLATFORM'] == 'win32' :
@@ -245,10 +246,10 @@ if env.check_externals( ):
 	
 	os.system( "chmod +x scripts/amldocs.aml" )
 
-	if env.have_boost_python( ):
-		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
-		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
-		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
+	# if env.have_boost_python( ):
+	# 	env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
+	# 	env.build( 'src/openimagelib/py', [ cl, pl, il ] )
+	# 	env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
 
 	env.create_package( )
 	if env[ 'PLATFORM' ] != 'win32':
