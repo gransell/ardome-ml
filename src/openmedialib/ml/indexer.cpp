@@ -224,6 +224,8 @@ class indexed_job_type : public indexer_job
 		aml_index_reader_ptr index_;
 };
 
+#define RETRIES 60
+
 class unindexed_job_type : public indexer_job 
 {
 	public:
@@ -231,6 +233,7 @@ class unindexed_job_type : public indexer_job
 			: url_( url )
 			, size_( 0 )
 			, finished_( false )
+			, retries_( RETRIES )
 		{
 			if ( url_.find( L":cache:" ) != pl::wstring::npos )
 				url_ = url.substr( 0, url.find( L"cache:" ) ) + url.substr( url.find( L"cache:" ) + 6 );
@@ -251,7 +254,7 @@ class unindexed_job_type : public indexer_job
 		const bool finished( ) const
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			return false;
+			return finished_;
 		}
 
 		void job_request( opencorelib::base_job_ptr job )
@@ -262,7 +265,7 @@ class unindexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 100 );
+			return boost::posix_time::milliseconds( 2000 );
 		}
 
 	private:
@@ -286,9 +289,14 @@ class unindexed_job_type : public indexer_job
 				{
 					boost::recursive_mutex::scoped_lock lock( mutex_ );
 					if ( bytes > size_ )
+					{
 						size_ = bytes;
+						retries_ = RETRIES;
+					}
 					else
-						finished_ = true;
+					{
+						finished_ = -- retries_ == 0;
+					}
 				}
 			}
 		}
@@ -298,6 +306,7 @@ class unindexed_job_type : public indexer_job
 		pl::wstring url_;
 		boost::int64_t size_;
 		bool finished_;
+		int retries_;
 };
 
 static const pl::pcos::key key_offset_ = pl::pcos::key::from_string( "offset" );
@@ -465,14 +474,13 @@ class indexer : public indexer_type
 			if ( map_.find( map_key ) == map_.end( ) )
 			{
 				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
-				bool is_indexed_job = static_cast<bool>( boost::dynamic_pointer_cast< indexed_job_type >( job ) );
-				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( is_indexed_job && !job->index( ) && job->size( ) > 0 ) );
+				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) );
 				if ( !job->finished( ) && has_frames_or_size )
 				{
 					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
 					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
 				}
-				if ( job->index( ) && has_frames_or_size )
+				if ( has_frames_or_size )
 				{
 					map_[ map_key ] = job;
 				}
