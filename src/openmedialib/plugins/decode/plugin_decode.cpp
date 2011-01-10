@@ -818,6 +818,7 @@ private:
 class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
 {
 	private:
+		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_scope_;
@@ -890,6 +891,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 		ml::filter_type_ptr filter_create( )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
 			fg->property( "length" ) = get_frames( );
 			
@@ -909,6 +911,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
  		ml::filter_type_ptr filter_obtain( )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			ml::filter_type_ptr result;
 			
 			if ( decoder_.size( ) == 0 )
@@ -927,6 +930,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 	
 		void filter_release( ml::filter_type_ptr filter )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			decoder_.push_back( filter );
 		}
 
@@ -1048,6 +1052,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 
 		ml::filter_type_ptr filter_create( )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			// Create the encoder that we have mapped from our profile
 			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 			ARENFORCE_MSG( encode, "Failed to create encoder" )( prop_filter_.value< pl::wstring >( ) );
@@ -1065,6 +1070,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 
  		ml::filter_type_ptr filter_obtain( )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			ml::filter_type_ptr result = gop_encoder_;
 			if ( !result )
 			{
@@ -1083,6 +1089,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 
 		void filter_release( ml::filter_type_ptr filter )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			if ( filter != gop_encoder_ )
 				decoder_.push_back( filter );
 		}
@@ -1132,7 +1139,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			}
 			else
 			{
-				ml::filter_type_ptr graph = filter_obtain( );
+				ml::filter_type_ptr graph;
 				frame = fetch_from_slot( );
 				frame->set_position( get_position( ) );
 
