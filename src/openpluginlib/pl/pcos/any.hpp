@@ -20,6 +20,7 @@
 #include <boost/type_traits/is_reference.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/cstdint.hpp>
 
 // openlibraries
 #include <openpluginlib/pl/string.hpp>
@@ -267,6 +268,7 @@ typedef std::list< double > double_list;
 typedef std::vector<int> int_vec;
 typedef std::vector<unsigned int> uint_vec;
 typedef std::vector<double> double_vec;
+typedef std::vector<boost::int64_t> int64_vec;
 typedef std::vector<void*> void_vec;
 
 } } }

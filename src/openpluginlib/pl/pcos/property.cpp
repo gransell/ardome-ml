@@ -278,6 +278,7 @@ template OPENPLUGINLIB_DECLSPEC string property::value< string >() const;
 template OPENPLUGINLIB_DECLSPEC void* property::value< void* >() const;
 template OPENPLUGINLIB_DECLSPEC int_vec property::value< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC double_vec property::value< double_vec >() const;
+template OPENPLUGINLIB_DECLSPEC int64_vec property::value< int64_vec >() const;
 template OPENPLUGINLIB_DECLSPEC string_vec property::value< string_vec >() const;
 template OPENPLUGINLIB_DECLSPEC void_vec property::value< void_vec >() const;
 
@@ -310,6 +311,7 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< void* >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_vec >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< int64_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void_vec >() const;
 
 template OPENPLUGINLIB_DECLSPEC wstring property::value< wstring >() const;
@@ -436,6 +438,11 @@ template <> OPENPLUGINLIB_DECLSPEC double_list parse_string( const wstring& str 
 template <> OPENPLUGINLIB_DECLSPEC double_vec parse_string( const wstring& )
 {
 	return double_vec( );
+}
+
+template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const wstring& )
+{
+	return int64_vec( );
 }
 
 template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const wstring& )

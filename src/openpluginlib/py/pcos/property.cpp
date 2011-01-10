@@ -61,6 +61,7 @@ il::image_type_ptr ( pcos::property::*value_image_type_ptr )( ) const = &pcos::p
 ml::input_type_ptr ( pcos::property::*value_input_type_ptr )( ) const = &pcos::property::value<ml::input_type_ptr>;
 ml::store_type_ptr ( pcos::property::*value_store_type_ptr )( ) const = &pcos::property::value<ml::store_type_ptr>;
 std::vector< double > ( pcos::property::*value_double_vector )( ) const = &pcos::property::value< std::vector< double > >;
+std::vector< boost::int64_t > ( pcos::property::*value_int64_vector )( ) const = &pcos::property::value< std::vector< boost::int64_t > >;
 
 bool			 ( pcos::property::*is_a_wstring )( ) const = &pcos::property::is_a<opl::wstring>;
 bool			 ( pcos::property::*is_a_string )( ) const = &pcos::property::is_a<opl::string>;
@@ -77,6 +78,7 @@ bool			 ( pcos::property::*is_a_image_type_ptr )( ) const = &pcos::property::is_
 bool			 ( pcos::property::*is_a_input_type_ptr )( ) const = &pcos::property::is_a<ml::input_type_ptr>;
 bool			 ( pcos::property::*is_a_store_type_ptr )( ) const = &pcos::property::is_a<ml::store_type_ptr>;
 bool			 ( pcos::property::*is_a_double_vector )( ) const = &pcos::property::is_a< std::vector< double > >;
+bool			 ( pcos::property::*is_a_int64_vector )( ) const = &pcos::property::is_a< std::vector< boost::int64_t > >;
 
 template < typename T > struct PyConvertTrait
 {};
@@ -184,6 +186,7 @@ void py_pcos_property()
 		.def( "value_as_input", value_input_type_ptr )
 		.def( "value_as_store", value_store_type_ptr )
 		.def( "value_as_double_vector", value_double_vector )
+		.def( "value_as_int64_vector", value_int64_vector )
 		.def( "is_a_wstring", is_a_wstring )
 		.def( "is_a_string", is_a_string )
 		.def( "is_a_wstring_list", is_a_wstring_list )
