@@ -405,6 +405,9 @@ class generating_job_type : public indexer_job
 				input_->sync( );
 				if ( last_frame_ && start_ >= input_->get_frames( ) )
                 	index_->close( input_->get_frames( ), input_->properties( ).get_property_with_key( key_file_size_ ).value< boost::int64_t >( ) );				
+
+				//Release the input, since we don't need it any more
+				input_.reset( );
 			}
 		}
 
