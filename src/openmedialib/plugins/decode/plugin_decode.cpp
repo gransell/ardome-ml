@@ -422,8 +422,11 @@ protected:
 				{
 					pl::pcos::property temporal_offset( key_temporal_offset_ );
 					pl::pcos::property temporal_stream( key_temporal_stream_ );
-					( *iter ).second->properties( ).append( temporal_offset = streams[ ( *iter ).first ]->position( ) );
-					( *iter ).second->properties( ).append( temporal_stream = streams[ ( *iter ).first ] );
+					if ( streams.find( ( *iter ).first ) != streams.end( ) )
+					{
+						( *iter ).second->properties( ).append( temporal_offset = streams[ ( *iter ).first ]->position( ) );
+						( *iter ).second->properties( ).append( temporal_stream = streams[ ( *iter ).first ] );
+					}
 				}
 
 				result = gop_[ get_position( ) ];
