@@ -1,0 +1,10 @@
+
+Name: boost_regex
+Description: boost regex lib
+Version: 0.0.1
+
+Requires: boost
+
+Libs:	-lboost_regex-mt
+
+install_libs=${prefix}/lib/libboost_regex*-mt*.so*
