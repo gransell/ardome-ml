@@ -54,6 +54,10 @@ namespace olib
 				you document what it says. */
 			invoke_enforce& reason(const TCHAR* r);
 
+			void operator++( )
+			{
+				//Silence warning in ARENFORCE about unused expression result
+			}
 
 			template <class T>
 			invoke_enforce& add_value( const char* exp, const T& obj)

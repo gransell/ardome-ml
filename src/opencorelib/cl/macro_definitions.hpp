@@ -40,7 +40,7 @@
 #elif defined __GNUC__
     #define ARUNUSED_ALWAYS(x) au_unused_var(x)
 #else
-    #define ARUNUSED_ALWAYS(x)
+    #define ARUNUSED_ALWAYS(x) x
 #endif
 
 /// Used on mac/linux (gcc-compiled) to make the ARUNUSED_ALWAYS macro work.

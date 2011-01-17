@@ -153,6 +153,11 @@ namespace olib
 
             /// Get the internal log context.
             boost::shared_ptr<exception_context> get_context() const { return m_context; }
+			
+			void operator++( )
+			{
+				// Silence compiler warning
+			}
                 
 		private:
 			mutable bool m_ignore_this_log;

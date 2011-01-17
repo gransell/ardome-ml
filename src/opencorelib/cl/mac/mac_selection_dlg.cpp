@@ -22,7 +22,7 @@ namespace olib
                                                         NULL, altButton, NULL, // Buttons (Default, Alternate, Other)
                                                         &responseFlags );
             
-            if( responseFlags = kCFUserNotificationAlternateResponse ) {
+            if( responseFlags == kCFUserNotificationAlternateResponse ) {
                 mResult = dialog_result::selection_made;
             }
             

@@ -9,12 +9,12 @@
 	If the enforcement fails, a CBase_exception is thrown. */
 	#define CREATE_ARENFORCE( expr, the_msg ) \
 		if( (expr) ); \
-        else olib::opencorelib::make_enforcer().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ) \
+        else ++olib::opencorelib::make_enforcer().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ) \
                  .msg((the_msg)).ARENFORCE_A
 
     #define CREATE_ARENFORCE_ERR_REASON( expr, the_msg, error_reason ) \
         if( (expr) ); \
-        else olib::opencorelib::make_enforcer().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ) \
+        else ++olib::opencorelib::make_enforcer().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ) \
                  .msg((the_msg)).reason((error_reason)).ARENFORCE_A
 
 

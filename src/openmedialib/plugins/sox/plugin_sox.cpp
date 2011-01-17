@@ -179,8 +179,8 @@ protected:
 		enc_.encoding = SOX_ENCODING_SIGN2;
 		enc_.bits_per_sample = 32;
 		eff_->in_encoding = eff_->out_encoding = &enc_;
-		char *temp[ ] = { "tempo", "2", 0 };
-		if ( ( * eff_->handler.getopts )( eff_, 2, temp ) == SOX_SUCCESS )
+		const char *temp[ ] = { "tempo", "2", 0 };
+		if ( ( * eff_->handler.getopts )( eff_, 2, const_cast< char ** >( temp ) ) == SOX_SUCCESS )
 		{
 			// Set the sox signal parameters
 			eff_->in_signal.rate = frame->get_audio( )->frequency( );

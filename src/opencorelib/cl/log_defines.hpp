@@ -41,7 +41,7 @@
     @sa ARLOG_IF
     @author Mats Lindel&ouml;f*/
 #define ARLOG(the_msg) \
-    olib::opencorelib::logger::make_logger() \
+    ++olib::opencorelib::logger::make_logger() \
     .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME).msg(the_msg).ARLOG_A
 
 #define ARSCOPELOG_MAKER( trace_id, msg, lvl ) \
@@ -173,7 +173,7 @@
     @author Mats Lindel&ouml;f*/
 #define ARLOG_IF_LEVEL( level_to_test_against_global , the_msg )       \
         if( !ARCOND_LEVEL(level_to_test_against_global) );             \
-        else olib::opencorelib::logger::make_logger()                          \
+        else ++olib::opencorelib::logger::make_logger()                \
              .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME)   \
              .msg(the_msg).level(level_to_test_against_global).ARLOG_A
 
