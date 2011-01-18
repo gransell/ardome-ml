@@ -13,6 +13,7 @@
 #include <opencorelib/cl/log_defines.hpp>
 #include <opencorelib/cl/uuid_16b.hpp>
 #include <opencorelib/cl/str_util.hpp>
+#include <openmedialib/ml/filter_encode.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -35,7 +36,17 @@ namespace cl = olib::opencorelib;
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
 static pl::pcos::key key_length_ = pl::pcos::key::from_string( "length" );
+static pl::pcos::key key_force_ = pl::pcos::key::from_string( "force" );
+static pl::pcos::key key_width_ = pl::pcos::key::from_string( "width" );
+static pl::pcos::key key_height_ = pl::pcos::key::from_string( "height" );
+static pl::pcos::key key_fps_num_ = pl::pcos::key::from_string( "fps_num" );
+static pl::pcos::key key_fps_den_ = pl::pcos::key::from_string( "fps_den" );
+static pl::pcos::key key_sar_num_ = pl::pcos::key::from_string( "sar_num" );
+static pl::pcos::key key_sar_den_ = pl::pcos::key::from_string( "sar_den" );
+static pl::pcos::key key_interlace_ = pl::pcos::key::from_string( "interlace" );
+static pl::pcos::key key_bit_rate_ = pl::pcos::key::from_string( "bit_rate" );
 static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
+static pl::pcos::key key_instances_ = pl::pcos::key::from_string( "instances" );
 
 class filter_pool
 {
@@ -997,13 +1008,13 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		}
 };
 
-class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_pool
+class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filter_pool
 {
 	private:
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_profile_;
-		pl::pcos::property prop_force_;
+		pl::pcos::property prop_instances_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_encoder_;
 		bool is_long_gop_;
@@ -1014,10 +1025,10 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
  
 	public:
 		filter_encode( )
-			: filter_simple( )
+			: filter_encode_type( )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
-			, prop_force_( pl::pcos::key::from_string( "force" ) )
+			, prop_instances_( pl::pcos::key::from_string( "instances" ) )
 			, decoder_( )
 			, gop_encoder_( )
 			, is_long_gop_( false )
@@ -1030,7 +1041,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
 			// Default to something. Should be overriden anyway.
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
-			properties( ).append( prop_force_ = int( 0 ) );
+			properties( ).append( prop_instances_ = 4 );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
@@ -1060,9 +1071,9 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
 				"Encode filter must have a profile property" );
 			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< pl::wstring >( );
-			
-			if( encode->properties( ).get_property_with_string( "force" ).valid( ) ) 
-				encode->properties( ).get_property_with_string( "force" ) = prop_force_.value< int >( );
+
+			if ( encode->properties( ).get_property_with_key( key_instances_ ).valid( ) )
+				encode->properties( ).get_property_with_key( key_instances_ ) = prop_instances_.value< int >( );
 			
 			return encode;
 		}
@@ -1082,6 +1093,25 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 				{
 					result = filter_create( );
 				}
+
+				if( result->properties( ).get_property_with_key( key_force_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_force_ ) = prop_force_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_width_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_width_ ) = prop_width_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_height_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_height_ ) = prop_height_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_fps_num_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_fps_num_ ) = prop_fps_num_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_fps_den_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_fps_den_ ) = prop_fps_den_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_sar_num_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_sar_num_ ) = prop_sar_num_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_sar_den_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_sar_den_ ) = prop_sar_den_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_interlace_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_interlace_ ) = prop_interlace_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_bit_rate_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_bit_rate_ ) = prop_bit_rate_.value< int >( );
 			}
 			return result;
 		}
@@ -1142,32 +1172,20 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 				frame = fetch_from_slot( );
 				frame->set_position( get_position( ) );
 
-				if ( stream_validation_ )
+				// Check the first frame here so that any unspecified properties are picked up at this point
+				if ( last_frame_ == 0 )
 				{
-					// Stream compatability and force logic is handled in the plugin implementation
-					// do nothing here and always pass through
+					matching( frame );
+					ARENFORCE_MSG( valid( frame ), "Invalid frame for encoder" );
 				}
-				else if ( prop_force_.value<int>() != 0 )
-				{
-					 ARLOG_DEBUG3( "Resetting stream on frame in encode filter, since the force property is set" );
-					 frame->get_image( );
-					 frame->set_stream( stream_type_ptr() );
-				}
-				else if( frame->get_stream( ) && ( frame->get_stream( )->codec( ) != video_codec_ ) )
-				{
-					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
-					ARLOG_DEBUG3( "Mismatching stream types: %1% and %2%, resetting stream." )( frame->get_stream( )->codec( ) )( video_codec_ );
-					frame->get_image( );
-					frame->set_stream( stream_type_ptr() );
-				}
-				   
+			   
 				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph, !stream_validation_ ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
 			last_frame_ = frame;
 		}
-		
+
 		void initialize_encoder_mapping( )
 		{
 			// Load the profile that contains the mappings between codec string and codec filter name
@@ -1201,7 +1219,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			}
 
 			vc_it = encoder_profile->find( "stream_validation" );
-			stream_validation_ = vc_it != encoder_profile->end() && vc_it->value == "1";
+			stream_validation_ = is_long_gop_ || ( vc_it != encoder_profile->end() && vc_it->value == "1" );
 			if ( stream_validation_ )
 			{
 				ARLOG_DEBUG3( "Encoder plugin is responsible for validating the stream" );
@@ -1601,7 +1619,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 				incr_ = get_position( ) >= expected_ ? 1 : -1;
 				clear( );
 				frameno_ = get_position( );
-				for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ) && frameno_ >= 0; i ++)
+				for(int i = 0; i < threads_ * 2 && frameno_ < get_frames( ) && frameno_ >= 0; i ++)
 				{
 					add_job( frameno_ );
 					frameno_ += incr_;
@@ -1612,9 +1630,9 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			frame = wait_for_available( get_position( ) );
 
 			// Add more jobs to the pool
-			int fillable = threads_ * 2 - pool_->jobs_pending( );
+			int fillable = pool_->get_number_of_idle_workers( );
 
-			if ( frameno_ >= 0 && frameno_ < get_frames( ) && fillable -- > 0 )
+			while ( frameno_ >= 0 && frameno_ < get_frames( ) && fillable -- > 0 && frameno_ <= get_position( ) + 2 * threads_ )
 			{
 				add_job( frameno_ );
 				frameno_ += incr_;
