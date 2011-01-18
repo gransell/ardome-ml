@@ -131,7 +131,7 @@
 
 #define CREATE_LOGGER( expr, the_msg ) \
 	if( !(expr) ); \
-	else olib::opencorelib::logger::make_logger() \
+	else ++olib::opencorelib::logger::make_logger() \
                  .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ).msg((the_msg)).ARLOG_A
 
 /** @def ARLOG_IF
