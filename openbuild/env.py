@@ -51,7 +51,7 @@ class Environment( BaseEnvironment ):
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
 		
-		BaseEnvironment.__init__( self, ENV = os.environ , **kw )
+		BaseEnvironment.__init__( self, ENV = os.environ , tools = ["default", "gch"], **kw )
 		
 		opts.Update( self )
 		# Remove the vs option if it is not given on the command-line.
@@ -438,7 +438,7 @@ class Environment( BaseEnvironment ):
 			self.Replace( CCFLAGS = ccflags )
 			self.Replace( CPPFLAGS = '' )
 			
-	def setup_precompiled_headers( self, sources, pre = None , nopre = None ) :
+	def setup_precompiled_headers( self, sources, pre = None , nopre = None, shared = False ) :
 		"""	Adds recompiled headers to the environment for this build.
 
 		Keyword arguments:
@@ -455,7 +455,27 @@ class Environment( BaseEnvironment ):
 			if len(pre) != 2 : raise SCons.Errors.UserError, "The pre varaible must be a tuple of (cpp-file, hpp-file)"
 			self.Append( PCHSTOP = pre[1].replace("/", os.sep ), PCH = self.PCH(pre[0])[0] )
 			if pre[0] not in sources: sources += [ pre[0] ]
-	
+		elif pre is not None and self[ 'use_gcc_pch' ] == 'yes':
+			
+			if shared:
+				self['GchSh'] = self.GchSh(pre[1])[0]
+				gch = self['GchSh']
+			else:
+				self['Gch'] = self.Gch(pre[1])[0]
+				gch = self['Gch']
+
+			pchfile = str(self.Gch(pre[1])[0])[:-4]
+			outdir = str(os.path.join( self.root, self.subst( self[ 'build_prefix' ] ), 'tmp', self.relative_path ))
+			srcdir = os.path.join(self.root, self.relative_path)
+			pch = outdir + '/' + pchfile
+
+			self.copy_files( pch, srcdir + '/' + pchfile )
+			self.Append( CCFLAGS = [ '-include', pch ] )
+
+			#-Winvalid-pch
+			for s in sources:
+				self.Depends( s, gch )
+
 	def shared_object(self, sources, **keywords ):
 		"""	Generate object files from the provided sources
 		
@@ -493,7 +513,7 @@ class Environment( BaseEnvironment ):
 		if self[ 'PLATFORM' ] == 'darwin':
 			self.Append( LINKFLAGS = [ '-Wl,-install_name', '-Wl,%slib%s.dylib' % ( self[ 'install_name' ], lib ) ] )
 
-		self.setup_precompiled_headers( sources, pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre, True )
 	
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
@@ -607,7 +627,7 @@ class Environment( BaseEnvironment ):
 		if "plugin" in dir(self.build_manager) :
 			return self.build_manager.plugin( self, lib, sources, headers, pre, nopre, *keywords )
 		
-		self.setup_precompiled_headers( sources, pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre, True )
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
@@ -622,7 +642,7 @@ class Environment( BaseEnvironment ):
 		if "program" in dir(self.build_manager) :
 			return self.build_manager.program( self, lib, sources, headers, pre, nopre, *keywords )
 			
-		self.setup_precompiled_headers( sources, pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre, False )
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
@@ -637,7 +657,7 @@ class Environment( BaseEnvironment ):
 		if "console_program" in dir(self.build_manager) : 
 			return self.build_manager.console_program( self, lib, sources, headers, pre, nopre, *keywords )
 			
-		self.setup_precompiled_headers( sources, pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre, False )
 		
 		if self[ 'PLATFORM' ] == 'win32':
 			self['PDB'] = lib + '.pdb'
@@ -731,7 +751,7 @@ class Environment( BaseEnvironment ):
 		sources.append( self.create_moc_cpp( dep_headers, pre, output_path ) )
 
 		
-		self.setup_precompiled_headers( sources, pre, nopre )
+		self.setup_precompiled_headers( sources, pre, nopre, False )
 		
 	def qt_library( self, lib, moc_files, sources, resources=None, headers=None, pre=None, nopre=None, *keywords ) : 
 		"""	Build a qt library. See shared_library in this class for a detailed description. """
