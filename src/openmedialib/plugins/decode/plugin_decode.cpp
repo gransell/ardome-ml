@@ -269,7 +269,6 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Get the audio associated to the frame.
 		virtual audio_type_ptr get_audio( )
 		{
-			if( !audio_ ) evaluate( );
 			return audio_;
 		}
 

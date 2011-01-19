@@ -511,7 +511,7 @@ static image_type_ptr yuv420p_to_bgr( const image_type_ptr &src_img, const opl::
 			while( x -- )
 			{
 				rc = lookup_v1[ *V ];
-				gc = lookup_v2[ *V ++ ] - lookup_u1[ *U ];
+				gc = lookup_v2[ *V ++ ] + lookup_u1[ *U ];
 				bc = lookup_u2[ *U ++ ];
 				yuv444_to_bgr( dst0, 1192 * ( int( *Y0 ++ ) - 16 ), rc, gc, bc );
 				yuv444_to_bgr( dst0, 1192 * ( int( *Y0 ++ ) - 16 ), rc, gc, bc );
@@ -562,7 +562,7 @@ static image_type_ptr yuv420p_to_rgb( const image_type_ptr &src_img, const opl::
 			while( x -- )
 			{
 				rc = lookup_v1[ *V ];
-				gc = lookup_v2[ *V ++ ] - lookup_u1[ *U ];
+				gc = lookup_v2[ *V ++ ] + lookup_u1[ *U ];
 				bc = lookup_u2[ *U ++ ];
 				yuv444_to_rgb( dst0, 1192 * ( int( *Y0 ++ ) - 16 ), rc, gc, bc );
 				yuv444_to_rgb( dst0, 1192 * ( int( *Y0 ++ ) - 16 ), rc, gc, bc );
