@@ -6,6 +6,7 @@ import os
 import sys
 import shutil
 from SCons.Script.SConscript import SConsEnvironment as BaseEnvironment
+from SCons.Environment import apply_tools
 import SCons.Tool
 import SCons.Script
 import utils
@@ -50,13 +51,18 @@ class Environment( BaseEnvironment ):
 			
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
-		
-		BaseEnvironment.__init__( self, ENV = os.environ , tools = ["default", "gch"], **kw )
+
+		BaseEnvironment.__init__( self, ENV = os.environ, **kw )
 		
 		opts.Update( self )
 		# Remove the vs option if it is not given on the command-line.
 		if utils.vs() == None and 'vs' in self._dict.keys( ): del self._dict['vs'] 
 		opts.Save( opts.file, self )
+
+		#Only apply the gch tool if we are to use gcc style precompiled headers,
+		#otherwise it will break pch generation for non-GCC platforms.
+		if self["use_gcc_pch"] == "yes" :
+			apply_tools(self, ["gch"], None)
 		
 		# Override the default scons hash based checking
 		self.Decider( 'MD5-timestamp' )
