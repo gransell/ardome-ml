@@ -13,7 +13,7 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-class ML_DECLSPEC filter_encode_type : public filter_simple
+class filter_encode_type : public filter_simple
 {
 	public:
 		filter_encode_type( )
