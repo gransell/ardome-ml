@@ -85,11 +85,28 @@ struct list_chunk : block { // 'list'
 
 struct label_chunk : block { // 'labl'
 	uint32_t identifier; // 'adtl' associated data list
-	char text[0]; // null terminated ANSI string
+	char text[0]; // null terminated string
 };
 
 struct marker_entry {
-	
+	uint32_t flags;
+	uint32_t sample_offset_low;
+	uint32_t sample_offset_high;
+	uint32_t byte_offset_low;
+	uint32_t byte_offset_high;
+	uint32_t intra_sample_offset_high;
+	uint32_t intra_sample_offset_low;
+	char label_text[256];
+	uint32_t label_chunk_identifier;
+	guid vendor_and_product;
+	uint32_t user_data_1;
+	uint32_t user_data_2;
+	uint32_t user_data_3;
+	uint32_t user_data_4;
+};
+
+struct marker_chunk : block { // 'r64m'
+	marker_entry markers[0];
 };
 
 
