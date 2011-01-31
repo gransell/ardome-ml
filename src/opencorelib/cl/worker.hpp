@@ -35,7 +35,7 @@ namespace olib
 			typedef olib::opencorelib::event_handler< worker *, base_job_ptr > job_done_event;
 
 			/// default constructor
-			worker();
+			worker( const t_string& name = _CT("Worker") );
 			/// Calls stop and cleans up the internal state.
 			virtual ~worker();
 
@@ -187,6 +187,9 @@ namespace olib
             boost::system_time next_timed_job_start_time() const;
 
 			void reset_current_job();
+			
+			// Name to use for this worker. If supported it will be set on the thread
+			t_string m_name;
 		};
 	}
 }
