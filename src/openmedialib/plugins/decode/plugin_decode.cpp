@@ -595,7 +595,7 @@ private:
 
 			while( !found && p + 4 < end )
 			{
-				p = ( uint8_t * )memchr( p + 2, 1, end - p );
+				p = ( boost::uint8_t * )memchr( p + 2, 1, end - p );
 				if ( p )
 				{
 					found = *( p - 2 ) == 0 && *( p - 1 ) == 0;
