@@ -505,6 +505,9 @@ class indexer : public indexer_type
 	private:
 		/// Constructor for the indexer collection
 		indexer( )
+		: mutex_( )
+		, map_( )
+		, index_read_worker_( _CT("Indexer") )
 		{
 			index_read_worker_.start( );
 		}
