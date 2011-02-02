@@ -4,6 +4,10 @@
 
 namespace aml { namespace endian {
 
+// This will basically enter a context where struct member alignment will be
+// one byte, i.e. per-byte alignment. In other words, structs will not be
+// "packed". This must be done surrounding all usage of these helper structs!
+// It is reset at the end of this file.
 #pragma pack(push, 1)
 
 template<typename T> inline T swap(const T& t);
@@ -56,6 +60,9 @@ struct same {
 	inline operator T() const {
 		return t_;
 	}
+	inline T operator*() const {
+		return t_;
+	}
 private:
 	T t_;
 };
@@ -70,6 +77,9 @@ struct opposite {
 		return *this;
 	}
 	inline operator T() const {
+		return swap(t_);
+	}
+	inline T operator*() const {
 		return swap(t_);
 	}
 private:
