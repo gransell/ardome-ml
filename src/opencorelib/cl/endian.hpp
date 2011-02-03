@@ -2,7 +2,7 @@
 #ifndef ENDIAN_H_
 #define ENDIAN_H_
 
-namespace aml { namespace endian {
+namespace olib { namespace opencorelib { namespace endian {
 
 // This will basically enter a context where struct member alignment will be
 // one byte, i.e. per-byte alignment. In other words, structs will not be
@@ -86,6 +86,18 @@ private:
 	T t_;
 };
 
+/// A class for storing arbitrary integer types as little endian in memory.
+/**	An instance of this class for a certain integer type T, will act as
+	that integer type when assigning a value to it. It can be explicitly
+	casted into its native integer type T, or implicitly by using the
+	*-operator. It can this way be treated just like a variable of type T.
+	The difference between a variable of type T and a variable of type
+	little<T> is that in memory, little<T> will always be stored in little
+	endian regardless of the host endianness.
+	An instance will take the same amount of memory as its native integer
+	type but must be wrapped around a "pragma pack" statement for this to
+	be guaranteed, just like the beginning of this file.
+	@author Gustaf R&auml;ntil&auml; */
 template<typename T> struct little
 #if BYTE_ORDER == LITTLE_ENDIAN
 : same<T> {
@@ -104,6 +116,11 @@ template<typename T> struct little
 		return *this;
 	}
 };
+
+/// A class for storing arbitrary integer types as big endian in memory.
+/**
+    This class is identical to little except data is always stored in big
+    endian in memory. */
 template<typename T> struct big
 #if BYTE_ORDER == LITTLE_ENDIAN
 : opposite<T> {
@@ -125,7 +142,7 @@ template<typename T> struct big
 
 #pragma pack(pop)
 
-} }
+} } }
 
 #endif // ENDIAN_H_
 
