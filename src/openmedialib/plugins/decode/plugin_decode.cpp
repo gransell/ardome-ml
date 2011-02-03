@@ -567,32 +567,47 @@ private:
 	int get( boost::uint8_t *p, int bit_offset, int bit_count )
 	{
 		int result = 0;
-		while( bit_count -- )
+		p += bit_offset / 8;
+		while( bit_count )
 		{
-			int byte = bit_offset / 8;
-			int bit = 7 - bit_offset % 8;
-			int bit_shifted = 1 << bit;
-			int bit_value = *( p + byte ) & bit_shifted;
-			result <<= 1;
-			result |= bit_value ? 1 : 0;
-			bit_offset ++;
+			int bits = 8 - bit_offset % 8;
+			int pattern = ( 1 << bits ) - 1;
+			boost::uint8_t value = ( *p ++ & pattern );
+			if ( bits > bit_count )
+			{
+				value = value >> ( bits - bit_count );
+				bits = bit_count;
+			}
+			result = ( result << bits ) | value;
+			bit_offset += bits;
+			bit_count -= bits;
 		}
 		return result;
 	}
-	
+
 	mpeg_start_code::type find_start( boost::uint8_t *&p, boost::uint8_t *end )
 	{
 		mpeg_start_code::type result = mpeg_start_code::undefined;
-		if ( p + 4 < end )
+
+		while ( p + 4 < end && result == mpeg_start_code::undefined )
 		{
 			bool found = false;
-			
+
 			while( !found && p + 4 < end )
 			{
-				found = ( *p == 0 && *( p + 1 ) == 0 && *( p + 2 ) == 1 );
-				p += found ? 3 : 1;
+				p = ( boost::uint8_t * )memchr( p + 2, 1, end - p );
+				if ( p )
+				{
+					found = *( p - 2 ) == 0 && *( p - 1 ) == 0;
+					p ++;
+				}
+				else
+				{
+					p = end;
+					return result;
+				}
 			}
-			
+
 			if ( found )
 			{
 				switch( *p ++ )
@@ -607,7 +622,8 @@ private:
 				}
 			}
 		}
-		else
+
+		if ( p + 4 > end )
 		{
 			p = end;
 		}

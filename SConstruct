@@ -118,7 +118,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
 		if self['PLATFORM'] == 'darwin':
-			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', '__STDC_CONSTANT_MACROS' ] )
+			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )
 		elif self['PLATFORM'] == 'posix':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX', '__STDC_CONSTANT_MACROS' ] ) 
 		elif self['PLATFORM'] == 'win32':
