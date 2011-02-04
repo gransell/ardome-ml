@@ -19,20 +19,20 @@ template<> inline uint16_t swap<uint16_t>(const uint16_t& t) {
 	return ((t & 0xff) << 8) + ((t >> 8) & 0xff);
 }
 template<> inline uint32_t swap<uint32_t>(const uint32_t& t) {
-	return (t >> 24) & 0xff
-	     | (t >>  8) & 0xff00
-	     | (t <<  8) & 0xff0000
-	     | (t << 24) & 0xff000000;
+	return ((t >> 24) & 0xff)
+	     | ((t >>  8) & 0xff00)
+	     | ((t <<  8) & 0xff0000)
+	     | ((t << 24) & 0xff000000);
 }
 template<> inline uint64_t swap<uint64_t>(const uint64_t& t) {
-	return (t >> 56) & 0xff
-	     | (t >> 40) & 0xff00
-	     | (t >> 24) & 0xff0000
-	     | (t >>  8) & 0xff000000
-	     | (t <<  8) & 0xff00000000UL
-	     | (t << 24) & 0xff0000000000UL
-	     | (t << 40) & 0xff000000000000UL
-	     | (t << 56) & 0xff00000000000000UL;
+	return ((t >> 56) & 0xff)
+	     | ((t >> 40) & 0xff00)
+	     | ((t >> 24) & 0xff0000)
+	     | ((t >>  8) & 0xff000000)
+	     | ((t <<  8) & 0xff00000000UL)
+	     | ((t << 24) & 0xff0000000000UL)
+	     | ((t << 40) & 0xff000000000000UL)
+	     | ((t << 56) & 0xff00000000000000UL);
 }
 template<> inline int8_t swap<int8_t>(const int8_t& t) {
 	return t;
@@ -53,15 +53,11 @@ struct same {
 	typedef same<T> self;
 	same() : t_() {}
 
-	inline self& operator=(const T& t) {
+	inline T get() const {
+		return t_;
+	}
+	inline void set(T t) {
 		t_ = t;
-		return *this;
-	}
-	inline operator T() const {
-		return t_;
-	}
-	inline T operator*() const {
-		return t_;
 	}
 private:
 	T t_;
@@ -72,18 +68,49 @@ struct opposite {
 	typedef opposite<T> self;
 	opposite() : t_() {}
 
-	inline self& operator=(const T& t) {
+	inline T get() const {
+		return swap(t_);
+	}
+	inline void set(T t) {
 		t_ = swap(t);
-		return *this;
-	}
-	inline operator T() const {
-		return swap(t_);
-	}
-	inline T operator*() const {
-		return swap(t_);
 	}
 private:
 	T t_;
+};
+
+template<class Super, class Base, typename T>
+struct limbo : Base {
+	using Base::get;
+	using Base::set;
+
+	inline Super& operator=(const T& t) {
+		set(t);
+		return static_cast<Super&>(*this);
+	}
+	inline operator T() const {
+		return get();
+	}
+	inline T operator*() const {
+		return get();
+	}
+
+	template<typename I> Super& operator+=(I i) {
+		set(get() + i);
+		return static_cast<Super&>(*this);
+	}
+	template<typename I> Super& operator-=(I i) {
+		set(get() - i);
+		return static_cast<Super&>(*this);
+	}
+	template<typename I> Super& operator*=(I i) {
+		set(get() * i);
+		return static_cast<Super&>(*this);
+	}
+	template<typename I> Super& operator/=(I i) {
+		set(get() / i);
+		return static_cast<Super&>(*this);
+	}
+
 };
 
 /// A class for storing arbitrary integer types as little endian in memory.
@@ -100,20 +127,16 @@ private:
 	@author Gustaf R&auml;ntil&auml; */
 template<typename T> struct little
 #if BYTE_ORDER == LITTLE_ENDIAN
-: same<T> {
+: limbo<little<T>, same<T>, T> {
 	typedef same<T> base;
 #else
-: opposite<T> {
+: limbo<little<T>, opposite<T>, T> {
 	typedef opposite<T> base;
 #endif
 	little() {
 	}
 	little(T t) {
-		this->base::operator=(t);
-	}
-	inline little<T>& operator=(const T& t) {
-		this->base::operator=(t);
-		return *this;
+		base::set(t);
 	}
 };
 
@@ -123,20 +146,16 @@ template<typename T> struct little
     endian in memory. */
 template<typename T> struct big
 #if BYTE_ORDER == LITTLE_ENDIAN
-: opposite<T> {
+: limbo<big<T>, opposite<T>, T> {
 	typedef opposite<T> base;
 #else
-: same<T> {
+: limbo<big<T>, same<T>, T> {
 	typedef same<T> base;
 #endif
 	big() {
 	}
 	big(T t) {
-		this->base::operator=(t);
-	}
-	inline big<T>& operator=(const T& t) {
-		this->base::operator=(t);
-		return *this;
+		base::set(t);
 	}
 };
 
