@@ -2,9 +2,9 @@
 #ifndef WAV_H_
 #define WAV_H_
 
-#include "endian.h"
+#include <opencorelib/cl/endian.hpp>
 
-namespace aml { namespace openmedialib { namespace riff { namespace wav {
+namespace olib { namespace openmedialib { namespace riff { namespace wav {
 
 #pragma pack(push, 1)
 
@@ -46,7 +46,7 @@ namespace aml { namespace openmedialib { namespace riff { namespace wav {
 #define SPEAKER_BITSTREAM_2_LEFT      0x02000000
 #define SPEAKER_BITSTREAM_2_RIGHT     0x04000000
 
-#define le endian::little
+#define le olib::opencorelib::endian::little
 
 struct guid {
 	le<uint32_t> data1;
@@ -59,8 +59,19 @@ struct guid {
 struct block {
 	block(const char* _type = NULL, uint32_t _size = 0) {
 		if (_type)
-			memcpy(type, _type, 4);
+			setType(_type);
 		size = _size;
+	}
+	void setType(const char* _type = NULL) {
+		size_t n = _type ? strlen(_type) : 0;
+		n = (n > 4) ? 4 : n;
+
+		type[0] = type[1] = type[2] = type[3] = 0;
+		for (size_t i = 0; i < n; ++i)
+			type[i] = _type[i];
+	}
+	bool operator==(std::string _type) {
+		return !strncmp(type, _type.c_str(), 4);
 	}
 
 	char type[4]; // 'RIFF', 'RF64', 'fmt ', 'data', ...
@@ -68,7 +79,9 @@ struct block {
 };
 
 struct wave : block { // 'RIFF' or 'RF64'
-	wave(const char* type = "RIFF") : block(type) {}
+	wave(const char* type = "RIFF") : block(type) {
+		memcpy(riff_type, "WAVE", 4);
+	}
 
 	char riff_type[4]; // 'WAVE'
 };
@@ -79,8 +92,16 @@ struct junk : block {
 	char dummy[0];
 };
 
+template<class T>
+struct as_junk : block {
+	as_junk() : block("JUNK", sizeof(T) - sizeof(block)) {}
+
+	char dummy[sizeof(T) - sizeof(block)];
+};
+
 struct fmt_base : block {
-	fmt_base(uint32_t size = 22) : block("fmt ", size + 18), cb_size(size) {}
+	fmt_base(uint32_t size = 0)
+	: block("fmt ", size + 16) {}
 
 	le<uint16_t> format_type;
 	le<uint16_t> channel_count;
@@ -88,14 +109,21 @@ struct fmt_base : block {
 	le<uint32_t> bytes_per_second;
 	le<uint16_t> block_alignment;
 	le<uint16_t> bits_per_sample;
-	le<uint16_t> cb_size;
 };
 
 struct fmt_generic : fmt_base {
+	fmt_generic() : fmt_base(24), cb_size(22) {}
+
+	le<uint16_t> cb_size;
+
 	char extra_data[22];
 };
 
 struct fmt_format_extensible : fmt_base { // 'fmt ' when FORMAT_EXTENSIBLE
+	fmt_format_extensible() : fmt_base(24), cb_size(22) {}
+
+	le<uint16_t> cb_size;
+
 	le<uint16_t> valid_bits_per_sample;
 	le<uint32_t> channel_mask;
 	guid sub_format;
@@ -133,7 +161,7 @@ struct cue_point {
 
 struct cue_chunk : block { // 'cue '
 	cue_chunk(size_t num_cues = 0)
-	: block("cue ", 4 + cues * sizeof(cue_point)) {}
+	: block("cue ", 4 + num_cues * sizeof(cue_point)) {}
 
 	le<uint32_t> cue_point_count;
 	cue_point cue_points[0];
@@ -183,7 +211,7 @@ struct marker_chunk : block { // 'r64m'
 struct data : block {
 	data(uint32_t size = 0xffffffff) : block("data", size) {}
 
-	char data[0];
+	char pdata[0];
 };
 
 /*
@@ -200,17 +228,17 @@ namespace bwf {
 struct bext_chunk : block { // 'bext', size == 752
 	bext_chunk() : block("bext", 752) {}
 
-	char description[256]; // ASCII: Description of the sound sequence
-	char originator[32]; // ASCII: Name of the originator
-	char originator_reference[32]; // ASCII: Reference of the originator
-	char origination_date[10]; // ASCII: yyyy-mm-dd
-	char origination_time[8]; // ASCII: hh-mm-ss
-	le<uint32_t> time_reference_low; // First sample count since midnight low word
-	le<uint32_t> time_reference_high; // First sample count since midnight, high word
-	le<uint16_t> Version; // Version of the BWF; unsigned binary number
-	char umid[64]; // SMPTE UMID
-	char reserved[190]; // 190 bytes, reserved for future use, set to '\0'
-	char CodingHistory[150]; /* ASCII : « History coding » */
+	char description[256];      // ASCII: Description of the sound sequence
+	char originator[32];        // ASCII: Name of the originator
+	char originator_ref[32];    // ASCII: Reference of the originator
+	char origination_date[10];  // ASCII: yyyy-mm-dd
+	char origination_time[8];   // ASCII: hh-mm-ss
+	le<uint32_t> time_ref_low;  // First sample count since midnight
+	le<uint32_t> time_ref_high; // First sample count since midnight
+	le<uint16_t> Version;       // Version of BWF; unsigned binary number
+	char umid[64];              // SMPTE UMID
+	char reserved[190];         // Reserved for future use, set to '\0'
+	char CodingHistory[150];    // ASCII: History coding
 };
 
 } // namespace bwf

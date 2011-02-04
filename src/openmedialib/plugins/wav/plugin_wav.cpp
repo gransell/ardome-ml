@@ -19,6 +19,8 @@ extern "C" {
 #include <libavformat/avio.h>
 }
 
+#include "store_wav.hpp"
+
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
@@ -345,7 +347,8 @@ public:
 
 	virtual store_type_ptr store( const pl::wstring &spec, const frame_type_ptr &frame )
 	{
-		return store_type_ptr( );
+std::cerr << "Loading plugin..." << std::endl;
+		return create_store_wav( spec );
 	}
 
 	virtual filter_type_ptr filter( const pl::wstring & )

@@ -5,6 +5,6 @@
 Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'libavformat', 'boost_date_time', 'boost_system' )
-object = local_env.plugin( 'openmedialib_wav', [ 'plugin_wav.cpp' ] )
+object = local_env.plugin( 'openmedialib_wav', [ 'plugin_wav.cpp', 'store_wav.cpp' ] )
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_wav.opl' ] )
 Return( 'object' )
