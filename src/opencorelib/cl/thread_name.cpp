@@ -18,7 +18,7 @@ namespace olib { namespace opencorelib {
 		void set_thread_name_internal( const char *name )
 		{
             // This function is only available on 10.6 and above
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 			pthread_setname_np( name );
 #endif
 		}
