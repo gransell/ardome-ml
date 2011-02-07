@@ -1,6 +1,9 @@
 
 #include "store_wav.hpp"
 
+#include <opencorelib/cl/logger.hpp>
+#include <opencorelib/cl/enforce.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/packet.hpp>
 
@@ -13,7 +16,6 @@ using boost::uint64_t;
 
 store_wav::store_wav(const pl::wstring &resource)
 	: ml::store_type()
-	, initialized_(false)
 	, file_(NULL)
 	, writeonly(true)
 	, resource_(resource)
@@ -25,11 +27,13 @@ store_wav::store_wav(const pl::wstring &resource)
 	, bytes_per_sample(0)
 	, frequency(0)
 	, channels(0)
-	, samples(0)
+	, accumulated_samples(0)
 	, real_bytes_per_sample(0)
 
 {
-std::cerr << "wav: store_wav::store_wav(" << pl::to_string(resource_) << ")" << std::endl;
+	std::string resource_name = pl::to_string(resource_);
+	ARLOG_DEBUG("store_wav::store_wav(\"%s\")")(resource_name.c_str());
+
 	properties( ).append( prop_enabled_ = 1 );
 	properties( ).append( prop_count_ = 1 );
 	properties( ).append( prop_deferrable_ = 1 );
@@ -37,29 +41,29 @@ std::cerr << "wav: store_wav::store_wav(" << pl::to_string(resource_) << ")" << 
 
 store_wav::~store_wav()
 {
-std::cerr << "wav: store_wav::~store_wav()" << std::endl;
+	ARLOG_DEBUG3("store_wav::~store_wav()");
 	closeFile();
 }
 
 bool store_wav::init()
 {
-std::cerr << "wav: store_wav::init()" << std::endl;
+	ARLOG_DEBUG2("store_wav::init()");
 	return true;
 }
 
 void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 {
-std::cerr << "wav: store_wav::initializeFirstFrame()" << std::endl;
+	ARLOG_DEBUG2("store_wav::initializeFirstFrame()");
+
 	std::string resource = pl::to_string(resource_);
 	if (resource.find("wav:") == 0) {
 		resource = resource.substr(4);
 		size_t ext = resource.rfind('.');
-		if (ext == std::string::npos || ext < resource.size() - 4)
+		if (ext == std::string::npos || ext < resource.size() - 5)
 			// Append a ".wav" extension
-			resource += ".wav";
+			if (false) // Apply if wanted
+				resource += ".wav";
 	}
-
-std::cerr << "wav: filename will be: " << resource << std::endl;
 
 	olib::openmedialib::ml::stream_type_ptr s(frame->get_stream());
 	ml::audio_type_ptr audio(frame->get_audio());
@@ -69,23 +73,27 @@ std::cerr << "wav: filename will be: " << resource << std::endl;
 	bytes_per_sample      = audio->sample_size();
 	frequency             = audio->frequency();
 	channels              = audio->channels();
-	samples               = audio->samples();
+	// This is just the number of samples within this frame_type_ptr
+	// samples               = audio->samples();
 	real_bytes_per_sample = bytes_per_sample;
 
-	if (ident == ml::audio::pcm8_id)
-		real_bytes_per_sample = 1;
-	else if (ident == ml::audio::pcm16_id)
-		real_bytes_per_sample = 2;
-	else if (ident == ml::audio::pcm24_id)
-		real_bytes_per_sample = 3;
-	else if (ident == ml::audio::pcm32_id ||
-	         ident == ml::audio::float_id)
-		real_bytes_per_sample = 4;
+	switch (ident) {
+		case ml::audio::pcm8_id:
+			real_bytes_per_sample = 1;
+		case ml::audio::pcm16_id:
+			real_bytes_per_sample = 2;
+		case ml::audio::pcm24_id:
+			real_bytes_per_sample = 3;
+		case ml::audio::pcm32_id:
+		case ml::audio::float_id:
+			real_bytes_per_sample = 4;
+	};
+
+	// Allocate headers, we'll write them down to file as they are
 
 	riff::wav::wave w;
 	riff::wav::fmt_base fmt;
-	riff::wav::ds64 ds64;
-	riff::wav::as_junk<riff::wav::ds64> junk; // either this or ds64
+	riff::wav::ds64 ds64; // Will be transformed into JUNK if necessary
 	riff::wav::bwf::bext_chunk bext;
 	riff::wav::data data;
 
@@ -98,25 +106,31 @@ std::cerr << "wav: filename will be: " << resource << std::endl;
 	fmt.block_alignment  = real_bytes_per_sample * channels;
 	fmt.bits_per_sample  = real_bytes_per_sample * 8;
 
+	// Figure out the total clip length. If we can do this, we can write a
+	// proper header right now. Otherwise we'll need to fix the header
+	// afterwords.
+
+	int samples = 0;
 	int count = -1;
 	try {
 		//count = property("count").value<int>();
 	} catch (...) {}
 
-	w.size = 4 // 'WAVE'
-	       + sizeof(fmt)
-	       + sizeof(junk)
-	    // + sizeof(bext)
-	       + sizeof(data)
-	       + 0; // data bytes; we don't know
+	uint64_t header_size =
+		  sizeof(w)
+		+ sizeof(fmt)
+		+ sizeof(ds64)
+		// + sizeof(bext)
+		+ sizeof(data)
+		+ 0; // data bytes; we don't know
 
-	writeonly = (count >= 0);
+	writeonly = (samples >= 0);
 
 	if (!file_) {
 		file_ = fopen(resource.c_str(), writeonly ? "wb" : "w+b");
 	}
 
-	if (count == 0) {
+	if (samples == 0) {
 		// We don't know total length, will use junk
 		// block to allocate space for a ds64 block if
 		// needed when reconstructing the header.
@@ -124,60 +138,39 @@ std::cerr << "wav: filename will be: " << resource << std::endl;
 	} else {
 		// We know length hence can set everything
 
-		w.size += samples * fmt.block_alignment;
-
-		if (rf64) {
-			w.setType("RF64");
-
-			//ds64. ... = ;
-		} else {
-			data.size = samples * fmt.block_alignment;
-		}
-
 		;
 	}
 
-#			define Write(block) \
+	setupHeaders(w, fmt, ds64, data,
+		samples * (uint64_t)fmt.block_alignment,
+		header_size,
+		samples);
+
+#	define Write(block) \
 		fwrite(&block, sizeof(block), 1, file_)
 
 	Write(w);
 	Write(fmt);
-	rf64 ? Write(ds64) : Write(junk);
+	Write(ds64);
 	// Write(bext);
 	Write(data);
 }
 
 bool store_wav::push(ml::frame_type_ptr frame)
 {
-std::cerr << "wav: store_wav::push()" << std::endl;
-
-	if (!frame) {
-		// What?
-		std::cerr << "store_wav::push(): frame is null?" << std::endl;
-		return false;
-	}
-
-	if (!initialized_) {
-		// This is the first frame, parse stream and
-		// write header.
-		initializeFirstFrame(frame);
-		initialized_ = true;
-	}
+	ARLOG_DEBUG5("store_wav::push()");
+	ARENFORCE_MSG( frame, "store_wav::push(): Frame is NULL?!" );
 
 	ml::audio_type_ptr audio(frame->get_audio());
 
 	// Add total number of parsed samples
-	samples += audio->samples();
+	accumulated_samples += audio->samples();
 
-std::cerr << "wav: store_wav::push(): samples=" << audio->samples() << std::endl;
+	ARLOG_DEBUG6("store_wav::push(): %d audio samples in this frame")(audio->samples());
 
 	if (real_bytes_per_sample != bytes_per_sample) {
 		// This happens only for 24 bits per second, stored as 4 bytes
-		if (bytes_per_sample != 4) {
-			std::cerr << "store_wav::push(): Format not supported" << std::endl;
-			return false;
-			//throw;
-		}
+		ARENFORCE_MSG( bytes_per_sample == 4, "Cannot understand audio sample format" );
 
 		uint32_t* p = (uint32_t*)audio->pointer();
 		uint32_t* end = p + (audio->size() / 4);
@@ -188,66 +181,46 @@ std::cerr << "wav: store_wav::push(): samples=" << audio->samples() << std::endl
 		}
 	} else
 		// Save the bytes just as they are
+		// NOTE: This requires the internal audio to be little endian!
 		fwrite(audio->pointer(), 1, audio->size(), file_);
 
 	return true;
-
-	if ( frame && prop_enabled_.value< int >( ) )
-	{
-/*
-		std::cout << "--------------------------------------------------------------------------------" << std::endl;
-		std::deque< ml::frame_type_ptr > queue = ml::frame_type::unfold( frame );
-		for( std::deque< ml::frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); iter ++ )
-		{
-			frame_report_basic( *iter );
-			frame_report_image( *iter );
-			frame_report_alpha( *iter );
-			frame_report_audio( *iter );
-			frame_report_props( *iter );
-		}
-*/
-	}
-	else if ( prop_enabled_.value< int >( ) )
-	{
-		std::cerr << "wav: No frame received.\n" << std::endl;
-	}
-	prop_count_.set< int >( prop_count_.value< int >( ) - 1 );
-	return prop_count_.value< int >( ) != 0;
 }
 
 ml::frame_type_ptr store_wav::flush()
 {
-std::cerr << "wav: store_wav::flush()" << std::endl;
+	ARLOG_DEBUG6("store_wav::flush()");
 	return ml::frame_type_ptr( );
 }
 
 void store_wav::complete()
 {
-std::cerr << "wav: store_wav::complete()" << std::endl;
+	ARLOG_DEBUG2("store_wav::complete()");
 	closeFile();
 }
 
 // Rewinds the file pointer, goes through the header and rewrites the
 // necessary parts.
 void store_wav::vitalizeHeader() {
-std::cerr << "wav: store_wav::vitalizeHeader()" << std::endl;
+	ARLOG_DEBUG("store_wav::vitalizeHeader()");
 
 	if (writeonly)
 		// File is opened for streaming output, we aren't allowed to
 		// rewind it.
 		return;
 
-	if (fseek(file_, 0, SEEK_END))
-		return;
+	ARENFORCE_MSG( fseek(file_, 0, SEEK_END) , "Could not seek in file" );
 
-	long filelen = ftell(file_);
+	long s_filelen = ftell(file_);
+	ARENFORCE_MSG( s_filelen != -1 , "Could not get file size" );
+
+	uint64_t filelen = (uint64_t)s_filelen;
 	rewind(file_);
 
 	size_t offset = 0;
 	std::vector<uint8_t> buf(4096);
 
-	if (!fread(&buf[0], 1, buf.size(), file_))
-		return;
+	ARENFORCE_MSG( fread(&buf[0], 1, buf.size(), file_) > 0 , "Could not read file" );
 
 	riff::wav::block* blk = NULL;
 	riff::wav::wave* wave = NULL;
@@ -298,19 +271,17 @@ std::cerr << "wav: store_wav::vitalizeHeader()" << std::endl;
 		offset += blk->size + 8;
 	}
 
-	if (!data || !fmt)
-		return;
+	ARENFORCE_MSG( wave && fmt && ds64 && data , "Could not find all necessary blocks in file" );
 
 	// Header size
-	long headerlen = ((uint8_t*)data - &buf[0]) - sizeof(*data);
+	uint64_t headerlen = ((uint8_t*)data - &buf[0]) - sizeof(*data);
+
+	ARENFORCE_MSG( filelen >= headerlen , "File is broken" );
 
 	// Number of samples
-	long nsamples = filelen - headerlen;
+	uint64_t nbytes = filelen - headerlen;
 
-	// Number of bytes to store all samples
-	long nbytes = nsamples * fmt->block_alignment;
-
-	rf64 = (nbytes + headerlen > 0xffffffffUL);
+	setupHeaders(*wave, *fmt, *ds64, *data, nbytes, headerlen, accumulated_samples);
 
 #define Save(block) \
 	do { \
@@ -318,20 +289,58 @@ std::cerr << "wav: store_wav::vitalizeHeader()" << std::endl;
 		fwrite(block, sizeof(*block), 1, file_); \
 	} while(0)
 
-	if (!rf64) {
-		wave->size = nbytes + headerlen - 8;
-		Save(wave);
+	Save(wave);
+	Save(fmt);
+	Save(ds64);
+	Save(data);
+}
 
-		data->size = nbytes;
-		Save(data);
+static uint32_t getLo(uint64_t val) {
+	return (uint32_t)(val && 0xffffffffUL);
+}
+static uint32_t getHi(uint64_t val) {
+	return (uint32_t)((val >> 32) && 0xffffffffUL);
+}
+
+void store_wav::setupHeaders(
+		riff::wav::wave& wave,
+		riff::wav::fmt_base& fmt,
+		riff::wav::ds64& ds64,
+		riff::wav::data& data,
+		uint64_t nbytes_of_samples,
+		uint64_t headerlen,
+		uint64_t nsamples) {
+
+	uint64_t size = nbytes_of_samples + headerlen;
+	rf64 = size > 0xffffffffUL;
+
+	wave.setType(rf64 ? "RF64" : "RIFF");
+	ds64.setType(rf64 ? "ds64" : "JUNK");
+
+	if (rf64) {
+		wave.size = 0xffffffff;
+		data.size = 0xffffffff;
+
+		ds64.riff_size_low     = getLo(size - 8);
+		ds64.riff_size_high    = getHi(size - 8);
+		ds64.data_size_low     = getLo(nbytes_of_samples);
+		ds64.data_size_high    = getHi(nbytes_of_samples);
+		ds64.sample_count_low  = getLo(nsamples);
+		ds64.sample_count_high = getHi(nsamples);
+		ds64.table_length = 0;
+	} else {
+		wave.size = size - 8;
+		data.size = nbytes_of_samples;
 	}
 }
 
 void store_wav::closeFile() {
-std::cerr << "wav: store_wav::closeFile()" << std::endl;
+	ARLOG_DEBUG3("store_wav::closeFile()");
+
 	if (file_) {
-		if (samples) {
-			// We have successfully saved samples, but not 
+		if (accumulated_samples) {
+			// We have successfully saved samples, but perhaps not
+			// a valid header. Rewrite if necessary.
 			vitalizeHeader();
 		}
 

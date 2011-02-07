@@ -347,8 +347,9 @@ public:
 
 	virtual store_type_ptr store( const pl::wstring &spec, const frame_type_ptr &frame )
 	{
-std::cerr << "Loading plugin..." << std::endl;
-		return ml::store_type_ptr(new store_wav(spec));
+		store_wav* s = new store_wav( spec );
+		s->initializeFirstFrame(frame);
+		return store_type_ptr( s );
 	}
 
 	virtual filter_type_ptr filter( const pl::wstring & )

@@ -26,23 +26,31 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 {
 	public:
 		store_wav(const pl::wstring &resource);
-		virtual ~store_wav();
+		/*virtual*/ ~store_wav();
 
-		virtual bool init();
+		/*virtual*/ bool init();
 
 		void initializeFirstFrame(ml::frame_type_ptr frame);
 
-		virtual bool push(ml::frame_type_ptr frame);
+		/*virtual*/ bool push(ml::frame_type_ptr frame);
 
-		virtual ml::frame_type_ptr flush();
+		/*virtual*/ ml::frame_type_ptr flush();
 
-		virtual void complete();
+		/*virtual*/ void complete();
 
 	protected:
+		void setupHeaders(
+			riff::wav::wave&     wave,
+			riff::wav::fmt_base& fmt,
+			riff::wav::ds64&     ds64,
+			riff::wav::data&     data,
+			uint64_t             nbytes_of_samples,
+			uint64_t             headerlen,
+			uint64_t             nsamples);
+
 		void vitalizeHeader();
 		void closeFile();
 
-		bool initialized_;
 		FILE* file_;
 		bool writeonly;
 		pl::wstring resource_;
@@ -56,7 +64,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 		int bytes_per_sample;
 		int frequency;
 		int channels;
-		int samples;
+		int accumulated_samples;
 		int real_bytes_per_sample;
 
 };
