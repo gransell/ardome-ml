@@ -148,7 +148,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 	public:
 		/// Constructor
 		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, bool validated = true )
-			: ml::frame_type( *other )
+			: ml::frame_type( other.get( ) )
 			, parent_( other )
 			, frames_( frames )
 			, pool_holder_( new filter_pool_holder( pool_token ) )
@@ -215,7 +215,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
-		virtual frame_type_ptr shallow( )
+		virtual frame_type_ptr shallow( ) const
 		{
 			ml::frame_type_ptr clone( new frame_lazy( this, parent_->shallow() ) );
 			return clone;
@@ -295,7 +295,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 	protected:
 		
 		frame_lazy( const frame_lazy *org, const frame_type_ptr &other )
-			: ml::frame_type( *org )
+			: ml::frame_type( org )
 			, parent_( other )
 			, frames_( org->frames_ )
 			, pool_holder_( org->pool_holder_ )

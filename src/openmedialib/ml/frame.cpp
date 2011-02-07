@@ -24,7 +24,7 @@ frame_type::frame_type( )
 	, queue_( )
 { }
 
-frame_type::frame_type( frame_type_ptr other )
+frame_type::frame_type( const frame_type *other )
 	: stream_( other->stream_ )
 	, image_( other->image_ )
 	, alpha_( other->alpha_ )
@@ -42,22 +42,22 @@ frame_type::frame_type( frame_type_ptr other )
 	properties_ = *clone.get( );
 	if ( audio_ )
 		audio_ = other->audio_->clone( );
-	for ( std::deque< ml::frame_type_ptr >::iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
+	for ( std::deque< ml::frame_type_ptr >::const_iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
 		queue_.push_back( ( *iter )->shallow( ) );
 }
 
 frame_type::~frame_type( ) 
 { }
 
-frame_type_ptr frame_type::shallow( )
+frame_type_ptr frame_type::shallow( ) const
 {
-	return frame_type_ptr( new frame_type( *this ) );
+	return frame_type_ptr( new frame_type( this ) );
 }
 
 frame_type_ptr frame_type::deep( )
 {
 	frame_type_ptr result;
-	frame_type *copy = new frame_type( *this );
+	frame_type *copy = new frame_type( this );
 	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
 	copy->properties_ = *clone.get( );
 	if ( image_ )
