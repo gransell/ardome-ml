@@ -95,6 +95,11 @@ namespace olib
 
 			/// Will return false in debug build and true in release build.
 			static bool always_fail();
+			
+			void operator++( )
+			{
+				// Silence compiler warning
+			}
         
         private:
             assert_level::severity m_level;

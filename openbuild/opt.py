@@ -37,6 +37,7 @@ def create_options( file, args ):
 	opts.Add( 'target', 'Target operating system and build environment.', target, validate_target )
 	opts.Add( 'prefix', 'Directory for installation.', '/usr/local' )
 	opts.Add( 'distdir', 'Directory to actually install to.  Prefix will be used inside this.', '' )
+	opts.Add( 'use_gcc_pch', 'Enable GCC Pre-compiled headers.', 'no' )
 	if os.name == 'win32' or os.name == 'nt' :
 		desc = 'Will create Visual Studio vcproj and sln-files instead of building. Do not specify target. Valid values: %s' % ( str(valid_vs_targets) )
 		opts.Add( 'vs', desc, '', validate_vs_value )

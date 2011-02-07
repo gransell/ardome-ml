@@ -39,7 +39,7 @@ namespace olib
             }
 
         private:
-            boost::uint32_t m_gui_thread_id;
+            boost::uint64_t m_gui_thread_id;
         };
         
         invoker_ptr create_invoker_mac()

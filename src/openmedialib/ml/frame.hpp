@@ -27,23 +27,7 @@ class ML_DECLSPEC frame_type
 		explicit frame_type( );
 
 		/// Copy constructor from a frame_type_ptr
-		frame_type( frame_type_ptr other )
-			: properties_( other->properties_ )
-			, stream_( other->stream_ )
-			, image_( other->image_ )
-			, alpha_( other->alpha_ )
-			, audio_( other->audio_ )
-			, pts_( other->pts_ )
-			, position_( other->position_ )
-			, duration_( other->duration_ )
-			, sar_num_( other->sar_num_ )
-			, sar_den_( other->sar_den_ )
-			, fps_num_( other->fps_num_ )
-			, fps_den_( other->fps_den_ )
-			, queue_( other->queue_ )
-			, exceptions_( other->exceptions_ )
-		{
-		}
+		frame_type( frame_type_ptr other );
 
 		/// Destructor
 		virtual ~frame_type( );

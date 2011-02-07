@@ -7,3 +7,4 @@ Requires: boost
 
 Libs:	-lboost_python-mt-py26
 
+install_libs=${prefix}/lib/libboost_python*-mt*.so*

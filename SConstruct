@@ -60,21 +60,10 @@ class AMLEnvironment( openbuild.env.Environment ):
 			if os.path.exists( 'bcomp/sdl' ):
 				self.install_config( 'config/linux32/sdl.pc', 'bcomp/sdl' )
 		elif self[ 'target' ] == 'linux64':
-			self.install_config( 'config/linux64/boost.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_date_time.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_filesystem.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_python.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_regex.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_signals.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_thread.pc', 'bcomp/boost' )
-			self.install_config( 'config/linux64/boost_unit_test_framework.pc', 'bcomp/boost' )
 			self.install_config( 'config/linux64/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux64/xerces.pc', 'bcomp/xercesc' )
-			self.install_config( 'config/linux64/libavcodec.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/linux64/libavdevice.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/linux64/libavformat.pc', 'bcomp/ffmpeg' )
-			self.install_config( 'config/linux64/libavutil.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/linux64/sdl.pc', 'bcomp/sdl' )
+			self.install_config( 'config/linux64/ffmpeg.pc', 'bcomp/ffmpeg' )
 
 	def configure_platform( self ):
 		self[ 'stage_ast' ] = os.path.join( '$stage_prefix', 'asts' )

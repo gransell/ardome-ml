@@ -515,6 +515,13 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		{
 		}
 
+		frame_avformat( const frame_avformat *other )
+			: ml::frame_type( *other )
+			, queue_( other->queue_ )
+			, original_position_( other->original_position_ )
+		{
+		}
+
 		/// Destructor
 		virtual ~frame_avformat( )
 		{
@@ -523,7 +530,7 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			return frame_type_ptr( new frame_avformat( frame_type::shallow( ), queue_ ) );
+			return frame_type_ptr( new frame_avformat( this ) );
 		}
 
 		/// Provide a deepy copy of the frame (and a shallow copy of all attached frames)

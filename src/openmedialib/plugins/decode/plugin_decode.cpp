@@ -13,6 +13,7 @@
 #include <opencorelib/cl/log_defines.hpp>
 #include <opencorelib/cl/uuid_16b.hpp>
 #include <opencorelib/cl/str_util.hpp>
+#include <openmedialib/ml/filter_encode.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -35,7 +36,17 @@ namespace cl = olib::opencorelib;
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
 static pl::pcos::key key_length_ = pl::pcos::key::from_string( "length" );
+static pl::pcos::key key_force_ = pl::pcos::key::from_string( "force" );
+static pl::pcos::key key_width_ = pl::pcos::key::from_string( "width" );
+static pl::pcos::key key_height_ = pl::pcos::key::from_string( "height" );
+static pl::pcos::key key_fps_num_ = pl::pcos::key::from_string( "fps_num" );
+static pl::pcos::key key_fps_den_ = pl::pcos::key::from_string( "fps_den" );
+static pl::pcos::key key_sar_num_ = pl::pcos::key::from_string( "sar_num" );
+static pl::pcos::key key_sar_den_ = pl::pcos::key::from_string( "sar_den" );
+static pl::pcos::key key_interlace_ = pl::pcos::key::from_string( "interlace" );
+static pl::pcos::key key_bit_rate_ = pl::pcos::key::from_string( "bit_rate" );
 static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
+static pl::pcos::key key_instances_ = pl::pcos::key::from_string( "instances" );
 
 class filter_pool
 {
@@ -112,9 +123,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		class filter_pool_holder
 		{
 		public:
-			filter_pool_holder( const ml::filter_type_ptr &filter, filter_pool *pool )
-			: filter_(filter)
-			, pool_( pool )
+			filter_pool_holder( filter_pool *pool )
+			: pool_( pool )
 			{ }
 
 			virtual ~filter_pool_holder()
@@ -137,11 +147,11 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, ml::filter_type_ptr filter, bool validated = true )
+		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, bool validated = true )
 			: ml::frame_type( *other )
 			, parent_( other )
 			, frames_( frames )
-			, pool_holder_( new filter_pool_holder( filter, pool_token ) )
+			, pool_holder_( new filter_pool_holder( pool_token ) )
 			, validated_( validated )
 			, evaluated_( false )
 		{
@@ -163,7 +173,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				{
 					ml::input_type_ptr pusher = filter->fetch_slot( 0 );
 
-					other->get_image( );
+					//other->get_image( );
 
 					if ( pusher == 0 )
 					{
@@ -183,11 +193,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					other = filter->fetch( );
 				}
 
-				image_ = other->get_image( );
+				if ( other->get_image( ) )
+					image_ = other->get_image( );
 				alpha_ = other->get_alpha( );
 				audio_ = other->get_audio( );
 				//properties_ = other->properties( );
-				stream_ = other->get_stream( );
+				if ( other->get_stream( ) )
+					stream_ = other->get_stream( );
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
 				//sar_num_ = other->get_sar_num( );
@@ -205,17 +217,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Provide a shallow copy of the frame (and all attached frames)
 		virtual frame_type_ptr shallow( )
 		{
-			ml::frame_type_ptr inner_copy;
-			//If we have already been evaluated, we should no use the parent_ frame
-			//anymore, since that will not necessarily have the decoded image set on it,
-			//but we will have that on this frame already.
-			if( evaluated_ )
-				inner_copy = frame_type::shallow();
-			else
-				inner_copy = parent_->shallow();
-
-			ml::frame_type_ptr clone( new frame_lazy( inner_copy, frames_, inner_copy, pool_holder_, validated_ ) );
-			clone->set_position( get_position() );
+			ml::frame_type_ptr clone( new frame_lazy( this, parent_->shallow() ) );
 			return clone;
 		}
 
@@ -281,7 +283,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 		virtual stream_type_ptr get_stream( )
 		{
-			if( !stream_ || !validated_ ) evaluate( );
+			if( !evaluated_ ) evaluate( );
 			return stream_;
 		}
 
@@ -292,13 +294,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	protected:
 		
-		frame_lazy( const frame_type_ptr &org, int frames, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool validated )
+		frame_lazy( const frame_lazy *org, const frame_type_ptr &other )
 			: ml::frame_type( *org )
 			, parent_( other )
-			, frames_( frames )
-			, pool_holder_( pool_holder )
-			, validated_( validated )
-			, evaluated_( false )
+			, frames_( org->frames_ )
+			, pool_holder_( org->pool_holder_ )
+			, validated_( org->validated_ )
+			, evaluated_( org->evaluated_ )
 		{
 		}
 
@@ -556,32 +558,47 @@ private:
 	int get( boost::uint8_t *p, int bit_offset, int bit_count )
 	{
 		int result = 0;
-		while( bit_count -- )
+		p += bit_offset / 8;
+		while( bit_count )
 		{
-			int byte = bit_offset / 8;
-			int bit = 7 - bit_offset % 8;
-			int bit_shifted = 1 << bit;
-			int bit_value = *( p + byte ) & bit_shifted;
-			result <<= 1;
-			result |= bit_value ? 1 : 0;
-			bit_offset ++;
+			int bits = 8 - bit_offset % 8;
+			int pattern = ( 1 << bits ) - 1;
+			boost::uint8_t value = ( *p ++ & pattern );
+			if ( bits > bit_count )
+			{
+				value = value >> ( bits - bit_count );
+				bits = bit_count;
+			}
+			result = ( result << bits ) | value;
+			bit_offset += bits;
+			bit_count -= bits;
 		}
 		return result;
 	}
-	
+
 	mpeg_start_code::type find_start( boost::uint8_t *&p, boost::uint8_t *end )
 	{
 		mpeg_start_code::type result = mpeg_start_code::undefined;
-		if ( p + 4 < end )
+
+		while ( p + 4 < end && result == mpeg_start_code::undefined )
 		{
 			bool found = false;
-			
+
 			while( !found && p + 4 < end )
 			{
-				found = ( *p == 0 && *( p + 1 ) == 0 && *( p + 2 ) == 1 );
-				p += found ? 3 : 1;
+				p = ( boost::uint8_t * )memchr( p + 2, 1, end - p );
+				if ( p )
+				{
+					found = *( p - 2 ) == 0 && *( p - 1 ) == 0;
+					p ++;
+				}
+				else
+				{
+					p = end;
+					return result;
+				}
 			}
-			
+
 			if ( found )
 			{
 				switch( *p ++ )
@@ -596,7 +613,8 @@ private:
 				}
 			}
 		}
-		else
+
+		if ( p + 4 > end )
 		{
 			p = end;
 		}
@@ -977,7 +995,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			{
 				if ( !frame ) frame = fetch_from_slot( );
 				ml::filter_type_ptr graph;
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
 		
 			last_frame_ = frame;
@@ -997,40 +1015,38 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		}
 };
 
-class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_pool
+class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filter_pool
 {
 	private:
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_profile_;
-		pl::pcos::property prop_force_;
+		pl::pcos::property prop_instances_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_encoder_;
 		bool is_long_gop_;
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr profile_to_encoder_mappings_;
-		std::string video_codec_;
 		bool stream_validation_;
  
 	public:
 		filter_encode( )
-			: filter_simple( )
+			: filter_encode_type( )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
-			, prop_force_( pl::pcos::key::from_string( "force" ) )
+			, prop_instances_( pl::pcos::key::from_string( "instances" ) )
 			, decoder_( )
 			, gop_encoder_( )
 			, is_long_gop_( false )
 			, last_frame_( )
 			, profile_to_encoder_mappings_( )
-			, video_codec_( )
 			, stream_validation_( false )
 		{
 			// Default to something. Will be overriden anyway as soon as we init
 			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
 			// Default to something. Should be overriden anyway.
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
-			properties( ).append( prop_force_ = int( 0 ) );
+			properties( ).append( prop_instances_ = 4 );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
@@ -1060,9 +1076,9 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
 				"Encode filter must have a profile property" );
 			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< pl::wstring >( );
-			
-			if( encode->properties( ).get_property_with_string( "force" ).valid( ) ) 
-				encode->properties( ).get_property_with_string( "force" ) = prop_force_.value< int >( );
+
+			if ( encode->properties( ).get_property_with_key( key_instances_ ).valid( ) )
+				encode->properties( ).get_property_with_key( key_instances_ ) = prop_instances_.value< int >( );
 			
 			return encode;
 		}
@@ -1082,6 +1098,25 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 				{
 					result = filter_create( );
 				}
+
+				if( result->properties( ).get_property_with_key( key_force_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_force_ ) = prop_force_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_width_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_width_ ) = prop_width_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_height_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_height_ ) = prop_height_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_fps_num_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_fps_num_ ) = prop_fps_num_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_fps_den_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_fps_den_ ) = prop_fps_den_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_sar_num_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_sar_num_ ) = prop_sar_num_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_sar_den_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_sar_den_ ) = prop_sar_den_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_interlace_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_interlace_ ) = prop_interlace_.value< int >( );
+				if( result->properties( ).get_property_with_key( key_bit_rate_ ).valid( ) ) 
+					result->properties( ).get_property_with_key( key_bit_rate_ ) = prop_bit_rate_.value< int >( );
 			}
 			return result;
 		}
@@ -1142,32 +1177,24 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 				frame = fetch_from_slot( );
 				frame->set_position( get_position( ) );
 
-				if ( stream_validation_ )
+				// Check the first frame here so that any unspecified properties are picked up at this point
+				if ( last_frame_ == 0 )
 				{
-					// Stream compatability and force logic is handled in the plugin implementation
-					// do nothing here and always pass through
+					matching( frame );
+					ARENFORCE_MSG( valid( frame ), "Invalid frame for encoder" );
 				}
-				else if ( prop_force_.value<int>() != 0 )
-				{
-					 ARLOG_DEBUG3( "Resetting stream on frame in encode filter, since the force property is set" );
-					 frame->get_image( );
-					 frame->set_stream( stream_type_ptr() );
-				}
-				else if( frame->get_stream( ) && ( frame->get_stream( )->codec( ) != video_codec_ ) )
-				{
-					// If the source frame already has a stream with a different codec than the one we are providing we need to reset the stream
-					ARLOG_DEBUG3( "Mismatching stream types: %1% and %2%, resetting stream." )( frame->get_stream( )->codec( ) )( video_codec_ );
-					frame->get_image( );
-					frame->set_stream( stream_type_ptr() );
-				}
-				   
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph, !stream_validation_ ) );
+
+				bool validate = matching( frame );
+				if ( validate && stream_validation_ )
+					validate = true;
+
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, validate ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
 			last_frame_ = frame;
 		}
-		
+
 		void initialize_encoder_mapping( )
 		{
 			// Load the profile that contains the mappings between codec string and codec filter name
@@ -1201,7 +1228,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_simple, public filter_poo
 			}
 
 			vc_it = encoder_profile->find( "stream_validation" );
-			stream_validation_ = vc_it != encoder_profile->end() && vc_it->value == "1";
+			stream_validation_ = is_long_gop_ || ( vc_it != encoder_profile->end() && vc_it->value == "1" );
 			if ( stream_validation_ )
 			{
 				ARLOG_DEBUG3( "Encoder plugin is responsible for validating the stream" );
@@ -1448,7 +1475,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 				frame = fetch_from_slot( 0 );
 				if ( filter_ )
 				{
-					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, ml::filter_type_ptr( ) ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 				}
 			}
 
@@ -1601,7 +1628,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 				incr_ = get_position( ) >= expected_ ? 1 : -1;
 				clear( );
 				frameno_ = get_position( );
-				for(int i = 0; i < threads_ * 3 && frameno_ < get_frames( ) && frameno_ >= 0; i ++)
+				for(int i = 0; i < threads_ * 2 && frameno_ < get_frames( ) && frameno_ >= 0; i ++)
 				{
 					add_job( frameno_ );
 					frameno_ += incr_;
@@ -1612,9 +1639,9 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			frame = wait_for_available( get_position( ) );
 
 			// Add more jobs to the pool
-			int fillable = threads_ * 2 - pool_->jobs_pending( );
+			int fillable = pool_->get_number_of_idle_workers( );
 
-			if ( frameno_ >= 0 && frameno_ < get_frames( ) && fillable -- > 0 )
+			while ( frameno_ >= 0 && frameno_ < get_frames( ) && fillable -- > 0 && frameno_ <= get_position( ) + 2 * threads_ )
 			{
 				add_job( frameno_ );
 				frameno_ += incr_;

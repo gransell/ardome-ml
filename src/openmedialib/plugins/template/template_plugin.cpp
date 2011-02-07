@@ -129,6 +129,7 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 			, name_( name )
 			, output_( 0 )
 			, index_( 0 )
+			, generator_( 1 )
 			, count_( 0 )
 		{
 			if ( frame && frame->get_stream( ) )
@@ -189,7 +190,7 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 		pl::wstring name_;
 		FILE *output_;
 		FILE *index_;
-		awi_generator_v2 generator_;
+		awi_generator_v4 generator_;
 		int count_;
 };
 

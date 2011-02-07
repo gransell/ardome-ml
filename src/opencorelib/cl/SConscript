@@ -59,6 +59,7 @@ sources = [
 	'stream_logtarget.cpp',
 	'string_conversions.cpp',
 	'str_util.cpp',
+	'thread_name.cpp',
 	'thread_pool.cpp',
 	'time_code.cpp',
 	'time_helpers.cpp',
@@ -108,7 +109,7 @@ if local_env['PLATFORM'] == 'darwin':
 	objc_flags.append( '-fobjc-gc' )
 
 object = local_env.shared_library( 'opencorelib_cl', sources = sources + extras[ local_env[ 'PLATFORM' ] ] + local_env.shared_object( objc[ local_env[ 'PLATFORM' ] ], 
-									CCFLAGS = objc_flags ), headers = cl_headers, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
+									CCFLAGS = " ".join( objc_flags ) ), headers = cl_headers, pre = [ 'precompiled_headers.cpp', 'precompiled_headers.hpp' ] )
 
 local_env.release( object )
 

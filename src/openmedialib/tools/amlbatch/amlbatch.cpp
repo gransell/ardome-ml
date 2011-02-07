@@ -424,7 +424,9 @@ int main( int argc, char *argv[ ] )
     #endif
 
 	pl::init_log( );
-	pl::set_log_level( -1 );
+	//Allow us to get diagnostic messages if the aml_stack input fails to load, since
+	//any log_level AML word on the command line has not taken effect yet at this point.
+	pl::set_log_level( 4 );
 
 	if ( argc > 1 )
 	{
@@ -433,6 +435,11 @@ int main( int argc, char *argv[ ] )
 		pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
 		pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
 		pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
+
+		//Set the log_level back to -1 (disabled), and let any log_level AML words control
+		//the level from this point on.
+		pl::set_log_level( -1 );
+
 		bool should_seek = false;
 		int seek_to = 0;
 		bool stats = true;

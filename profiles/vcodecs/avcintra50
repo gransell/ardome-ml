@@ -1,5 +1,5 @@
 video_codec = avc
-setting_preset = 18
+setting_preset = 27
 cppmedia_bit_rate = 50000000
 
 include vcodecs/avcintra

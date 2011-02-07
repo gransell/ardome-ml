@@ -52,7 +52,7 @@ namespace olib
             
             if( log_options & logoutput::current_thread_id  )
             {
-                boost::int32_t thread_id = utilities::get_current_thread_id();
+                boost::uint64_t thread_id = utilities::get_current_thread_id();
                 t_format thread_fmt(_CT(" (%08x)"));
                 ss << (thread_fmt % thread_id).str();
             }

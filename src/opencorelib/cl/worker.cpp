@@ -18,6 +18,8 @@
 #include "enforce_defines.hpp"
 #include "log_defines.hpp"
 
+#include "thread_name.hpp"
+
 using namespace boost::posix_time;
 
 #undef max
@@ -38,7 +40,7 @@ namespace olib
             return *lhs == *rhs;
         }
 
-        worker::worker() : m_thread_running(false), m_stop_thread(false)
+        worker::worker( const t_string& name ) : m_thread_running(false), m_stop_thread(false), m_name( name )
         {
         }
 
@@ -264,6 +266,8 @@ namespace olib
         {
             try
             {
+				set_thread_name( m_name );
+				
                 on_thread_started();
 
                 {

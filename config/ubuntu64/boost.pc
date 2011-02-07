@@ -1,0 +1,16 @@
+Name: boost
+Description: boost
+Version: 0.0.1
+
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/boost
+
+CFlags:	-I${includedir}
+
+Libs: -L${libdir} -lboost_system-mt
+
+install_libs=${libdir}/pkgconfig* ${libdir}/libboost_system*
+install_include=${prefix}/include
+

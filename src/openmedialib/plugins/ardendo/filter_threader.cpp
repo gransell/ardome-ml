@@ -11,6 +11,8 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+#include <opencorelib/cl/thread_name.hpp>
+
 #include <map>
 
 #include <boost/thread/recursive_mutex.hpp>
@@ -753,6 +755,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void run( )
 		{
+			// Set the thread name to simplify debugging
+			olib::opencorelib::set_thread_name( _CT("Threader filter worker") );
+
 			int position = 0;
 			int speed = 0;
 			int max_size = 0;

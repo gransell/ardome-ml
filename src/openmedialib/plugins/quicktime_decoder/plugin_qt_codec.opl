@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="Quicktime Codec plugin" type="filter" extension='"qt_decode"' merit="50" filename='"libopenmedialib_qt_codec.so", "libopenmedialib_qt_codec.dylib", "openmedialib_qt_codec.dll"'/>
+	</openmedialib>
+</openlibraries>

@@ -35,7 +35,7 @@
 
 #define CREATE_ASSERT( expr, the_msg ) \
     if( (expr) ); \
-    else olib::opencorelib::invoke_assert::make_assert().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ).msg(the_msg).ARASSERT_A
+    else ++olib::opencorelib::invoke_assert::make_assert().add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME, #expr ).msg(the_msg).ARASSERT_A
 
 #ifdef _DEBUG
 	#define ARASSERT_MSG(expr, the_msg) CREATE_ASSERT( expr, the_msg )
