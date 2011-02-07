@@ -15,7 +15,8 @@ void inc(int* n) {
 
 void TestExplicitStepInvoker()
 {
-    explicit_step_invoker invoker;
+    invoker_ptr n_inv( new non_invoker() );
+    explicit_step_invoker invoker( n_inv );
     int n_calls = 0;
     invoker.invoke(bind(inc, &n_calls));
     invoker.invoke(bind(inc, &n_calls));
@@ -30,7 +31,8 @@ void bad_function() {
 
 void TestExplicitStepInvokerSafe()
 {
-    explicit_step_invoker invoker;
+    invoker_ptr n_inv( new non_invoker() );
+    explicit_step_invoker invoker( n_inv );
     int n_calls = 0;
     invoker.invoke(bind(&inc, &n_calls));
     invoker.invoke(&bad_function);
@@ -47,7 +49,8 @@ void result_callback( int& to_inc, invoke_result::type res, std_exception_ptr ep
 
 void test_non_blocking_invoke()
 {
-     explicit_step_invoker invoker;
+     invoker_ptr n_inv( new non_invoker() );
+     explicit_step_invoker invoker( n_inv );
      int cb_called = 0;
      int n_calls = 0;
      

@@ -20,36 +20,17 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-class ML_DECLSPEC frame_type 
+	class ML_DECLSPEC frame_type : boost::noncopyable
 {
 	public:
 		/// Constructor
 		explicit frame_type( );
 
-		/// Copy constructor from a frame_type_ptr
-		frame_type( frame_type_ptr other )
-			: properties_( other->properties_ )
-			, stream_( other->stream_ )
-			, image_( other->image_ )
-			, alpha_( other->alpha_ )
-			, audio_( other->audio_ )
-			, pts_( other->pts_ )
-			, position_( other->position_ )
-			, duration_( other->duration_ )
-			, sar_num_( other->sar_num_ )
-			, sar_den_( other->sar_den_ )
-			, fps_num_( other->fps_num_ )
-			, fps_den_( other->fps_den_ )
-			, queue_( other->queue_ )
-			, exceptions_( other->exceptions_ )
-		{
-		}
-
 		/// Destructor
 		virtual ~frame_type( );
 
 		/// Provide a shallow copy of the frame (and all attached frames)
-		virtual frame_type_ptr shallow( );
+		virtual frame_type_ptr shallow( ) const;
 
 		/// Provide a deepy copy of the frame (and a shallow copy of all attached frames)
 		virtual frame_type_ptr deep( );
@@ -209,6 +190,10 @@ class ML_DECLSPEC frame_type
 		std::deque< frame_type_ptr > queue( ) const { return queue_; }
 
 	protected:
+	
+		/// Copy constructor from a frame_type_ptr
+		frame_type( const frame_type *other );
+	
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::stream_type_ptr stream_;
 		olib::openimagelib::il::image_type_ptr image_;

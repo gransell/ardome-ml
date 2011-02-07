@@ -123,9 +123,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		class filter_pool_holder
 		{
 		public:
-			filter_pool_holder( const ml::filter_type_ptr &filter, filter_pool *pool )
-			: filter_(filter)
-			, pool_( pool )
+			filter_pool_holder( filter_pool *pool )
+			: pool_( pool )
 			{ }
 
 			virtual ~filter_pool_holder()
@@ -148,11 +147,11 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, ml::filter_type_ptr filter, bool validated = true )
-			: ml::frame_type( *other )
+		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, bool validated = true )
+			: ml::frame_type( other.get( ) )
 			, parent_( other )
 			, frames_( frames )
-			, pool_holder_( new filter_pool_holder( filter, pool_token ) )
+			, pool_holder_( new filter_pool_holder( pool_token ) )
 			, validated_( validated )
 			, evaluated_( false )
 		{
@@ -174,7 +173,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				{
 					ml::input_type_ptr pusher = filter->fetch_slot( 0 );
 
-					other->get_image( );
+					//other->get_image( );
 
 					if ( pusher == 0 )
 					{
@@ -194,11 +193,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					other = filter->fetch( );
 				}
 
-				image_ = other->get_image( );
+				if ( other->get_image( ) )
+					image_ = other->get_image( );
 				alpha_ = other->get_alpha( );
 				audio_ = other->get_audio( );
 				//properties_ = other->properties( );
-				stream_ = other->get_stream( );
+				if ( other->get_stream( ) )
+					stream_ = other->get_stream( );
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
 				//sar_num_ = other->get_sar_num( );
@@ -214,19 +215,9 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
-		virtual frame_type_ptr shallow( )
+		virtual frame_type_ptr shallow( ) const
 		{
-			ml::frame_type_ptr inner_copy;
-			//If we have already been evaluated, we should no use the parent_ frame
-			//anymore, since that will not necessarily have the decoded image set on it,
-			//but we will have that on this frame already.
-			if( evaluated_ )
-				inner_copy = frame_type::shallow();
-			else
-				inner_copy = parent_->shallow();
-
-			ml::frame_type_ptr clone( new frame_lazy( inner_copy, frames_, inner_copy, pool_holder_, validated_ ) );
-			clone->set_position( get_position() );
+			ml::frame_type_ptr clone( new frame_lazy( this, parent_->shallow() ) );
 			return clone;
 		}
 
@@ -292,7 +283,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 		virtual stream_type_ptr get_stream( )
 		{
-			if( !stream_ || !validated_ ) evaluate( );
+			if( !evaluated_ ) evaluate( );
 			return stream_;
 		}
 
@@ -303,13 +294,13 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 	protected:
 		
-		frame_lazy( const frame_type_ptr &org, int frames, const frame_type_ptr &other, const boost::shared_ptr< filter_pool_holder > &pool_holder, bool validated )
-			: ml::frame_type( *org )
+		frame_lazy( const frame_lazy *org, const frame_type_ptr &other )
+			: ml::frame_type( org )
 			, parent_( other )
-			, frames_( frames )
-			, pool_holder_( pool_holder )
-			, validated_( validated )
-			, evaluated_( false )
+			, frames_( org->frames_ )
+			, pool_holder_( org->pool_holder_ )
+			, validated_( org->validated_ )
+			, evaluated_( org->evaluated_ )
 		{
 		}
 
@@ -1004,7 +995,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			{
 				if ( !frame ) frame = fetch_from_slot( );
 				ml::filter_type_ptr graph;
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
 		
 			last_frame_ = frame;
@@ -1036,7 +1027,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 		bool is_long_gop_;
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr profile_to_encoder_mappings_;
-		std::string video_codec_;
 		bool stream_validation_;
  
 	public:
@@ -1050,7 +1040,6 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			, is_long_gop_( false )
 			, last_frame_( )
 			, profile_to_encoder_mappings_( )
-			, video_codec_( )
 			, stream_validation_( false )
 		{
 			// Default to something. Will be overriden anyway as soon as we init
@@ -1194,8 +1183,12 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 					matching( frame );
 					ARENFORCE_MSG( valid( frame ), "Invalid frame for encoder" );
 				}
-			   
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, graph, !stream_validation_ ) );
+
+				bool validate = matching( frame );
+				if ( validate && stream_validation_ )
+					validate = true;
+
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, validate ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
@@ -1482,7 +1475,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 				frame = fetch_from_slot( 0 );
 				if ( filter_ )
 				{
-					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, ml::filter_type_ptr( ) ) );
+					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 				}
 			}
 

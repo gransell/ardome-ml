@@ -52,11 +52,11 @@ class filter_pulldown : public ml::filter_type
 					input->seek( index );
 					frame = input->fetch( );
 					frame->get_image( );
-					map_[ index ++ ] = ml::frame_type_ptr( new ml::frame_type( frame ) );
+					map_[ index ++ ] = frame->shallow( );
 				}
 
 				while( map_.size( ) < 4 )
-					map_[ index ++ ] = frame;
+					map_[ index ++ ] = frame->shallow( );
 			}
 
 			switch( get_position( ) % 5 )
@@ -68,7 +68,7 @@ class filter_pulldown : public ml::filter_type
 				case 4: result = map_[ src_frame + 3 ]; break;
 			}
 
-			result = ml::frame_type_ptr( new ml::frame_type( result ) );
+			result = result->shallow( );
 			result->set_position( get_position( ) );
 		}
 
@@ -93,7 +93,7 @@ class filter_pulldown : public ml::filter_type
 			il::image_type_ptr field1 = il::field( image1, 1 );
 			il::image_type_ptr field2 = il::field( image2, 0 );
 
-			ml::frame_type_ptr result = ml::frame_type_ptr( new ml::frame_type( frame1 ) );
+			ml::frame_type_ptr result = frame1->shallow( );
 			result->set_image( merge_fields( field1, field2 ) );
 
 			return result;

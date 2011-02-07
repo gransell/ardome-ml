@@ -139,6 +139,8 @@ namespace olib
         class CORE_API explicit_step_invoker : public invoker
         {
         public:
+            explicit_step_invoker( const invoker_ptr &parent );
+
             olib::opencorelib::invoke_result::type invoke( const invokable_function& f ) const;
 
             void non_blocking_invoke(   const invokable_function& f, 
@@ -147,7 +149,15 @@ namespace olib
             bool need_invoke() const;
             
             /// Call all waiting functions.
-            void step();            
+            void step();
+
+            invoker_ptr get_parent() const { return m_parent; }
+
+        private:
+            invoker_ptr m_parent;
+
+            static void blocking_invoke_tagging_function( olib::opencorelib::invoke_result::type, std_exception_ptr ) {}
+            const invoke_callback_function_ptr m_was_a_blocking_invoke;
         };
 
         class CORE_API main_invoker
