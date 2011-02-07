@@ -10,6 +10,15 @@ namespace olib { namespace opencorelib { namespace endian {
 // It is reset at the end of this file.
 #pragma pack(push, 1)
 
+using boost::uint8_t;
+using boost::uint16_t;
+using boost::uint32_t;
+using boost::uint64_t;
+using boost::int8_t;
+using boost::int16_t;
+using boost::int32_t;
+using boost::int64_t;
+
 template<typename T> inline T swap(const T& t);
 
 template<> inline uint8_t swap<uint8_t>(const uint8_t& t) {

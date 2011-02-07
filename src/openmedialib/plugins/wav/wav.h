@@ -8,6 +8,13 @@ namespace olib { namespace openmedialib { namespace riff { namespace wav {
 
 #pragma pack(push, 1)
 
+#ifdef WAVE_FORMAT_PCM
+#	undef WAVE_FORMAT_PCM
+#endif
+#ifdef WAVE_FORMAT_IEEE_FLOAT
+#	undef WAVE_FORMAT_IEEE_FLOAT
+#endif
+
 #define WAVE_FORMAT_PCM        0x0001 // PCM
 #define WAVE_FORMAT_IEEE_FLOAT 0x0003 // IEEE float
 #define WAVE_FORMAT_ALAW       0x0006 // 8-bit ITU-T G.711 A-law
@@ -47,6 +54,11 @@ namespace olib { namespace openmedialib { namespace riff { namespace wav {
 #define SPEAKER_BITSTREAM_2_RIGHT     0x04000000
 
 #define le olib::opencorelib::endian::little
+
+using boost::uint8_t;
+using boost::uint16_t;
+using boost::uint32_t;
+using boost::uint64_t;
 
 struct guid {
 	le<uint32_t> data1;
@@ -130,7 +142,7 @@ struct fmt_format_extensible : fmt_base { // 'fmt ' when FORMAT_EXTENSIBLE
 };
 
 struct chunksize64 : block { // 'big1'
-	chunksize64(uint64_t size)
+	chunksize64(uint64_t size = 0)
 	: block("big1", (uint32_t)(size & 0xffffffff))
 	, size_high((uint32_t)(size >> 32)) {}
 

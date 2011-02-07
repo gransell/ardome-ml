@@ -6,6 +6,11 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace wav {
 
+using boost::uint8_t;
+using boost::uint16_t;
+using boost::uint32_t;
+using boost::uint64_t;
+
 store_wav::store_wav(const pl::wstring &resource)
 	: ml::store_type()
 	, initialized_(false)

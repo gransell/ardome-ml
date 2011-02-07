@@ -61,10 +61,5 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 
 };
 
-static ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_wav(const pl::wstring &resource)
-{
-	return ml::store_type_ptr(new store_wav(resource));
-}
-
 } } } }
 
