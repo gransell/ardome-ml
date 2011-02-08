@@ -21,9 +21,9 @@ void test_span()
     BOOST_REQUIRE( to_time( f, frame_rate::pal ) == media_time(10));
 
     // 250 pal frames = 10 seconds = 299,97 ntsc frames (rounding down, always)
-    BOOST_REQUIRE( convert( frames(250), frame_rate::pal, frame_rate::ntsc_drop_frame ) == 299 );
-    BOOST_REQUIRE( convert( frames(2500), frame_rate::pal, frame_rate::ntsc_drop_frame ) == 2997 );
-    BOOST_REQUIRE( convert( frames(25000), frame_rate::pal, frame_rate::ntsc_drop_frame ) == 29970 );
+    BOOST_REQUIRE( convert( frames(250), frame_rate::pal, frame_rate::ntsc ) == 299 );
+    BOOST_REQUIRE( convert( frames(2500), frame_rate::pal, frame_rate::ntsc ) == 2997 );
+    BOOST_REQUIRE( convert( frames(25000), frame_rate::pal, frame_rate::ntsc ) == 29970 );
         
     // 250 frames corresponds to 10 seconds.
     frame_span fs( frames(0), frames(250) );

@@ -53,12 +53,12 @@ namespace olib
             return *this;
         }
 
-        time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft ) const
+        time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame ) const
         {
             ARENFORCE_MSG( m_time >= 0, "Can not convert negative values to time codes.")(*this);
-            time_code tc;  
+            time_code tc( drop_frame );
             const rational_time fps = frame_rate::get_fps(ft);  
-            if( ft == frame_rate::pal || ft == frame_rate::ntsc || ft == frame_rate::movie )
+            if( !drop_frame )
             {
                 // Nr of whole frame seconds:
                 boost::int64_t whole_sec = m_time.numerator() / m_time.denominator(); 
@@ -72,8 +72,9 @@ namespace olib
                 frames *= fps;
                 tc.set_frames( static_cast<boost::int32_t>(frames.numerator() / frames.denominator()) );
             }
-            else if( ft == frame_rate::ntsc_drop_frame )
+            else
             {
+                ARENFORCE_MSG( ft == frame_rate::ntsc, "Drop frame can only be used with NTSC" );
                 rational_time totF = m_time * fps;   
                 const rational_time fph(3600 * fps), fpm(60 * fps);
 
@@ -117,8 +118,9 @@ namespace olib
             media_time mt;
             rational_time fps(frame_rate::get_fps(ft));
 
-            if( ft == frame_rate::ntsc_drop_frame )
+            if( tc.get_uses_drop_frame() )
             {
+                ARENFORCE_MSG( ft == frame_rate::ntsc, "Drop frame can only be used with NTSC" );
                 boost::uint32_t m = 60 * tc.get_hours() + tc.get_minutes();
                 rational_time 
                     totfrms = tc.get_frames() + fps * (tc.get_seconds() + 60 * m) - 2 * (m - m / 10);
@@ -147,8 +149,6 @@ namespace olib
         media_time& media_time::from_frame_number(olib::opencorelib::frame_rate::type ft,  const rational_time& fr_nr )
         {
             rational_time fps(frame_rate::get_fps(ft));
-            // If its ntsc then we should use 30 fps since it should include the drift when converting to seconds
-            if( ft == frame_rate::ntsc ) fps = rational_time( 30 );
             m_time = fr_nr * (1 / fps);
             return *this;
         }
@@ -156,8 +156,6 @@ namespace olib
         boost::int32_t media_time::to_frame_nr(olib::opencorelib::frame_rate::type ft ) const
         {
             rational_time fps(frame_rate::get_fps(ft));
-            // If its ntsc then we should use 30 fps since it should include the drift when converting to seconds
-            if( ft == frame_rate::ntsc ) fps = rational_time( 30 );
             rational_time frm_count = m_time * fps;
             return static_cast<boost::int32_t>( frm_count.numerator() / frm_count.denominator() );
         }

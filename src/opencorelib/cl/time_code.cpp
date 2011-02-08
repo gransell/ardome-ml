@@ -9,7 +9,8 @@ namespace olib
 		
         CORE_API t_ostream& operator<<( t_ostream& os, const time_code& tc )
         {
-            t_format fmt(_CT("%02i:%02i:%02i:%02i"));
+            //Use a semicolon between seconds and frames for drop frame timecodes
+            t_format fmt( tc.get_uses_drop_frame() ? _CT("%02i:%02i:%02i;%02i") : _CT("%02i:%02i:%02i:%02i") );
             os << (fmt % tc.m_i_hours % tc.m_i_min % tc.m_i_sec % tc.m_i_frames);
             return os;
         }
@@ -26,7 +27,8 @@ namespace olib
             return  lhs.m_i_hours == rhs.m_i_hours && 
                     lhs.m_i_min == rhs.m_i_min && 
                     lhs.m_i_sec == rhs.m_i_sec && 
-                    lhs.m_i_frames == rhs.m_i_frames; 
+                    lhs.m_i_frames == rhs.m_i_frames &&
+                    lhs.m_drop_frame == rhs.m_drop_frame; 
         }
     }
 }
