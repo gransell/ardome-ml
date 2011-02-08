@@ -67,7 +67,7 @@ namespace olib
 
             /// Convert the current time to a time_code.
             /** @param ft The currently usedolib::opencorelib::frame_rate::type. */
-            time_code to_time_code(olib::opencorelib::frame_rate::type ft ) const;
+            time_code to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame ) const;
 
             /// Converts the current time to a discreet frame number.
             boost::int32_t to_frame_nr(olib::opencorelib::frame_rate::type ft ) const;

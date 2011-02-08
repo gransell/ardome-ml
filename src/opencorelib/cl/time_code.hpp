@@ -41,7 +41,7 @@ namespace olib
         public:
 
             /// Creates a zero initialized time code.
-            time_code() : m_i_hours(0), m_i_min(0), m_i_sec(0), m_i_frames(0) {}
+            time_code(bool drop_frame) : m_i_hours(0), m_i_min(0), m_i_sec(0), m_i_frames(0), m_drop_frame(drop_frame) {}
             
             /// Creates a time code with the given values.
             /** @param hours The number of hours of media (< 24)
@@ -52,8 +52,9 @@ namespace olib
             time_code(  boost::uint32_t hours, 
                         boost::uint32_t minutes, 
                         boost::uint32_t seconds, 
-                        boost::uint32_t frames)
-                : m_i_hours(hours), m_i_min(minutes), m_i_sec(seconds), m_i_frames(frames)
+                        boost::uint32_t frames,
+                        bool drop_frame )
+                : m_i_hours(hours), m_i_min(minutes), m_i_sec(seconds), m_i_frames(frames), m_drop_frame(drop_frame)
             {
                 check_valid();
             }
@@ -78,6 +79,9 @@ namespace olib
 
             /// Get the number of frames.
             boost::uint32_t get_frames() const { return m_i_frames; }
+
+            /// Returns whether the timecode uses drop frame for NTSC or not
+            bool get_uses_drop_frame() const { return m_drop_frame; }
  
             /// Set the number of hours.
             void set_hours( boost::uint32_t h ) { ARENFORCE(h < 24); m_i_hours = h; } 
@@ -91,10 +95,19 @@ namespace olib
             /// Set the number of frames.
             void set_frames( boost::uint32_t f ) { m_i_frames = f; }
 
-            /// Convert the time code to a string on the format: HH:MM:SS:FF
+            /// Sets whether the timecode is to be interpreted using drop frame or not
+            void set_uses_drop_frame( bool drop_frame ) { m_drop_frame = drop_frame; }
+
+            /// Convert the time code to a string. If the timecode uses drop frame the
+            /// format will use a semicolon instead of a colon between seconds and frames,
+            /// like so: "HH:MM:SS;FF". If it does not use drop frames then the format is
+            /// "HH:MM:SS:FF".
             t_string to_string() const;
 
-            /// Stream the time code on the format: HH:MM:SS:FF
+            /// Stream the timecode as a string to the specified stream. If the timecode
+            /// uses drop frame the format will use a semicolon instead of a colon between 
+            /// seconds and frames, like so: "HH:MM:SS;FF". If it does not use drop frames
+            /// then the format is "HH:MM:SS:FF".
             CORE_API friend t_ostream& operator<<( t_ostream& os, const time_code& tc );
 
             /// compare two time codes for equality.
@@ -110,6 +123,7 @@ namespace olib
             }
 
             boost::uint32_t m_i_hours, m_i_min, m_i_sec, m_i_frames;
+            bool m_drop_frame;
         };
     }
 }

@@ -33,34 +33,7 @@ namespace olib
                             525/2 = 262.5 lines/field
                             NTSC refresh rate is not 59.95 Hz exactly but 60 Hz*1000/1001 
                             = 59.9400599400599400... Hz ò 59.94 Hz. */ 
-   
-                ntsc_drop_frame, /**< Video Time Code Counters and Drop Frame Flag/Non Drop Frame Flag.
-                                    Video time code counters can only count in whole frames. An example for a 
-                                    video time code - also called SMPTE time code - is [01:42:55:23] denoting 
-                                    [hours:minutes:seconds:frames]. The NTSC refresh rate is ò 29.97 fps. That 
-                                    means that one second of the video time code counter would be a little faster 
-                                    than the real second of the film (second in SI-System).
-                                    The drop frame flag or non drop frame flag has a special task 
-                                    with NTSC video. At the beginning of each minute (except zero 
-                                    minutes and multiples of ten minutes: 0, 10, 20, 30, 40, 50, etc.) on drop frame 
-                                    MPEG streams the frames 0 and 1 on the video time code are passed 
-                                    ("dropped"). So this procedure will be done only between integer 
-                                    valued minutes, in particular 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, etc. 
-                                    It is important that only the frames 0 and 1 on the video time code are 
-                                    passed - not the real film frames 0 and 1.
-                                    For example the video time code jumps from [00:01:59:29] to [00:02:00:02] 
-                                    instead of [00:02:00:00]. The drop frame flag is set to synchronize the 
-                                    video time code with the real time.
-                                    In 100 min. real time 10*9*(2 [two frames: 0 and 1]) = 180 frames are 
-                                    passed in the video time code counter. The video time code counter can 
-                                    only count 30 whole frames per second at standard NTSC. This yields 
-                                    180 frames/30s = 6 fps. 100 film minutes - programmed as drop frame 
-                                    MPEG - are also displayed accurately on the video time code in 100 min. 
-                                    One second of the video time code is about 0.03 fps faster than the 
-                                    real NTSC film second [30 fps - 29.97 fps = 0.03 fps]. Auxiliary calculation: 
-                                    0.03 fps*6000 s = 180 frames. These 180 frames actually compensate the frames 
-                                    that are passed. Therefore, non drop frame MPEGs would display 100 film 
-                                    minutes (real time) as 100 min. and 6 sec. on the video time code. */
+
                 movie, /**< 24000:1001.
    
                 internal = pal,  The internal format is pal. */
@@ -70,12 +43,8 @@ namespace olib
             /// Get the frame rate per second for a certain frame_rate::type
             CORE_API rational_time get_fps( olib::opencorelib::frame_rate::type ft );
 
-            /// Is the given type a drop frame type or not?
-            CORE_API bool uses_drop_frame( olib::opencorelib::frame_rate::type ft);
-
             /// Convert to a frame_rate::type from a fps and drop frame flag.
-            CORE_API olib::opencorelib::frame_rate::type get_type( const rational_time& rt, 
-                                                                    bool drop_frame  );
+            CORE_API olib::opencorelib::frame_rate::type get_type( const rational_time& rt );
 
             /// Convert the enum to a human readable string.
             CORE_API const TCHAR* to_string( type ft );
