@@ -79,14 +79,14 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	switch (ident) {
 		case ml::audio::pcm8_id:
-			real_bytes_per_sample = 1;
+			real_bytes_per_sample = 1; break;
 		case ml::audio::pcm16_id:
-			real_bytes_per_sample = 2;
+			real_bytes_per_sample = 2; break;
 		case ml::audio::pcm24_id:
-			real_bytes_per_sample = 3;
+			real_bytes_per_sample = 3; break;
 		case ml::audio::pcm32_id:
 		case ml::audio::float_id:
-			real_bytes_per_sample = 4;
+			real_bytes_per_sample = 4; break;
 	};
 
 	// Allocate headers, we'll write them down to file as they are
@@ -124,7 +124,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 		+ sizeof(data)
 		+ 0; // data bytes; we don't know
 
-	writeonly = (samples >= 0);
+	writeonly = (samples > 0);
 
 	if (!file_) {
 		file_ = fopen(resource.c_str(), writeonly ? "wb" : "w+b");
@@ -156,6 +156,40 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	Write(data);
 }
 
+// Creates one large array of endian::little<T>'s which are filled with the
+// values from p and then stored as is down to file in one chunk.
+template<typename T>
+inline void saveRangeFast(FILE* file, T* p, size_t nblocks) {
+	boost::scoped_array< le<T> > blocks( new le<T>[nblocks] );
+	size_t i = 0;
+	while (i < nblocks)
+		blocks[i++] = *p++;
+
+	fwrite(blocks.get(), sizeof(T) * nblocks, 1, file);
+}
+
+// Goes through p sample by sample and saves them. This is necessary when the
+// sample is isn't a power of 2.
+template<typename T, size_t realsizeofT>
+inline void saveRangeNormal(FILE* file, T* p, size_t nblocks) {
+	le<T> sample;
+	for (size_t i = 0; i < nblocks; ++i) {
+		sample = *p++;
+		fwrite(&sample, realsizeofT, 1, file);
+	}
+}
+
+template<typename T, size_t realsizeofT>
+inline void saveRange(FILE* file, void* array, size_t nbytes) {
+	size_t nblocks = nbytes / sizeof(T);
+	T* p = (T*)array;
+
+	if (realsizeofT == sizeof(T))
+		saveRangeFast<T>(file, p, nblocks);
+	else
+		saveRangeNormal<T, realsizeofT>(file, p, nblocks);
+}
+
 bool store_wav::push(ml::frame_type_ptr frame)
 {
 	ARLOG_DEBUG5("store_wav::push()");
@@ -168,21 +202,26 @@ bool store_wav::push(ml::frame_type_ptr frame)
 
 	ARLOG_DEBUG6("store_wav::push(): %d audio samples in this frame")(audio->samples());
 
-	if (real_bytes_per_sample != bytes_per_sample) {
-		// This happens only for 24 bits per second, stored as 4 bytes
-		ARENFORCE_MSG( bytes_per_sample == 4, "Cannot understand audio sample format" );
+#if BYTE_ORDER == LITTLE_ENDIAN
+	if (real_bytes_per_sample == bytes_per_sample) {
+		// This is no doubt the fastest, just write the memory
+		// chunk down to file in one go.
+		fwrite(audio->pointer(), audio->size(), 1, file_);
 
-		uint32_t* p = (uint32_t*)audio->pointer();
-		uint32_t* end = p + (audio->size() / 4);
-		--p;
-		while (++p < end) {
-			le<uint32_t> sample(*p);
-			fwrite(&sample, 3, 1, file_);
-		}
 	} else
-		// Save the bytes just as they are
-		// NOTE: This requires the internal audio to be little endian!
-		fwrite(audio->pointer(), 1, audio->size(), file_);
+#endif // BYTE_ORDER == LITTLE_ENDIAN
+	if (real_bytes_per_sample == 1) {
+		saveRange<uint8_t,  1>(file_, audio->pointer(), audio->size());
+
+	} else if (real_bytes_per_sample == 2) {
+		saveRange<uint16_t, 2>(file_, audio->pointer(), audio->size());
+
+	} else if (real_bytes_per_sample == 3) {
+		saveRange<uint32_t, 3>(file_, audio->pointer(), audio->size());
+
+	} else if (real_bytes_per_sample == 4) {
+		saveRange<uint32_t, 4>(file_, audio->pointer(), audio->size());
+	}
 
 	return true;
 }
@@ -204,12 +243,15 @@ void store_wav::complete()
 void store_wav::vitalizeHeader() {
 	ARLOG_DEBUG("store_wav::vitalizeHeader()");
 
-	if (writeonly)
+	if (writeonly) {
 		// File is opened for streaming output, we aren't allowed to
 		// rewind it.
+		ARLOG_DEBUG("store_wav::vitalizeHeader(): "
+			"In writeonly mode, will not reconstruct header");
 		return;
+	}
 
-	ARENFORCE_MSG( fseek(file_, 0, SEEK_END) , "Could not seek in file" );
+	ARENFORCE_MSG( !fseek(file_, 0, SEEK_END) , "Could not seek in file" );
 
 	long s_filelen = ftell(file_);
 	ARENFORCE_MSG( s_filelen != -1 , "Could not get file size" );
@@ -231,8 +273,7 @@ void store_wav::vitalizeHeader() {
 
 	blk = wave = (riff::wav::wave*)&buf[0];
 
-	if (!(*wave == "RIFF" || *wave == "RF64"))
-		return;
+	ARENFORCE_MSG( *wave == "RIFF" || *wave == "RF64" , "Bad file header" );
 
 	offset = 12;
 
@@ -241,29 +282,29 @@ void store_wav::vitalizeHeader() {
 
 		if (*blk == "fmt ") {
 
-			std::cout << "wav::: found fmt" << std::endl;
+			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found fmt block");
 			fmt = (riff::wav::fmt_base*)blk;
 
 		} else if (*blk == "ds64") {
 
-			std::cout << "wav::: found ds64" << std::endl;
+			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found ds64 block");
 			ds64 = (riff::wav::ds64*)blk;
 
 		} else if (*blk == "JUNK" &&
 		           !ds64 &&
 		           blk->size >= sizeof(riff::wav::ds64) - sizeof(riff::wav::block)) {
 
-			std::cout << "wav::: found JUNK -> ds64" << std::endl;
+			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found JUNK block (perhaps converting into ds64)");
 			ds64 = (riff::wav::ds64*)blk;
 
 		} else if (*blk == "bext") {
 
-			std::cout << "wav::: found bext" << std::endl;
+			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found bext block");
 			bext = (riff::wav::bwf::bext_chunk*)blk;
 
 		} else if (*blk == "data") {
 
-			std::cout << "wav::: found data" << std::endl;
+			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found data block");
 			data = (riff::wav::data*)blk;
 
 		}
@@ -296,10 +337,10 @@ void store_wav::vitalizeHeader() {
 }
 
 static uint32_t getLo(uint64_t val) {
-	return (uint32_t)(val && 0xffffffffUL);
+	return (uint32_t)(val & 0xffffffffUL);
 }
 static uint32_t getHi(uint64_t val) {
-	return (uint32_t)((val >> 32) && 0xffffffffUL);
+	return (uint32_t)((val >> 32) & 0xffffffffUL);
 }
 
 void store_wav::setupHeaders(
@@ -318,6 +359,8 @@ void store_wav::setupHeaders(
 	ds64.setType(rf64 ? "ds64" : "JUNK");
 
 	if (rf64) {
+		ARLOG_DEBUG3("store_wav::setupHeaders(): riffsize > 4GiB, writing RF64 headers");
+
 		wave.size = 0xffffffff;
 		data.size = 0xffffffff;
 
@@ -329,6 +372,8 @@ void store_wav::setupHeaders(
 		ds64.sample_count_high = getHi(nsamples);
 		ds64.table_length = 0;
 	} else {
+		ARLOG_DEBUG3("store_wav::setupHeaders(): riffsize <= 4GiB, writing RIFF headers");
+
 		wave.size = size - 8;
 		data.size = nbytes_of_samples;
 	}
