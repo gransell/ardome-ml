@@ -188,7 +188,10 @@ class stream_queue
 				else if ( frame->get_stream( )->codec( ).find( "dv" ) != 0 )
 				{
 					int got = 0;
-					if ( avcodec_decode_video( context_, frame_, &got, 0, 0 ) >= 0 )
+					AVPacket pkt;
+					pkt.data = 0;
+					pkt.size = 0;
+					if ( avcodec_decode_video2( context_, frame_, &got, &pkt ) >= 0 )
 					{
 						il::image_type_ptr image;
 						if ( got )
@@ -386,12 +389,15 @@ class stream_queue
 
 			int got = 0;
 			int audio_size = audio_buf_size_;
+			AVPacket avpkt;
 
 			switch( pkt->id( ) )
 			{
 				case ml::stream_video:
 					ARLOG_DEBUG5( "Decoding image %d" )( position );
-					if ( avcodec_decode_video( context_, frame_, &got, pkt->bytes( ), pkt->length( ) ) >= 0 )
+					avpkt.data = pkt->bytes( );
+					avpkt.size = pkt->length( );
+					if ( avcodec_decode_video2( context_, frame_, &got, &avpkt ) >= 0 )
 					{
 						if ( got )
 						{
@@ -451,7 +457,11 @@ class stream_queue
 					break;
 
 				case ml::stream_audio:
-					if ( avcodec_decode_audio2( context_, ( short * )( audio_buf_ ), &audio_size, pkt->bytes( ), pkt->length( ) ) >= 0 )
+
+					avpkt.data = pkt->bytes( );
+					avpkt.size = pkt->length( );
+
+					if ( avcodec_decode_audio3( context_, ( short * )( audio_buf_ ), &audio_size, &avpkt ) >= 0 )
 					{
 						int channels = context_->channels;
 						int frequency = context_->sample_rate;

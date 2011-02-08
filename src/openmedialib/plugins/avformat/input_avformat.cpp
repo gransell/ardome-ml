@@ -1647,7 +1647,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						break;
 
 					// Create an audio frame
-					if ( !( ignore || codec_context->codec_id == CODEC_ID_AAC && aac_first_packet_after_seek_ ) )
+					if ( !( ignore || ( codec_context->codec_id == CODEC_ID_AAC && aac_first_packet_after_seek_ ) ) )
 					{
 						index += store_audio( audio_buf_offset_, audio_buf_ + index, samples );
 						audio_buf_offset_ = audio_.back( )->position( );

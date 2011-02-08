@@ -35,6 +35,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavutil/pixdesc.h>
 }
 
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
@@ -609,13 +610,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			AVOutputFormat *fmt = NULL;
 
 			if ( prop_format_.value< pl::wstring >( ) != L"" )
-				fmt = guess_format( pl::to_string( prop_format_.value< pl::wstring >( ) ).c_str( ), NULL, NULL );
+				fmt = av_guess_format( pl::to_string( prop_format_.value< pl::wstring >( ) ).c_str( ), NULL, NULL );
 
 			if ( fmt == NULL )
-				fmt = guess_format( NULL, pl::to_string( resource( ) ).c_str( ), NULL );
+				fmt = av_guess_format( NULL, pl::to_string( resource( ) ).c_str( ), NULL );
 
 			if ( fmt == NULL )
-				fmt = guess_format( "mpeg", NULL, NULL );
+				fmt = av_guess_format( "mpeg", NULL, NULL );
 
 			return fmt;
 		}
@@ -689,7 +690,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
 				pl::string pixfmt = pl::to_string( prop_pix_fmt_.value< pl::wstring >( ) );
-				c->pix_fmt = pixfmt != "" ? avcodec_get_pix_fmt( pixfmt.c_str( ) ) : PIX_FMT_YUV420P;
+				c->pix_fmt = pixfmt != "" ? av_get_pix_fmt( pixfmt.c_str( ) ) : PIX_FMT_YUV420P;
 		
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
@@ -1175,7 +1176,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			static int first = true;
 			int encode_tries = 1;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); (do_flush || ret && data) && iter != audio_stream_.end( ); iter ++, stream ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); iter ++, stream ++ )
 			{
 				for( int ec=0; ec<encode_tries; ec++ )
 				{
@@ -1359,7 +1360,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		awi_generator_v4 ts_generator_audio_;
 		URLContext *ts_context_;
 		int ts_last_position_;
-		boost::uint64_t ts_last_offset_;
+		boost::int64_t ts_last_offset_;
 
 		FILE *log_file_;
 		char *log_;
