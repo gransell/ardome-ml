@@ -4,6 +4,8 @@
 #include "./enforce.hpp"
 
 #include <boost/thread.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 #define LOKI_CLASS_LEVEL_THREADING
 #include <loki/Singleton.h>
@@ -109,12 +111,17 @@ namespace olib
                 report_failure( result_cb );
             }
         }
+
+        explicit_step_invoker::explicit_step_invoker( const invoker_ptr &parent )
+            : m_parent( parent )
+            , m_was_a_blocking_invoke( new invoke_callback_function( boost::bind( &blocking_invoke_tagging_function, _1, _2 ) ) )
+        {
+        }
         
         invoke_result::type explicit_step_invoker::invoke( const invokable_function& f ) const 
         {
             boost::recursive_mutex::scoped_lock lck(m_mtx);
-            invoke_callback_function_ptr null_cb;
-            m_queue.push(std::make_pair( f, null_cb ) );
+            m_queue.push( std::make_pair( f, m_was_a_blocking_invoke ) );
 			return invoke_result::success;
         }
         
@@ -128,25 +135,22 @@ namespace olib
             boost::recursive_mutex::scoped_lock lck(m_mtx);
             while (!m_queue.empty()) 
             {
-                try
-                {  
-                    m_queue.front().first();
-                    report_success( m_queue.front().second );
-                } 
-                catch( const base_exception& be )
+                if( m_queue.front().second == m_was_a_blocking_invoke )
                 {
-                    report_failure( m_queue.front().second, be );
+                    m_parent->invoke( m_queue.front().first );
                 }
-                catch( const std::exception& e )
+                else
                 {
-                    report_failure( m_queue.front().second, e );
+                    m_parent->non_blocking_invoke( m_queue.front().first, m_queue.front().second );
                 }
-                catch( ... )
-                {
-                    report_failure( m_queue.front().second );
-                }
-                
+
                 m_queue.pop();
+            }
+
+            boost::shared_ptr< explicit_step_invoker > exp_inv;
+            if( exp_inv = boost::dynamic_pointer_cast< explicit_step_invoker >( m_parent ) )
+            {
+                exp_inv->step( );
             }
         }
 

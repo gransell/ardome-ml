@@ -24,28 +24,40 @@ frame_type::frame_type( )
 	, queue_( )
 { }
 
+frame_type::frame_type( const frame_type *other )
+	: stream_( other->stream_ )
+	, image_( other->image_ )
+	, alpha_( other->alpha_ )
+	, audio_( other->audio_ )
+	, pts_( other->pts_ )
+	, position_( other->position_ )
+	, duration_( other->duration_ )
+	, sar_num_( other->sar_num_ )
+	, sar_den_( other->sar_den_ )
+	, fps_num_( other->fps_num_ )
+	, fps_den_( other->fps_den_ )
+	, exceptions_( other->exceptions_ )
+{
+	std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
+	properties_ = *clone.get( );
+	if ( audio_ )
+		audio_ = other->audio_->clone( );
+	for ( std::deque< ml::frame_type_ptr >::const_iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
+		queue_.push_back( ( *iter )->shallow( ) );
+}
+
 frame_type::~frame_type( ) 
 { }
 
-frame_type_ptr frame_type::shallow( )
+frame_type_ptr frame_type::shallow( ) const
 {
-	frame_type_ptr result;
-	frame_type *copy = new frame_type( *this );
-	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
-	copy->properties_ = *clone.get( );
-	if ( audio_ )
-		copy->audio_ = audio_->clone( );
-	copy->queue_.clear( );
-	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
-		copy->queue_.push_back( ( *iter )->shallow( ) );
-	result = frame_type_ptr( copy );
-	return result;
+	return frame_type_ptr( new frame_type( this ) );
 }
 
 frame_type_ptr frame_type::deep( )
 {
 	frame_type_ptr result;
-	frame_type *copy = new frame_type( *this );
+	frame_type *copy = new frame_type( this );
 	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
 	copy->properties_ = *clone.get( );
 	if ( image_ )
@@ -54,9 +66,6 @@ frame_type_ptr frame_type::deep( )
 		copy->alpha_ = il::image_type_ptr( alpha_->clone( ) );
 	if ( audio_ )
 		copy->audio_ = audio_->clone( );
-	copy->queue_.clear( );
-	for ( std::deque< ml::frame_type_ptr >::iterator iter = queue_.begin( ); iter != queue_.end( ) ; iter ++ )
-		copy->queue_.push_back( ( *iter )->shallow( ) );
 	result = frame_type_ptr( copy );
 	return result;
 }

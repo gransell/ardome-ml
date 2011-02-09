@@ -170,12 +170,12 @@ class stream_queue
 
 				if ( start < input_->get_frames( ) )
 				{
-					temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+					temp = fetch( start ++ )->shallow( );
 
 					while( temp && temp->get_stream( ) && decode( temp, position ) )
 					{
 						if ( start < input_->get_frames( ) )
-							temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+							temp = fetch( start ++ )->shallow( );
 						else
 							temp = ml::frame_type_ptr( );
 					}
@@ -233,10 +233,10 @@ class stream_queue
 				if ( gop_open_ && start == position && position != 0 )
 					start = fetch( start - 1 )->get_stream( )->key( );
 
-				ml::frame_type_ptr temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+				ml::frame_type_ptr temp = fetch( start ++ )->shallow( );
 
 				while( temp && temp->get_stream( ) && decode( temp, position ) )
-					temp = ml::frame_type_ptr( new frame_type( fetch( start ++ ) ) );
+					temp = fetch( start ++ )->shallow( );
 
 				return temp->get_audio( );
 			}
@@ -509,9 +509,16 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 	public:
 		/// Constructor
 		frame_avformat( const frame_type_ptr &other, const stream_queue_ptr &queue )
-			: ml::frame_type( *other )
+			: ml::frame_type( other.get( ) )
 			, queue_( queue )
 			, original_position_( other->get_position( ) )
+		{
+		}
+
+		frame_avformat( const frame_avformat *other )
+			: ml::frame_type( other )
+			, queue_( other->queue_ )
+			, original_position_( other->original_position_ )
 		{
 		}
 
@@ -521,9 +528,9 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		}
 
 		/// Provide a shallow copy of the frame (and all attached frames)
-		virtual frame_type_ptr shallow( )
+		virtual frame_type_ptr shallow( ) const
 		{
-			return frame_type_ptr( new frame_avformat( frame_type::shallow( ), queue_ ) );
+			return frame_type_ptr( new frame_avformat( this ) );
 		}
 
 		/// Provide a deepy copy of the frame (and a shallow copy of all attached frames)
