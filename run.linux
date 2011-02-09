@@ -1,0 +1,17 @@
+#!/bin/sh
+
+if [ "$1" = "" ]; then
+	echo "Usage: $0 aml-program [aml-program-args ...]"
+	exit 1
+fi
+
+SCRIPT=`pwd`/$0
+SCRIPTDIR=`dirname $SCRIPT`
+PROG=$1
+shift
+
+export LD_LIBRARY_PATH=$SCRIPTDIR/build/debug/linux64/lib/
+export AML_PATH=$SCRIPTDIR/build/debug/linux64/lib/ardome-ml/openmedialib/plugins/
+
+`$PROG $@`
+
