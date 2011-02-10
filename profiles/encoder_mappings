@@ -21,3 +21,4 @@ vcodecs/imx40 = avencode
 vcodecs/imx50 = avencode
 vcodecs/nexio = avencode
 vcodecs/xdcam = avencode
+vcodecs/mpeg2_iframe100 = avencode
