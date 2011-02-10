@@ -4,6 +4,9 @@
 #include "./platform.hpp"
 #include "./boost_link_defines.hpp"
 
+// Enable boost assertion handler to be routed to ARENFORCE
+//#define BOOST_ENABLE_ASSERT_HANDLER
+
 // Must be placed before any other includes...
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO
     #pragma warning(push)

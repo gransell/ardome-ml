@@ -21,9 +21,7 @@
 #include "machine_readable_errors.hpp"
 
 // wx_widgets stackwalk implementation
-#ifndef OLIB_ON_LINUX
-#	include "stack_walker.hpp"
-#endif
+#include "stack_walker.hpp"
 
 #include <algorithm>
 
@@ -37,7 +35,7 @@
 //#include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
-#ifdef OLIB_ON_MAC
+#if defined(OLIB_ON_MAC) || defined(OLIB_ON_LINUX)
 	#include "mac/stack_dump.hpp"
 #endif
 
@@ -108,7 +106,7 @@ namespace olib
 		}
 
 
-		#ifndef OLIB_ON_LINUX
+		#ifdef OLIB_ON_WINDOWS
         class stack_dump : public olib::opencorelib::stack_walker
         {
         public:
@@ -251,7 +249,7 @@ namespace olib
 
 				    dump.Walk(skip_levels); 
 				    stack_trace = dump.get_stack_trace();
-                #elif defined( OLIB_ON_MAC )
+                #elif defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
 				    stack_trace = str_util::to_t_string( mac::get_stack_trace() );
                 #endif
 

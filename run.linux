@@ -10,8 +10,17 @@ SCRIPTDIR=`dirname $SCRIPT`
 PROG=$1
 shift
 
-export LD_LIBRARY_PATH=$SCRIPTDIR/build/debug/linux64/lib/
-export AML_PATH=$SCRIPTDIR/build/debug/linux64/lib/ardome-ml/openmedialib/plugins/
+# Build type (release or debug) from PROG which should be eg. build
+BUILD=`echo "$PROG" | sed -r -e 's!.*build/([^/]+)/.*!\\1!'`
+if [ -z "$BUILD" ]; then
+	BUILD=debug
+fi
 
-`$PROG $@`
+# TARGET is linux32, linux64, ubuntu32 or ubuntu64
+TARGET=`\ls -1 build/debug`
+
+export LD_LIBRARY_PATH=$SCRIPTDIR/build/$BUILD/$TARGET/lib/
+export AML_PATH=$SCRIPTDIR/build/$BUILD/$TARGET/lib/ardome-ml/openmedialib/plugins/
+
+`$PROG "$@"`
 
