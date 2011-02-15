@@ -24,6 +24,22 @@ template<typename T> inline T swap(const T& t);
 template<> inline uint8_t swap<uint8_t>(const uint8_t& t) {
 	return t;
 }
+
+#ifdef OLIB_ON_LINUX
+#	include <byteswap.h>
+
+template<> inline uint16_t swap<uint16_t>(const uint16_t& t) {
+	return bswap_16(t);
+}
+template<> inline uint32_t swap<uint32_t>(const uint32_t& t) {
+	return bswap_32(t);
+}
+template<> inline uint64_t swap<uint64_t>(const uint64_t& t) {
+	return bswap_64(t);
+}
+
+#else // OLIB_ON_LINUX
+
 template<> inline uint16_t swap<uint16_t>(const uint16_t& t) {
 	return ((t & 0xff) << 8) + ((t >> 8) & 0xff);
 }
@@ -43,6 +59,9 @@ template<> inline uint64_t swap<uint64_t>(const uint64_t& t) {
 	     | ((t << 40) & 0xff000000000000UL)
 	     | ((t << 56) & 0xff00000000000000UL);
 }
+
+#endif // OLIB_ON_LINUX
+
 template<> inline int8_t swap<int8_t>(const int8_t& t) {
 	return t;
 }
