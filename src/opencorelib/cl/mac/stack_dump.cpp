@@ -101,9 +101,13 @@ using namespace abi;
 		else
 			params = "(" + params + ")";
 
-		return
-			prettify_templated_part(funcname, base_indent) +
-			params + qualifiers;
+		funcname = prettify_templated_part(funcname, base_indent);
+
+#ifdef OLIB_ON_LINUX
+		funcname = "\x1b[0;1m" + funcname + "\x1b[0m";
+#endif
+
+		return funcname + params + qualifiers;
 	}
 
 #ifdef OLIB_ON_LINUX
