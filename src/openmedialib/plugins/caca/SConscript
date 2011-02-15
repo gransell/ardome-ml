@@ -4,6 +4,8 @@
 
 Import(['local_env'])
 
+local_env.packages( 'boost' )
+
 options = local_env.optional( 'caca' )
 build = options[ 'have_caca' ]
 
