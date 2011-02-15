@@ -44,9 +44,9 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 			riff::wav::fmt_base& fmt,
 			riff::wav::ds64&     ds64,
 			riff::wav::data&     data,
-			uint64_t             nbytes_of_samples,
-			uint64_t             headerlen,
-			uint64_t             nsamples);
+			boost::uint64_t      nbytes_of_samples,
+			boost::uint64_t      headerlen,
+			boost::uint64_t      nsamples);
 
 		void vitalizeHeader();
 		void closeFile();

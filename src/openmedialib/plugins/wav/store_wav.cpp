@@ -374,8 +374,8 @@ void store_wav::setupHeaders(
 	} else {
 		ARLOG_DEBUG3("store_wav::setupHeaders(): riffsize <= 4GiB, writing RIFF headers");
 
-		wave.size = size - 8;
-		data.size = nbytes_of_samples;
+		wave.size = (uint32_t)(size - 8);
+		data.size = (uint32_t)nbytes_of_samples;
 	}
 }
 
