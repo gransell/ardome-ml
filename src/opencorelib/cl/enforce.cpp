@@ -164,10 +164,10 @@ void assertion_failed(char const * expr, char const * function, char const * fil
 }
 
 #else
-#	warning ===============================================================
-#	warning Compiling without BOOST_ENABLE_ASSERT_HANDLER will not give
-#	warning explanatory assertion output when a boost expression fails.
-#	warning ===============================================================
+//#	warning ===============================================================
+//#	warning Compiling without BOOST_ENABLE_ASSERT_HANDLER will not give
+//#	warning explanatory assertion output when a boost expression fails.
+//#	warning ===============================================================
 #endif // BOOST_ENABLE_ASSERT_HANDLER
 
 
