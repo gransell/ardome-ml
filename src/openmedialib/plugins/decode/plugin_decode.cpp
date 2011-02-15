@@ -111,7 +111,14 @@ private:
 	boost::recursive_mutex mtx_;
 		   
 };
-	
+
+typedef enum
+{
+	eval_image = 1,
+	eval_stream = 2
+}
+component;
+
 typedef Loki::SingletonHolder< shared_filter_pool, Loki::CreateUsingNew, Loki::PhoenixSingleton > the_shared_filter_pool;
 
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
@@ -129,14 +136,19 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 			virtual ~filter_pool_holder()
 			{
-				if ( filter_ )
-					the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
 			}
 
 			ml::filter_type_ptr filter()
 			{
 				filter_ = filter_ ? filter_ : the_shared_filter_pool::Instance().filter_obtain( pool_ );
 				return filter_;
+			}
+
+			void release( )
+			{
+				if ( filter_ )
+					the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
+				filter_ = ml::filter_type_ptr( );
 			}
 
 		private:
@@ -153,7 +165,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			, frames_( frames )
 			, pool_holder_( new filter_pool_holder( pool_token ) )
 			, validated_( validated )
-			, evaluated_( false )
+			, evaluated_( 0 )
 		{
 		}
 
@@ -162,18 +174,16 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		{
 		}
 
-		void evaluate( )
+		void evaluate( component comp )
 		{
 			filter_type_ptr filter;
-			evaluated_ = true;
+			evaluated_ |= comp;
 			if ( pool_holder_ && ( filter = pool_holder_->filter( ) ) )
 			{
 				ml::frame_type_ptr other = parent_;
 
 				{
 					ml::input_type_ptr pusher = filter->fetch_slot( 0 );
-
-					//other->get_image( );
 
 					if ( pusher == 0 )
 					{
@@ -188,18 +198,26 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 						filter->sync( );
 					}
 
-					filter->fetch_slot( 0 )->push( other );
+					pusher->push( other );
 					filter->seek( other->get_position( ) );
 					other = filter->fetch( );
+
+					//Empty pusher in case filter didn't read from it due to caching
+					pusher->fetch( );
 				}
 
-				if ( other->get_image( ) )
+				if ( comp == eval_image )
+				{
 					image_ = other->get_image( );
-				alpha_ = other->get_alpha( );
+					alpha_ = other->get_alpha( );
+				}
+
 				audio_ = other->get_audio( );
 				//properties_ = other->properties( );
-				if ( other->get_stream( ) )
+				if ( comp == eval_stream )
+				{
 					stream_ = other->get_stream( );
+				}
 				pts_ = other->get_pts( );
 				duration_ = other->get_duration( );
 				//sar_num_ = other->get_sar_num( );
@@ -210,7 +228,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				queue_ = other->queue( );
 
 				//We will not have any use for the filter now
-				pool_holder_.reset();
+				pool_holder_->release();
 			}
 		}
 
@@ -232,7 +250,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Indicates if the frame has an image
 		virtual bool has_image( )
 		{
-			return !evaluated_ || image_;
+			return !( evaluated_ & eval_image ) || image_;
 		}
 
 		/// Indicates if the frame has audio
@@ -245,7 +263,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded )
 		{
 			frame_type::set_image( image, decoded );
-			evaluated_ = true;
+			evaluated_ = eval_image | eval_stream;
 			pool_holder_.reset();
 			if( parent_ )
 				parent_->set_image( image, decoded );
@@ -254,7 +272,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Get the image associated to the frame.
 		virtual olib::openimagelib::il::image_type_ptr get_image( )
 		{
-			if( !evaluated_ ) evaluate( );
+			if( !( evaluated_ & eval_image ) ) evaluate( eval_image );
 			return image_;
 		}
 
@@ -283,7 +301,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 
 		virtual stream_type_ptr get_stream( )
 		{
-			if( !evaluated_ ) evaluate( );
+			if( !( evaluated_ & eval_stream ) ) evaluate( eval_stream );
 			return stream_;
 		}
 
@@ -309,7 +327,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		int frames_;
 		boost::shared_ptr< filter_pool_holder > pool_holder_;
 		bool validated_;
-		bool evaluated_;
+		int evaluated_;
 };
 
 namespace {
@@ -1568,6 +1586,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 		void decode_job ( ml::frame_type_ptr frame )
 		{
 			frame->get_image( );
+			frame->get_stream( );
 			make_available( frame );
 		}
  
