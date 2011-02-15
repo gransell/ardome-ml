@@ -19,6 +19,8 @@ extern "C" {
 #include <libavformat/avio.h>
 }
 
+#include "store_wav.hpp"
+
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
@@ -124,7 +126,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					
 					//The next 4 bytes after the chunk ID is the size of the chunk
 					boost::uint32_t n = get_ule32( buffer, 4 );
-					if ( n > int( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != n ) break;
+					if ( n > boost::uint32_t( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != (int)n ) break;
 					offset_ += n;
 
 					if ( memcmp( &chunk_id[ 0 ], "ds64", 4 ) == 0 )
@@ -345,7 +347,9 @@ public:
 
 	virtual store_type_ptr store( const pl::wstring &spec, const frame_type_ptr &frame )
 	{
-		return store_type_ptr( );
+		store_wav* s = new store_wav( spec );
+		s->initializeFirstFrame(frame);
+		return store_type_ptr( s );
 	}
 
 	virtual filter_type_ptr filter( const pl::wstring & )

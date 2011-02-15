@@ -43,6 +43,8 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self[ 'target' ] == 'ubuntu64':
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu64/ffmpeg.pc', 'bcomp/ffmpeg' )
+			if os.path.exists( 'bcomp/xercesc' ):
+				self.install_config( 'config/ubuntu64/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'linux32':
 			if os.path.exists( 'bcomp/boost' ):
 				self.install_config( 'config/linux32/boost.pc', 'bcomp/boost' )

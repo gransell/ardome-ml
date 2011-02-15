@@ -160,11 +160,9 @@ namespace olib
 }
 
 #ifdef OLIB_ON_WINDOWS
-    #include "msw/stack_walker.hpp"
-#elif defined(OLIB_ON_MAC)
-#include "mac/stack_walker.hpp"
-#else
-	#include "unix/stack_walker.hpp"
+#	include "msw/stack_walker.hpp"
+#elif defined(OLIB_ON_MAC) || defined(OLIB_ON_LINUX)
+#	include "mac/stack_walker.hpp"
 #endif
 
 
