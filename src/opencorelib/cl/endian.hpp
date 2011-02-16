@@ -54,10 +54,10 @@ template<> inline uint64_t swap<uint64_t>(const uint64_t& t) {
 	     | ((t >> 40) & 0xff00)
 	     | ((t >> 24) & 0xff0000)
 	     | ((t >>  8) & 0xff000000)
-	     | ((t <<  8) & 0xff00000000UL)
-	     | ((t << 24) & 0xff0000000000UL)
-	     | ((t << 40) & 0xff000000000000UL)
-	     | ((t << 56) & 0xff00000000000000UL);
+	     | ((t <<  8) & 0xff00000000ULL)
+	     | ((t << 24) & 0xff0000000000ULL)
+	     | ((t << 40) & 0xff000000000000ULL)
+	     | ((t << 56) & 0xff00000000000000ULL);
 }
 
 #endif // OLIB_ON_LINUX
