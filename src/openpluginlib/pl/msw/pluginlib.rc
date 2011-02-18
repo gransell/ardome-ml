@@ -45,12 +45,12 @@ BEGIN
         BLOCK "041d04b0"
         BEGIN
             VALUE "CompanyName", "Vizrt"
-            VALUE "FileDescription", "AML Core Utilities"
+            VALUE "FileDescription", "AML Plugin Library"
             VALUE "FileVersion", "0,0,0,0"
             VALUE "InternalName", "Ardome Media Library (AML)"
             VALUE "LegalCopyright", "Copyright © Vizrt 2008"
-            VALUE "OriginalFilename", "opencorelib_cl.dll"
-            VALUE "ProductName", "Vizrt AMF core utilities"
+            VALUE "OriginalFilename", "openpluginlib_pl.dll"
+            VALUE "ProductName", "Vizrt AML plugin library"
             VALUE "ProductVersion", "0,0,0,0"
         END
     END

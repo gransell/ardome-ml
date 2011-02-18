@@ -5,6 +5,12 @@
 Import(['local_env'])
 
 local_env.packages( 'loki', 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_system' )
-object = local_env.plugin( 'openmedialib_decode', [ 'plugin_decode.cpp' ] )
+
+src = [ 'plugin_decode.cpp' ]
+
+if local_env[ 'PLATFORM' ] == 'win32' :
+	src.append( 'msw/decodeplugin.rc' )
+
+object = local_env.plugin( 'openmedialib_decode', src )
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_decode.opl' ] )
 Return( 'object' )

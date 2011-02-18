@@ -9,6 +9,12 @@ options = local_env.optional( 'sox' )
 build = options[ 'have_sox' ]
 
 if build:
-	object = local_env.plugin( 'openmedialib_sox', [ 'plugin_sox.cpp' ] )
+	
+	src = [ 'plugin_sox.cpp' ]
+
+	if local_env[ 'PLATFORM' ] == 'win32' :
+		src.append( 'msw/soxplugin.rc' )
+		
+	object = local_env.plugin( 'openmedialib_sox', src )
 	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_sox.opl' ] )
 	Return( 'object' )

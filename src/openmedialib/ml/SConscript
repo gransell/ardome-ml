@@ -6,18 +6,22 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
 
-object = local_env.shared_library( 'openmedialib_ml', [ 
-		'audio_channel_convert.cpp', 
-		'audio_sample_calcs.cpp', 
-		'audio_utilities.cpp', 
-		'awi.cpp', 
-		'filter.cpp', 
-		'frame.cpp', 
-		'indexer.cpp', 
-		'ml.cpp', 
-		'openmedialib_plugin.cpp', 
-		'scope_handler.cpp', 
-		'utilities.cpp' ] )
+src = [ 'audio_channel_convert.cpp',
+        'audio_sample_calcs.cpp',
+        'audio_utilities.cpp',
+        'awi.cpp',
+        'filter.cpp',
+        'frame.cpp',
+        'indexer.cpp',
+        'ml.cpp',
+        'openmedialib_plugin.cpp',
+        'scope_handler.cpp',
+        'utilities.cpp' ]
+
+if local_env[ 'PLATFORM' ] == 'win32':
+	src.append( 'msw/medialib.rc' )
+
+object = local_env.shared_library( 'openmedialib_ml', src )
 
 local_env.release( object )
 

@@ -10,7 +10,7 @@ local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env[ 
 local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_ml_plugin' ] ] )
 
 libxml2_sources = [ 'content_handler_libxml.cpp' ]
-msxml_sources = [ 'content_handler_msxml.cpp' ]
+msxml_sources = [ 'content_handler_msxml.cpp', 'msw/pluginlib.rc' ]
 
 if local_env[ 'PLATFORM' ] == 'darwin' :
 	local_env.Append( FRAMEWORKS  = 'CoreServices' )
