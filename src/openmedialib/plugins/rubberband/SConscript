@@ -9,6 +9,11 @@ options = local_env.optional( 'rubberband' )
 build = options[ 'have_rubberband' ]
 
 if build:
-	object = local_env.plugin( 'openmedialib_rubberband', [ 'plugin_rubberband.cpp' ] )
+	src = [ 'plugin_rubberband.cpp' ]
+	
+	if local_env[ 'PLATFORM' ] == 'win32' :
+		src.append( 'msw/rubberbandplugin.rc' )
+	
+	object = local_env.plugin( 'openmedialib_rubberband', src )
 	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_rubberband.opl' ] )
 	Return( 'object' )

@@ -8,7 +8,12 @@ local_env.packages( 'boost_thread', 'boost_system', 'boost_date_time' )
 
 local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 
-object = local_env.plugin( 'openmedialib_gensys', [ 'gensys_plugin.cpp' ] )
+src = [ 'gensys_plugin.cpp' ]
+
+if local_env[ 'PLATFORM' ] == 'win32' :
+	src.append( 'msw/gensysplugin.rc' )
+	
+object = local_env.plugin( 'openmedialib_gensys', src )
 
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'gensys_plugin.opl' ] )
 
