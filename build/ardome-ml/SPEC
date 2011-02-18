@@ -13,6 +13,7 @@ MAILTO: mats@ardendo.se, gransell@ardendo.se, bga@ardendo.se, rasmus@ardendo.se
 
 ### Buildsteps related to the Visual Studio 2008 compiler:
 vs2008_POSTGRAB: build/ardome-ml/vs2008_postgrab.sh
+vs2008_PREBAG: build/ardome-ml/update-rc.sh
 vs2008_TARGET: ardome-ml-vs2008.zip
 vs2008_BUILDSCRIPT: build/ardome-ml/vs2008_build_step.sh
 vs2008_BUILDSCRIPT2: build/ardome-ml/vs2008_build_zip.sh
