@@ -1,7 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "resource.hpp"
-#include "../config.hpp"
+ 
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -22,47 +21,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(1252)
 #endif //_WIN32
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON                    "icon2.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
-BEGIN
-    IDD_ASSERT_DIALOG_2, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 242
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 213
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_ASSERT_DIALOG_2 DIALOGEX 0, 0, 249, 220
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "Dialog"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -70,8 +28,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION CORE_VERSION_MAJOR,CORE_VERSION_MINOR,0,0
- PRODUCTVERSION CORE_VERSION_MAJOR,CORE_VERSION_MINOR,0,0
+ FILEVERSION 1,6,0,10
+ PRODUCTVERSION 1,6,0,10 
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -86,14 +44,14 @@ BEGIN
     BEGIN
         BLOCK "041d04b0"
         BEGIN
-            VALUE "CompanyName", "Vizrt"
-            VALUE "FileDescription", "AML Core Utilities"
-            VALUE "FileVersion", "0,0,0,0"
-            VALUE "InternalName", "Ardome Media Library (AML)"
-            VALUE "LegalCopyright", "Copyright <A9> Vizrt 2008"
-            VALUE "OriginalFilename", "opencorelib_cl.dll"
-            VALUE "ProductName", "Vizrt AMF core utilities"
-            VALUE "ProductVersion", "0,0,0,0"
+          VALUE "CompanyName", "Vizrt"
+		  VALUE "FileDescription", "AML Generated Wrappers"
+		  VALUE "FileVersion", "1, 6, 0, 10"
+		  VALUE "InternalName", "Ardome Media Library (AML)"
+		  VALUE "LegalCopyright", "Copyright © Vizrt 2008"
+		  VALUE "OriginalFilename", "AML.dll"
+		  VALUE "ProductName", "AML Generated Wrappers"
+		  VALUE "ProductVersion", "1, 6, 0, 10"
         END
     END
     BLOCK "VarFileInfo"
@@ -154,4 +112,5 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+
 

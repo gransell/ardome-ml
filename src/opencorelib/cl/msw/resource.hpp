@@ -2,6 +2,20 @@
 // Microsoft Visual C++ generated include file.
 // Used by au_base.rc
 //
+#define IDD_ASSERT_DIALOG_2             9
+#define IDS_PROJNAME                    100
+#define IDR_WMDMLOGGER                  101
+#define IDS_LOG_SEV_INFO                201
+#define IDS_LOG_SEV_WARN                202
+#define IDS_LOG_SEV_ERROR               203
+#define IDS_LOG_DATETIME                204
+#define IDS_LOG_SRCNAME                 205
+#define IDS_DEF_LOGFILE                 301
+#define IDS_DEF_MAXSIZE                 302
+#define IDS_DEF_SHRINKTOSIZE            303
+#define IDS_DEF_LOGENABLED              304
+#define IDS_MUTEX_TIMEOUT               401
+#define IDI_ICON1                       402
 
 // Next default values for new objects
 // 
