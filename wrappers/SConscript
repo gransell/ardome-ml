@@ -142,6 +142,7 @@ elif local_env['PLATFORM'] == 'win32' :
 	pickled_wf.close( )
 
 	wrapper_files[ 'source_files' ].extend( ['src/c_sharp/AMLConversionFunctions.cpp'] )
+	wrapper_files[ 'source_files' ].extend( ['src/msw/aml_wrappers.rc'] )
 	
 	build_mode_str = 'release'
 	if local_env['debug'] == '1' :
