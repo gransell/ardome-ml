@@ -19,6 +19,7 @@ prebag-rc src/openmedialib/plugins/wav/msw/wavplugin.rc
 prebag-rc src/openmedialib/tools/amlbatch/amlbatch.rc
 prebag-rc src/openpluginlib/pl/msw/pluginlib.rc
 
+prebag-rc wrappers/src/msw/aml_wrappers.rc
 
 echo "Updating RC files done."
 
