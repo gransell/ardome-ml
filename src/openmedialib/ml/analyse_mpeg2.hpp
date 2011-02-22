@@ -126,7 +126,7 @@ typedef struct picture_coding_extension
 	int sub_carrier_phase;					// 8 bits
 } picture_coding_extension;
 
-class analyse_mpeg2
+class ML_DECLSPEC analyse_mpeg2
 {
 	public:
 		analyse_mpeg2( );
