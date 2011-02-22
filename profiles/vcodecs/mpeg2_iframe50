@@ -1,0 +1,3 @@
+include vcodecs/imx50
+
+stream_codec_id = http://www.ardendo.com/apf/codec/mpeg/mpeg2

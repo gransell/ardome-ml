@@ -1,0 +1,9 @@
+include vcodecs/imx50
+
+vvideo_bit_rate = 40000000
+video_rc_min_rate = 40000000
+video_rc_max_rate = 40000000
+video_rc_buffer_size = 1600000
+video_rc_initial_buffer_occupancy = 1600000
+
+stream_codec_id = http://www.ardendo.com/apf/codec/mpeg/mpeg2
