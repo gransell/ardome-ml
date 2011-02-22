@@ -6,7 +6,8 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
 
-src = [ 'audio_channel_convert.cpp',
+src = [ 'analyse_mpeg2.cpp',
+		'audio_channel_convert.cpp',
         'audio_sample_calcs.cpp',
         'audio_utilities.cpp',
         'awi.cpp',
@@ -29,7 +30,8 @@ local_env.copy_files( local_env[ 'stage_profiles' ], Dir('#').abspath + '/profil
 
 if local_env[ 'PLATFORM' ] != 'win32' :
 	local_env.copy_project_files( local_env[ 'ml_include' ], 
-		[ 	'audio.hpp', 
+		[ 	'analyse_mpeg2.hpp',
+			'audio.hpp', 
 			'audio_cast.hpp', 
 			'audio_channel_convert.hpp', 
 			'audio_channel_extract.hpp', 
