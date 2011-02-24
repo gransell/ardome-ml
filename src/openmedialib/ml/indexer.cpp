@@ -158,17 +158,15 @@ aml_index_reader_ptr create( const std::string& indexname, boost::uint16_t v4_in
 	{
 		// Try V4 Index
 		result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v4 >( indexname, v4_index_entry_type ) );
-		if ( result->frames( 0 ) == 0 )
-		{
+		if ( result->total_frames( ) == 0 )
 			result = aml_index_reader_ptr( );
-		}
 	}
 
 	if ( !result )
 	{
 		// Try V3 Index
 		result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v3 >( indexname ) );
-		if ( result->frames( 0 ) == 0 )
+		if ( result->total_frames( ) == 0 )
 			result = aml_index_reader_ptr( );
 	}
 
@@ -176,7 +174,7 @@ aml_index_reader_ptr create( const std::string& indexname, boost::uint16_t v4_in
 	{
 		// Try V2 Index
 		result = aml_index_reader_ptr( new aml_index_reader< awi_parser_v2 >( indexname ) );
-		if ( result->frames( 0 ) == 0 )
+		if ( result->total_frames( ) == 0 )
 			result = aml_index_reader_ptr( );
 	}
 
@@ -425,8 +423,10 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint1
 		aml_index_reader_ptr index = create( pl::to_string( url ), v4_index_entry_type );
 		if ( index )
 			return indexer_job_ptr( new indexed_job_type( url, index ) );
-		else
+		else if ( url.find( L".awi" ) == pl::wstring::npos )
 			return indexer_job_ptr( new unindexed_job_type( url ) );
+		else
+			return indexer_job_ptr( );
 	}
 	else
 	{
@@ -477,6 +477,8 @@ class indexer : public indexer_type
 			if ( map_.find( map_key ) == map_.end( ) )
 			{
 				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
+				if ( !job ) return indexer_item_ptr( );
+
 				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) );
 				if ( !job->finished( ) && has_frames_or_size )
 				{
