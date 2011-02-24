@@ -57,13 +57,13 @@ projectTemplate = """
 		/* Sources */
 		%for s in project._sources :
 			%if s.format() == 'source' :
-			${s.uuid()} /* ${s.name()} */ = { isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = ${s.type()}; name = ${s.name()}; path = ${s.path()}; sourceTree = "<absolute>"; };
+			${s.uuid()} /* ${s.name()} */ = { isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = ${s.type()}; name = ${s.name()}; path = ${s.path()}; sourceTree = SOURCE_ROOT; };
 			%endif
 		%endfor
 		/* Headers */
 		%for s in project._sources :
 			%if s.format() == 'header' :
-			${s.uuid()} /* ${s.name()} */ = { isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = ${s.type()}; name = ${s.name()}; path = ${s.path()}; sourceTree = "<absolute>"; };
+			${s.uuid()} /* ${s.name()} */ = { isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = ${s.type()}; name = ${s.name()}; path = ${s.path()}; sourceTree = SOURCE_ROOT; };
 			%endif
 		%endfor
 		/* Products */

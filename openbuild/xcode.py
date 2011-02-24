@@ -30,7 +30,7 @@ def _add_groups_and_sources( project, env, lib, sources, headers=None ):
 		if isinstance( s, dict ):
 			source_name = s.keys()[0]
 			settings = s[source_name]
-		source_path = os.path.join(env.root, env.relative_path, str(source_name))
+		source_path = os.path.join(env.relative_path, str(source_name))
 		itm = project.source_item_for_path( source_path )
 		if itm is None :
 			itm = XcodeSourceFile( source_path, 'source' )
@@ -221,7 +221,7 @@ class XcodeBuilder(object):
 			self._project.aggregate_dependency_list().append(proxy)
 		
 		print 'Generating xcode project files. Products will not be built'
-		proj_path = os.path.join( env.root, 'build', 'project' )
+		proj_path = os.path.join( env.root )
 		if not os.path.exists( proj_path ) :
 			os.makedirs( proj_path )
 		
