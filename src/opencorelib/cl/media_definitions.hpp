@@ -37,6 +37,10 @@ namespace olib
                 movie, /**< 24000:1001.
    
                 internal = pal,  The internal format is pal. */
+
+				pal_50,
+				ntsc_60,
+
                 undef 
             };
 
