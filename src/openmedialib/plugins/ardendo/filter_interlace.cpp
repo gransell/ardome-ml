@@ -95,7 +95,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			{
 				boost::uint8_t *dest_ptr = image->data( p );
 				boost::uint8_t *frame0_ptr = frame0->data( p );
-				boost::uint8_t *frame1_ptr = frame1->data( p );
+				boost::uint8_t *frame1_ptr = frame1->data( p ) + frame1->pitch( p );
 				int frame0_pitch = frame0->pitch( p ) * 2;
 				int frame1_pitch = frame1->pitch( p ) * 2;
 				int linesize = image->linesize( p );
