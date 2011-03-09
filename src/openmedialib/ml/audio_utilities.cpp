@@ -8,6 +8,7 @@
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/audio_channel_convert.hpp>
 #include <openmedialib/ml/audio_channel_extract.hpp>
+#include <openmedialib/ml/audio_mix_matrix.hpp>
 #include <openmedialib/ml/audio_pitch.hpp>
 #include <openmedialib/ml/audio_place.hpp>
 #include <openmedialib/ml/audio_reverse.hpp>
@@ -309,6 +310,27 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 				levels.push_back( 0.0 );
 		}
 		result = channel_mixer( a, b, levels, max_level, 0, c );
+	}
+
+	return result;
+}
+
+ML_DECLSPEC audio_type_ptr mix_matrix( audio_type_ptr &a, const std::vector< double > &b, int c )
+{
+	audio_type_ptr result;
+
+	if ( a )
+	{
+		if ( a->id( ) == pcm8_id )
+			result = mix_matrix< pcm8 >( a, b, c );
+		else if ( a->id( ) == pcm16_id )
+			result = mix_matrix< pcm16 >( a, b, c );
+		else if ( a->id( ) == pcm24_id )
+			result = mix_matrix< pcm24 >( a, b, c );
+		else if ( a->id( ) == pcm32_id )
+			result = mix_matrix< pcm32 >( a, b, c );
+		else if ( a->id( ) == float_id )
+			result = mix_matrix< floats >( a, b, c );
 	}
 
 	return result;

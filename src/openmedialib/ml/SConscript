@@ -37,6 +37,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'audio_channel_extract.hpp', 
 			'audio_convert.hpp', 
 			'audio_interface.hpp', 
+			'audio_mix_matrix.hpp', 
 			'audio_place.hpp', 
 			'audio_template.hpp', 
 			'audio_types.hpp', 

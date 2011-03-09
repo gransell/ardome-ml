@@ -53,7 +53,10 @@ boost::shared_ptr< T > mixer( const audio_type_ptr &a_, const audio_type_ptr &b_
 		{
 			sa = float( *pa ) / max_sample;
 			sb = float( *pb ) / max_sample;
-			*po ++ = ( typename T::sample_type )( ( ( sa + sb ) - ( sa * sb ) ) * max_sample );
+			if ( sa < 0.0f && sb < 0.0f )
+				*po ++ = ( typename T::sample_type )( ( sa + sb + sa * sb ) * max_sample );
+			else
+				*po ++ = ( typename T::sample_type )( ( sa + sb - sa * sb ) * max_sample );
 			pa ++;
 			pb ++;
 		}
@@ -144,7 +147,10 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 				{
 					sa = float( *dst ) / max_sample;
 					sb = ( float( *src ) / max_sample ) * volume[ c ];
-					*dst = ( typename T::sample_type )( ( ( sa + sb ) - ( sa * sb ) ) * max_sample );
+					if ( sa < 0.0f && sb < 0.0f )
+						*dst = ( typename T::sample_type )( ( sa + sb + sa * sb ) * max_sample );
+					else
+						*dst = ( typename T::sample_type )( ( sa + sb - sa * sb ) * max_sample );
 				}
 
 				dst ++;
@@ -173,7 +179,10 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 			{
 				sa = float( *dst ) / max_sample;
 				sb = ( float( *src ) / max_sample ) * vol;
-				*dst = ( typename T::sample_type )( ( ( sa + sb ) - ( sa * sb ) ) * max_sample );
+				if ( sa < 0.0f && sb < 0.0f )
+					*dst = ( typename T::sample_type )( ( sa + sb + sa * sb ) * max_sample );
+				else
+					*dst = ( typename T::sample_type )( ( sa + sb - sa * sb ) * max_sample );
 			}
 
 			src ++;

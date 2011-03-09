@@ -40,6 +40,9 @@ extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, int, const audio_type_ptr &c = audio_type_ptr( ) );
 
+// Apply the mix matrix to the specified audio
+extern ML_DECLSPEC audio_type_ptr mix_matrix( audio_type_ptr &input, const std::vector< double > &matrix, int channels );
+
 // Place the specified channel from b in the channel from b
 extern ML_DECLSPEC audio_type_ptr channel_place( audio_type_ptr &a, const audio_type_ptr &b, int out, int in );
 
