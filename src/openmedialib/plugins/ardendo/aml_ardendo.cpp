@@ -40,6 +40,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const pl::wstrin
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mix_matrix( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & );
@@ -112,6 +113,8 @@ public:
 			return create_locked_audio( resource );
 		if ( resource == L"loop" )
 			return create_loop( resource );
+		if ( resource == L"mix_matrix" )
+			return create_mix_matrix( resource );
 		if ( resource == L"mono" )
 			return create_mono( resource );
 		if ( resource == L"montage" )
