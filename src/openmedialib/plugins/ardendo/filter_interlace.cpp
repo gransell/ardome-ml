@@ -48,10 +48,6 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			ml::frame_type_ptr frame0 = source->fetch( get_position( ) * 2 );
 			ml::frame_type_ptr frame1 = source->fetch( get_position( ) * 2 + 1 );
 
-			int num, den;
-			frame0->get_fps( num, den );
-			frame0->set_fps( num / 2, den );
-
 			// Merge fields
 			if ( prop_bff_.value< int >( ) )
 			{
@@ -79,6 +75,10 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 				memcpy( ( boost::uint8_t * )audio->pointer( ) + a->size( ), b->pointer( ), b->size( ) );
 				frame0->set_audio( audio );
 			}
+
+			int num, den;
+			frame0->get_fps( num, den );
+			frame0->set_fps( num / 2, den );
 
 			return frame0;
 		}
