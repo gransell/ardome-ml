@@ -920,18 +920,33 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 				if ( image->field_order( ) != il::progressive && image->field_order( ) != il::field_order_flags( prop_order_.value< int >( ) ) )
 				{
 					// Do we have a previous frame and is it the one preceding this request?
-					// If not, we'll just provide the current frame as the result
-					if ( previous_ && previous_->position( ) == get_position( ) - 1 )
+					if ( !previous_ || previous_->position( ) != get_position( ) - 1 )
 					{
-						// Image is definitely in the wrong order - guessing here :-)
-						il::image_type_ptr merged = merge( image, 0, previous_, 1 );
+						if ( get_position( ) > 0 )
+							previous_ = fetch_slot( 0 )->fetch( get_position( ) - 1 )->get_image( );
+						else
+							previous_ = il::image_type_ptr( );
+					}
+
+					// If we have a previous frame, merge the fields accordingly, otherwise duplicate the first field
+					if ( previous_ )
+					{
+						// Image is definitely in the wrong order - think this is correct for both?
+						il::image_type_ptr merged;
+						if ( prop_order_.value< int >( ) == 2 )
+							merged = merge( image, 0, previous_, 1 );
+						else
+							merged = merge( previous_, 0, image, 1 );
 						merged->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
 						merged->set_position( get_position( ) );
 						frame->set_image( merged );
 					}
 					else
 					{
-						image->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+						il::image_type_ptr merged = merge( image, 0, image, 0 );
+						merged->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+						merged->set_position( get_position( ) );
+						frame->set_image( merged );
 					}
 
 					// We need to remember this frame for reuse on the next request
