@@ -85,6 +85,11 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 					result = fetch_from_slot( 1, false );
 				}
 			}
+			else if( slot == -2 )
+			{
+				//Render neither video nor audio
+				result = ml::frame_type_ptr( new ml::frame_type( ) );
+			}
 			else
 			{
 				result = fetch_from_slot( slot, false );
