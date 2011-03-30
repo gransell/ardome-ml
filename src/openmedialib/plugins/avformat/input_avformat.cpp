@@ -1831,6 +1831,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( context_ )
 				av_close_input_file( context_ );
 
+			// Clear video and audio index vectors
+			video_indexes_.erase( video_indexes_.begin( ), video_indexes_.end( ) );
+			audio_indexes_.erase( audio_indexes_.begin( ), audio_indexes_.end( ) );
+
 			// Reopen the media
 			seek( 0 );
 			clear_stores( true );
