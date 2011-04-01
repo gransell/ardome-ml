@@ -78,9 +78,22 @@ std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, 
 			pl::wstring arg = pl::to_wstring( argv[ index ++ ] );
 
 			if ( arg.find( L"=" ) != pl::wstring::npos )
+			{
 				assign( properties, arg );
+			}
 			else
-				result.push_back( ml::create_store( arg, frame ) );
+			{
+				ml::store_type_ptr st = ml::create_store( arg, frame );
+				if( st )
+				{
+					result.push_back( st );
+				}
+				else
+				{
+					std::wcerr << L"Error: Could not find a plugin providing the store \"" << arg << L"\"" << std::endl;
+					exit(-1);
+				}
+			}
 
 			if ( result.size( ) )
 				properties = result.back( )->properties( );
