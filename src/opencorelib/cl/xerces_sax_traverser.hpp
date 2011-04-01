@@ -102,7 +102,7 @@ namespace olib
             /// Read a number of bytes from the stream
             /** Required to implement by BinInputStream. */
             virtual xerces_size_type readBytes( XMLByte* const toFill,
-                                         		xerces_size_type maxToRead );
+                                         		const xerces_size_type maxToRead );
 			
 			/// It is ok to return 0 here for streams that we do not know the mime type for
 			/// This method is only needed when runnign xerces 3.x
