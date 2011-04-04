@@ -1825,9 +1825,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Close the existing codec and file objects
 			if ( prop_video_index_.value< int >( ) >= 0 )
+			{
 				close_video_codec( );
+				video_indexes_.clear( );
+			}
 			if ( prop_audio_index_.value< int >( ) >= 0 )
+			{
 				close_audio_codec( );
+				audio_indexes_.clear( );
+			}
 			if ( context_ )
 				av_close_input_file( context_ );
 
