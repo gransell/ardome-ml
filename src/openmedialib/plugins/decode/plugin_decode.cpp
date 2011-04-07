@@ -1576,7 +1576,10 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 		virtual ~filter_map_reduce( )
 		{
 			if ( pool_ )
+			{
 				pool_->terminate_all_threads( boost::posix_time::seconds( 5 ) );
+				delete pool_;
+			}
 		}
 
 		// Indicates if the input will enforce a packet decode
