@@ -75,11 +75,12 @@ boost::recursive_mutex avformat_video::avcodec_open_lock_;
 class stream_queue
 {
 	public:
-		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope, const std::wstring& source_uri )
+		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope, const std::wstring& source_uri, int threads )
 			: input_( input )
 			, gop_open_( gop_open )
 			, scope_( scope )
 			, scope_uri_key_( source_uri )
+			, threads_( threads )
 			, keys_( 0 )
 			, context_( 0 )
 			, codec_( 0 )
@@ -363,7 +364,6 @@ class stream_queue
 				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				ARLOG_DEBUG5( "Creating decoder context" );
 				context_ = avcodec_alloc_context( );
-				context_->thread_count = 4;
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
 				ARENFORCE_MSG( codec_, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ result->get_stream( )->codec( ) ] )( result->get_stream( )->codec( ) );
 				// Work around for broken Omneon IMX streams which incorrectly assign the low delay flag in their encoder
@@ -371,9 +371,11 @@ class stream_queue
 					context_->flags |= CODEC_FLAG_LOW_DELAY;
 				avcodec_open( context_, codec_ );
 				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
-				#ifndef WIN32
-				avcodec_thread_init( context_, 4 );
-				#endif
+				if ( threads_ )
+				{
+					context_->thread_count = threads_;
+					avcodec_thread_init( context_, threads_ );
+				}
 				avcodec_flush_buffers( context_ );
 			}
 
@@ -492,6 +494,7 @@ class stream_queue
 		int gop_open_;
 		std::wstring scope_;
 		std::wstring scope_uri_key_;
+		int threads_;
 
 		int keys_;
 		AVCodecContext *context_;
@@ -604,12 +607,14 @@ class avformat_decode_filter : public filter_simple
 			, prop_gop_open_( pl::pcos::key::from_string( "gop_open" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
+			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
 			, initialised_( false )
 			, queue_( )
 		{
 			properties( ).append( prop_gop_open_ = 1 );
 			properties( ).append( prop_scope_ = pl::wstring(L"default_scope") );
 			properties( ).append( prop_source_uri_ = pl::wstring(L"") );
+			properties( ).append( prop_threads_ = 1 );
 		}
 
 		virtual ~avformat_decode_filter( )
@@ -640,7 +645,7 @@ class avformat_decode_filter : public filter_simple
 						uri = prop_source_uri_.value< pl::wstring >( );
 					}
 					
-					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< pl::wstring >( ), uri ) );
+					queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< pl::wstring >( ), uri, prop_threads_.value< int >( ) ) );
 					initialised_ = true;
 				}
 			}
@@ -666,6 +671,7 @@ class avformat_decode_filter : public filter_simple
 		pl::pcos::property prop_gop_open_;
 		pl::pcos::property prop_scope_;
 		pl::pcos::property prop_source_uri_;
+		pl::pcos::property prop_threads_;
 		bool initialised_;
 		stream_queue_ptr queue_;
 };
@@ -850,6 +856,7 @@ class avformat_encode_filter : public filter_simple
 			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, prop_force_( pl::pcos::key::from_string( "force" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
+			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
 			, initialised_( false )
 			, encoding_( false )
 			, video_wrapper_( 0 )
@@ -858,6 +865,7 @@ class avformat_encode_filter : public filter_simple
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
 			properties( ).append( prop_profile_ = pl::wstring( L"profiles/vcodec/dv25" ) );
+			properties( ).append( prop_threads_ = 4 );
 		}
 
 		virtual ~avformat_encode_filter( )
@@ -1030,6 +1038,7 @@ class avformat_encode_filter : public filter_simple
 		pl::pcos::property prop_enable_;
 		pl::pcos::property prop_force_;
 		pl::pcos::property prop_profile_;
+		pl::pcos::property prop_threads_;
 		bool initialised_;
 		ml::frame_type_ptr last_frame_;
 		ml::input_type_ptr pusher_;

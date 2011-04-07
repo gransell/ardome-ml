@@ -47,6 +47,7 @@ static pl::pcos::key key_interlace_ = pl::pcos::key::from_string( "interlace" );
 static pl::pcos::key key_bit_rate_ = pl::pcos::key::from_string( "bit_rate" );
 static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
 static pl::pcos::key key_instances_ = pl::pcos::key::from_string( "instances" );
+static pl::pcos::key key_threads_ = pl::pcos::key::from_string( "threads" );
 
 class filter_pool
 {
@@ -982,7 +983,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			
 			result = decoder_.back( );
 			decoder_.pop_back( );
-			
+
 			return result;
 		}
 	
@@ -999,6 +1000,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				ml::filter_type_ptr analyse = ml::filter_type_ptr( new filter_analyse( ) );
 				analyse->connect( fetch_slot( 0 ) );
 				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
+				if ( gop_decoder_->property( "threads" ).valid( ) ) 
+					gop_decoder_->property( "threads" ) = prop_inner_threads_.value< int >( );
 				gop_decoder_->connect( analyse );
 				gop_decoder_->sync( );
 				return true;
@@ -1318,8 +1321,10 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 			if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 			{
 				il::image_type_ptr image = frame->get_image( );
-				if ( prop_progressive_.value< int >( ) )
+				if ( prop_progressive_.value< int >( ) == 1 )
 					image = il::deinterlace( image );
+				else if ( prop_progressive_.value< int >( ) == -1 )
+					image->set_field_order( il::progressive );
 				image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
 				frame->set_image( image );
 				frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
