@@ -1,0 +1,405 @@
+// distributor - A distributor plugin to ml.
+//
+// Copyright (C) 2010 Vizrt
+// Released under the LGPL.
+
+#include <openmedialib/ml/analyse_mpeg2.hpp>
+#include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/packet.hpp>
+#include <openpluginlib/pl/pcos/observer.hpp>
+#include <opencorelib/cl/thread_pool.hpp>
+#include <opencorelib/cl/function_job.hpp>
+#include <opencorelib/cl/profile.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/log_defines.hpp>
+#include <opencorelib/cl/uuid_16b.hpp>
+#include <opencorelib/cl/str_util.hpp>
+#include <openmedialib/ml/filter_encode.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/enable_shared_from_this.hpp>
+
+#include <iostream>
+#include <cstdlib>
+#include <vector>
+#include <string>
+#include <set>
+
+#define LOKI_CLASS_LEVEL_THREADING
+#include <loki/Singleton.h>
+
+namespace pl = olib::openpluginlib;
+namespace ml = olib::openmedialib::ml;
+namespace il = olib::openimagelib::il;
+namespace pcos = olib::openpluginlib::pcos;
+namespace cl = olib::opencorelib;
+
+namespace olib { namespace openmedialib { namespace ml { namespace distributor {
+
+class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
+{
+	public:
+		filter_lock( )
+			: filter_simple( )
+		{
+		}
+
+		virtual ~filter_lock( )
+		{
+		}
+
+		virtual bool requires_image( ) const { return false; }
+
+		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"lock" ); }
+
+		virtual const size_t slot_count( ) const { return 1; }
+
+		virtual void seek( const int position, const bool relative = false )
+		{
+			int *current = position_ptr( );
+			*current = opencorelib::utilities::clamp( relative ? *current + position : position, 0, int( get_frames( ) - 1 ) );
+		}
+
+		virtual int get_position( ) const
+		{
+			return position_.get( ) ? *( position_.get( ) ) : 0;
+		}
+
+	protected:
+
+		int *position_ptr( )
+		{
+			if ( position_.get( ) == 0 )
+				position_.reset( new int( 0 ) );
+			return position_.get( );
+		}
+
+		void do_fetch( frame_type_ptr &frame )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			frame = fetch_from_slot( );
+		}
+
+	private:
+		boost::thread_specific_ptr< int > position_;
+		boost::recursive_mutex mutex_;
+};
+
+class lru
+{
+	public:
+		lru( )
+			: size_( 50 )
+		{
+		}
+
+		void resize( size_t size )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			while( queue_.size( ) > size )
+				remove_lru( );
+			size_ = size;
+		}
+
+		void append( int index, frame_type_ptr frame )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			queue_[ index ] = frame;
+			lru_.push_back( index );
+			resize( size_ );
+			cond_.notify_all( );
+		}
+
+		frame_type_ptr fetch( int index )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			frame_type_ptr result;
+			std::map< int, frame_type_ptr >::iterator iter = queue_.find( index );
+			if ( iter != queue_.end( ) )
+			{
+				result = iter->second;
+				lru_.remove( index );
+				lru_.push_back( index );
+			}
+			return result;
+		}
+
+		frame_type_ptr wait( int position, boost::posix_time::time_duration time )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			frame_type_ptr result;
+			while( !( result = fetch( position ) ) )
+				if ( !cond_.timed_wait( lock, time ) )
+					break;
+			return result;
+		}
+
+	private:
+		void remove_lru( )
+		{
+			queue_.erase( queue_.find( *( lru_.begin( ) ) ) );
+			lru_.pop_front( );
+		}
+		
+		boost::recursive_mutex mutex_;
+		boost::condition_variable_any cond_;
+		std::map< int, frame_type_ptr > queue_;
+		std::list< int > lru_;
+		size_t size_;
+};
+
+class stack
+{
+	public:
+		stack( )
+			: stack_( create_input( L"aml_stack:" ) )
+		{
+		}
+
+		void push( input_type_ptr &input )
+		{
+			stack_->connect( input );
+			push( L"recover" );
+		}
+
+		void push( pl::wstring command )
+		{
+			stack_->property( "parse" ) = command;
+		}
+
+		void copy( input_type_ptr &input )
+		{
+			filter_type_ptr aml = create_filter( L"aml" );
+			aml->property( "limit" ) = 1;
+			aml->property( "filename" ) = pl::wstring( L"@" );
+			aml->connect( input );
+			pl::wstring output = pl::to_wstring( aml->property( "stdout" ).value< std::string >( ) );
+			push( output );
+		}
+
+		input_type_ptr pop( )
+		{
+			push( L"." );
+			return stack_->fetch_slot( 0 );
+		}
+
+	private:
+		input_type_ptr stack_;
+};
+
+class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
+{
+	public:
+		filter_distribute( )
+			: filter_simple( )
+			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
+			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
+			, prop_active_( pl::pcos::key::from_string( "active" ) )
+			, pool_( 0 )
+			, expected_( 0 )
+			, requested_( 0 )
+			, direction_( 1 )
+		{
+			properties( ).append( prop_threads_ = 4 );
+			properties( ).append( prop_queue_ = 50 );
+			properties( ).append( prop_active_ = 1 );
+		}
+
+		virtual ~filter_distribute( )
+		{
+			if ( pool_ )
+				pool_->terminate_all_threads( boost::posix_time::seconds( 5 ) );
+			delete pool_;
+		}
+
+		virtual bool requires_image( ) const { return false; }
+
+		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"distribute" ); }
+
+		virtual const size_t slot_count( ) const { return 1; }
+
+	protected:
+
+		void do_fetch( frame_type_ptr &frame )
+		{
+			int position = get_position( );
+
+			if ( pool_ == 0 )
+			{
+				clone_graphs( prop_threads_.value< int >( ) );
+				lru_.resize( prop_queue_.value< int >( ) );
+				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+				pool_ = new cl::thread_pool( prop_threads_.value< int >( ), timeout );
+			}
+
+			frame = lru_.fetch( position );
+
+			if ( expected_ != position )
+			{
+				pool_->clear_jobs( );
+				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+				pool_->wait_for_all_jobs_completed( timeout );
+				requested_ = position;
+				direction_ = position >= expected_ ? 1 : -1;
+			}
+
+			int schedulable = prop_threads_.value< int >( ) * 2;
+			int extremity = position + direction_ * prop_queue_.value< int >( ) / 2;
+
+			while( schedulable && requested_ < get_frames( ) && requested_ >= 0 )
+			{
+				if ( direction_ < 0 && requested_ <= extremity ) break;
+				if ( direction_ > 0 && requested_ >= extremity ) break;
+				if ( !lru_.fetch( requested_ ) )
+				{
+					add_job( requested_ );
+					schedulable --;
+				}
+				requested_ += direction_;
+			}
+
+			if ( !frame )
+			{
+				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+				frame = lru_.wait( position, timeout );
+			}
+
+			expected_ = position + direction_;
+		}
+
+		void clone_graphs( int graphs )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			while( graphs -- )
+			{
+				stack parser;
+				clone( parser, fetch_slot( 0 ) );
+				graphs_.push_back( parser.pop( ) );
+			}
+		}
+
+		void clone( stack &parser, input_type_ptr graph )
+		{
+			if ( graph && graph->get_uri( ) == L"lock" )
+			{
+				parser.push( graph );
+			}
+			else if ( graph && graph->slot_count( ) && graph->get_uri( ) != L"lock" )
+			{
+				for ( size_t i = 0; i < graph->slot_count( ); i ++ )
+					clone( parser, graph->fetch_slot( i ) );
+				parser.copy( graph );
+			}
+			else
+			{
+				ARENFORCE_MSG( false, "Unlocked input" );
+			}
+		}
+
+		void add_job( int position )
+		{
+			opencorelib::function_job_ptr fjob( new opencorelib::function_job( boost::bind( &filter_distribute::decode_job, this, position ) ) );
+			pool_->add_job( fjob );
+		}
+
+		void decode_job( int position )
+		{
+			input_type_ptr input = fetch_graph( );
+
+			try
+			{
+				input->seek( position );
+				lru_.append( position, input->fetch( ) );
+			}
+			catch( ... )
+			{
+				return_graph( input );
+				throw;
+			}
+
+			return_graph( input );
+		}
+
+		input_type_ptr fetch_graph( )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			input_type_ptr input = graphs_.back( );
+			graphs_.pop_back( );
+			return input;
+		}
+
+		void return_graph( input_type_ptr input )
+		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			graphs_.push_back( input );
+		}
+
+	private:
+		pl::pcos::property prop_threads_;
+		pl::pcos::property prop_queue_;
+		pl::pcos::property prop_active_;
+		std::vector< input_type_ptr > graphs_;
+		lru lru_;
+		boost::recursive_mutex mutex_;
+		cl::thread_pool *pool_;
+		int expected_;
+		int requested_;
+		int direction_;
+};
+
+//
+// Plugin object
+//
+
+class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
+{
+public:
+	virtual input_type_ptr input( const pl::wstring & )
+	{
+		return input_type_ptr( );
+	}
+
+	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
+	{
+		return store_type_ptr( );
+	}
+
+	virtual filter_type_ptr filter( const pl::wstring &spec )
+	{
+		if ( spec == L"lock" )
+			return filter_type_ptr( new filter_lock( ) );
+		if ( spec == L"distribute" )
+			return filter_type_ptr( new filter_distribute( ) );
+		return ml::filter_type_ptr( );
+	}
+};
+
+} } } }
+
+//
+// Access methods for openpluginlib
+//
+
+extern "C"
+{
+	ML_PLUGIN_DECLSPEC bool openplugin_init( void )
+	{
+		return true;
+	}
+
+	ML_PLUGIN_DECLSPEC bool openplugin_uninit( void )
+	{
+		return true;
+	}
+	
+	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
+	{
+		*plug = new ml::distributor::plugin;
+		return true;
+	}
+	
+	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
+	{ 
+		delete static_cast< ml::distributor::plugin * >( plug ); 
+	}
+}

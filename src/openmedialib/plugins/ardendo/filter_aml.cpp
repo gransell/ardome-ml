@@ -43,10 +43,12 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			, prop_filename_( pl::pcos::key::from_string( "filename" ) )
 			, prop_write_( pl::pcos::key::from_string( "write" ) )
 			, prop_stdout_( pl::pcos::key::from_string( "stdout" ) )
+			, prop_limit_( pl::pcos::key::from_string( "limit" ) )
 		{
 			properties( ).append( prop_filename_ = pl::wstring( L"graph.aml" ) );
 			properties( ).append( prop_write_ = 1 );
 			properties( ).append( prop_stdout_ = std::string( "" ) );
+			properties( ).append( prop_limit_ = 0 );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -61,7 +63,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			{
 				if ( prop_write_.value< int >( ) )
 				{
-					create_aml( input, prop_filename_.value< pl::wstring >( ) );
+					create_aml( input, prop_filename_.value< pl::wstring >( ), prop_limit_.value< int >( ) );
 					prop_write_ = 0;
 				}
 			}
@@ -73,29 +75,29 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		{
 			if ( prop_write_.value< int >( ) )
 			{
-				create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ) );
+				create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ), prop_limit_.value< int >( ) );
 				prop_write_ = 0;
 			}
 			result = fetch_from_slot( );
 		}
 
 	private:
-		void create_aml( ml::input_type_ptr input, const pl::wstring filename )
+		void create_aml( ml::input_type_ptr input, const pl::wstring filename, int limit )
 		{
 			if ( filename == L"@" )
 			{
 				std::ostringstream stream;
-				create_aml( stream, input );
+				create_aml( stream, input, limit );
 				prop_stdout_ = stream.str( );
 			}
 			else if ( filename != L"-" )
 			{
 				std::fstream stream( pl::to_string( filename ).c_str( ), std::ios::out );
-				create_aml( stream, input );
+				create_aml( stream, input, limit );
 			}
 			else
 			{
-				create_aml( std::cout, input );
+				create_aml( std::cout, input, limit );
 			}
 		}
 
@@ -138,17 +140,17 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			return result;
 		}
 
-		void create_aml( std::ostream &stream, ml::input_type_ptr input )
+		void create_aml( std::ostream &stream, ml::input_type_ptr input, int limit )
 		{
 			if ( input )
 			{
 				const pl::pcos::property_container &props = input->properties( );
 				pl::pcos::key_vector keys = props.get_keys( );
 
-				if ( !props.get_property_with_string( "serialise_terminator" ).valid( ) )
+				if ( -- limit != 0 && !props.get_property_with_string( "serialise_terminator" ).valid( ) )
 				{
 					for( size_t i = 0; i < input->slot_count( ); i ++ )
-						create_aml( stream, input->fetch_slot( i ) );
+						create_aml( stream, input->fetch_slot( i ), limit );
 				}
 				else
 				{
@@ -222,6 +224,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		pl::pcos::property prop_filename_;
 		pl::pcos::property prop_write_;
 		pl::pcos::property prop_stdout_;
+		pl::pcos::property prop_limit_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring &resource )

@@ -1,0 +1,16 @@
+# (C) Ardendo SE 2008
+#
+# Released under the LGPL
+
+Import(['local_env'])
+
+local_env.packages( 'loki', 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_system' )
+
+src = [ 'plugin_distributor.cpp' ]
+
+#if local_env[ 'PLATFORM' ] == 'win32' :
+#	src.append( 'msw/decodeplugin.rc' )
+
+object = local_env.plugin( 'openmedialib_distributor', src )
+local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_distributor.opl' ] )
+Return( 'object' )
