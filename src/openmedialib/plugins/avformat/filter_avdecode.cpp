@@ -157,10 +157,13 @@ class stream_queue
 				{
 					if ( position + offset_ != expected_ )
 					{
-						start = frame->get_stream( )->key( );
+						if ( position + offset_ < expected_ || position + offset_ > expected_ + 12 )
+						{
+							start = frame->get_stream( )->key( );
 
-						if ( position < start + 3 && position != 0 )
-							start = fetch( start - 1 )->get_stream( )->key( );
+							if ( position < start + 3 && position != 0 )
+								start = fetch( start - 1 )->get_stream( )->key( );
+						}
 					}
 				}
 				else
