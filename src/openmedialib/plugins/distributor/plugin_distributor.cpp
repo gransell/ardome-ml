@@ -23,10 +23,6 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
-#include <set>
-
-#define LOKI_CLASS_LEVEL_THREADING
-#include <loki/Singleton.h>
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
@@ -69,8 +65,7 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 
 		int *position_ptr( )
 		{
-			if ( position_.get( ) == 0 )
-				position_.reset( new int( 0 ) );
+			if ( position_.get( ) == 0 ) position_.reset( new int( 0 ) );
 			return position_.get( );
 		}
 
@@ -97,7 +92,10 @@ class lru
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			while( queue_.size( ) > size )
-				remove_lru( );
+			{
+				queue_.erase( queue_.find( *( lru_.begin( ) ) ) );
+				lru_.pop_front( );
+			}
 			size_ = size;
 		}
 
@@ -135,12 +133,6 @@ class lru
 		}
 
 	private:
-		void remove_lru( )
-		{
-			queue_.erase( queue_.find( *( lru_.begin( ) ) ) );
-			lru_.pop_front( );
-		}
-		
 		boost::recursive_mutex mutex_;
 		boost::condition_variable_any cond_;
 		std::map< int, frame_type_ptr > queue_;
@@ -195,6 +187,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
 			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 			, prop_active_( pl::pcos::key::from_string( "active" ) )
+			, prop_trigger_( pl::pcos::key::from_string( "trigger" ) )
 			, pool_( 0 )
 			, expected_( 0 )
 			, requested_( 0 )
@@ -203,6 +196,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 			properties( ).append( prop_threads_ = 4 );
 			properties( ).append( prop_queue_ = 50 );
 			properties( ).append( prop_active_ = 1 );
+			properties( ).append( prop_trigger_ = 1 );
 		}
 
 		virtual ~filter_distribute( )
@@ -222,47 +216,40 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame )
 		{
+			boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
 			int position = get_position( );
+			int threads = prop_threads_.value< int >( );
+			int queue = prop_queue_.value< int >( );
 
 			if ( pool_ == 0 )
 			{
-				clone_graphs( prop_threads_.value< int >( ) );
-				lru_.resize( prop_queue_.value< int >( ) );
-				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
-				pool_ = new cl::thread_pool( prop_threads_.value< int >( ), timeout );
+				clone_graphs( threads );
+				lru_.resize( queue );
+				pool_ = new cl::thread_pool( threads, timeout );
 			}
 
 			frame = lru_.fetch( position );
 
-			if ( expected_ != position )
+			if ( expected_ != position && position != expected_ - direction_ )
 			{
 				pool_->clear_jobs( );
-				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
 				pool_->wait_for_all_jobs_completed( timeout );
 				requested_ = position;
 				direction_ = position >= expected_ ? 1 : -1;
 			}
 
-			int schedulable = prop_threads_.value< int >( ) * 2;
-			int extremity = position + direction_ * prop_queue_.value< int >( ) / 2;
+			int min_extremity = std::max< int >( position - queue / 2, 0 );
+			int max_extremity = std::min< int >( position + queue / 2, get_frames( ) );
 
-			while( schedulable && requested_ < get_frames( ) && requested_ >= 0 )
+			while( requested_ >= min_extremity && requested_ < max_extremity )
 			{
-				if ( direction_ < 0 && requested_ <= extremity ) break;
-				if ( direction_ > 0 && requested_ >= extremity ) break;
 				if ( !lru_.fetch( requested_ ) )
-				{
 					add_job( requested_ );
-					schedulable --;
-				}
 				requested_ += direction_;
 			}
 
 			if ( !frame )
-			{
-				boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
 				frame = lru_.wait( position, timeout );
-			}
 
 			expected_ = position + direction_;
 		}
@@ -284,7 +271,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 			{
 				parser.push( graph );
 			}
-			else if ( graph && graph->slot_count( ) && graph->get_uri( ) != L"lock" )
+			else if ( graph && graph->slot_count( ) )
 			{
 				for ( size_t i = 0; i < graph->slot_count( ); i ++ )
 					clone( parser, graph->fetch_slot( i ) );
@@ -308,8 +295,19 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 
 			try
 			{
-				input->seek( position );
-				lru_.append( position, input->fetch( ) );
+				ml::frame_type_ptr frame = input->fetch( position );
+
+				switch( prop_trigger_.value< int >( ) )
+				{
+					case 1:
+						frame->get_image( );
+						break;
+					case 2:
+						frame->get_stream( );
+						break;
+				}
+
+				lru_.append( position, frame );
 			}
 			catch( ... )
 			{
@@ -338,6 +336,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 		pl::pcos::property prop_threads_;
 		pl::pcos::property prop_queue_;
 		pl::pcos::property prop_active_;
+		pl::pcos::property prop_trigger_;
 		std::vector< input_type_ptr > graphs_;
 		lru lru_;
 		boost::recursive_mutex mutex_;
