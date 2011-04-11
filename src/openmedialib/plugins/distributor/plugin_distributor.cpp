@@ -154,7 +154,7 @@ class stack
 		{
 		}
 
-		void push( input_type_ptr &input )
+		void push( input_type_ptr input )
 		{
 			stack_->connect( input );
 			push( L"recover" );
@@ -222,8 +222,6 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			boost::recursive_mutex::scoped_lock lck( mutex_ );
-
 			boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
 			int position = get_position( );
 			int threads = prop_threads_.value< int >( );
@@ -259,6 +257,9 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 			if ( !frame )
 				frame = lru_.wait( position, timeout );
 
+			if ( frame )
+				frame = frame->shallow( );
+
 			expected_ = position + direction_;
 		}
 
@@ -268,26 +269,31 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 			while( graphs -- )
 			{
 				stack parser;
-				clone( parser, fetch_slot( 0 ) );
+				clone( parser, fetch_slot( 0 ), shared_from_this( ) );
 				graphs_.push_back( parser.pop( ) );
 			}
 		}
 
-		void clone( stack &parser, input_type_ptr graph )
+		void clone( stack &parser, input_type_ptr graph, input_type_ptr parent )
 		{
-			if ( graph && graph->get_uri( ) == L"lock" )
+			ARENFORCE_MSG( graph, "Malformed graph - null input detected" );
+
+			if ( graph->slot_count( ) == 0 || graph->get_uri( ) == L"decode" || graph->get_uri( ) == L"distribute" )
+			{
+				filter_type_ptr lock = create_filter( L"lock" );
+				lock->connect( graph );
+				parent->connect( lock );
+				parser.push( lock );
+			}
+			else if ( graph->get_uri( ) == L"lock" )
 			{
 				parser.push( graph );
 			}
-			else if ( graph && graph->slot_count( ) )
-			{
-				for ( size_t i = 0; i < graph->slot_count( ); i ++ )
-					clone( parser, graph->fetch_slot( i ) );
-				parser.copy( graph );
-			}
 			else
 			{
-				ARENFORCE_MSG( false, "Unlocked input" );
+				for ( size_t i = 0; i < graph->slot_count( ); i ++ )
+					clone( parser, graph->fetch_slot( i ), graph );
+				parser.copy( graph );
 			}
 		}
 
