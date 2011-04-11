@@ -22,6 +22,8 @@ private:
 
 class CORE_API streamable_input {
 public:
+	virtual ~streamable_input() {}
+
 	template<typename T>
 	streamable_input& operator<<(const T& t) {
 		std::ostringstream ss;
@@ -47,7 +49,7 @@ public:
 	class attribute : public streamable_input {
 	public:
 		attribute(attribute& attrib);
-		~attribute();
+		virtual ~attribute();
 
 		operator std::string() const;
 		attribute& operator=(const std::string& val);
