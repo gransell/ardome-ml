@@ -47,6 +47,16 @@ void t_string_roundtrip_16()
 	BOOST_CHECK( result.compare(input) == 0 );
 }
 
+void test_string_trim()
+{
+	olib::t_string test1(_CT("   "));
+	olib::t_string result = str_util::trim(test1);
+
+	//Make sure that a string full of whitespace that is trimmed
+	//returns an empty string.
+	BOOST_CHECK( result.empty() );
+}
+
 void test_string_conversions()
 {
 	correct_utf8_to_utf16();
@@ -54,4 +64,6 @@ void test_string_conversions()
 	try_latin1_to_utf16();
 	t_string_roundtrip_8();
 	t_string_roundtrip_16();
+	test_string_trim();
 }
+

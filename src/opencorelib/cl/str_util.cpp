@@ -34,7 +34,13 @@ namespace olib
 				return str;
 
 			l_pos = str.find_last_not_of(chars_toTrim);
-			if( l_pos != t_string::npos )
+			if( l_pos == t_string::npos )
+			{
+				//Entire string is whitespace, just return empty string
+				str.clear();
+				return str;
+			}
+			else
 			{
 				if( l_pos + 1 < str.size() )
 					str.erase(l_pos + 1, str.size() - l_pos - 1);
