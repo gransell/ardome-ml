@@ -36,7 +36,7 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 {
 	public:
 		filter_lock( )
-			: filter_simple( )
+		: filter_simple( )
 		{
 		}
 
@@ -80,11 +80,17 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 		boost::recursive_mutex mutex_;
 };
 
+template< typename Tkey, typename Tval >
 class lru
 {
 	public:
+		typedef Tkey key_type;
+		typedef Tval val_type;
+		typedef std::map< key_type, val_type > map;
+		typedef std::list< key_type > list;
+
 		lru( )
-			: size_( 50 )
+		: size_( 50 )
 		{
 		}
 
@@ -99,7 +105,7 @@ class lru
 			size_ = size;
 		}
 
-		void append( int index, frame_type_ptr frame )
+		void append( key_type index, val_type frame )
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			queue_[ index ] = frame;
@@ -108,11 +114,11 @@ class lru
 			cond_.notify_all( );
 		}
 
-		frame_type_ptr fetch( int index )
+		val_type fetch( key_type index )
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
-			frame_type_ptr result;
-			std::map< int, frame_type_ptr >::iterator iter = queue_.find( index );
+			val_type result;
+			typename map::iterator iter = queue_.find( index );
 			if ( iter != queue_.end( ) )
 			{
 				result = iter->second;
@@ -122,11 +128,11 @@ class lru
 			return result;
 		}
 
-		frame_type_ptr wait( int position, boost::posix_time::time_duration time )
+		val_type wait( key_type index, boost::posix_time::time_duration time )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			frame_type_ptr result;
-			while( !( result = fetch( position ) ) )
+			val_type result;
+			while( !( result = fetch( index ) ) )
 				if ( !cond_.timed_wait( lock, time ) )
 					break;
 			return result;
@@ -135,8 +141,8 @@ class lru
 	private:
 		boost::recursive_mutex mutex_;
 		boost::condition_variable_any cond_;
-		std::map< int, frame_type_ptr > queue_;
-		std::list< int > lru_;
+		map queue_;
+		list lru_;
 		size_t size_;
 };
 
@@ -144,7 +150,7 @@ class stack
 {
 	public:
 		stack( )
-			: stack_( create_input( L"aml_stack:" ) )
+		: stack_( create_input( L"aml_stack:" ) )
 		{
 		}
 
@@ -179,19 +185,19 @@ class stack
 		input_type_ptr stack_;
 };
 
-class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
+class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 {
 	public:
 		filter_distribute( )
-			: filter_simple( )
-			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
-			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
-			, prop_active_( pl::pcos::key::from_string( "active" ) )
-			, prop_trigger_( pl::pcos::key::from_string( "trigger" ) )
-			, pool_( 0 )
-			, expected_( 0 )
-			, requested_( 0 )
-			, direction_( 1 )
+		: filter_lock( )
+		, prop_threads_( pl::pcos::key::from_string( "threads" ) )
+		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
+		, prop_active_( pl::pcos::key::from_string( "active" ) )
+		, prop_trigger_( pl::pcos::key::from_string( "trigger" ) )
+		, pool_( 0 )
+		, expected_( 0 )
+		, requested_( 0 )
+		, direction_( 1 )
 		{
 			properties( ).append( prop_threads_ = 4 );
 			properties( ).append( prop_queue_ = 50 );
@@ -216,6 +222,8 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame )
 		{
+			boost::recursive_mutex::scoped_lock lck( mutex_ );
+
 			boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
 			int position = get_position( );
 			int threads = prop_threads_.value< int >( );
@@ -254,9 +262,9 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 			expected_ = position + direction_;
 		}
 
+	private:
 		void clone_graphs( int graphs )
 		{
-			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			while( graphs -- )
 			{
 				stack parser;
@@ -338,7 +346,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 		pl::pcos::property prop_active_;
 		pl::pcos::property prop_trigger_;
 		std::vector< input_type_ptr > graphs_;
-		lru lru_;
+		lru< int, frame_type_ptr > lru_;
 		boost::recursive_mutex mutex_;
 		cl::thread_pool *pool_;
 		int expected_;
