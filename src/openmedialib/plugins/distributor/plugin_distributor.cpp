@@ -87,6 +87,7 @@ class lru
 		typedef Tkey key_type;
 		typedef Tval val_type;
 		typedef std::map< key_type, val_type > map;
+		typedef typename map::iterator iterator;
 		typedef std::list< key_type > list;
 
 		lru( )
@@ -118,7 +119,7 @@ class lru
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			val_type result;
-			typename map::iterator iter = queue_.find( index );
+			iterator iter = queue_.find( index );
 			if ( iter != queue_.end( ) )
 			{
 				result = iter->second;
@@ -185,11 +186,11 @@ class stack
 		input_type_ptr stack_;
 };
 
-class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
+class ML_PLUGIN_DECLSPEC filter_distribute : public filter_simple
 {
 	public:
 		filter_distribute( )
-		: filter_lock( )
+		: filter_simple( )
 		, prop_threads_( pl::pcos::key::from_string( "threads" ) )
 		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 		, prop_active_( pl::pcos::key::from_string( "active" ) )
@@ -249,8 +250,7 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 
 			while( requested_ >= min_extremity && requested_ < max_extremity )
 			{
-				if ( !lru_.fetch( requested_ ) )
-					add_job( requested_ );
+				add_job( requested_ );
 				requested_ += direction_;
 			}
 
@@ -299,8 +299,11 @@ class ML_PLUGIN_DECLSPEC filter_distribute : public filter_lock
 
 		void add_job( int position )
 		{
-			opencorelib::function_job_ptr fjob( new opencorelib::function_job( boost::bind( &filter_distribute::decode_job, this, position ) ) );
-			pool_->add_job( fjob );
+			if ( !lru_.fetch( position ) )
+			{
+				opencorelib::function_job_ptr fjob( new opencorelib::function_job( boost::bind( &filter_distribute::decode_job, this, position ) ) );
+				pool_->add_job( fjob );
+			}
 		}
 
 		void decode_job( int position )
