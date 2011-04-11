@@ -12,7 +12,7 @@ typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::DOMDocument> DocPtr;
 
 namespace dom {
 
-class document : public node {
+class CORE_API document : public node {
 public:
 	// Creates a completely empty document without root element
 	document();

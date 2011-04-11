@@ -9,7 +9,7 @@
 
 namespace olib { namespace opencorelib { namespace xml {
 
-class exception : public std::exception {
+class CORE_API exception : public std::exception {
 public:
 	exception(const std::string& msg) throw();
 	virtual ~exception() throw();
@@ -20,7 +20,7 @@ private:
 	std::string msg;
 };
 
-class streamable_input {
+class CORE_API streamable_input {
 public:
 	template<typename T>
 	streamable_input& operator<<(const T& t) {
@@ -42,7 +42,7 @@ namespace dom {
 class node;
 class document;
 
-class node : public streamable_input {
+class CORE_API node : public streamable_input {
 public:
 	class attribute : public streamable_input {
 	public:
