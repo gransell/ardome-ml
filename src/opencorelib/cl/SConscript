@@ -70,6 +70,9 @@ sources = [
 	'worker.cpp',
 	'xerces_sax_handler.cpp',
 	'xerces_sax_traverser.cpp',
+	'xerces_dom_document.cpp',
+	'xerces_dom_node.cpp',
+	'xerces_utilities.cpp',
 	'xml_sax_parser.cpp' ] 
 
 mac_sources = [
@@ -199,6 +202,10 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'worker.hpp',
 		'xerces_sax_handler.hpp',
 		'xerces_sax_traverser.hpp',
+		'xerces_dom_document.hpp',
+		'xerces_headers.hpp',
+		'xerces_dom_node.hpp',
+		'xerces_utilities.hpp',
 		'xerces_typedefs.hpp',
 		'xml_sax_parser.hpp'
 	] )

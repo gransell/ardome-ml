@@ -52,8 +52,16 @@ class Environment( BaseEnvironment ):
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
 
-		BaseEnvironment.__init__( self, ENV = os.environ, **kw )
-		
+		if 'verbose' in sys.argv:
+			BaseEnvironment.__init__( self, ENV = os.environ, **kw )
+		else:
+			BaseEnvironment.__init__( self,
+				ENV = os.environ,
+				LINKCOMSTR = "Linking $TARGET",
+				CCCOMSTR = "Compiling static object $TARGET",
+				CXXCOMSTR = "Compiling static object $TARGET",
+				**kw )
+
 		opts.Update( self )
 		# Remove the vs option if it is not given on the command-line.
 		if utils.vs() == None and 'vs' in self._dict.keys( ): del self._dict['vs'] 
@@ -146,7 +154,19 @@ class Environment( BaseEnvironment ):
 			
 			#self[ 'CC' ] = 'llvm-gcc'
 			#self[ 'CXX' ] = 'llvm-g++'
-			
+
+		if os.name == 'posix':
+			if self[ 'compiler' ] == 'gcc':
+				self[ 'CC' ] = 'gcc'
+				self[ 'CXX' ] = 'g++'
+				self[ 'LINK' ] = 'g++'
+			elif self[ 'compiler' ] == 'clang':
+				self[ 'CC' ] = 'clang'
+				self[ 'CXX' ] = 'clang++'
+				self[ 'LINK' ] = 'clang++'
+			else:
+				raise Exception( "Invalid compiler " )
+
 
 	def install_config( self, src, dst ):
 		"""	Installs config files for bcomp usage.
