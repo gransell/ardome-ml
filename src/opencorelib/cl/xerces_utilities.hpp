@@ -4,7 +4,11 @@
 
 #include "./typedefs.hpp"
 #include "./core_enums.hpp"
-#include "./xerces_typedefs.hpp"
+
+#include "./xerces_headers.hpp"
+
+#include "./xerces_sax_traverser.hpp" // TODO: Remove this include and move code here instead
+
 
 /** @file xerces_utilities.h
     amf wrapper class around the xerces API. */
@@ -22,7 +26,7 @@ public:
 	error_handler();
 	~error_handler();
 
-	bool handleError(const DOMError& domError);
+	bool handleError(const XERCES_CPP_NAMESPACE::DOMError& domError);
 };
 
 

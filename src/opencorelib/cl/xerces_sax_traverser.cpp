@@ -25,22 +25,23 @@ namespace olib
    namespace opencorelib
     {
 
-		xerces_string to_x_string(const char *source, unsigned int length)
+	namespace xml {
+		xerces_string from_string(const char *source, unsigned int length)
 		{
-			return to_x_string(std::string(source, length));
+			return from_string(std::string(source, length));
 		}
 
-		xerces_string to_x_string(const std::string &source)
+		xerces_string from_string(const std::string &source)
 		{
-			return to_x_string(str_util::to_wstring(source));
+			return from_string(str_util::to_wstring(source));
 		}
 
-		xerces_string to_x_string(const wchar_t *source, unsigned int length)
+		xerces_string from_string(const wchar_t *source, unsigned int length)
 		{
-			return to_x_string(std::wstring(source, length));
+			return from_string(std::wstring(source, length));
 		}
 
-		xerces_string to_x_string(const std::wstring &source)
+		xerces_string from_string(const std::wstring &source)
 		{
 			#if defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
 				// XMLCh is supposed to be 16 bit and wchar_t 32 bit
@@ -51,7 +52,7 @@ namespace olib
 			#endif
 		}
 
-		std::wstring x_to_wstring(const XMLCh *source, unsigned int length)
+		std::wstring to_wstring(const XMLCh *source, unsigned int length)
 		{
 			#if defined (OLIB_ON_MAC) || defined( OLIB_ON_LINUX )
 				using namespace XERCES_CPP_NAMESPACE;
@@ -62,25 +63,26 @@ namespace olib
 			#endif
 		}
 
-		std::wstring x_to_wstring(const XMLCh *source)
+		std::wstring to_wstring(const XMLCh *source)
 		{
-			return x_to_wstring(source, XMLString::stringLen(source));
+			return to_wstring(source, XMLString::stringLen(source));
 		}
 
-		t_string x_to_t_string(const XMLCh *source, unsigned int length)
+		t_string to_t_string(const XMLCh *source, unsigned int length)
 		{
-			return str_util::to_t_string(x_to_wstring(source, length));
+			return str_util::to_t_string(to_wstring(source, length));
 		}
 
-		t_string x_to_t_string(const XMLCh *source)
+		t_string to_t_string(const XMLCh *source)
 		{
-			return str_util::to_t_string(x_to_wstring(source));
+			return str_util::to_t_string(to_wstring(source));
 		}
 
-		std::string x_to_string(const XMLCh *source)
+		std::string to_string(const XMLCh *source)
 		{
-			return str_util::to_string(x_to_wstring(source));
+			return str_util::to_string(to_wstring(source));
 		}
+	}
 
         xerces_size_type std_bin_input_stream::readBytes( XMLByte* const toFill,
                                                    		  xerces_size_type maxToRead )
@@ -115,7 +117,7 @@ namespace olib
             t_smatch xmatch;
             t_regex re(_CT("([[:digit:]]{4})-([[:digit:]]{2})-([[:digit:]]{2})") _CT("T")
                 _CT("([[:digit:]]{2}):([[:digit:]]{2}):([[:digit:]]{2})"));
-            t_string str = x_to_t_string(chars, length);
+            t_string str = xml::to_t_string(chars, length);
             ARENFORCE_MSG( boost::regex_search( str, xmatch, re ), 
                 "The passed string is not on the form: CCYY-MM-DDThh:mm:ss" )( to_string(str));
 
@@ -139,7 +141,7 @@ namespace olib
 		
 		bool parse_bool( const XMLCh* const chars )
 		{
-			t_string str = x_to_t_string(chars);
+			t_string str = xml::to_t_string(chars);
 			boost::algorithm::to_lower(str);
 			return str == _CT("true") || str == _CT("1");
 		}
@@ -149,24 +151,24 @@ namespace olib
         {
             ARENFORCE_ERR(att, error::null_pointer());
             const XMLCh* att_val = att->getValue( L2(att_name).c_str() );
-            return x_to_t_string( att_val );
+            return xml::to_t_string( att_val );
         }
 
 		boost::any string_to_boost_any( const XMLCh *const chars, type_hint::type th )
 		{
 			if( th  == type_hint::th_int )
 			{
-				int v = boost::lexical_cast<int>(x_to_t_string(chars));
+				int v = boost::lexical_cast<int>(xml::to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_float )
 			{
-				float v = boost::lexical_cast<float>(x_to_t_string(chars));
+				float v = boost::lexical_cast<float>(xml::to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_double )
 			{
-				double v = boost::lexical_cast<double>(x_to_t_string(chars));
+				double v = boost::lexical_cast<double>(xml::to_t_string(chars));
 				return boost::any(v);
 			}
 			else if( th == type_hint::th_bool )
@@ -177,12 +179,12 @@ namespace olib
 			else if( th == type_hint::th_string ||
 				th == type_hint::th_any )
 			{
-				t_string v = x_to_t_string(chars);
+				t_string v = xml::to_t_string(chars);
 				return boost::any(v);
 			}
 			else
 			{
-				ARLOG_ERR("Invalid type_hint: %i (%s)")(th)(x_to_t_string(chars));
+				ARLOG_ERR("Invalid type_hint: %i (%s)")(th)(xml::to_t_string(chars));
 				return boost::any();
 			}
 		}
@@ -259,7 +261,7 @@ namespace olib
             {
 				if( xml_doc_path)
 				{
-					xerces_string path = to_x_string(xml_doc_path->string());
+					xerces_string path = xml::from_string(xml_doc_path->string());
 					m_traverser->parse(path.c_str());
 				}
 				else if (bin_data)
@@ -298,12 +300,12 @@ namespace olib
             }
             catch( SAXException& e)
             {
-                ARLOG_ERR("Failed to parse. Message: %s")(x_to_t_string( e.getMessage()));
+                ARLOG_ERR("Failed to parse. Message: %s")(xml::to_t_string( e.getMessage()));
                 return object_ptr();
             }
             catch( XMLException& e)
             {
-                ARLOG_ERR("Failed to parse. Message: %s")(x_to_t_string( e.getMessage()));
+                ARLOG_ERR("Failed to parse. Message: %s")(xml::to_t_string( e.getMessage()));
                 return object_ptr();
             }
 
@@ -313,14 +315,14 @@ namespace olib
         
         void xerces_sax_traverser::error(const SAXParseException& exc)
         {
-            ARENFORCE_ERR(false, error::invalid_xml())( x_to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
-                (x_to_t_string(exc.getPublicId()))(x_to_t_string(exc.getSystemId()));
+            ARENFORCE_ERR(false, error::invalid_xml())( xml::to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber())
+                (xml::to_t_string(exc.getPublicId()))(xml::to_t_string(exc.getSystemId()));
             throw exc;
         }
 
         void xerces_sax_traverser::fatalError(const SAXParseException& exc)
         {
-            ARENFORCE_ERR(false, error::invalid_xml())( x_to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber());
+            ARENFORCE_ERR(false, error::invalid_xml())( xml::to_t_string(exc.getMessage()) )(exc.getLineNumber())(exc.getColumnNumber());
             throw exc;
         }
 
@@ -427,13 +429,13 @@ namespace olib
         void xerces_sax_traverser::stream_xml_start_tag( const XMLCh* const elem_name,
                                                             AttributeList* attributes )
         {
-            m_xml_data << _CT("<") <<  x_to_t_string(elem_name);
+            m_xml_data << _CT("<") <<  xml::to_t_string(elem_name);
             boost::uint32_t att_len = attributes->getLength();
             for( boost::uint32_t i = 0; i < att_len ; ++i)
             {
                 m_xml_data << _CT(" ")
-                           << x_to_t_string(attributes->getName(i)) << _CT("=\"")
-                           << x_to_t_string(attributes->getValue(i)) << _CT("\"");
+                           << xml::to_t_string(attributes->getName(i)) << _CT("=\"")
+                           << xml::to_t_string(attributes->getValue(i)) << _CT("\"");
             }
             
             m_xml_data << _CT(">");
@@ -442,12 +444,12 @@ namespace olib
         void xerces_sax_traverser::stream_xml_content(   const XMLCh* const chars,
                                                             const unsigned int length)
         {
-            m_xml_data << x_to_t_string(chars) ;
+            m_xml_data << xml::to_t_string(chars) ;
         }
 
         void xerces_sax_traverser::stream_xml_end_tag( const XMLCh* const elem_name )
         {
-            m_xml_data << _CT("</") << x_to_t_string(elem_name) << _CT(">");
+            m_xml_data << _CT("</") << xml::to_t_string(elem_name) << _CT(">");
         }
 
         namespace

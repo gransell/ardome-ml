@@ -1,11 +1,11 @@
 
 #include "precompiled_headers.hpp"
-#include "xerces_dom_builder.hpp"
 #include "./xerces_utilities.hpp"
+#include "./xerces_dom_document.hpp"
 
 namespace olib { namespace opencorelib { namespace xml {
 
-#if defined (XERCES_CPP_NAMESPACE) && XERCES_CPP_NAMESPACE
+#if defined (XERCES_CPP_NAMESPACE)
 	using namespace XERCES_CPP_NAMESPACE;
 #endif
 
@@ -16,25 +16,32 @@ document::document()
 {
 	DOMImplementation* di = DOMImplementation::getImplementation();
 
-	doc = di->createDocument();
+	doc = DocPtr(di->createDocument());
 
-	n = NodePtr(doc);
+	// Set these in the node superclass
+	n_ = &*doc;
+	parent_ = NULL;
+	owner_ = &*doc;
 }
 
 document::document(const char* qn, const char* ns)
 {
 	DOMImplementation* di = DOMImplementation::getImplementation();
 
-	doc = di->createDocument(
+	doc = DocPtr(di->createDocument(
 		to_x_string(ns).c_str(),
 		to_x_string(qn).c_str(),
-		NULL);
+		NULL));
 
-	n = NodePtr(doc);
+	// Set these in the node superclass
+	n_ = &*doc;
+	parent_ = NULL;
+	owner_ = &*doc;
 }
 
 document::document(document& ref)
-: node(ref.node), doc(ref.doc)
+: node(ref)
+, doc(ref.doc)
 {
 }
 
@@ -81,6 +88,7 @@ bool document::writeNode(XMLFormatTarget* ft) const
 	if (!dw)
 		return false;
 
+	dw->setFeature(to_x_string("format-pretty-print").c_str(), true);
 	dw->setEncoding(to_x_string("utf-8").c_str());
 	dw->setNewLine(to_x_string("\n").c_str());
 	error_handler e;

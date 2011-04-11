@@ -1,11 +1,14 @@
 
-#ifndef OPENCORELIB_XERCES_DOM_NODE_H_
-#define OPENCORELIB_XERCES_DOM_NODE_H_
+#ifndef OPENCORELIB_XERCES_DOM_DOCUMENT_H_
+#define OPENCORELIB_XERCES_DOM_DOCUMENT_H_
 
 #include "./typedefs.hpp"
-#include "./xml_sax_parser.hpp"
+
+#include "./xerces_dom_node.hpp"
 
 namespace olib { namespace opencorelib { namespace xml {
+
+typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::DOMDocument> DocPtr;
 
 namespace dom {
 
@@ -22,7 +25,7 @@ public:
 	// in object 'ref'
 	document(document& ref);
 
-	~document();
+	virtual ~document();
 
 	// Cloaking operators to xerces DOMDocument
 	operator XERCES_CPP_NAMESPACE::DOMDocument&();
@@ -34,14 +37,14 @@ public:
 private:
 	document(const document&) {}
 
-	bool writeNode(XMLFormatTarget* ft) const;
+	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft) const;
 
-	XERCES_CPP_NAMESPACE::DOMDocument* doc;
+	DocPtr doc;
 };
 
 } // namespace dom
 
 } } } // namespace xml, namespace opencorelib, namespace olib
 
-#endif // OPENCORELIB_XERCES_DOM_NODE_H_
+#endif // OPENCORELIB_XERCES_DOM_DOCUMENT_H_
 
