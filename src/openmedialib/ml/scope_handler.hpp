@@ -91,7 +91,7 @@ public:
     
     lru_cache_type_ptr lru_cache( const std::wstring &scope );
     
-    template <typename T> friend class Loki::CreateUsingNew;
+    template <typename T> friend struct Loki::CreateUsingNew;
     
 private:
     scope_handler()
