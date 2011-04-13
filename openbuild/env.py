@@ -57,9 +57,23 @@ class Environment( BaseEnvironment ):
 		else:
 			BaseEnvironment.__init__( self,
 				ENV = os.environ,
-				LINKCOMSTR = "Linking $TARGET",
+
 				CCCOMSTR = "Compiling static object $TARGET",
 				CXXCOMSTR = "Compiling static object $TARGET",
+				SHCCCOMSTR = "Compiling shared object $TARGET",
+				SHCXXCOMSTR = "Compiling shared object $TARGET",
+
+				PCHCOMSTR = "Generating pre-compiled header $TARGET",
+
+				LINKCOMSTR = " ==> Linking $TARGET\n",
+				LDMODULECOMSTR = " ==> Linking dynamic module $TARGET\n",
+				SHLINKCOMSTR = " ==> Linking shared library $TARGET\n",
+
+				RANLIBCOMSTR = "Indexing $TARGET",
+				ARCOMSTR = "Generating archive $TARGET",
+				ASCOMSTR = "Assembling $TARGET",
+				ASPPCOMSTR = "Assembling $TARGET",
+
 				**kw )
 
 		opts.Update( self )
@@ -160,6 +174,10 @@ class Environment( BaseEnvironment ):
 				self[ 'CC' ] = 'gcc'
 				self[ 'CXX' ] = 'g++'
 				self[ 'LINK' ] = 'g++'
+			elif self[ 'compiler' ] == 'gcc44':
+				self[ 'CC' ] = 'gcc-4.4'
+				self[ 'CXX' ] = 'g++-4.4'
+				self[ 'LINK' ] = 'g++-4.4'
 			elif self[ 'compiler' ] == 'clang':
 				self[ 'CC' ] = 'clang'
 				self[ 'CXX' ] = 'clang++'
