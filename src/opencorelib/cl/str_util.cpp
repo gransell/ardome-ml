@@ -96,7 +96,7 @@ namespace olib
 
 				if(qa == quote::respect)
 				{
-					if( input[i] == _CT('"') || input[i] == _CT('\'') && !escaped_quote(i, input) ) 
+					if( input[i] == _CT('"') || ( input[i] == _CT('\'') && !escaped_quote(i, input) ) ) 
 					{
 						if(quote_stack.empty()) quote_stack.push_back(input[i]);
 						else if( quote_stack.back() == input[i] ) quote_stack.pop_back();
