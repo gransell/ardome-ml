@@ -38,18 +38,18 @@ class CORE_API lru
 			size_ = size;
 		}
 
-		void append( key_type index, val_type frame )
+		void append( key_type index, val_type value )
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			if ( queue_.find( index ) == queue_.end( ) )
 			{
-				queue_[ index ] = frame;
+				queue_[ index ] = value;
 				lru_.push_back( index );
 				resize( size_ );
 			}
 			else
 			{
-				queue_[ index ] = frame;
+				queue_[ index ] = value;
 				fetch( index );
 			}
 			cond_.notify_all( );
