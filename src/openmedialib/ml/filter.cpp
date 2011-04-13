@@ -209,7 +209,7 @@ bool filter_type::is_thread_safe( )
 {
 	size_t count = 0;
 	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); iter != slots_.end( ); iter ++ )
-		if ( !( *iter ) || *iter && ( *iter )->is_thread_safe( ) )
+		if ( !( *iter ) || ( *iter && ( *iter )->is_thread_safe( ) ) )
 			count ++;
 	return count == slots_.size( );
 }
