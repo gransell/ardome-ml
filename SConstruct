@@ -223,7 +223,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/distributor', [ cl, pl, il, ml ] ) )
+	#plugins.append( env.build( 'src/openmedialib/plugins/distributor', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
