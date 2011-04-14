@@ -377,13 +377,11 @@ class stream_queue
 					context_->flags |= CODEC_FLAG_LOW_DELAY;
 				avcodec_open( context_, codec_ );
 				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
-				#ifndef WIN32
 				if ( threads_ )
 				{
 					context_->thread_count = threads_;
 					avcodec_thread_init( context_, threads_ );
 				}
-				#endif
 				avcodec_flush_buffers( context_ );
 			}
 
