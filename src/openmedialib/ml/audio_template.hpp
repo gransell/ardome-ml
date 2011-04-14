@@ -25,6 +25,7 @@ class ML_DECLSPEC template_ : public base
 			, frequency_( frequency )
 			, channels_( channels )
 			, samples_( samples )
+			, orig_samples_( samples )
 			, position_( 0 )
 		{
 			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
@@ -36,6 +37,7 @@ class ML_DECLSPEC template_ : public base
 			, frequency_( other.frequency( ) )
 			, channels_( other.channels( ) )
 			, samples_( other.samples( ) )
+			, orig_samples_( other.original_samples( ) )
 			, position_( other.position( ) )
 		{
 			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
@@ -67,6 +69,9 @@ class ML_DECLSPEC template_ : public base
 		int size( ) const
 		{ return sizeof( sample_type ) * samples_ * channels_; }
 
+		int original_size( ) const
+		{ return sizeof( sample_type ) * orig_samples_ * channels_; }
+
 		int frequency( ) const 
 		{ return frequency_; }
 
@@ -75,6 +80,12 @@ class ML_DECLSPEC template_ : public base
 
 		int samples( ) const 
 		{ return samples_; }
+
+		int original_samples( ) const
+		{ return orig_samples_; }
+
+		void original_samples( int samples )
+		{ orig_samples_ = samples; }
 
 		const std::wstring &af( ) const
 		{ return id_to_af( id_ ); }
@@ -111,6 +122,7 @@ class ML_DECLSPEC template_ : public base
 		int frequency_;
 		int channels_;
 		int samples_;
+		int orig_samples_;
 		int position_;
 		boost::shared_ptr < std::vector< sample_type > > data_;
 };

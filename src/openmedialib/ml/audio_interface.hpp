@@ -32,6 +32,13 @@ class ML_DECLSPEC base
 		/// The number of samples in the audio object
 		virtual int samples( ) const  = 0;
 
+		/// The number of samples in the source audio (i.e. excluding
+		/// any silent padded samples)
+		virtual int original_samples( ) const = 0;
+
+		/// Set the number of samples actually coming from the source
+		virtual void original_samples( int samples ) = 0;
+
 		/// A textual description of the audio format
 		virtual const std::wstring &af( ) const = 0;
 
@@ -43,6 +50,10 @@ class ML_DECLSPEC base
 
 		/// The number of bytes in the audio object
 		virtual int size( ) const = 0;
+
+		/// The number of bytes in the audio object refering to real
+		/// samples in the source media
+		virtual int original_size( ) const = 0;
 
 		/// A void * pointer to access the data of the audio object
 		virtual void *pointer( ) const = 0;

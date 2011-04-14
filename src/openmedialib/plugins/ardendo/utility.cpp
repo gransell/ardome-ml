@@ -237,6 +237,8 @@ void report_audio( std::ostream &stream, const ml::audio_type_ptr &audio )
 		stream << "Frequency   : " << audio->frequency( ) << endl;
 		stream << "Channels    : " << audio->channels( ) << endl;
 		stream << "Samples     : " << audio->samples( ) << endl;
+		if ( audio->samples( ) != audio->original_samples( ) )
+			stream << "Samples(src): " << audio->original_samples( ) << endl;
 	}
 	else
 	{

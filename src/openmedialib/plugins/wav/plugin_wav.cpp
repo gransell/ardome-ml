@@ -240,7 +240,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			int samples = ml::audio::samples_for_frame( position, frequency_, prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
 
 			std::vector< boost::uint8_t > buffer( samples * bits_ / 8 * channels_ );
-			url_read_complete( context_, &buffer[ 0 ], buffer.size( ) );
+			int nread = url_read_complete( context_, &buffer[ 0 ], buffer.size( ) );
 
 			switch( bits_ )
 			{
@@ -266,6 +266,11 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 				default:
 					break;
+			}
+
+			if (result) {
+				boost::int64_t samples = ((boost::int64_t)result->samples() * (boost::int64_t)nread) / (boost::int64_t)result->size();
+				result->original_samples( (int)samples );
 			}
 
 			return result;
