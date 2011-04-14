@@ -160,6 +160,10 @@ class Environment( BaseEnvironment ):
 				self[ 'CC' ] = 'gcc'
 				self[ 'CXX' ] = 'g++'
 				self[ 'LINK' ] = 'g++'
+			elif self[ 'compiler' ] == 'gcc44':
+				self[ 'CC' ] = 'gcc-4.4'
+				self[ 'CXX' ] = 'g++-4.4'
+				self[ 'LINK' ] = 'g++-4.4'
 			elif self[ 'compiler' ] == 'clang':
 				self[ 'CC' ] = 'clang'
 				self[ 'CXX' ] = 'clang++'
@@ -231,6 +235,9 @@ class Environment( BaseEnvironment ):
 			self.Append( LINKFLAGS = [ '/DEBUG' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
+
+		if self[ 'compiler' ] == 'clang':
+			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses' ] )
 	
 	def prep_release( self ):
 		"""	Prepare the environment for release use - provides some hard coded debug and link flags."""
@@ -257,6 +264,9 @@ class Environment( BaseEnvironment ):
 			self.Append( CCFLAGS = [ '/W3', '/O2', '/EHa', '/GR', '/MD' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
+
+		if self[ 'compiler' ] == 'clang':
+			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses' ] )
 
 	def optional( self, *packages ):
 		"""Tries to locate optional packages listed.
