@@ -250,7 +250,7 @@ class Environment( BaseEnvironment ):
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
-		if self[ 'compiler' ] == 'clang':
+		if os.name == 'posix' and self[ 'compiler' ] == 'clang':
 			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses' ] )
 	
 	def prep_release( self ):
@@ -279,7 +279,7 @@ class Environment( BaseEnvironment ):
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
-		if self[ 'compiler' ] == 'clang':
+		if os.name == 'posix' and self[ 'compiler' ] == 'clang':
 			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses' ] )
 
 	def optional( self, *packages ):
