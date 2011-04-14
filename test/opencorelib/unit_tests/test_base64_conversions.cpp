@@ -40,7 +40,7 @@ void test_base64_conversions()
 {
 	boost::uint8_t test_data[] = { 0x03, 0x10, 0xB8, 0xFF, 0xFF, 0x04, 0x34, 0x00 };
 	
-	for( int i=0; i<=sizeof(test_data); i++ )
+	for( size_t i=0; i<=sizeof(test_data); i++ )
 	{
 		test( test_data, i );
 	}

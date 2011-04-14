@@ -248,7 +248,7 @@ namespace olib
 						std::wcerr << L"XMLExeption::getMessage: " << e.getMessage() << std::endl;
 					#else	
 						char *ptr = const_cast< char * >( reinterpret_cast< const char * >( str.c_str( ) ) );
-						for( int i = 0; i < str.size( ) * 2; ++i )
+						for( size_t i = 0; i < str.size( ) * 2; ++i )
 						{
 							if( ptr[ i ] == 0 ) ptr[ i ] = '.';
 						}

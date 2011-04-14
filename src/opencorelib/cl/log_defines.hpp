@@ -172,9 +172,9 @@
 
     @author Mats Lindel&ouml;f*/
 #define ARLOG_IF_LEVEL( level_to_test_against_global , the_msg )       \
-        if( !ARCOND_LEVEL(level_to_test_against_global) );             \
+        if( !ARCOND_LEVEL(level_to_test_against_global) ){;}           \
         else ++olib::opencorelib::logger::make_logger()                \
-             .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME)   \
+             .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME)  \
              .msg(the_msg).level(level_to_test_against_global).ARLOG_A
 
 #define ARLOG_A(x) ARLOG_OP(x, B)

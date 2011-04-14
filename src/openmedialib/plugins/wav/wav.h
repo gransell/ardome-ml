@@ -53,19 +53,17 @@ namespace olib { namespace openmedialib { namespace riff { namespace wav {
 #define SPEAKER_BITSTREAM_2_LEFT      0x02000000
 #define SPEAKER_BITSTREAM_2_RIGHT     0x04000000
 
-#define le olib::opencorelib::endian::little
-
 using boost::uint8_t;
 using boost::uint16_t;
 using boost::uint32_t;
 using boost::uint64_t;
 
 struct guid {
-	le<uint32_t> data1;
-	le<uint16_t> data2;
-	le<uint16_t> data3;
-	le<uint32_t> data4;
-	le<uint32_t> data5;
+	opencorelib::endian::little<uint32_t> data1;
+	opencorelib::endian::little<uint16_t> data2;
+	opencorelib::endian::little<uint16_t> data3;
+	opencorelib::endian::little<uint32_t> data4;
+	opencorelib::endian::little<uint32_t> data5;
 };
 
 struct block {
@@ -87,7 +85,7 @@ struct block {
 	}
 
 	char type[4]; // 'RIFF', 'RF64', 'fmt ', 'data', ...
-	le<uint32_t> size;
+	opencorelib::endian::little<uint32_t> size;
 };
 
 struct wave : block { // 'RIFF' or 'RF64'
@@ -115,18 +113,18 @@ struct fmt_base : block {
 	fmt_base(uint32_t size = 0)
 	: block("fmt ", size + 16) {}
 
-	le<uint16_t> format_type;
-	le<uint16_t> channel_count;
-	le<uint32_t> sample_rate;
-	le<uint32_t> bytes_per_second;
-	le<uint16_t> block_alignment;
-	le<uint16_t> bits_per_sample;
+	opencorelib::endian::little<uint16_t> format_type;
+	opencorelib::endian::little<uint16_t> channel_count;
+	opencorelib::endian::little<uint32_t> sample_rate;
+	opencorelib::endian::little<uint32_t> bytes_per_second;
+	opencorelib::endian::little<uint16_t> block_alignment;
+	opencorelib::endian::little<uint16_t> bits_per_sample;
 };
 
 struct fmt_generic : fmt_base {
 	fmt_generic() : fmt_base(24), cb_size(22) {}
 
-	le<uint16_t> cb_size;
+	opencorelib::endian::little<uint16_t> cb_size;
 
 	char extra_data[22];
 };
@@ -134,10 +132,10 @@ struct fmt_generic : fmt_base {
 struct fmt_format_extensible : fmt_base { // 'fmt ' when FORMAT_EXTENSIBLE
 	fmt_format_extensible() : fmt_base(24), cb_size(22) {}
 
-	le<uint16_t> cb_size;
+	opencorelib::endian::little<uint16_t> cb_size;
 
-	le<uint16_t> valid_bits_per_sample;
-	le<uint32_t> channel_mask;
+	opencorelib::endian::little<uint16_t> valid_bits_per_sample;
+	opencorelib::endian::little<uint32_t> channel_mask;
 	guid sub_format;
 };
 
@@ -146,36 +144,36 @@ struct chunksize64 : block { // 'big1'
 	: block("big1", (uint32_t)(size & 0xffffffff))
 	, size_high((uint32_t)(size >> 32)) {}
 
-	le<uint32_t> size_high;
+	opencorelib::endian::little<uint32_t> size_high;
 };
 
 struct ds64 : block {
 	ds64() : block("ds64", 28) {}
 
-	le<uint32_t> riff_size_low;
-	le<uint32_t> riff_size_high;
-	le<uint32_t> data_size_low;
-	le<uint32_t> data_size_high;
-	le<uint32_t> sample_count_low;
-	le<uint32_t> sample_count_high;
-	le<uint32_t> table_length;
+	opencorelib::endian::little<uint32_t> riff_size_low;
+	opencorelib::endian::little<uint32_t> riff_size_high;
+	opencorelib::endian::little<uint32_t> data_size_low;
+	opencorelib::endian::little<uint32_t> data_size_high;
+	opencorelib::endian::little<uint32_t> sample_count_low;
+	opencorelib::endian::little<uint32_t> sample_count_high;
+	opencorelib::endian::little<uint32_t> table_length;
 	chunksize64 table[0];
 };
 
 struct cue_point {
-	le<uint32_t> identifier;
-	le<uint32_t> position;
+	opencorelib::endian::little<uint32_t> identifier;
+	opencorelib::endian::little<uint32_t> position;
 	char data_chunk_id[4];
-	le<uint32_t> chunk_start;
-	le<uint32_t> block_start;
-	le<uint32_t> sample_offset;
+	opencorelib::endian::little<uint32_t> chunk_start;
+	opencorelib::endian::little<uint32_t> block_start;
+	opencorelib::endian::little<uint32_t> sample_offset;
 };
 
 struct cue_chunk : block { // 'cue '
 	cue_chunk(size_t num_cues = 0)
 	: block("cue ", 4 + num_cues * sizeof(cue_point)) {}
 
-	le<uint32_t> cue_point_count;
+	opencorelib::endian::little<uint32_t> cue_point_count;
 	cue_point cue_points[0];
 };
 
@@ -192,25 +190,25 @@ struct label_chunk : block { // 'labl'
 			size += strlen(text) + 1;
 	}
 
-	le<uint32_t> identifier; // 'adtl' associated data list
+	opencorelib::endian::little<uint32_t> identifier; // 'adtl' associated data list
 	char text[0]; // null terminated string
 };
 
 struct marker_entry {
-	le<uint32_t> flags;
-	le<uint32_t> sample_offset_low;
-	le<uint32_t> sample_offset_high;
-	le<uint32_t> byte_offset_low;
-	le<uint32_t> byte_offset_high;
-	le<uint32_t> intra_sample_offset_high;
-	le<uint32_t> intra_sample_offset_low;
+	opencorelib::endian::little<uint32_t> flags;
+	opencorelib::endian::little<uint32_t> sample_offset_low;
+	opencorelib::endian::little<uint32_t> sample_offset_high;
+	opencorelib::endian::little<uint32_t> byte_offset_low;
+	opencorelib::endian::little<uint32_t> byte_offset_high;
+	opencorelib::endian::little<uint32_t> intra_sample_offset_high;
+	opencorelib::endian::little<uint32_t> intra_sample_offset_low;
 	char label_text[256];
-	le<uint32_t> label_chunk_identifier;
+	opencorelib::endian::little<uint32_t> label_chunk_identifier;
 	guid vendor_and_product;
-	le<uint32_t> user_data_1;
-	le<uint32_t> user_data_2;
-	le<uint32_t> user_data_3;
-	le<uint32_t> user_data_4;
+	opencorelib::endian::little<uint32_t> user_data_1;
+	opencorelib::endian::little<uint32_t> user_data_2;
+	opencorelib::endian::little<uint32_t> user_data_3;
+	opencorelib::endian::little<uint32_t> user_data_4;
 };
 
 struct marker_chunk : block { // 'r64m'
@@ -245,9 +243,9 @@ struct bext_chunk : block { // 'bext', size == 752
 	char originator_ref[32];    // ASCII: Reference of the originator
 	char origination_date[10];  // ASCII: yyyy-mm-dd
 	char origination_time[8];   // ASCII: hh-mm-ss
-	le<uint32_t> time_ref_low;  // First sample count since midnight
-	le<uint32_t> time_ref_high; // First sample count since midnight
-	le<uint16_t> Version;       // Version of BWF; unsigned binary number
+	opencorelib::endian::little<uint32_t> time_ref_low;  // First sample count since midnight
+	opencorelib::endian::little<uint32_t> time_ref_high; // First sample count since midnight
+	opencorelib::endian::little<uint16_t> Version;       // Version of BWF; unsigned binary number
 	char umid[64];              // SMPTE UMID
 	char reserved[190];         // Reserved for future use, set to '\0'
 	char CodingHistory[150];    // ASCII: History coding

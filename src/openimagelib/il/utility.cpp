@@ -1882,7 +1882,6 @@ static image_type_ptr l8_to_yuv_planar( image_type_ptr src_img, const opl::wstri
 
 static image_type_ptr f32_to_yuv_planar( image_type_ptr src_img, const opl::wstring &format )
 {
-	size_type width = src_img->width( );
 	size_type height = src_img->height( );
 
 	image_type_ptr dst_img = allocate( src_img, format );

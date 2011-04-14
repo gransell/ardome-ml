@@ -151,7 +151,7 @@ void TestThreadPool()
 	boost::uint32_t job_counter = 0;
 	
 
-    for(int i = 0; i < num_jobs_to_run; ++i)
+    for(boost::uint32_t i = 0; i < num_jobs_to_run; ++i)
     {
         boost::shared_ptr< MyJobClass > aJob( new MyJobClass(job_duration, &job_counter) );
         myPool.add_job(aJob);

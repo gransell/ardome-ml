@@ -10,6 +10,7 @@
 #include <openmedialib/ml/audio.hpp>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #include <opencorelib/cl/profile.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
@@ -39,6 +40,9 @@ boost::shared_ptr< T > mixer( const audio_type_ptr &a_, const audio_type_ptr &b_
 	const int channels_out = a->channels();
 	
 	boost::shared_ptr< T > mix = boost::shared_ptr< T >( new T( a->frequency( ), channels_out, samples_out ) );
+
+	// Set the output "original" sample count to the maximum of the inputs
+	mix->original_samples( std::max( a->original_samples(), b->original_samples() ) );
 
 	typename T::sample_type *po = mix->data( );
 	typename T::sample_type *pa = a->data( );
@@ -105,6 +109,9 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 	{
 		input = coerce< T >( ml::audio::pitch( input, output->samples( ) ) );
 	}
+
+	// Set the output "original" sample count to the maximum of the inputs
+	output->original_samples( std::max( output->original_samples(), output->original_samples() ) );
 
 	// Extract samples, number of channels and data
 	int samples = input->samples( );

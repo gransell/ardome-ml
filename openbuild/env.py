@@ -57,9 +57,23 @@ class Environment( BaseEnvironment ):
 		else:
 			BaseEnvironment.__init__( self,
 				ENV = os.environ,
-				LINKCOMSTR = "Linking $TARGET",
+
 				CCCOMSTR = "Compiling static object $TARGET",
 				CXXCOMSTR = "Compiling static object $TARGET",
+				SHCCCOMSTR = "Compiling shared object $TARGET",
+				SHCXXCOMSTR = "Compiling shared object $TARGET",
+
+				PCHCOMSTR = "Generating pre-compiled header $TARGET",
+
+				LINKCOMSTR = " ==> Linking $TARGET\n",
+				LDMODULECOMSTR = " ==> Linking dynamic module $TARGET\n",
+				SHLINKCOMSTR = " ==> Linking shared library $TARGET\n",
+
+				RANLIBCOMSTR = "Indexing $TARGET",
+				ARCOMSTR = "Generating archive $TARGET",
+				ASCOMSTR = "Assembling $TARGET",
+				ASPPCOMSTR = "Assembling $TARGET",
+
 				**kw )
 
 		opts.Update( self )

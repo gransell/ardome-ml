@@ -14,6 +14,8 @@ using boost::uint16_t;
 using boost::uint32_t;
 using boost::uint64_t;
 
+#define le olib::opencorelib::endian::little
+
 store_wav::store_wav(const pl::wstring &resource)
 	: ml::store_type()
 	, file_(NULL)
@@ -111,10 +113,12 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	// afterwords.
 
 	int samples = 0;
+/*
 	int count = -1;
 	try {
-		//count = property("count").value<int>();
+		count = property("count").value<int>();
 	} catch (...) {}
+*/
 
 	uint64_t header_size =
 		  sizeof(w)
@@ -197,30 +201,41 @@ bool store_wav::push(ml::frame_type_ptr frame)
 
 	ml::audio_type_ptr audio(frame->get_audio());
 
-	// Add total number of parsed samples
-	accumulated_samples += audio->samples();
+	// These are the values from the audio object
+	int samples = audio->samples();
+	int orig_samples = audio->original_samples();
+	int size = audio->original_size();
 
-	ARLOG_DEBUG6("store_wav::push(): %d audio samples in this frame")(audio->samples());
+	// Add total number of parsed samples
+	accumulated_samples += orig_samples;
+
+	ARLOG_DEBUG6("store_wav::push(): %d audio samples in this frame (%d valid ones)")(samples)(orig_samples);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	if (real_bytes_per_sample == bytes_per_sample) {
+	if (real_bytes_per_sample == bytes_per_sample)
+	{
 		// This is no doubt the fastest, just write the memory
 		// chunk down to file in one go.
-		fwrite(audio->pointer(), audio->size(), 1, file_);
+		fwrite(audio->pointer(), size, 1, file_);
 
-	} else
+	}
+	else
 #endif // BYTE_ORDER == LITTLE_ENDIAN
-	if (real_bytes_per_sample == 1) {
-		saveRange<uint8_t,  1>(file_, audio->pointer(), audio->size());
-
-	} else if (real_bytes_per_sample == 2) {
-		saveRange<uint16_t, 2>(file_, audio->pointer(), audio->size());
-
-	} else if (real_bytes_per_sample == 3) {
-		saveRange<uint32_t, 3>(file_, audio->pointer(), audio->size());
-
-	} else if (real_bytes_per_sample == 4) {
-		saveRange<uint32_t, 4>(file_, audio->pointer(), audio->size());
+	if (real_bytes_per_sample == 1)
+	{
+		saveRange<uint8_t,  1>(file_, audio->pointer(), size);
+	}
+	else if (real_bytes_per_sample == 2)
+	{
+		saveRange<uint16_t, 2>(file_, audio->pointer(), size);
+	}
+	else if (real_bytes_per_sample == 3)
+	{
+		saveRange<uint32_t, 3>(file_, audio->pointer(), size);
+	}
+	else if (real_bytes_per_sample == 4)
+	{
+		saveRange<uint32_t, 4>(file_, audio->pointer(), size);
 	}
 
 	return true;

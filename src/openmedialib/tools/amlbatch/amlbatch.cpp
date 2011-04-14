@@ -220,7 +220,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 			last_time = curr_time;
 		}
 
-		if ( syncing && sync_check ++ % 50 == 0 || input->get_position( ) == total_frames - 1 )
+		if ( ( syncing && (sync_check ++ % 50 == 0) ) || ( input->get_position( ) == total_frames - 1 ) )
 		{
 			input->sync( );
 			int current_frames = input->get_frames( );

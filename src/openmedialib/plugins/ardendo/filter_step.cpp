@@ -54,7 +54,6 @@ class ML_PLUGIN_DECLSPEC filter_step : public ml::filter_type
 
 			if ( input && input->get_frames( ) > 0 )
 			{
-				int length = input->get_frames( );
 				int position = get_position( );
 				if ( prop_speed_.value< int >( ) != 0 )
 					position *= prop_speed_.value< int >( );
