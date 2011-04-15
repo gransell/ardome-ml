@@ -46,7 +46,7 @@ class document;
 
 class CORE_API node : public streamable_input {
 public:
-	class attribute : public streamable_input {
+	class CORE_API attribute : public streamable_input {
 	public:
 		attribute(attribute& attrib);
 		virtual ~attribute();
