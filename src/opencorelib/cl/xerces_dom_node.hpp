@@ -36,8 +36,10 @@ public:
 	virtual void onStreamInput(const std::string& s) = 0;
 };
 
-template<> streamable_input& streamable_input::operator<<(const std::string& s);
-template<> streamable_input& streamable_input::operator<<(const std::wstring& s);
+template<> CORE_API
+streamable_input& streamable_input::operator<<(const std::string& s);
+template<> CORE_API
+streamable_input& streamable_input::operator<<(const std::wstring& s);
 
 namespace dom {
 
