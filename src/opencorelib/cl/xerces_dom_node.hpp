@@ -25,13 +25,23 @@ public:
 	virtual ~streamable_input() {}
 
 	template<typename T>
-	streamable_input& operator<<(const T t) {
+	streamable_input& operator<<(const T& t) {
 		std::ostringstream ss;
 		ss << t;
 		ss.flush();
 		onStreamInput(ss.str());
 		return *this;
 	}
+
+	template<typename T>
+	streamable_input& operator<<(const T* t) {
+		std::ostringstream ss;
+		ss << t;
+		ss.flush();
+		onStreamInput(ss.str());
+		return *this;
+	}
+
 
 	virtual void onStreamInput(const std::string& s) = 0;
 };
