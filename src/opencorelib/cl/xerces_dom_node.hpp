@@ -25,7 +25,7 @@ public:
 	virtual ~streamable_input() {}
 
 	template<typename T>
-	streamable_input& operator<<(const T& t) {
+	streamable_input& operator<<(const T t) {
 		std::ostringstream ss;
 		ss << t;
 		ss.flush();
@@ -40,6 +40,10 @@ template<> CORE_API
 streamable_input& streamable_input::operator<<(const std::string& s);
 template<> CORE_API
 streamable_input& streamable_input::operator<<(const std::wstring& s);
+template<> CORE_API
+streamable_input& streamable_input::operator<<(const char* s);
+template<> CORE_API
+streamable_input& streamable_input::operator<<(const wchar_t* s);
 
 namespace dom {
 

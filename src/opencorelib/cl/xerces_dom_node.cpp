@@ -25,11 +25,25 @@ const char* exception::what() const throw()
 }
 
 
-template<> streamable_input& streamable_input::operator<<(const std::string& s) {
+template<>
+streamable_input& streamable_input::operator<<(const std::string& s) {
 	onStreamInput(s);
 	return *this;
 }
-template<> streamable_input& streamable_input::operator<<(const std::wstring& s) {
+template<>
+streamable_input& streamable_input::operator<<(const std::wstring& s) {
+	onStreamInput(olib::opencorelib::str_util::to_string( s ));
+	return *this;
+}
+template<>
+streamable_input& streamable_input::operator<<(const char* _s) {
+	std::string s(_s);
+	onStreamInput(s);
+	return *this;
+}
+template<>
+streamable_input& streamable_input::operator<<(const wchar_t* _s) {
+	std::wstring s(_s);
 	onStreamInput(olib::opencorelib::str_util::to_string( s ));
 	return *this;
 }
