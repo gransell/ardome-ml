@@ -16,6 +16,7 @@
 #include <xercesc/dom/DOMError.hpp>
 
 #include <xercesc/dom/DOMWriter.hpp>
+#include <xercesc/dom/DOMNodeFilter.hpp>
 
 #include <xercesc/dom/DOMErrorHandler.hpp>
 

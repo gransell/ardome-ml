@@ -58,25 +58,25 @@ document::operator const XERCES_CPP_NAMESPACE::DOMDocument&() const
 	return *doc;
 }
 
-bool document::serializeIntoString(std::string& s) const
+bool document::serializeIntoString(std::string& s, bool asFragment) const
 {
 	MemBufFormatTarget t(1024 * 64);
 
-	bool ret = writeNode(&t);
+	bool ret = writeNode(&t, asFragment);
 
 	if (ret)
 		s.assign((const char*)t.getRawBuffer(), t.getLen());
 	return ret;
 }
 
-bool document::serializeToFile(std::string& s) const
+bool document::serializeToFile(std::string& s, bool asFragment) const
 {
 	LocalFileFormatTarget t(s.c_str());
 
-	return writeNode(&t);
+	return writeNode(&t, asFragment);
 }
 
-bool document::writeNode(XMLFormatTarget* ft) const
+bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 {
 	if (!doc)
 		return false;
@@ -87,6 +87,18 @@ bool document::writeNode(XMLFormatTarget* ft) const
 
 	if (!dw)
 		return false;
+
+	DOMWriterFilter* dwf = dw->getFilter();
+
+	if (!dwf)
+		return false;
+
+	// Choose to (or not to) print the xml header (<?xml ... ?>)
+	unsigned long flt = dwf->getWhatToShow();
+	flt &= ~DOMNodeFilter::SHOW_ENTITY;
+	if (!asFragment)
+		flt |= DOMNodeFilter::SHOW_ENTITY;
+	dwf->setWhatToShow(flt);
 
 	dw->setFeature(to_x_string("format-pretty-print").c_str(), true);
 	dw->setEncoding(to_x_string("utf-8").c_str());

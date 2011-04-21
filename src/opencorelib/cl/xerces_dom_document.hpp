@@ -31,13 +31,16 @@ public:
 	operator XERCES_CPP_NAMESPACE::DOMDocument&();
 	operator const XERCES_CPP_NAMESPACE::DOMDocument&() const;
 
-	bool serializeIntoString(std::string& s) const;
-	bool serializeToFile(std::string& filename) const;
+	bool serializeIntoString(std::string& s,
+	                         bool asFragment = false) const;
+	bool serializeToFile(std::string& filename,
+	                     bool asFragment = false) const;
 
 private:
 	document(const document&) {}
 
-	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft) const;
+	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft,
+	               bool asFragment = false) const;
 
 	DocPtr doc;
 };
