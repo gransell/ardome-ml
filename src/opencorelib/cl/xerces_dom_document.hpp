@@ -12,6 +12,20 @@ typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::DOMDocument> DocPtr;
 
 namespace dom {
 
+class fragment_filter : public XERCES_CPP_NAMESPACE::DOMWriterFilter {
+public:
+	fragment_filter();
+	virtual ~fragment_filter();
+
+protected:
+	virtual short acceptNode(const XERCES_CPP_NAMESPACE::DOMNode* node) const;
+	virtual unsigned long getWhatToShow() const;
+	virtual void setWhatToShow(unsigned long toShow);
+
+private:
+	unsigned long what_to_show_;
+};
+
 class CORE_API document : public node {
 public:
 	// Creates a completely empty document without root element

@@ -12,6 +12,31 @@ namespace olib { namespace opencorelib { namespace xml {
 
 namespace dom {
 
+fragment_filter::fragment_filter()
+: what_to_show_(~DOMNodeFilter::SHOW_ENTITY)
+{
+}
+
+fragment_filter::~fragment_filter()
+{
+}
+
+short fragment_filter::acceptNode(const DOMNode* node) const
+{
+	return node && ( node->getNodeType() & what_to_show_ );
+}
+
+unsigned long fragment_filter::getWhatToShow() const
+{
+	return what_to_show_;
+}
+
+void fragment_filter::setWhatToShow(unsigned long toShow)
+{
+	what_to_show_ = toShow;
+}
+
+
 document::document()
 {
 	DOMImplementation* di = DOMImplementation::getImplementation();
@@ -88,17 +113,8 @@ bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 	if (!dw)
 		return false;
 
-	DOMWriterFilter* dwf = dw->getFilter();
-
-	if (!dwf)
-		return false;
-
-	// Choose to (or not to) print the xml header (<?xml ... ?>)
-	unsigned long flt = dwf->getWhatToShow();
-	flt &= ~DOMNodeFilter::SHOW_ENTITY;
-	if (!asFragment)
-		flt |= DOMNodeFilter::SHOW_ENTITY;
-	dwf->setWhatToShow(flt);
+	fragment_filter ff;
+	dw->setFilter(asFragment ? &ff : NULL);
 
 	dw->setFeature(to_x_string("format-pretty-print").c_str(), true);
 	dw->setEncoding(to_x_string("utf-8").c_str());
