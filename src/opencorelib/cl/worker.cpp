@@ -467,6 +467,41 @@ namespace olib
             return m_current_job->wait_for_job_done(time_out);
         }
 
+        bool worker::cancel_and_remove_job( const base_job_ptr &job_to_cancel, const boost::posix_time::time_duration& time_out )
+        {
+            ARENFORCE( job_to_cancel );
+
+            {
+                boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
+                job_to_cancel->set_should_terminate_job(true);
+
+                if( job_to_cancel == m_current_job )
+                {
+                    job_to_cancel->set_should_reschedule( false );
+                    //The job has already started, so we wait for it to cancel itself
+                    return job_to_cancel->wait_for_job_done( time_out );
+                }
+                else
+                {
+                    //The job is (possibly) in the heap, waiting for execution, so we remove it.
+                    jobcollection::iterator heap_it = std::find( m_heap.begin(), m_heap.end(), job_to_cancel );
+                    if( heap_it != m_heap.end() )
+                    {
+                        m_heap.erase( heap_it );
+                    }
+
+                    //The job may be in the timed jobs heap, so we remove it
+                    jobcollection::iterator tj_it = std::find( m_timed_jobs.begin(), m_timed_jobs.end(), job_to_cancel );
+                    if( tj_it != m_timed_jobs.end() )
+                    {
+                        m_timed_jobs.erase( tj_it );
+                    }
+                }
+            }
+
+            return true;
+        }
+
         void worker::cancel_and_clear_jobs() 
         {
             boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
