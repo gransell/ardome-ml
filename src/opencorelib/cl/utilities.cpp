@@ -243,12 +243,15 @@ namespace olib
 				t_string stack_trace;
                 
                 #ifdef OLIB_ON_WINDOWS
+                    //Caused hangs in some scenarios, commented out pending further investigations.
+                    #if 0
 				    stack_dump dump;
                     #undef max
 				    skip_levels = std::max(1, skip_levels);
 
 				    dump.Walk(skip_levels); 
 				    stack_trace = dump.get_stack_trace();
+                    #endif
                 #elif defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
 				    stack_trace = str_util::to_t_string( mac::get_stack_trace() );
                 #endif
