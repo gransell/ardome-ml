@@ -551,6 +551,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
 				if ( gop_decoder_->property( "threads" ).valid( ) ) 
 					gop_decoder_->property( "threads" ) = prop_inner_threads_.value< int >( );
+				if ( gop_decoder_->property( "scope" ).valid( ) ) 
+					gop_decoder_->property( "scope" ) = prop_scope_.value< pl::wstring >( );
 				gop_decoder_->connect( analyse );
 				gop_decoder_->sync( );
 				return true;
