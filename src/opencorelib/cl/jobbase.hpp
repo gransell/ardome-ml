@@ -74,12 +74,6 @@ namespace olib
             when the answer is 'true' */
             bool get_should_terminate_job() const;
 
-            /// Signals to a thread that is running a job that it should terminate.
-            /** Termination will not happen automatically.
-            If the thread running the job isn't polling get_should_terminate_job
-            in a frequent manner, termination will fail. */
-            void set_should_terminate_job( bool term );
-
             /// Wait for this job to terminate
             /** @param time_out The time to wait (in milli seconds) for the job to complete.
                 @param activity The activity that should be performed by the calling thread during the wait.
@@ -133,6 +127,12 @@ namespace olib
             static long s_dw_counter;
 
         private:
+            /// Signals to a thread that is running a job that it should terminate.
+            /** Termination will not happen automatically.
+            If the thread running the job isn't polling get_should_terminate_job
+            in a frequent manner, termination will fail. */
+            void set_should_terminate_job( bool term );
+
             // Should the job terminate or not
             bool m_terminate_job;
 

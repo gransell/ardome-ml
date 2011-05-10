@@ -82,6 +82,11 @@ namespace olib
                         false otherwise. */
             bool cancel_current_job( const boost::posix_time::time_duration& time_out) ;
 
+            /// Cancel a specific job in this worker's job queue. If the job has already been
+            /// started, it will be marked for cancellation. If the job is a reocurring job, 
+            /// it will not be run again.
+            bool cancel_and_remove_job( const base_job_ptr &job_to_cancel, const boost::posix_time::time_duration& time_out );
+
 			/// Remove all added jobs, will set job_base::set_should_terminate_job to true.
 			/** This function is called automatically by the Stop function. */
 			void cancel_and_clear_jobs() ;
