@@ -1120,7 +1120,16 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				result.h = dst_h;
 			}
 
-			if ( result.w % 1 ) result.w += 1;
+			if ( result.w % 2 ) result.w += 1;
+
+			//If both the source and destination images are interlaced, 
+			//we need to place the source at an even line to avoid
+			//flipping the field order.
+			if ( dst->get_image()->field_order( ) != il::progressive &&
+			     src->get_image()->field_order( ) != il::progressive )
+			{
+				if( result.y % 2 ) result.y += 1;
+			}
 
 			return result;
 		}
