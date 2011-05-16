@@ -164,10 +164,10 @@ namespace olib { namespace openmedialib { namespace ml {
 		virtual std::string video_codec( ) const;
 
 		/// Obtain width from packet or image
-		int width( ) const;
+		virtual int width( ) const;
 
 		/// Obtain height from packet or image
-		int height( ) const;
+		virtual int height( ) const;
 
 		/// Obtain colourspace from packet or image
 		std::wstring pf( ) const;
