@@ -146,7 +146,22 @@ class Environment( BaseEnvironment ):
 			
 			#self[ 'CC' ] = 'llvm-gcc'
 			#self[ 'CXX' ] = 'llvm-g++'
-			
+
+                if os.name == 'posix':
+                        if self[ 'compiler' ] == 'gcc':
+                                self[ 'CC' ] = 'gcc'
+                                self[ 'CXX' ] = 'g++'
+                                self[ 'LINK' ] = 'g++'
+                        elif self[ 'compiler' ] == 'gcc44':
+                                self[ 'CC' ] = 'gcc-4.4'
+                                self[ 'CXX' ] = 'g++-4.4'
+                                self[ 'LINK' ] = 'g++-4.4'
+                        elif self[ 'compiler' ] == 'clang':
+                                self[ 'CC' ] = 'clang'
+                                self[ 'CXX' ] = 'clang++'
+                                self[ 'LINK' ] = 'clang++'
+                        else:
+                                raise Exception( "Invalid compiler " )
 
 	def install_config( self, src, dst ):
 		"""	Installs config files for bcomp usage.
