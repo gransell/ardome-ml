@@ -934,6 +934,13 @@ class avformat_encode_filter : public filter_simple
 					
 					if( source->get_stream( ) && ( source->get_stream( )->codec( ) != video_wrapper_->stream_codec_id( ) ) )
 					   stream_types_match = false;
+
+					//Check that bit rates match
+					if( source->get_stream( ) && source->get_stream( )->bitrate( ) != video_wrapper_->context( )->bit_rate )
+					{
+						ARLOG_DEBUG5("Stream bitrates differ. Source: %1%, target: %2%")( source->get_stream( )->bitrate( ) )( video_wrapper_->context( )->bit_rate );
+						stream_types_match = false;
+					}
 	
 					if ( prop_force_.value< int >( ) )
 					{
