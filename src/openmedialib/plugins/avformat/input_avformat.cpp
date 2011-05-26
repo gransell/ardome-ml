@@ -411,6 +411,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
             pcos::property tc_prop( source_tc_key );
             tc_prop = (int)result->get_position( );
             result->properties().append( tc_prop );
+
+            pl::pcos::property source_tc_prop = result->properties().get_property_with_key( source_tc_key );
+
+            if ( !source_tc_prop.valid() ) {
+                ARLOG_WARN( "Could not set source_timecode: %1%" )( tc_prop );
+            }
+            ARENFORCE_MSG( source_tc_prop.valid(), "Failed to set the source timecode on the frame" );
         }
 
 		// Fetch method
