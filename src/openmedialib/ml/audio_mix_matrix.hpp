@@ -22,6 +22,12 @@ boost::shared_ptr< T > mix_matrix( audio_type_ptr &a, const std::vector< double 
 	ARENFORCE_MSG( a, "No audio input provided" );
 	ARENFORCE_MSG( matrix.size( ) == size_t( channels * a->channels( ) ), "Malformed matrix - expected %1% entries, got %2%" )( channels * a->channels( ) )( matrix.size( ) );
 
+	//Avoid creating an audio object with zero samples
+	if( channels == 0 )
+	{
+		return boost::shared_ptr< T >();
+	}
+
 	// Coerce the input to the correct type
 	boost::shared_ptr< T > input = coerce< T >( a );
 
