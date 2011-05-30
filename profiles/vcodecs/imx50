@@ -10,6 +10,7 @@
 # - Only works for 25 fps content.
 # - Change minrate, maxrate and b values to 30000k / 40000k / 50000k in order to produce 30/40/50 Mbps D10 essence.
 # - Set bufsize and rc_init_occupancy values to 1200000 / 1600000 / 2000000 for 30/40/50 Mbps D10 essence.
+# - Set qmax value to 8 / 3 / 3 for 30/40/50 Mbps D10 essence.
 # - Add the -padtop 32 option if you want to produce a 720x608 D10 image size from a 720x576 source.
 #
 # AML integration notes: 
