@@ -8,9 +8,18 @@
 
 namespace olib { namespace opencorelib { namespace xml {
 
+struct DocPtrNullDeleter {
+	void operator()(XERCES_CPP_NAMESPACE::DOMDocument* docptr) {}
+};
+
 typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::DOMDocument> DocPtr;
+typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::XercesDOMParser> DomParserPtr;
 
 namespace dom {
+
+class fragment_filter;
+class document;
+class fragment;
 
 class fragment_filter : public XERCES_CPP_NAMESPACE::DOMWriterFilter {
 public:
@@ -50,13 +59,36 @@ public:
 	bool serializeToFile(std::string& filename,
 	                     bool asFragment = false) const;
 
-private:
+protected:
 	document(const document&) {}
 
 	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft,
 	               bool asFragment = false) const;
 
 	DocPtr doc;
+};
+
+/*
+ * Very simple and basic DOM parser.
+ * NOTE: All referenced document and node pointers from this fragment is owned
+ * by the fragment instance. When the instance is deleted, the node pointers
+ * are invalid.
+ */
+class CORE_API fragment : public document {
+public:
+	fragment(const std::string& xmltext);
+
+private:
+	DomParserPtr parser_;
+};
+
+/*
+ * Simple DOM parser.
+ * NOTE: The same rules applies to this as to the fragment parser
+ */
+class CORE_API file_document : public document {
+public:
+	file_document(const std::string& filename);
 };
 
 } // namespace dom
