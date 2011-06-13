@@ -238,7 +238,7 @@ namespace olib
 
 			}
 
-			t_string get_stack_trace( int skip_levels )
+			t_string get_stack_trace( int skip_levels, bool verbose )
 			{
 				t_string stack_trace;
                 
@@ -253,7 +253,7 @@ namespace olib
 				    stack_trace = dump.get_stack_trace();
                     #endif
                 #elif defined( OLIB_ON_MAC ) || defined( OLIB_ON_LINUX )
-				    stack_trace = str_util::to_t_string( mac::get_stack_trace() );
+				    stack_trace = str_util::to_t_string( mac::get_stack_trace( verbose ) );
                 #endif
 
 				return stack_trace;	
