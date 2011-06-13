@@ -168,14 +168,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( input ) input->sync( );
 					frames = input ? input->get_frames( ) : 0;
 				}
-				bool changed = frames != frames_ && is_paused( locker );
 				{
 					scoped_lock lock( mutex_ ); 
 					frames_ = frames;
-				}
-				if ( changed )
-				{
-					start( locker );
 				}
 			}
 			else
