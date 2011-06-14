@@ -128,7 +128,6 @@ class ML_DECLSPEC filter_type : public input_type
 	private:
 		std::vector < input_type_ptr > slots_;
 		std::map < std::size_t, filter_key_ptr > keys_;
-		int position_;
 		exception_list collated_;
 };
 

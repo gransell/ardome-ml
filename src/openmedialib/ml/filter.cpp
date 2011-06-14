@@ -98,7 +98,6 @@ filter_type::filter_type( )
 	: input_type( )
 	, slots_( )
 	, keys_( )
-	, position_( 0 ) 
 {
 	slots_.push_back( input_type_ptr( ) ); 
 }

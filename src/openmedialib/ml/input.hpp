@@ -19,6 +19,7 @@
 #include <opencorelib/cl/base_exception.hpp>
 #include <opencorelib/cl/utilities.hpp>
 #include <opencorelib/cl/log_defines.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -45,9 +46,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Constructor/destructor
 		explicit input_type( )
 			: properties_( )
+			, position_( 0 )
 			, initialized_( false )
 			, prop_debug_( olib::openpluginlib::pcos::key::from_string( "debug" ) )
-			, position_( 0 )
 			, process_( process_image | process_audio )
 			, report_exceptions_( true )
 		{
@@ -206,11 +207,12 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual void sync_frames( ) { }
 
 		olib::openpluginlib::pcos::property_container properties_;
+		
+		int position_;
 
 	private:
 		bool initialized_;
 		olib::openpluginlib::pcos::property prop_debug_;
-		int position_;
 		int process_;
 		bool report_exceptions_;
 };
