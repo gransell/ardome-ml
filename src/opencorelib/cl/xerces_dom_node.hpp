@@ -73,7 +73,7 @@ public:
 		attribute& operator=(const std::string& val);
 		attribute& operator=(const std::wstring& val);
 
-		operator bool();
+		bool valid() const;
 
 		attribute& remove();
 
@@ -94,7 +94,7 @@ public:
 	node(const node& ref);
 	virtual ~node();
 
-	operator bool() const;
+	bool valid() const;
 
 	node& operator=(const std::string& s); // Sets value
 	node& operator=(const std::wstring& ws); // Sets value
