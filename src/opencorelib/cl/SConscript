@@ -193,6 +193,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'string_conversions.hpp',
 		'string_defines.hpp',
 		'str_util.hpp',
+		'thread_name.hpp',
 		'thread_pool.hpp',
 		'throw_try_catch_defines.hpp',
 		'time_code.hpp',

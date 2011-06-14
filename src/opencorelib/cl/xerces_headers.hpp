@@ -14,15 +14,19 @@
 #include <xercesc/dom/DOMAttr.hpp>
 #include <xercesc/dom/DOMText.hpp>
 #include <xercesc/dom/DOMError.hpp>
+#include <xercesc/dom/DOMNodeList.hpp>
 
 #include <xercesc/dom/DOMWriter.hpp>
 #include <xercesc/dom/DOMNodeFilter.hpp>
 
 #include <xercesc/dom/DOMErrorHandler.hpp>
 
+#include <xercesc/parsers/XercesDOMParser.hpp>
+
 #include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/framework/MemBufFormatTarget.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/framework/LocalFileInputSource.hpp>
 
 #endif // OPENCORELIB_XERCES_HEADERS_H_
 

@@ -56,8 +56,8 @@ node::attribute::attribute(attribute& attrib)
 : n(attrib.n)
 , key(attrib.key)
 , val(attrib.val)
-, changed(false)
-, exists(false)
+, changed(attrib.changed)
+, exists(attrib.exists)
 {
 }
 node::attribute::~attribute()
@@ -119,7 +119,8 @@ node::attribute::attribute(node& n, const std::string& attrib, const std::string
 
 
 node::node()
-: owner_(NULL)
+: n_(NULL)
+, owner_(NULL)
 {
 }
 node::node(const node& ref)
@@ -133,6 +134,10 @@ node::node(const node& ref)
 }
 node::~node()
 {
+}
+
+bool node::valid() const {
+	return owner_ && n_;
 }
 
 node& node::operator=(const std::string& s) {
@@ -158,6 +163,124 @@ node::attribute node::operator[](const std::string& attrib) {
 	}
 	attribute a(*this, attrib, NULL);
 	return a;
+}
+
+node node::first(const std::string& s) {
+	if ( !n_ )
+		return node();
+
+	DOMNodeList* children = n_->getChildNodes();
+
+	if ( !children || !children->getLength( ) )
+		return node();
+
+	XMLSize_t len = children->getLength( );
+	for ( XMLSize_t i = 0; i < len; ++i ) {
+		DOMNode* np = children->item( i );
+
+		node n(this, np);
+		if ( n.getName() == s )
+			return n;
+	}
+
+	return node();
+}
+
+// ns_uri is ignored, getNsUri seems not to work for some reason
+node node::first(const std::string& s, const std::string& ns_uri) {
+	if ( !n_ )
+		return node();
+
+	DOMNodeList* children = n_->getChildNodes();
+
+	if ( !children || !children->getLength( ) )
+		return node();
+
+	XMLSize_t len = children->getLength( );
+	for ( XMLSize_t i = 0; i < len; ++i ) {
+		DOMNode* np = children->item( i );
+
+		node n(this, np);
+		if ( n.getName() == s /* && n.getNsUri() == ns_uri */ )
+			return n;
+	}
+
+	return node();
+}
+
+nodes node::all(const std::string& s) {
+	nodes _nodes;
+
+	if ( !n_ )
+		return _nodes;
+
+	DOMNodeList* children = n_->getChildNodes();
+
+	if ( !children || !children->getLength( ) )
+		return _nodes;
+
+	XMLSize_t len = children->getLength( );
+	for ( XMLSize_t i = 0; i < len; ++i ) {
+		DOMNode* np = children->item( i );
+
+		node n(this, np);
+		if ( n.getName() == s )
+			_nodes.push_back( n );
+	}
+
+	return _nodes;
+}
+
+// ns_uri is ignored, getNsUri seems not to work for some reason
+nodes node::all(const std::string& s, const std::string& ns_uri) {
+	nodes _nodes;
+
+	if ( !n_ )
+		return _nodes;
+
+	DOMNodeList* children = n_->getChildNodes();
+
+	if ( !children || !children->getLength( ) )
+		return _nodes;
+
+	XMLSize_t len = children->getLength( );
+	for ( XMLSize_t i = 0; i < len; ++i ) {
+		DOMNode* np = children->item( i );
+
+		node n(this, np);
+		if ( n.getName() == s /* && n.getNsUri() == ns_uri */ )
+			_nodes.push_back( n );
+	}
+
+	return _nodes;
+}
+
+std::string node::getNsUri() const {
+	if ( !n_ )
+		return "";
+	const XMLCh* nsuri = n_->getNamespaceURI( );
+	if ( !nsuri )
+		return "";
+
+	return xml::to_string(nsuri);
+}
+
+std::string node::getName() const {
+	if ( !n_ )
+		return "";
+
+	const XMLCh* name = n_->getNodeName( );
+	std::string s( xml::to_string( name ) );
+	std::string::size_type i = s.find(':');
+
+	return i == std::string::npos ? s : s.substr(i + 1);
+}
+
+std::string node::getValue() const {
+	if ( !n_ )
+		return "";
+	const XMLCh* name = n_->getTextContent( );
+	return xml::to_string(name);
 }
 
 node node::createChild(const std::string& _name)

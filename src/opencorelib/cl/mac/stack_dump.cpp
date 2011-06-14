@@ -111,7 +111,7 @@ using namespace abi;
 	}
 
 #ifdef OLIB_ON_LINUX
-	std::string demangle_line(const std::string& line)
+	std::string demangle_line(const std::string& line, bool verbose)
 	{
 		boost::regex e("\\s*([^(]*)"  "\\("  "([^+)]*)"  "[^[]*"  "\\[(.*)\\].*");
 		boost::smatch what;
@@ -127,7 +127,8 @@ using namespace abi;
 			if( status >= 0 )
 			{
 				std::string demang(demangled);
-				demang = prettify_templated_function(demang, 2);
+				if ( verbose )
+					demang = prettify_templated_function(demang, 2);
 
 				return "\tFunction:\n" + demang + "\n\tFile: " + std::string(what[1]);
 			}
@@ -136,7 +137,7 @@ using namespace abi;
 		return "\t( Function unknown )\n\tSymbol: " + line;
 	}
 #elif defined(OLIB_ON_MAC)
-	std::string demangle_line(const std::string& line)
+	std::string demangle_line(const std::string& line, bool verbose)
 	{
 		boost::regex e("\\s*(\\d+)\\s+(\\S+)\\s+(\\S+)\\s*(\\S+)(.+)");
 		boost::smatch what;
@@ -159,7 +160,7 @@ using namespace abi;
 	}
 #endif
 
-	utf8_string get_stack_trace()
+	utf8_string get_stack_trace( bool verbose )
 	{
 
 		void* callstack[128];
@@ -177,7 +178,7 @@ using namespace abi;
 			trace += sframenum;
 
 			utf8_string line(strs[i]);
-			trace += demangle_line(line) + "\n";
+			trace += demangle_line(line, verbose) + "\n";
 
 		}
 

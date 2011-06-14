@@ -60,6 +60,8 @@ namespace dom {
 class node;
 class document;
 
+typedef std::vector<node> nodes;
+
 class CORE_API node : public streamable_input {
 public:
 	class CORE_API attribute : public streamable_input {
@@ -92,11 +94,31 @@ public:
 	node(const node& ref);
 	virtual ~node();
 
+	bool valid() const;
+
 	node& operator=(const std::string& s); // Sets value
 	node& operator=(const std::wstring& ws); // Sets value
 
 	node operator()(const std::string& name); // Alias to createChild()
 	attribute operator[](const std::string& attrib);
+
+	// Gets the first child with tagname s. If the second function is used
+	// i.e. with ns_uri parameter, it can be:
+	// * empty: then no namespace is required [not implemented]
+	// * ':':   any namespace works
+	// * nsuri: s needs to be part of nsuri
+	// The first function (without ns_uri) will inherit the settings from
+	// its parent.
+	node first(const std::string& s);
+	node first(const std::string& s, const std::string& ns_uri);
+
+	// Same as first() but returns all nodes with a certain name
+	nodes all(const std::string& s);
+	nodes all(const std::string& s, const std::string& ns_uri);
+
+	std::string getNsUri() const;
+	std::string getName() const;
+	std::string getValue() const;
 
 	/*
 	 * Creates a child node.

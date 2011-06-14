@@ -145,7 +145,7 @@ namespace olib
 			/// Get the current call stack as a string.
 			/** @param skip_levels The number of levels from the top of the stack that
 								should be discarded in the result. Must be 1 or higher.*/
-			CORE_API t_string get_stack_trace( int skip_levels );
+			CORE_API t_string get_stack_trace( int skip_levels, bool verbose = true );
 
             
             /// Small helper class that measures time in ms from creation to measuring call.

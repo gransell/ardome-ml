@@ -127,6 +127,33 @@ bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 	return ret;
 }
 
+
+fragment::fragment(const std::string& xmltext)
+{
+	parser_ = DomParserPtr(new XercesDOMParser);
+	MemBufInputSource membuf((const XMLByte*)xmltext.c_str(), xmltext.size(), (const XMLCh*)NULL);
+
+	parser_->parse(membuf);
+
+	doc = DocPtr(parser_->getDocument(), DocPtrNullDeleter());
+	n_ = &*doc;
+}
+
+
+file_document::file_document(const std::string& filename)
+{
+	XercesDOMParser parser;
+
+	xerces_string x_filename = xml::from_string(filename);
+	LocalFileInputSource filebuf( x_filename.c_str( ) );
+
+	parser.parse(filebuf);
+
+	doc = DocPtr(parser.adoptDocument());
+	n_ = &*doc;
+}
+
+
 } // namespace dom
 
 } } } // namespace xml, namespace opencorelib, namespace olib

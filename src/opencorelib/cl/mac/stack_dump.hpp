@@ -12,7 +12,7 @@
 namespace olib {
 	namespace opencorelib {
 		namespace mac {
-			std::string get_stack_trace();
+			std::string get_stack_trace( bool verbose );
 		}
 	}
 }
