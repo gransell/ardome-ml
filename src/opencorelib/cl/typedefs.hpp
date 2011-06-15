@@ -35,6 +35,7 @@ namespace olib
         class cache_description;
         class thread_sleeper;
         class library_info;
+		class dom_serializer;
 
         typedef boost::shared_ptr< base_job > base_job_ptr;
         typedef boost::shared_ptr< const base_job > const_base_job_ptr;
@@ -55,6 +56,8 @@ namespace olib
         typedef boost::shared_ptr< cache_description > cache_description_ptr;
         typedef boost::shared_ptr< thread_sleeper > thread_sleeper_ptr;
         typedef boost::shared_ptr< library_info > library_info_ptr;
+
+		typedef boost::shared_ptr< dom_serializer > dom_serializer_ptr;
 
         typedef boost::weak_ptr< object > weak_object_ptr;
               
