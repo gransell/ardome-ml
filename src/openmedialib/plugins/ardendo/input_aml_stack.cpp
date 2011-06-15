@@ -180,6 +180,7 @@ class input_value : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return 0; }
 		virtual int get_audio_streams( ) const { return 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0 ;}
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
@@ -374,6 +375,7 @@ class frame_value : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return value_ && value_->has_image( ) ? 1 : 0; }
 		virtual int get_audio_streams( ) const { return value_ && value_->has_audio( ) ? 1 : 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { if ( value_ && get_position( ) == 0 ) { f = value_->shallow( ); f->set_position( 0 ); } }
@@ -462,6 +464,7 @@ template < typename T > class stack_value : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return 0; }
 		virtual int get_audio_streams( ) const { return 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
@@ -3231,6 +3234,10 @@ class input_aml_stack : public ml::input_type
 		virtual bool is_seekable( ) const { return tos_ ? tos_->is_seekable( ) : false; }
 		virtual int get_video_streams( ) const { return tos_ ? tos_->get_video_streams( ) : 0; }
 		virtual int get_audio_streams( ) const { return tos_ ? tos_->get_audio_streams( ) : 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const
+		{
+			return tos_ ? tos_->get_audio_channels_in_stream( stream_index ) : 0;
+		}
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )

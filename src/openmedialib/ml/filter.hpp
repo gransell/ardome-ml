@@ -117,6 +117,8 @@ class ML_DECLSPEC filter_type : public input_type
 		/// Audio
 		virtual int get_audio_streams( ) const;
 
+		virtual int get_audio_channels_in_stream( int stream_index ) const;
+
 	protected:
 
 		// Convenience function - fetch a frame from the slot and optionally ensure frame properties

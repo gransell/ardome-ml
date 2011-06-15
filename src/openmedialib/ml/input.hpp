@@ -125,6 +125,10 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Audio
 		virtual int get_audio_streams( ) const = 0;
 
+		// Returns the number of audio channel in the specified stream.
+		// The index should be between 0 and the result from get_audio_streams() minus 1.
+		virtual int get_audio_channels_in_stream( int stream_index ) const = 0;
+
 		// Provides a hint to the input implementation - allows the user to say 
 		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch
 		// NB: usage is not enforced - up to the implementation to decide whether they do it or not
