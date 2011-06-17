@@ -140,6 +140,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'create_selection_dialog.hpp',
 		'deserializer.hpp',
 		'disabled_warnings.hpp',
+		'dom_serializer.hpp',
 		'doxygen_documentation.hpp',
 		'enforce_defines.hpp',
 		'enforce.hpp',

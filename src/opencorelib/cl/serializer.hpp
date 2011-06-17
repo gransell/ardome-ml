@@ -18,7 +18,7 @@ namespace olib
             /** @param os The byte stream to write to.
                 @param obj The object to serialize.
                 @throws A base_exception if the object has the wrong type */
-            virtual void serialize( std::ostream& os, const object_ptr& obj, int start_indent = 0 ) = 0;
+            virtual void serialize( std::ostream& os, const object_ptr& obj ) = 0;
         };
     }
 }
