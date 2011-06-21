@@ -89,7 +89,7 @@ node::attribute& node::attribute::operator=(const std::wstring& s)
 	return *this;
 }
 
-node::attribute::operator bool()
+bool node::attribute::valid() const
 {
 	return exists;
 }

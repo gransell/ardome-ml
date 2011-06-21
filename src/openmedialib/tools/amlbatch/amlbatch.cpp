@@ -474,9 +474,11 @@ int main( int argc, char *argv[ ] )
 				stats = false;
 			else if ( arg == L"--interactive" )
 				interactive = true;
-			else if ( arg == L"--" )
+			else if ( arg == L"--" || arg == L"@@" ) {
+				// Ensure "--" and not "@@"
+				argv[ index ] = (char*)"--";
 				break;
-			else
+			} else
 				tokens.push_back( arg );
 
 			index ++;
@@ -556,7 +558,7 @@ int main( int argc, char *argv[ ] )
 	}
 	else
 	{
-		std::cerr << "Usage: amlbatch <graph> [ -- ( <store> )* ]" << std::endl;
+		std::cerr << "Usage: amlbatch <graph> [ ( -- | @@ ) ( <store> )* ]" << std::endl;
 	}
 
 	ml::indexer_shutdown();

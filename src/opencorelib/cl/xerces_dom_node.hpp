@@ -73,7 +73,7 @@ public:
 		attribute& operator=(const std::string& val);
 		attribute& operator=(const std::wstring& val);
 
-		operator bool();
+		bool valid() const;
 
 		attribute& remove();
 
