@@ -40,8 +40,7 @@ frame_type::frame_type( const frame_type *other )
 {
 	std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
 	properties_ = *clone.get( );
-	if ( audio_ )
-		audio_ = other->audio_->clone( );
+	audio_ = other->audio_;
 	for ( std::deque< ml::frame_type_ptr >::const_iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
 		queue_.push_back( ( *iter )->shallow( ) );
 }
