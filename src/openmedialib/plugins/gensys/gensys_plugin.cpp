@@ -454,10 +454,15 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		virtual bool push( frame_type_ptr frame )
 		{
 			queue_.push_back( frame );
+
+			ARENFORCE( queue_.size() == 1 || queue_[0]->get_position() != queue_[1]->get_position() );
 			
 			// Work around pushing the same frame multiple times to the store
 			if( last_frame_ && frame->get_position( ) == last_frame_->get_position( ) )
+			{
+				ARENFORCE( queue_.size() == 1 );
 				last_frame_ = ml::frame_type_ptr( );
+			}
 
 			return true;
 		}

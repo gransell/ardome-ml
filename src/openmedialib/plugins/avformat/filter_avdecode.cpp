@@ -724,6 +724,10 @@ class avformat_video_streamer : public ml::stream_type
 		{
 			ml::stream_type_ptr stream = wrapper_->encode( frame );
 			ARENFORCE_MSG( stream, "Encoding failed" );
+
+			//Protect against logical errors
+			ARENFORCE( stream.get() != this );
+
 			queue_.push_back( stream );
 			if ( frame && frame->has_image( ) && stream->length( ) == 0 )
 				pending_ ++;
@@ -898,6 +902,7 @@ class avformat_encode_filter : public filter_simple
 			if ( prop_enable_.value< int >( ) )
 			{
 				ml::frame_type_ptr source = fetch_from_slot( 0 );
+				ARENFORCE( fetch_slot(0)->get_position() == get_position() );
 
 				if ( !initialised_ )
 				{

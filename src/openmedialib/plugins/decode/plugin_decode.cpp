@@ -169,6 +169,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 			, validated_( validated )
 			, evaluated_( 0 )
 		{
+			ARENFORCE( other->get_position() < frames );
 		}
 
 		/// Destructor
