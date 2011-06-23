@@ -236,7 +236,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			properties( ).append( prop_sar_den_ = 54 );
 			properties( ).append( prop_interlace_ = 0 );
 			properties( ).append( prop_out_ = 25 );
-			properties( ).append( prop_deferred_ = 0 );
+			properties( ).append( prop_deferred_ = 1 );
 			properties( ).append( prop_background_ = 1 );
 		}
 
@@ -280,6 +280,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		// Fetch method
@@ -447,15 +448,21 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 1; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for pusher inputs" ); return -1; }
 
 		// Push method
 		virtual bool push( frame_type_ptr frame )
 		{
 			queue_.push_back( frame );
+
+			ARENFORCE( queue_.size() == 1 || queue_[0]->get_position() != queue_[1]->get_position() );
 			
 			// Work around pushing the same frame multiple times to the store
 			if( last_frame_ && frame->get_position( ) == last_frame_->get_position( ) )
+			{
+				ARENFORCE( queue_.size() == 1 );
 				last_frame_ = ml::frame_type_ptr( );
+			}
 
 			return true;
 		}

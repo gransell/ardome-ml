@@ -322,8 +322,8 @@ node node::createChild(const std::string& _name)
 			n = n->parent_;
 		} while (n);
 		if (!n)
-			throw xml::exception("Unable to find the appropriate "
-				"namespace for this tag");
+			throw xml::exception(std::string("Unable to find the appropriate "
+				"namespace for this tag: ") + _name);
 
 		std::string name = _name;
 		if (i == std::string::npos)

@@ -1,11 +1,16 @@
 
 #include "store_wav.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
 #include <opencorelib/cl/logger.hpp>
 #include <opencorelib/cl/enforce.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/packet.hpp>
+
+namespace ba = boost::algorithm;
 
 namespace olib { namespace openmedialib { namespace ml { namespace wav {
 
@@ -66,7 +71,10 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 			if (false) // Apply if wanted
 				resource += ".wav";
 	}
-
+	if( ba::starts_with( resource, "file:" ) ) {
+		ba::replace_first( resource, "file:", "" );
+	}
+	
 	olib::openmedialib::ml::stream_type_ptr s(frame->get_stream());
 	ml::audio_type_ptr audio(frame->get_audio());
 
@@ -132,6 +140,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	if (!file_) {
 		file_ = fopen(resource.c_str(), writeonly ? "wb" : "w+b");
+		ARENFORCE_MSG( file_, "Failed to open %1% for writing. errno = %2% (%3%)" )( resource )( strerror( errno ) )( errno );
 	}
 
 	if (samples == 0) {

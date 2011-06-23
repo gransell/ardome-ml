@@ -98,7 +98,6 @@ filter_type::filter_type( )
 	: input_type( )
 	, slots_( )
 	, keys_( )
-	, position_( 0 ) 
 {
 	slots_.push_back( input_type_ptr( ) ); 
 }
@@ -140,6 +139,11 @@ int filter_type::get_video_streams( ) const
 int filter_type::get_audio_streams( ) const
 {
 	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_streams( ) : 0; 
+}
+
+int filter_type::get_audio_channels_in_stream( int stream_index ) const
+{
+	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_channels_in_stream( stream_index ) : 0; 
 }
 
 void filter_type::on_slot_change( input_type_ptr, int ) 

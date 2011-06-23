@@ -69,6 +69,21 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			}
 		}
 
+		virtual void sync( )
+		{
+			fetch_slot( 0 )->sync( );
+			sync_frames();
+
+			// For each input, collect pushers, update their duration (via collect)
+			// and then sync up the slots that are connected to them
+			std::vector < ml::input_type_ptr > pushers;
+			for ( size_t i = 1; i < slot_count( ); i ++ )
+			{
+				collect( pushers, fetch_slot( i ) );
+				fetch_slot( i )->sync( );
+			}
+		}
+
 	private:
 		// Pass the frame to each of the pushers
 		void present_to_pushers( ml::frame_type_ptr frame )
@@ -76,7 +91,10 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			// For each input, collect pushers
 			std::vector < ml::input_type_ptr > pushers;
 			for ( size_t i = 1; i < slot_count( ); i ++ )
+			{
 				collect( pushers, fetch_slot( i ) );
+				ARENFORCE( frame->get_position() < fetch_slot(i)->get_frames() );
+			}
 
 			// Push the frame to each discovered pusher
 			for( std::vector < ml::input_type_ptr >::iterator iter = pushers.begin( ); iter != pushers.end( ); iter ++ )
