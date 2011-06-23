@@ -236,7 +236,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			properties( ).append( prop_sar_den_ = 54 );
 			properties( ).append( prop_interlace_ = 0 );
 			properties( ).append( prop_out_ = 25 );
-			properties( ).append( prop_deferred_ = 0 );
+			properties( ).append( prop_deferred_ = 1 );
 			properties( ).append( prop_background_ = 1 );
 		}
 
