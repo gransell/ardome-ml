@@ -78,6 +78,11 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 1; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const
+		{
+			ARENFORCE_MSG( context_, "wav input not initialized" );
+			return channels_;
+		}
 
 	protected:
 

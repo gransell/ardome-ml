@@ -221,6 +221,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
+		virtual int get_audio_channels_in_stream( int stream_index ) const
+		{
+			ARENFORCE_MSG( stream_index >= 0 && stream_index < get_audio_streams(), "Invalid audio stream index: %1%" )
+				( stream_index )( get_audio_streams() );
+
+			ARENFORCE_MSG( context_, "Codec context not initialized (did you forget to initialize the input?)" );
+
+			ARENFORCE( context_->streams );
+			ARENFORCE( context_->streams[ stream_index ] );
+			ARENFORCE( context_->streams[ stream_index ]->codec );
+			
+			return context_->streams[ stream_index ]->codec->channels;
+		}
 		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
 
 		virtual bool set_audio_stream( const int stream ) 

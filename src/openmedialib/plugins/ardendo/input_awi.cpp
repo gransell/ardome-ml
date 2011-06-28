@@ -45,6 +45,7 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 
 		virtual int get_video_streams( ) const { return video_streams_; }
 		virtual int get_audio_streams( ) const { return audio_streams_; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for awi inputs" ); return -1; }
 
 	protected:
 		virtual bool initialize( )
