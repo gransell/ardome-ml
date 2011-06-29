@@ -221,6 +221,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
+		virtual int get_audio_channels_in_stream( int stream_index ) const
+		{
+			ARENFORCE_MSG( stream_index >= 0 && stream_index < get_audio_streams(), "Invalid audio stream index: %1%" )
+				( stream_index )( get_audio_streams() );
+
+			ARENFORCE_MSG( context_, "Codec context not initialized (did you forget to initialize the input?)" );
+
+			ARENFORCE( context_->streams );
+			ARENFORCE( context_->streams[ stream_index ] );
+			ARENFORCE( context_->streams[ stream_index ]->codec );
+			
+			return context_->streams[ stream_index ]->codec->channels;
+		}
 		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
 
 		virtual bool set_audio_stream( const int stream ) 
@@ -411,6 +424,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
             pcos::property tc_prop( source_tc_key );
             tc_prop = (int)result->get_position( );
             result->properties().append( tc_prop );
+
+            pl::pcos::property source_tc_prop = result->properties().get_property_with_key( source_tc_key );
+
+            if ( !source_tc_prop.valid() ) {
+                ARLOG_WARN( "Could not set source_timecode: %1% == %2%" )( (int)result->get_position( ) )( tc_prop.value<int>( ) );
+            }
+            ARENFORCE_MSG( source_tc_prop.valid(), "Failed to set the source timecode on the frame" );
         }
 
 		// Fetch method

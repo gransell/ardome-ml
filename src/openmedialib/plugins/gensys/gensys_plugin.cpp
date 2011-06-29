@@ -114,6 +114,9 @@
 #define _USE_MATH_DEFINES
 #endif // WIN32
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/audio.hpp>
@@ -280,6 +283,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		// Fetch method
@@ -447,6 +451,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 1; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for pusher inputs" ); return -1; }
 
 		// Push method
 		virtual bool push( frame_type_ptr frame )

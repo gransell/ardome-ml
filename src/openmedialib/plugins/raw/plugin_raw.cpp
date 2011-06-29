@@ -87,6 +87,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 		// Audio
 		virtual int get_audio_streams( ) const { return 0; }
+		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 
