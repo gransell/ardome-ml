@@ -218,7 +218,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] ) )
-	#plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, il, ml ] ) )

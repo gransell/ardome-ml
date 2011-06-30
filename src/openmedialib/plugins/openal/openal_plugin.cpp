@@ -37,6 +37,7 @@
 #else
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
 #endif
 
 namespace pl = olib::openpluginlib;
@@ -213,6 +214,10 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				if( aud->channels( ) == 1 )
 				{
 					format_ = AL_FORMAT_MONO16;
+				}
+				else if( aud->channels( ) == 6 )
+				{
+					format_ = AL_FORMAT_51CHN16;
 				}
 				else
 				{
