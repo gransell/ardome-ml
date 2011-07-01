@@ -11,7 +11,7 @@ if local_env[ 'PLATFORM' ] != 'darwin':
 	build = options[ 'have_openal' ]
 else:
 	local_env.Append( CPPDEFINES = [ 'HAVE_OPENALFRAMEWORK' ] )
-	local_env.Append( CCFLAGS = [ '-F/System/Library/Frameworks/OpenAL.Framework' ] )
+	local_env.Append( FRAMEWORKS = [ 'OpenAL' ] )
 	local_env.Append( LINKFLAGS = [ '-framework', 'OpenAL' ] )
 	build = True
 

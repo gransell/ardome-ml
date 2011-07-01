@@ -215,10 +215,13 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				{
 					format_ = AL_FORMAT_MONO16;
 				}
+// 5.1 audio not supported by OpenAL on OS X
+#ifndef OLIB_ON_MAC 
 				else if( aud->channels( ) == 6 )
 				{
 					format_ = AL_FORMAT_51CHN16;
 				}
+#endif
 				else
 				{
 					aud = audio::channel_convert( aud, 2 );

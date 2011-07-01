@@ -114,6 +114,9 @@
 #define _USE_MATH_DEFINES
 #endif // WIN32
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/audio.hpp>

@@ -19,7 +19,6 @@
 #include <opencorelib/cl/base_exception.hpp>
 #include <opencorelib/cl/utilities.hpp>
 #include <opencorelib/cl/log_defines.hpp>
-#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <boost/enable_shared_from_this.hpp>
 
