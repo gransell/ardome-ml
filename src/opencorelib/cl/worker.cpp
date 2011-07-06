@@ -266,6 +266,7 @@ namespace olib
         {
             try
             {
+				ARLOG_INFO( "Setting name for thread %1$08x to \"%2%\"" )( utilities::get_current_thread_id() )( m_name );
 				set_thread_name( m_name );
 				
                 on_thread_started();
