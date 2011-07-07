@@ -46,6 +46,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		explicit input_type( )
 			: properties_( )
 			, position_( 0 )
+			, complete_( false )
 			, initialized_( false )
 			, prop_debug_( olib::openpluginlib::pcos::key::from_string( "debug" ) )
 			, process_( process_image | process_audio )
@@ -109,9 +110,19 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Audio/Visual
 		virtual void sync( )
 		{
-			for ( size_t i = 0; i < slot_count( ); i ++ )
-				if ( fetch_slot( i ) )
-					fetch_slot( i )->sync( );
+			size_t completed = 0;
+			size_t n_slots = slot_count( );
+
+			for ( size_t i = 0; i < n_slots; i ++ ) {
+				input_type_ptr slot = fetch_slot( i );
+				if ( slot ) {
+					slot->sync( );
+					if ( slot->complete( ) )
+						++completed;
+				}
+			}
+
+			complete_ = ( completed == n_slots );
 			sync_frames( );
 		}
 
@@ -199,6 +210,11 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Determine the debug level
 		inline int debug_level( ) { return prop_debug_.value< int >( ); }
 
+		// Determines if the input is complete (e.g. isn't growing)
+		// This uses the member variable as a cache and will only be
+		// updated upon sync.
+		virtual bool complete( ) const { return complete_; }
+
 	protected:
 		// Virtual method for initialization
 		virtual bool initialize( ) { return true; }
@@ -212,6 +228,8 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		olib::openpluginlib::pcos::property_container properties_;
 		
 		int position_;
+
+		bool complete_;
 
 	private:
 		bool initialized_;
