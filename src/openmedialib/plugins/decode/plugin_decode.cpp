@@ -441,6 +441,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		int total_frames_;
 		ml::frame_type_ptr prefetched_frame_;
 		boost::int64_t precharged_frames_;
+		mutable int estimated_gop_size_;
 
 	public:
 		filter_decode( )
@@ -455,6 +456,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, total_frames_( 0 )
 			, prefetched_frame_( )
 			, precharged_frames_( 0 )
+			, estimated_gop_size_( 0 )
 		{
 			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
@@ -605,7 +607,18 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		}
 
 		virtual int get_frames( ) const {
-			return filter_type::get_frames( ) - precharged_frames_;
+			int frames = filter_type::get_frames( );
+
+			// Subtract precharged frames
+			frames -= precharged_frames_;
+
+			// Check if the source is complete. If it isn't, we'll
+			// subtract a gop from the duration in case of rollout.
+			input_type_ptr slot = fetch_slot( 0 );
+			if ( !slot->complete( ) )
+				frames -= estimated_gop_size( );
+
+			return frames;
 		}
 
 		void initialize( ml::frame_type_ptr &first_frame )
@@ -621,6 +634,33 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			ARLOG_INFO( "Stream itentifier is %1%. Using decode filter %2%" )( first_frame->get_stream( )->codec( ) )( it->value );
 			
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+		}
+
+	private:
+		int estimated_gop_size( ) const {
+			if ( estimated_gop_size_ )
+				return estimated_gop_size_;
+
+			int gop = 0;
+			do {
+				stream_type_ptr stream;
+
+				if ( !last_frame_ )
+					break;
+
+				stream = last_frame_->get_stream( );
+
+				if ( stream )
+					gop = stream->estimated_gop_size( );
+
+				if ( !gop ) {
+					// Guess gop size = framerate / 2
+					int fps = ::ceil( last_frame_->fps() );
+					gop = fps / 2;
+				}
+			} while ( false );
+
+			return estimated_gop_size_ = gop;
 		}
 };
 
