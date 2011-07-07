@@ -439,7 +439,9 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		bool initialized_;
 		std::string video_codec_;
 		int total_frames_;
- 
+		ml::frame_type_ptr prefetched_frame_;
+		boost::int64_t precharged_frames_;
+
 	public:
 		filter_decode( )
 			: filter_type( )
@@ -451,6 +453,9 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, codec_to_decoder_( )
 			, initialized_( false )
 			, total_frames_( 0 )
+			, prefetched_frame_( )
+			, precharged_frames_( 0 )
+			, rollout_frames_( 0 )
 		{
 			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
@@ -461,6 +466,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
+
 		}
 
 		virtual ~filter_decode( )
@@ -528,7 +534,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				result = filter_create( );
 				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
 				decoder_.push_back( result );
-                ARLOG_INFO( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
+				ARLOG_INFO( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
 			}
 			
 			result = decoder_.back( );
@@ -565,8 +571,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			int frameno = get_position( );
-			
 			if ( last_frame_ == 0 )
 			{
 				frame = fetch_from_slot( );
@@ -584,6 +588,9 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				determine_decode_use( frame );
 			}
 
+			int frameno = get_position( );
+			frameno += (int)precharged_frames_;
+
 			if ( gop_decoder_ )
 			{
 				gop_decoder_->seek( frameno );
@@ -598,12 +605,18 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		
 			last_frame_ = frame;
 		}
-		
-		void initialize( const ml::frame_type_ptr &first_frame )
+
+		virtual int get_frames( ) const {
+			return filter_type::get_frames( ) - precharged_frames_;
+		}
+
+		void initialize( ml::frame_type_ptr &first_frame )
 		{
 			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
-			
+
+			precharged_frames_ = first_frame->property( "first_valid_frame" ).value< boost::int64_t >( );
+
 			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
 			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
 			
