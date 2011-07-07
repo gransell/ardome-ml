@@ -455,7 +455,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, total_frames_( 0 )
 			, prefetched_frame_( )
 			, precharged_frames_( 0 )
-			, rollout_frames_( 0 )
 		{
 			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
@@ -466,7 +465,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
-
 		}
 
 		virtual ~filter_decode( )
