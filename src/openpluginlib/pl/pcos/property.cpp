@@ -16,6 +16,7 @@
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/str_util.hpp>
 #include <opencorelib/cl/assert_defines.hpp>
+#include <opencorelib/cl/log_defines.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/minimal_string_defines.hpp>
 
@@ -515,6 +516,15 @@ std::ostream& operator<<( std::ostream& os , const property& p )
 		os << "*** write type output! ***";
 
 	return os;
+}
+
+void prop_enforce( bool ok, const char* msg )
+{
+	ARENFORCE_MSG( ok, msg );
+}
+void prop_err( const char* msg )
+{
+	ARLOG_ERR( msg );
 }
 
 } } }

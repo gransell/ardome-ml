@@ -57,6 +57,9 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		virtual ~input_type( ) { }
 
+		DEFINE_PROPERTY( boost::int64_t, first_valid_frame )
+		DEFINE_PROPERTY( boost::int64_t, valid_duration )
+
 		// Provides a mechanism for defering initialisation from the ctor
 		bool init( ) 
 		{ 

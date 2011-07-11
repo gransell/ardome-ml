@@ -108,6 +108,35 @@ private:
 
 OPENPLUGINLIB_DECLSPEC std::ostream& operator<<( std::ostream&, const property& );
 
+
+// Sets up getter and setter for a certain property with predefined data type.
+void prop_enforce( bool ok, const char* msg );
+void prop_err( const char* msg );
+#define DEFINE_PROPERTY( Type, Name ) \
+	bool has_##Name( ) { \
+		namespace pcos = olib::openpluginlib::pcos; \
+		pcos::property prop = properties_.get_property_with_string( #Name ); \
+		if ( prop.valid( ) && !prop.is_a< Type >( ) ) { \
+			pcos::prop_err( "Property \"" #Name "\" is of conflicting type!" ); \
+			return false; \
+		} \
+		return prop.valid( ); \
+	} \
+	Type get_##Name( ) { \
+		namespace pcos = olib::openpluginlib::pcos; \
+		pcos::property prop = properties_.get_property_with_string( #Name ); \
+		pcos::prop_enforce( prop.valid( ), "Property \"" #Name "\" not defined" ); \
+		pcos::prop_enforce( prop.is_a< Type >( ), "Property \"" #Name "\" is of conflicting type!" ); \
+		return prop.value< Type >( ); \
+	} \
+	void set_##Name( const Type& val ) { \
+		namespace pcos = olib::openpluginlib::pcos; \
+		const pcos::key key = pcos::key::from_string( #Name ); \
+		pcos::property prop( key ); \
+		properties_.append( prop = val ); \
+	}
+
+
 } } }
 
 #endif // PCOS_PROPERTY_H
