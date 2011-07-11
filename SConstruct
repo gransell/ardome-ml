@@ -101,7 +101,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_prefix', '$ml_plugin' )
 			self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', '$mf_plugin' )
 			self[ 'stage_mf_schemas' ] = os.path.join( '$stage_bin', 'schemas' )
-			self[ 'stage_examples' ] = os.path.join( '$stage_bin', '$examples' )
+			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'examples' )
 			self[ 'stage_profiles' ] = os.path.join( '$stage_bin', 'profiles' )
 			self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
 
