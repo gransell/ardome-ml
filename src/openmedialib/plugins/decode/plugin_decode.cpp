@@ -609,12 +609,19 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		virtual int get_frames( ) const {
 			int frames = filter_type::get_frames( );
 
-			// Subtract precharged frames
+			ARLOG_DEBUG4( "filter:decode::get_frames() says %1% frames, subtracting %2% precharged frames." )( frames )( precharged_frames_ );
+
 			frames -= precharged_frames_;
+
+			input_type_ptr slot = fetch_slot( 0 );
+
+			if ( slot->has_valid_duration( ) ) {
+				frames = slot->get_valid_duration( );
+				ARLOG_DEBUG4( "filter:decode::get_frames() found valid_duration property with value %1%, using it." )( frames );
+			}
 
 			// Check if the source is complete. If it isn't, we'll
 			// subtract a gop from the duration in case of rollout.
-			input_type_ptr slot = fetch_slot( 0 );
 			if ( !slot->complete( ) )
 				frames -= estimated_gop_size( );
 
@@ -626,7 +633,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
 
-			precharged_frames_ = first_frame->property( "first_valid_frame" ).value< boost::int64_t >( );
+			precharged_frames_ = 0;
+			input_type_ptr slot = fetch_slot( 0 );
+			if ( slot->has_first_valid_frame( ) )
+				precharged_frames_ = slot->get_first_valid_frame( );
 
 			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
 			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
