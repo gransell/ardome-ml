@@ -1,0 +1,25 @@
+Import(['local_env'])
+import os
+
+local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system' )
+options = local_env.optional( 'cairo' )
+
+if options[ 'have_cairo' ]: 
+	local_env.Append( CPPDEFINES = [ 'HAVE_CAIRO' ] )
+
+	srcs = [ 'cairo_plugin.cpp', 'filter_cairo.cpp' ]
+ 
+	if local_env[ 'PLATFORM' ] == 'win32':
+		local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
+
+	# Make sure we place the binary correctly on windows
+	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+
+	bin = local_env.plugin( 'openmedialib_cairo', srcs )
+
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'aml_cairo.opl' ])
+
+	Return( 'bin' )
+else:
+	print "Not building cairo plugin because of missing dependency"
+
