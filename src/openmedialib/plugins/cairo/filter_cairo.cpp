@@ -18,13 +18,14 @@
 #include <iostream>
 #include <sstream>
 
-#include <cairo.h>
+#include <external/cairo/cairo.hpp>
 
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
+namespace ex = olib::external;
 
 namespace aml { namespace openmedialib {
 
@@ -38,11 +39,11 @@ static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
 static pl::pcos::key key_mode_( pl::pcos::key::from_string( "mode" ) );
 
-class filter_cairo : public ml::filter_simple
+class filter_subtitle : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_cairo( const pl::wstring & )
+		explicit filter_subtitle( const pl::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_title_( pcos::key::from_string( "title" ) )
@@ -106,7 +107,7 @@ class filter_cairo : public ml::filter_simple
 			svg_->init( );
 		}
 
-		virtual ~filter_cairo( )
+		virtual ~filter_subtitle( )
 		{
 		}
 
@@ -197,11 +198,14 @@ class filter_cairo : public ml::filter_simple
 		ml::input_type_ptr pusher_fg_;
 		ml::input_type_ptr svg_;
 		ml::filter_type_ptr compositor_;
+
+		ex::cairo::surface_ptr cairo_surface_;
+		ex::cairo::context_ptr cairo_context_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_cairo( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_subtitle( const pl::wstring &resource )
 {
-	return ml::filter_type_ptr( new filter_cairo( resource ) );
+	return ml::filter_type_ptr( new filter_subtitle( resource ) );
 }
 
 void olib_cairo_init(void)

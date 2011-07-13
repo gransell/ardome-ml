@@ -3,9 +3,9 @@
 // Copyright (C) 2009 Vizrt
 // Released under the LGPL.
 //
-// #plugin:rsvg
+// #plugin:subtitle
 //
-// Provides a plugin for svg use.
+// Provides a plugin for subtitle use.
 
 // TODO REMOVE maybe
 #include <openmedialib/ml/openmedialib_plugin.hpp>
@@ -22,7 +22,7 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_cairo( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_subtitle( const pl::wstring & );
 
 extern void olib_cairo_init();
 
@@ -36,8 +36,8 @@ public:
 
 	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
 	{
-		if ( resource == L"cairo" )
-			return create_filter_cairo( resource );
+		if ( resource == L"subtitle" )
+			return create_filter_subtitle( resource );
 		return ml::filter_type_ptr( );
 	}
 };

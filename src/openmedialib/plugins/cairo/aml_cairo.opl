@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="librsvg plugin" type="filter" extension='"cairo"' merit="50" filename='"libopenmedialib_cairo.so", "libopenmedialib_cairo.dylib", "openmedialib_cairo.dll"'/>
+		<plugin name="subtitle plugin" type="filter" extension='"subtitle"' merit="50" filename='"libopenmedialib_subtitle.so", "libopenmedialib_subtitle.dylib", "openmedialib_subtitle.dll"'/>
 	</openmedialib>
 </openlibraries>
