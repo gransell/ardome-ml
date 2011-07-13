@@ -7,7 +7,7 @@ options = local_env.optional( 'cairo' )
 if options[ 'have_cairo' ]: 
 	local_env.Append( CPPDEFINES = [ 'HAVE_CAIRO' ] )
 
-	srcs = [ 'cairo.cpp' ]
+	srcs = [ 'cairo.cpp', 'cairo_types.cpp' ]
 
 	if local_env[ 'PLATFORM' ] == 'win32':
 		local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )

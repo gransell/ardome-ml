@@ -25,7 +25,7 @@ namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
-namespace ex = olib::external;
+namespace ex = aml::external;
 
 namespace aml { namespace openmedialib {
 
@@ -110,6 +110,8 @@ class filter_subtitle : public ml::filter_simple
 		virtual ~filter_subtitle( )
 		{
 		}
+
+		DEFINE_PROPERTY( std::string, text )
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const 

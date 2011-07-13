@@ -1,7 +1,7 @@
 
 #include "cairo.hpp"
 
-namespace aml { namespace openmedialib { namespace cairo {
+namespace aml { namespace external { namespace cairo {
 
 
 surface::surface( size_t width, size_t height )
@@ -240,5 +240,5 @@ void context::stroke( bool preserve )
 }
 
 
-} } } // namespace cairo, namespace openmedialib, namespace aml
+} } } // namespace cairo, namespace ext, namespace aml
 

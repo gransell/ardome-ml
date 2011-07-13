@@ -8,7 +8,7 @@
 #include "cairo_types.hpp"
 #include <string>
 
-namespace aml { namespace openmedialib { namespace cairo {
+namespace aml { namespace external { namespace cairo {
 
 
 /*
@@ -108,5 +108,5 @@ private:
 };
 
 
-} } } // namespace cairo, namespace openmedialib, namespace aml
+} } } // namespace cairo, namespace external, namespace aml
 
