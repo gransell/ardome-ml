@@ -226,7 +226,12 @@ il::image_type_ptr surface::to_image( ) const
 	size_t h = height( );
 	ARENFORCE_MSG( w * h, "Cannot write cairo image with zero size" );
 
-	il::image_type_ptr image = il::allocate( L"b8g8r8a8", (int)w, (int)h );
+#	if BYTE_ORDER == LITTLE_ENDIAN
+#		define PLANE_FORMAT L"b8g8r8a8"
+#	else
+#		define PLANE_FORMAT L"a8r8g8b8"
+#	endif
+	il::image_type_ptr image = il::allocate( PLANE_FORMAT, (int)w, (int)h );
 
 	size_t in_stride  = stride( );
 	size_t out_stride = (size_t)image->pitch( );

@@ -112,7 +112,7 @@ OPENPLUGINLIB_DECLSPEC std::ostream& operator<<( std::ostream&, const property& 
 // Sets up getter and setter for a certain property with predefined data type.
 void prop_enforce( bool ok, const char* msg );
 void prop_err( const char* msg );
-#define DEFINE_PROPERTY_RENAMED( Type, Name, CodeName ) \
+#define DEFINE_PROPERTY_AS( Type, Name, CodeName ) \
 	bool has_##CodeName( ) { \
 		namespace pcos = olib::openpluginlib::pcos; \
 		pcos::property prop = properties_.get_property_with_string( #Name ); \
@@ -137,7 +137,7 @@ void prop_err( const char* msg );
 	}
 
 #define DEFINE_PROPERTY( Type, Name ) \
-	DEFINE_PROPERTY_RENAMED( Type, Name, Name )
+	DEFINE_PROPERTY_AS( Type, Name, Name )
 
 
 } } }

@@ -10,6 +10,61 @@
 // fill and stroke, geometry and optionally a background box. Internally, it
 // renders on a cairo surface converted to an image put on a frame and
 // composited internally (not deferred).
+//
+// The textoverlay filter can overlay text with lots of options for font,
+// size, etc. It doesn't yet support deferred frames, but when printing the
+// same text with the same options (technically as long as the "dirty"
+// property is still false) the overlayed image will be cached and not redrawn
+// which although being fast, takes its time.
+//
+// It has the following properties:
+// type:
+// 	"tc" for timecodes or "text" [default] for custom text
+// text:
+//	Custom text to draw (only applicable when type=text)
+// color:
+//	The text color on the format #RRGGBB(AA)
+// stroke_width:
+//	The width of the stroke if the text should have an outer stroke. If in
+//	percent, it's relative to the font height (around 3-5% is good).
+// stroke_color:
+//	The color of the outer stroke on the format #RRGGBB(AA)
+// font_face:
+//	The font (such as "Sans")
+// font_size:
+//	The font size. If in percent, it's relative to the height of the frame
+//	which makes it easy to specify a size that is resolution agnostic.
+// font_slant:
+//	"normal" or "italic" or "oblique"
+// font_weight:
+//	"normal" or "bold"
+// position:
+//	As "x,y" where any of x and/or y can be either in pixels or in percent
+//	which is relative to the frame width and height respectively.
+// origin:
+//	The origin from where the position is measured:
+//	top_left, top_right, bottom_left or bottom_right
+//	So, origin "top_left" at position "0,0" equals origin "bottom_right" at
+//	position "100%,100%"
+// alignment:
+//	The direction at which the text is drawn.
+//	right_up, right_middle, right_down, left_up, left_middle, left_down,
+//	center_up, center_middle or center_down.
+//	right_up draws the text to the right of the position and upward, i.e.
+//	the position defines the bottom left point of the text.
+//	left_down draws to the left and down, i.e. the position defines the
+//	upper right point of the text.
+//	This doesn't affect the text direction per se, just where to place the
+//	text. In other words, text is always LTR.
+// box_color:
+//	The color of the background box on the format #RRGGBB(AA). Defaults to
+//	a color with alpha==0 which means invisible. No box is then rendered.
+// box_padding:
+//	The amount of space surrounding the text that will be filled. Either
+//	in pixels or in percentage of the font height. So, "20%" means that
+//	each side of the text will be padded (and painted) by a fifth of the
+//	font height.
+//
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
@@ -52,7 +107,7 @@ public:
 	DEFINE_PROPERTY( std::string, font_size )
 	DEFINE_PROPERTY( std::string, font_slant )
 	DEFINE_PROPERTY( std::string, font_weight )
-	DEFINE_PROPERTY_RENAMED( std::string, position, textpos )
+	DEFINE_PROPERTY_AS( std::string, position, textpos )
 	DEFINE_PROPERTY( std::string, origin )
 	DEFINE_PROPERTY( std::string, alignment )
 	DEFINE_PROPERTY( std::string, box_color )

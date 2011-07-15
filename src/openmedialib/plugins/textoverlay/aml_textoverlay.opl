@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0">
+		<plugin name="textoverlay plugin" type="filter" extension='"textoverlay"' merit="50" filename='"libopenmedialib_textoverlay.so", "libopenmedialib_textoverlay.dylib", "openmedialib_textoverlay.dll"'/>
+	</openmedialib>
+</openlibraries>
