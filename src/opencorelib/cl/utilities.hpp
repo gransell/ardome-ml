@@ -6,6 +6,7 @@
 	@brief This file contains ...*/
 
 #include "./minimal_string_defines.hpp"
+#include "export_defines.hpp"
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread/xtime.hpp>

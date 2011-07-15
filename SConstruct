@@ -212,6 +212,7 @@ if env.check_externals( ):
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
+	cairo = env.build( 'src/external/cairo' )
 
 	plugins = []
 	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
@@ -225,7 +226,8 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, il, ml ] ) )
 	#plugins.append( env.build( 'src/openmedialib/plugins/distributor', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/cairo', [ cl, pl, il, ml ] ) )
+	if cairo is not None:
+		plugins.append( env.build( 'src/openmedialib/plugins/textoverlay', [ cl, pl, il, ml, cairo ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml, il ] ) )
