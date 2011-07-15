@@ -228,11 +228,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			ARENFORCE_MSG( context_, "Codec context not initialized (did you forget to initialize the input?)" );
 
+			int effective_index = audio_indexes_[stream_index];
+
 			ARENFORCE( context_->streams );
-			ARENFORCE( context_->streams[ stream_index ] );
-			ARENFORCE( context_->streams[ stream_index ]->codec );
+			ARENFORCE( context_->streams[ effective_index ] );
+			ARENFORCE( context_->streams[ effective_index ]->codec );
 			
-			return context_->streams[ stream_index ]->codec->channels;
+			return context_->streams[ effective_index ]->codec->channels;
 		}
 		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
 
