@@ -31,13 +31,8 @@ weight::type weight::from_string( const std::string& s )
 origin::type origin::from_string( const std::string& s )
 {
 	TRY_NAME_DEFAULT( top_left );
-	TRY_NAME( top_center );
 	TRY_NAME( top_right );
-	TRY_NAME( middle_left );
-	TRY_NAME( middle_center );
-	TRY_NAME( middle_right );
 	TRY_NAME( bottom_left );
-	TRY_NAME( bottom_center );
 	TRY_NAME( bottom_right );
 	ARENFORCE_MSG( false, "No such origin: \"%1%\"" )( s );
 	return top_left; // To hide compiler warnings
@@ -45,15 +40,19 @@ origin::type origin::from_string( const std::string& s )
 
 alignment::type alignment::from_string( const std::string& s )
 {
-	TRY_NAME_DEFAULT( right_down );
-	TRY_NAME( right_up );
-	TRY_NAME( left_down );
+	TRY_NAME_DEFAULT( right_up );
+	TRY_NAME( right_middle );
+	TRY_NAME( right_down );
 	TRY_NAME( left_up );
+	TRY_NAME( left_middle );
+	TRY_NAME( left_down );
+	TRY_NAME( center_up );
+	TRY_NAME( center_middle );
+	TRY_NAME( center_down );
 	ARENFORCE_MSG( false, "No such alignment: \"%1%\"" )( s );
 	return right_down; // To hide compiler warnings
 }
 
 
 } } } // namespace cairo, namespace external, namespace aml
-
 

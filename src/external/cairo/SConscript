@@ -17,6 +17,8 @@ if options[ 'have_cairo' ]:
 
 	object = local_env.shared_library( 'aml_cairo', srcs )
 
+	local_env.release( object )
+
 	Return( 'object' )
 else:
 	print "Not building cairo plugin because of missing dependency"

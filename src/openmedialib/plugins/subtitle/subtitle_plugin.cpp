@@ -3,11 +3,10 @@
 // Copyright (C) 2009 Vizrt
 // Released under the LGPL.
 //
-// #plugin:subtitle
+// #plugin:textoverlay
 //
-// Provides a plugin for subtitle use.
+// Provides a plugin for textoverlay use.
 
-// TODO REMOVE maybe
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
@@ -22,22 +21,20 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_subtitle( const pl::wstring & );
-
-extern void olib_cairo_init();
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_textoverlay( const pl::wstring & );
 
 //
 // Plugin object
 //
 
-class ML_PLUGIN_DECLSPEC cairo_plugin : public ml::openmedialib_plugin
+class ML_PLUGIN_DECLSPEC textoverlay_plugin : public ml::openmedialib_plugin
 {
 public:
 
 	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
 	{
-		if ( resource == L"subtitle" )
-			return create_filter_subtitle( resource );
+		if ( resource == L"textoverlay" )
+			return create_filter_textoverlay( resource );
 		return ml::filter_type_ptr( );
 	}
 };
@@ -53,8 +50,6 @@ extern "C"
 {
 	ML_PLUGIN_DECLSPEC bool openplugin_init( void )
 	{
-		aml::openmedialib::olib_cairo_init( );
-
 		return true;
 	}
 
@@ -65,13 +60,13 @@ extern "C"
 	
 	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		*plug = new aml::openmedialib::cairo_plugin;
+		*plug = new aml::openmedialib::textoverlay_plugin;
 		return true;
 	}
 	
 	ML_PLUGIN_DECLSPEC void openplugin_destroy_plugin( pl::openplugin* plug )
 	{ 
-		delete static_cast< aml::openmedialib::cairo_plugin * >( plug ); 
+		delete static_cast< aml::openmedialib::textoverlay_plugin * >( plug ); 
 	}
 }
 

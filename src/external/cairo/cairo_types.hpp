@@ -34,13 +34,8 @@ CORE_API type from_string( const std::string& s );
 namespace origin {
 typedef enum {
 	top_left,
-	top_center,
 	top_right,
-	middle_left,
-	middle_center,
-	middle_right,
 	bottom_left,
-	bottom_center,
 	bottom_right
 } type;
 CORE_API type from_string( const std::string& s );
@@ -48,10 +43,15 @@ CORE_API type from_string( const std::string& s );
 
 namespace alignment {
 typedef enum {
-	right_down,
 	right_up,
+	right_middle,
+	right_down,
+	left_up,
+	left_middle,
 	left_down,
-	left_up
+	center_up,
+	center_middle,
+	center_down
 } type;
 CORE_API type from_string( const std::string& s );
 }

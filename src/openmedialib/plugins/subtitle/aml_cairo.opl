@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="subtitle plugin" type="filter" extension='"subtitle"' merit="50" filename='"libopenmedialib_subtitle.so", "libopenmedialib_subtitle.dylib", "openmedialib_subtitle.dll"'/>
+		<plugin name="textoverlay plugin" type="filter" extension='"textoverlay"' merit="50" filename='"libopenmedialib_textoverlay.so", "libopenmedialib_textoverlay.dylib", "openmedialib_textoverlay.dll"'/>
 	</openmedialib>
 </openlibraries>
