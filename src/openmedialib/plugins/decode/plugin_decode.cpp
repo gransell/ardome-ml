@@ -491,8 +491,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				total_frames_ = gop_decoder_->get_frames( );
 
 				// Avoid smeared frames due to incomplete sources
-				pl::pcos::property complete = fetch_slot( 0 )->properties( ).get_property_with_key( key_complete_ );
-				if ( complete.valid( ) && complete.value< int >( ) == 0 )
+				if ( !fetch_slot( 0 )->complete( ) )
 					total_frames_ -= 2;
 			}
 			else if ( fetch_slot( 0 ) )
@@ -615,7 +614,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 			input_type_ptr slot = fetch_slot( 0 );
 
-			if ( slot->has_valid_duration( ) ) {
+			if ( slot->has_valid_duration( ) && slot->get_valid_duration( ) != -1 ) {
 				frames = slot->get_valid_duration( );
 				ARLOG_DEBUG4( "filter:decode::get_frames() found valid_duration property with value %1%, using it." )( frames );
 			}
