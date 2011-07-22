@@ -212,7 +212,7 @@ if env.check_externals( ):
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
-	cairo = env.build( 'src/external/cairo' )
+	cairo = None #env.build( 'src/external/cairo' )
 
 	plugins = []
 	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
