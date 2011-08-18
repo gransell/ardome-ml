@@ -17,6 +17,13 @@
 #endif // WIN32
 
 #include <boost/shared_ptr.hpp>
+#ifndef BOOST_REGEX_DYN_LINK 
+    #define BOOST_REGEX_DYN_LINK 
+#endif
+#include <boost/regex.hpp>
+#ifndef BOOST_THREAD_DYN_DLL
+    #define BOOST_THREAD_DYN_DLL
+#endif
 
 #include <openpluginlib/pl/config.hpp>
 #include <openpluginlib/pl/string.hpp>
@@ -64,7 +71,8 @@ namespace detail
 			, context( 0 )
 		{ }
 
-		std::vector<wstring> extension, filename;
+		std::vector<wstring> filename;
+		std::vector<boost::wregex> extension;
 		wstring name, type, mime, category, libname, in_filter, out_filter;
 		int merit;
 

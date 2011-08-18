@@ -193,7 +193,7 @@ namespace
 								plugin_item item;
 							
 								item.name = L"ofx_" + to_wstring( plugin->pluginIdentifier );
-								item.extension.push_back( item.name );
+								item.extension.push_back( boost::wregex( item.name ) );
 								item.type = L"ofx";
 								item.category = to_wstring( plugin->pluginApi );
 								item.context = plugin;
