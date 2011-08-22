@@ -27,13 +27,6 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#ifndef BOOST_REGEX_DYN_LINK 
-    #define BOOST_REGEX_DYN_LINK 
-#endif
-#include <boost/regex.hpp>
-#ifndef BOOST_THREAD_DYN_DLL
-    #define BOOST_THREAD_DYN_DLL
-#endif
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/tokenizer.hpp>
 
@@ -231,17 +224,16 @@ namespace detail
 {
 	namespace
 	{
-		class is_match : public std::unary_function<wstring, bool>
+		class is_match : public std::unary_function<boost::wregex, bool>
 		{
 		public:
 			explicit is_match( const wstring& to_match )
 				: to_match_( to_match )
 			{ }
 
-			bool operator( )( const wstring& expr )
+			bool operator( )( const boost::wregex& expr )
 			{
-				boost::wregex ex( expr.c_str( ), boost::wregex::extended | boost::wregex::icase );
-				if( boost::regex_match( to_match_.c_str( ), ex ) )
+				if( boost::regex_match( to_match_.c_str( ), expr ) )
 					return true;
 
 				return false;
@@ -254,9 +246,9 @@ namespace detail
 			const wstring& to_match_;
 		};
 
-		bool if_matches_expression( const wstring& to_match, const std::vector<wstring>& expression )
+		bool if_matches_expression( const wstring& to_match, const std::vector<boost::wregex>& expression )
 		{
-			typedef std::vector<wstring>::const_iterator const_iterator;
+			typedef std::vector<boost::wregex>::const_iterator const_iterator;
 
 			const_iterator I = std::find_if( expression.begin( ), expression.end( ), is_match( to_match ) );
 
@@ -311,8 +303,8 @@ namespace detail
 
 		while( pair.first != pair.second )
 		{
-			const wstring& item_type					= ( *pair.first ).second.type;
-			const std::vector<wstring>& item_extension	= ( *pair.first ).second.extension;
+			const wstring& item_type							= ( *pair.first ).second.type;
+			const std::vector<boost::wregex>& item_extension	= ( *pair.first ).second.extension;
 
 			if( ( type.empty( ) || type == item_type ) && ( to_match.empty( ) || if_matches_expression( to_match, item_extension ) ) ) 
 				plugins.push_back( ( *pair.first ).second );

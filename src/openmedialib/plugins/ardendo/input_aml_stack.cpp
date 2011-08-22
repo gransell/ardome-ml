@@ -2124,7 +2124,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
 	{
 		std::vector< pl::wstring > files = ( *i ).filename( );
-		std::vector< pl::wstring > contents = ( *i ).extension( );
+		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 
 		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); f ++ )
@@ -2138,9 +2138,9 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 		if ( found )
 		{
-			for ( std::vector< pl::wstring >::iterator j = contents.begin( ); j != contents.end( ); j ++ )
+			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); j ++ )
 			{
-				( *stack->output_ ) << pl::to_string( *j ) << " ";
+				( *stack->output_ ) << pl::to_string( j->str() ) << " ";
 			}
 			( *stack->output_ ) << std::endl;
 		}

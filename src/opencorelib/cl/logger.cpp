@@ -96,21 +96,33 @@ namespace olib
         logger& logger::msg( const t_string& str_msg)
         {
             if(!m_context) return *this;
-            m_context->message(str_msg);
+
+            try
+            {
+                m_context->message(str_msg);
+            }
+            catch( boost::io::bad_format_string & )
+            {
+                olib::t_stringstream temp;
+                temp << _CT("Bad log format string in ") << 
+                    m_context->filename() << _CT(":") << m_context->line_nr();
+
+                m_context->message(temp.str());
+            }
             return *this;
         }
 
         logger& logger::msg( const wchar_t* str_msg)
         {
             if(!m_context) return *this;
-            m_context->message(str_util::to_t_string(str_msg));
+            msg(str_util::to_t_string(str_msg));
             return *this;
         }
 
         logger& logger::msg( const char* str_msg)
         {
             if(!m_context) return *this;
-            m_context->message(str_util::to_t_string(str_msg));
+            msg(str_util::to_t_string(str_msg));
             return *this;
         }
      

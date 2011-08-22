@@ -80,7 +80,7 @@ namespace detail
 			{ return item_.merit; }
 			void* context( ) const
 			{ return item_.context; }
-			std::vector<wstring> extension( ) const
+			std::vector<boost::wregex> extension( ) const
 			{ return item_.extension; }
 			std::vector<wstring> filename( ) const
 			{ return item_.filename; }
