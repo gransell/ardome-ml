@@ -166,7 +166,7 @@ property& property::operator=( const any& v )
 	{
 		/// \todo emit warning about trying to change type
 		/// \todo consider throwing here
-		return *this;
+        ARENFORCE( false );
 	}
 
 	if ( !impl_->always_notify && v == impl_->value )
