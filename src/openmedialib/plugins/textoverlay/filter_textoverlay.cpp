@@ -257,7 +257,15 @@ std::string filter_textoverlay::text_to_draw( ml::frame_type_ptr& bg_frame )
 	ARENFORCE( get_type( ) == "tc" || get_type( ) == "text" );
 
 	if ( get_type( ) == "tc" ) {
-		boost::int64_t n = (boost::int64_t)bg_frame->get_position( );
+		boost::int64_t n;
+		pl::pcos::property tc_prop = bg_frame->property( "source_timecode" );
+		if (tc_prop.valid()) {
+			n = (boost::int64_t) tc_prop.value<int>();
+			fprintf(stderr,"filter_textoverlay::text_to_draw Found calid tc %d\n", n);
+		} else {
+			n = (boost::int64_t)bg_frame->get_position( );
+			fprintf(stderr,"filter_textoverlay::text_to_draw Fallback tc %d\n", n);
+		}
 
 		cl::frame_rate::type fr = cl::frame_rate::get_type(
 			cl::rational_time(
