@@ -160,6 +160,7 @@ key property::get_key() const
 
 property& property::operator=( const any& v )
 {
+    ARENFORCE( (*this).valid() );
 	if ( !impl_->value.empty() && 
 		 v.type() != impl_->value.type() )
 	{
