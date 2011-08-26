@@ -179,14 +179,17 @@ class stream_queue
 
 					while( temp && temp->get_stream( ) && decode( temp, position ) )
 					{
-						if ( start < input_->get_frames( ) )
+						if ( start < input_->get_frames( ) ) {
 							temp = fetch( start ++ )->shallow( );
-						else
+						} else {
 							temp = ml::frame_type_ptr( );
+						}
 					}
 				}
 
-				if ( temp )
+				/* The temp->get_stream( ) is needed for transcode, without that it will get one frame 
+				 * short on browse. See Jira AMF-840 */
+				if ( temp && temp->get_stream( ) )
 				{
 					return temp->get_image( );
 				}
