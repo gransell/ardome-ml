@@ -388,6 +388,10 @@ rect context::get_string_extents( const std::string& text, bool absolute )
 
 void context::text_at( const std::string& text )
 {
+	text_at( text, text );
+}
+void context::text_at( const std::string& text, const std::string& extent_from )
+{
 	if ( alignment_ == alignment::right_up ) {
 		// Simple drawing without caring about text extents
 		cairo_text_path( c_, text.c_str( ) );
@@ -395,7 +399,7 @@ void context::text_at( const std::string& text )
 	}
 
 	// We need to calculate text extents to base drawing position on this
-	rect r = get_string_extents( text );
+	rect r = get_string_extents( extent_from );
 
 	double dx = 0, dy = 0;
 	get_alignment_deltas( r, dx, dy );

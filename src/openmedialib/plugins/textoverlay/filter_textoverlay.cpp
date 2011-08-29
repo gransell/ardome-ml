@@ -113,7 +113,7 @@ public:
 	DEFINE_PROPERTY( std::string, box_color )
 	DEFINE_PROPERTY( std::string, box_padding )
 
-	DEFINE_PROPERTY( bool, deferred )
+	DEFINE_PROPERTY_TYPED_AS( bool, int, deferred, deferred )
 
 	// Indicates if the input will enforce a packet decode
 	virtual bool requires_image( ) const { return true; } // No deferred support yet
@@ -139,6 +139,7 @@ protected:
 	                             const std::string& pos );
 
 	std::string text_to_draw( ml::frame_type_ptr& bg_frame );
+	std::string text_for_extent( ml::frame_type_ptr& bg_frame );
 
 	void draw_text( ml::frame_type_ptr& bg_frame );
 
@@ -261,7 +262,7 @@ std::string filter_textoverlay::text_to_draw( ml::frame_type_ptr& bg_frame )
 		pl::pcos::property tc_prop = bg_frame->property( "source_timecode" );
 		if (tc_prop.valid()) {
 			n = (boost::int64_t) tc_prop.value<int>();
-			fprintf(stderr,"filter_textoverlay::text_to_draw Found calid tc %d\n", n);
+			fprintf(stderr,"filter_textoverlay::text_to_draw Found valid tc %d\n", n);
 		} else {
 			n = (boost::int64_t)bg_frame->get_position( );
 			fprintf(stderr,"filter_textoverlay::text_to_draw Fallback tc %d\n", n);
@@ -287,12 +288,28 @@ std::string filter_textoverlay::text_to_draw( ml::frame_type_ptr& bg_frame )
 	return "[Error]";
 }
 
+std::string filter_textoverlay::text_for_extent( ml::frame_type_ptr& bg_frame )
+{
+	ARENFORCE( get_type( ) == "tc" || get_type( ) == "text" );
+
+	if ( get_type( ) == "tc" ) {
+		return "00:00:00:00";
+	} else if ( get_type( ) == "text" ) {
+		return get_text( );
+	}
+
+	return "[Error]";
+}
+
 void filter_textoverlay::draw_text( ml::frame_type_ptr& bg_frame )
 {
 	// Setup all properties used for drawing...
 	cairo::rect bounding_box = cairo_surface_->box( );
 
+	// The text to draw
 	std::string txt = text_to_draw( bg_frame );
+	// The text to use when calculating text extents (usually same as txt)
+	std::string txt_extent = text_for_extent( bg_frame );
 
 	double font_size;
 	cairo::slant::type font_slant;
@@ -341,7 +358,7 @@ void filter_textoverlay::draw_text( ml::frame_type_ptr& bg_frame )
 		cairo::rect box;
 
 		cairo_context_->move_to( pos_x, pos_y );
-		box = cairo_context_->get_string_extents( txt, true );
+		box = cairo_context_->get_string_extents( txt_extent, true );
 		box.grow( box_padding );
 
 		cairo_context_->set_color( box_color );
@@ -351,7 +368,7 @@ void filter_textoverlay::draw_text( ml::frame_type_ptr& bg_frame )
 	cairo_context_->set_color( get_color( ) );
 
 	cairo_context_->move_to( pos_x, pos_y );
-	cairo_context_->text_at( txt );
+	cairo_context_->text_at( txt, txt_extent );
 
 	bool do_stroke = stroke_width != 0;
 	cairo_context_->fill( do_stroke );
@@ -360,7 +377,7 @@ void filter_textoverlay::draw_text( ml::frame_type_ptr& bg_frame )
 		cairo_context_->move_to( pos_x, pos_y );
 		cairo_context_->set_color( get_stroke_color( ) );
 		cairo_context_->set_line_width( stroke_width );
-		cairo_context_->text_at( get_text( ) );
+		cairo_context_->text_at( txt, txt_extent );
 		cairo_context_->stroke( );
 	}
 }

@@ -131,6 +131,7 @@ public:
 	void set_font( font f );
 	rect get_string_extents( const std::string& text, bool absolute = false );
 	void text_at( const std::string& text );
+	void text_at( const std::string& text, const std::string& extent_from );
 	void text_at( const std::string& text, double x, double y );
 
 	void circle( double radius );
