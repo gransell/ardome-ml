@@ -112,11 +112,31 @@ OPENPLUGINLIB_DECLSPEC std::ostream& operator<<( std::ostream&, const property& 
 // Sets up getter and setter for a certain property with predefined data type.
 OPENPLUGINLIB_DECLSPEC void prop_enforce( bool ok, const char* msg );
 OPENPLUGINLIB_DECLSPEC void prop_err( const char* msg );
-#define DEFINE_PROPERTY_AS( Type, Name, CodeName ) \
+
+/*
+ * The following macro definitions works as helpers, defining getters and
+ * setters (and "has_"-functions) for properties.
+ * You'll probably only want to DEFINE_PROPERTY.
+ *
+ * DEFINE_PROPERTY
+ * Defines a property with get_, set_ and has_ functions for the same name as
+ * the property per se, and with the same type.
+ *
+ * DEFINE_PROPERTY_AS
+ * Defines a property with a different getter/setter name than the real
+ * property name, but with the same type.
+ *
+ * DEFINE_PROPERTY_TYPED_AS
+ * Defines a property with a possibly different getter and setter name than
+ * the real property and with a different type in code than the inner property
+ * type. You'll likely not want to use this.
+ *
+ */
+#define DEFINE_PROPERTY_TYPED_AS( Type, RealType, Name, CodeName ) \
 	bool has_##CodeName( ) { \
 		namespace pcos = olib::openpluginlib::pcos; \
 		pcos::property prop = properties_.get_property_with_string( #Name ); \
-		if ( prop.valid( ) && !prop.is_a< Type >( ) ) { \
+		if ( prop.valid( ) && !prop.is_a< RealType >( ) ) { \
 			pcos::prop_err( "Property \"" #Name "\" is of conflicting type!" ); \
 			return false; \
 		} \
@@ -126,15 +146,18 @@ OPENPLUGINLIB_DECLSPEC void prop_err( const char* msg );
 		namespace pcos = olib::openpluginlib::pcos; \
 		pcos::property prop = properties_.get_property_with_string( #Name ); \
 		pcos::prop_enforce( prop.valid( ), "Property \"" #Name "\" not defined" ); \
-		pcos::prop_enforce( prop.is_a< Type >( ), "Property \"" #Name "\" is of conflicting type!" ); \
-		return prop.value< Type >( ); \
+		pcos::prop_enforce( prop.is_a< RealType >( ), "Property \"" #Name "\" is of conflicting type!" ); \
+		return static_cast< Type >( prop.value< RealType >( ) ); \
 	} \
 	void set_##CodeName( const Type& val ) { \
 		namespace pcos = olib::openpluginlib::pcos; \
 		const pcos::key key = pcos::key::from_string( #Name ); \
 		pcos::property prop( key ); \
-		properties_.append( prop = val ); \
+		properties_.append( prop = static_cast< RealType >( val ) ); \
 	}
+
+#define DEFINE_PROPERTY_AS( Type, Name, CodeName ) \
+	DEFINE_PROPERTY_TYPED_AS( Type, Type, Name, CodeName )
 
 #define DEFINE_PROPERTY( Type, Name ) \
 	DEFINE_PROPERTY_AS( Type, Name, Name )
