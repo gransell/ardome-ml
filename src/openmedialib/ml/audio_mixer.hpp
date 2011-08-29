@@ -89,15 +89,6 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 		output = boost::shared_ptr< T >( new T( frequency, volume.size( ), samples ) );
 	}
 
-	// Should never happen, but can accept if it does
-	if ( size_t( output->channels( ) ) != volume.size( ) )
-	{
-        //PL_LOG(pl::level::warning, "Channels doesn't match volumes in mix_channel");
-		output = coerce< T >( ml::audio::channel_convert( input, static_cast<int>(volume.size( ) ) ) );
-		if ( output == 0 )
-			return output;
-	}
-
 	// Do I reject or do a rough resample?
 	// For now, we'll do a pitch shift
 	if ( input->frequency( ) != output->frequency( ) )

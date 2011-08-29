@@ -78,6 +78,15 @@ namespace
 
 		std::copy( wtok.begin( ), wtok.end( ), std::back_inserter( values ) );
 	}
+
+	void regexes_from_strings( const std::vector<wstring> &strings, std::vector<boost::wregex>& regexes )
+	{
+		regexes.reserve(strings.size());
+		for( int i = 0; i < strings.size(); ++i )
+		{
+			regexes.push_back(boost::wregex(strings[i], boost::wregex::extended | boost::wregex::icase));
+		}
+	}
 	
 	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filename )
 	{
@@ -188,7 +197,9 @@ bool plugin_opl_parser_action( opl_parser_action& pa )
 	item.libname	= pa.get_libname( );
 	item.merit		= static_cast<int>( wcstol( value_from_name( pa, L"merit" ).c_str( ), 0, 10 ) );
 
-	vector_from_string( value_from_name( pa, L"extension" ), item.extension );
+	std::vector<wstring> temp;
+	vector_from_string( value_from_name( pa, L"extension" ), temp );
+	regexes_from_strings( temp, item.extension );
 	vector_from_string( value_from_name( pa, L"filename"  ), item.filename );
 
 	if( !item.filename.empty( ) )
