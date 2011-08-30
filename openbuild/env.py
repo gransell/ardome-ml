@@ -52,7 +52,7 @@ class Environment( BaseEnvironment ):
 		self.toolpath = [ utils.path_to_openbuild_tools() ]
 		self.options = opts
 
-		if 'verbose' in sys.argv:
+		if utils.verbose():
 			BaseEnvironment.__init__( self, ENV = os.environ, **kw )
 		else:
 			BaseEnvironment.__init__( self,
