@@ -35,14 +35,10 @@ bool analyse_mpeg2::analyse( olib::openmedialib::ml::stream_type_ptr stream )
 {
 	if( stream->codec( ) != "http://www.ardendo.com/apf/codec/mpeg/mpeg2" && stream->codec( ) != "http://www.ardendo.com/apf/codec/imx/imx" ) return false;
 
-	if ( stream->properties( ).get_property_with_key( key_analysed_ ).valid( ) && 
-		 stream->properties( ).get_property_with_key( key_analysed_ ).value< int >( ) )
-		return true;
-
 	boost::uint8_t *data = stream->bytes( );
 	size_t size = stream->length( );
 	boost::uint8_t *end = data + size;
-	
+
 	bool done = false;
 	mpeg_start_code::type sc = find_start( data, end );
 	
