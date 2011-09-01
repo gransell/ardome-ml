@@ -585,6 +585,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				}
 				
 				determine_decode_use( frame );
+
+				//Set last_frame_ here, since get_frames() below needs it to be able
+				//to estimate the GOP size.
+				last_frame_ = frame;
 			}
 
 			int frameno = get_position( );
@@ -601,7 +605,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				ml::filter_type_ptr graph;
 				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
-		
+
 			last_frame_ = frame;
 		}
 
@@ -621,7 +625,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 			// Check if the source is complete. If it isn't, we'll
 			// subtract a gop from the duration in case of rollout.
-			if ( !slot->complete( ) )
+			if ( !slot->complete( ) && estimated_gop_size() != 1 )
 				frames -= estimated_gop_size( );
 
 			return frames;
