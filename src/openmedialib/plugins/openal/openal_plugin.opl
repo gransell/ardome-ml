@@ -2,6 +2,6 @@
 <openlibraries version="1.0">
 	<!-- plugins go here -->
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="OpenLibraries openal plugin" type="output" extension='"openal:"' merit="0" filename='"libopenmedialib_openal.so", "libopenmedialib_openal.dylib", "openmedialib_openal-vc71-d-0_4_1.dll", "openmedialib_openal-vc71-r-0_4_1.dll", "openmedialib_openal-vc80-d-0_4_1.dll", "openmedialib_openal-vc80-r-0_4_1.dll"'/>
+		<plugin name="OpenLibraries openal plugin" type="output" extension='"openal:"' merit="0" filename='"libopenmedialib_openal.so", "libopenmedialib_openal.dylib", "openmedialib_openal.dll"'/>
 	</openmedialib>
 </openlibraries>

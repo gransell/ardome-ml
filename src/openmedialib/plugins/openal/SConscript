@@ -16,7 +16,7 @@ else:
 	build = True
 
 if build:
-	local_env.packages( 'boost_thread' )
+	local_env.packages( 'boost_thread', 'boost_date_time', 'boost_system' )
 	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 	object = local_env.plugin( 'openmedialib_openal', [ 'openal_plugin.cpp' ] )
 	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'openal_plugin.opl' ] )

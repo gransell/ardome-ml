@@ -15,6 +15,7 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
 #include <openpluginlib/pl/timer.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #ifdef WIN32
 #include <windows.h>
@@ -194,6 +195,8 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				alSourcefv( source_, AL_ORIENTATION, listener_ori );
 				alSource3f( source_, AL_DIRECTION, 0.0, 0.0, 0.0);
 				alSourcef( source_, AL_ROLLOFF_FACTOR, 0.0 );
+
+				ARENFORCE( al_format_51chn16_ = alGetEnumValue("AL_FORMAT_51CHN16") );
 			}
 
 			return context != NULL;
@@ -219,7 +222,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 #ifndef OLIB_ON_MAC 
 				else if( aud->channels( ) == 6 )
 				{
-					format_ = AL_FORMAT_51CHN16;
+					format_ = al_format_51chn16_;
 				}
 #endif
 				else
@@ -281,6 +284,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 		std::deque < ALuint > buffers_;
 		ALuint source_;
 		ALenum format_;
+		ALenum al_format_51chn16_;
 
 #if defined WIN32 || ( GCC_VERSION >= 40000 && !defined __APPLE__ ) // GC - shouldn't this Apple thing be PPC?
 		typedef pl::rdtsc_default_timer default_timer;
