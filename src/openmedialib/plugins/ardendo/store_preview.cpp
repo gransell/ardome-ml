@@ -238,6 +238,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			, video_mutex_( )
 			, last_frame_shown_( )
 			, first_( true )
+			, last_audio_push_result_( false )
 		{
 			timer_ = aml::openmedialib::create_timer( );
 
@@ -408,14 +409,14 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
 			if ( t > 0 )
 			{
-            	aml::openmedialib::time_value tv( boost::int64_t( t ), boost::int64_t( ( t - int( t ) ) * 1000000 ) );
+				aml::openmedialib::time_value tv( boost::int64_t( t ), boost::int64_t( ( t - int( t ) ) * 1000000 ) );
 #				ifdef WIN32
-				// Windows timer seems to be inaccurate - for now, we'll rely on vsync
-				// and audio blocking to handle the sync
-                if ( audio_owner != boost::int64_t( this ) )
-           			timer_->sleep( tv );
+				// Windows timer seems to be inaccurate - for now, we'll rely on 
+				// audio blocking to handle the sync.
+				if ( audio_owner != boost::int64_t( this ) || last_audio_push_result_ == false )
+					timer_->sleep( tv );
 #				else
-           		timer_->sleep( tv );
+					timer_->sleep( tv );
 #				endif
 			}
 		}
@@ -462,6 +463,15 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 					time_sleep( diff );
 				}
 
+				//Since we rely on the audio story for sync, we need to sleep
+				//manually if the audio push fails (for example, if there is
+				//no sound card).
+				if( last_audio_push_result_ == false || !frame->get_audio() )
+				{
+					double diff = next_image_ - time_now( );
+					time_sleep( diff );
+				}
+
 				// Set the pts of this frame
 				frame->set_pts( pts_ );
 				pts_ += duration( frame );
@@ -486,7 +496,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 					audio_->properties( ).get_property_with_key( key_preroll_ ) = prop_preroll_.value< int >( );
 					count_ ++;
 					cache_.push_back( frame );
-					result = audio_->push( frame );
+					last_audio_push_result_ = result = audio_->push( frame );
 					if ( active( ) && start_ == 0.0 )
 						start_ = time_now( );
 					if ( count_ >= prop_preroll_.value< int >( ))
@@ -510,7 +520,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 					if ( video_ )
 						result = video_push( frame );
 					if ( prop_audio_scrub_.value< int >( ) || std::abs( last_speed_ ) == 1 )
-						result = audio_->push( frame );
+						last_audio_push_result_ = result = audio_->push( frame );
 					else
 						start_ -= duration( frame );
 
@@ -705,6 +715,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		mutable boost::mutex video_mutex_;
 		ml::frame_type_ptr last_frame_shown_;
 		bool first_;
+		bool last_audio_push_result_;
 };
 
 ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( )
