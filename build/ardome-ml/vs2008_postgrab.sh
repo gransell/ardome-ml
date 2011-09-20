@@ -17,7 +17,7 @@ if [ ! -d boost_1_37_0 ]; then
 	fi
 fi
 
-if [ ! -d rubberband ]; then
+if [ ! -d rubberband-1.5.0 ]; then
 	echo "Extracting rubberband..."
 	unzip -oq ../tmp/rubberband-1.5.0.zip	
 	if [ ! $? == 0 ]; then
@@ -57,6 +57,30 @@ if [ ! -d  sdl/include ]; then
 	  echo "Failed to run tar -jxf ../tmp/sdl-win32.B.tar.bz2. Terminating."
 	  exit
 	fi
+fi
+
+if [ ! -d directx  ]; then
+
+    echo "Extracting DirectX [~27 MB]..."
+
+    unzip -oq ../tmp/directx.zip
+
+    if [ ! $? == 0 ]; then
+        echo "Failed to unzip -oq ../tmp/directx.zip. Terminating."
+        exit 1
+    fi
+fi
+
+if [ ! -d openal  ]; then
+
+    echo "Extracting OpenAL..."
+
+    unzip -oq ../tmp/openal.zip
+
+    if [ ! $? == 0 ]; then
+        echo "Failed to unzip -oq ../tmp/openal.zip. Terminating."
+        exit 1
+    fi
 fi
 
 if [ ! -d  loki-0.1.6/include ]; then

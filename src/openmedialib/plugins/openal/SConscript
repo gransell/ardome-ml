@@ -3,6 +3,7 @@
 # Released under the LGPL
 
 Import(['local_env'])
+import os
 
 build = False
 
@@ -16,6 +17,16 @@ else:
 	build = True
 
 if build:
+	if local_env[ 'PLATFORM' ] == 'win32':
+		#Required to be able to load DirectSound via COM (if available) and probe
+		#for speaker setup.
+		local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS' ] )
+		local_env.Append( LIBS = ['ole32.lib'] )
+		#Add the include path manually, since requiring the package will make us link
+		#against the DirectX .lib which in turn would make us statically dependent on
+		#the DirectX DLL's.
+		local_env.Append( CPPPATH= [ os.path.join( local_env.root, 'bcomp', 'vs2008', 'direct_x_june_2006', 'Include' ) ] )
+
 	local_env.packages( 'boost_thread', 'boost_date_time', 'boost_system' )
 	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 	object = local_env.plugin( 'openmedialib_openal', [ 'openal_plugin.cpp' ] )

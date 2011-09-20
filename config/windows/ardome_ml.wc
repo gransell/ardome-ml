@@ -37,6 +37,10 @@ def install( env, prefix ):
 		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'OWL.dll') ] )
 		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'AML.dll') ] )
 
+		#OpenAL + OpenAL Soft
+		env.release( [os.path.join( prefix, 'bin', folder_name, 'OpenAL32.dll') ] ) 
+		env.release( [os.path.join( prefix, 'bin', folder_name, 'soft_oal.dll') ] ) 
+
 	#env.install_dir( os.path.join( env[ 'stage_libdir' ], 'site-packages' ), [ os.path.join( prefix, 'lib', folder_name, 'site-packages') ] )
 	env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlbatch.exe' ) ] )
 	if folder_name == 'release':
