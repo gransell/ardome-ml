@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include <openpluginlib/pl/timer.hpp>
+#include <opencorelib/cl/media_definitions.hpp>
 #include <boost/operators.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/weak_ptr.hpp>
@@ -210,14 +211,15 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			, prop_box_( pcos::key::from_string( "box" ) )
 			, prop_threaded_( pcos::key::from_string( "threaded" ) )
 			, prop_grab_audio_( pcos::key::from_string( "grab_audio" ) )
-            , prop_video_store_( pcos::key::from_string( "video_store" ) )
-            , prop_audio_store_( pcos::key::from_string( "audio_store" ) )
+			, prop_video_store_( pcos::key::from_string( "video_store" ) )
+			, prop_audio_store_( pcos::key::from_string( "audio_store" ) )
+			, prop_supported_listen_modes_( pcos::key::from_string( "supported_listen_modes" ) )
 			, prop_deferrable_( pcos::key::from_string( "deferrable" ) )
-            , prop_timed_( pcos::key::from_string( "timed" ) )
-            , prop_ttn_( pcos::key::from_string( "ttn" ) )
-            , prop_sync_( pcos::key::from_string( "sync" ) )
-            , prop_preroll_( pcos::key::from_string( "preroll" ) )
-            , prop_keys_wanted_( pcos::key::from_string( "keys_wanted" ) )
+			, prop_timed_( pcos::key::from_string( "timed" ) )
+			, prop_ttn_( pcos::key::from_string( "ttn" ) )
+			, prop_sync_( pcos::key::from_string( "sync" ) )
+			, prop_preroll_( pcos::key::from_string( "preroll" ) )
+			, prop_keys_wanted_( pcos::key::from_string( "keys_wanted" ) )
 			, prop_deinterlace_( pcos::key::from_string( "deinterlace" ) )
 			, key_box_( pcos::key::from_string( "box" ) )
 			, key_deferrable_( pcos::key::from_string( "deferrable" ) )
@@ -253,6 +255,10 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			properties( ).append( prop_grab_audio_ = 0 );
             properties( ).append( prop_video_store_ = ml::store_type_ptr() );
             properties( ).append( prop_audio_store_ = ml::store_type_ptr() );
+			std::vector<int> listen_modes;
+			listen_modes.push_back( (int)cl::listen_mode::mono );
+			listen_modes.push_back( (int)cl::listen_mode::stereo_2_0 );
+			properties( ).append( prop_supported_listen_modes_ = listen_modes );
 			properties( ).append( prop_deferrable_ = 0 );
 			properties( ).append( prop_timed_ = 0 );
 			properties( ).append( prop_ttn_ = 0 );
@@ -310,6 +316,10 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 					{
 						pass_all_props( audio_, "@audio." );
 						audio_->init( );
+						if( audio_->properties().get_property_with_string("supported_listen_modes").valid() )
+						{
+							prop_supported_listen_modes_ = audio_->properties().get_property_with_string("supported_listen_modes").value< std::vector<int> >();
+						}
 					}
 				}
 				else
@@ -687,6 +697,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		pl::pcos::property prop_grab_audio_;
 		pl::pcos::property prop_video_store_;
 		pl::pcos::property prop_audio_store_;
+		pl::pcos::property prop_supported_listen_modes_;
 		pl::pcos::property prop_deferrable_;
 		pl::pcos::property prop_timed_;
 		pl::pcos::property prop_ttn_;

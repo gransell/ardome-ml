@@ -53,6 +53,26 @@ namespace olib
 				return undef;
 			}
         }
-    }
+
+		namespace listen_mode
+		{
+			CORE_API t_string to_string( type t )
+			{
+				switch( t )
+				{
+					case mono: return _CT("mono");
+					case stereo_2_0: return _CT("stereo_2_0");
+					case stereo_2_1: return _CT("stereo_2_1");
+					case surround_5_1: return _CT("surround_5_1");
+					case surround_6_1: return _CT("surround_6_1");
+					case surround_7_1: return _CT("surround_7_1");
+					case pass_through: return _CT("pass_through");
+				}
+
+				ARENFORCE_MSG(false, "Unknown type %d")(t);
+				return _CT("");
+			}
+		}
+	}
 }
 

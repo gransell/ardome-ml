@@ -149,7 +149,7 @@ namespace olib
             };
         }
 
-        /// The aspect ration of the video.
+        /// The aspect ratio of the video.
         namespace video
         {
             enum aspect
@@ -160,6 +160,25 @@ namespace olib
                                 (Standard Definition TV); it stands for 16 arbitrary 
                                 units of width for every 9 arbitrary units of height. */
             };
+        }
+
+        /// Audio listening mode: how audio should be mixed when played
+        /// back to the listener.
+        namespace listen_mode
+        {
+            enum type
+            {
+                mono,
+                stereo_2_0,
+                stereo_2_1,
+                surround_5_1,
+                surround_6_1,
+                surround_7_1,
+                pass_through //!< Do not mix the audio at all
+            };
+
+            //Enum to string conversion method
+            CORE_API t_string to_string( type t );
         }
 
         /// Different audio file formats.
