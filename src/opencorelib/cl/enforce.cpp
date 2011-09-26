@@ -137,3 +137,37 @@ namespace olib
 		}
 	}
 }
+
+#ifdef BOOST_ENABLE_ASSERT_HANDLER
+
+#include "enforce_defines.hpp"
+
+namespace boost {
+void assertion_failed(char const * expr, char const * function, char const * file, long line) {
+
+	char buf[32];
+	snprintf(buf, sizeof buf, "%ld }\n", line);
+
+	std::string msg;
+	msg.reserve(256);
+	msg += "BOOST ASSERTION FAILED\n\ton expression: { ";
+	msg += expr;
+	msg += " }\n\tin function { ";
+	msg += function;
+	msg += " }\n\tin file { ";
+	msg += file;
+	msg += ":";
+	msg += buf;
+
+	ARENFORCE_MSG( false , msg );
+}
+}
+
+#else
+//#	warning ===============================================================
+//#	warning Compiling without BOOST_ENABLE_ASSERT_HANDLER will not give
+//#	warning explanatory assertion output when a boost expression fails.
+//#	warning ===============================================================
+#endif // BOOST_ENABLE_ASSERT_HANDLER
+
+
