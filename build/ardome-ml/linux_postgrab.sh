@@ -2,7 +2,7 @@
 
 cd bcomp
 
-for pkg in 'loki.tbz2' 'boost.tbz2' 'ffmpeg.tbz2' 'xercesc.tbz2' 'sdl.tbz2' 'rubberband.tbz2'; do
+for pkg in 'loki.tbz2' 'boost.tbz2' 'ffmpeg.tbz2' 'xercesc.tbz2' 'sdl.tbz2' 'rubberband.tbz2' 'librsvg.tbz2'; do
     if [ -f $pkg ]; then
         name=${pkg/\.tbz2/};
         echo "Extracting ${name}..."

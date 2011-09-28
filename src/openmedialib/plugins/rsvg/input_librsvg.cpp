@@ -7,6 +7,9 @@
 //
 // An SVG input based on librsvg.
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
@@ -85,7 +88,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return 1; }
 		virtual int get_audio_streams( ) const { return 0; }
-
+		virtual int get_audio_channels_in_stream( int stream ) const { assert("No audio streams in svg input!"); return 0; }
+				
 		// FIXME: Currently librsvg breaks in threaded use
 		virtual bool is_thread_safe( ) { return false; }
 
@@ -148,6 +152,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 					}
 					else
 					{
+						ARENFORCE_MSG( false, "Error when reading SVG data from doc property: \"%1%\"" )( error->message );
 					}
 
 					loaded_ = prop_doc_.value< pl::wstring >( );
@@ -157,7 +162,28 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			{
 				scoped_lock lock( mutex_ );
 				loaded_ = prop_resource_.value< pl::wstring >( );
-				pixbuf = rsvg_pixbuf_from_file( pl::to_string( loaded_ ).c_str( ), NULL );
+				//Remove the svg: prefix, if any
+				if( loaded_.find( L"svg:" ) == 0 )
+					loaded_ = loaded_.substr( 4 );
+
+				GError *error = NULL;
+
+				int w = prop_render_width_.value<int>();
+				int h = prop_render_height_.value<int>();
+				if( w > 0 && h > 0 )
+				{
+					pixbuf = rsvg_pixbuf_from_file_at_size( pl::to_string( loaded_ ).c_str( ), w, h, &error );
+				}
+				else
+				{
+					//Use the size specified in the svg file itself
+					pixbuf = rsvg_pixbuf_from_file( pl::to_string( loaded_ ).c_str( ), &error );
+				}
+
+				if ( !pixbuf )
+				{
+					ARENFORCE_MSG( false, "Error when reading SVG data from file \"%1%\": \"%2%\"" )( loaded_ )( error->message );
+				}
 			}
 
 			if ( pixbuf )
