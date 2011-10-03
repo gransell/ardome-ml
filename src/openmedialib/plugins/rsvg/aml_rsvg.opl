@@ -2,6 +2,7 @@
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
 		<plugin name="librsvg plugin" type="filter" extension='"title"' merit="50" filename='"libopenmedialib_rsvg.so", "libopenmedialib_rsvg.dylib", "openmedialib_rsvg.dll"'/>
+		<plugin name="librsvg plugin" type="filter" extension='"svg"' merit="50" filename='"libopenmedialib_rsvg.so", "libopenmedialib_rsvg.dylib", "openmedialib_rsvg.dll"'/>
 		<plugin name="librsvg plugin" type="input" extension='".*\.svg", "svg:.*"' merit="50" filename='"libopenmedialib_rsvg.so", "libopenmedialib_rsvg.dylib", "openmedialib_rsvg.dll"'/>
 	</openmedialib>
 </openlibraries>

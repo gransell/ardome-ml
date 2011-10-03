@@ -7,8 +7,9 @@ if local_env['target'] == 'linux32':
 	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
 
 	srcs = [ 'rsvg_plugin.cpp',
-		 'filter_title.cpp',
-		 'input_librsvg.cpp' ]
+		'filter_title.cpp',
+		'input_librsvg.cpp',  
+		'filter_librsvg.cpp', ]
 
 	bin = local_env.plugin( 'openmedialib_rsvg', srcs )
 

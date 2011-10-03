@@ -25,6 +25,7 @@ extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wst
 
 // OML Filter plugins
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_librsvg( const pl::wstring & );
 
 extern void olib_rsvg_init();
 
@@ -49,6 +50,8 @@ public:
 	{
 		if ( resource == L"title" )
 			return create_title( resource );
+		if ( resource == L"svg" )
+			return create_filter_librsvg( resource );
 		return ml::filter_type_ptr( );
 	}
 };
