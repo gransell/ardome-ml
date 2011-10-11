@@ -163,6 +163,9 @@ class Environment( BaseEnvironment ):
 			elif self[ 'min_osx_ver' ] == '10.6' :
 				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
 				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
+			elif self[ 'min_osx_ver' ] == '10.7' :
+				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
 			else :
 				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
 			
