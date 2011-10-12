@@ -62,7 +62,7 @@ class reseat_impl : public reseat
 
 				while( index != requested && queue.size( ) > 0 )
 				{
-					audio = queue[ 0 ];
+					audio = audio::coerce( temp->af( ), queue[ 0 ] );
 
 					int remainder = audio->samples( ) - offset;
 					int samples_from_packet = requested - index < remainder ? requested - index : remainder;
