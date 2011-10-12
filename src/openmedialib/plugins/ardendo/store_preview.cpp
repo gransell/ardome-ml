@@ -466,7 +466,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				//Since we rely on the audio story for sync, we need to sleep
 				//manually if the audio push fails (for example, if there is
 				//no sound card).
-				if( last_audio_push_result_ == false || !frame->get_audio() )
+				if( last_audio_push_result_ == false || !frame->get_audio() || audio_owner != boost::int64_t( this ) )
 				{
 					double diff = next_image_ - time_now( );
 					time_sleep( diff );

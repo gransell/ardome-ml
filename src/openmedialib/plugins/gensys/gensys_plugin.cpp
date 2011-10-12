@@ -1518,12 +1518,15 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 // 	fps_den = denominator [default: 1]
 //
 
+static pl::pcos::key key_audio_reversed_( pcos::key::from_string( "audio_reversed" ) );
+
 class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 {
 	public:
 		frame_rate_filter( )
 			: filter_type( )
 			, position_( 0 )
+			, last_position_( 0 )
 			, src_frames_( 0 )
 			, src_frequency_( 0 )
 			, src_fps_num_( -1 )
@@ -1531,11 +1534,14 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			, src_has_image_( false )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
+			, prop_audio_direction_( pcos::key::from_string( "audio_direction" ) )
+			, current_dir_( 1 )
 			, reseat_( )
 			, map_( )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
+			properties( ).append( prop_audio_direction_ = 0 );
 			reseat_ = audio::create_reseat( );
 		}
 
@@ -1557,8 +1563,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 		virtual void seek( const int position, const bool relative = false )
 		{
-			int expected = position_ + 1;
-
+			int cur_position = position_;
 			if ( relative )
 				position_ += position;
 			else
@@ -1567,11 +1572,22 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			if ( position_ < 0 )
 				position_ = 0;
 
-			if ( position_ != expected )
+			int delta1 = cur_position - last_position_;
+			int delta2 = position_ - cur_position;
+			
+			if( delta1 == delta2 )
 			{
+				current_dir_ = ( delta1 < 0 ? -1 : 1 );
+			}
+			else
+			{
+				current_dir_ = 1;
+
 				reseat_->clear( );
 				map_.clear( );
 			}
+
+			last_position_ = cur_position;
 		}
 
 		virtual int get_position( ) const
@@ -1613,16 +1629,27 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			if ( input && fps_num > 0 && fps_den > 0 )
 			{
-				double pos_in_source = map_dest_to_source( position_ );
+				//If we're currently playing backwards (current_dir_ is -1), then we should fetch the frames in backwards order
+				//as well, so as to not confuse the filters between us and the input about what direction we are playing in.
+				//When fetching backwards, we expect the audio on the frames to have been reversed (if that's not the case, we
+				//reverse it ourselves). Consider the following simplified example input with 4 samples per frame, and assume
+				//that we want to convert to a framerate that has 5 samples per frame instead:
+				//
+				// frame no:           0         1
+				// sample no:      |3 2 1 0| |7 6 5 4|
+				//
+				//We must now fetch from frame 1 first, taking sample 4, then fetch from frame 0, taking samples 3, 2, 1, and 0.
+				
+				double startpos = position_;
+				double pos_in_source = map_dest_to_source( startpos ) + ( current_dir_ == -1 ? src_fps_num_ * fps_den / double(src_fps_den_ * fps_num ) : 0.0 );
 				int requested = (int)pos_in_source;
-				double pos_in_source_frame = pos_in_source - requested;
+				double pos_in_source_frame = current_dir_ == -1 ? 1.0 - ( pos_in_source - requested ) : ( pos_in_source - requested );
 
-				//int requested = map_dest_to_source( position_ );
 				int next = requested;
 
 				if ( src_frequency_ == 0 || ( fps_num == src_fps_num_ && fps_den == src_fps_den_ ) )
 				{
-					input->seek( requested );
+					input->seek( (int) position_ );
 					result = input->fetch( );
 				}
 				else
@@ -1634,25 +1661,27 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 					while ( map_.find( next ) != map_.end( ) ) 
 					{
-						next ++;
+						next += current_dir_;
 					}
 
-					while ( next < src_frames_ && ( !reseat_->has( samples ) || map_.find( requested ) == map_.end( ) ) )
+					while ( next < src_frames_ && next >= 0 && ( !reseat_->has( samples ) || map_.find( requested ) == map_.end( ) ) )
 					{
 						input->seek( next );
 						frame_type_ptr frame = input->fetch( );
 						if ( frame )
 						{
+							handle_reverse_input_audio( frame );
+							
 							int source_frame_sample_offset = 0;
 							if( map_.empty( ) )
 							{
-								int samples_in_source_frame = audio::samples_for_frame( position_, src_frequency_, src_fps_num_, src_fps_den_ );
+								int samples_in_source_frame = frame->get_audio( )->samples( );
 
 								source_frame_sample_offset = pos_in_source_frame * samples_in_source_frame;
 							}
 							reseat_->append( frame->get_audio( ), source_frame_sample_offset );
 							map_[ next ] = frame;
-							next ++;
+							next += current_dir_;
 						}
 						else
 						{
@@ -1664,6 +1693,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					if ( result && reseat_->has( samples ) )
 					{
 						result->set_audio( reseat_->retrieve( samples ) );
+						handle_reverse_output_audio( result );
 					}
 					else if ( result )
 					{
@@ -1724,7 +1754,41 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			return position * ( t1 / t2 );
 		}
 
+		void handle_reverse_input_audio( ml::frame_type_ptr frame ) const
+		{
+			if( current_dir_ == -1 )
+			{
+				pcos::property prop_audio_reversed = frame->properties().get_property_with_key( key_audio_reversed_ );
+				if( !prop_audio_reversed.valid( ) || prop_audio_reversed.value<int>( ) == 0 )
+				{
+					//We are fetching backwards, but the frame does not have reversed audio.
+					//We reverse the audio ourselves before putting the samples into the reseat.
+					frame->set_audio( ml::audio::reverse( frame->get_audio( ) ) );
+				}
+			}
+		}
+
+		void handle_reverse_output_audio( ml::frame_type_ptr frame ) const
+		{
+			if( current_dir_ == -1 )
+			{
+				if( prop_audio_direction_.value<int>( ) == 0 )
+				{
+					//If we're not to reverse the audio, then we need to reverse it back at this
+					//point, since we will have stored it backwards in the audio reseat
+					frame->set_audio( ml::audio::reverse( frame->get_audio( ) ) );
+					pcos::property prop_audio_reversed = frame->properties().get_property_with_key( key_audio_reversed_ );
+					
+					if( prop_audio_reversed.valid( ) )
+					{
+						frame->properties().remove( prop_audio_reversed );
+					}
+				}
+			}
+		}
+
 		int position_;
+		int last_position_;
 		int src_frames_;
 		int src_frequency_;
 		int src_fps_num_;
@@ -1732,6 +1796,8 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		bool src_has_image_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
+		pcos::property prop_audio_direction_;
+		int current_dir_;
 		audio::reseat_ptr reseat_;
 		std::map < int, frame_type_ptr > map_;
 };
