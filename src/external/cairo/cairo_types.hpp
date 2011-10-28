@@ -31,6 +31,7 @@ typedef enum {
 CORE_API type from_string( const std::string& s );
 }
 
+// An anchor from which to base drawing, offsetting and scaling
 namespace origin {
 typedef enum {
 	top_left,
@@ -41,6 +42,7 @@ typedef enum {
 CORE_API type from_string( const std::string& s );
 }
 
+// A direction in which to draw the object, based at the origin (see above)
 namespace alignment {
 typedef enum {
 	right_up,

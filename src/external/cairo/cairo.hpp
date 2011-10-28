@@ -112,6 +112,7 @@ private:
 	cairo_font_weight_t weight_;
 };
 
+// A context is a drawing state on which we can draw text, shapes and images.
 class context {
 public:
 	context( surface_ptr surface );
@@ -124,6 +125,7 @@ public:
 	void set_color( const std::string& clr );
 	void set_line_width( double lw );
 
+	void get_cur_pos( double& x, double& y );
 	void move_to( double x, double y );
 	void line_to( double x, double y );
 

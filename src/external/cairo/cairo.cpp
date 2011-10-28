@@ -208,7 +208,6 @@ surface::surface( size_t width, size_t height )
 		CAIRO_FORMAT_ARGB32,
 		(int)width,
 		(int)height);
-
 }
 surface::~surface( )
 {
@@ -331,6 +330,11 @@ void context::set_line_width( double lw )
 	cairo_set_line_width( c_, lw );
 }
 
+void context::get_cur_pos( double& x, double& y )
+{
+	cairo_get_current_point( c_, &x, &y );
+}
+
 void context::move_to( double x, double y )
 {
 	cairo_move_to( c_, x, y );
@@ -374,7 +378,7 @@ rect context::get_string_extents( const std::string& text, bool absolute )
 
 		// Position the box where we're at
 		double x, y;
-		cairo_get_current_point( c_, &x, &y );
+		get_cur_pos( x, y );
 
 		// Text is based at lower left point, rect's are measured from
 		// top left, so move the box up.
@@ -423,7 +427,7 @@ void context::text_at( const std::string& text, double x, double y )
 void context::circle( double radius )
 {
 	double x, y;
-	cairo_get_current_point( c_, &x, &y );
+	get_cur_pos( x, y );
 
 	circle( x, y, radius );
 }
