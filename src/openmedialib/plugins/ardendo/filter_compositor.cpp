@@ -591,6 +591,8 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					{
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
 						{
+							pusher_0_->push( ml::frame_type_ptr( ) );
+							pusher_1_->push( ml::frame_type_ptr( ) );
 							pusher_0_->push( result );
 							pusher_1_->push( *iter );
 							composite_->seek( get_position( ) );
