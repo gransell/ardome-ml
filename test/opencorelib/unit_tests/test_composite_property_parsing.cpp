@@ -31,7 +31,7 @@ void basic_test()
     t_string basic_test = _CT("prop1=5|prop2=yuv420p|codec_def=http://www.ardendo.com/apf/codec/pcm");
     multivalue_property_map result = utilities::parse_multivalue_property( basic_test );
 
-    BOOST_CHECK_EQUAL( result.size(), 3 );
+    BOOST_CHECK_EQUAL( result.size(), (size_t)3 );
 
     BOOST_CHECK( result.find(_CT("prop1")) != result.end() );
     BOOST_CHECK( result.find(_CT("prop2")) != result.end() );
