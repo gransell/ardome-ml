@@ -67,6 +67,12 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 				resource += ".wav";
 	}
 
+	//If the URI uses ftp, then add the aml: protocol so that
+	//the generic connector system will be used.
+	if( resource.find( "ftp:" ) == 0 )
+		resource = "aml:" + resource;
+
+
 	olib::openmedialib::ml::stream_type_ptr s(frame->get_stream());
 	ml::audio_type_ptr audio(frame->get_audio());
 
@@ -131,8 +137,16 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	writeonly = (samples > 0);
 
 	if (!file_) {
+		//Try to open with read-write access first
 		int error = url_open( &file_, resource.c_str( ), URL_RDWR );
-		ARENFORCE_MSG( file_, "Failed to open %1% for writing. error = %3%" )( resource )( error );
+		if( !file_ || error )
+		{
+			//If that failed, open with just write access.
+			ARLOG_WARN( "Could not open %1% with read/write access. Attempting to open with just write. Will not be able to rewrite WAV header" )( resource );
+			writeonly = true;
+			error = url_open( &file_, resource.c_str( ), URL_WRONLY );
+			ARENFORCE_MSG( file_ && !error, "Failed to open %1% for writing. error = %3%" )( resource )( error );
+		}
 	}
 
 	if (samples == 0) {
@@ -154,11 +168,11 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 #	define Write(block) \
 		url_write( file_, ( unsigned char * )&block, sizeof(block) )
 
-	Write(w);
-	Write(fmt);
-	Write(ds64);
+	ARENFORCE( Write(w) >= 0 );
+	ARENFORCE( Write(fmt) >= 0 );
+	ARENFORCE( Write(ds64) >= 0 );
 	// Write(bext);
-	Write(data);
+	ARENFORCE( Write(data) >= 0 );
 }
 
 // Creates one large array of endian::little<T>'s which are filled with the
