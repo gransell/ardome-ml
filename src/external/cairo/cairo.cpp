@@ -9,6 +9,13 @@
 namespace cl = olib::opencorelib;
 namespace il = olib::openimagelib::il;
 
+#if WIN32
+#	define snprintf sprintf_s
+#	ifndef M_PI
+#		define M_PI 3.14159265358979323846
+#	endif
+#endif
+
 namespace aml { namespace external { namespace cairo {
 
 

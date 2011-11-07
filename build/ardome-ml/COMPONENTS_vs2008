@@ -6,6 +6,8 @@ tmp: http://oof/releases/external-source/amf-dependencies/windows/ffmpeg-win32-r
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/sdl-win32.B.tar.bz2 
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/doxygen-1.5.7.1.windows.bin.zip -> doxygen.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/html_help_workshop.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/openal-1_1-windows.zip -> openal.zip
+tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/cairo_1.10.2-1_win32.zip -> cairo.zip
 
 tmp : http://releases.ardendo.se/builds/owl/vs2008/owl-vs2008-0_3-B1.zip -> owl-vs2008.zip
 

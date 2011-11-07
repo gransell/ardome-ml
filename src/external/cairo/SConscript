@@ -5,7 +5,7 @@ local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_fil
 options = local_env.optional( 'pixman-1', 'cairo-ft', 'cairo' )
 
 if options[ 'have_cairo' ]: 
-	local_env.Append( CPPDEFINES = [ 'HAVE_CAIRO' ] )
+	local_env.Append( CPPDEFINES = [ 'HAVE_CAIRO', 'CAIRO_EXPORTS' ] )
 
 	srcs = [ 'cairo.cpp', 'cairo_types.cpp' ]
 
@@ -13,7 +13,7 @@ if options[ 'have_cairo' ]:
 		local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
 
 	# Make sure we place the binary correctly on windows
-	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+	#local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 
 	object = local_env.shared_library( 'aml_cairo', srcs )
 
