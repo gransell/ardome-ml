@@ -15,6 +15,7 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
 #include <openpluginlib/pl/timer.hpp>
+#include <opencorelib/cl/assert_defines.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/guard_define.hpp>
 #include <opencorelib/cl/media_definitions.hpp>
@@ -475,6 +476,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 
 	private:
 		
+#if defined( WIN32 )
 		//Helper functions to cleanup COM related objects
 		static void release( IDirectSound8 **ds8 )
 		{
@@ -489,7 +491,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 		{
 			CoUninitialize();
 		}
-
+#endif
 
 		void find_supported_listen_modes()
 		{
