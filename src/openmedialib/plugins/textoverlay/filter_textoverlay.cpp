@@ -386,10 +386,23 @@ il::image_type_ptr filter_textoverlay::redraw( ml::frame_type_ptr& bg_frame )
 
 	il::image_type_ptr image = bg_frame->get_image( );
 
+	double sar = bg_frame->sar( );
+
 	if ( !cairo_surface_ ) {
 		// Create surface
 		size_t w = image->width( );
 		size_t h = image->height( );
+
+		// We need to create a bigger surface to draw in, so that we
+		// stretch it down to frame geometry at composite time.
+		// Cairo seems not able to scale down the user coordinates to
+		// device coordinates without actually enforcing a smaller
+		// clip region. That is really sad.
+		if ( sar > 1 )
+			w = (double)w * sar + 0.5;
+		else if ( sar < 1 )
+			h = (double)h / sar + 0.5;
+
 		cairo_surface_ = cairo::surface::make( w, h );
 	}
 

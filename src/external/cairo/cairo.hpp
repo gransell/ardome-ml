@@ -20,7 +20,7 @@ namespace aml { namespace external { namespace cairo {
  *     any such thing. Convert your strings if they aren't UTF-8!
  */
 
-class color {
+class CAIRO_API color {
 public:
 	color();
 	color( const std::string& clr );
@@ -40,7 +40,7 @@ private:
 	double r_, g_, b_, a_;
 };
 
-class rect {
+class CAIRO_API rect {
 public:
 	rect( );
 	rect( double x1, double y1, double x2, double y2 );
@@ -75,7 +75,7 @@ private:
 	double y2_;
 };
 
-class surface {
+class CAIRO_API surface {
 public:
 	surface( size_t width, size_t height );
 	surface(  );
@@ -99,7 +99,7 @@ private:
 	cairo_surface_t* cs_;
 };
 
-class font {
+class CAIRO_API font {
 public:
 	font( const std::string& face, double size, slant::type s = slant::normal, weight::type w = weight::normal );
 	virtual ~font( );
@@ -112,7 +112,8 @@ private:
 	cairo_font_weight_t weight_;
 };
 
-class context {
+// A context is a drawing state on which we can draw text, shapes and images.
+class CAIRO_API context {
 public:
 	context( surface_ptr surface );
 	virtual ~context( );
@@ -124,6 +125,7 @@ public:
 	void set_color( const std::string& clr );
 	void set_line_width( double lw );
 
+	void get_cur_pos( double& x, double& y );
 	void move_to( double x, double y );
 	void line_to( double x, double y );
 

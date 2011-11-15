@@ -1,16 +1,11 @@
 
 #include "store_wav.hpp"
 
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/replace.hpp>
-
 #include <opencorelib/cl/logger.hpp>
 #include <opencorelib/cl/enforce.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/packet.hpp>
-
-namespace ba = boost::algorithm;
 
 namespace olib { namespace openmedialib { namespace ml { namespace wav {
 
@@ -71,10 +66,13 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 			if (false) // Apply if wanted
 				resource += ".wav";
 	}
-	if( ba::starts_with( resource, "file:" ) ) {
-		ba::replace_first( resource, "file:", "" );
-	}
-	
+
+	//If the URI uses ftp, then add the aml: protocol so that
+	//the generic connector system will be used.
+	if( resource.find( "ftp:" ) == 0 )
+		resource = "aml:" + resource;
+
+
 	olib::openmedialib::ml::stream_type_ptr s(frame->get_stream());
 	ml::audio_type_ptr audio(frame->get_audio());
 
@@ -139,8 +137,16 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	writeonly = (samples > 0);
 
 	if (!file_) {
-		file_ = fopen(resource.c_str(), writeonly ? "wb" : "w+b");
-		ARENFORCE_MSG( file_, "Failed to open %1% for writing. errno = %2% (%3%)" )( resource )( strerror( errno ) )( errno );
+		//Try to open with read-write access first
+		int error = url_open( &file_, resource.c_str( ), URL_RDWR );
+		if( !file_ || error )
+		{
+			//If that failed, open with just write access.
+			ARLOG_WARN( "Could not open %1% with read/write access. Attempting to open with just write. Will not be able to rewrite WAV header" )( resource );
+			writeonly = true;
+			error = url_open( &file_, resource.c_str( ), URL_WRONLY );
+			ARENFORCE_MSG( file_ && !error, "Failed to open %1% for writing. error = %3%" )( resource )( error );
+		}
 	}
 
 	if (samples == 0) {
@@ -160,40 +166,40 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 		samples);
 
 #	define Write(block) \
-		fwrite(&block, sizeof(block), 1, file_)
+		url_write( file_, ( unsigned char * )&block, sizeof(block) )
 
-	Write(w);
-	Write(fmt);
-	Write(ds64);
+	ARENFORCE( Write(w) >= 0 );
+	ARENFORCE( Write(fmt) >= 0 );
+	ARENFORCE( Write(ds64) >= 0 );
 	// Write(bext);
-	Write(data);
+	ARENFORCE( Write(data) >= 0 );
 }
 
 // Creates one large array of endian::little<T>'s which are filled with the
 // values from p and then stored as is down to file in one chunk.
 template<typename T>
-inline void saveRangeFast(FILE* file, T* p, size_t nblocks) {
+inline void saveRangeFast(URLContext* file, T* p, size_t nblocks) {
 	boost::scoped_array< le<T> > blocks( new le<T>[nblocks] );
 	size_t i = 0;
 	while (i < nblocks)
 		blocks[i++] = *p++;
 
-	fwrite(blocks.get(), sizeof(T) * nblocks, 1, file);
+	url_write(file, ( unsigned char * ) blocks.get(), sizeof(T) * nblocks);
 }
 
 // Goes through p sample by sample and saves them. This is necessary when the
 // sample is isn't a power of 2.
 template<typename T, size_t realsizeofT>
-inline void saveRangeNormal(FILE* file, T* p, size_t nblocks) {
+inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks) {
 	le<T> sample;
 	for (size_t i = 0; i < nblocks; ++i) {
 		sample = *p++;
-		fwrite(&sample, realsizeofT, 1, file);
+		url_write(file,  ( unsigned char * )&sample, realsizeofT);
 	}
 }
 
 template<typename T, size_t realsizeofT>
-inline void saveRange(FILE* file, void* array, size_t nbytes) {
+inline void saveRange(URLContext* file, void* array, size_t nbytes) {
 	size_t nblocks = nbytes / sizeof(T);
 	T* p = (T*)array;
 
@@ -225,7 +231,7 @@ bool store_wav::push(ml::frame_type_ptr frame)
 	{
 		// This is no doubt the fastest, just write the memory
 		// chunk down to file in one go.
-		fwrite(audio->pointer(), size, 1, file_);
+		url_write( file_, ( unsigned char * )audio->pointer(), size );
 
 	}
 	else
@@ -275,18 +281,16 @@ void store_wav::vitalizeHeader() {
 		return;
 	}
 
-	ARENFORCE_MSG( !fseek(file_, 0, SEEK_END) , "Could not seek in file" );
-
-	long s_filelen = ftell(file_);
+	int64_t s_filelen = url_filesize(file_);
 	ARENFORCE_MSG( s_filelen != -1 , "Could not get file size" );
 
 	uint64_t filelen = (uint64_t)s_filelen;
-	rewind(file_);
+	url_seek(file_, 0, SEEK_SET);
 
 	size_t offset = 0;
 	std::vector<uint8_t> buf(4096);
 
-	ARENFORCE_MSG( fread(&buf[0], 1, buf.size(), file_) > 0 , "Could not read file" );
+	ARENFORCE_MSG( url_read_complete( file_, &buf[0], buf.size( ) ) > 0 , "Could not read file" );
 
 	riff::wav::block* blk = NULL;
 	riff::wav::wave* wave = NULL;
@@ -350,8 +354,8 @@ void store_wav::vitalizeHeader() {
 
 #define Save(block) \
 	do { \
-		fseek(file_, (uint8_t*)block - &buf[0], SEEK_SET); \
-		fwrite(block, sizeof(*block), 1, file_); \
+		url_seek(file_, (uint8_t*)block - &buf[0], SEEK_SET); \
+		url_write(file_, (uint8_t *)block, sizeof(*block)); \
 	} while(0)
 
 	Save(wave);
@@ -413,7 +417,7 @@ void store_wav::closeFile() {
 			vitalizeHeader();
 		}
 
-		fclose(file_);
+		url_close(file_);
 		file_ = NULL;
 	}
 }

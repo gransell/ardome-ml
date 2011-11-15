@@ -141,53 +141,63 @@ namespace olib
         class thread_sleeper::impl
         {
         public:
-            impl() 
+            impl()
+                : m_semaphore( 0 )
             {
-                m_event = ::CreateEvent(NULL, FALSE, FALSE, NULL );
+                create_semaphore();
             }
 
             ~impl()
             {
-                if(m_event) CloseHandle(m_event);
+                destroy_semaphore();
+            }
+
+            void create_semaphore()
+            {
+                m_semaphore = ::CreateSemaphore(NULL, 0, 1, _CT("thread_sleeper win32 semaphore"));
+            }
+
+            void destroy_semaphore()
+            {
+                if(m_semaphore) CloseHandle(m_semaphore);
             }
 
             thread_sleep::result current_thread_sleep( const boost::posix_time::time_duration& val, thread_sleep_activity::type sleep_activty ) 
             {
-                {
-                    boost::recursive_mutex::scoped_lock lck(m_mtx);
-                    DWORD to_wait = static_cast<DWORD>( val.total_milliseconds());
-                    if( to_wait <= 0 ) return thread_sleep::slept_full_time;
-                    timeSetEvent( to_wait , 0, (LPTIMECALLBACK)m_event, 0, TIME_CALLBACK_EVENT_SET );
-                }
+                thread_sleep::result sleep_result = thread_sleep::slept_full_time;
 
                 timer a_timer;
                 a_timer.start();
 
                 if( sleep_activty == thread_sleep_activity::block)
                 {
-                    ::WaitForSingleObject(m_event, INFINITE);
+                    ::WaitForSingleObject(m_semaphore, static_cast<DWORD>(val.total_milliseconds()));
                 }
                 else // thread_sleep_activity::handle_incomming_messages
                 {
-                    const HANDLE handles [] = { m_event };
+                    const HANDLE handles [] = { m_semaphore };
                     for(;;)
                     {
                         message_pump();
-                        DWORD waitResult = ::MsgWaitForMultipleObjects(1, handles ,FALSE, INFINITE, QS_ALLEVENTS);
-                        if( waitResult == WAIT_OBJECT_0 ) break; 
+                        boost::posix_time::time_duration diff = val - a_timer.elapsed();
+                        if( diff.is_negative() )
+                            break;
+
+                        DWORD waitResult = ::MsgWaitForMultipleObjects(1, handles ,FALSE, static_cast<DWORD>(diff.total_milliseconds()), QS_ALLEVENTS);
+                        if( waitResult == WAIT_OBJECT_0 )
+                        {
+                            sleep_result = thread_sleep::interrupted;
+                            break; 
+                        }
                     }
                 }
                 
-                a_timer.stop();
-                boost::posix_time::time_duration small_epsilon = boost::posix_time::milliseconds(10);
-                if( a_timer.elapsed() >= ( val - small_epsilon )) return thread_sleep::slept_full_time;
-                return thread_sleep::interrupted;
+                return sleep_result;
             }
 
             void wake_sleeping_thread()
             {
-                boost::recursive_mutex::scoped_lock lck(m_mtx);
-                SetEvent(m_event);
+                ::ReleaseSemaphore(m_semaphore, 1, NULL);
             }
 
         private:
@@ -198,11 +208,10 @@ namespace olib
                 while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) 
                 { 
                     ::DispatchMessage(&msg); 
-                }  
+                }
             }
 
-            HANDLE m_event;
-            boost::recursive_mutex m_mtx;
+            HANDLE m_semaphore;
         };
         
         #endif // OLIB_ON_WINDOWS

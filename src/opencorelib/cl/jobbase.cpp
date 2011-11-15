@@ -87,6 +87,9 @@ namespace olib
             else // thread_sleep_activity::handle_incomming_messages
             {
                 if(! m_sleeper ) m_sleeper = thread_sleeper_ptr( new thread_sleeper() );
+				//The thread sleeper is now activated, so we can release the job_done mutex lock
+				lock.unlock();
+
                 thread_sleep::result res = m_sleeper->current_thread_sleep( time_out, activity );
                 if( res == thread_sleep::slept_full_time ) return false;
                 return true;

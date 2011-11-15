@@ -1,14 +1,14 @@
 
 #include <cairo.h>
 #include <boost/shared_ptr.hpp>
-#include <opencorelib/cl/export_defines.hpp>
+#include "export_defines.hpp"
 
 namespace aml { namespace external { namespace cairo {
 
 
-class surface;
-class font;
-class context;
+class CAIRO_API surface;
+class CAIRO_API font;
+class CAIRO_API context;
 
 typedef boost::shared_ptr< surface > surface_ptr;
 typedef boost::shared_ptr< context > context_ptr;
@@ -20,7 +20,7 @@ typedef enum {
 	italic  = CAIRO_FONT_SLANT_ITALIC,
 	oblique = CAIRO_FONT_SLANT_OBLIQUE
 } type;
-CORE_API type from_string( const std::string& s );
+CAIRO_API type from_string( const std::string& s );
 }
 
 namespace weight {
@@ -28,9 +28,10 @@ typedef enum {
 	normal  = CAIRO_FONT_WEIGHT_NORMAL,
 	bold    = CAIRO_FONT_WEIGHT_BOLD
 } type;
-CORE_API type from_string( const std::string& s );
+CAIRO_API type from_string( const std::string& s );
 }
 
+// An anchor from which to base drawing, offsetting and scaling
 namespace origin {
 typedef enum {
 	top_left,
@@ -38,9 +39,10 @@ typedef enum {
 	bottom_left,
 	bottom_right
 } type;
-CORE_API type from_string( const std::string& s );
+CAIRO_API type from_string( const std::string& s );
 }
 
+// A direction in which to draw the object, based at the origin (see above)
 namespace alignment {
 typedef enum {
 	right_up,
@@ -53,7 +55,7 @@ typedef enum {
 	center_middle,
 	center_down
 } type;
-CORE_API type from_string( const std::string& s );
+CAIRO_API type from_string( const std::string& s );
 }
 
 

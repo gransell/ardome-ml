@@ -1,8 +1,7 @@
 Import(['local_env'])
 import os
 
-local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system' )
-options = local_env.optional( 'cairo' )
+local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system', 'cairo')
 
 srcs = [ 'textoverlay_plugin.cpp', 'filter_textoverlay.cpp' ]
 

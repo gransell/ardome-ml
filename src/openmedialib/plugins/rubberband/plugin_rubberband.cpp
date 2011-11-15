@@ -26,7 +26,7 @@ using namespace RubberBand;
 
 namespace olib { namespace openmedialib { namespace ml { namespace rubberband {
 
-static pl::pcos::key key_audio_reverse_ =  pl::pcos::key::from_string( "reverse_audio" );
+static pl::pcos::key key_audio_reversed_ =  pl::pcos::key::from_string( "audio_reversed" );
 
 class rubber
 {
@@ -247,7 +247,7 @@ class rubber
 				result->get_audio( )->set_position( result->get_position( ) );
 
 				if ( increment_ < 0 )
-					result->properties( ).append( pl::pcos::property( key_audio_reverse_ ) = 1 );
+					result->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 1 );
 			}
 			else if ( !result )
 			{
@@ -267,11 +267,11 @@ class rubber
 			ml::audio_type_ptr audio = frame->get_audio( );
 
 			// Make sure we have a propery on the frame
-			if ( !frame->property_with_key( key_audio_reverse_ ).valid( ) )
-				frame->properties( ).append( pl::pcos::property( key_audio_reverse_ ) = 0 );
+			if ( !frame->property_with_key( key_audio_reversed_ ).valid( ) )
+				frame->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 0 );
 
 			// Obtain the reverse audio property
-			pl::pcos::property reverse = frame->property_with_key( key_audio_reverse_ );
+			pl::pcos::property reverse = frame->property_with_key( key_audio_reversed_ );
 
 			if ( ( increment_ < 0 && reverse.value< int >( ) == 0 ) || ( increment_ > 0 && reverse.value< int >( ) == 1 ) )
 			{

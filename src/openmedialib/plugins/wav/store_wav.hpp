@@ -14,6 +14,10 @@
 
 #include "wav.h"
 
+extern "C" {
+#include <libavformat/avio.h>
+}
+
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
@@ -51,7 +55,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 		void vitalizeHeader();
 		void closeFile();
 
-		FILE* file_;
+		URLContext *file_;
 		bool writeonly;
 		pl::wstring resource_;
 

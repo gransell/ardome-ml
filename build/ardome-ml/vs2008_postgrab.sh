@@ -26,6 +26,15 @@ if [ ! -d rubberband-1.5.0 ]; then
 	fi
 fi
 
+if [ ! -d openal ]; then
+	echo "Extracting OpenAL..."
+	unzip -oq ../tmp/openal.zip	
+	if [ ! $? == 0 ]; then
+		echo "Failed to run: unzip openal.zip. Terminating."
+		exit
+	fi
+fi
+
 if [ ! -d xerces-c-src_2_8_0 ]; then
 
 	echo "Extracting xerces for c++ [~56 MB]..."
@@ -90,6 +99,17 @@ if [ ! -d  loki-0.1.6/include ]; then
 
 	if [ ! $? == 0 ]; then
 	  echo "Failed to run unzip -oq ../tmp/loki-0.1.6.zip. Terminating."
+	  exit
+	fi
+fi
+
+if [ ! -d cairo_1.10.2-1_win32/include ]; then
+
+	echo "Extracting cairo [~5 MB]..."
+	unzip -oq ../tmp/cairo.zip  
+
+	if [ ! $? == 0 ]; then
+	  echo "Failed to run unzip -oq ../tmp/cairo.zip. Terminating."
 	  exit
 	fi
 fi

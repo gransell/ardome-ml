@@ -1,20 +1,15 @@
 Import(['local_env'])
 import os
 
-options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'gthread-2.0', 'libswscale', 'boost_thread' )
+if local_env['target'] == 'linux32':
+	options = local_env.packages( 'gdk-pixbuf-2.0', 'librsvg-2.0', 'gthread-2.0', 'libswscale', 'boost_thread' )
 
-if options[ 'have_librsvg-2.0' ]: 
 	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
 
 	srcs = [ 'rsvg_plugin.cpp',
-         'filter_title.cpp',
-         'input_librsvg.cpp' ]
- 
-	if local_env[ 'PLATFORM' ] == 'win32':
-		local_env.Append( CPPDEFINES = ['_CRT_SECURE_NO_WARNINGS'] )
-
-	# Make sure we place the binary correctly on windows
-	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+		'filter_title.cpp',
+		'input_librsvg.cpp',  
+		'filter_librsvg.cpp', ]
 
 	bin = local_env.plugin( 'openmedialib_rsvg', srcs )
 

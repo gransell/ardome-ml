@@ -555,9 +555,10 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 get_prop< double >( frame, key_w_, 1.0 ) == 1.0 &&
 						 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
 						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
-						 matching_modes( frame, result ) )
+						 matching_modes( frame, result ) &&
+						 !frame->get_alpha( ) )
 					{
-						ARLOG_DEBUG7( "Foreground match %d" )( get_position( ) );
+						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
 						result = frames[ 0 ];
 						frames.erase( frames.begin( ) );
 					}
@@ -591,6 +592,8 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					{
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
 						{
+							pusher_0_->push( ml::frame_type_ptr( ) );
+							pusher_1_->push( ml::frame_type_ptr( ) );
 							pusher_0_->push( result );
 							pusher_1_->push( *iter );
 							composite_->seek( get_position( ) );

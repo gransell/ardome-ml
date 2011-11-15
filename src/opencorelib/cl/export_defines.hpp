@@ -13,8 +13,9 @@
 #ifdef OLIB_ON_WINDOWS
     // The OLIB_DLL_EXPORT macro should only be used in plugins, since it always exports symbols.
     #define OLIB_DLL_EXPORT __declspec( dllexport )
-        #if defined CORE_EXPORTS && defined(DYNAMIC_BUILD)
+    #if defined CORE_EXPORTS && defined(DYNAMIC_BUILD)
         #define CORE_API __declspec(dllexport)
+
         #pragma message ("Building open_core_library as a dynamic library")
     #elif defined CORE_EXPORTS && defined(STATIC_BUILD)
         #define CORE_API

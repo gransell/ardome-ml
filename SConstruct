@@ -215,8 +215,8 @@ if env.check_externals( ):
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
 	cairo = None
-	if env['PLATFORM'] != 'win32' and env['PLATFORM'] != 'darwin':
-		cairo = env.build( 'src/external/cairo' )
+	if env['PLATFORM'] != 'darwin':
+		cairo = env.build( 'src/external/cairo', [ cl, pl, il ] )
 
 	plugins = []
 	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )

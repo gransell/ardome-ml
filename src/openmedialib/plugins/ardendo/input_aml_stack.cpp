@@ -848,7 +848,7 @@ class aml_stack
 			}
 			else
 			{
-				throw( std::string( "Invalid property " ) + name );
+				throw( std::string( "Invalid property " ) + name + " on input " + pl::to_string( inputs_.back( )->get_uri( ) ) );
 			}
 		}
 

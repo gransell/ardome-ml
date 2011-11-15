@@ -82,7 +82,7 @@ namespace
 	void regexes_from_strings( const std::vector<wstring> &strings, std::vector<boost::wregex>& regexes )
 	{
 		regexes.reserve(strings.size());
-		for( int i = 0; i < strings.size(); ++i )
+		for( size_t i = 0; i < strings.size(); ++i )
 		{
 			regexes.push_back(boost::wregex(strings[i], boost::wregex::extended | boost::wregex::icase));
 		}

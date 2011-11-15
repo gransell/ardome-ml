@@ -188,8 +188,8 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			, buffers_( )
 			, source_( 0 )
 			, format_( AL_FORMAT_STEREO16 )
-			, timer_( )
 			, last_recover_failed_( false )
+			, timer_( )
 		{
 			properties( ).append( prop_preroll_ = 8 );
 			properties( ).append( prop_supported_listen_modes_ = std::vector<int>() );
