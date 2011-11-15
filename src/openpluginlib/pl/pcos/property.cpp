@@ -160,13 +160,13 @@ key property::get_key() const
 
 property& property::operator=( const any& v )
 {
-    ARENFORCE( (*this).valid() );
+    ARENFORCE_MSG( (*this).valid(), "Tried to set a NULL property (%1%)" )( impl_->key_.as_string( ) );
 	if ( !impl_->value.empty() && 
 		 v.type() != impl_->value.type() )
 	{
 		/// \todo emit warning about trying to change type
 		/// \todo consider throwing here
-        ARENFORCE( false );
+        ARENFORCE_MSG( false, "Tried to change type from %1% to %2%" )( impl_->value.type().name( ) )( v.type().name() );
 	}
 
 	if ( !impl_->always_notify && v == impl_->value )
