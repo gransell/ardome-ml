@@ -90,6 +90,17 @@ if [ ! -d cairo_1.10.2-1_win32/include ]; then
 	fi
 fi
 
+if [ ! -d rsvg_2.32.1-1_win32/include ]; then
+
+	echo "Extracting librsvg [~38 MB]..."
+	unzip -oq ../tmp/rsvg.zip  
+
+	if [ ! $? == 0 ]; then
+	  echo "Failed to run unzip -oq ../tmp/rsvg.zip. Terminating."
+	  exit
+	fi
+fi
+
 echo "Extracting Doxygen..."
 unzip -oq ../tmp/doxygen.zip
 if [ ! $? == 0 ]; then

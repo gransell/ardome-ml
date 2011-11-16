@@ -16,21 +16,48 @@ def install( env, prefix ):
 
 	if env.debug : folder_name = 'debug'
 	else: folder_name = 'release'
-	
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'opencorelib_cl.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'opencorelib_cl.pdb') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openimagelib_il.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openimagelib_il.pdb') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openpluginlib_pl.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openpluginlib_pl.pdb') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openmedialib_ml.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'openmedialib_ml.pdb') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avformat-52.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avcodec-52.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avutil-50.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'swscale-0.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'avcore-0.dll') ] )
-	env.release(  [ os.path.join( prefix, 'bin', folder_name, 'SDL.dll') ] )
+
+	dlls = ['opencorelib_cl.dll',
+			'opencorelib_cl.pdb',
+			'openimagelib_il.dll',
+			'openimagelib_il.pdb',
+			'openpluginlib_pl.dll',
+			'openpluginlib_pl.pdb',
+			'openmedialib_ml.dll',
+			'openmedialib_ml.pdb',
+			'avformat-52.dll',
+			'avcodec-52.dll',
+			'avutil-50.dll',
+			'swscale-0.dll',
+			'avcore-0.dll',
+			'SDL.dll',
+			'freetype6.dll',
+			'libcairo-gobject-2.dll',
+			'libcairo-script-interpreter-2.dll',
+			'libcroco-0.6-3.dll',
+			'libexpat-1.dll',
+			'libfontconfig-1.dll',
+			'libgdk_pixbuf-2.0-0.dll',
+			'libgio-2.0-0.dll',
+			'libglib-2.0-0.dll',
+			'libgmodule-2.0-0.dll',
+			'libgobject-2.0-0.dll',
+			'libgthread-2.0-0.dll',
+			'libpango-1.0-0.dll',
+			'libpangocairo-1.0-0.dll',
+			'libpangoft2-1.0-0.dll',
+			'libpangowin32-1.0-0.dll',
+			'libpixbufloader-svg.dll',
+			'libpng14-14.dll',
+			'librsvg-2-2.dll',
+			'libsvg.dll',
+			'libxml2-2.dll',
+			'libcairo-2.dll',
+			'zlib1.dll',
+		]
+
+	for dll in dlls :
+		env.release( [ os.path.join( prefix, 'bin', folder_name, dll ) ] )
 
 	if env['target'] == 'vs2008' :
 		#.NET wrappers
