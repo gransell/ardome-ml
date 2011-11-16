@@ -2,7 +2,7 @@ Import(['local_env'])
 import os
 
 local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system' )
-options = local_env.optional( 'pixman-1', 'cairo-ft', 'cairo' )
+options = local_env.optional( 'pixman-1', 'cairo-fc', 'cairo-ft', 'cairo' )
 
 if options[ 'have_cairo' ]: 
 	local_env.Append( CPPDEFINES = [ 'HAVE_CAIRO', 'CAIRO_EXPORTS' ] )

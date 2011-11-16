@@ -4,6 +4,6 @@
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/lsb_3_1_32/xercesc-2.8-lsb_3_1_32.tar.bz2 -> xercesc.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/lsb_3_1_32/sdl-1.2-2008-08-19-lsb_3_1_32-nonas.tar.bz2 -> sdl.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/lsb_3_1_32/rubberband-1.5.0-lsb_3_1_32.tbz2 -> rubberband.tbz2
-: http://releases.ardendo.se/releases/external-source/amf-dependencies/linux32/aml-cairo-1.10.2.tar.gz -> cairo.tar.gz
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/linux32/aml-cairo-1.10.2-2.tar.gz -> cairo.tar.gz
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/lsb_3_1_32/librsvg-2.14.4-lsb_3_1_32.tar.bz2 -> librsvg.tbz2
 
