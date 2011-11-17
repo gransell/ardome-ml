@@ -10,7 +10,7 @@
 // Property usage:
 //
 // fps_num, fps_den : int, int
-//		The framerate of the frame produced. Defaults to 25:1 (PAL)
+//		The frame rate of the frame produced. Defaults to 25:1 (PAL)
 //
 // out : int
 //		The duration of the input (in number of frames). Defaults to 1.
@@ -22,10 +22,19 @@
 // render_width, render_height : int
 //		The dimensions of the image to be rendered. If set to 0 (default),
 //		the dimensions from the SVG data itself is used. See also the
-//		stretch parameter below.
+//		stretch, render_sar_num and render_sar_den parameters below.
 //
 // stretch : int
 //		If 0 (default), the render_width and render_height dimensions
+//		are adjusted to maintain the SVG source aspect ratio. If not 0,
+//		the output image dimensions always correspond exactly to
+//		the render_width and render_height properties.
+//
+// render_sar_num, render_sar_den : int
+//		The desired sample aspect ratio of the output image. If stretch
+//		is set to 0, this value is taken into account so that the image
+//		produced has the correct aspect ratio when viewed with the
+//		given sar.
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
@@ -97,6 +106,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			, prop_xml_( pcos::key::from_string( "xml" ) )
 			, prop_render_width_( pcos::key::from_string( "render_width" ) )
 			, prop_render_height_( pcos::key::from_string( "render_height" ) )
+			, prop_render_sar_num_( pcos::key::from_string( "render_sar_num" ) )
+			, prop_render_sar_den_( pcos::key::from_string( "render_sar_den" ) )
 			, prop_stretch_( pcos::key::from_string( "stretch" ) )
 			, obs_dirty_state_( new rsvg_observer( &dirty_ ) )
 			, frame_( )
@@ -111,6 +122,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			//When set to 0, the default size given in the SVG data will be used.
 			properties( ).append( prop_render_width_ = 0 );
 			properties( ).append( prop_render_height_ = 0 );
+			properties( ).append( prop_render_sar_num_ = 1 );
+			properties( ).append( prop_render_sar_den_ = 1 );
 
 			properties( ).append( prop_stretch_ = 0 );
 
@@ -118,6 +131,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			//all properties that should cause us to re-render the SVG.
 			prop_render_width_.attach( obs_dirty_state_ );
 			prop_render_height_.attach( obs_dirty_state_ );
+			prop_render_sar_num_.attach( obs_dirty_state_ );
+			prop_render_sar_den_.attach( obs_dirty_state_ );
 			prop_stretch_.attach( obs_dirty_state_ );
 			prop_xml_.attach( obs_dirty_state_ );
 			prop_resource_.attach( obs_dirty_state_ );
@@ -152,8 +167,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		{
 			const input_librsvg *me = reinterpret_cast<const input_librsvg*>(user_data);
 
-			int w = me->prop_render_width_.value<int>();
-			int h = me->prop_render_height_.value<int>();
+			int w = me->prop_render_width_.value< int >( );
+			int h = me->prop_render_height_.value< int >( );
 
 			if( w > 0 && h > 0 )
 			{
@@ -168,12 +183,29 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				{
 					//No stretching allowed; maintain original SVG aspect ratio
 					//by letter/pillarboxing as necessary.
+
+					//First, get the wanted sample aspect ratio. We will need to tell librsvg
+					//to shrink the rendered width by this amount, so that the image
+					//looks correct when shown with the sar applied.
+					double sar_factor = 1.0;
+					int sar_num = me->prop_render_sar_num_.value< int >( );
+					int sar_den = me->prop_render_sar_den_.value< int >( );
+					if( sar_num > 0 && sar_den > 0 )
+					{
+						sar_factor = static_cast< double >( sar_num ) / static_cast< double >( sar_den );
+					}
+
+					//Next, find how much we can expand the image in the X and Y
+					//directions and take the least of the two. This ensures that
+					//we get the maximum size possible while still maintaining
+					//the aspect ratio.
 					double sizing_factor = std::min< double >( 
-						static_cast< double >( w ) / (*width),
+						static_cast< double >( w ) * sar_factor / (*width),
 						static_cast< double >( h ) / (*height)
 					);
 
-					*width = static_cast< gint >( sizing_factor * (*width) + 0.5 );
+					//Finally, set the new width/height, and adjust the width for sar.
+					*width = static_cast< gint >( sizing_factor * (*width) / sar_factor + 0.5 );
 					*height = static_cast< gint >( sizing_factor * (*height) + 0.5 );
 				}
 			}
@@ -280,6 +312,15 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				}
 
 				frame_ = ml::frame_type_ptr( new ml::frame_type( ) );
+
+				int sar_num = prop_render_sar_num_.value< int >( );
+				int sar_den = prop_render_sar_den_.value< int >( );
+				if( sar_num > 0 && sar_den > 0 )
+				{
+					frame_->set_sar( sar_num, sar_den );
+					image->set_sar_num( sar_num );
+					image->set_sar_den( sar_den );
+				}
 				frame_->set_image( image );
 
 				//Our image is now rendered and in sync with the current state
@@ -290,7 +331,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 			result = frame_->shallow( );
 			result->set_position( get_position( ) );
-			result->set_sar( 1, 1 );
 			result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
 		}
 
@@ -304,6 +344,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		pcos::property prop_xml_;
 		pcos::property prop_render_width_;
 		pcos::property prop_render_height_;
+		pcos::property prop_render_sar_num_;
+		pcos::property prop_render_sar_den_;
 		pcos::property prop_stretch_;
 		boost::shared_ptr< rsvg_observer > obs_dirty_state_;
 		ml::frame_type_ptr frame_;

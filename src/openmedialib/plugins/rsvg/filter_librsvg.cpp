@@ -93,11 +93,16 @@ class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 				// Determine dimensions based on our background
 				svg_->properties( ).get_property_with_string( "render_width" ) = result->get_image( )->width( );
 				svg_->properties( ).get_property_with_string( "render_height" ) = result->get_image( )->height( );
-				svg_->properties( ).get_property_with_string( "stretch" ) = prop_stretch_.value< int >( );
+				svg_->properties( ).get_property_with_string( "stretch" ) = prop_stretch_.value< int >();
+
+				int sar_num = 0, sar_den = 0;
+				result->get_sar( sar_num, sar_den );
+				svg_->properties( ).get_property_with_string( "render_sar_num" ) = sar_num;
+				svg_->properties( ).get_property_with_string( "render_sar_den" ) = sar_den;
 
 				// Pass the SVG XML string/filename to the SVG input
-				svg_->properties( ).get_property_with_string( "xml" ) = prop_xml_.value<pl::wstring>( );
-				svg_->properties( ).get_property_with_string( "resource" ) = prop_file_.value<pl::wstring>();
+				svg_->properties( ).get_property_with_string( "xml" ) = prop_xml_.value< pl::wstring >( );
+				svg_->properties( ).get_property_with_string( "resource" ) = prop_file_.value< pl::wstring >();
 
 
 				// Fetch image
