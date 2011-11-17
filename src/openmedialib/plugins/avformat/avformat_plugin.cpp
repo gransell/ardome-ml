@@ -152,6 +152,8 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
         }
     }
 
+    image->set_writable( false );
+
 	return image;
 }
 
