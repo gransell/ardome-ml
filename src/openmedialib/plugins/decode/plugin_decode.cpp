@@ -205,6 +205,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					filter->seek( other->get_position( ) );
 					other = filter->fetch( );
 
+					ARENFORCE( !other->in_error() );
+
 					//Empty pusher in case filter didn't read from it due to caching
 					pusher->fetch( );
 				}
