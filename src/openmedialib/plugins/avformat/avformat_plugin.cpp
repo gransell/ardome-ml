@@ -141,7 +141,12 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
 
 	if ( frame->interlaced_frame )
     {
-        if( width > 720 )
+        if( height == 720 )
+        {
+            //HD 720 progressive
+            image->set_field_order( il::progressive );
+        }
+        else if( height > 720 )
         {
             //HD material, set top field first
             image->set_field_order( il::top_field_first );
