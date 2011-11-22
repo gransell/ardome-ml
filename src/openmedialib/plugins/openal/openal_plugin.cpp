@@ -191,7 +191,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			, last_recover_failed_( false )
 			, timer_( )
 		{
-			properties( ).append( prop_preroll_ = 8 );
+			properties( ).append( prop_preroll_ = 2 );
 			properties( ).append( prop_supported_listen_modes_ = std::vector<int>() );
 
 			timer_.reset( );
