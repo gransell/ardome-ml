@@ -32,6 +32,7 @@ def install( env, prefix ):
 			'avcore-0.dll',
 			'SDL.dll',
 			'freetype6.dll',
+			'intl.dll',
 			'libcairo-gobject-2.dll',
 			'libcairo-script-interpreter-2.dll',
 			'libcroco-0.6-3.dll',
