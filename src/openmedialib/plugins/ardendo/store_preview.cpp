@@ -320,6 +320,10 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 						{
 							prop_supported_listen_modes_ = audio_->properties().get_property_with_string("supported_listen_modes").value< std::vector<int> >();
 						}
+						if( audio_->properties().get_property_with_string("preroll").valid() )
+						{
+							prop_preroll_ = audio_->properties().get_property_with_string("preroll").value< int >();
+						}
 					}
 				}
 				else
