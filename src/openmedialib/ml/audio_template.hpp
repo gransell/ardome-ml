@@ -28,7 +28,6 @@ class ML_DECLSPEC template_ : public base
 			, position_( 0 )
 		{
 			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
-			memset( data( ), 0, size( ) );
 		}
 
 		template_( const base &other )
@@ -80,10 +79,17 @@ class ML_DECLSPEC template_ : public base
 		{ return id_to_af( id_ ); }
 
 		void *pointer( ) const
-		{ return ( void * )&( *data_ )[ 0 ]; }
+		{
+			return static_cast< void * >( data( ) );
+		}
 
 		sample_type *data( ) const 
-		{ return &( *data_ )[ 0 ]; }
+		{
+			if( data_->size() == 0 )
+				return NULL;
+			else
+				return &( *data_ )[ 0 ];
+		}
 
 		int position( ) const 
 		{ return position_; }
