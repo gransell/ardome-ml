@@ -204,10 +204,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const 
 		{
-			if ( aml_index_  ) 
-				return aml_index_->frames( frames_ );
-			else 
-				return frames_; 
+			return frames_; 
 		}
 
 		virtual bool is_seekable( ) const { return is_seekable_; }
