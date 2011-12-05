@@ -46,6 +46,18 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 			dv_samples.push_back( 1602 );
 			dv_samples.push_back( 1602 );
 
+			std::vector< int > dv_p60_samples;
+			dv_p60_samples.push_back( 800 );
+			dv_p60_samples.push_back( 800 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+			dv_p60_samples.push_back( 801 );
+
 			std::vector< int > imx_samples;
 			imx_samples.push_back( 1602 );
 			imx_samples.push_back( 1601 );
@@ -53,15 +65,17 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 			imx_samples.push_back( 1601 );
 			imx_samples.push_back( 1602 );
 
+			std::vector< int > imx_p60_samples;
+			imx_p60_samples.push_back( 800 );
+			imx_p60_samples.push_back( 801 );
+			imx_p60_samples.push_back( 801 );
+			imx_p60_samples.push_back( 801 );
+			imx_p60_samples.push_back( 801 );
+
 			profiles_[ pl::wstring( L"dv" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"dv25" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"dv50" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"dv1000" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"dvcpro" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"dvcpro50" ) ] = dv_samples;
 			profiles_[ pl::wstring( L"imx" ) ] = imx_samples;
-			profiles_[ pl::wstring( L"imx50" ) ] = imx_samples;
-			profiles_[ pl::wstring( L"mpeg" ) ] = imx_samples;
+			profiles_[ pl::wstring( L"dv_p60" ) ] = dv_p60_samples;
+			profiles_[ pl::wstring( L"imx_p60" ) ] = imx_p60_samples;
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -85,7 +99,16 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< pl::wstring >( ) ) != profiles_.end( ) && get_position( ) < frames )
 			{
 				ml::input_type_ptr input = fetch_slot( 0 );
-				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) ];
+
+				if( fps_num_ < 0 || fps_den_ < 0 )
+				{
+					ml::frame_type_ptr frame = fetch_from_slot( );
+					frame->get_fps( fps_num_, fps_den_ );
+				}
+
+				bool is_p60 = ( fps_num_ == 60000 && fps_den_ == 1001 );
+				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) + ( is_p60 ? L"_p60" : L"" ) ];
+				ARENFORCE_MSG( table.size(), "Invalid locked audio profile: \"%1%\"" )( prop_profile_.value< pl::wstring >( ) );
 				const int start = ( get_position( ) + prop_offset_.value< int >( ) ) - ( get_position( ) % table.size( ) );
 				const int final = start + table.size( );
 
@@ -110,7 +133,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
                         frame->get_fps( fps_num_, fps_den_ );
                         frequency_ = frame->get_audio( )->frequency( );
                         channels_ = frame->get_audio( )->channels( );
-                        if ( fps_num_ == 30000 && fps_den_ == 1001 && frequency_ == 48000 )
+                        if ( ( fps_num_ == 30000 || fps_num_ == 60000 ) && fps_den_ == 1001 && frequency_ == 48000 )
                         {
                             int total = 0;
                             for ( size_t i = 0; i < table.size( ); i ++ ) total += table[ i ];
