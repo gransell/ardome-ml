@@ -24,7 +24,7 @@ class ML_PLUGIN_DECLSPEC filter_lowpass : public ml::filter_simple
 			: ml::filter_simple( )
 			, prop_mag_( pcos::key::from_string( "mag" ) )
 		{
-			properties( ).append( prop_mag_ = 12 );
+		  properties( ).append( prop_mag_ = 14 );
 			size = -1;
 		}
 
@@ -39,44 +39,44 @@ class ML_PLUGIN_DECLSPEC filter_lowpass : public ml::filter_simple
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			result = fetch_from_slot( );
+		  result = fetch_from_slot( );
+		  
+		  ml::audio_type_ptr input_audio  = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
+ 		  ml::audio_type_ptr output_audio = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
+		  int samples                     =          input_audio->samples( );
+		  int channels                    =          input_audio->channels( );
+		  float *input_ptr                = (float*) input_audio->pointer( );
+		  float *output_ptr               = (float*) output_audio->pointer( );
+		  int mag                         = prop_mag_.value< int >( );
 
-			ml::audio_type_ptr input_audio  = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
-			ml::audio_type_ptr output_audio = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
-			int samples                     =          input_audio->samples( );
-			int channels                    =          input_audio->channels( );
-			float *input_ptr                = (float*) input_audio->pointer( );
-			float *output_ptr               = (float*) output_audio->pointer( );
+		  if(mag<1){
+		    result->set_audio( input_audio );
+		    return;
+		  }
 
-			if(size == -1)
-			{
-				size  = channels*prop_mag_.value< int >( );
-				x_n = new float[ size ];
-				for(int n = 0; n<size; n++)
-					x_n[n]=0.0;
+		  if(size == -1){
+		    size  = channels*prop_mag_.value< int >( );
+		    x_n.resize(size);
+		  }
+		  for ( int i = 0; i < samples; i++ )
+		    for ( int j = 0; j < channels; j++)
+		      {
+			float x_0 = *input_ptr;
+			for( int n=j; n<size; n=n+channels)
+			  x_0 = x_0+x_n[n];
+			*output_ptr = x_0/(size/channels);
+			for( int n=(channels*(mag-1))+j; n>channels; n=n-channels){
+			  x_n[n] = x_n[n-channels];
 			}
-			int mag = prop_mag_.value< int >( );
-			for ( int i = 0; i < samples; i++ )
-			{
-				for ( int j = 0; j < channels; j++)
-				{
-					float x_0 = *input_ptr;
-					for( int n=j; n<size; n=n+channels)
-						x_0 = x_0+x_n[n];
-					*output_ptr = x_0/(size/channels);
-					for( int n=(channels*mag)+j; n>j; n=n-channels)
-						x_n[n] = x_n[n-channels];
-					x_n[j]=*input_ptr;
-
-					input_ptr++;
-					output_ptr++;
-				}
-			}
-			result->set_audio( output_audio );
+			x_n[j]=*input_ptr;
+			
+			input_ptr++;
+			output_ptr++;
+		      }
+		  result->set_audio( output_audio );
 		}
-		ml::audio_type_ptr oinput_audio;
 		pcos::property prop_mag_;
-		float* x_n;
+		std::vector<float> x_n;
 		int size;
 };
 
