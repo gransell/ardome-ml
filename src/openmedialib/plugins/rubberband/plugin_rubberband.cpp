@@ -103,6 +103,12 @@ class rubber
 				sync( speed, pitch, true );
 			}
 
+			pusher_         = ml::create_input(  L"pusher:" );
+			lowpass_filter_ = ml::create_filter( L"lowpass" );
+
+			pusher_->init( );
+			lowpass_filter_->init( );
+			lowpass_filter_->connect( pusher_, 0 );
 			return result;
 		}
 
@@ -144,7 +150,7 @@ class rubber
 			return my_key;
 		}
 
-		ml::frame_type_ptr fetch( ml::input_type_ptr input, int position, int total_frames, double speed, double pitch )
+  ml::frame_type_ptr fetch( ml::input_type_ptr input, int position, int total_frames, double speed, double pitch, int lowpass_ )
 		{
 			ml::frame_type_ptr result;
 
@@ -245,7 +251,11 @@ class rubber
 				// Obtain the samples required
 				result->set_audio( retrieve( position, samples ) );
 				result->get_audio( )->set_position( result->get_position( ) );
-
+				if (lowpass_)
+				  {
+				    pusher_->push( result );
+				    result = lowpass_filter_->fetch( );
+				  }
 				if ( increment_ < 0 )
 					result->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 1 );
 			}
@@ -331,7 +341,10 @@ class rubber
 			return output;
 		}
 
-	private:
+	private:                
+                ml::input_type_ptr  pusher_;
+                ml::filter_type_ptr lowpass_filter_;
+
 		ml::input_type_ptr input_;
 		RubberBandStretcher *rubber_;
 		int source_fps_num_;
@@ -354,10 +367,12 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple
 			: filter_simple( )
 			, prop_speed_( pl::pcos::key::from_string( "speed" ) )
 			, prop_pitch_( pl::pcos::key::from_string( "pitch" ) )
-		{
+		        , prop_lowpass_( pl::pcos::key::from_string( "lowpass" ) )
+		  {			
 			properties( ).append( prop_speed_ = 1.0 );
 			properties( ).append( prop_pitch_ = 1.0 );
-		}
+			properties( ).append( prop_lowpass_ = 1   );
+		  }
 	
 		// Indicates if the input will enforce a packet decode
 		bool requires_image( ) const { return false; }
@@ -372,12 +387,13 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple
 		void do_fetch( frame_type_ptr &result )
 		{
 			// Obtain the current frame
-			result = rubber_.fetch( fetch_slot( ), get_position( ), get_frames( ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ) );
+		  result = rubber_.fetch( fetch_slot( ), get_position( ), get_frames( ), prop_speed_.value< double >( ), prop_pitch_.value< double >( ), prop_lowpass_.value< int >( ) );
 		}
 
 	private:
 		pl::pcos::property prop_speed_;
 		pl::pcos::property prop_pitch_;
+		pl::pcos::property prop_lowpass_;
 		rubber rubber_;
 };
 
@@ -392,12 +408,14 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_speed_( filter_->property( "speed" ) )
 			, prop_samples_( pcos::key::from_string( "samples" ) )
+ 		        , prop_lowpass_( pl::pcos::key::from_string( "lowpass" ) )
 			, total_frames_( 0 )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_speed_ = 1.0 );
 			properties( ).append( prop_samples_ = 0 );
+			properties( ).append( prop_lowpass_ = 1  );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -435,6 +453,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 		ml::filter_type_ptr filter_;
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
+		pcos::property prop_lowpass_;
 		pcos::property prop_speed_;
 		pcos::property prop_samples_;
 		int total_frames_;
