@@ -1622,7 +1622,11 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
 
-			if ( input && fps_num > 0 && fps_den > 0 )
+			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
+			{
+				result = last_frame_;
+			}
+			else if ( input && fps_num > 0 && fps_den > 0 )
 			{
 				//If we're currently playing backwards (current_dir_ is -1), then we should fetch the frames in backwards order
 				//as well, so as to not confuse the filters between us and the input about what direction we are playing in.
@@ -1727,6 +1731,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			{
 				result = fetch_from_slot( );
 			}
+
+			if ( result )
+				last_frame_ = result->shallow( );
 		}
 
 		virtual void sync_frames( )
@@ -1795,6 +1802,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		int current_dir_;
 		audio::reseat_ptr reseat_;
 		std::map < int, frame_type_ptr > map_;
+		frame_type_ptr last_frame_;
 };
 
 //
