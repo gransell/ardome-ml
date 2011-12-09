@@ -63,6 +63,7 @@ namespace olib
 					case mono: return _CT("mono");
 					case stereo_2_0: return _CT("stereo_2_0");
 					case stereo_2_1: return _CT("stereo_2_1");
+					case quad: return _CT("quad");
 					case surround_5_1: return _CT("surround_5_1");
 					case surround_6_1: return _CT("surround_6_1");
 					case surround_7_1: return _CT("surround_7_1");
@@ -71,6 +72,24 @@ namespace olib
 
 				ARENFORCE_MSG(false, "Unknown type %d")(t);
 				return _CT("");
+			}
+
+			CORE_API int num_channels( type t )
+			{
+				switch( t )
+				{
+					case mono: return 1;
+					case stereo_2_0: return 2;
+					case stereo_2_1: return 3;
+					case quad: return 4;
+					case surround_5_1: return 6;
+					case surround_6_1: return 7;
+					case surround_7_1: return 8;
+					case pass_through: return 0;
+				}
+
+				ARENFORCE_MSG( false, "Unknown listen_mode %1%")( t );
+				return 0;
 			}
 		}
 	}

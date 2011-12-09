@@ -43,6 +43,7 @@
 #include <cstdlib>
 #include <deque>
 #include <string>
+#include <set>
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
@@ -324,6 +325,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				AL_ENFORCE( alSource3f( source_, AL_DIRECTION, 0.0, 0.0, 0.0) );
 				AL_ENFORCE( alSourcef( source_, AL_ROLLOFF_FACTOR, 0.0 ) );
 
+				AL_ENFORCE( al_format_quad16_ = alGetEnumValue("AL_FORMAT_QUAD16") );
 				AL_ENFORCE( al_format_51chn16_ = alGetEnumValue("AL_FORMAT_51CHN16") );
 				AL_ENFORCE( al_format_71chn16_ = alGetEnumValue("AL_FORMAT_71CHN16") );
 
@@ -341,69 +343,100 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				return false;
 			}
 
-			// Get the audio from the frame
-			audio_type_ptr aud = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
-			if( !aud )
+			//If there's no audio on the frame, there's nothing to do.
+			if( !frame->get_audio() )
 			{
 				return true;
 			}
 
-			boost::int32_t recover_wait_ms = 2 * ( aud->samples() * 1000 / aud->frequency() );
+			boost::int32_t recover_wait_ms = 2 * ( frame->get_audio( )->samples() * 1000 / frame->get_audio( )->frequency() );
 
 			// Recover any played out buffers
 			if( !recover( recover_wait_ms ) )
 			{
 				//We could not recover any buffers, and we have no free ones.
-				//One explanation for this could be a USB sound card that's been unplugged,
-				//so we want to be able to handle this gracefully.
+				//The most likely reason for this that the sound card was disabled.
+				//Some sound cards disable themselves when the headphones are unplugged,
+				//or this could be an unplugged USB sound card.
+				//In any case, we want to be able to handle this gracefully.
 				return false;
 			}
 
 			// If we have audio in this frame then schedule for playout
    			if ( buffers_.size( ) > 0 )
 			{
-				ALenum new_format;
-				// TODO: complete mapping from audio type (combination of af and channels)
+				audio_type_ptr converted_audio;
+				ARENFORCE( !supported_channels_.empty() );
 
-				const int incoming_channels = aud->channels();
-				switch( incoming_channels )
+				ALenum new_format;
+				const int incoming_channels = frame->get_audio( )->channels();
+				int output_channels = 0;
+				if( supported_channels_.lower_bound( incoming_channels ) != supported_channels_.end() )
 				{
-//Mono does not seem well supported on Windows, so we'll upmix it manually to "stereo" instead
-#ifndef WIN32
-					case 1:
-					{
-						new_format = AL_FORMAT_MONO16;
-						break;
-					}
+					//We support a channel setup with at least as many channels as the incoming audio
+					output_channels = *supported_channels_.lower_bound( incoming_channels );
+#ifdef WIN32
+					//Mono does not seem well supported on Windows, so we'll upmix it manually to "stereo" instead
+					if( output_channels == 1 )
+						output_channels = 2;
 #endif
-					case 2:
+				}
+				else
+				{
+					//We did not support a channel setup that had enough channels, so we'll have
+					//to settle for the biggest one we have.
+					output_channels = *supported_channels_.rbegin();
+				}
+
+				converted_audio = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
+				if( incoming_channels != output_channels )
+				{
+					if( output_channels == 2 )
 					{
-						new_format = AL_FORMAT_STEREO16;
-						break;
+						//Special case, since downconverting to stereo is supported for
+						//all input configurations.
+						//This will mix every other channel to the left and right speakers.
+						converted_audio = audio::channel_convert( converted_audio, 2 );
 					}
-// 5.1 audio not supported by OpenAL on OS X
-#ifndef OLIB_ON_MAC 
-					case 6:
+					else
 					{
-						new_format = al_format_51chn16_;
-						break;
+						//Map the input channels one by one to the output channels. If there
+						//are more input channels than outputs, we drop the extra ones.
+						audio_type_ptr original = converted_audio;
+						const int samples = original->samples( );
+						converted_audio = audio::allocate( audio::FORMAT_PCM16, original->frequency( ), output_channels, samples );
+
+						int channels_to_copy = std::min< int >( incoming_channels, output_channels );
+						const boost::int16_t *src = static_cast< boost::int16_t * >( original->pointer( ) );
+						boost::int16_t *dst = static_cast< boost::int16_t * >( converted_audio->pointer( ) );
+						for(int i = 0; i < samples; ++i )
+						{
+							memcpy( dst, src, channels_to_copy * 2 );
+							src += incoming_channels;
+							dst += output_channels;
+						}
 					}
-					case 8:
-					{
-						new_format = al_format_71chn16_;
-						break;
-					}
-#endif
+				}
+
+				assert( converted_audio );
+
+				switch( output_channels )
+				{
+					case 1: new_format = AL_FORMAT_MONO16; break;
+					case 2: new_format = AL_FORMAT_STEREO16; break;
+					case 4: new_format = al_format_quad16_; break;
+					case 6: new_format = al_format_51chn16_; break;
+					case 8: new_format = al_format_71chn16_; break;
 					default:
-					{
-						aud = audio::channel_convert( aud, 2 );
-						new_format = AL_FORMAT_STEREO16;
-						break;
-					}
+						ARENFORCE_MSG( false, "Speaker configuration with %1% channels was marked as supported, but no OpenAL buffer format could be found for it!" )
+							( output_channels );
 				}
 
 				if( new_format != format_ )
 				{
+					ARLOG_INFO("OpenAL store setting new buffer format. Input channels are %3%, output channels are %4%.")
+						( incoming_channels )( output_channels );
+
 					//The audio format has changed. We may not mix
 					//buffers with different formats in the play queue, so we
 					//stop the playback to clear out all current buffers in the queue.
@@ -421,7 +454,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 					buf[ i ] = ( buf[ i ] >> 8 ) | ( buf[ i ] << 8 );
 #			endif
 				
- 				AL_ENFORCE( alBufferData( *buffers_.begin( ), format_, aud->pointer( ), aud->size( ), aud->frequency( ) ) );
+ 				AL_ENFORCE( alBufferData( *buffers_.begin( ), format_, converted_audio->pointer( ), converted_audio->size( ), converted_audio->frequency( ) ) );
 				AL_ENFORCE( alSourceQueueBuffers( source_, 1, &( *buffers_.begin( ) ) ) );
 				buffers_.pop_front( );
 			}
@@ -430,7 +463,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			if ( buffers_.size( ) == 0 )
 				play( );
 
-			return aud != 0;
+			return true;
 		}
 
 		virtual frame_type_ptr flush( )
@@ -538,6 +571,12 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 						supported_listen_modes.push_back( cl::listen_mode::mono );
 						supported_listen_modes.push_back( cl::listen_mode::stereo_2_0 );
 						break;
+					case DSSPEAKER_QUAD:
+						speakerMode = "Quad";
+						supported_listen_modes.push_back( cl::listen_mode::mono );
+						supported_listen_modes.push_back( cl::listen_mode::stereo_2_0 );
+						supported_listen_modes.push_back( cl::listen_mode::quad );
+						break;
 					case DSSPEAKER_SURROUND:
 					case DSSPEAKER_5POINT1:
 					case DSSPEAKER_5POINT1_SURROUND:
@@ -570,18 +609,25 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 			{
 				//If the DirectSound probe failed, or we're on a non-Windows platform we end up here.
 				//TODO: Implement checks for Linux and OSX.
-				ARLOG_WARN( "Unable to query for sound card speaker setup; 5.1 may or may not be downmixed to stereo." );
+				ARLOG_WARN( "Unable to query for sound card speaker setup; multichannel audio may be downmixed to stereo." );
 
-				//All OpenAL implementations are required to handle at
-				//least mono and stereo, so we'll hope for that.
+				//Since we couldn't check for supported listen modes, we'll hope that 5.1
+				//is available. If not, the usual result is that it gets downmixed to
+				//stereo anyway, so no harm done.
 				supported_listen_modes.push_back( (int)cl::listen_mode::mono );
 				supported_listen_modes.push_back( (int)cl::listen_mode::stereo_2_0 );
+
+#ifndef OLIB_ON_MAC 
+				// 5.1 audio not supported by OpenAL on OS X
+				supported_listen_modes.push_back( (int)cl::listen_mode::surround_5_1 );
+#endif
 			}
 
 			ARLOG_INFO( "Supported listening modes are: " );
 			BOOST_FOREACH( int lm, supported_listen_modes )
 			{
 				ARLOG_INFO( "  * %1%" )( cl::listen_mode::to_string( (cl::listen_mode::type)lm ) );
+				supported_channels_.insert( cl::listen_mode::num_channels( (cl::listen_mode::type)lm ) );
 			}
 
 			prop_supported_listen_modes_ = supported_listen_modes;
@@ -590,9 +636,11 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 	private:
 		pcos::property prop_preroll_;
 		pcos::property prop_supported_listen_modes_;
+		std::set< int > supported_channels_;
 		std::deque < ALuint > buffers_;
 		ALuint source_;
 		ALenum format_;
+		ALenum al_format_quad16_;
 		ALenum al_format_51chn16_;
 		ALenum al_format_71chn16_;
 

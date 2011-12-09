@@ -171,6 +171,7 @@ namespace olib
                 mono,
                 stereo_2_0,
                 stereo_2_1,
+                quad,
                 surround_5_1,
                 surround_6_1,
                 surround_7_1,
@@ -179,6 +180,11 @@ namespace olib
 
             //Enum to string conversion method
             CORE_API t_string to_string( type t );
+
+            //Returns the number of channels for a specific listen mode.
+            //For example, stereo_2_0 returns 2 and surround_5_1 return 6,
+            //while pass_through is a special case and returns 0.
+            CORE_API int num_channels( type t );
         }
 
         /// Different audio file formats.
