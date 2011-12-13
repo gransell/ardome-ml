@@ -204,10 +204,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const 
 		{
-			if ( aml_index_  ) 
-				return aml_index_->frames( frames_ );
-			else 
-				return frames_; 
+			return frames_; 
 		}
 
 		virtual bool is_seekable( ) const { return is_seekable_; }
@@ -735,13 +732,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( aml_index_ )
 			{
-				if ( aml_index_->frames( frames_ ) > frames_ )
+				if ( aml_index_->total_frames( ) > frames_ )
 				{
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
 					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
 					frames_ = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
-                    ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->frames( frames_ ) );
+					ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->total_frames( ) );
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
 				}

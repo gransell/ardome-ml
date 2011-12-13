@@ -159,6 +159,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		{
 			do_lock_t locker;
 			bool should_check = !is_running( locker ) || is_paused( locker );
+			bool changed = false;
 			if ( should_check )
 			{
 				int frames = 0;
@@ -168,6 +169,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( input ) input->sync( );
 					frames = input ? input->get_frames( ) : 0;
 				}
+				changed = frames != frames_ && is_paused( locker );
 				{
 					scoped_lock lock( mutex_ ); 
 					frames_ = frames;
@@ -176,8 +178,11 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			else
 			{
 				scoped_lock lock( mutex_ ); 
+				changed = frames_ != last_sync_count_;
 				frames_ = last_sync_count_;
 			}
+			if ( changed )
+				cond_.notify_all( );
 		}
 
 	protected:
