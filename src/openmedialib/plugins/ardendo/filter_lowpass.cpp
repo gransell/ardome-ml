@@ -47,36 +47,37 @@ class ML_PLUGIN_DECLSPEC filter_lowpass : public ml::filter_simple
 		  int channels                    =          input_audio->channels( );
 		  float *input_ptr                = (float*) input_audio->pointer( );
 		  float *output_ptr               = (float*) output_audio->pointer( );
-		  int mag                         = prop_mag_.value< int >( );
-
-		  if(mag<1){
+		  int mag = prop_mag_.value< int >( );
+		  if(mag <= 1){
 		    result->set_audio( input_audio );
 		    return;
 		  }
 
 		  if(size == -1){
-		    size  = channels*prop_mag_.value< int >( );
-		    x_n.resize(size);
+		    size = prop_mag_.value< int >( );
+		    for(int i = 0; i < channels; i++){
+		      std::vector<float> p;
+		      p.resize(size);
+		      x_n.push_back(p);
+		    }
 		  }
+
 		  for ( int i = 0; i < samples; i++ )
 		    for ( int j = 0; j < channels; j++)
 		      {
 			float x_0 = *input_ptr;
-			for( int n=j; n<size; n=n+channels)
-			  x_0 = x_0+x_n[n];
-			*output_ptr = x_0/(size/channels);
-			for( int n=(channels*(mag-1))+j; n>channels; n=n-channels){
-			  x_n[n] = x_n[n-channels];
-			}
-			x_n[j]=*input_ptr;
-			
+			for( int n=0; n<size; n++)
+			  x_0 = x_0+x_n[j][n];
+			*output_ptr = x_0/size;
+			x_n[j].erase(x_n[j].begin());
+			x_n[j].push_back(*input_ptr);
 			input_ptr++;
 			output_ptr++;
 		      }
 		  result->set_audio( output_audio );
 		}
 		pcos::property prop_mag_;
-		std::vector<float> x_n;
+		std::vector< std::vector<float> > x_n;
 		int size;
 };
 
