@@ -371,22 +371,14 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 				ALenum new_format;
 				const int incoming_channels = frame->get_audio( )->channels();
 				int output_channels = 0;
-				if( supported_channels_.lower_bound( incoming_channels ) != supported_channels_.end() )
-				{
-					//We support a channel setup with at least as many channels as the incoming audio
-					output_channels = *supported_channels_.lower_bound( incoming_channels );
+				//Choose biggest supported channel setup. If we have more output- than input channels 
+				//they will be dropped.
+				output_channels = *supported_channels_.rbegin();
 #ifdef WIN32
-					//Mono does not seem well supported on Windows, so we'll upmix it manually to "stereo" instead
-					if( output_channels == 1 )
-						output_channels = 2;
+				//Mono does not seem well supported on Windows, so we'll upmix it manually to "stereo" instead
+				if( output_channels == 1 )
+					output_channels = 2;
 #endif
-				}
-				else
-				{
-					//We did not support a channel setup that had enough channels, so we'll have
-					//to settle for the biggest one we have.
-					output_channels = *supported_channels_.rbegin();
-				}
 
 				converted_audio = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
 				if( incoming_channels != output_channels )
@@ -434,7 +426,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 
 				if( new_format != format_ )
 				{
-					ARLOG_INFO("OpenAL store setting new buffer format. Input channels are %3%, output channels are %4%.")
+					ARLOG_INFO("OpenAL store setting new buffer format. Input channels are %1%, output channels are %2%.")
 						( incoming_channels )( output_channels );
 
 					//The audio format has changed. We may not mix
