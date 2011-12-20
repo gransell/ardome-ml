@@ -251,10 +251,10 @@ class rubber
 				result->set_audio( retrieve( position, samples ) );
 				result->get_audio( )->set_position( result->get_position( ) );
 				if (lowpass_)
-				  {
+				{
 				    pusher_->push( result );
 				    result = lowpass_filter_->fetch( );
-				  }
+				}
 				if ( increment_ < 0 )
 					result->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 1 );
 			}
@@ -370,7 +370,7 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple
 		  {			
 			properties( ).append( prop_speed_ = 1.0 );
 			properties( ).append( prop_pitch_ = 1.0 );
-			properties( ).append( prop_lowpass_ = 1   );
+			properties( ).append( prop_lowpass_ = 0   );
 		  }
 	
 		// Indicates if the input will enforce a packet decode
