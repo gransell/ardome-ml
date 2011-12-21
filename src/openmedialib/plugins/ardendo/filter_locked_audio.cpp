@@ -127,12 +127,35 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
                         return;
                     }
 
+                    // Erase the previously collected frames
+                    frames_.erase( frames_.begin( ), frames_.end( ) );
+
+                    // Collect and analyse all frames needed to match the table size
+                    for( int index = start; index < final && index < frames; index ++ )
+                    {
+                        ml::frame_type_ptr frame = input->fetch( index );
+                        if ( frame && frame->get_audio( ) )
+                        {
+                            if( start_audio == -1 ) start_audio = index - start;
+                            final_audio = index - start;
+                            samples += frame->get_audio( )->samples( );
+                        }
+                        frames_.push_back( frame );
+                    }
+
 					// Allocate a single audio object to accomodate the number of samples specified in the table
 					if ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ )
 					{
                         frame->get_fps( fps_num_, fps_den_ );
                         frequency_ = frame->get_audio( )->frequency( );
                         channels_ = frame->get_audio( )->channels( );
+                        for ( size_t i = 0; i < frames_.size( ); i ++ )
+                        {
+                            if (frames_[ i ]->get_audio( )->channels( ) > channels_) {
+                                channels_ = frames_[ i ]->get_audio( )->channels( );
+                            }
+                        }
+
                         if ( ( fps_num_ == 30000 || fps_num_ == 60000 ) && fps_den_ == 1001 && frequency_ == 48000 )
                         {
                             int total = 0;
@@ -146,21 +169,6 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
                         }
 					}
 
-					// Erase the previously collected frames
-					frames_.erase( frames_.begin( ), frames_.end( ) );
-
-					// Collect and analyse all frames needed to match the table size
-					for( int index = start; index < final && index < frames; index ++ )
-					{
-						ml::frame_type_ptr frame = input->fetch( index );
-						if ( frame && frame->get_audio( ) )
-						{
-							if( start_audio == -1 ) start_audio = index - start;
-							final_audio = index - start;
-							samples += frame->get_audio( )->samples( );
-						}
-						frames_.push_back( frame );
-					}
 
 					// Pack all the audio into the audio span - if the number of samples match precisely, we just need to append them
 					// but if there is a short fall, then we pitch shift to make sure we have what we want
