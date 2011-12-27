@@ -615,7 +615,22 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						else if ( !audio && ( *iter )->get_audio( ) )
 							audio = ( *iter )->get_audio( );
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
+						{
+
+							//Relay all properties
+							pcos::key_vector keys = (*iter)->properties().get_keys();
+							const pcos::property_container &props = (*iter)->properties();
+							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+							for( ; cit != eit; ++cit )
+							{
+								pcos::property pcos_prop = props.get_property_with_key(*cit);
+								if( !pcos_prop.valid() ) continue;
+								pl::pcos::property prop( *cit );
+								result->properties( ).append( prop = pcos_prop.value<int>() );
+							}
+                            
 							result->push( *iter );
+						}
 						if ( audio )
 							result->set_audio( audio );
 					}
