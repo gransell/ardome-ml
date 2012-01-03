@@ -25,6 +25,12 @@ import types
 class Environment( BaseEnvironment ):
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
+
+	#Check SCons version. Openbuild does not currently work with SCons versions newer than 1.2.x
+	#on Windows platforms.
+	scons_version = SCons.__version__
+	if sys.platform == 'win32' and not scons_version.startswith( '1.2' ) :
+		raise Exception( "Error: SCons version is " + scons_version + " but 1.2.x is required." )
 	
 	vs_builder = None 
 	xcode_builder = None
