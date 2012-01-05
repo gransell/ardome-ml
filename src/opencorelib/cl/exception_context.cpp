@@ -391,6 +391,13 @@ namespace olib
             }
 			return os;
 		}
+        
+		t_string exception_context::pretty_print(print::option p_option) const
+		{
+			t_stringstream l_ss;
+			pretty_print(l_ss, p_option);
+			return l_ss.str();
+		}
 
 		t_ostream& exception_context::pretty_print_one_line( t_ostream& os, print::option p_option) const
 		{
