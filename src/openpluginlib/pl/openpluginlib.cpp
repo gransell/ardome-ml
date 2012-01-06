@@ -335,6 +335,18 @@ namespace detail
 	}
 }
 
+void auto_load( )
+{
+	const detail::registry::list &l = detail::registry::instance( ).auto_load( );
+	for ( detail::registry::list::const_iterator i = l.begin( ); i != l.end( ); i ++ )
+	{
+		struct detail::plugin_resolver resolver;
+		acquire_shared_symbols( resolver, ( *i ).filename );
+		resolver.init( );
+	}
+	detail::registry::instance( ).auto_clear( );
+}
+
 bool init( const string_list& lookup_paths )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex );
@@ -345,6 +357,8 @@ bool init( const string_list& lookup_paths )
         reflib( 1, *I );
     }
 
+	auto_load( );
+
 	return true;
 }
 
@@ -353,6 +367,8 @@ bool init( const string& lookup_path )
 	boost::recursive_mutex::scoped_lock lock( mutex );
 
 	reflib( 1, lookup_path );
+
+	auto_load( );
 
 	return true;
 }

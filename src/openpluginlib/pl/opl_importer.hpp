@@ -40,6 +40,7 @@ struct opl_importer
 	void operator( )( const boost::filesystem::path& file );
 	
 	container plugins;
+	bool auto_load;
 };
 
 } }

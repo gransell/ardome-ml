@@ -26,6 +26,7 @@
 namespace olib { namespace openpluginlib {
 
 opl_importer::opl_importer( )
+: auto_load( false )
 {
 #ifdef WIN32
 	CoInitializeEx( NULL, COINIT_SPEED_OVER_MEMORY | COINIT_APARTMENTTHREADED );
@@ -67,6 +68,7 @@ void opl_importer::operator( )( const boost::filesystem::path& file )
 #endif
 
 	plugins = ch->get_action( ).plugins;
+	auto_load = ch->get_action( ).get_auto_load( );
 
 #ifndef WIN32
 	delete ch;

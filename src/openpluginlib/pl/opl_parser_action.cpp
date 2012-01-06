@@ -110,6 +110,7 @@ namespace
 }
 
 opl_parser_action::opl_parser_action( )
+: auto_load_( false )
 {
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openlibraries",		default_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"head",				default_opl_parser_action ) );
@@ -180,7 +181,7 @@ bool openlibraries_opl_parser_action( opl_parser_action& /*pa*/ )
 bool olib_opl_parser_action( opl_parser_action& pa )
 {
 	pa.set_libname( pa.get_current_tag( ) );
-
+	pa.set_auto_load( value_from_name( pa, L"auto_load" ) == L"true" );
 	return true;
 }
 

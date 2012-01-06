@@ -71,6 +71,12 @@ public:
 	path get_branch_path( ) const;
 	void set_branch_path( const path& branch_path );
 
+	bool get_auto_load( ) const
+	{ return auto_load_; }
+
+	void set_auto_load( bool auto_load )
+	{ auto_load_ = auto_load; }
+
 public:
 #ifdef WIN32
 	void set_attrs( MSXML2::ISAXAttributes __RPC_FAR* attrs );
@@ -92,6 +98,7 @@ private:
 	
 	path branch_path_;
 	wstring libname_, tag_;
+	bool auto_load_;
 };
 
 bool default_opl_parser_action( opl_parser_action& pa );
