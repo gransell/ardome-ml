@@ -1021,10 +1021,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					prop_gop_size_ = 1;
 			}
 
-			// Determine the number of frames in the media
-			if ( prop_frames_.value< int >( ) != -1 )
-				frames_ = prop_frames_.value< int >( );
-
 			// Report the file size via the file_size and frames properties
 			prop_file_size_ = boost::int64_t( context_->file_size );
 		}
