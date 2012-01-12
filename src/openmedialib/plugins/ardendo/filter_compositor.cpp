@@ -538,11 +538,13 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
 						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
 						 matching_modes( frame, result ) &&
-						 frame->pf() == result->pf() &&
 						 !frame->get_alpha( ) )
 					{
 						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
-						result = frames[ 0 ];
+						if ( frame->pf() != result->pf() )
+							result = ml::frame_convert( frame, result->pf( ) );
+
+						result = frame;
 						frames.erase( frames.begin( ) );
 					}
 					else
