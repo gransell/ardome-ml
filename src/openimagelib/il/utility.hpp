@@ -58,7 +58,7 @@ IL_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new
 
 typedef void ( *rescale_plane_type )( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
 
-IL_DECLSPEC void register_rescale_plane( rescale_plane_type function );
+IL_DECLSPEC void register_rescale_plane( rescale_plane_type function, rescale_filter filter = BILINEAR_SAMPLING );
 
 template<typename T, template<class, class> class structure, template<class> class storage>
 typename image<T, structure, storage>::size_type calculate_mipmap_size( const boost::shared_ptr<image<T, structure, storage> >& im, typename image<T, structure, storage>::size_type mip )

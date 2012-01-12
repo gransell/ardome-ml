@@ -102,10 +102,12 @@ namespace
 static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
 
 static rescale_plane_type rescale_plane = rescale_plane_default;
+static rescale_filter rescale_filter_value = BILINEAR_SAMPLING;
 
-IL_DECLSPEC void register_rescale_plane( rescale_plane_type function )
+IL_DECLSPEC void register_rescale_plane( rescale_plane_type function, rescale_filter filter )
 {
 	rescale_plane = function;
+	rescale_filter_value = filter;
 }
 
 // The following private functions are a bit rough and shouldn't be exposed publicly
@@ -442,7 +444,7 @@ static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::ws
 	{
 		for ( int plane = 0; plane < 3; plane ++ )
 		{
-			rescale_plane( dst_img, src_img, 1, 1, BICUBIC_SAMPLING, plane );
+			rescale_plane( dst_img, src_img, 1, 1, rescale_filter_value, plane );
 		}
 	}
 
