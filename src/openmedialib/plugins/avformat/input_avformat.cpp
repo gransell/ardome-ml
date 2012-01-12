@@ -598,10 +598,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			else if ( exact_image || exact_audio )
 				expected_ ++;
 
-			if ( aml_index_ == 0 && ( expected_ >= frames_ && error >= 0 && url_ftell( context_->pb ) != context_->file_size ) )
-				if( std::string( context_->iformat->name ) != "image2" )
-					frames_ = expected_ + 1;
-
 			if ( prop_gen_index_.value< int >( ) && error < 0 )
 			{
 				indexer_.close( get_position( ), url_ftell( context_->pb ) );
@@ -1053,7 +1049,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( format == "divx" )
 					result = false;
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" )
-					result = false;
+					result = true;
 			}
 			else if ( result && has_audio( ) )
 			{
