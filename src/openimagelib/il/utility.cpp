@@ -99,7 +99,14 @@ namespace
 }
 
 // Foward declaration to plane scaler
-static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
+static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
+
+static rescale_plane_type rescale_plane = rescale_plane_default;
+
+IL_DECLSPEC void register_rescale_plane( rescale_plane_type function )
+{
+	rescale_plane = function;
+}
 
 // The following private functions are a bit rough and shouldn't be exposed publicly
 // All access to the functions are via the public convert and allocate functions
@@ -435,7 +442,7 @@ static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::ws
 	{
 		for ( int plane = 0; plane < 3; plane ++ )
 		{
-			rescale_plane( dst_img, src_img, 1, 1, BILINEAR_SAMPLING, plane );
+			rescale_plane( dst_img, src_img, 1, 1, BICUBIC_SAMPLING, plane );
 		}
 	}
 
@@ -2303,7 +2310,7 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 	return image_type_ptr( );
 }
 
-static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p )
+static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p )
 {
 	int src_w = im->width( p );
 	int src_h = im->height( p );

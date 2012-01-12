@@ -440,24 +440,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			composite_->properties( ).append( rh = pl::wstring( L"@@h:1" ) );
 			composite_->properties( ).append( mix = pl::wstring( L"@@mix:1" ) );
 			composite_->properties( ).append( mode = pl::wstring( L"@@mode:fill" ) );
-
-			// Attempt to load the optional mc_scaler plugin
-			if ( ml::has_plugin_for( L"mc_scaler?", L"input" ) )
-			{
-				ml::input_type_ptr mc_scaler = ml::create_input( L"mc_scaler?" );
-				if ( mc_scaler )
-				{
-					composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = 
-						mc_scaler->properties( ).get_property_with_key( key_frame_rescale_cb_ ).value< boost::uint64_t >( );
-					composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
-						mc_scaler->properties( ).get_property_with_key( key_image_rescale_cb_ ).value< boost::uint64_t >( );
-				}
-			}
-			else
-			{
-				composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( frame_rescale );
-				composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
-			}
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -567,12 +549,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					{
 						ARLOG_DEBUG7( "Foreground mismatch %d" )( get_position( ) );
 					}
-				}
-
-				if ( prop_mc_.value< int >( ) == 0 )
-				{
-					composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( 0 );
-					composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( 0 );
 				}
 
 				// Provide basic mixing capabilities in deferred mode
