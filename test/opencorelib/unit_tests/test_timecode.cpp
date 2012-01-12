@@ -16,6 +16,8 @@ void test_timecode()
 	int th=0, tm=0, ts=0, tf=0;
 	time_code reference_drop_tc(0, 0, 0, 0, true);
 	time_code reference_tc(0, 0, 0, 0, false);
+	t_string str;
+
 	for( int reference_frame=0; reference_frame<2589408; ++reference_frame)
 	{
 		reference_drop_tc.set_frames(tfd);
@@ -116,6 +118,25 @@ void test_timecode()
     BOOST_CHECK( from_time_code( frame_rate::pal, tc2).to_time_code( frame_rate::pal, false ) == tc2 );
     BOOST_CHECK( mt1.to_frame_nr( frame_rate::pal ) == 500 );
     BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc ) == 599 );
+
+	//Test timecode string conversions
+	time_code str1_tc(_CT("12:33:44;29"));		//Internally testing from_string()
+
+	BOOST_CHECK(
+		str1_tc.get_uses_drop_frame() == true &&
+		str1_tc.get_hours() == 12 &&
+		str1_tc.get_minutes() == 33 &&
+		str1_tc.get_seconds() == 44 &&
+		str1_tc.get_frames() == 29 );
+
+	time_code str2_tc(_CT("12:33:44:29"));		//Internally testing from_string()
+
+	BOOST_CHECK(
+		str2_tc.get_uses_drop_frame() == false &&
+		str2_tc.get_hours() == 12 &&
+		str2_tc.get_minutes() == 33 &&
+		str2_tc.get_seconds() == 44 &&
+		str2_tc.get_frames() == 29 );
 
 	// Check division
 	media_time mt4( rational_time( 20 ) );

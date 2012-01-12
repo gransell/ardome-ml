@@ -22,6 +22,22 @@ namespace olib
             return ss.str();
         }
 
+		void time_code::from_string(const t_string &timestr)
+		{
+			ARENFORCE_MSG(timestr.size() == 11 && (timestr[8] == _CT(';') || timestr[8] == _CT(':') ),"Invalid input format")(timestr);
+
+			if(timestr[8] == _CT(';'))
+				m_drop_frame = true;
+			else
+				m_drop_frame = false;
+
+			t_stringstream ss(timestr);
+			wchar_t skip;
+			ss >> m_i_hours >> skip >> m_i_min >> skip >> m_i_sec >> skip >> m_i_frames;
+
+			check_valid();
+		}
+
         CORE_API bool operator==(const time_code& lhs, const time_code& rhs)
         {
             return  lhs.m_i_hours == rhs.m_i_hours && 
