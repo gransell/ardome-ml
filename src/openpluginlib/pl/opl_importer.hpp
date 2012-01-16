@@ -57,6 +57,8 @@ private:
         const XMLCh* const qname,
         const Attributes& attrs );
 
+	void error(const SAXParseException& exc);
+
 	actions::opl_parser_action action_;
 
 };

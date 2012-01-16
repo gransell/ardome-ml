@@ -16,6 +16,7 @@
 
 #include <openpluginlib/pl/opl_importer.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
+#include <openpluginlib/pl/log.hpp>
 
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
@@ -63,7 +64,12 @@ void opl_importer::startElement (
     const Attributes& attrs )
 {
 	action_.set_attrs(&attrs);
-	action_.dispatch( olib::opencorelib::xml::to_wstring( localname ) );
+	action_.dispatch( opencorelib::xml::to_wstring( localname ) );
+}
+
+void opl_importer::error(const SAXParseException& exc)
+{
+	PL_LOG(level::error, opencorelib::xml::to_string( exc.getMessage() ) );
 }
 
 } }
