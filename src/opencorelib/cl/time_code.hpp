@@ -60,7 +60,7 @@ namespace olib
             }
 
             time_code( const t_string &inputstr ) { from_string(inputstr); }
-            time_code( const wchar_t *inputcstr ) { from_string(inputcstr);	}
+            time_code( const TCHAR *inputcstr ) { from_string(inputcstr);	}
 
             boost::uint32_t operator[]( int idx )
             {
