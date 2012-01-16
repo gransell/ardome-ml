@@ -32,7 +32,7 @@ namespace olib
 				m_drop_frame = false;
 
 			t_stringstream ss(timestr);
-			wchar_t skip;
+			TCHAR skip;
 			ss >> m_i_hours >> skip >> m_i_min >> skip >> m_i_sec >> skip >> m_i_frames;
 
 			check_valid();

@@ -14,6 +14,7 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_parser_action.hpp>
+#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -24,11 +25,11 @@ namespace
 	wstring value_from_name( opl_parser_action& pa, const wstring& name )
 	{
 		wstring str;
-		const XMLCh *s = pa.attrs_->getValue(name.c_str());
+		const XMLCh *s = pa.attrs_->getValue(opencorelib::xml::from_string(name).c_str());
 
 		if (s)
 		{
-			str = s;
+			str = opencorelib::xml::to_wstring(s);
 		}
 
 		return str;

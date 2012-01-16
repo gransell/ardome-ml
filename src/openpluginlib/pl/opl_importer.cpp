@@ -20,6 +20,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
 #include <xercesc/framework/LocalFileInputSource.hpp>
+#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
 
 XERCES_CPP_NAMESPACE_USE
 
@@ -47,7 +48,7 @@ void opl_importer::operator( )( const boost::filesystem::path& file )
 	parser->setContentHandler(this);
 	parser->setErrorHandler(this);
 
-	parser->parse(to_wstring( file.native_file_string( ).c_str( ) ).c_str( ));
+	parser->parse(opencorelib::xml::from_string( file.native_file_string( ).c_str( ) ).c_str( ));
 
 	plugins = action_.plugins;
 	auto_load = action_.get_auto_load();
@@ -62,7 +63,7 @@ void opl_importer::startElement (
     const Attributes& attrs )
 {
 	action_.set_attrs(&attrs);
-	action_.dispatch( wstring( localname ) );
+	action_.dispatch( olib::opencorelib::xml::to_wstring( localname ) );
 }
 
 } }
