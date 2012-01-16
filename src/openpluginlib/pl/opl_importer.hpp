@@ -15,17 +15,24 @@
 #include <map>
 #include <string>
 
+#include <xercesc/sax2/DefaultHandler.hpp>
+
+XERCES_CPP_NAMESPACE_USE
+
 #ifndef BOOST_FILESYSTEM_DYN_LINK 
     #define BOOST_FILESYSTEM_DYN_LINK 
 #endif
 #include <boost/filesystem/path.hpp>
 
 #include <openpluginlib/pl/openplugin.hpp>
+#include <openpluginlib/pl/opl_parser_action.hpp>
 
 namespace olib { namespace openpluginlib {
 
-struct opl_importer
+class opl_importer : 
+	private DefaultHandler
 {
+public:
 	typedef wstring key_type;
 	
 #if _MSC_VER >= 1400
@@ -34,13 +41,24 @@ struct opl_importer
 	typedef std::multimap<key_type, detail::plugin_item> container;
 #endif
 
-	explicit opl_importer( );
+	opl_importer( );
 	~opl_importer( );
 
 	void operator( )( const boost::filesystem::path& file );
 	
 	container plugins;
 	bool auto_load;
+
+private:
+
+    void startElement (
+        const XMLCh* const uri,
+        const XMLCh* const localname,
+        const XMLCh* const qname,
+        const Attributes& attrs );
+
+	actions::opl_parser_action action_;
+
 };
 
 } }
