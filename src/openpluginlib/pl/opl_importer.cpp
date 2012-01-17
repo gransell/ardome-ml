@@ -10,8 +10,6 @@
 #define _WIN32_DCOM
 #include <windows.h>
 #include <objbase.h>
-#else
-#include <libxml/parser.h>
 #endif
 
 #include <openpluginlib/pl/opl_importer.hpp>
