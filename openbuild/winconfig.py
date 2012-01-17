@@ -25,13 +25,15 @@ class WinConfig :
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
 		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp' ) ]  :
 			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
-				for f in files:
-					if f.endswith( '.wc' ):
-						pkg = f.replace( '.wc', '' )
-						prefix = r.rsplit( '\\', 2 )[ 0 ]
-						type = prefix.split( os.sep )[-1]
-						if type in [ 'debug', 'release'] : pkg += '_' + type
-						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
+				#Only accept .wc files in winconfig directories
+				if os.path.split(r)[-1] == 'winconfig':
+					for f in files:
+						if f.endswith( '.wc' ):
+							pkg = f.replace( '.wc', '' )
+							prefix = r.rsplit( '\\', 2 )[ 0 ]
+							type = prefix.split( os.sep )[-1]
+							if type in [ 'debug', 'release'] : pkg += '_' + type
+							flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 		return flags
 		
 	def locate_package( self, env, package_name ) :
