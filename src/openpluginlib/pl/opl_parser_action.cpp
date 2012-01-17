@@ -8,16 +8,13 @@
 #include <algorithm>
 #include <cstdio>
 
-#ifdef WIN32
-#import <msxml4.dll> raw_interfaces_only
-using namespace MSXML2;
-#endif // WIN32
 
 #include <boost/tokenizer.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_parser_action.hpp>
+#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -25,48 +22,17 @@ namespace olib { namespace openpluginlib { namespace actions {
 
 namespace
 {
-#ifndef WIN32
-	bool libxml2_value_from_name( const wstring& name, xmlChar** attributes, wstring& value )
-	{
-		if( !attributes ) return false;
-
-		xmlChar** begin = attributes;
-		while( *begin )
-		{
-			if( name == to_wstring( reinterpret_cast<char*>( *begin ) ) )
-			{
-				value = to_wstring( reinterpret_cast<char*>( *( begin + 1 ) ) );
-				
-				return true;
-			}
-
-			begin += 2;
-		}
-		
-		return false;
-	}
-#endif
-
 	wstring value_from_name( opl_parser_action& pa, const wstring& name )
 	{
-#ifdef WIN32
-		wchar_t* value = NULL;
-		int length;
-
-		if( SUCCEEDED(	pa.attrs_->getValueFromName(
-						( unsigned short*  ) L"", 0,
-						( unsigned short*  ) name.c_str( ), ( int ) name.size( ),
-						( unsigned short** ) &value, &length ) ) )
-		{
-			return wstring( value, length );
-		}
-#else
 		wstring str;
-		if( libxml2_value_from_name( name, pa.attrs_, str ) )
-			return str;
-#endif
-		
-		return wstring( L"" );
+		const XMLCh *s = pa.attrs_->getValue(opencorelib::xml::from_string(name).c_str());
+
+		if (s)
+		{
+			str = opencorelib::xml::to_wstring(s);
+		}
+
+		return str;
 	}
 	
 	void vector_from_string( const wstring& str, std::vector<wstring>& values )
@@ -151,15 +117,6 @@ void opl_parser_action::start( )
 
 void opl_parser_action::finish( )
 {
-}
-
-#ifdef WIN32
-void opl_parser_action::set_attrs( ISAXAttributes __RPC_FAR* attrs )
-#else
-void opl_parser_action::set_attrs( xmlChar** attrs )
-#endif
-{
-	attrs_ = attrs;
 }
 
 opl_parser_action::path opl_parser_action::get_branch_path( ) const

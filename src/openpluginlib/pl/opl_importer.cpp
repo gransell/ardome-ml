@@ -10,69 +10,64 @@
 #define _WIN32_DCOM
 #include <windows.h>
 #include <objbase.h>
-#else
-#include <libxml/parser.h>
-#endif
-
-#ifdef WIN32
-#include <openpluginlib/pl/content_handler_msxml.hpp>
-#else
-#include <openpluginlib/pl/content_handler_libxml.hpp>
 #endif
 
 #include <openpluginlib/pl/opl_importer.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
+#include <openpluginlib/pl/log.hpp>
+
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/sax2/XMLReaderFactory.hpp>
+#include <xercesc/framework/LocalFileInputSource.hpp>
+#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
+
+XERCES_CPP_NAMESPACE_USE
 
 namespace olib { namespace openpluginlib {
 
 opl_importer::opl_importer( )
 : auto_load( false )
 {
-#ifdef WIN32
-	CoInitializeEx( NULL, COINIT_SPEED_OVER_MEMORY | COINIT_APARTMENTTHREADED );
-#endif
 }
 
 opl_importer::~opl_importer( )
 {
-#ifdef WIN32
-	CoUninitialize( );
-#endif
 }
 
 void opl_importer::operator( )( const boost::filesystem::path& file )
 {
 	namespace fs = boost::filesystem;
-	
-#ifdef WIN32
-	MSXML2::ISAXXMLReaderPtr pSAXReader = NULL;
-	HRESULT hr = pSAXReader.CreateInstance( __uuidof( MSXML2::SAXXMLReader40 ) );
 
-	assert( SUCCEEDED( hr ) && L"openpluginlib::opl_importer::operator( ) SAXReader instantiation failed." );
-	
-	content_handler_msxml* ch = new content_handler_msxml( );
-	ch->set_branch_path( file.branch_path( ) );
+	XMLPlatformUtils::Initialize();
 
-	hr = pSAXReader->putContentHandler( ch );
-	assert( SUCCEEDED( hr ) && L"openpluginlib::opl_importer::opl_importer:operator( ) putContentHandler failed." );
+	action_.set_branch_path( file.branch_path( ) );
 
-	hr = pSAXReader->parseURL( ( unsigned short* ) to_wstring( file.native_file_string( ).c_str( ) ).c_str( ) );
-	assert( SUCCEEDED( hr ) && L"openpluginlib::opl_importer::opl_importer:operator( ) parseURL failed." );
+	SAX2XMLReader* parser = XMLReaderFactory::createXMLReader();
 
-#else
-	content_handler_libxml* ch = new content_handler_libxml( );
-	ch->set_branch_path( file.branch_path( ) );
+	parser->setContentHandler(this);
+	parser->setErrorHandler(this);
 
-	if( xmlSAXUserParseFile( ch->get_content_handler( ), &ch->get_action( ), file.native_file_string( ).c_str( ) ) < 0 )
-		; // we need log functionality!
-#endif
+	parser->parse(opencorelib::xml::from_string( file.native_file_string( ).c_str( ) ).c_str( ));
 
-	plugins = ch->get_action( ).plugins;
-	auto_load = ch->get_action( ).get_auto_load( );
+	plugins = action_.plugins;
+	auto_load = action_.get_auto_load();
 
-#ifndef WIN32
-	delete ch;
-#endif
+	XMLPlatformUtils::Terminate();
+}
+
+void opl_importer::startElement (
+    const XMLCh* const uri,
+    const XMLCh* const localname,
+    const XMLCh* const qname,
+    const Attributes& attrs )
+{
+	action_.set_attrs(&attrs);
+	action_.dispatch( opencorelib::xml::to_wstring( localname ) );
+}
+
+void opl_importer::error(const SAXParseException& exc)
+{
+	PL_LOG(level::error, opencorelib::xml::to_string( exc.getMessage() ) );
 }
 
 } }

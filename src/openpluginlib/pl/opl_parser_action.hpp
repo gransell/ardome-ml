@@ -14,18 +14,14 @@
 
 #include <map>
 
+#include <xercesc/sax2/Attributes.hpp>
+XERCES_CPP_NAMESPACE_USE
+
 #ifndef BOOST_FILESYSTEM_DYN_LINK 
     #define BOOST_FILESYSTEM_DYN_LINK 
 #endif
 
 #include <boost/filesystem/path.hpp>
-
-// forward declarations
-#ifdef WIN32
-struct MSXML2::ISAXAttributes;
-#else
-#include <libxml/parser.h>
-#endif // WIN32
 
 #include <openpluginlib/pl/openplugin.hpp>
 #include <openpluginlib/pl/string.hpp>
@@ -78,18 +74,13 @@ public:
 	{ auto_load_ = auto_load; }
 
 public:
-#ifdef WIN32
-	void set_attrs( MSXML2::ISAXAttributes __RPC_FAR* attrs );
-#else
-	void set_attrs( xmlChar** attrs );
-#endif
 
-public:
-#ifdef WIN32
-	MSXML2::ISAXAttributes __RPC_FAR* attrs_;
-#else
-	xmlChar** attrs_;
-#endif
+	void set_attrs(const Attributes *att)
+	{
+		attrs_ = att;
+	}
+
+	const Attributes *attrs_;
 
 	container plugins;
 
