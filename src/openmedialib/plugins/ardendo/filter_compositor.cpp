@@ -541,10 +541,11 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 !frame->get_alpha( ) )
 					{
 						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
-						if ( frame->pf() != result->pf() )
+						if ( frame->pf() == result->pf() )
+							result = frame;
+						else
 							result = ml::frame_convert( frame, result->pf( ) );
-
-						result = frame;
+						
 						frames.erase( frames.begin( ) );
 					}
 					else
