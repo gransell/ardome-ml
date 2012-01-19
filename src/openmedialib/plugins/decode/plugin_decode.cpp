@@ -590,7 +590,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 				//Set last_frame_ here, since get_frames() below needs it to be able
 				//to estimate the GOP size.
-				last_frame_ = frame;
+				last_frame_ = frame->shallow();
 			}
 
 			int frameno = get_position( );
@@ -608,7 +608,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
 
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		virtual int get_frames( ) const {
@@ -828,7 +828,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 
 			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 			}
 			else if ( gop_encoder_ )
 			{
@@ -852,11 +852,11 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 				if ( validate && stream_validation_ )
 					validate = true;
 
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, validate ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame->shallow(), get_frames( ), this, validate ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		void initialize_encoder_mapping( )
@@ -1149,7 +1149,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		{
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 			}
 			else
 			{
@@ -1160,7 +1160,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 				}
 			}
 
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		void sync_frames( )
@@ -1299,12 +1299,13 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 				return;
 			}
 			else if ( !thread_safe_ )
 			{
-				last_frame_ = frame = fetch_from_slot( );
+				frame = fetch_from_slot( );
+				last_frame_ = frame->shallow();
 				return;
 			}
 
@@ -1333,7 +1334,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			}
 
 			// Keep a reference to the last frame in case of a duplicated request
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 			expected_ = get_position( ) + incr_;
 		}
 };
