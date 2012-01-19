@@ -54,22 +54,22 @@ namespace
 		}
 	}
 	
-	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filename )
+	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filenames )
 	{
 		namespace opl = olib::openpluginlib;
 		
 		typedef std::vector<wstring>::iterator 		 iterator;
 		typedef std::vector<wstring>::const_iterator const_iterator;
 				
-		std::vector<wstring> filename_copy( filename );
-		for( const_iterator I = filename_copy.begin( ); I != filename_copy.end( ); ++I )
+		std::vector<wstring> filenames_copy( filenames );
+		for( const_iterator I = filenames_copy.begin( ); I != filenames_copy.end( ); ++I )
 		{
 			fs::path tmp( to_string( *I ).c_str( ), fs::native );
 
-			filename.push_back( to_wstring( ( pa.get_branch_path( ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( to_wstring( ( pa.get_opl_path().branch_path() / tmp.leaf( ) ).string( ).c_str( ) ) );
 			
 #	ifdef WIN32
-			filename.push_back( to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
 #	endif
 		}
 	}
@@ -119,11 +119,12 @@ void opl_parser_action::finish( )
 {
 }
 
-opl_parser_action::path opl_parser_action::get_branch_path( ) const
-{ return branch_path_; }
+opl_parser_action::path opl_parser_action::get_opl_path( ) const
+{ return opl_path_; }
 
-void opl_parser_action::set_branch_path( const opl_parser_action::path& branch_path )
-{ branch_path_ = branch_path; }
+void opl_parser_action::set_opl_path( const opl_parser_action::path& opl_path )
+{ opl_path_ = opl_path; }
+
 
 bool default_opl_parser_action( opl_parser_action& /*pa*/ )
 {
@@ -154,14 +155,15 @@ bool plugin_opl_parser_action( opl_parser_action& pa )
 	item.out_filter	= value_from_name( pa, L"out_filter" );
 	item.libname	= pa.get_libname( );
 	item.merit		= static_cast<int>( wcstol( value_from_name( pa, L"merit" ).c_str( ), 0, 10 ) );
+	item.opl_path = to_wstring( pa.get_opl_path( ).string() );
 
 	std::vector<wstring> temp;
 	vector_from_string( value_from_name( pa, L"extension" ), temp );
 	regexes_from_strings( temp, item.extension );
-	vector_from_string( value_from_name( pa, L"filename"  ), item.filename );
+	vector_from_string( value_from_name( pa, L"filename"  ), item.filenames );
 
-	if( !item.filename.empty( ) )
-		add_opl_path_to_search( pa, item.filename );
+	if( !item.filenames.empty( ) )
+		add_opl_path_to_search( pa, item.filenames );
 
 	pa.plugins.insert( opl_parser_action::container::value_type( pa.get_libname( ), item ) );
 

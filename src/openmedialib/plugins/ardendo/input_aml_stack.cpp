@@ -2123,7 +2123,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
 	{
-		std::vector< pl::wstring > files = ( *i ).filename( );
+		std::vector< pl::wstring > files = ( *i ).filenames( );
 		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 

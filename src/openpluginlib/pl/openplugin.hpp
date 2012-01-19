@@ -60,9 +60,9 @@ namespace detail
 		bool dlopened;		
 	};
 
-	bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstring>& shared_name );
+	bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>& shared_name );
 
-	void uninit_shared_symbols( );
+	void unload_shared_library( );
 
 	struct plugin_item
 	{
@@ -71,9 +71,10 @@ namespace detail
 			, context( 0 )
 		{ }
 
-		std::vector<wstring> filename;
+		std::vector<wstring> filenames;
 		std::vector<boost::wregex> extension;
 		wstring name, type, mime, category, libname, in_filter, out_filter;
+		wstring opl_path; //The path to the opl file that references this plugin
 		int merit;
 
 		// 3rd party plugin API support.

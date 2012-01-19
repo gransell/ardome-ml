@@ -82,8 +82,8 @@ namespace detail
 			{ return item_.context; }
 			std::vector<boost::wregex> extension( ) const
 			{ return item_.extension; }
-			std::vector<wstring> filename( ) const
-			{ return item_.filename; }
+			std::vector<wstring> filenames( ) const
+			{ return item_.filenames; }
 
 		private:
 			mutable plugin_item	item_;

@@ -33,6 +33,7 @@
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/str_util.hpp>
 #include <opencorelib/cl/profile.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <opencorelib/cl/logger.hpp>
 #include <opencorelib/cl/loghandler.hpp>
@@ -45,6 +46,7 @@
 
 namespace fs = boost::filesystem;
 namespace cl = olib::opencorelib;
+using boost::filesystem::wpath;
 
 namespace olib { namespace openpluginlib {
 
@@ -213,7 +215,7 @@ namespace
 			else
 				el_reg.clear( );
 
-			detail::uninit_shared_symbols( );
+			detail::unload_shared_library( );
 		}
 	}
 	
@@ -262,7 +264,7 @@ namespace detail
 	opl_ptr discover_query_impl::plugin_proxy::create_plugin( const string& options ) const
 	{
 		if( !item_.resolver.dlopened )
-			acquire_shared_symbols( item_.resolver, item_.filename );
+			load_shared_library( item_.resolver, item_.filenames );
 
 		if( item_.resolver.dlopened )
 		{
@@ -341,7 +343,9 @@ void auto_load( )
 	for ( detail::registry::list::const_iterator i = l.begin( ); i != l.end( ); i ++ )
 	{
 		struct detail::plugin_resolver resolver;
-		acquire_shared_symbols( resolver, ( *i ).filename );
+		ARENFORCE_MSG( load_shared_library( resolver, i->filenames ), 
+			"Failed to auto-load plugin in \"%1%\" (%2%)\nThe full path is \"%3%\"." )
+			( wpath(i->opl_path).leaf() )( i->name )( i->opl_path );
 		resolver.init( );
 	}
 	detail::registry::instance( ).auto_clear( );

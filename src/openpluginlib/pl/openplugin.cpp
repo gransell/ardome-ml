@@ -107,7 +107,7 @@ plugin_resolver::~plugin_resolver( )
 {
 }
 
-bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstring>& shared_name )
+bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>& shared_name )
 {
 	typedef std::vector<wstring>::const_iterator const_iterator;
 	fs::path key = fs::path( to_string( *shared_name.begin( ) ).c_str( ), fs::native );
@@ -176,7 +176,7 @@ bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstrin
 	return resolver.dlopened;
 }
 
-void uninit_shared_symbols( )
+void unload_shared_library( )
 {
 	std::map<fs::path, plugin_resolver>::iterator i = plugin_cache.begin( );
 	while( i != plugin_cache.end( ) )

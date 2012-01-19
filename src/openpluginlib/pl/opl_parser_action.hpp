@@ -64,8 +64,8 @@ public:
 	void set_current_tag( const wstring& tag )
 	{ tag_ = tag; }
 
-	path get_branch_path( ) const;
-	void set_branch_path( const path& branch_path );
+	path get_opl_path( ) const;
+	void set_opl_path( const path& opl_path );
 
 	bool get_auto_load( ) const
 	{ return auto_load_; }
@@ -87,7 +87,7 @@ public:
 private:
 	opl_dispatcher_container dispatch_;
 	
-	path branch_path_;
+	path opl_path_;
 	wstring libname_, tag_;
 	bool auto_load_;
 };

@@ -40,7 +40,7 @@ void opl_importer::operator( )( const boost::filesystem::path& file )
 
 	XMLPlatformUtils::Initialize();
 
-	action_.set_branch_path( file.branch_path( ) );
+	action_.set_opl_path( file );
 
 	SAX2XMLReader* parser = XMLReaderFactory::createXMLReader();
 
