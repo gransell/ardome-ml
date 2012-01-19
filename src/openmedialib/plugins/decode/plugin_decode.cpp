@@ -852,7 +852,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 				if ( validate && stream_validation_ )
 					validate = true;
 
-				frame = ml::frame_type_ptr( new frame_lazy( frame->shallow(), get_frames( ), this, validate ) );
+				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, validate ) );
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request

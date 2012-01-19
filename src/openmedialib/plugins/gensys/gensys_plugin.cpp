@@ -486,7 +486,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			{
 				if ( queue_.size( ) == 0 || queue_[ 0 ]->get_position( ) != get_position( ) )
 				{
-					result = last_frame_;
+					result = last_frame_->shallow( );
 					return;
 				}
 			}
@@ -501,7 +501,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 				queue_.pop_front( );
 			}
 			
-			last_frame_ = result;
+			last_frame_ = result->shallow( );
 		}
 
 	private:
@@ -1637,7 +1637,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				result = last_frame_;
+				result = last_frame_->shallow( );
 			}
 			else if ( input && fps_num > 0 && fps_den > 0 )
 			{

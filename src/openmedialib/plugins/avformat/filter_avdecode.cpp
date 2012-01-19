@@ -1006,13 +1006,13 @@ class avformat_encode_filter : public filter_simple
 					}
 
 					result->set_stream( video_streamer_ );
-					last_frame_ = result;
-					result = result->shallow( );
+					last_frame_ = result->shallow( );
+					result = result->shallow( );	//TODO perhaps not needed
 					video_streamer_->next( );
 				}
 				else
 				{
-					result = last_frame_;
+					result = last_frame_->shallow( );
 				}
 			}
 			else

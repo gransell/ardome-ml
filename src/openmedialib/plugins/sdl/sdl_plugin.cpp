@@ -187,7 +187,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			if ( frame )
 				img = frame->get_image( );
 			else
-				frame = last_frame_;
+				frame = last_frame_->shallow( );
 
 			// Use the previously converted image if current frame has no image or we're repeating
 			if ( img == 0 )

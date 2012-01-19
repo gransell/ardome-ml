@@ -224,7 +224,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( last_frame_ && last_frame_->get_position( ) == position )
 					{
 						PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "last frame repeat %d" ) % position );
-						result = last_frame_;
+						result = last_frame_->shallow( );
 					}
 					else
 					{
@@ -332,7 +332,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 								}
 								else if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
 								{
-									result = last_frame_;
+									result = last_frame_->shallow( );
 									blank_audio = true;
 									break;
 								}
@@ -340,12 +340,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						}
 
 						if ( result == 0 )
-							result = last_frame_;
+							result = last_frame_->shallow( );
 					}
 				}
 
 				// Keep a reference to the frame in case of reuse
-				last_frame_ = result;
+				last_frame_ = result->shallow( );
 
 				if( !result ) {
 					result = ml::frame_type_ptr( new ml::frame_type() );
