@@ -12,11 +12,7 @@
 
 namespace olib { namespace openpluginlib {
 
-#ifdef _MSC_VER
-    #define PL_CURRENT_FUNC_NAME __FUNCDNAME__
-#else 
-    #define PL_CURRENT_FUNC_NAME __FUNCTION__
-#endif
+#define PL_CURRENT_FUNC_NAME __FUNCTION__
 
 // Typedef for logger
 typedef void ( *logger )( const char *, long, const char *, int, std::string );

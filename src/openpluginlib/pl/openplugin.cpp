@@ -27,6 +27,7 @@
 #include <openpluginlib/pl/openplugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/log.hpp>
+#include <sstream>
 
 namespace fs = boost::filesystem;
 
@@ -118,6 +119,7 @@ bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstrin
 		return resolver.dlopened;
 	}
 
+	bool lib_file_was_found = false;
 	for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
 	{
 		//Check if the file exists before trying to dlopen it
@@ -125,6 +127,10 @@ bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstrin
 		if( !fs::exists(lib_path) )
 		{
 			continue;
+		}
+		else
+		{
+			lib_file_was_found = true;
 		}
         
 		resolver.dl_handle = dlopen_( lib_path );
@@ -148,7 +154,24 @@ bool acquire_shared_symbols( plugin_resolver& resolver, const std::vector<wstrin
 	if ( resolver.dlopened )
 		plugin_cache[ key ] = resolver;
 	else
-		PL_LOG( 0, boost::format( "Unable to open shared object: %1%" ) % error );
+	{
+		if ( lib_file_was_found )
+		{
+			PL_LOG( 0, boost::format( "Unable to open shared object: %1%" ) % error );
+		}
+		else
+		{
+			//If none of the library paths could be found, there won't be a dlopen/LoadLibrary
+			//error for us to display.
+			std::stringstream paths_tried;
+			for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
+			{
+				paths_tried << to_string( *I ).c_str() << "\n";
+			}
+
+			PL_LOG( 0, boost::format( "Could not find the requested plugin library. Tried the following %1% paths:\n%2%" ) % shared_name.size() % paths_tried.str() );
+		}
+	}
 
 	return resolver.dlopened;
 }
