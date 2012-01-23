@@ -126,6 +126,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
                         result = frame;
                         return;
                     }
+
+					frequency_ = frame->get_audio( )->frequency( );					
                     
 					// Allocate a single audio object to accomodate the number of samples specified in the table
 					if ( ( audio_span_ == 0 || frame->get_audio( )->channels( ) != channels_ ) &&
@@ -148,7 +150,6 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 						}
 
 						frame->get_fps( fps_num_, fps_den_ );
-						frequency_ = frame->get_audio( )->frequency( );
 						channels_ = frame->get_audio( )->channels( );
 						for ( size_t i = 0; i < frames_.size( ); i ++ )
 						{
