@@ -177,6 +177,12 @@
              .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME)   \
              .msg(the_msg).level(level_to_test_against_global).ARLOG_A
 
+#define ARLOG_IF_ENV( env_var_name, the_msg )                                           \
+        if( !olib::opencorelib::str_util::env_var_exists( env_var_name ) );  \
+        else ++olib::opencorelib::logger::make_logger()                                 \
+             .add_context(__FILE__, __LINE__, OLIB_CURRENT_FUNC_NAME)                   \
+             .msg(the_msg).level(olib::opencorelib::log_level::info).ARLOG_A
+
 #define ARLOG_A(x) ARLOG_OP(x, B)
 #define ARLOG_B(x) ARLOG_OP(x, A)
 

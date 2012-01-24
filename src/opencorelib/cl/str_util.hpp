@@ -155,6 +155,8 @@ namespace olib
 				to "C:\Documents and Settings\User\Local Settings\Temp\Ardendo\App" */
 			CORE_API t_string expand_env_vars( const t_string& to_expand );
 
+            CORE_API bool env_var_exists( const char *env_var_name );
+
             CORE_API bool env_var_exists( const t_string& env_var_name );
             CORE_API t_string get_env_var( const t_string& env_var_name );
             CORE_API void set_env_var( const t_string& env_var_name, const t_string& val );
