@@ -507,7 +507,8 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 							result = video_push( image );
 					}
 				}
-                else if ( frame->get_audio( ) && ( audio_owner == boost::int64_t( this ) || scrub.valid() )  )
+				else if ( frame->get_audio( ) && frame->get_audio( )->channels( ) > 0 &&
+						( audio_owner == boost::int64_t( this ) || scrub.valid() )  )
 				{
 					if( audio_owner !=  boost::int64_t( this ) && scrub.valid() ) 
 					{
