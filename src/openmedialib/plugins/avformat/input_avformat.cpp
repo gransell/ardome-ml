@@ -515,15 +515,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			while( error >= 0 && ( !got_picture || !got_audio ) )
 			{
 				last_packet_pos_ = url_ftell( context_->pb );
+				error = av_read_frame( context_, &pkt_ );
+				if ( error < 0)
 				{
-					ARSCOPELOG_MSG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "av_read_frame" );
-					error = av_read_frame( context_, &pkt_ );
-				}
-                if ( error < 0)
-                {
-                    ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+					ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
 					break;
-                }
+				}
 				if ( is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
 				else if ( is_audio_stream( pkt_.stream_index ) )
