@@ -26,29 +26,34 @@ namespace olib
 {
    namespace opencorelib
     {
-
-        t_string log_utilities::get_log_prefix_string(  log_level::severity lvl,
-                                                    const t_string& date_fmt,
-                                                    const t_string& time_fmt,
-                                                    logoutput::options log_options )
+        void log_utilities::get_formatted_stream( t_stringstream &ss, 
+                                    const t_string& date_fmt,
+                                    const t_string& time_fmt )
         {
-            using namespace boost::date_time;
-            using namespace boost::posix_time;
-
-            t_stringstream ss;
-
             t_date_facet* date_output_facet = new t_date_facet();
             date_output_facet->format(date_fmt.c_str());
 
             t_local_time_facet* time_output_facet = new t_local_time_facet();
             time_output_facet->format(time_fmt.c_str());
 
-            ptime now = boost::posix_time::microsec_clock::local_time();
             ss.imbue( std::locale( ss.getloc(), date_output_facet) );
             ss.imbue( std::locale( ss.getloc(), time_output_facet) );
-            
-            if(!date_fmt.empty()) ss << now.date();
-            if(!time_fmt.empty()) ss << now.time_of_day();
+        }
+
+        t_string log_utilities::get_log_prefix_string( log_level::severity lvl, 
+                                                       t_stringstream &ss,
+                                                       logoutput::options log_options )
+        {
+            using namespace boost::date_time;
+            using namespace boost::posix_time;
+
+			//Clear out the stream before using it
+			ss.str(_CT(""));
+			ss.clear();
+
+            ptime now = boost::posix_time::microsec_clock::local_time();
+            ss << now.date();
+            ss << now.time_of_day();
             
             if( log_options & logoutput::current_thread_id  )
             {
@@ -131,9 +136,9 @@ namespace olib
             utilities::make_sure_path_exists( log_file_path.parent_path() );
             
             if( fs::exists( log_file_path ))
-                return boost::shared_ptr< t_ofstream >( new fs_t_ofstream(log_file_path, std::ios_base::app ));
+                return boost::shared_ptr< t_ofstream >( new t_ofstream(log_file_path.string().c_str(), std::ios_base::app ));
             else
-                return boost::shared_ptr< t_ofstream >( new fs_t_ofstream(log_file_path));
+                return boost::shared_ptr< t_ofstream >( new t_ofstream(log_file_path.string().c_str()));
             
         }
     }

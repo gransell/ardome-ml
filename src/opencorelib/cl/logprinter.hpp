@@ -39,10 +39,17 @@ namespace olib
                 @return A suitable file name. i.e. "my_log-2007-12-18-Mon.log" if app_name is "my_log" */
             CORE_API t_string get_sutiable_logfile_name(const t_string& app_name );
 
+            /// Formats a stringstream according to the given date and time formats.
+            /** @param date_fmt A date format string according to boost::date_time.
+                @param time_fmt A time format string according to boost::date_time.
+            */
+            CORE_API void get_formatted_stream( t_stringstream &ss, 
+                                       const t_string& date_fmt,
+                                       const t_string& time_fmt );
+
             /// Creates a short string with useful log information.
             /** @param lvl The severity of the log request. Output if log_options
                     contains the flag: Currentlog_level.
-                @param time_fmt A time format string according to boost::date_time.
                 @param log_options Determines which information should be present
                         in the information string.
                 @return A log info string. If log_options is logoutput::short the string 
@@ -51,9 +58,8 @@ namespace olib
                         seconds, followed by the current thread's id, followed by the
                         log_level. */
             CORE_API t_string get_log_prefix_string( log_level::severity lvl, 
-                                                    const t_string& date_fmt,
-                                                    const t_string& time_fmt, 
-                                                    logoutput::options log_options );
+                                                     t_stringstream &ss,
+                                                     logoutput::options log_options );
 
             /// Creates a stream that is useful for log output.
             /** The function returns a stream object to log_file_path. 
