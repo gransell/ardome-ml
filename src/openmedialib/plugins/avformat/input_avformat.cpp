@@ -204,10 +204,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const 
 		{
-			if ( aml_index_  ) 
-				return aml_index_->frames( frames_ );
-			else 
-				return frames_; 
+			return frames_; 
 		}
 
 		virtual bool is_seekable( ) const { return is_seekable_; }
@@ -438,9 +435,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Fetch method
 		void do_decode_fetch( frame_type_ptr &result )
 		{
+			ARSCOPELOG_IF_ENV( "AMF_PERFORMANCE_LOGGING" );
+
 			// Repeat last frame if necessary
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
+				ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Reusing last frame at position %1%" )( get_position() );
 				result = last_frame_->shallow( );
 				return;
 			}
@@ -516,11 +516,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				last_packet_pos_ = url_ftell( context_->pb );
 				error = av_read_frame( context_, &pkt_ );
-                if ( error < 0)
-                {
-                    ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+				if ( error < 0)
+				{
+					ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
 					break;
-                }
+				}
 				if ( is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
 				else if ( is_audio_stream( pkt_.stream_index ) )
@@ -735,13 +735,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( aml_index_ )
 			{
-				if ( aml_index_->frames( frames_ ) > frames_ )
+				if ( aml_index_->total_frames( ) > frames_ )
 				{
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
 					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
 					frames_ = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
-                    ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->frames( frames_ ) );
+					ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->total_frames( ) );
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
 				}
@@ -1023,10 +1023,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 1;
 			}
-
-			// Determine the number of frames in the media
-			if ( prop_frames_.value< int >( ) != -1 )
-				frames_ = prop_frames_.value< int >( );
 
 			// Report the file size via the file_size and frames properties
 			prop_file_size_ = boost::int64_t( context_->file_size );

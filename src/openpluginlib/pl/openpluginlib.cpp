@@ -58,6 +58,11 @@ namespace
 	class pl_logtarget : public cl::logtarget
 	{
 		public:
+			pl_logtarget( )
+			{
+				 cl::log_utilities::get_formatted_stream( formatted_stream_, _CT(""), _CT("%H:%M:%S%F") );
+			}
+
 			virtual ~pl_logtarget( ) { }
 	
 			virtual void log( cl::invoke_assert& a, const TCHAR* log_source)
@@ -78,8 +83,10 @@ namespace
 			{
 				olib::t_stringstream ss;
 				log_msg.pretty_print_one_line( ss, cl::print::output_default );
-				std::cerr << cl::str_util::to_string( cl::log_utilities::get_log_prefix_string( log_msg.level( ), _CT(""), _CT("%H:%M:%S%F"), cl::logoutput::output_default ) ) << " " << cl::str_util::to_string( ss.str( ) ) << std::endl;
+				std::cerr << cl::str_util::to_string( cl::log_utilities::get_log_prefix_string( log_msg.level( ), formatted_stream_, cl::logoutput::output_default ) ) << " " << cl::str_util::to_string( ss.str( ) ) << std::endl;
 			}
+		private:
+			t_stringstream formatted_stream_;
 	};
 
 	class add_to_filter_string : public std::unary_function<detail::registry::container::value_type, void>

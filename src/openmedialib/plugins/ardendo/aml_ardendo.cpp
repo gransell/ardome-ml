@@ -58,6 +58,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const pl::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pass( const pl::wstring & );
 
 //
 // Plugin object
@@ -149,6 +150,9 @@ public:
 			return create_transport( resource );
 		if ( resource == L"volume" )
 			return create_volume( resource );
+		if ( resource == L"lowpass" )
+		  return create_pass( resource );
+
 		return ml::filter_type_ptr( );
 	}
 };

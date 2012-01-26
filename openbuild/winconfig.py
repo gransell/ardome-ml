@@ -96,7 +96,11 @@ class WinConfig :
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
 		env.checked = []
-		env.requires( *packages )
+		try:
+			env.requires( *packages )
+		except PackageNotFoundException, exc:
+			print "Exception when locating package:", exc.package_name
+			raise exc
 		
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
