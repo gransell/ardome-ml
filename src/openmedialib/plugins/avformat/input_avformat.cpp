@@ -347,6 +347,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				error = av_find_stream_info( context_ ) < 0;
+				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+					error = true;
 			}
 			
 			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
@@ -1854,6 +1856,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			if ( context_ )
 				av_close_input_file( context_ );
+
+			video_indexes_.erase( video_indexes_.begin( ), video_indexes_.end( ) );
+			audio_indexes_.erase( audio_indexes_.begin( ), audio_indexes_.end( ) );
 
 			// Reopen the media
 			seek( 0 );
