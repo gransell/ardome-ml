@@ -111,7 +111,7 @@ namespace olib
 			ARASSERT_MSG( quote_stack.empty(),"The stack should be empty here.");
 		}
 
-        CORE_API bool str_util::env_var_exists( const t_string& env_var_name )
+        CORE_API bool str_util::env_var_exists( const char *env_var_name )
         {
 			#ifdef OLIB_ON_WINDOWS
 				// getenv is deprecated on windows. replace with
@@ -120,11 +120,16 @@ namespace olib
 				#pragma warning( disable: 4996 )
 			#endif
             
-			return getenv( to_string(env_var_name).c_str()) != 0;
+			return getenv( env_var_name ) != 0;
 			
 			#ifdef OLIB_ON_WINDOWS
 				#pragma warning( pop )
 			#endif
+        }
+
+        CORE_API bool str_util::env_var_exists( const t_string& env_var_name )
+        {
+            return env_var_exists( to_string(env_var_name).c_str() );
         }
 
         CORE_API t_string str_util::get_env_var( const t_string& env_var_name )

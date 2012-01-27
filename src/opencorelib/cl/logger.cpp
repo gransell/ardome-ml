@@ -181,7 +181,7 @@ namespace olib
             m_timer.stop();
             
             olib::t_stringstream ss_msg;
-            ss_msg << _CT(" <-- ") << m_funcname << _CT(" (") << m_timer.elapsed() << _CT(") ")  << m_msg;
+            ss_msg << _CT(" <-- ") << m_funcname << _CT(" (") << m_timer.elapsed().total_milliseconds() << _CT(" ms) ")  << m_msg;
             m_context->message( ss_msg.str() );
 
             olib::t_stringstream ss;

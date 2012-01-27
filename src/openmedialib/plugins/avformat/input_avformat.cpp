@@ -347,6 +347,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				error = av_find_stream_info( context_ ) < 0;
+				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+					error = true;
 			}
 			
 			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
@@ -435,9 +437,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Fetch method
 		void do_decode_fetch( frame_type_ptr &result )
 		{
+			ARSCOPELOG_IF_ENV( "AMF_PERFORMANCE_LOGGING" );
+
 			// Repeat last frame if necessary
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
+				ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Reusing last frame at position %1%" )( get_position() );
 				result = last_frame_->shallow( );
 				return;
 			}
@@ -513,11 +518,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				last_packet_pos_ = url_ftell( context_->pb );
 				error = av_read_frame( context_, &pkt_ );
-                if ( error < 0)
-                {
-                    ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+				if ( error < 0)
+				{
+					ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
 					break;
-                }
+				}
 				if ( is_video_stream( pkt_.stream_index ) )
 					error = decode_image( got_picture, &pkt_ );
 				else if ( is_audio_stream( pkt_.stream_index ) )

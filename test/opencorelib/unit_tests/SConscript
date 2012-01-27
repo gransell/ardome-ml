@@ -15,7 +15,6 @@ test_sources = ['main_entry_unittests.cpp',
 				# 'test_frames.cpp', Currently empty!!
 				'test_int64_conversions.cpp',
 				'test_invoker.cpp',
-				'test_logprint.cpp',
 				'test_messagequeue.cpp',
 				'test_plugin.cpp',
 				'test_serious_error_handler.cpp',

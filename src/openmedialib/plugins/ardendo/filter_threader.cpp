@@ -42,6 +42,23 @@ enum thread_state
 	thread_eof = 8
 };
 
+//Returns a string describing what's in the given threader cache
+std::string cache_to_string( const std::map< int, ml::frame_type_ptr >& cache )
+{
+	std::map< int, ml::frame_type_ptr >::const_iterator it = cache.begin( );
+	std::map< int, ml::frame_type_ptr >::const_iterator eit = cache.end( );
+	
+	std::string out;
+	
+	for( ;it != eit; ++it )
+	{
+		out += boost::lexical_cast< std::string >( it->first );
+		out += std::string( " " );
+	}
+	
+	return out;
+}
+
 struct do_lock_t
 {
 
@@ -72,6 +89,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, position_( 0 )
 			, sync_time_( boost::get_system_time( ) )
 			, last_sync_count_( 0 )
+			, next_cache_size_report_( boost::get_system_time( ) + boost::posix_time::seconds( 1 ) )
 		{
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
@@ -207,23 +225,23 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 				if ( active_ == 0 )
 				{
-					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "requesting %d from dormant" ) % position );
+					ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Requesting frame %1% from inactive threader" )( position );
 					input->seek( position );
 					result = input->fetch( );
 				}
 				else if ( !changed || speed_ != old_speed || std::abs( speed_ ) > 16 )
 				{
-					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "requesting %d from paused" ) % position );
+					ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Requesting frame %1% from paused threader" )( position );
 
 					if ( changed )
 					{
-						PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "pausing %d to %d" ) % last_position_ % position );
+						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Pausing %1% to %2%" )( last_position_ )( position );
 						pause( lck );
 					}
 
 					if ( last_frame_ && last_frame_->get_position( ) == position )
 					{
-						PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "last frame repeat %d" ) % position );
+						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Last frame repeat: %1%" )( position );
 						result = last_frame_->shallow( );
 					}
 					else
@@ -232,7 +250,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						if( !cache )
 						{
 							pause( lck );
-							PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "cache repopulate %d" ) % position );
+							ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Cache repopulate: %1%" )( position );
 							analyse_cache( position, speed_, lck, true );
 							input->seek( position );
 							result = input->fetch( );
@@ -240,7 +258,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						}
 						else
 						{
-							PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "retrieve from cache %d" ) % position );
+							ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Retrieved frame %1% from cache" )( position );
 							result = cache;
 						}
 					}
@@ -253,7 +271,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						start( lck );
 					}
 
-					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "requesting %d from active %d %d" ) % position % (unsigned int)cache_.size( ) % speed_ );
+					ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Requesting %1% from active cache. Cache size = %2%, playback speed = %3%" )
+						( position ) ( cache_.size( ) )( speed_ );
 
 					{
 
@@ -292,7 +311,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 								if ( remove != cache_.end( ) )
 								{
-									PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Removing %d at %d" ) % remove->first % speed_ );
+									ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Removing %1% at speed %2%" )( remove->first )( speed_ );
 									cache_.erase( remove );
 									made_space = true;
 								}
@@ -312,12 +331,15 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 							if ( res != cache_.end( ) )
 							{
 								result = res->second;
-								PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Found %d" ) % result->get_position( ) );
+								ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Found frame %1% in cache" )( result->get_position( ) );
 							}
 
 							// Wait for the next frame arrival
 							if ( result == 0 && cache_.find( position ) == cache_.end( ) )
 							{
+								ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Threader did not have the requested frame in cache %1%.\nCache = %2%.\nCache size = %3%. Waiting." )
+									( position )( cache_to_string( cache_ ) )( cache_.size( ) );
+
 								boost::posix_time::time_duration ms;
 								if( last_frame_ && speed_ == 1 && speed_ == old_speed ) 
 									ms = boost::posix_time::milliseconds( int( 2000 * last_frame_->get_duration( ) ) );
@@ -328,7 +350,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 								if ( res != cache_.end( ) )
 								{
 									result = res->second;
-									PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Found %d" ) % result->get_position( ) );
+									ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Found frame %1% after waiting" )( result->get_position( ) );
 								}
 								else if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
 								{
@@ -531,8 +553,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		int analyse_cache( int position, int speed, scoped_lock& lck, bool clean = false )
 		{
 			if ( clean && !cache_.empty( ) )
-				PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "ANTE %d: have %d to %d want %d" ) 
-                    % (unsigned int)cache_.size( ) % cache_.begin( )->first % ( -- cache_.end( ) )->first % position );
+				ARLOG_DEBUG7( "Cache analysis size = %1%: have %2% to %3% want %4%" ) 
+					( cache_.size( ) )( cache_.begin( )->first )( ( -- cache_.end( ) )->first )( position );
 
 			std::map< int, ml::frame_type_ptr >::iterator current = cache_.find( position );
 
@@ -541,7 +563,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( clean )
 				{
 					cache_.clear( );
-					PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "POST %d" ) % (unsigned int)cache_.size( ) );
+					ARLOG_DEBUG7( "POST %1%" )( cache_.size( ) );
 				}
 				return 0;
 			}
@@ -607,7 +629,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 
 			if ( clean )
-				PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "POST %d" ) % (unsigned int)cache_.size( ) );
+				ARLOG_DEBUG7( "POST %1%" )( cache_.size( ) );
 
 			return count;
 		}
@@ -685,7 +707,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				lck.unlock( );
 				{
             		scoped_lock lock( input_mutex_ ); 
+					ARLOG_DEBUG7( "Syncing input on worker thread" );
 					input->sync( );
+					ARLOG_DEBUG7( "Sync done on worker thread" );
 					frames = input->get_frames( );
 				}
 				lck.lock( );
@@ -702,12 +726,20 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			if ( cache_.size( ) > 0 )
 			{
 				lck.unlock( );
+				ARGUARD( boost::bind( &scoped_lock::lock, &lck ) );
 				{
+					try {
             		scoped_lock lock( input_mutex_ ); 
 					input->seek( position );
+					ARLOG_DEBUG7( "Fetching position %1%" )( position );
 					frame = input->fetch( );
+					ARLOG_DEBUG7( "Done fetching position %1%" )( position );
+					}
+					catch( ... ) {
+						ARLOG_ERR( "Caught exception during fetch." );
+						throw;
+					}
 				}
-				lck.lock( );
 			}
 			else
 			{
@@ -723,16 +755,18 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					// Wait for space to become available
 					if ( static_cast<int>(cache_.size( )) >= max_size )
 					{
+						ARLOG_DEBUG7( "Cache is full." );
 						while ( is_running( lck ) && !is_paused( lck ) && static_cast<int>(cache_.size( )) >= max_size )
 						{
 							sync_thread( lck, input );
+							ARLOG_DEBUG7( "Waiting for space to be available." );
                             cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) );
 						}
 					}
 		
 					if ( is_running( lck ) )
 					{
-						PL_LOG( debug_level( ) + pl::level::unknown, boost::format( "Adding %d" ) % frame->get_position( ) );
+						ARLOG_DEBUG7( "Adding %1%" )( frame->get_position( ) );
 	
 						if ( frame->get_image( ) )
 							frame->get_image( )->set_writable( false );
@@ -786,6 +820,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				// Ensure that the position is still valid
 				while( is_running( lock ) && position >= 0 && position < get_frames( ) )
 				{
+					if( olib::opencorelib::str_util::env_var_exists( "AMF_PERFORMANCE_LOGGING" ) )
+					{
+						boost::system_time now = boost::get_system_time();
+						if( next_cache_size_report_ < now )
+						{
+							ARLOG_INFO( "Threader cache size = %1%" )( cache_.size( ) );
+							next_cache_size_report_ = now + boost::posix_time::seconds( 1 );
+						}
+					}
+
 					// Resync on pause condition
 					if ( is_paused( lock ) )
 						break;
@@ -899,6 +943,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		int position_;
 		boost::system_time sync_time_;
 		int last_sync_count_;
+		boost::system_time next_cache_size_report_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )

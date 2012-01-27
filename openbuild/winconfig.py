@@ -71,7 +71,6 @@ class WinConfig :
 			
 			pkg = self.locate_package(env, package)
 			if pkg == None :
-				print "Could not find ", package
 				raise PackageNotFoundException('Unable to locate ' + package)
 			
 			# This can be used in the wc-file code, its the path to the file itself.
@@ -105,7 +104,11 @@ class WinConfig :
 	def packages( self, env, *packages ):
 		"""Add packages to the environment"""
 		env.checked = []
-		env.requires( *packages )
+		try:
+			env.requires( *packages )
+		except PackageNotFoundException, exc:
+			print "Exception when locating package:", exc.package_name
+			raise exc
 		
 	def optional( self, env, *packages ):
 		"""Extracts compile and link flags for the specified packages and adds to the 
