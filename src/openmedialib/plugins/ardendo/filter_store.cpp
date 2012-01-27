@@ -55,11 +55,11 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 
 					ARENFORCE_MSG(store_->push( result->shallow( ) ), "Pushing to store %1% failed.") (prop_store_.value<pl::wstring>());
 				}
-				last_frame_ = result;
+				last_frame_ = result->shallow();
 			}
 			else
 			{
-				result = last_frame_;
+				result = last_frame_->shallow();
 			}
 		}
 
