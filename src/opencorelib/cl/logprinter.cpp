@@ -30,14 +30,19 @@ namespace olib
                                     const t_string& date_fmt,
                                     const t_string& time_fmt )
         {
-            t_date_facet* date_output_facet = new t_date_facet();
-            date_output_facet->format(date_fmt.c_str());
+            if( !date_fmt.empty() )
+            {
+                t_date_facet* date_output_facet = new t_date_facet();
+                date_output_facet->format(date_fmt.c_str());
+                ss.imbue( std::locale( ss.getloc(), date_output_facet) );
+            }
 
-            t_local_time_facet* time_output_facet = new t_local_time_facet();
-            time_output_facet->format(time_fmt.c_str());
-
-            ss.imbue( std::locale( ss.getloc(), date_output_facet) );
-            ss.imbue( std::locale( ss.getloc(), time_output_facet) );
+            if( !time_fmt.empty() )
+            {
+                t_local_time_facet* time_output_facet = new t_local_time_facet();
+                time_output_facet->format(time_fmt.c_str());
+                ss.imbue( std::locale( ss.getloc(), time_output_facet) );
+            }
         }
 
         t_string log_utilities::get_log_prefix_string( log_level::severity lvl, 
@@ -52,8 +57,9 @@ namespace olib
 			ss.clear();
 
             ptime now = boost::posix_time::microsec_clock::local_time();
-            ss << now.date();
-            ss << now.time_of_day();
+            std::locale loc = ss.getloc();
+            if( std::has_facet<       t_date_facet >( loc ) ) ss << now.date();
+            if( std::has_facet< t_local_time_facet >( loc ) ) ss << now.time_of_day();
             
             if( log_options & logoutput::current_thread_id  )
             {
