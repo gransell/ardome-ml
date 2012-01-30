@@ -767,12 +767,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( is_running( lck ) )
 					{
 						ARLOG_DEBUG7( "Adding %1%" )( frame->get_position( ) );
-	
-						if ( frame->get_image( ) )
-							frame->get_image( )->set_writable( false );
-	
-						if ( frame->get_alpha( ) )
-							frame->get_alpha( )->set_writable( false );
+
+						{
+							lck.unlock( );
+							ARGUARD( boost::bind( &scoped_lock::lock, &lck ) );
+							if ( frame->get_image( ) )
+								frame->get_image( )->set_writable( false );
+
+							if ( frame->get_alpha( ) )
+								frame->get_alpha( )->set_writable( false );
+						}
 	
 						cache_[ frame->get_position( ) ] = frame;
 						cond_.notify_all( );
