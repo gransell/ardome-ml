@@ -166,6 +166,27 @@ inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 	}
 }
 
+inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
+{
+	unsigned char *ptr = img->data( );
+	int width = img->width( );
+	int height = img->height( );
+	int x;
+	if ( ptr )
+	{
+		while( height -- )
+		{
+			x = width;
+			while ( x -- )
+			{
+				memset( ptr++, r, 1 );
+				memset( ptr++, g, 1 );
+				memset( ptr++, b, 1 );
+			}
+		}
+	}
+}
+
 static pl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
 static pl::pcos::key key_use_last_image_( pcos::key::from_string( "use_last_image" ) );
 
@@ -378,6 +399,10 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				fill( image, 0, ( unsigned char )y );
 				fill( image, 1, ( unsigned char )u );
 				fill( image, 2, ( unsigned char )v );
+			}
+			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == L"r8g8b8" )
+			{
+				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
 			}
 		}
 
