@@ -269,6 +269,7 @@ void py_plugin( )
 	py::def( "audio_allocate", &detail::audio_allocate1 );
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "audio_channel_extract", &ml::audio::channel_extract );
+	py::def( "audio_channel_extract_count", &ml::audio::channel_extract_count );
 	py::def( "audio_mixer", &ml::audio::mixer );
 	py::def( "audio_pitch", &ml::audio::pitch );
 	py::def( "audio_reverse", &ml::audio::reverse );

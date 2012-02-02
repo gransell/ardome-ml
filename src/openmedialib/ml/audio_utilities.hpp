@@ -34,6 +34,9 @@ extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int 
 // Convenience function to extract a specific channel wihtout changing type
 extern ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &a, int channel );
 
+// Convenience function to extract count channels, 0-count, wihtout changing type
+extern ML_DECLSPEC audio_type_ptr channel_extract_count( const audio_type_ptr &a, int count );
+
 // Convenience functions to mix a channel without changing the audio sample type in the first object
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, int channel, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, const audio_type_ptr &c = audio_type_ptr( ) );
