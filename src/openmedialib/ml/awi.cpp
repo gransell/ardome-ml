@@ -286,17 +286,20 @@ bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 	if ( result )
 		append( data, length );
 
-	// We need to ensure that we have the minimum length of the smallest record
-	while( result && buffer_.size( ) > 8 )
+	while( result )
 	{
-		if ( ( is_item( ) && buffer_.size( ) < awi_item_size ) || ( !is_item( ) && buffer_.size( ) < awi_footer_size ) )
-			break;
-
 		switch( state_ )
 		{
 			case header:
-				result = parse_header( );
-				state_ = result ? item : error;
+				if ( buffer_.size( ) >= awi_header_size )
+				{
+					result = parse_header( );
+					state_ = result ? item : error;
+				}
+				else
+				{
+					result = false;
+				}
 				break;
 
 			case item:
@@ -309,6 +312,11 @@ bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 				{
 					result = parse_footer( );
 					state_ = result ? footer : error;
+				}
+				else
+				{
+					// Need more data to parse break the loop
+					result = false;	
 				}
 				break;
 
@@ -922,16 +930,13 @@ bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 		append( data, length );
 
 	// We need to ensure that we have the minimum length of the smallest record
-	while( result && buffer_.size( ) > 8 )
+	while( result )
 	{
-		if ( ( is_item( ) && buffer_.size( ) < awi_item_size ) || ( !is_item( ) && buffer_.size( ) < awi_footer_size ) )
-			break;
-
 		switch( state_ )
 		{
 			case header:
 				// Make sure that we have enough data for the header
-				if ( buffer_.size( ) > awi_header_size_v3 )
+				if ( buffer_.size( ) >= awi_header_size_v3 )
 				{
 					result = parse_header( );
 					state_ = result ? item : error;
@@ -953,6 +958,11 @@ bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 				{
 					result = parse_footer( );
 					state_ = result ? footer : error;
+				}
+				else
+				{
+					// Need more data to parse break the loop
+					result = false;	
 				}
 				break;
 
@@ -1545,8 +1555,7 @@ bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 	if ( result )
 		append( data, length );
 
-	// We need to ensure that we have the minimum length of the smallest record
-	while( result && buffer_.size( ) > 8 )
+	while( result )
 	{
 		if ( buffer_.size( ) < awi_entry_size_v4 )
 			break;
