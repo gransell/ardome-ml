@@ -596,12 +596,15 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							composite_->seek( get_position( ) );
 							result = composite_->fetch( );
 
-							//Relay the source timecode if present
-							pl::pcos::property source_tc_prop = ( *iter )->properties( ).get_property_with_key( key_source_timecode_ );
-							if( source_tc_prop.valid() )
+							//Relay all properties
+							pcos::key_vector keys = (*iter)->properties().get_keys();
+							const pcos::property_container &props = (*iter)->properties();
+							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+							for( ; cit != eit; ++cit )
 							{
-								pl::pcos::property prop( key_source_timecode_ );
-								result->properties( ).append( prop = source_tc_prop.value<int>() );
+								pcos::property pcos_prop = props.get_property_with_key(*cit);
+								if( !pcos_prop.valid() ) continue;
+								result->properties( ).append( pcos_prop );
 							}
 						}
 					}
@@ -612,7 +615,21 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						else if ( !audio && ( *iter )->get_audio( ) )
 							audio = ( *iter )->get_audio( );
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
+						{
+
+							//Relay all properties
+							pcos::key_vector keys = (*iter)->properties().get_keys();
+							const pcos::property_container &props = (*iter)->properties();
+							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+							for( ; cit != eit; ++cit )
+							{
+								pcos::property pcos_prop = props.get_property_with_key(*cit);
+								if( !pcos_prop.valid() ) continue;
+								result->properties( ).append( pcos_prop );
+							}
+                            
 							result->push( *iter );
+						}
 						if ( audio )
 							result->set_audio( audio );
 					}
