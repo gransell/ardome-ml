@@ -686,6 +686,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_profile_;
 		pl::pcos::property prop_instances_;
+		pl::pcos::property prop_enable_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_encoder_;
 		bool is_long_gop_;
@@ -699,6 +700,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
 			, prop_instances_( pl::pcos::key::from_string( "instances" ) )
+			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, decoder_( )
 			, gop_encoder_( )
 			, is_long_gop_( false )
@@ -711,6 +713,9 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			// Default to something. Should be overriden anyway.
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
 			properties( ).append( prop_instances_ = 4 );
+
+			// Enabled by default
+			properties( ).append( prop_enable_ = 1 );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
@@ -818,6 +823,12 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 
 		void do_fetch( frame_type_ptr &frame )
 		{
+			if ( prop_enable_.value<int>() == 0)
+			{
+				frame = fetch_from_slot( );
+				return;
+			}
+
 			int frameno = get_position( );
 		
 			if ( last_frame_ == 0 )
