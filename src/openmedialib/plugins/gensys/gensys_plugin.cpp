@@ -520,11 +520,9 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			acquire_values( );
 
 			// Acquire frame
-			if ( queue_.size( ) > 0 )
-			{
-				result = *( queue_.begin( ) );
-				queue_.pop_front( );
-			}
+			ARENFORCE_MSG( !queue_.empty(), "Attempting to fetch from depleted pusher input!" )( get_position() );
+			result = *( queue_.begin( ) );
+			queue_.pop_front( );
 			
 			last_frame_ = result->shallow( );
 		}
