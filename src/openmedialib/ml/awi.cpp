@@ -193,18 +193,44 @@ boost::int64_t awi_index_v2::bytes( )
 int awi_index_v2::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	int result = -1;
+
 	if ( eof_ && size >= bytes( ) )
 	{
-		result = frames_;
+		return frames_;
 	}
-	else if ( offsets_.size( ) )
+	else if ( offsets_.empty( ) )
 	{
-		std::map< boost::int64_t, awi_item >::iterator iter = offsets_.upper_bound( size );
-		if ( iter != offsets_.begin( ) ) iter --;
-		result = std::max< int >( ( *iter ).second.frame - 1, 0 );
+		return 0;
 	}
-	return result;
+	else
+	{
+		//Find the first item that has an offset that is larger than the current file size
+		std::map< boost::int64_t, awi_item >::iterator larger = offsets_.lower_bound( size );
+		if ( larger == offsets_.begin( ) )
+		{
+			//The offset of the first item is larger than the file size.
+			//No frames are available.
+			return 0;
+		}
+
+		//Move back to the previous item, which is guaranteed to
+		//have an offset smaller than the file size.
+		std::map< boost::int64_t, awi_item >::iterator prev = larger;
+		--prev;
+
+		if ( prev->first + prev->second.length > size )
+		{
+			//The item pointed to by prev is not fully available.
+			//We have to back one item further.
+			if ( prev == offsets_.begin( ) )
+				return 0;
+			else
+				--prev;
+		}
+
+		//prev now points to the last fully available item
+		return prev->second.frame + prev->second.frames;
+	}
 }
 
 // Indicates if the index is usable (if we're writing multiple media files in parallel with 
@@ -474,7 +500,8 @@ awi_generator_v2::awi_generator_v2( )
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )
-	, offset_( 0 )
+	, offset_( -1 )
+	, known_packet_length_( false )
 {
 	awi_header header;
 
@@ -529,7 +556,7 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = length;
+			known_packet_length_ = ( length > 0 );
 		}
 	}
 	else
@@ -752,19 +779,44 @@ boost::int64_t awi_index_v3::bytes( )
 int awi_index_v3::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	int result = -1;
 
 	if ( eof_ && size >= bytes( ) )
 	{
-		result = frames_;
+		return frames_;
 	}
-	else if ( offsets_.size( ) )
+	else if ( offsets_.empty( ) )
 	{
-		std::map< boost::int64_t, awi_item_v3 >::iterator iter = offsets_.upper_bound( size );
-		if ( iter != offsets_.begin( ) ) iter --;
-		result = std::max< int >( ( *iter ).second.frame - 1, 0 );
+		return 0;
 	}
-	return result;
+	else
+	{
+		//Find the first item that has an offset that is larger than the current file size
+		std::map< boost::int64_t, awi_item_v3 >::iterator larger = offsets_.lower_bound( size );
+		if ( larger == offsets_.begin( ) )
+		{
+			//The offset of the first item is larger than the file size.
+			//No frames are available.
+			return 0;
+		}
+
+		//Move back to the previous item, which is guaranteed to
+		//have an offset smaller than the file size.
+		std::map< boost::int64_t, awi_item_v3 >::iterator prev = larger;
+		--prev;
+		
+		if ( prev->first + prev->second.length > size )
+		{
+			//The item pointed to by prev is not fully available.
+			//We have to back one item further.
+			if ( prev == offsets_.begin( ) )
+				return 0;
+			else
+				--prev;
+		}
+
+		//prev now points to the last fully available item
+		return prev->second.frame + prev->second.frames;
+	}
 }
 
 // Indicates if the index is usable (if we're writing multiple media files in parallel with 
@@ -1236,7 +1288,7 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = length;
+			known_packet_length_ = ( length > 0 );
 		}
 	}
 	else
@@ -1463,18 +1515,44 @@ boost::int64_t awi_index_v4::bytes( )
 int awi_index_v4::calculate( boost::int64_t size )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	int result = -1;
+
 	if ( eof_ && size >= bytes( ) )
 	{
-		result = frames_;
+		return frames_;
 	}
-	else if ( offsets_.size( ) )
+	else if ( offsets_.empty( ) )
 	{
-		std::map< boost::int64_t, awi_item_v4 >::iterator iter = offsets_.upper_bound( size );
-		if ( iter != offsets_.begin( ) ) iter --;
-		result = std::max< int >( ( *iter ).second.frame - 1, 0 );
+		return 0;
 	}
-	return result;
+	else
+	{
+		//Find the first item that has an offset that is larger than the current file size
+		std::map< boost::int64_t, awi_item_v4 >::iterator larger = offsets_.lower_bound( size );
+		if ( larger == offsets_.begin( ) )
+		{
+			//The offset of the first item is larger than the file size.
+			//No frames are available.
+			return 0;
+		}
+
+		//Move back to the previous item, which is guaranteed to
+		//have an offset smaller than the file size.
+		std::map< boost::int64_t, awi_item_v4 >::iterator prev = larger;
+		--prev;
+
+		if ( prev->first + prev->second.length > size )
+		{
+			//The item pointed to by prev is not fully available.
+			//We have to back one item further.
+			if ( prev == offsets_.begin( ) )
+				return 0;
+			else
+				--prev;
+		}
+
+		//prev now points to the last fully available item
+		return prev->second.frame + prev->second.frames;
+	}
 }
 
 // Indicates if the index is usable (if we're writing multiple media files in parallel with 
@@ -1758,7 +1836,7 @@ awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete
 	, current_( items_.begin( ) )
 	, flushed_( 0 )
 	, position_( -1 )
-	, offset_( 0 )
+	, offset_( -1 )
 	, type_to_write_( type_to_write )
 	, complete_( complete )
 	, known_packet_length_( false )
@@ -1818,7 +1896,7 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, b
 			position_ = position;
 			offset_ = offset;
 			
-			known_packet_length_ = length;
+			known_packet_length_ = ( length > 0 );
 		}
 	}
 	else

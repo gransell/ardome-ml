@@ -1,0 +1,10 @@
+Import(['local_env'])
+
+local_env.packages( 'boost', 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'loki' )
+
+test_sources = [ 'src/main.cpp', 'src/test_awi.cpp' ]
+
+object = local_env.console_program( 'openmedialib_unit_tests', test_sources )
+local_env.release( object )
+
+Return( 'object' )
