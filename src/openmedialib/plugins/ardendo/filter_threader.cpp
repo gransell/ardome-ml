@@ -669,7 +669,14 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( cond_.timed_wait( lck , boost::get_system_time() + boost::posix_time::seconds(1) ) )
 				{
 					input = fetch_slot( 0 );
+
+					//Since sync_thread() temporarily releases the lock,
+					//we might have changed state during the call to it,
+					//so we must keep track of state before and after.
+					int prev_state = state_;
 					sync_thread( lck, input );
+					if ( state_ != prev_state ) accept_needed = true;
+
 					position = get_position( );
 					speed = speed_;
 					max_size = prop_queue_.value< int >( );
