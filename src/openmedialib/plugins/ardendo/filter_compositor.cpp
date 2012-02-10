@@ -396,6 +396,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
 			, prop_events_( pcos::key::from_string( "events" ) )
 			, prop_update_state_( pcos::key::from_string( "update_state" ) )
+			, prop_ignore_pf_( pcos::key::from_string( "ignore_pf" ) )
 			, obs_update_state_( new fn_observer< filter_compositor >( const_compositor( this ), &filter_compositor::update_state ) )
 			, obs_slots_( new fn_observer< filter_compositor >( const_compositor( this ), &filter_compositor::update_slots ) )
 			, pusher_0_( )
@@ -412,6 +413,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			properties( ).append( prop_deferred_ = 0 );
 			properties( ).append( prop_events_ = std::vector< int >( ) );
 			properties( ).append( prop_update_state_ = 0 );
+			properties( ).append( prop_ignore_pf_ = 0 );
 
 			prop_update_state_.attach( obs_update_state_ );
 			prop_slots_.attach( obs_slots_ );
@@ -541,7 +543,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 !frame->get_alpha( ) )
 					{
 						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
-						if ( frame->pf() == result->pf() )
+						if ( frame->pf() == result->pf() || prop_ignore_pf_.value< int >( ) )
 							result = frame;
 						else
 							result = ml::frame_convert( frame, result->pf( ) );
@@ -750,6 +752,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		pcos::property prop_deferred_;
 		pcos::property prop_events_;
 		pcos::property prop_update_state_;
+		pcos::property prop_ignore_pf_;
 		boost::shared_ptr< pl::pcos::observer > obs_update_state_;
 		boost::shared_ptr< pl::pcos::observer > obs_slots_;
 		ml::input_type_ptr pusher_0_;
