@@ -32,7 +32,7 @@ boost::shared_ptr< T > channel_extract_count( const audio_type_ptr &input, int c
 		{
 			if (n>=channels)
 			{
-				*dst ++ = T::sample_type(0);
+				*dst ++ = typename T::sample_type(0);
 			}
 			else
 			{
