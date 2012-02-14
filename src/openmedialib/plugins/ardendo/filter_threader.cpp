@@ -689,9 +689,17 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					sync_thread( lck, input );
 				}
 
-				if ( state_ != prev_state )
+				if ( !( prev_state & thread_paused ) && ( state_ & thread_paused ) )
 				{
-					//State changed while we were unlocked
+					//State changed to paused while we were unlocked.
+					//Acknowledge state change.
+					state_ |= thread_accepted;
+					cond_.notify_all();
+				}
+				else if ( ( prev_state & thread_paused ) && !( state_ & thread_paused ) )
+				{
+					//State changed to paused while we were unlocked.
+					//Break out of loop, and acknowledge state change.
 					accept_needed = true;
 					refresh = false;
 				}
@@ -758,6 +766,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 			else
 			{
+				scoped_lock input_lock( input_mutex_ ); 
 				input->seek( position );
 				frame = input->fetch( );
 			}
