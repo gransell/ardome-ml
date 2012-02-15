@@ -1229,6 +1229,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 			if ( video_codec_ == NULL || avcodec_open( codec_context, video_codec_ ) < 0 )
 				prop_video_index_ = -1;
+			else
+				avcodec_thread_init( codec_context, std::max< int >( 1, boost::thread::hardware_concurrency( ) / 2 ) );
 		}
 
 		void close_video_codec( )
