@@ -54,10 +54,22 @@ IL_DECLSPEC image_type_ptr merge_alpha( const image_type_ptr &im, const image_ty
 
 enum IL_DECLSPEC rescale_filter { POINT_SAMPLING, BILINEAR_SAMPLING, BICUBIC_SAMPLING };
 
+//Rescales an image to a new size.
+//N.B. If the im parameter points to an interlaced image, the height of the returned image will be
+//rounded up to the nearest number evenly divisable by 2.
 IL_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_d = 1, rescale_filter filter = POINT_SAMPLING );
 
+//Image plane rescaling function signature.
+//Reads plane p from the image im, scales it according to the dimensions of plane p in the image
+//new_im and writes the result to new_im.
+//Parameters:
+//new_im:   The destination image.
+//im:       The source image.
+//p:        The index of the image plane to scale.
 typedef void ( *rescale_plane_type )( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
 
+//Call this function to register the image plane scaler function to be used by openimagelib.
+//For information on the function parameter, refer to the the comments on rescale_plane_type above.
 IL_DECLSPEC void register_rescale_plane( rescale_plane_type function, rescale_filter filter = BILINEAR_SAMPLING );
 
 template<typename T, template<class, class> class structure, template<class> class storage>

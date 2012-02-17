@@ -2703,9 +2703,17 @@ static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr&
 
 image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, int new_d, int bs, rescale_filter filter )
 {
-	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h );
+	//Make sure that the height is evenly divisible by two if the image is
+	//interlaced, since some scalers require it.
+	int extra_height = 0;
+	if( im->field_order( ) != progressive && new_h % 2 != 0 )
+		extra_height = 1;
+
+	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h + extra_height );
 	if( !new_im )
 		return im;
+
+	new_im->set_field_order( im->field_order( ) );
 
 	for ( int p = 0; p < im->plane_count( ); p ++ )
 	{
