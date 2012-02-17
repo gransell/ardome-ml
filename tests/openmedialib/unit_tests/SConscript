@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'boost', 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'loki', 'ffmpeg' )
+local_env.packages( 'boost', 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'loki', 'libavformat' )
 
 test_sources = [ 'src/main.cpp', 'src/test_awi.cpp' ]
 
