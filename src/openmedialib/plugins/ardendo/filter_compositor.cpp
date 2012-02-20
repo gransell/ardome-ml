@@ -80,6 +80,22 @@ template < typename T > T get_prop( ml::frame_type_ptr frame, pl::pcos::key key,
 	return value;
 }
 
+//Returns whether or not the given property key is one that is
+//"consumed" by the compositor filter (i.e. used to control the
+//actual compositing), and thus should not be relayed to the
+//resulting frame. This is important if there is another compositor
+//further downstream in the graph to avoid applying the same
+//compositing there as well.
+bool is_consumed_property( const pl::pcos::key &k )
+{
+	return (
+		k == key_x_ || k == key_y_ ||
+		k == key_w_ || k == key_h_ ||
+		k == key_mix_ || k == key_mode_ ||
+		k == key_is_background_ || k == key_background_
+	);
+}
+
 class priority_node
 {
 	public:
@@ -587,9 +603,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
 							for( ; cit != eit; ++cit )
 							{
-								pcos::property pcos_prop = props.get_property_with_key(*cit);
-								if( !pcos_prop.valid() ) continue;
-								result->properties( ).append( pcos_prop );
+								if( !is_consumed_property( *cit ) )
+								{
+									pcos::property pcos_prop = props.get_property_with_key(*cit);
+									if( !pcos_prop.valid() ) continue;
+									result->properties( ).append( pcos_prop );
+								}
 							}
 						}
 					}
@@ -608,9 +627,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
 							for( ; cit != eit; ++cit )
 							{
-								pcos::property pcos_prop = props.get_property_with_key(*cit);
-								if( !pcos_prop.valid() ) continue;
-								result->properties( ).append( pcos_prop );
+								if( !is_consumed_property( *cit ) )
+								{
+									pcos::property pcos_prop = props.get_property_with_key(*cit);
+									if( !pcos_prop.valid() ) continue;
+									result->properties( ).append( pcos_prop );
+								}
 							}
                             
 							result->push( *iter );
