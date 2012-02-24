@@ -39,6 +39,8 @@ public:
 	typedef std::multimap<key_type, plugin_item> container;
 #endif
 
+	typedef std::vector< plugin_item > list;
+
 private:
 	static registry* revive_if_dead( )
 	{
@@ -107,6 +109,12 @@ public:
 	const container& get_custom_db( ) const
 	{ return custom_db_; }
 
+	const list &auto_load( ) const
+	{ return auto_load_; }
+
+	void auto_clear( )
+	{ auto_load_.erase( auto_load_.begin( ), auto_load_.end( ) ); }
+
 private:
 	explicit registry( const string& lookup_path = "" );
 	~registry( );
@@ -116,6 +124,7 @@ private:
 private:
 	// Store std and custom items separatly so that they can be searched independently
 	container std_db_, custom_db_;
+	list auto_load_;
 	static registry* instance_;
 	static bool destroyed_, was_destroyed_;
 };

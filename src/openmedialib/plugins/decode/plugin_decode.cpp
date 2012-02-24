@@ -205,6 +205,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 					filter->seek( other->get_position( ) );
 					other = filter->fetch( );
 
+					ARENFORCE( !other->in_error() );
+
 					//Empty pusher in case filter didn't read from it due to caching
 					pusher->fetch( );
 				}
@@ -588,7 +590,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 				//Set last_frame_ here, since get_frames() below needs it to be able
 				//to estimate the GOP size.
-				last_frame_ = frame;
+				last_frame_ = frame->shallow();
 			}
 
 			int frameno = get_position( );
@@ -606,7 +608,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
 
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		virtual int get_frames( ) const {
@@ -684,6 +686,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 		pl::pcos::property prop_filter_;
 		pl::pcos::property prop_profile_;
 		pl::pcos::property prop_instances_;
+		pl::pcos::property prop_enable_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_encoder_;
 		bool is_long_gop_;
@@ -697,6 +700,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
 			, prop_instances_( pl::pcos::key::from_string( "instances" ) )
+			, prop_enable_( pl::pcos::key::from_string( "enable" ) )
 			, decoder_( )
 			, gop_encoder_( )
 			, is_long_gop_( false )
@@ -709,6 +713,9 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			// Default to something. Should be overriden anyway.
 			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
 			properties( ).append( prop_instances_ = 4 );
+
+			// Enabled by default
+			properties( ).append( prop_enable_ = 1 );
 			
 			the_shared_filter_pool::Instance( ).add_pool( this );
 		}
@@ -816,6 +823,12 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 
 		void do_fetch( frame_type_ptr &frame )
 		{
+			if ( prop_enable_.value<int>() == 0)
+			{
+				frame = fetch_from_slot( );
+				return;
+			}
+
 			int frameno = get_position( );
 		
 			if ( last_frame_ == 0 )
@@ -826,7 +839,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 
 			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 			}
 			else if ( gop_encoder_ )
 			{
@@ -854,7 +867,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			}
 		
 			// Keep a reference to the last frame in case of a duplicated request
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		void initialize_encoder_mapping( )
@@ -1147,7 +1160,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		{
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 			}
 			else
 			{
@@ -1158,7 +1171,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 				}
 			}
 
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 		}
 
 		void sync_frames( )
@@ -1297,12 +1310,13 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 			{
-				frame = last_frame_;
+				frame = last_frame_->shallow();
 				return;
 			}
 			else if ( !thread_safe_ )
 			{
-				last_frame_ = frame = fetch_from_slot( );
+				frame = fetch_from_slot( );
+				last_frame_ = frame->shallow();
 				return;
 			}
 
@@ -1331,7 +1345,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 			}
 
 			// Keep a reference to the last frame in case of a duplicated request
-			last_frame_ = frame;
+			last_frame_ = frame->shallow();
 			expected_ = get_position( ) + incr_;
 		}
 };

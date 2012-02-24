@@ -141,7 +141,7 @@ elif local_env['PLATFORM'] == 'win32' :
 	
 	pickled_wf.close( )
 
-	wrapper_files[ 'source_files' ].extend( ['src/c_sharp/AMLConversionFunctions.cpp'] )
+	wrapper_files[ 'source_files' ].extend( ['src/c_sharp/AMLConversionFunctions.cpp', 'src/c_sharp/OWLAnyAMLExtensions.cpp'] )
 	wrapper_files[ 'source_files' ].extend( ['src/msw/aml_wrappers.rc'] )
 	
 	build_mode_str = 'release'
@@ -151,6 +151,7 @@ elif local_env['PLATFORM'] == 'win32' :
 	obj = local_env.dot_net_library( 'AML', sources = wrapper_files['source_files'], 
 									headers = wrapper_files['header_files'], 
 									dot_net_assemblies = [ 
+										os.path.join(os.environ['PROGRAMFILES'], 'Reference Assemblies', 'Microsoft', 'Framework', 'v3.5', 'System.Core.dll' ), 
 										os.path.join(os.environ['PROGRAMFILES'], 'Reference Assemblies', 'Microsoft', 'Framework', 'v3.0', 'WindowsBase.dll' ), 
 										os.path.join( local_env.root, 'bcomp', 'owl', build_mode_str, 'bin', 'OWL.dll' ),  
 									],

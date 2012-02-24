@@ -80,6 +80,22 @@ template < typename T > T get_prop( ml::frame_type_ptr frame, pl::pcos::key key,
 	return value;
 }
 
+//Returns whether or not the given property key is one that is
+//"consumed" by the compositor filter (i.e. used to control the
+//actual compositing), and thus should not be relayed to the
+//resulting frame. This is important if there is another compositor
+//further downstream in the graph to avoid applying the same
+//compositing there as well.
+bool is_consumed_property( const pl::pcos::key &k )
+{
+	return (
+		k == key_x_ || k == key_y_ ||
+		k == key_w_ || k == key_h_ ||
+		k == key_mix_ || k == key_mode_ ||
+		k == key_is_background_ || k == key_background_
+	);
+}
+
 class priority_node
 {
 	public:
@@ -396,6 +412,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
 			, prop_events_( pcos::key::from_string( "events" ) )
 			, prop_update_state_( pcos::key::from_string( "update_state" ) )
+			, prop_ignore_pf_( pcos::key::from_string( "ignore_pf" ) )
 			, obs_update_state_( new fn_observer< filter_compositor >( const_compositor( this ), &filter_compositor::update_state ) )
 			, obs_slots_( new fn_observer< filter_compositor >( const_compositor( this ), &filter_compositor::update_slots ) )
 			, pusher_0_( )
@@ -412,6 +429,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			properties( ).append( prop_deferred_ = 0 );
 			properties( ).append( prop_events_ = std::vector< int >( ) );
 			properties( ).append( prop_update_state_ = 0 );
+			properties( ).append( prop_ignore_pf_ = 0 );
 
 			prop_update_state_.attach( obs_update_state_ );
 			prop_slots_.attach( obs_slots_ );
@@ -440,24 +458,6 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			composite_->properties( ).append( rh = pl::wstring( L"@@h:1" ) );
 			composite_->properties( ).append( mix = pl::wstring( L"@@mix:1" ) );
 			composite_->properties( ).append( mode = pl::wstring( L"@@mode:fill" ) );
-
-			// Attempt to load the optional mc_scaler plugin
-			if ( ml::has_plugin_for( L"mc_scaler?", L"input" ) )
-			{
-				ml::input_type_ptr mc_scaler = ml::create_input( L"mc_scaler?" );
-				if ( mc_scaler )
-				{
-					composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = 
-						mc_scaler->properties( ).get_property_with_key( key_frame_rescale_cb_ ).value< boost::uint64_t >( );
-					composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
-						mc_scaler->properties( ).get_property_with_key( key_image_rescale_cb_ ).value< boost::uint64_t >( );
-				}
-			}
-			else
-			{
-				composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( frame_rescale );
-				composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
-			}
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -559,19 +559,17 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 !frame->get_alpha( ) )
 					{
 						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
-						result = frames[ 0 ];
+						if ( frame->pf() == result->pf() || prop_ignore_pf_.value< int >( ) )
+							result = frame;
+						else
+							result = ml::frame_convert( frame, result->pf( ) );
+						
 						frames.erase( frames.begin( ) );
 					}
 					else
 					{
 						ARLOG_DEBUG7( "Foreground mismatch %d" )( get_position( ) );
 					}
-				}
-
-				if ( prop_mc_.value< int >( ) == 0 )
-				{
-					composite_->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( 0 );
-					composite_->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( 0 );
 				}
 
 				// Provide basic mixing capabilities in deferred mode
@@ -599,12 +597,18 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							composite_->seek( get_position( ) );
 							result = composite_->fetch( );
 
-							//Relay the source timecode if present
-							pl::pcos::property source_tc_prop = ( *iter )->properties( ).get_property_with_key( key_source_timecode_ );
-							if( source_tc_prop.valid() )
+							//Relay all properties
+							pcos::key_vector keys = (*iter)->properties().get_keys();
+							const pcos::property_container &props = (*iter)->properties();
+							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+							for( ; cit != eit; ++cit )
 							{
-								pl::pcos::property prop( key_source_timecode_ );
-								result->properties( ).append( prop = source_tc_prop.value<int>() );
+								if( !is_consumed_property( *cit ) )
+								{
+									pcos::property pcos_prop = props.get_property_with_key(*cit);
+									if( !pcos_prop.valid() ) continue;
+									result->properties( ).append( pcos_prop );
+								}
 							}
 						}
 					}
@@ -615,7 +619,24 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						else if ( !audio && ( *iter )->get_audio( ) )
 							audio = ( *iter )->get_audio( );
 						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
+						{
+
+							//Relay all properties
+							pcos::key_vector keys = (*iter)->properties().get_keys();
+							const pcos::property_container &props = (*iter)->properties();
+							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+							for( ; cit != eit; ++cit )
+							{
+								if( !is_consumed_property( *cit ) )
+								{
+									pcos::property pcos_prop = props.get_property_with_key(*cit);
+									if( !pcos_prop.valid() ) continue;
+									result->properties( ).append( pcos_prop );
+								}
+							}
+                            
 							result->push( *iter );
+						}
 						if ( audio )
 							result->set_audio( audio );
 					}
@@ -753,6 +774,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		pcos::property prop_deferred_;
 		pcos::property prop_events_;
 		pcos::property prop_update_state_;
+		pcos::property prop_ignore_pf_;
 		boost::shared_ptr< pl::pcos::observer > obs_update_state_;
 		boost::shared_ptr< pl::pcos::observer > obs_slots_;
 		ml::input_type_ptr pusher_0_;

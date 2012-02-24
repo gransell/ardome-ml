@@ -14,18 +14,14 @@
 
 #include <map>
 
+#include <xercesc/sax2/Attributes.hpp>
+XERCES_CPP_NAMESPACE_USE
+
 #ifndef BOOST_FILESYSTEM_DYN_LINK 
     #define BOOST_FILESYSTEM_DYN_LINK 
 #endif
 
 #include <boost/filesystem/path.hpp>
-
-// forward declarations
-#ifdef WIN32
-struct MSXML2::ISAXAttributes;
-#else
-#include <libxml/parser.h>
-#endif // WIN32
 
 #include <openpluginlib/pl/openplugin.hpp>
 #include <openpluginlib/pl/string.hpp>
@@ -68,30 +64,32 @@ public:
 	void set_current_tag( const wstring& tag )
 	{ tag_ = tag; }
 
-	path get_branch_path( ) const;
-	void set_branch_path( const path& branch_path );
+	path get_opl_path( ) const;
+	void set_opl_path( const path& opl_path );
+
+	bool get_auto_load( ) const
+	{ return auto_load_; }
+
+	void set_auto_load( bool auto_load )
+	{ auto_load_ = auto_load; }
 
 public:
-#ifdef WIN32
-	void set_attrs( MSXML2::ISAXAttributes __RPC_FAR* attrs );
-#else
-	void set_attrs( xmlChar** attrs );
-#endif
 
-public:
-#ifdef WIN32
-	MSXML2::ISAXAttributes __RPC_FAR* attrs_;
-#else
-	xmlChar** attrs_;
-#endif
+	void set_attrs(const Attributes *att)
+	{
+		attrs_ = att;
+	}
+
+	const Attributes *attrs_;
 
 	container plugins;
 
 private:
 	opl_dispatcher_container dispatch_;
 	
-	path branch_path_;
+	path opl_path_;
 	wstring libname_, tag_;
+	bool auto_load_;
 };
 
 bool default_opl_parser_action( opl_parser_action& pa );

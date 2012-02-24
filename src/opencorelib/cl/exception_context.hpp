@@ -139,6 +139,9 @@ namespace olib
 
 			/// Prints this error in human readable format for display purposes.
 			t_ostream& pretty_print( t_ostream& os, print::option print_empty_fields) const;
+			
+			/// Prints this error in human readable format for display purposes.
+			t_string pretty_print(print::option print_empty_fields) const;
 
 			/// Prints this error in human readable format for display purposes.
 			t_ostream& pretty_print_one_line( t_ostream& os, print::option print_empty_fields) const;

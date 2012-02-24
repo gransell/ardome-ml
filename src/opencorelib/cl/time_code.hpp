@@ -59,6 +59,9 @@ namespace olib
                 check_valid();
             }
 
+            time_code( const t_string &inputstr ) { from_string(inputstr); }
+            time_code( const TCHAR *inputcstr ) { from_string(inputcstr);	}
+
             boost::uint32_t operator[]( int idx )
             {
                 ARENFORCE( idx >= 0 && idx < 4 );
@@ -103,6 +106,10 @@ namespace olib
             /// like so: "HH:MM:SS;FF". If it does not use drop frames then the format is
             /// "HH:MM:SS:FF".
             t_string to_string() const;
+
+            /// Set a the time code object with the contents of a string. The format expected 
+            /// is described above to_string()
+            void from_string(const t_string &timestr);
 
             /// Stream the timecode as a string to the specified stream. If the timecode
             /// uses drop frame the format will use a semicolon instead of a colon between 

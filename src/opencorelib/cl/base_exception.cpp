@@ -22,7 +22,7 @@ namespace olib
 
 		const char* base_exception::what( ) const throw( )
 		{
-			m_std_except_message = str_util::to_string(m_context.as_xml());
+			m_std_except_message = str_util::to_string(m_context.pretty_print(print::output_default));
 			return m_std_except_message.c_str();
 		}
 

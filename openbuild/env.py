@@ -25,6 +25,12 @@ import types
 class Environment( BaseEnvironment ):
 
 	"""Base environment for Ardendo AML/AMF and related builds."""
+
+	#Check SCons version. Openbuild does not currently work with SCons versions newer than 1.2.x
+	#on Windows platforms.
+	scons_version = SCons.__version__
+	if sys.platform == 'win32' and not scons_version.startswith( '1.2' ) :
+		raise Exception( "Error: SCons version is " + scons_version + " but 1.2.x is required." )
 	
 	vs_builder = None 
 	xcode_builder = None
@@ -433,7 +439,13 @@ class Environment( BaseEnvironment ):
 			build_dir = os.path.join( self.root, local_env.subst( local_env[ 'build_prefix' ] ), 'tmp', path )
 			if not os.path.exists( build_dir ): os.makedirs( build_dir )
 
-			result[ build_type ] = local_env.SConscript( [ os.path.join( path, 'SConscript' ) ], 
+			#Workaround for terrible error handling in SCons. A missing SConscript file only produces a warning,
+			#leaving the build to continue and most likely run into confusing errors later on.
+			sconscript_path = os.path.join( path, 'SConscript' )
+			if not os.path.exists( sconscript_path ):
+				raise Exception, "The source directory \"%s\" was referenced in the SConstruct file, but there was no SConscript file in it" % path
+
+			result[ build_type ] = local_env.SConscript( [ sconscript_path ], 
 															variant_dir=build_dir, 
 															duplicate=0, exports=[ 'local_env' ] )
 

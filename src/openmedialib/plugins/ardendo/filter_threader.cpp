@@ -242,7 +242,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( last_frame_ && last_frame_->get_position( ) == position )
 					{
 						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Last frame repeat: %1%" )( position );
-						result = last_frame_;
+						result = last_frame_->shallow( );
 					}
 					else
 					{
@@ -354,7 +354,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 								}
 								else if ( ! cond_.timed_wait( lck, boost::get_system_time() + ms ) )
 								{
-									result = last_frame_;
+									result = last_frame_->shallow( );
 									blank_audio = true;
 									break;
 								}
@@ -362,12 +362,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						}
 
 						if ( result == 0 )
-							result = last_frame_;
+							result = last_frame_->shallow( );
 					}
 				}
 
 				// Keep a reference to the frame in case of reuse
-				last_frame_ = result;
+				last_frame_ = result->shallow( );
 
 				if( !result ) {
 					result = ml::frame_type_ptr( new ml::frame_type() );
@@ -767,12 +767,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( is_running( lck ) )
 					{
 						ARLOG_DEBUG7( "Adding %1%" )( frame->get_position( ) );
-	
-						if ( frame->get_image( ) )
-							frame->get_image( )->set_writable( false );
-	
-						if ( frame->get_alpha( ) )
-							frame->get_alpha( )->set_writable( false );
+
+						{
+							lck.unlock( );
+							ARGUARD( boost::bind( &scoped_lock::lock, &lck ) );
+							if ( frame->get_image( ) )
+								frame->get_image( )->set_writable( false );
+
+							if ( frame->get_alpha( ) )
+								frame->get_alpha( )->set_writable( false );
+						}
 	
 						cache_[ frame->get_position( ) ] = frame;
 						cond_.notify_all( );

@@ -187,7 +187,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			if ( frame )
 				img = frame->get_image( );
 			else
-				frame = last_frame_;
+				frame = last_frame_->shallow( );
 
 			// Use the previously converted image if current frame has no image or we're repeating
 			if ( img == 0 )
@@ -607,7 +607,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			if( frame )
 				frame_duration_ = static_cast<int>((1.0 / frame->fps()) * 1000);
 
-        	bool result = frame && frame->get_audio( );
+			bool result = frame && frame->get_audio( ) && ( frame->get_audio( )->channels( ) > 0 );
 			if ( result )
 			{
 				frame->get_audio( )->set_position( frame->get_position( ) );

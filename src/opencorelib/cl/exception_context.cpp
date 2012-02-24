@@ -339,11 +339,21 @@ namespace olib
 		t_ostream& exception_context::pretty_print( t_ostream& os, print::option p_option) const
 		{
 			bool out_empty = p_option == print::output_empty_fields ? true : false;
-			using std::endl;
+			
+            if((p_option & print::output_message ))
+            {
+                os << _CT("Message: ") << m_message << _CT("\n\n");
+            }
+
+            if((p_option & print::output_expression) && (!m_expression.empty() || out_empty) )
+            {
+                os << _CT("Tested expression: ") << m_expression << _CT("\n\n");
+            }
+
             if( (p_option & print::output_file_and_line ) )
             {
 			    os << _CT("Context :: \n\t_file:\t\t") << m_file_name
-                   << _CT("\n\t_line:\t\t") << m_line_nr << endl;
+                   << _CT("\n\t_line:\t\t") << m_line_nr << _CT("\n");
             }
 
             if( (p_option & print::output_source ) ) 
@@ -352,44 +362,44 @@ namespace olib
 #ifdef OLIB_ON_WINDOWS
 				os << _CT("::") << m_target_site;
 #endif
-				os << endl;
-            }
-
-            if((p_option & print::output_expression) && (!m_expression.empty() || out_empty) )
-            {
-                os << endl << _CT("Tested expression: ") << m_expression << endl;
-            }
-			
-            if((p_option & print::output_message ))
-            {
-                os << _CT("Message: ") << m_message << endl ;
+				os << _CT("\n\n");
             }
 			
 			if( (p_option & print::output_machine_error ) && (!m_error_reason.empty() || out_empty) ) 
             {
-                os << _CT("Machine Readable Error: ") << m_error_reason << endl;
+                os << _CT("Machine Readable Error: ") << m_error_reason << _CT("\n\n");
             }
             
             #ifdef OLIB_ON_WINDOWS
 			if( (p_option & print::output_hr ) && (m_hr != 0 || out_empty )) 
             {
                 os << _CT("HRESULT: ") << m_hr << _CT(", ")
-                   << utilities::hresult_to_string(m_hr) << endl << endl;
+                   << utilities::hresult_to_string(m_hr) << _CT("\n\n");
             }
             #endif
 			
             if( (p_option & print::output_name_values) && (!m_name_value_vec.empty() || out_empty) ) 
             {
-                os << _CT("Recorded name value pairs: ") << endl << endl;
+                os << _CT("Recorded name value pairs: ") << _CT("\n");
                 std::for_each(m_name_value_vec.begin(), m_name_value_vec.end(), 
                     boost::bind(&exception_context::pretty_print_value_pair, _1, boost::ref(os)));
+				os << _CT("\n\n");
             }
 		
 			if( (p_option & print::output_callstack )&& (!m_call_stack.empty() || out_empty) ) 
             {
-                os << endl << endl << _CT("Callstack: ") << endl << m_call_stack;
+                os << _CT("Callstack: ") << _CT("\n") << m_call_stack;
             }
+
+			os.flush();
 			return os;
+		}
+        
+		t_string exception_context::pretty_print(print::option p_option) const
+		{
+			t_stringstream l_ss;
+			pretty_print(l_ss, p_option);
+			return l_ss.str();
 		}
 
 		t_ostream& exception_context::pretty_print_one_line( t_ostream& os, print::option p_option) const

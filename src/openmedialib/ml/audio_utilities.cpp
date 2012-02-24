@@ -8,6 +8,7 @@
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/audio_channel_convert.hpp>
 #include <openmedialib/ml/audio_channel_extract.hpp>
+#include <openmedialib/ml/audio_channel_extract_count.hpp>
 #include <openmedialib/ml/audio_mix_matrix.hpp>
 #include <openmedialib/ml/audio_pitch.hpp>
 #include <openmedialib/ml/audio_place.hpp>
@@ -160,6 +161,28 @@ ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &audio, int cha
 
 	return result;
 }
+
+ML_DECLSPEC audio_type_ptr channel_extract_count( const audio_type_ptr &audio, int count )
+{
+	audio_type_ptr result;
+
+	if ( audio )
+	{
+		if ( audio->id( ) == pcm8_id )
+			result = channel_extract_count< pcm8 >( audio, count );
+		else if ( audio->id( ) == pcm16_id )
+			result = channel_extract_count< pcm16 >( audio, count );
+		else if ( audio->id( ) == pcm24_id )
+			result = channel_extract_count< pcm24 >( audio, count );
+		else if ( audio->id( ) == pcm32_id )
+			result = channel_extract_count< pcm32 >( audio, count );
+		else if ( audio->id( ) == float_id )
+			result = channel_extract_count< floats >( audio, count );
+	}
+
+	return result;
+}
+
 
 // Convenience function to change the pitch of audio object which changing sample type
 ML_DECLSPEC audio_type_ptr pitch( const audio_type_ptr &audio, int required )

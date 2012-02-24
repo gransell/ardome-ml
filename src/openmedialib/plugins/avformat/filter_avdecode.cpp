@@ -57,17 +57,17 @@ static const pl::pcos::key key_fixed_sar_ = pl::pcos::key::from_string( "fixed_s
 
 static bool is_dv( const std::string &codec )
 {
-	return codec == "dv" || codec == "dv25" || codec == "dv50" || codec == "dvcprohd_1080i";
+	return boost::algorithm::ends_with( codec,  "dv" ) || codec == "dv25" || codec == "dv50" || codec == "dvcprohd_1080i";
 }
 
 static bool is_mpeg2( const std::string &codec )
 {
-	return codec == "mpeg2" || codec == "mpeg2/mpeg2hd_1080i";
+	return boost::algorithm::ends_with( codec, "mpeg2" ) || codec == "mpeg2/mpeg2hd_1080i";
 }
 
 static bool is_imx( const std::string &codec )
 {
-	return codec == "mpeg2/30" || codec == "mpeg2/50";
+	return boost::algorithm::ends_with( codec, "imx" );
 }
 
 boost::recursive_mutex avformat_video::avcodec_open_lock_; 
@@ -1006,13 +1006,13 @@ class avformat_encode_filter : public filter_simple
 					}
 
 					result->set_stream( video_streamer_ );
-					last_frame_ = result;
-					result = result->shallow( );
+					last_frame_ = result->shallow( );
+					result = result->shallow( );	//TODO perhaps not needed
 					video_streamer_->next( );
 				}
 				else
 				{
-					result = last_frame_;
+					result = last_frame_->shallow( );
 				}
 			}
 			else

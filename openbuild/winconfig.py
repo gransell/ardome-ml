@@ -23,8 +23,17 @@ class WinConfig :
 		"""Walk the bcomp directory to pick out all the .wc files"""
 		flags = { }
 		shared = os.path.join( __file__.rsplit( '/', 1 )[ 0 ], 'pkgconfig' )
-		for repo in [ os.path.join( 'pkgconfig', 'win32' ), os.path.join( 'bcomp' ) ]  :
-			for r, d, files in os.walk( os.path.join( env.root, repo ) ):
+
+		self.find_wc_file( env, flags, os.path.join( 'pkgconfig', 'win32' ), None )
+
+		#Only accept .wc files in winconfig directories when searching in bcomp/
+		self.find_wc_file( env, flags, os.path.join( 'bcomp' ), 'winconfig' )
+
+		return flags
+	
+	def find_wc_file( self, env, flags, dir_to_search, required_parent_dir ):
+		for r, d, files in os.walk( os.path.join( env.root, dir_to_search ) ):
+			if required_parent_dir is None or os.path.split(r)[-1] == required_parent_dir:
 				for f in files:
 					if f.endswith( '.wc' ):
 						pkg = f.replace( '.wc', '' )
@@ -32,7 +41,6 @@ class WinConfig :
 						type = prefix.split( os.sep )[-1]
 						if type in [ 'debug', 'release'] : pkg += '_' + type
 						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
-		return flags
 		
 	def locate_package( self, env, package_name ) :
 		# return prefix and file ...

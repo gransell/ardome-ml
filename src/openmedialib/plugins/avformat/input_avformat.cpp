@@ -76,6 +76,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, mime_type_( mime_type )
 			, frames_( 0 )
 			, is_seekable_( true )
+			, eof_ ( false )
 			, first_video_frame_( true )
 			, first_video_found_( 0 )
 			, first_audio_frame_( true )
@@ -204,6 +205,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const 
 		{
+			if (!is_seekable_ && !eof_) {
+				return INT_MAX;
+			}
 			return frames_; 
 		}
 
@@ -311,29 +315,31 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Since we may need to reopen the file, we'll store the modified version now
 			resource_ = resource;
 
-			// Try to obtain the index specified
-			if ( !prop_gen_index_.value< int >( ) )
-			{
-				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
-				if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
-				else
-					indexer_item_ = ml::indexer_request( resource, index_entry_type );
-
-				if ( indexer_item_ && indexer_item_->index( ) )
-					aml_index_ = indexer_item_->index( );
-				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					return false;
-			}
-			else if ( url_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0 )
-			{
-				prop_genpts_ = 1;
-				is_seekable_ = false;
-				prop_audio_index_ = -1;
-			}
-
 			// Attempt to open the resource
 			int error = av_open_input_file( &context_, pl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
+
+            if (error == 0 && !url_is_streamed( context_->pb )) {
+                // Try to obtain the index specified
+                if ( !prop_gen_index_.value< int >( ))
+                {
+                    boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
+                    if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
+                        indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
+                    else
+                        indexer_item_ = ml::indexer_request( resource, index_entry_type );
+
+                    if ( indexer_item_ && indexer_item_->index( ) )
+                        aml_index_ = indexer_item_->index( );
+                    else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
+                        return false;
+                }
+                else if ( url_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0 )
+                {
+                    prop_genpts_ = 1;
+                    is_seekable_ = false;
+                    prop_audio_index_ = -1;
+                }
+            }
 
 			// Check for streaming
 			if ( error == 0 && context_->pb && url_is_streamed( context_->pb ) )
@@ -347,6 +353,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				error = av_find_stream_info( context_ ) < 0;
+				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+					error = true;
 			}
 			
 			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
@@ -518,7 +526,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				error = av_read_frame( context_, &pkt_ );
 				if ( error < 0)
 				{
-					ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
+					if (url_feof(context_->pb)) {
+						ARLOG_ERR( "Got EOF at position %1%" )( get_position( ) );
+						eof_ = true; //Mark eof to let get_frames start returning the correct number of frames
+					} else {
+						ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2% real error = %3% eof = %4%" )( get_position( ) )( error ) ( url_ferror(context_->pb))(url_feof(context_->pb));
+
+					}
 					break;
 				}
 				if ( is_video_stream( pkt_.stream_index ) )
@@ -600,10 +614,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				expected_ ++;
 			else if ( exact_image || exact_audio )
 				expected_ ++;
-
-			if ( aml_index_ == 0 && ( expected_ >= frames_ && error >= 0 && url_ftell( context_->pb ) != context_->file_size ) )
-				if( std::string( context_->iformat->name ) != "image2" )
-					frames_ = expected_ + 1;
 
 			if ( prop_gen_index_.value< int >( ) && error < 0 )
 			{
@@ -1056,7 +1066,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( format == "divx" )
 					result = false;
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" )
-					result = false;
+					result = true;
 			}
 			else if ( result && has_audio( ) )
 			{
@@ -1219,6 +1229,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 			if ( video_codec_ == NULL || avcodec_open( codec_context, video_codec_ ) < 0 )
 				prop_video_index_ = -1;
+			else
+				avcodec_thread_init( codec_context, std::max< int >( 1, boost::thread::hardware_concurrency( ) / 2 ) );
 		}
 
 		void close_video_codec( )
@@ -1878,6 +1890,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		pl::wstring mime_type_;
 		int frames_;
 		bool is_seekable_;
+		bool eof_;
 		bool first_video_frame_;
 		int first_video_found_;
 		bool first_audio_frame_;

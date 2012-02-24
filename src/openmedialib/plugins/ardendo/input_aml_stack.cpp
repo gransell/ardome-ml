@@ -915,10 +915,10 @@ class aml_stack
 			else if ( arg[ 0 ] == L'\'' && arg[ arg.size( ) - 1 ] == L'\'' )
 				arg = arg.substr( 1, arg.size( ) - 2 );
 
-            olib::t_string url = cl::str_util::to_t_string( arg );
+			olib::t_string url = cl::str_util::to_t_string( arg );
 			bool is_http_source = paths_.back( ).external_directory_string( ).find( _CT("http://") ) == 0;
 
-            if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
+			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
 				url = olib::t_path( paths_.back( ) / url ).external_directory_string( );
 
 			if ( inputs_.size( ) )
@@ -957,7 +957,7 @@ class aml_stack
 			else if ( boost::regex_match( pl::to_string( arg ), numeric_syntax ) )
 				create_numeric( arg );
 			else if ( arg.find( L"=" ) != pl::wstring::npos && arg.find( L"http:" ) < arg.find( L"=" ) )
-                create_input( cl::str_util::to_wstring( url ) );
+				create_input( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"=" ) != pl::wstring::npos )
 				assign( properties, arg );
 			else if ( url.find( _CT("http://") ) == 0 && url.find( _CT(".aml") ) == arg.size( ) - 4 )
@@ -965,18 +965,39 @@ class aml_stack
 			else if ( is_http_source && arg.find( L".aml" ) == arg.size( ) - 4 )
 				parse_http( paths_.back( ).external_directory_string( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
 			else if ( url.find( _CT(".aml") ) == url.size( ) - 4 || url == _CT( "stdin:" ) )
-                parse_file( cl::str_util::to_wstring( url ) );
+				parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"filter:" ) == 0 )
 				create_filter( arg );
 			else if ( arg != L"" && arg[ arg.size( ) - 1 ] != L':' && arg.find( L"http://" ) == pl::wstring::npos && is_http_source )
-                create_input( cl::str_util::to_wstring( url ) );
+				create_input( cl::str_util::to_wstring( url ) );
 			else if ( arg != L"" && is_an_aml_script( arg ) && arg.find( L"http://" ) == pl::wstring::npos )
-                parse_file( cl::str_util::to_wstring( url ) );
+				parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg != L"" && ( arg[ arg.size( ) - 1 ] == L':' || arg.find( L"http://" ) != pl::wstring::npos ) )
-                create_input( arg );
+				create_input( arg );
+#ifdef WIN32
+			else if ( arg.find( L":/cygdrive/" ) != pl::wstring::npos )
+				create_input( translate_cygwin_path( arg ) );
+#endif
 			else if ( arg != L"" )
-                create_input( cl::str_util::to_wstring( url ) );
+				create_input( cl::str_util::to_wstring( url ) );
 		}
+
+#ifdef WIN32
+		//Translates a path on the form input:/cygdrive/c/file.mxf to
+		//the normal Windows-style input:C:/file.mxf
+		pl::wstring translate_cygwin_path( const pl::wstring &path )
+		{
+			pl::wstring::size_type pos = path.find( L":/cygdrive/" );
+			ARENFORCE_MSG( pos != pl::wstring::npos, "Invalid cygwin path: %1%" )( path );
+			ARENFORCE_MSG( path.size() >= pos + 11 + 2, "Invalid cygwin path: %1%" )( path );
+			ARENFORCE_MSG( path[pos + 11 + 1] == '/', "Invalid cygwin path: %1%" )( path );
+
+			return path.substr( 0, pos + 1 ) + //Input name
+				path.substr( pos + 11, 1 ) + //Drive letter
+				L":/" + 
+				path.substr( pos + 13 ); //Rest of the path
+		}
+#endif
 
 		bool is_word( const pl::wstring &arg )
 		{
@@ -2123,7 +2144,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
 	{
-		std::vector< pl::wstring > files = ( *i ).filename( );
+		std::vector< pl::wstring > files = ( *i ).filenames( );
 		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 

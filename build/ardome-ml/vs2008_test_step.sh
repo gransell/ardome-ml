@@ -14,5 +14,13 @@ if [ ! $? == 0 ]; then
   exit 1
 fi
 
+echo "Running unit tests for openmedialib ..."
+build/release/vs2008/bin/openmedialib_unit_tests.exe
+
+if [ ! $? == 0 ]; then
+  echo "openmedialib's unit tests failed. Terminating."
+  exit 1
+fi
+
 echo "All unit tests passed!"
 echo -e "Testphase done. Continue with production...\n\n"

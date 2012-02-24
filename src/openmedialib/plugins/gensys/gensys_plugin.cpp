@@ -166,6 +166,27 @@ inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 	}
 }
 
+inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
+{
+	unsigned char *ptr = img->data( );
+	int width = img->width( );
+	int height = img->height( );
+	int x;
+	if ( ptr )
+	{
+		while( height -- )
+		{
+			x = width;
+			while ( x -- )
+			{
+				memset( ptr++, r, 1 );
+				memset( ptr++, g, 1 );
+				memset( ptr++, b, 1 );
+			}
+		}
+	}
+}
+
 static pl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
 static pl::pcos::key key_use_last_image_( pcos::key::from_string( "use_last_image" ) );
 
@@ -379,6 +400,10 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				fill( image, 1, ( unsigned char )u );
 				fill( image, 2, ( unsigned char )v );
 			}
+			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == L"r8g8b8" )
+			{
+				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
+			}
 		}
 
 	private:
@@ -486,7 +511,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			{
 				if ( queue_.size( ) == 0 || queue_[ 0 ]->get_position( ) != get_position( ) )
 				{
-					result = last_frame_;
+					result = last_frame_->shallow( );
 					return;
 				}
 			}
@@ -495,13 +520,11 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			acquire_values( );
 
 			// Acquire frame
-			if ( queue_.size( ) > 0 )
-			{
-				result = *( queue_.begin( ) );
-				queue_.pop_front( );
-			}
+			ARENFORCE_MSG( !queue_.empty(), "Attempting to fetch from depleted pusher input!" )( get_position() );
+			result = *( queue_.begin( ) );
+			queue_.pop_front( );
 			
-			last_frame_ = result;
+			last_frame_ = result->shallow( );
 		}
 
 	private:
@@ -942,8 +965,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			, prop_mix_( pcos::key::from_string( "mix" ) )
 			, prop_interp_( pcos::key::from_string( "interp" ) )
 			, prop_slot_( pcos::key::from_string( "slot" ) )
-			, prop_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) )
-			, prop_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) )
+			, prop_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) ) //Deprecated
+			, prop_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) ) //Deprecated
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_mode_ = pl::wstring( L"fill" ) );
@@ -955,8 +978,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			properties( ).append( prop_mix_ = 1.0 );
 			properties( ).append( prop_interp_ = pl::wstring( L"bilinear" ) );
 			properties( ).append( prop_slot_ = 0 );
-			properties( ).append( prop_frame_rescale_cb_ = boost::uint64_t( 0 ) );
-			properties( ).append( prop_image_rescale_cb_ = boost::uint64_t( 0 ) );
+
+			properties( ).append( prop_frame_rescale_cb_ = boost::uint64_t( 0 ) ); //Deprecated
+			properties( ).append( prop_image_rescale_cb_ = boost::uint64_t( 0 ) ); //Deprecated
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -1168,13 +1192,6 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			// Crop to computed geometry
 			foreground = frame_crop( foreground, geom.cx, geom.cy, geom.cw, geom.ch );
 
-			// Acquire callbacks for rescaling
-			frame_rescale_type f_rescale = reinterpret_cast< frame_rescale_type >( prop_frame_rescale_cb_.value< boost::uint64_t >( ) );
-			image_rescale_type i_rescale = reinterpret_cast< image_rescale_type >( prop_image_rescale_cb_.value< boost::uint64_t >( ) );
-
-			if( !f_rescale ) f_rescale = ml::frame_rescale;
-			if( !i_rescale ) i_rescale = il::rescale;
-
 			// Aquire requested rescaling algorithm
 			il::rescale_filter filter = il::BILINEAR_SAMPLING;
 			if ( prop_interp_.value< pl::wstring >( ) == L"point" )
@@ -1184,7 +1201,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			if ( background->get_image( )->field_order( ) == il::progressive ) 
 			    foreground->set_image( il::deinterlace( foreground->get_image( ) ) );
 			
-			foreground = f_rescale( foreground, geom.w, geom.h, filter );
+			foreground = ml::frame_rescale( foreground, geom.w, geom.h, filter );
 
 			// We're going to update both image and alpha here
 			background->set_image( il::conform( background->get_image( ), il::writable ) );
@@ -1232,9 +1249,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			il::image_type_ptr half_dst_alpha;
 
 			if ( background->get_alpha( ) )
-				half_dst_alpha = i_rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
+				half_dst_alpha = il::rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
 			if ( foreground->get_alpha( ) )
-				half_src_alpha = i_rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
+				half_src_alpha = il::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
 
 			// Determine the x and y factors for the chroma plane sizes
 			int plane_x_factor = background->get_image( )->width( ) / background->get_image( )->width( 1 );
@@ -1378,8 +1395,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		pcos::property prop_mix_;
 		pcos::property prop_interp_;
 		pcos::property prop_slot_;
-		pcos::property prop_frame_rescale_cb_;
-		pcos::property prop_image_rescale_cb_;
+
+		pcos::property prop_frame_rescale_cb_; //Deprecated
+		pcos::property prop_image_rescale_cb_; //Deprecated
 };
 
 // Colour correction filter
@@ -1637,7 +1655,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				result = last_frame_;
+				result = last_frame_->shallow( );
 			}
 			else if ( input && fps_num > 0 && fps_den > 0 )
 			{

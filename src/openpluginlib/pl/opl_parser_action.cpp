@@ -8,16 +8,13 @@
 #include <algorithm>
 #include <cstdio>
 
-#ifdef WIN32
-#import <msxml4.dll> raw_interfaces_only
-using namespace MSXML2;
-#endif // WIN32
 
 #include <boost/tokenizer.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_parser_action.hpp>
+#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -25,48 +22,17 @@ namespace olib { namespace openpluginlib { namespace actions {
 
 namespace
 {
-#ifndef WIN32
-	bool libxml2_value_from_name( const wstring& name, xmlChar** attributes, wstring& value )
-	{
-		if( !attributes ) return false;
-
-		xmlChar** begin = attributes;
-		while( *begin )
-		{
-			if( name == to_wstring( reinterpret_cast<char*>( *begin ) ) )
-			{
-				value = to_wstring( reinterpret_cast<char*>( *( begin + 1 ) ) );
-				
-				return true;
-			}
-
-			begin += 2;
-		}
-		
-		return false;
-	}
-#endif
-
 	wstring value_from_name( opl_parser_action& pa, const wstring& name )
 	{
-#ifdef WIN32
-		wchar_t* value = NULL;
-		int length;
-
-		if( SUCCEEDED(	pa.attrs_->getValueFromName(
-						( unsigned short*  ) L"", 0,
-						( unsigned short*  ) name.c_str( ), ( int ) name.size( ),
-						( unsigned short** ) &value, &length ) ) )
-		{
-			return wstring( value, length );
-		}
-#else
 		wstring str;
-		if( libxml2_value_from_name( name, pa.attrs_, str ) )
-			return str;
-#endif
-		
-		return wstring( L"" );
+		const XMLCh *s = pa.attrs_->getValue(opencorelib::xml::from_string(name).c_str());
+
+		if (s)
+		{
+			str = opencorelib::xml::to_wstring(s);
+		}
+
+		return str;
 	}
 	
 	void vector_from_string( const wstring& str, std::vector<wstring>& values )
@@ -88,28 +54,29 @@ namespace
 		}
 	}
 	
-	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filename )
+	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filenames )
 	{
 		namespace opl = olib::openpluginlib;
 		
 		typedef std::vector<wstring>::iterator 		 iterator;
 		typedef std::vector<wstring>::const_iterator const_iterator;
 				
-		std::vector<wstring> filename_copy( filename );
-		for( const_iterator I = filename_copy.begin( ); I != filename_copy.end( ); ++I )
+		std::vector<wstring> filenames_copy( filenames );
+		for( const_iterator I = filenames_copy.begin( ); I != filenames_copy.end( ); ++I )
 		{
 			fs::path tmp( to_string( *I ).c_str( ), fs::native );
 
-			filename.push_back( to_wstring( ( pa.get_branch_path( ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( to_wstring( ( pa.get_opl_path().branch_path() / tmp.leaf( ) ).string( ).c_str( ) ) );
 			
 #	ifdef WIN32
-			filename.push_back( to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
 #	endif
 		}
 	}
 }
 
 opl_parser_action::opl_parser_action( )
+: auto_load_( false )
 {
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openlibraries",		default_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"head",				default_opl_parser_action ) );
@@ -152,20 +119,12 @@ void opl_parser_action::finish( )
 {
 }
 
-#ifdef WIN32
-void opl_parser_action::set_attrs( ISAXAttributes __RPC_FAR* attrs )
-#else
-void opl_parser_action::set_attrs( xmlChar** attrs )
-#endif
-{
-	attrs_ = attrs;
-}
+opl_parser_action::path opl_parser_action::get_opl_path( ) const
+{ return opl_path_; }
 
-opl_parser_action::path opl_parser_action::get_branch_path( ) const
-{ return branch_path_; }
+void opl_parser_action::set_opl_path( const opl_parser_action::path& opl_path )
+{ opl_path_ = opl_path; }
 
-void opl_parser_action::set_branch_path( const opl_parser_action::path& branch_path )
-{ branch_path_ = branch_path; }
 
 bool default_opl_parser_action( opl_parser_action& /*pa*/ )
 {
@@ -180,7 +139,7 @@ bool openlibraries_opl_parser_action( opl_parser_action& /*pa*/ )
 bool olib_opl_parser_action( opl_parser_action& pa )
 {
 	pa.set_libname( pa.get_current_tag( ) );
-
+	pa.set_auto_load( value_from_name( pa, L"auto_load" ) == L"true" );
 	return true;
 }
 
@@ -196,14 +155,15 @@ bool plugin_opl_parser_action( opl_parser_action& pa )
 	item.out_filter	= value_from_name( pa, L"out_filter" );
 	item.libname	= pa.get_libname( );
 	item.merit		= static_cast<int>( wcstol( value_from_name( pa, L"merit" ).c_str( ), 0, 10 ) );
+	item.opl_path = to_wstring( pa.get_opl_path( ).string() );
 
 	std::vector<wstring> temp;
 	vector_from_string( value_from_name( pa, L"extension" ), temp );
 	regexes_from_strings( temp, item.extension );
-	vector_from_string( value_from_name( pa, L"filename"  ), item.filename );
+	vector_from_string( value_from_name( pa, L"filename"  ), item.filenames );
 
-	if( !item.filename.empty( ) )
-		add_opl_path_to_search( pa, item.filename );
+	if( !item.filenames.empty( ) )
+		add_opl_path_to_search( pa, item.filenames );
 
 	pa.plugins.insert( opl_parser_action::container::value_type( pa.get_libname( ), item ) );
 

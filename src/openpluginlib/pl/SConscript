@@ -4,13 +4,13 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'boost_regex', 'boost_date_time', 'libxml-2.0', 'build_pl' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'boost_regex', 'boost_date_time', 'libxml-2.0', 'build_pl', 'xerces' )
 
 local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_il_plugin' ] ] )
 local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_ml_plugin' ] ] )
 
-libxml2_sources = [ 'content_handler_libxml.cpp' ]
-msxml_sources = [ 'content_handler_msxml.cpp', 'msw/pluginlib.rc' ]
+libxml2_sources = [ ]
+msxml_sources = [ ]
 
 if local_env[ 'PLATFORM' ] == 'darwin' :
 	local_env.Append( FRAMEWORKS  = 'CoreServices' )

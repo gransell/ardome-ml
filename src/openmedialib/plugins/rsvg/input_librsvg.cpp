@@ -1,14 +1,44 @@
-// An SVG reader
+// An SVG input based on librsvg.
 //
 // Copyright (C) 2007 Ardendo
 // Released under the LGPL.
 //
 // #input:svg:
 //
-// An SVG input based on librsvg.
+// Renders an SVG image from a file or an XML string to an RGBA image.
+//
+// Property usage:
+//
+// fps_num, fps_den : int, int
+//		The frame rate of the frame produced. Defaults to 25:1 (PAL)
+//
+// out : int
+//		The duration of the input (in number of frames). Defaults to 1.
+//
+// xml : string
+//		An SVG XML string to render. Will only be used if the input is
+//		opened without an input file.
+//
+// render_width, render_height : int
+//		The dimensions of the image to be rendered. If set to 0 (default),
+//		the dimensions from the SVG data itself is used. See also the
+//		stretch, render_sar_num and render_sar_den parameters below.
+//
+// stretch : int
+//		If 0 (default), the render_width and render_height dimensions
+//		are adjusted to maintain the SVG source aspect ratio. If not 0,
+//		the output image dimensions always correspond exactly to
+//		the render_width and render_height properties.
+//
+// render_sar_num, render_sar_den : int
+//		The desired sample aspect ratio of the output image. If stretch
+//		is set to 0, this value is taken into account so that the image
+//		produced has the correct aspect ratio when viewed with the
+//		given sar.
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/guard_define.hpp>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
@@ -29,7 +59,7 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib { 
 
 typedef boost::recursive_mutex::scoped_lock scoped_lock;
-static boost::recursive_mutex mutex_;
+static boost::recursive_mutex librsvg_mutex_;
 
 void olib_rsvg_init( )
 {
@@ -43,33 +73,69 @@ void olib_rsvg_init( )
 	}
 }
 
+class rsvg_observer : public pcos::observer
+{
+public:
+
+	rsvg_observer( bool *dirty_flag )
+		: dirty_flag_( dirty_flag )
+	{}
+
+	virtual ~rsvg_observer()
+	{}
+
+	virtual void updated( pcos::isubject* )
+	{
+		*dirty_flag_ = true;
+	}
+
+private:
+	bool *dirty_flag_;
+};
+
 class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 {
 	public:
 		input_librsvg( const pl::wstring &resource ) 
 			: ml::input_type( )
 			, prop_resource_( pcos::key::from_string( "resource" ) )
-			, loaded_( L"" )
+			, dirty_( true )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_out_( pcos::key::from_string( "out" ) )
-			, prop_doc_( pcos::key::from_string( "doc" ) )
-			, prop_deferred_( pcos::key::from_string( "deferred" ) )
+			, prop_xml_( pcos::key::from_string( "xml" ) )
 			, prop_render_width_( pcos::key::from_string( "render_width" ) )
 			, prop_render_height_( pcos::key::from_string( "render_height" ) )
+			, prop_render_sar_num_( pcos::key::from_string( "render_sar_num" ) )
+			, prop_render_sar_den_( pcos::key::from_string( "render_sar_den" ) )
+			, prop_stretch_( pcos::key::from_string( "stretch" ) )
+			, obs_dirty_state_( new rsvg_observer( &dirty_ ) )
 			, frame_( )
 		{
 			properties( ).append( prop_resource_ = resource );
-			properties( ).append( prop_fps_num_ = 1 );
+			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_out_ = 1 );
-			properties( ).append( prop_doc_ = pl::wstring( L"" ) );
-			properties( ).append( prop_deferred_ = 0 );
+			properties( ).append( prop_xml_ = pl::wstring( L"" ) );
 
 			//Set a custom width/height for the SVG rendering.
 			//When set to 0, the default size given in the SVG data will be used.
-			properties( ).append( prop_render_width_ = 0);
-			properties( ).append( prop_render_height_ = 0);
+			properties( ).append( prop_render_width_ = 0 );
+			properties( ).append( prop_render_height_ = 0 );
+			properties( ).append( prop_render_sar_num_ = 1 );
+			properties( ).append( prop_render_sar_den_ = 1 );
+
+			properties( ).append( prop_stretch_ = 0 );
+
+			//Attach an observer which will set the dirty flag for
+			//all properties that should cause us to re-render the SVG.
+			prop_render_width_.attach( obs_dirty_state_ );
+			prop_render_height_.attach( obs_dirty_state_ );
+			prop_render_sar_num_.attach( obs_dirty_state_ );
+			prop_render_sar_den_.attach( obs_dirty_state_ );
+			prop_stretch_.attach( obs_dirty_state_ );
+			prop_xml_.attach( obs_dirty_state_ );
+			prop_resource_.attach( obs_dirty_state_ );
 		}
 
 		virtual ~input_librsvg( )
@@ -94,100 +160,122 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		virtual bool is_thread_safe( ) { return false; }
 
 	protected:
-		bool matches_deferred( ml::frame_type_ptr &frame )
-		{
-			if ( frame && frame->get_image( ) )
-			{
-				if ( prop_deferred_.value< int >( ) == 0 )
-					return il::is_yuv_planar( frame->get_image( ) );
-				else
-					return !il::is_yuv_planar( frame->get_image( ) );
-			}
-			return false;
-		}
 		
 		//Called by librsvg before the SVG image is rendered.
 		//Gives us a chance to set the dimensions of rendered SVG.
-		static void resizerFunc(gint *width, gint *height, gpointer user_data)
+		static void resizer_func(gint *width, gint *height, gpointer user_data)
 		{
 			const input_librsvg *me = reinterpret_cast<const input_librsvg*>(user_data);
-			
-			if (me->prop_render_width_.value<int>() > 0)
+
+			int w = me->prop_render_width_.value< int >( );
+			int h = me->prop_render_height_.value< int >( );
+
+			if( w > 0 && h > 0 )
 			{
-				*width = me->prop_render_width_.value<int>();
+				if( me->prop_stretch_.value<int>() )
+				{
+					//Stretching allowed; just force the dimensions given
+					//from the properties.
+					*width = w;
+					*height = h;
+				}
+				else
+				{
+					//No stretching allowed; maintain original SVG aspect ratio
+					//by letter/pillarboxing as necessary.
+
+					//First, get the wanted sample aspect ratio. We will need to tell librsvg
+					//to shrink the rendered width by this amount, so that the image
+					//looks correct when shown with the sar applied.
+					double sar_factor = 1.0;
+					int sar_num = me->prop_render_sar_num_.value< int >( );
+					int sar_den = me->prop_render_sar_den_.value< int >( );
+					if( sar_num > 0 && sar_den > 0 )
+					{
+						sar_factor = static_cast< double >( sar_num ) / static_cast< double >( sar_den );
+					}
+
+					//Next, find how much we can expand the image in the X and Y
+					//directions and take the least of the two. This ensures that
+					//we get the maximum size possible while still maintaining
+					//the aspect ratio.
+					double sizing_factor = std::min< double >( 
+						static_cast< double >( w ) * sar_factor / (*width),
+						static_cast< double >( h ) / (*height)
+					);
+
+					//Finally, set the new width/height, and adjust the width for sar.
+					*width = static_cast< gint >( sizing_factor * (*width) / sar_factor + 0.5 );
+					*height = static_cast< gint >( sizing_factor * (*height) + 0.5 );
+				}
 			}
-			if (me->prop_render_height_.value<int>() > 0)
+		}
+
+		//Helper function for cleaning up RSVG/GDK resources
+		static void cleanup_rsvg( RsvgHandle **handle_ptr, GdkPixbuf **pixbuf_ptr )
+		{
+			scoped_lock lock( librsvg_mutex_ );
+
+			if( *handle_ptr )
 			{
-				*height = me->prop_render_height_.value<int>();
+				rsvg_handle_free( *handle_ptr );
+				*handle_ptr = NULL;
+			}
+
+			if( *pixbuf_ptr )
+			{
+				g_object_unref( *pixbuf_ptr );
+				*pixbuf_ptr = NULL;
 			}
 		}
 
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			GdkPixbuf *pixbuf = NULL;
-
-			if ( prop_resource_.value< pl::wstring >( ) == L"svg:" )
+			if( dirty_ )
 			{
-				std::string doc = pl::to_string( prop_doc_.value< pl::wstring >( ) );
-
-				if ( doc != "" && ( prop_doc_.value< pl::wstring >( ) != loaded_ || !matches_deferred( frame_ ) ) )
-				{
-					scoped_lock lock( mutex_ );
-
-					RsvgHandle *handle = rsvg_handle_new( );
-					GError *error = NULL;
-
-					rsvg_handle_set_size_callback( handle, &resizerFunc, this, 0);
-
-					if ( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( doc.c_str( ) ), doc.size( ), &error ) )
-					{
-						if ( rsvg_handle_close( handle, &error ) )
-						{
-							pixbuf = rsvg_handle_get_pixbuf( handle );
-							rsvg_handle_free( handle );
-						}
-						else
-						{
-						}
-					}
-					else
-					{
-						ARENFORCE_MSG( false, "Error when reading SVG data from doc property: \"%1%\"" )( error->message );
-					}
-
-					loaded_ = prop_doc_.value< pl::wstring >( );
-				}
-			}
-			else if ( prop_resource_.value< pl::wstring >( ) != loaded_ )
-			{
-				scoped_lock lock( mutex_ );
-				loaded_ = prop_resource_.value< pl::wstring >( );
-				//Remove the svg: prefix, if any
-				if( loaded_.find( L"svg:" ) == 0 )
-					loaded_ = loaded_.substr( 4 );
+				RsvgHandle *handle = NULL;
+				GdkPixbuf *pixbuf = NULL;
+				//Exception-safe cleanup
+				ARGUARD( boost::bind( &cleanup_rsvg, &handle, &pixbuf ) );
 
 				GError *error = NULL;
+				scoped_lock lock( librsvg_mutex_ );
 
-				int w = prop_render_width_.value<int>();
-				int h = prop_render_height_.value<int>();
-				if( w > 0 && h > 0 )
+				if ( prop_resource_.value< pl::wstring >( ).empty() || prop_resource_.value< pl::wstring >( ) == L"svg:" )
 				{
-					pixbuf = rsvg_pixbuf_from_file_at_size( pl::to_string( loaded_ ).c_str( ), w, h, &error );
+					//No SVG file given as input, load SVG XML from the "xml" property instead
+					std::string xml_str = pl::to_string( prop_xml_.value< pl::wstring >( ) );
+
+					ARENFORCE_MSG( !xml_str.empty(), "SVG input: no file was given and the xml property is empty. Nothing to render." );
+					
+					handle = rsvg_handle_new( );
+					ARENFORCE_MSG( handle, "SVG input: failed to create libsrvg handle: \"%1%\"" )( error->message );
+
+					ARENFORCE_MSG( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( xml_str.c_str( ) ), xml_str.size( ), &error ),
+						"SVG input: error when loading SVG data from xml property: \"%1%\"" )( error->message );
 				}
 				else
 				{
-					//Use the size specified in the svg file itself
-					pixbuf = rsvg_pixbuf_from_file( pl::to_string( loaded_ ).c_str( ), &error );
+					//Remove the svg: prefix, if any
+					std::string filename = pl::to_string( prop_resource_.value< pl::wstring >( ) );
+					if( filename.find( "svg:" ) == 0 )
+					{
+						filename = filename.substr( 4 );
+					}
+
+					handle = rsvg_handle_new_from_file( filename.c_str(), &error );
+					ARENFORCE_MSG( handle, "SVG input: Failed to create librsvg handle from file \"%1%\".\nError returned was: \"%2%\"" )
+						( filename )( error->message );
 				}
 
-				if ( !pixbuf )
-				{
-					ARENFORCE_MSG( false, "Error when reading SVG data from file \"%1%\": \"%2%\"" )( loaded_ )( error->message );
-				}
-			}
+				//Close the handle, which blocks until the I/O operations are finished
+				ARENFORCE_MSG( rsvg_handle_close( handle, &error ), "Error when closing librsvg handle: \"%1%\"" )( error->message );
 
-			if ( pixbuf )
-			{
+				rsvg_handle_set_size_callback( handle, &resizer_func, this, 0);
+
+				pixbuf = rsvg_handle_get_pixbuf( handle );
+				ARENFORCE_MSG( pixbuf, "SVG input: Failed to create pixbuf from RSVG. Reason unknown." );
+
 				boost::uint8_t *src = gdk_pixbuf_get_pixels( pixbuf );
 				int src_pitch = gdk_pixbuf_get_rowstride( pixbuf );
 				int w = gdk_pixbuf_get_width( pixbuf );
@@ -224,35 +312,42 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				}
 
 				frame_ = ml::frame_type_ptr( new ml::frame_type( ) );
+
+				int sar_num = prop_render_sar_num_.value< int >( );
+				int sar_den = prop_render_sar_den_.value< int >( );
+				if( sar_num > 0 && sar_den > 0 )
+				{
+					frame_->set_sar( sar_num, sar_den );
+					image->set_sar_num( sar_num );
+					image->set_sar_den( sar_den );
+				}
 				frame_->set_image( image );
 
-				if ( prop_deferred_.value< int >( ) == 0 )
-					frame_ = ml::frame_convert( frame_, L"yuv420p" );
-
-				g_object_unref( pixbuf );
-				pixbuf = 0;
+				//Our image is now rendered and in sync with the current state
+				dirty_ = false;
 			}
 
-			if ( frame_ )
-			{
-				result = frame_->deep( );
-				result->set_position( get_position( ) );
-				result->set_sar( 1, 1 );
-				result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
-			}
+			ARENFORCE( frame_ );
+
+			result = frame_->shallow( );
+			result->set_position( get_position( ) );
+			result->set_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
 		}
 
 	protected:
 
 		pcos::property prop_resource_;
-		pl::wstring loaded_;
+		bool dirty_; //Whether the SVG needs to be re-rendered on the next fetch
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_out_;
-		pcos::property prop_doc_;
-		pcos::property prop_deferred_;
+		pcos::property prop_xml_;
 		pcos::property prop_render_width_;
 		pcos::property prop_render_height_;
+		pcos::property prop_render_sar_num_;
+		pcos::property prop_render_sar_den_;
+		pcos::property prop_stretch_;
+		boost::shared_ptr< rsvg_observer > obs_dirty_state_;
 		ml::frame_type_ptr frame_;
 };
 

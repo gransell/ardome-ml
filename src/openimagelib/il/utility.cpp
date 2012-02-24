@@ -99,7 +99,16 @@ namespace
 }
 
 // Foward declaration to plane scaler
-static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
+static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p );
+
+static rescale_plane_type rescale_plane = rescale_plane_default;
+static rescale_filter rescale_filter_value = BILINEAR_SAMPLING;
+
+IL_DECLSPEC void register_rescale_plane( rescale_plane_type function, rescale_filter filter )
+{
+	rescale_plane = function;
+	rescale_filter_value = filter;
+}
 
 // The following private functions are a bit rough and shouldn't be exposed publicly
 // All access to the functions are via the public convert and allocate functions
@@ -435,7 +444,7 @@ static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::ws
 	{
 		for ( int plane = 0; plane < 3; plane ++ )
 		{
-			rescale_plane( dst_img, src_img, 1, 1, BILINEAR_SAMPLING, plane );
+			rescale_plane( dst_img, src_img, 1, 1, rescale_filter_value, plane );
 		}
 	}
 
@@ -2303,7 +2312,7 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 	return image_type_ptr( );
 }
 
-static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p )
+static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr& im, int new_d, int bs, rescale_filter filter, const int &p )
 {
 	int src_w = im->width( p );
 	int src_h = im->height( p );
@@ -2694,9 +2703,17 @@ static void rescale_plane( image_type_ptr &new_im, const image_type_ptr& im, int
 
 image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, int new_d, int bs, rescale_filter filter )
 {
-	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h );
+	//Make sure that the height is evenly divisible by two if the image is
+	//interlaced, since some scalers require it.
+	int extra_height = 0;
+	if( im->field_order( ) != progressive && new_h % 2 != 0 )
+		extra_height = 1;
+
+	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h + extra_height );
 	if( !new_im )
 		return im;
+
+	new_im->set_field_order( im->field_order( ) );
 
 	for ( int p = 0; p < im->plane_count( ); p ++ )
 	{

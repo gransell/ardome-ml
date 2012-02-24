@@ -3,6 +3,7 @@
 #define _CORE_ENUMS_H_
 
 #include "./minimal_string_defines.hpp"
+#include "./export_defines.hpp"
 
 namespace olib
 {
