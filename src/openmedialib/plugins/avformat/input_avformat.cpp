@@ -1696,7 +1696,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					}
 				}
 
-				audio_buf_used_ -= index;
+				audio_buf_used_ = std::max< int >( 0, audio_buf_used_ - index );	// Warning audio_buf_used_ could become negative here.
+
 				if ( audio_buf_used_ && index != 0 )
 					memmove( audio_buf_, audio_buf_ + index, audio_buf_used_ );
 			}
