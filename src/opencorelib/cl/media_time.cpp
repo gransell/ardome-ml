@@ -54,14 +54,31 @@ namespace olib
             return *this;
         }
 
-        time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame ) const
+        time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame, bool wrap_around_at_24h ) const
         {
             ARENFORCE_MSG( m_time >= 0, "Can not convert negative values to time codes.")(*this);
+			const rational_time full_day( 24 * 60 * 60, 1 );
+			rational_time time( m_time );
+
+			if( wrap_around_at_24h )
+			{
+				while( time >= full_day )
+				{
+					time -= full_day;
+				}
+			}
+			else
+			{
+				ARENFORCE_MSG( time < full_day, 
+					"The wrap_around_at_24h parameter is false, and the time \"%1%\" is too large to be converted to timecode.")
+					( time );
+			}
+
             time_code tc( drop_frame );
             rational_time fps = frame_rate::get_fps(ft);  
             if( !drop_frame )
             {
-				rational_time t = m_time;
+				rational_time t = time;
 				if( ft == frame_rate::ntsc )
 				{
 					//If we are not using drop frame, then the timecode
@@ -88,11 +105,11 @@ namespace olib
             else
             {
                 ARENFORCE_MSG( ft == frame_rate::ntsc, "Drop frame can only be used with NTSC" );
-                rational_time totF = m_time * fps;
+                rational_time totF = time * fps;
 
                 // How many frames have we dropped during the time we have played?
                 // We discard 2 frames every whole minute (except 0,10,20,30 ...)
-                // How many whole minutes do we have: mns = m_time / 60;
+                // How many whole minutes do we have: mns = time / 60;
                 //                                    m = mns.numerator() / mns.denominator();
                 // This is the number of dropped frames :  dropped = 2 * (m - m / 10);
                 // So if we have 10 minutes total, we have dropped 18 frames.
