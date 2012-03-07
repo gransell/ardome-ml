@@ -246,28 +246,14 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			{
 				int position = get_position( );
 
-				if( state_ == thread_dead )
+				if( state_ == thread_paused || state_ == thread_dead )
 				{
 					ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
-						"Requesting frame %1% from inactive threader filter" )
-						( position );
+						"Requesting frame %1% from threader filter with state %2%." )
+						( position )( state_names[ state_ ] );
 
 					input->seek( position );
 					result = input->fetch( );
-				}
-				else if( state_ == thread_paused )
-				{
-					ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
-						"Requesting frame %1% from paused threader filter." )
-						( position );
-
-					//Use the cached frame if it exists, otherwise fetch it ourselves
-					if( !( result = cached( position, lck ) ) )
-					{
-						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", "Frame %1% not found in cache." )( position );
-						input->seek( position );
-						result = input->fetch( );
-					}
 				}
 				else
 				{
@@ -640,6 +626,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 					if( state_ == thread_paused )
 					{
+						//There might be changes to the input now, so the
+						//cached frames are not necessarily valid anymore.
+						cache_.clear();
+						fully_cached = false;
+						prefetch_position = current_filter_position;
+
 						//We're paused. Wait for a state change from the main thread.
 						cond_.wait( lck );
 					}
