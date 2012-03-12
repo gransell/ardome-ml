@@ -452,7 +452,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		virtual ~store_raw( )
 		{
 			if ( context_ )
-				url_fclose( context_ );
+				url_close( context_ );
 		}
 
 		bool init( )
@@ -464,11 +464,9 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				if ( spec.find( L"raw:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = url_fopen( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
+				error = url_open( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
 				if ( error == 0 )
 				{
-					url_setbufsize( context_, bytes_ * 2 );
-
 					ByteIOContext *aml = 0;
 					if( !context_->is_streamed && url_fopen( &aml, pl::to_string( spec + L".aml" ).c_str( ), URL_WRONLY ) == 0 )
 					{
@@ -511,8 +509,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				<< " field_order=" << field_order_
 				<< std::endl;
 			std::string string = str.str( );
-			put_buffer( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-			put_flush_packet( context_ );
+			url_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 		}
 
 		bool push( frame_type_ptr frame )
@@ -521,19 +518,18 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			bool success = true;
 			if ( image != 0 )
 			{
-				for ( int p = 0; p < image->plane_count( ); p ++ )
+				for ( int p = 0; success && p < image->plane_count( ); p ++ )
 				{
 					const boost::uint8_t *dst = image->data( p );
 					int pitch = image->pitch( p );
 					int width = image->linesize( p );
 					int height = image->height( p );
-					while( height -- )
+					while( success && height -- )
 					{
-						put_buffer( context_, dst, width );
+						success = url_write( context_, dst, width ) == width;
 						dst += pitch;
 					}
 				}
-				put_flush_packet( context_ );
 			}
 			return success;
 		}
@@ -547,7 +543,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 	private:
 		pl::pcos::property prop_header_;
 		pl::wstring spec_;
-		ByteIOContext *context_;
+		URLContext *context_;
 		pl::wstring pf_;
 		int valid_;
 		int width_;
