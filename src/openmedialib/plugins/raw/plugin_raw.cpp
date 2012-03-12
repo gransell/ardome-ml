@@ -65,6 +65,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, prop_fps_den_( pl::pcos::key::from_string( "fps_den" ) )
 			, prop_sar_num_( pl::pcos::key::from_string( "sar_num" ) )
 			, prop_sar_den_( pl::pcos::key::from_string( "sar_den" ) )
+			, prop_field_order_( pl::pcos::key::from_string( "field_order" ) )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
 			, context_( 0 )
 			, size_( 0 )
@@ -81,6 +82,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_sar_num_ = 1 );
 			properties( ).append( prop_sar_den_ = 1 );
+			properties( ).append( prop_field_order_ = 0 );
 			properties( ).append( prop_header_ = 1 );
 		}
 
@@ -132,17 +134,17 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				std::string header = url_fgets( context_ );
 				std::istringstream str( header );
 				std::string token;
-				while( true )
+				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( !str.good( ) ) break;
-					else if ( token.find( "pf=" ) == 0 ) prop_pf_ = pl::to_wstring( token.substr( 3 ) );
+					if ( token.find( "pf=" ) == 0 ) prop_pf_ = pl::to_wstring( token.substr( 3 ) );
 					else if ( token.find( "width=" ) == 0 ) prop_width_ = boost::lexical_cast< int >( token.substr( 6 ) );
 					else if ( token.find( "height=" ) == 0 ) prop_height_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else if ( token.find( "sar_num=" ) == 0 ) prop_sar_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "sar_den=" ) == 0 ) prop_sar_den_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "fps_num=" ) == 0 ) prop_fps_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "fps_den=" ) == 0 ) prop_fps_den_ = boost::lexical_cast< int >( token.substr( 8 ) );
+					else if ( token.find( "field_order=" ) == 0 ) prop_field_order_ = boost::lexical_cast< int >( token.substr( 12 ) );
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else std::cerr << "unrecognised header entry " << token;
 				}
@@ -155,7 +157,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			if ( is_seekable( ) )
 			{
-				if ( bytes_ != 0 && size_ != 0 && size_ % bytes_ == 0 )
+				if ( bytes_ != 0 && size_ != 0 && size_ % bytes_ == offset_ )
 					frames_ = size_ / bytes_;
 				else
 					error = 1;
@@ -198,6 +200,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			int width = prop_width_.value< int >( );
 			int height = prop_height_.value< int >( );
 			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), width, height );
+			image->set_field_order( static_cast< il::field_order_flags >( prop_field_order_.value < int >( ) ) );
 			bool error = false;
 
 			if ( image )
@@ -235,6 +238,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		pl::pcos::property prop_fps_den_;
 		pl::pcos::property prop_sar_num_;
 		pl::pcos::property prop_sar_den_;
+		pl::pcos::property prop_field_order_;
 		pl::pcos::property prop_header_;
 		ByteIOContext *context_;
 		boost::int64_t size_;
@@ -326,8 +330,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( !str.good( ) ) break;
-					else if ( token.find( "af=" ) == 0 ) prop_af_ = pl::to_wstring( token.substr( 3 ) );
+					if ( token.find( "af=" ) == 0 ) prop_af_ = pl::to_wstring( token.substr( 3 ) );
 					else if ( token.find( "frequency=" ) == 0 ) prop_frequency_ = boost::lexical_cast< int >( token.substr( 10 ) );
 					else if ( token.find( "channels=" ) == 0 ) prop_channels_ = boost::lexical_cast< int >( token.substr( 9 ) );
 					else if ( token.find( "fps_num=" ) == 0 ) prop_fps_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
@@ -442,6 +445,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				frame->get_sar( sar_num_, sar_den_ );
 				frame->get_fps( fps_num_, fps_den_ );
 				bytes_ = bytes_per_image( image );
+				field_order_ = image->field_order( );
 			}
 		}
 
@@ -475,6 +479,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 								<< " width=" << width_ << " height=" << height_ 
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 								<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
+								<< " field_order=" << field_order_
 								<< std::endl;
 						else
 							str << pl::to_string( spec_ )
@@ -503,6 +508,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				<< " width=" << width_ << " height=" << height_ 
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
+				<< " field_order=" << field_order_
 				<< std::endl;
 			std::string string = str.str( );
 			put_buffer( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
@@ -512,6 +518,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		bool push( frame_type_ptr frame )
 		{
 			il::image_type_ptr image = frame->get_image( );
+			bool success = true;
 			if ( image != 0 )
 			{
 				for ( int p = 0; p < image->plane_count( ); p ++ )
@@ -528,7 +535,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				}
 				put_flush_packet( context_ );
 			}
-			return image != 0;
+			return success;
 		}
 
 		virtual frame_type_ptr flush( )
@@ -550,6 +557,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		int sar_num_;
 		int sar_den_;
 		int bytes_;
+		il::field_order_flags field_order_;
 };
 
 class ML_PLUGIN_DECLSPEC store_aud : public store_type
@@ -637,12 +645,13 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		bool push( frame_type_ptr frame )
 		{
 			ml::audio_type_ptr audio = frame->get_audio( );
+			bool success = true;
 			if ( audio != 0 )
 			{
 				put_buffer( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) );
 				put_flush_packet( context_ );
 			}
-			return audio != 0;
+			return success;
 		}
 
 		virtual frame_type_ptr flush( )
