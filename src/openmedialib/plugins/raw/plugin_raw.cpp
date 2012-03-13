@@ -5,7 +5,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
-
+#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <iostream>
