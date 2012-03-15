@@ -187,7 +187,7 @@ inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, u
 	}
 }
 
-static pl::pcos::key key_background_( pcos::key::from_string( "is_background" ) );
+static pl::pcos::key key_is_background_( pcos::key::from_string( "is_background" ) );
 static pl::pcos::key key_use_last_image_( pcos::key::from_string( "use_last_image" ) );
 
 static bool has_image( frame_type_ptr &frame )
@@ -201,7 +201,7 @@ static bool has_image( frame_type_ptr &frame )
 		{
 			if ( *iter && ( *iter )->has_image( ) )
 			{
-				pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_background_ );
+				pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_is_background_ );
 				result = !prop.valid( ) || prop.value< int >( ) == 0;
 			}
 		}
@@ -383,7 +383,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				result->set_alpha( alpha );
 
 				// Identify image as a background
-				pl::pcos::property prop( key_background_ );
+				pl::pcos::property prop( key_is_background_ );
 				result->properties( ).append( prop = prop_background_.value< int >( ) );
 			}
 		}
@@ -749,7 +749,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 				}
 
 				// Force non background setting
-				pl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+				pl::pcos::property prop = result->properties( ).get_property_with_key( key_is_background_ );
 				if ( prop.valid( ) && prop.value< int >( ) == 1 )
 					prop = 0;
 			}
@@ -1024,7 +1024,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result = composite( result, overlay, geom );
 
 					// If we've composited on to a background, it's no longer a background...
-					pl::pcos::property prop = result->properties( ).get_property_with_key( key_background_ );
+					pl::pcos::property prop = result->properties( ).get_property_with_key( key_is_background_ );
 					if ( prop.valid( ) && prop.value< int >( ) == 1 )
 						prop = 0;
 				}
