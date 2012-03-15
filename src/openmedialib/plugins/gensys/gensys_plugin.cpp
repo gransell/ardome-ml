@@ -1746,16 +1746,16 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 							iter ++;
 						}
 					}
+				}
 
-					if ( result )
-					{
-						result->set_position( position_ );
-						result->set_fps( fps_num, fps_den );
-						if ( result->get_image( ) )
-							result->get_image( )->set_writable( false );
-						if ( result->get_alpha( ) )
-							result->get_alpha( )->set_writable( false );
-					}
+				if ( result && ( fps_num != src_fps_num_ || fps_den != src_fps_den_ ) )
+				{
+					result->set_position( position_ );
+					result->set_fps( fps_num, fps_den );
+					if ( result->get_image( ) )
+						result->get_image( )->set_writable( false );
+					if ( result->get_alpha( ) )
+						result->get_alpha( )->set_writable( false );
 				}
 			}
 			else if ( input )
