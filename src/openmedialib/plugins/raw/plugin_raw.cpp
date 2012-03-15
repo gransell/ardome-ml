@@ -348,7 +348,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( is_seekable( ) )
 			{
 				int bytes_per_second = samples_size_ * prop_frequency_.value< int >( );
-				frames_ = int( prop_fps_num_.value< int >( ) * ( double( url_fsize( context_ ) - offset_ ) / bytes_per_second ) / prop_fps_den_.value< int >( ) );
+				frames_ = int( ( prop_fps_num_.value< int >( ) * double( url_fsize( context_ ) - offset_ ) / bytes_per_second ) / prop_fps_den_.value< int >( ) );
 			}
 
 			parsed_ = true;
@@ -371,7 +371,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			// Seek to requested position when required
 			if ( get_position( ) != expected_ && is_seekable( ) )
 			{
-				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) ); //, prop_profile_.value< pl::wstring >( ) );
+				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
 				url_fseek( context_, offset_ + samples * samples_size_, SEEK_SET );
 			}
 			else
@@ -581,7 +581,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		virtual ~store_aud( )
 		{
 			if ( context_ )
-				url_fclose( context_ );
+				url_close( context_ );
 		}
 
 		bool init( )
@@ -593,7 +593,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				if ( spec.find( L"aud:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = url_fopen( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
+				error = url_open( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
 				if ( error == 0 )
 				{
 					ByteIOContext *aml = 0;
@@ -634,8 +634,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< std::endl;
 			std::string string = str.str( );
-			put_buffer( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-			put_flush_packet( context_ );
+			url_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 		}
 
 		bool push( frame_type_ptr frame )
@@ -643,10 +642,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			ml::audio_type_ptr audio = frame->get_audio( );
 			bool success = true;
 			if ( audio != 0 )
-			{
-				put_buffer( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) );
-				put_flush_packet( context_ );
-			}
+				success = url_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
 			return success;
 		}
 
@@ -659,7 +655,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 	private:
 		pl::pcos::property prop_header_;
 		pl::wstring spec_;
-		ByteIOContext *context_;
+		URLContext *context_;
 		pl::wstring af_;
 		int valid_;
 		int frequency_;
