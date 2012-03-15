@@ -120,11 +120,34 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 		return samples_per_frame_base + (int(floor((extra_sample_spread * cycle_idx) + 0.5)) > int(floor(extra_sample_spread * (cycle_idx - 1) + 0.5)) ? deficit : 0);
 }
 
-ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator)
+ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator, const std::wstring& locked_profile )
 {
 	boost::int64_t common = gcd( framerate_numerator, framerate_denominator );
 	framerate_numerator /= int( common );
 	framerate_denominator /= int( common ); 
+
+	std::vector< int > cycle;
+	if( get_audio_cycle( samplefreq, framerate_numerator, framerate_denominator, locked_profile, cycle ) )
+	{
+		// Determine the size of the cycle
+		size_t size = cycle.size( );
+		assert( size > 0 );
+
+		// Determine the number of cycles and remainder
+		int cycles = frameoffset / size;
+		int remainder = frameoffset % size;
+
+		// Calculate samples in the cycle
+		boost::int64_t total = 0;
+		boost::int64_t count = 0;
+		for ( size_t i = 0; i < size; i ++ ) 
+		{
+			count += cycle[ i ];
+			total += i < remainder ? cycle[ i ] : 0;
+		}
+
+		return count * cycles + total;
+	}
 
 	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
 	double	samples_per_frame	= double(samplefreq) / frames_per_second;

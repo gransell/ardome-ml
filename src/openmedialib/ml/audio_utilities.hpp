@@ -75,7 +75,7 @@ extern ML_DECLSPEC reseat_ptr create_reseat( );
 extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den, const std::wstring& locked_profile = L"" );
 
 // Method to determine the sample offset for a given frame number at a specified frequency and frame rate
-extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den );
+extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, const std::wstring& locked_profile = L"" );
 
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
