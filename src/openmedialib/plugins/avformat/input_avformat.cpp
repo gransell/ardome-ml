@@ -515,6 +515,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Loop until an error or we have what we need
 			int error = 0;
+			bool packet_failure = false;
 
 			// Check if we still have both components after handling position shift
 			got_picture = has_video_for( get_position( ) );
@@ -533,6 +534,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2% real error = %3% eof = %4%" )( get_position( ) )( error ) ( url_ferror(context_->pb))(url_feof(context_->pb));
 
 					}
+					packet_failure = true;
 					break;
 				}
 				if ( is_video_stream( pkt_.stream_index ) )
@@ -555,7 +557,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Special case for eof - last video frame is retrieved via a null packet
             // If we have an index then it has to be completed for us to do this
-			if ( frames_ != 1 && has_video( ) && url_feof( context_->pb ) && 
+			if ( frames_ != 1 && has_video( ) && packet_failure &&
                  ( aml_index_ == 0 || ( aml_index_ != 0 && aml_index_->finished( ) ) ) )
 			{
 				bool temp = false;
@@ -1025,6 +1027,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					prop_gop_size_ = 12;
 				else if ( format == "mpegts" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
+				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 12;
 				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 			}
