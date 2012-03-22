@@ -6,9 +6,15 @@
 // #filter:threader
 // 
 // This filter provides a read ahead component into a graph.
-
-
-//General threading rules for this filter:
+//
+// Important notes about changing the graph that's connected to this filter:
+// * The filter must be paused (by setting the active property to 0) before
+//   any modification to the connected graph is done.
+// * If the modification of the connected graph causes the duration of it
+//   to shrink, sync() must be called on the filter before it is resumed.
+//
+//
+//Internal threading rules for this filter:
 //
 //* All change of worker thread state must be through the
 //  apply_new_thread_state() method. The state_ and new_state_
@@ -104,6 +110,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 			, obs_queue_( new fn_observer< filter_threader >( const_threader( this ), &filter_threader::update_queue ) )
 			, active_( 0 )
+			, input_is_thread_safe_( false )
 			, state_( thread_dead )
 			, new_state_( thread_dead )
 			, prop_audio_direction_( pl::pcos::key::from_string( "audio_direction" ) )
@@ -186,13 +193,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		void on_slot_change( ml::input_type_ptr input, int )
 		{
 			scoped_lock lock( mutex_ ); 
-			stop( lock );
-
-			sync( );
-
-			//Reapply the current state, i.e. if we we're running
-			//before, we should be running afterwards also.
-			update_active( );
+			ARENFORCE_MSG( state_ != thread_running, "Threader filter must be paused when changing connected filters!" );
+			input_is_thread_safe_ = input && is_thread_safe( );
 		}
 
 		ml::input_type_ptr fetch_slot( size_t slot ) const
@@ -201,17 +203,11 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			return filter_type::fetch_slot( slot ); 
 		}
 
-		virtual bool is_thread_safe( )
-		{ 
-			scoped_lock lock( mutex_ ); 
-			if ( fetch_slot( 0 ) )
-				return fetch_slot( 0 )->is_thread_safe( );
-			return false;
-		}
-
 		void sync( )
 		{
-			scoped_lock lock( mutex_ );
+			scoped_lock lck( mutex_ );
+
+			check_for_worker_error( lck, true );
 
 			if( state_ == thread_dead || state_ == thread_paused )
 			{
@@ -219,6 +215,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				if ( input )
 				{
 					input->sync( );
+					ARENFORCE_MSG( input->get_frames() > 0,
+						"Media length was 0 after sync! (Previous length was %1%)" )
+						( frames_ )( input->get_uri() );
 					last_sync_count_ = frames_ = input->get_frames( );
 				}
 				else
@@ -239,7 +238,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			scoped_lock lck( mutex_ ); 
+			scoped_lock lck( mutex_ );
+
+			check_for_worker_error( lck, true );
+
 			ml::input_type_ptr input = fetch_slot( 0 );
 
 			if( input )
@@ -254,6 +256,18 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 					input->seek( position );
 					result = input->fetch( );
+
+					if( result && !result->in_error() && state_ == thread_dead && active_ == 1 )
+					{
+						//The active property is set to running, but the thread state is dead. This means
+						//that the worker thread exited earlier due to a failure of some kind (such as a
+						//network disconnect).
+						//Since the state of the graph appears to be OK again, we attempt to restart the
+						//worker thread now.
+						ARLOG_INFO("Fetch of frame %1% was successful. Will restart the threader worker again, due to the active property being %2%")
+							( position )( active_ );
+						update_active( lck );
+					}
 				}
 				else
 				{
@@ -272,6 +286,8 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 						do 
 						{
 							cond_.wait( lck );
+							//Check for error in the worker thread, and rethrow if so
+							check_for_worker_error( lck, true );
 						} while( !( result = cached( position, lck ) ) );
 
 						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING", 
@@ -333,13 +349,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			do 
 			{
 				cond_.wait( lck );
-			} while ( state_ != the_state );
+				if( check_for_worker_error( lck, false ) )
+					return;
+
+			} while ( state_ != new_state_ );
 
 			ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
 				"Worker accepted new state: \"%1%\"" )
-				( state_names[ new_state_ ] );
+				( state_names[ state_ ] );
 
-			if( the_state == thread_dead )
+			if( state_ == thread_dead )
 			{
 				ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
 					"Waiting for worker thread to exit." );
@@ -353,10 +372,33 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
+		bool check_for_worker_error( scoped_lock &lck, bool rethrow )
+		{
+			if( !thread_error_msg_.empty() )
+			{
+				ARLOG_ERR( "Threader worker terminated with error:\n%1%" )( thread_error_msg_ );
+				olib::t_string err_msg_copy = thread_error_msg_;
+				thread_error_msg_.clear();
+				state_ = new_state_ = thread_dead;
+				reader_.join();
+
+				if( rethrow )
+				{
+					ARENFORCE_MSG( false, _CT( "Threader worker error:\n%1%" ) )( err_msg_copy );
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
 		void start( scoped_lock& lck  )
 		{
-			if ( is_thread_safe( ) )
+			if ( input_is_thread_safe_ )
 			{
+				check_for_worker_error( lck, false );
+
 				//The thread is already running. We don't need to do anything.
 				if( state_ == thread_running )
 				{
@@ -366,6 +408,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				{
 					if ( state_ == thread_dead )
 					{
+						thread_error_msg_.clear();
 						//Create the worker thread.
 						reader_ = boost::thread( boost::bind( &filter_threader::run, this ) );
 					}
@@ -379,8 +422,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void pause( scoped_lock& lck )
 		{
-			if( is_thread_safe( ) )
+			if( input_is_thread_safe_ )
 			{
+				check_for_worker_error( lck, false );
+
 				if( state_ == thread_running )
 				{
 					apply_new_thread_state( thread_paused, lck );
@@ -395,8 +440,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void stop( scoped_lock &lck )
 		{
-			if ( is_thread_safe( ) )
+			if ( input_is_thread_safe_ )
 			{
+				check_for_worker_error( lck, false );
+
 				if ( state_ != thread_dead )
 				{
 					apply_new_thread_state( thread_dead, lck );
@@ -404,20 +451,31 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
-		//Called when the "active" property changes
+		//Called when the "active" property changes.
+		//Important: Never call this from inside the filter with the lock held.
+		//Use the overload which takes a lock instead.
 		void update_active( )
 		{
 			scoped_lock lck( mutex_ );
-			if ( is_thread_safe( ) )
+			update_active( lck );
+		}
+
+		void update_active( scoped_lock &lck )
+		{
+			if ( input_is_thread_safe_ )
 			{
 				active_ = prop_active_.value< int >( );
 
 				if ( active_ == 0 )
-					stop( lck );
+					pause( lck );
 				else if ( active_ == 1 )
 					start( lck );
 				else if ( active_ == 2 )
+				{
+					//2 previously meant pause, and 0 meant stop, so
+					//we accept 2 here as well for legacy reasons.
 					pause( lck );
+				}
 			}
 			else
 			{
@@ -426,16 +484,19 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
+		//Called when the queue property changes.
+		//Important: Never call this from inside the filter with
+		//the lock held.
 		void update_queue( )
 		{
 			scoped_lock lck( mutex_ );
-			stop( lck );
+			pause( lck );
 
 			max_cache_size_ = prop_queue_.value<int>();
 
 			//Reapply the current state, i.e. if we we're running
 			//before, we should be running afterwards also.
-			update_active( );
+			update_active( lck );
 		}
 
 		ml::frame_type_ptr cached( int position, scoped_lock& lck )
@@ -470,8 +531,13 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 				
 				sync_time_ = boost::get_system_time( ) + boost::posix_time::milliseconds( TIME_BETWEEN_BACKGROUND_SYNCS );
 				
+				//The input should never shrink on a background sync. If it did, it's for one of these reasons:
+				//* A connection failure of some kind, so that the actual input shrunk
+				//* The graph was changed so that the duration shrunk while the thread was paused,
+				//  but sync() was not called on the filter before it was resumed.
+				//* The connected input was incorrectly modified while the thread was running.
 				ARENFORCE_MSG( frames >= last_sync_count_,
-					"Media shrunk on last sync! Previous length was %1%, new length is %2%" )
+					"Media shrunk on last background sync! Previous length was %1%, new length is %2%" )
 					( last_sync_count_ )( frames )( input->get_uri() );
 
 				last_sync_count_ = frames;
@@ -589,187 +655,205 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 		void run( )
 		{
-			// Set the thread name to simplify debugging
-			olib::t_format thread_name_format = 
-				olib::t_format( _CT("Threader filter worker for 0x%|x|)") ) % reinterpret_cast< uintptr_t >( this );
-			olib::opencorelib::set_thread_name( thread_name_format.str() );
-
-			int prefetch_position = 0;
-			bool fully_cached = false;
-
 			scoped_lock lck( mutex_ );
 
-			//Keep thread local copies of the position_ and speed_ members.
-			//This is needed to ensure that they do not change unexpectedly,
-			//since we unlock the mutex during lengthy operations in the code
-			//below.
-			int current_filter_position = position_;
-			int current_filter_speed = speed_;
-			
-			cache_.clear();
+			ARASSERT( thread_error_msg_.empty() );
 
-			while( true )
+			try
 			{
-				//First of all, we handle any new thread state imposed upon us
-				//by the main thread.
+				// Set the thread name to simplify debugging
+				olib::t_format thread_name_format = 
+					olib::t_format( _CT("Threader filter worker for 0x%|x|)") ) % reinterpret_cast< uintptr_t >( this );
+				olib::opencorelib::set_thread_name( thread_name_format.str() );
+
+				sync_time_ = boost::get_system_time() + boost::posix_time::milliseconds( TIME_BETWEEN_BACKGROUND_SYNCS );
+
+				int prefetch_position = 0;
+				bool fully_cached = false;
+
+				//Keep thread local copies of the position_ and speed_ members.
+				//This is needed to ensure that they do not change unexpectedly,
+				//since we unlock the mutex during lengthy operations in the code
+				//below.
+				int current_filter_position = position_;
+				int current_filter_speed = speed_;
+				
+				cache_.clear();
+
 				while( true )
 				{
-					//Check if the main thread wants us to change state
-					accept_new_state( lck );
-					
-					if( state_ == thread_dead )
+					//First of all, we handle any new thread state imposed upon us
+					//by the main thread.
+					while( true )
 					{
-						//Main thread signaled that this thread should quit and is waiting
-						//in a join() call.
-						return;
-					}
-
-					if( state_ == thread_paused )
-					{
-						//There might be changes to the input now, so the
-						//cached frames are not necessarily valid anymore.
-						cache_.clear();
-						fully_cached = false;
-						prefetch_position = current_filter_position;
-
-						//We're paused. Wait for a state change from the main thread.
-						cond_.wait( lck );
-					}
-					else
-					{
-						ARENFORCE( state_ == thread_running );
-
-						//If it's time to sync the frame count, do that now
-						background_sync( lck );
-
-						if( current_filter_position != position_ || 
-							current_filter_speed != speed_ )
+						//Check if the main thread wants us to change state
+						accept_new_state( lck );
+						
+						if( state_ == thread_dead )
 						{
-							//If the filter position/speed has changed, we should
-							//potentially be adding new frames to the cache.
-							fully_cached = false;
-
-							if( speed_ != current_filter_speed || position_ != current_filter_position + speed_ )
-							{
-								//If the speed changed, or the new position is not in the current
-								//direction, reset the prefetch position. Otherwise, the main thread
-								//is just fetching linearly, and we can leave the prefetch position
-								//as it is, since we're guaranteed to have fetched or soon be going
-								//to fetch that frame anyway.
-								prefetch_position = position_;
-								scrub_cache( lck, position_, speed_ );
-								ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
-									"Non-linear seek. New position: %1%, new speed: %2%" )
-									( position_ )( speed_ );
-							}
-
-							current_filter_position = position_;
-							current_filter_speed = speed_;
-							
-							break;
+							//Main thread signaled that this thread should quit and is waiting
+							//in a join() call.
+							return;
 						}
-						else if( !fully_cached && prefetch_position >= 0 && prefetch_position < last_sync_count_ )
+
+						if( state_ == thread_paused )
 						{
-							//The cache is not filled with optimal frames, and the current
-							//prefetch position is valid. We should continue prefetching frames
-							//into the cache.
-							break;
+							//There might be changes to the input now, so the
+							//cached frames are not necessarily valid anymore.
+							cache_.clear();
+							fully_cached = false;
+							prefetch_position = current_filter_position;
+
+							//We're paused. Wait for a state change from the main thread.
+							cond_.wait( lck );
 						}
 						else
 						{
-							//We're running, but our cache is already filled with optimal
-							//frames, or we've hit the beginning/end of the media.
-							//Wait for position/state change on the main thread, or for
-							//the media to grow.
+							ARENFORCE( state_ == thread_running );
 
-							ARENFORCE( cache_.find( current_filter_position ) != cache_.end() );
-							boost::system_time timeout_point = boost::get_system_time() + boost::posix_time::milliseconds( TIME_BETWEEN_BACKGROUND_SYNCS );
-							cond_.timed_wait( lck, timeout_point );
+							//If it's time to sync the frame count, do that now
+							background_sync( lck );
+
+							if( current_filter_position != position_ || 
+								current_filter_speed != speed_ )
+							{
+								//If the filter position/speed has changed, we should
+								//potentially be adding new frames to the cache.
+								fully_cached = false;
+
+								if( speed_ != current_filter_speed || position_ != current_filter_position + speed_ )
+								{
+									//If the speed changed, or the new position is not in the current
+									//direction, reset the prefetch position. Otherwise, the main thread
+									//is just fetching linearly, and we can leave the prefetch position
+									//as it is, since we're guaranteed to have fetched or soon be going
+									//to fetch that frame anyway.
+									prefetch_position = position_;
+									scrub_cache( lck, position_, speed_ );
+									ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
+										"Non-linear seek. New position: %1%, new speed: %2%" )
+										( position_ )( speed_ );
+								}
+
+								current_filter_position = position_;
+								current_filter_speed = speed_;
+								
+								break;
+							}
+							else if( !fully_cached && prefetch_position >= 0 && prefetch_position < last_sync_count_ )
+							{
+								//The cache is not filled with optimal frames, and the current
+								//prefetch position is valid. We should continue prefetching frames
+								//into the cache.
+								break;
+							}
+							else
+							{
+								//We're running, but our cache is already filled with optimal
+								//frames, or we've hit the beginning/end of the media.
+								//Wait for position/state change on the main thread, or for
+								//the media to grow.
+
+								ARENFORCE( cache_.find( current_filter_position ) != cache_.end() );
+								cond_.timed_wait( lck, sync_time_ );
+							}
 						}
 					}
-				}
 
-				//State sanity check
-				ARENFORCE( state_ == thread_running );
+					//State sanity check
+					ARENFORCE( state_ == thread_running );
 
-				//Cache size sanity check
-				ARENFORCE( cache_.size() <= static_cast< size_t >( max_cache_size_ ) );
+					//Cache size sanity check
+					ARENFORCE( cache_.size() <= static_cast< size_t >( max_cache_size_ ) );
 
-				//Is there room in the cache?
-				if( cache_.size() == max_cache_size_ )
-				{
-					if( !remove_frame_from_cache( lck, current_filter_position, current_filter_speed ) )
+					//Is there room in the cache?
+					if( cache_.size() == max_cache_size_ )
 					{
-						//Could not find a suitable frame to remove.
-						//This means the cache is now in a good state for this
-						//position/speed combination, and we should leave it as is.
-						ARENFORCE( cache_.find( current_filter_position ) != cache_.end() );
-						fully_cached = true;
-						continue;
-					}
-				}
-
-				//Cache size sanity check
-				ARENFORCE( cache_.size() < static_cast< size_t >( max_cache_size_ ) );
-
-				ml::input_type_ptr input = fetch_slot( 0 );
-				ARENFORCE( input );
-
-				bool inserted_frame = false;
-				while( !inserted_frame && prefetch_position >= 0 && prefetch_position < last_sync_count_ )
-				{
-					//Check if the frame is in the cache already. If not, fetch it.
-					if( cache_.find( prefetch_position ) == cache_.end() )
-					{
-						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
-							"Prefetching frame %1% on background thread" )
-							( prefetch_position );
-
-						ml::frame_type_ptr frame;
+						if( !remove_frame_from_cache( lck, current_filter_position, current_filter_speed ) )
 						{
-							//Unlock, so that calls to fetch() and seek() on the main thread
-							//will not be blocked.
-							lck.unlock();
-							ARGUARD( boost::bind( &scoped_lock::lock, &lck ) );
-
-							input->seek( prefetch_position );
-							frame = input->fetch( );
-
-							//Retrieved frame sanity check
-							ARENFORCE( frame )( prefetch_position )( input->get_uri() );
-							ARENFORCE( frame->get_position() == prefetch_position )( frame->get_position() )( prefetch_position )( input->get_uri() );
-
-							if ( frame->get_image( ) )
-								frame->get_image( )->set_writable( false );
-							if ( frame->get_alpha( ) )
-								frame->get_alpha( )->set_writable( false );
+							//Could not find a suitable frame to remove.
+							//This means the cache is now in a good state for this
+							//position/speed combination, and we should leave it as is.
+							ARENFORCE( cache_.find( current_filter_position ) != cache_.end() );
+							fully_cached = true;
+							continue;
 						}
-
-						cache_[ prefetch_position ] = frame;
-						inserted_frame = true;
-
-						ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
-							"Prefetching of frame %1% done." )
-							( prefetch_position );
-
-						//Notify the main thread that a new frame has been inserted into the cache
-						cond_.notify_one();
 					}
 
-					//Advance the prefetch position to the next frame
-					prefetch_position += current_filter_speed;
+					//Cache size sanity check
+					ARENFORCE( cache_.size() < static_cast< size_t >( max_cache_size_ ) );
+
+					ml::input_type_ptr input = fetch_slot( 0 );
+					ARENFORCE( input );
+
+					bool inserted_frame = false;
+					while( !inserted_frame && prefetch_position >= 0 && prefetch_position < last_sync_count_ )
+					{
+						//Check if the frame is in the cache already. If not, fetch it.
+						if( cache_.find( prefetch_position ) == cache_.end() )
+						{
+							ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
+								"Prefetching frame %1% on background thread" )
+								( prefetch_position );
+
+							ml::frame_type_ptr frame;
+							{
+								//Unlock, so that calls to fetch() and seek() on the main thread
+								//will not be blocked.
+								lck.unlock();
+								ARGUARD( boost::bind( &scoped_lock::lock, &lck ) );
+
+								input->seek( prefetch_position );
+								frame = input->fetch( );
+
+								//Retrieved frame sanity check
+								ARENFORCE( frame )( prefetch_position )( input->get_uri() );
+								ARENFORCE( frame->get_position() == prefetch_position )( frame->get_position() )( prefetch_position )( input->get_uri() );
+
+								if ( frame->get_image( ) )
+									frame->get_image( )->set_writable( false );
+								if ( frame->get_alpha( ) )
+									frame->get_alpha( )->set_writable( false );
+							}
+
+							cache_[ prefetch_position ] = frame;
+							inserted_frame = true;
+
+							ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
+								"Prefetching of frame %1% done." )
+								( prefetch_position );
+
+							//Notify the main thread that a new frame has been inserted into the cache
+							cond_.notify_one();
+						}
+
+						//Advance the prefetch position to the next frame
+						prefetch_position += current_filter_speed;
+					}
 				}
+			}
+			catch ( std::exception &exc )
+			{
+				ARLOG_ERR("Caught exception in threader worker:\n%1%")( exc.what() );
+				thread_error_msg_ = olib::opencorelib::str_util::to_t_string( exc.what() );
+				if( thread_error_msg_.empty() )
+					thread_error_msg_ = _CT("Caught empty std-exception in threader worker!");
+				cond_.notify_one();
+			}
+			catch ( ... )
+			{
+				ARLOG_ERR("Caught unknown (non-std) exception in threader worker!");
+				thread_error_msg_ = _CT("Caught unknown (non-std) exception in threader worker!");
+				cond_.notify_one();
 			}
 		}
 
 	private:
 		//Control property for the prefetch thread state.
-		//0: thread_dead
-		//1: thread_running
-		//2: thread_paused
 		pl::pcos::property prop_active_;
 		boost::shared_ptr< pl::pcos::observer > obs_active_;
 		int active_;
+		bool input_is_thread_safe_;
 
 		//The maximum size (in number of frames) of the prefetch cache
 		pl::pcos::property prop_queue_;
@@ -781,7 +865,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		boost::condition_variable_any cond_;
 		thread_state state_; //The current state of the worker thread
 		thread_state new_state_; //The desired new state that the worker thread should assume
-
+		olib::t_string thread_error_msg_; //If the worker thread encounters an exception, its message is stored here
 		
 		pl::pcos::property prop_audio_direction_;
 		int last_position_;
