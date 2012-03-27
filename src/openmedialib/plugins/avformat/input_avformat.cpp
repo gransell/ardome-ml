@@ -520,7 +520,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				error = av_read_frame( context_, &pkt_ );
 				if ( error < 0)
 				{
-					ARENFORCE_MSG( error != -5, "I/O failure when reading frame %1%. Network connection down?" )( get_position() );
 					ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2%" )( get_position( ) )( error );
 					break;
 				}
