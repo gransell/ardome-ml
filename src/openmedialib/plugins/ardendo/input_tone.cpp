@@ -29,6 +29,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			, prop_periods_( pcos::key::from_string( "periods" ) )
 			, prop_peak_( pcos::key::from_string( "peak" ) )
 			, prop_oscillate_( pcos::key::from_string( "oscillate" ) )
+			, prop_profile_( pcos::key::from_string( "profile" ) )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -38,6 +39,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			properties( ).append( prop_periods_ = 20 );
 			properties( ).append( prop_peak_ = 0.5 );
 			properties( ).append( prop_oscillate_ = 0 );
+			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
 		}
 
 		virtual ~input_tone( ) { }
@@ -86,7 +88,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			int fps_den = prop_fps_den_.value< int >( );
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
-			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den );
+			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, prop_profile_.value< pl::wstring >( ) );
 			int periods = prop_periods_.value< int >( );
 			int oscillate = prop_oscillate_.value< int >( );
 			double peak = prop_peak_.value< double >( );
@@ -126,6 +128,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 		pcos::property prop_periods_;
 		pcos::property prop_peak_;
 		pcos::property prop_oscillate_;
+		pcos::property prop_profile_;
 };
 
 ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring &resource )

@@ -27,7 +27,7 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib {
 
 static pl::pcos::key key_deferred_( pcos::key::from_string( "deferred" ) );
-static pl::pcos::key key_doc_( pcos::key::from_string( "doc" ) );
+static pl::pcos::key key_doc_( pcos::key::from_string( "xml" ) );
 static pl::pcos::key key_x_( pcos::key::from_string( "x" ) );
 static pl::pcos::key key_y_( pcos::key::from_string( "y" ) );
 static pl::pcos::key key_w_( pcos::key::from_string( "w" ) );
@@ -129,7 +129,6 @@ class filter_title : public ml::filter_simple
 			{
 				// Ensure the inner components agrees with the deferred state
 				compositor_->properties( ).get_property_with_key( key_deferred_ ) = prop_deferred_.value< int >( );
-				svg_->properties( ).get_property_with_key( key_deferred_ ) = prop_deferred_.value< int >( );
 
 				// Determine dimensions based on our background
 				int w = int( 0.5 + prop_w_.value< double >( ) * result->get_image( )->width( ) * result->get_sar_num( ) / result->get_sar_den( ) );

@@ -258,6 +258,11 @@ int audio_samples_for_frame( int frame, int frequency, int fps_num, int fps_den 
 	return ml::audio::samples_for_frame( frame, frequency, fps_num, fps_den );
 }
 
+int audio_samples_to_frame( int frame, int frequency, int fps_num, int fps_den )
+{
+	return ml::audio::samples_to_frame( frame, frequency, fps_num, fps_den );
+}
+
 void py_plugin( )
 {
 	py::def( "create_input", &detail::create_input0 );
@@ -275,7 +280,7 @@ void py_plugin( )
 	py::def( "audio_reverse", &ml::audio::reverse );
 	py::def( "audio_volume", &ml::audio::volume );
 	py::def( "audio_samples_for_frame", &detail::audio_samples_for_frame );
-	py::def( "audio_samples_to_frame", &ml::audio::samples_to_frame );
+	py::def( "audio_samples_to_frame", &detail::audio_samples_to_frame );
 	py::def( "create_audio_reseat", &ml::audio::create_reseat );
 	py::def( "audio_mix", &ml::audio::mixer );
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );

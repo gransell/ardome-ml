@@ -61,14 +61,13 @@ class ML_PLUGIN_DECLSPEC filter_lowpass : public ml::filter_simple
 		      x_n.push_back(p);
 		    }
 		  }
-
 		  for ( int i = 0; i < samples; i++ )
 		    for ( int j = 0; j < channels; j++)
 		      {
 			float x_0 = *input_ptr;
-			for( int n=0; n<size; n++)
-			  x_0 = x_0+x_n[j][n];
-			*output_ptr = x_0/size;
+			for( int n=0; n<1; n++)
+			  x_0 = x_0+(x_n[j][n]*0.8);
+			*output_ptr = x_0*0.625;
 			x_n[j].erase(x_n[j].begin());
 			x_n[j].push_back(*input_ptr);
 			input_ptr++;

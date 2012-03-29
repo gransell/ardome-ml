@@ -5,6 +5,8 @@
 import os
 import utils
 import glob
+import SCons.Node.FS
+import SCons
 
 class PkgConfig:
 	def walk( self, env ):
@@ -78,7 +80,7 @@ class PkgConfig:
 	def pkgconfig_cmd( self, env, package, switches = '--cflags --libs' ):
 		"""General purpose accessor for pkg-config - will override to use bcomp prefix 
 		when necessary."""
-		command = 'PKG_CONFIG_PATH="%s" pkg-config %s ' % ( os.getenv( 'PKG_CONFIG_PATH' ), switches )
+		command = 'PKG_CONFIG_PATH="%s" PKG_CONFIG_TOP_BUILD_DIR="%s" pkg-config %s ' % ( os.getenv( 'PKG_CONFIG_PATH' ), SCons.Node.FS.default_fs.Dir('#').abspath, switches )
 		name = self.package_name( env, package )
 		if name in env.package_list.keys( ):
 			command += '--define-variable=prefix=' + env.package_list[ name ] + ' '
