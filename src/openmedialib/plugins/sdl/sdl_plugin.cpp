@@ -625,7 +625,6 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
             int should_pause = prop_pause_.value< int >();
             if( should_pause != 0 )
             {
-				is_paused_ = true;
 				complete( lock );
             }
         }
@@ -638,12 +637,20 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 
 		virtual void complete( scoped_lock& lck )
 		{
+			
+			if ( buffer_ && is_paused_ )
+			{
+				chunks_.push_back( buffer_ );
+				cond_.notify_all( );
+			}
+			
 			if ( chunks_.size( ) > 0 && is_paused_ )
 			{
 				is_paused_ = false;
 				while( chunks_.size( ) > 0 )
 					cond_.wait( lck );
 				cond_.notify_all( );
+				buffer_ = chunk_type_ptr( );
 			}
 
 			is_paused_ = true;
@@ -666,6 +673,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			chunks_.clear( );
 			position_ = 0;
 			used_ = 0;
+			buffer_ = chunk_type_ptr( );
 
 			return frame_type_ptr( );
 		}
@@ -753,7 +761,10 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			while( bytes )
 			{
 				if ( !buffer_ )
+				{
 					buffer_ = chunk_type_ptr( new chunk_type( buffer_size ) );
+					memset ( buffer_->ptr( ), 0, buffer_size );
+				}
 
 				if ( used_ + bytes >= buffer_size )
 				{

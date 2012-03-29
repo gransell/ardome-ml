@@ -66,8 +66,14 @@ namespace olib
             CORE_API friend bool operator<(const media_time& lhs, const media_time& rhs);
 
             /// Convert the current time to a time_code.
-            /** @param ft The currently usedolib::opencorelib::frame_rate::type. */
-            time_code to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame ) const;
+            /** @param ft The currently used olib::opencorelib::frame_rate::type.
+                @param drop_frame Whether the resulting timecode should use drop frame or not.
+                @param wrap_around_at_24h If true, the returned timecode will wrap around to
+					   00:00:00:00 and onwards if the given number of frames represent a time
+					   duration longer than 24h at the given frame rate. If false, an exception
+					   will be thrown instead of the timecode wrapping around.
+            */
+            time_code to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame, bool wrap_around_at_24h = false ) const;
 
             /// Converts the current time to a discreet frame number.
             boost::int32_t to_frame_nr(olib::opencorelib::frame_rate::type ft ) const;

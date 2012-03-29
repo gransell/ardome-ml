@@ -150,4 +150,18 @@ void test_timecode()
 
     media_time mt6 = from_frame_number( frame_rate::ntsc, 45 );
     olib::t_string mt6_str = mt6.to_time_code(frame_rate::ntsc, false).to_string();
+
+
+	//Check midnight wrap-around
+	media_time after_midnight( rational_time( 24 * 60 * 60 ) );
+
+	//PAL
+	BOOST_CHECK_THROW( after_midnight.to_time_code( frame_rate::pal, false ), olib::opencorelib::base_exception );
+	BOOST_CHECK_NO_THROW( after_midnight.to_time_code( frame_rate::pal, false, true ) );
+	BOOST_CHECK( after_midnight.to_time_code( frame_rate::pal, false, true ) == time_code( 0, 0, 0, 0, false ) );
+
+	//NTSC drop frame
+	BOOST_CHECK_THROW( after_midnight.to_time_code( frame_rate::ntsc, true ), olib::opencorelib::base_exception );
+	BOOST_CHECK_NO_THROW( after_midnight.to_time_code( frame_rate::ntsc, true, true ) );
+	BOOST_CHECK( after_midnight.to_time_code( frame_rate::ntsc, true, true ) == time_code( 0, 0, 0, 0, true ) );
 }

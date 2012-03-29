@@ -1698,6 +1698,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					{
 						input->seek( next );
 						frame_type_ptr frame = input->fetch( );
+						ARENFORCE( frame->get_audio() );
 						if ( frame )
 						{
 							handle_reverse_input_audio( frame );

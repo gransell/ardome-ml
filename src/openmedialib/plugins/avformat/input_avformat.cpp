@@ -752,7 +752,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					boost::int64_t pos = context_->pb->pos;
 					av_url_read_pause( url_fileno( context_->pb ), 0 );
 					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
-					frames_ = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
+					int new_frames = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
+					ARENFORCE_MSG( new_frames >= frames_, "Media shrunk on sync! Last duration was: %1%, new duration is: %2% (index frames: %3%)" )
+						( frames_ )( new_frames )( aml_index_->total_frames( ) );
+					frames_ = new_frames;
 					ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->total_frames( ) );
 					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
