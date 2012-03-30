@@ -270,6 +270,7 @@ class Environment( BaseEnvironment ):
 		self[ 'stage_prefix' ] = utils.install_target( self )
 
 		if self[ 'PLATFORM' ] == 'posix':
+			self.Append( CCFLAGS = [ '-fno-strict-aliasing' ] )
 			self.Append( CCFLAGS = [ '-Wall', '-O3', '-pipe' ] )
 			self.Append( LINKFLAGS = [ '-s' ] )
 			self.Append( CPPDEFINES = [ '_LARGEFILE_SOURCE' ] )

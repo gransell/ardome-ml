@@ -143,7 +143,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self['PLATFORM'] == 'darwin':
 			return '-DOLIB_USE_UTF8' + common
 		elif self['PLATFORM'] == 'posix':
-			return '-DOLIB_USE_UTF8 -DOLIB_ON_LINUX' + common
+			return '-DOLIB_USE_UTF8 -DOLIB_ON_LINUX -fno-strict-aliasing' + common
 		elif self['PLATFORM'] == 'win32':
 			return '-DOLIB_USE_UTF16' + common
 		else:
