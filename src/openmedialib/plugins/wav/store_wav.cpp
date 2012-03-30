@@ -102,7 +102,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	riff::wav::wave w;
 	riff::wav::fmt_base fmt;
 	riff::wav::ds64 ds64; // Will be transformed into JUNK if necessary
-	riff::wav::bwf::bext_chunk bext;
 	riff::wav::data data;
 
 	fmt.format_type      = ident == ml::audio::float_id
@@ -130,7 +129,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 		  sizeof(w)
 		+ sizeof(fmt)
 		+ sizeof(ds64)
-		// + sizeof(bext)
 		+ sizeof(data)
 		+ 0; // data bytes; we don't know
 
@@ -171,7 +169,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	ARENFORCE( Write(w) >= 0 );
 	ARENFORCE( Write(fmt) >= 0 );
 	ARENFORCE( Write(ds64) >= 0 );
-	// Write(bext);
 	ARENFORCE( Write(data) >= 0 );
 }
 
@@ -296,7 +293,6 @@ void store_wav::vitalizeHeader() {
 	riff::wav::wave* wave = NULL;
 	riff::wav::fmt_base* fmt = NULL;
 	riff::wav::ds64* ds64 = NULL;
-	riff::wav::bwf::bext_chunk* bext = NULL;
 	riff::wav::data* data = NULL;
 
 	blk = wave = (riff::wav::wave*)&buf[0];
@@ -324,11 +320,6 @@ void store_wav::vitalizeHeader() {
 
 			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found JUNK block (perhaps converting into ds64)");
 			ds64 = (riff::wav::ds64*)blk;
-
-		} else if (*blk == "bext") {
-
-			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found bext block");
-			bext = (riff::wav::bwf::bext_chunk*)blk;
 
 		} else if (*blk == "data") {
 

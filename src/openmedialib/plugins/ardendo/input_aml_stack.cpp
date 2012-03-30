@@ -926,7 +926,7 @@ class aml_stack
 
 			if ( ( ( arg != L":" && arg != L";" ) || ignore_ ) && state_ == 1 )
 			{
-				ignore_ = !ignore_ && arg == L"$" ? ignore_ = 1 : ignore_ = 0;
+				ignore_ = !ignore_ && arg == L"$" ? 1 : 0;
 				if ( arg != L"" )
 					word_.push_back( arg );
 				else

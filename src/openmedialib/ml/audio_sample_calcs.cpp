@@ -143,7 +143,7 @@ ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int
 		for ( size_t i = 0; i < size; i ++ ) 
 		{
 			count += cycle[ i ];
-			total += i < remainder ? cycle[ i ] : 0;
+			total += int( i ) < remainder ? cycle[ i ] : 0;
 		}
 
 		return count * cycles + total;

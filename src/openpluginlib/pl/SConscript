@@ -4,7 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'boost_regex', 'boost_date_time', 'libxml-2.0', 'build_pl', 'xerces' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'boost_regex', 'boost_date_time', 'build_pl', 'xerces' )
 
 local_env.Append( CPPDEFINES = [ 'OPENIMAGELIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_il_plugin' ] ] )
 local_env.Append( CPPDEFINES = [ 'OPENMEDIALIB_PLUGINS=\\\"%s\\\"' % local_env[ 'install_ml_plugin' ] ] )
