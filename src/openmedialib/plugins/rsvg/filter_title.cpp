@@ -208,7 +208,6 @@ class filter_title : public ml::filter_simple
 			int size = prop_size_.value< int >( );
 			int bevel = prop_bevel_.value< int >( );
 			int halign = prop_halign_.value< int >( );
-			int valign = prop_valign_.value< int >( );
 			double opacity = prop_opacity_.value< double >( );
 
 			int x = prop_gutter_.value< int >( );

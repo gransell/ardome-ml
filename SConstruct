@@ -119,6 +119,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 			version = sys.version_info
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
+		# Provides support boost 1.4x but will be ignored with earlier revisions
+		self.Append( CPPDEFINES = [ 'BOOST_FILESYSTEM_VERSION=2' ] )
+
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )
 		elif self['PLATFORM'] == 'posix':
@@ -131,17 +134,18 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def check_externals( self ):
 		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libxml-2.0", "libavformat", "loki", "xerces", "sdl", "uuid" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl", "uuid" )
 		else:
 			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
+		common = ' -DBOOST_FILESYSTEM_VERSION=2'
 		if self['PLATFORM'] == 'darwin':
-			return '-DOLIB_USE_UTF8'
+			return '-DOLIB_USE_UTF8' + common
 		elif self['PLATFORM'] == 'posix':
-			return '-DOLIB_USE_UTF8 -DOLIB_ON_LINUX'
+			return '-DOLIB_USE_UTF8 -DOLIB_ON_LINUX -fno-strict-aliasing' + common
 		elif self['PLATFORM'] == 'win32':
-			return '-DOLIB_USE_UTF16'
+			return '-DOLIB_USE_UTF16' + common
 		else:
 			raise( "Unknown platform" )
 

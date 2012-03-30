@@ -59,7 +59,6 @@ namespace olib
             //Max size of the frame part for the specific FPS
             int get_framecount_for_framerate( olib::opencorelib::frame_rate::type ft )
             {
-                boost::int64_t tc_base_fps;
                 switch( ft )
                 {
                     case frame_rate::ntsc:

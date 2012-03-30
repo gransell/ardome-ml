@@ -56,7 +56,6 @@ void test_span()
 	BOOST_REQUIRE( sub_span.get_duration() == frames(100) );
 
     frames to_negate(50);
-    frames a = -to_negate;
 	
 	frame_span fs3( frames(50), frames(10) );
 	sub_result = span_subtraction( fs, fs3 );

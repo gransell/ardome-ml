@@ -107,10 +107,10 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			: ml::filter_type( )
 			, prop_active_( pl::pcos::key::from_string( "active" ) )
 			, obs_active_( new fn_observer< filter_threader >( const_threader( this ), &filter_threader::update_active ) )
-			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
-			, obs_queue_( new fn_observer< filter_threader >( const_threader( this ), &filter_threader::update_queue ) )
 			, active_( 0 )
 			, input_is_thread_safe_( false )
+			, prop_queue_( pl::pcos::key::from_string( "queue" ) )
+			, obs_queue_( new fn_observer< filter_threader >( const_threader( this ), &filter_threader::update_queue ) )
 			, state_( thread_dead )
 			, new_state_( thread_dead )
 			, prop_audio_direction_( pl::pcos::key::from_string( "audio_direction" ) )
@@ -767,7 +767,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					ARENFORCE( cache_.size() <= static_cast< size_t >( max_cache_size_ ) );
 
 					//Is there room in the cache?
-					if( cache_.size() == max_cache_size_ )
+					if( int( cache_.size() ) == max_cache_size_ )
 					{
 						if( !remove_frame_from_cache( lck, current_filter_position, current_filter_speed ) )
 						{

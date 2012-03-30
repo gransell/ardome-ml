@@ -13,11 +13,20 @@
 #pragma warning ( disable: 4100 4121 4503 4511 4512 4244 4267 )
 #endif
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
+#ifdef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE
+#endif
+
 #include <boost/python.hpp>
 
 #ifdef _MSC_VER
 #pragma warning ( default: 4100 4121 4503 4511 4512 4244 4267 )
 #pragma warning ( pop )
 #endif
+
 
 #endif
