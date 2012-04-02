@@ -30,11 +30,15 @@ namespace olib { namespace openmedialib { namespace ml {
 static pl::pcos::key key_complete_ = pl::pcos::key::from_string( "complete" );
 
 // Decorates indexer item with job control functionality
-class indexer_job : public indexer_item
+class indexer_job : public indexer_item, public opencorelib::function_job
 {
 	public:
+		indexer_job()
+		: opencorelib::function_job( boost::bind( &indexer_job::job_request, this ) )
+		{ }
+
 		virtual ~indexer_job( ) { }
-		virtual void job_request( opencorelib::base_job_ptr ) = 0;
+		virtual void job_request( ) = 0;
 		virtual const boost::posix_time::milliseconds job_delay( ) const = 0;
 };
 
@@ -43,21 +47,6 @@ typedef ML_DECLSPEC boost::shared_ptr< indexer_job > indexer_job_ptr;
 
 // Forward declaration to local factory method
 static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
-
-// Possibly redundant?
-class ML_DECLSPEC indexer_type
-{
-	public:
-		/// Obtain the item associated to the url
-		virtual ~indexer_type( ) { }
-		virtual void init( ) = 0;
-		virtual indexer_item_ptr request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type = 0 ) = 0;
-		virtual void shutdown( ) = 0;
-};
-
-// Possibly redundant?
-typedef ML_DECLSPEC boost::shared_ptr< indexer_type > indexer_type_ptr;
-
 
 template < class T >
 class aml_index_reader;
@@ -206,10 +195,10 @@ class indexed_job_type : public indexer_job
 			return index_->finished( );
 		}
 
-		void job_request( opencorelib::base_job_ptr job )
+		void job_request( )
 		{
 			index_->read( );
-			job->set_should_reschedule( !finished( ) );
+			set_should_reschedule( !get_should_terminate_job() && !finished( ) );
 		}
 
 		const boost::posix_time::milliseconds job_delay( ) const
@@ -255,10 +244,10 @@ class unindexed_job_type : public indexer_job
 			return finished_;
 		}
 
-		void job_request( opencorelib::base_job_ptr job )
+		void job_request( )
 		{
 			check_size( );
-			job->set_should_reschedule( !finished( ) );
+			set_should_reschedule( !get_should_terminate_job() && !finished( ) );
 		}
 
 		const boost::posix_time::milliseconds job_delay( ) const
@@ -356,10 +345,10 @@ class generating_job_type : public indexer_job
 			return index_->finished( );
 		}
 
-		void job_request( opencorelib::base_job_ptr job )
+		void job_request( )
 		{
 			analyse_gop( );
-			job->set_should_reschedule( !finished( ) );
+			set_should_reschedule( !get_should_terminate_job() && !finished( ) );
 		}
 
 		const boost::posix_time::milliseconds job_delay( ) const
@@ -434,15 +423,17 @@ static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint1
 	}
 }
 
+class indexer;
+typedef boost::shared_ptr< indexer > indexer_ptr;
 
 // The indexer singleton
-class indexer : public indexer_type
+class indexer
 {
 	public:
 		/// Provides the singleton instance of this object
-		static indexer_type_ptr instance( )
+		static indexer_ptr instance( )
 		{
-			static indexer_type_ptr instance_( new indexer( ) );
+			static indexer_ptr instance_( new indexer( ) );
 			return instance_;
 		}
 
@@ -474,7 +465,9 @@ class indexer : public indexer_type
 			}
 			pl::wstring map_key = map_key_str.str();
 
-			if ( map_.find( map_key ) == map_.end( ) )
+			map_type::iterator existing = map_.find( map_key );
+
+			if ( existing == map_.end( ) )
 			{
 				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
 				if ( !job ) return indexer_item_ptr( );
@@ -482,12 +475,11 @@ class indexer : public indexer_type
 				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) );
 				if ( !job->finished( ) && has_frames_or_size )
 				{
-					opencorelib::function_job_ptr read_job = opencorelib::function_job_ptr( new opencorelib::function_job( boost::bind( &indexer_job::job_request, job, _1 ) ) );
-					index_read_worker_.add_reoccurring_job( read_job, job->job_delay( ) );
+					index_read_worker_.add_reoccurring_job( job, job->job_delay( ) );
 				}
 				if ( has_frames_or_size )
 				{
-					map_[ map_key ] = job;
+					existing = map_.insert( std::make_pair( map_key, std::make_pair( job, 1 ) ) ).first;
 				}
 				else
 				{
@@ -495,8 +487,48 @@ class indexer : public indexer_type
 					return indexer_item_ptr( );
 				}
 			}
+			else
+			{
+				++existing->second.second;
+			}
 
-			return map_[ map_key ];
+			return existing->second.first;
+		}
+
+		void cancel( indexer_item_ptr item )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+
+			map_type::iterator it;
+			for( it = map_.begin(); it != map_.end(); ++it )
+			{
+				if( it->second.first == item )
+				{
+					break;
+				}
+			}
+
+			if( it != map_.end() )
+			{
+				boost::int32_t &ref_count = it->second.second;
+				--ref_count;
+				if( ref_count == 0 )
+				{
+					if( !it->second.first->finished() )
+					{
+						if( !index_read_worker_.cancel_and_remove_job( it->second.first, boost::posix_time::milliseconds( 5000 ) ) )
+						{
+							ARLOG_ERR( "Wait timed out when attempting to release indexer item job" );
+						}
+					}
+
+					map_.erase( it );
+				}
+			}
+			else
+			{
+				ARLOG_ERR( "Attempting to release non-existent indexer item job" );
+			}
 		}
 
 		void shutdown( )
@@ -515,7 +547,8 @@ class indexer : public indexer_type
 		}
 
 		mutable boost::recursive_mutex mutex_;
-		std::map< pl::wstring, indexer_job_ptr > map_;
+		typedef std::map< pl::wstring, std::pair< indexer_job_ptr, boost::int32_t > > map_type;
+		map_type map_;
 		opencorelib::worker index_read_worker_;
 };
 
@@ -528,6 +561,11 @@ void ML_DECLSPEC indexer_init( )
 indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type )
 {
 	return indexer::instance( )->request( url, v4_index_entry_type );
+}
+
+void ML_DECLSPEC indexer_cancel_request( const indexer_item_ptr &item )
+{
+	indexer::instance( )->cancel( item );
 }
 
 void ML_DECLSPEC indexer_shutdown( )

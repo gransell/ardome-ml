@@ -178,6 +178,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
 			av_free( audio_buf_temp_ );
+
+			if( indexer_item_ )
+			{
+				ml::indexer_cancel_request( indexer_item_ );
+			}
 		}
 
 		// Indicates if the input will enforce a packet decode

@@ -37,6 +37,9 @@ extern void ML_DECLSPEC indexer_init( );
 /// Factory method for index_item_ptr objects
 extern indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
 
+/// Cancels an indexer request previously returned by indexer_request
+extern void ML_DECLSPEC indexer_cancel_request( const indexer_item_ptr &item );
+
 /// Shuts the indexer subsystem down
 extern void ML_DECLSPEC indexer_shutdown( );
 
