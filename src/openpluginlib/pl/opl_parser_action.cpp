@@ -14,7 +14,7 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_parser_action.hpp>
-#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
+#include "../../opencorelib/cl/xerces_sax_traverser.hpp"
 
 namespace fs = boost::filesystem;
 
