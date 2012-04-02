@@ -2706,8 +2706,21 @@ image_type_ptr rescale_image( const image_type_ptr& im, int new_w, int new_h, in
 	//Make sure that the height is evenly divisible by two if the image is
 	//interlaced, since some scalers require it.
 	int extra_height = 0;
-	if( im->field_order( ) != progressive && new_h % 2 != 0 )
-		extra_height = 1;
+	if( im->field_order( ) != progressive )
+	{
+		if( im->pf( ) == L"yuv420p" )
+		{
+			//U and V planes will be half image height already, so
+			//the image height needs to be a multiple of 4 for yuv420p.
+			if( new_h % 4 != 0 )
+				extra_height = 4 - ( new_h % 4 );
+		}
+		else
+		{
+			if( new_h % 2 != 0 )
+				extra_height = 1;
+		}
+	}
 
 	image_type_ptr new_im = allocate( im->pf( ), new_w, new_h + extra_height );
 	if( !new_im )
