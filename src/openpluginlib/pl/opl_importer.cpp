@@ -19,7 +19,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
 #include <xercesc/framework/LocalFileInputSource.hpp>
-#include <../../opencorelib/cl/xerces_sax_traverser.hpp>
+#include "../../opencorelib/cl/xerces_sax_traverser.hpp"
 
 XERCES_CPP_NAMESPACE_USE
 

@@ -101,14 +101,15 @@ class rubber
 				source_fps_den_ = frame->get_fps_den( );
 
 				sync( speed, pitch, true );
+
+				pusher_         = ml::create_input(  L"pusher:" );
+				lowpass_filter_ = ml::create_filter( L"lowpass" );
+
+				pusher_->init( );
+				lowpass_filter_->init( );
+				lowpass_filter_->connect( pusher_, 0 );
 			}
 
-			pusher_         = ml::create_input(  L"pusher:" );
-			lowpass_filter_ = ml::create_filter( L"lowpass" );
-
-			pusher_->init( );
-			lowpass_filter_->init( );
-			lowpass_filter_->connect( pusher_, 0 );
 			return result;
 		}
 
@@ -251,7 +252,7 @@ class rubber
 				// Obtain the samples required
 				result->set_audio( retrieve( position, samples ) );
 				result->get_audio( )->set_position( result->get_position( ) );
-				if (lowpass_)
+				if (lowpass_ && lowpass_filter_)
 				{
 				    pusher_->push( result );
 				    result = lowpass_filter_->fetch( );

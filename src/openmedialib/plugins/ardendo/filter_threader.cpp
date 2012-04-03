@@ -320,7 +320,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 					if ( ( audio_reversed.value< int >( ) && speed_ >= 0 ) || ( !audio_reversed.value< int >( ) && speed_ < 0 ) )
 					{
 						result->set_audio( ml::audio::reverse( result->get_audio( ) ) );
-						audio_reversed = !audio_reversed.value< int >( );
+						audio_reversed = audio_reversed.value< int >( ) ? 0 : 1;
 					}
 				}
 				else
