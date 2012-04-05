@@ -147,7 +147,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 													input_channels_,
 													prop_output_sample_freq_.value<int>(),
 													input_sample_freq_,
-													SAMPLE_FMT_S16, SAMPLE_FMT_S16,
+													AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_S16,
 													16, 10, 0, 0.8 );
 				
 				if(!context_)

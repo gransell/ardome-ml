@@ -45,8 +45,8 @@ extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & 
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
 
 // libavformat codec codec context
-static AVCodecContext *avctx_opts[ CODEC_TYPE_NB ];
-static AVFormatContext *avformat_opts;
+//static AVCodecContext *avctx_opts[ CODEC_TYPE_NB ];
+//static AVFormatContext *avformat_opts;
 
 std::map< CodecID, std::string > codec_name_lookup_;
 std::map< std::string, CodecID > name_codec_lookup_;
@@ -208,9 +208,10 @@ namespace
 		{
 			avcodec_register_all();
 			av_register_all( );
-			for( int i = 0; i < CODEC_TYPE_NB; i ++ )
-				ml::avctx_opts[ i ]= avcodec_alloc_context2( CodecType( i ) );
-			ml::avformat_opts = avformat_alloc_context( );
+			avformat_network_init( );
+			//for( int i = 0; i < CODEC_TYPE_NB; i ++ )
+				//ml::avctx_opts[ i ]= avcodec_alloc_context2( CodecType( i ) );
+			//ml::avformat_opts = avformat_alloc_context( );
 			if ( getenv( "AML_AVFORMAT_DEBUG" ) == 0 )
 				av_log_set_level( -1 );
 			

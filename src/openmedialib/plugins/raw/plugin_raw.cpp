@@ -16,7 +16,9 @@
 #include <limits>
 
 extern "C" {
+#include <libavformat/avformat.h>
 #include <libavformat/avio.h>
+#include <libavformat/url.h>
 }
 
 namespace pl = olib::openpluginlib;
@@ -26,16 +28,16 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { namespace raw {
 
-std::string url_fgets( ByteIOContext *s )
+std::string avio_gets( AVIOContext *s )
 {
 	std::string result;
 	int c;
 
-	c = url_fgetc( s );
-	while( c != EOF && c != '\n' ) 
+	c = avio_r8( s );
+	while( c != EOF && c != '\n' && c != '\r' ) 
 	{
 		result += c;
-		c = url_fgetc( s );
+		c = avio_r8( s );
 	}
 	return result;
 }
@@ -89,7 +91,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		virtual ~input_raw( ) 
 		{ 
 			if ( context_ )
-				url_fclose( context_ );
+				avio_close( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -101,7 +103,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
-		virtual bool is_seekable( ) const { return context_ ? !context_->is_streamed : 0; }
+		virtual bool is_seekable( ) const { return context_ ? context_->seekable : 0; }
 
 		// Visual
 		virtual int get_video_streams( ) const { return 1; }
@@ -118,7 +120,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			if ( spec.find( L"raw:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = url_fopen( &context_, pl::to_string( spec ).c_str( ), URL_RDONLY );
+			int error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -131,7 +133,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			if ( prop_header_.value< int >( ) )
 			{
-				std::string header = url_fgets( context_ );
+				std::string header = avio_gets( context_ );
 				std::istringstream str( header );
 				std::string token;
 				while( !str.eof( ) )
@@ -148,11 +150,11 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else std::cerr << "unrecognised header entry " << token;
 				}
-				offset_ = url_ftell( context_ );
+				offset_ = avio_tell( context_ );
 			}
 
 			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
-			size_ = url_fsize( context_ );
+			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 
 			if ( is_seekable( ) )
@@ -182,7 +184,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			// Seek to requested position when required
 			if ( get_position( ) != expected_ && is_seekable( ) )
-				url_fseek( context_, offset_ + boost::int64_t( get_position( ) ) * bytes_, SEEK_SET );
+				avio_seek( context_, offset_ + boost::int64_t( get_position( ) ) * bytes_, SEEK_SET );
 			else
 				seek( expected_ );
 			expected_ = get_position( ) + 1;
@@ -213,7 +215,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 					int height = image->height( p );
 					while( height -- )
 					{
-						error |= get_buffer( context_, dst, width ) != width;
+						error |= avio_read( context_, dst, width ) != width;
 						dst += pitch;
 					}
 				}
@@ -240,7 +242,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		pl::pcos::property prop_sar_den_;
 		pl::pcos::property prop_field_order_;
 		pl::pcos::property prop_header_;
-		ByteIOContext *context_;
+		AVIOContext *context_;
 		boost::int64_t size_;
 		int bytes_;
 		int frames_;
@@ -282,7 +284,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		virtual ~input_aud( ) 
 		{ 
 			if ( context_ )
-				url_fclose( context_ );
+				avio_close( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -294,7 +296,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
-		virtual bool is_seekable( ) const { return context_ ? !context_->is_streamed : 0; }
+		virtual bool is_seekable( ) const { return context_ ? context_->seekable : 0; }
 
 		// Visual
 		virtual int get_video_streams( ) const { return 0; }
@@ -311,7 +313,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( spec.find( L"aud:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = url_fopen( &context_, pl::to_string( spec ).c_str( ), URL_RDONLY );
+			int error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -324,7 +326,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 
 			if ( prop_header_.value< int >( ) )
 			{
-				std::string header = url_fgets( context_ );
+				std::string header = avio_gets( context_ );
 				std::istringstream str( header );
 				std::string token;
 				while( !str.eof( ) )
@@ -339,7 +341,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else std::cerr << "unrecognised header entry " << token;
 				}
-				offset_ = url_ftell( context_ );
+				offset_ = avio_tell( context_ );
 			}
 
 			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), 1 );
@@ -348,7 +350,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( is_seekable( ) )
 			{
 				int bytes_per_second = samples_size_ * prop_frequency_.value< int >( );
-				frames_ = int( ( prop_fps_num_.value< int >( ) * double( url_fsize( context_ ) - offset_ ) / bytes_per_second ) / prop_fps_den_.value< int >( ) );
+				frames_ = int( ( prop_fps_num_.value< int >( ) * double( avio_size( context_ ) - offset_ ) / bytes_per_second ) / prop_fps_den_.value< int >( ) );
 			}
 
 			parsed_ = true;
@@ -372,7 +374,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( get_position( ) != expected_ && is_seekable( ) )
 			{
 				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
-				url_fseek( context_, offset_ + samples * samples_size_, SEEK_SET );
+				avio_seek( context_, offset_ + samples * samples_size_, SEEK_SET );
 			}
 			else
 			{
@@ -394,7 +396,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples );
 
 			if ( audio )
-				error = get_buffer( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) != audio->size( );
+				error = avio_read( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) != audio->size( );
 
 			if ( !error )
 				frame->set_audio( audio );
@@ -414,7 +416,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		pl::pcos::property prop_fps_den_;
 		pl::pcos::property prop_profile_;
 		pl::pcos::property prop_header_;
-		ByteIOContext *context_;
+		AVIOContext *context_;
 		boost::int64_t size_;
 		int frames_;
 		int expected_;
@@ -452,7 +454,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		virtual ~store_raw( )
 		{
 			if ( context_ )
-				url_close( context_ );
+				avio_close( context_ );
 		}
 
 		bool init( )
@@ -464,11 +466,11 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				if ( spec.find( L"raw:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = url_open( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
+				error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
 				if ( error == 0 )
 				{
-					ByteIOContext *aml = 0;
-					if( !context_->is_streamed && url_fopen( &aml, pl::to_string( spec + L".aml" ).c_str( ), URL_WRONLY ) == 0 )
+					AVIOContext *aml = 0;
+					if( context_->seekable && avio_open( &aml, pl::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
@@ -486,10 +488,10 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 						std::string string = str.str( );
 
-						url_setbufsize( aml, string.size( ) );
-						put_buffer( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-						put_flush_packet( aml );
-						url_fclose( aml );
+						//url_setbufsize( aml, string.size( ) );
+						avio_write( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
+						avio_flush( aml );
+						avio_close( aml );
 					}
 
 					if ( prop_header_.value< int >( ) )
@@ -509,7 +511,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				<< " field_order=" << field_order_
 				<< std::endl;
 			std::string string = str.str( );
-			url_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
+			avio_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 		}
 
 		bool push( frame_type_ptr frame )
@@ -526,10 +528,11 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 					int height = image->height( p );
 					while( success && height -- )
 					{
-						success = url_write( context_, dst, width ) == width;
+						avio_write( context_, dst, width );
 						dst += pitch;
 					}
 				}
+				avio_flush( context_ );
 			}
 			return success;
 		}
@@ -543,7 +546,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 	private:
 		pl::pcos::property prop_header_;
 		pl::wstring spec_;
-		URLContext *context_;
+		AVIOContext *context_;
 		pl::wstring pf_;
 		int valid_;
 		int width_;
@@ -581,7 +584,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		virtual ~store_aud( )
 		{
 			if ( context_ )
-				url_close( context_ );
+				ffurl_close( context_ );
 		}
 
 		bool init( )
@@ -593,11 +596,11 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				if ( spec.find( L"aud:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = url_open( &context_, pl::to_string( spec ).c_str( ), URL_WRONLY );
+				error = ffurl_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
 				if ( error == 0 )
 				{
-					ByteIOContext *aml = 0;
-					if( !context_->is_streamed && url_fopen( &aml, pl::to_string( spec + L".aml" ).c_str( ), URL_WRONLY ) == 0 )
+					AVIOContext *aml = 0;
+					if( !context_->is_streamed && avio_open( &aml, pl::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
@@ -613,10 +616,10 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 
 						std::string string = str.str( );
 
-						url_setbufsize( aml, string.size( ) );
-						put_buffer( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-						put_flush_packet( aml );
-						url_fclose( aml );
+						//url_setbufsize( aml, string.size( ) );
+						avio_write( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
+						avio_flush( aml );
+						avio_close( aml );
 					}
 
 					if ( prop_header_.value< int >( ) )
@@ -634,7 +637,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< std::endl;
 			std::string string = str.str( );
-			url_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
+			ffurl_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 		}
 
 		bool push( frame_type_ptr frame )
@@ -642,7 +645,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			ml::audio_type_ptr audio = frame->get_audio( );
 			bool success = true;
 			if ( audio != 0 )
-				success = url_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
+				success = ffurl_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
 			return success;
 		}
 

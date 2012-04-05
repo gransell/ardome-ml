@@ -20,7 +20,7 @@
 
 // includes for access to the avformat url access interface
 extern "C" {
-#include <libavformat/avformat.h>
+#include <libavformat/url.h>
 }
 
 namespace pl = olib::openpluginlib;
@@ -116,23 +116,23 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 	URLContext *ts_context;
 	boost::uint8_t temp[ 16384 ];
 
-	if ( url_open( &ts_context, target->file_.c_str( ), URL_RDONLY ) < 0 )
+	if ( ffurl_open( &ts_context, target->file_.c_str( ), AVIO_FLAG_READ, 0, 0 ) < 0 )
 	{
-		ARLOG_ERR( "url_open failed on index file %1%" )( target->file_ );
+		ARLOG_ERR( "ffurl_open failed on index file %1%" )( target->file_ );
 		return;
 	}
 
-	url_seek( ts_context, target->position_, SEEK_SET );
+	ffurl_seek( ts_context, target->position_, SEEK_SET );
 
 	while ( target->T::valid( ) )
 	{
-		int actual = url_read( ts_context, ( unsigned char * )temp, sizeof( temp ) );
+		int actual = ffurl_read( ts_context, ( unsigned char * )temp, int( sizeof( temp ) ) );
 		if ( actual <= 0 ) break;
 		target->position_ += actual;
 		target->T::parse( temp, actual );
 	}
 
-	url_close( ts_context );
+	ffurl_close( ts_context );
 }
 
 // Shared pointer wrapper for index reader
@@ -264,13 +264,13 @@ class unindexed_job_type : public indexer_job
 			std::string temp = pl::to_string( url_ );
 
 			// Attempt to reopen the media
-			if ( url_open( &context, temp.c_str( ), URL_RDONLY ) >= 0 )
+			if ( ffurl_open( &context, temp.c_str( ), AVIO_FLAG_READ, 0, 0 ) >= 0 )
 			{
 				// Check the current file size
-				boost::int64_t bytes = url_seek( context, 0, SEEK_END );
+				boost::int64_t bytes = ffurl_seek( context, 0, SEEK_END );
 
 				// Clean up the temporary sizing context
-				url_close( context );
+				ffurl_close( context );
 
 				// If it's larger than before, then reopen, otherwise reduce resize count
 				{

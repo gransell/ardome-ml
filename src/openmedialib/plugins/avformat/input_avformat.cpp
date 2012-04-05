@@ -40,6 +40,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavformat/url.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 }
@@ -89,7 +90,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, height_( 576 )
 			, context_( 0 )
 			, format_( 0 )
-			, params_( 0 )
 			, prop_video_index_( pcos::key::from_string( "video_index" ) )
 			, prop_audio_index_( pcos::key::from_string( "audio_index" ) )
 			, prop_gop_size_( pcos::key::from_string( "gop_size" ) )
@@ -174,7 +174,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( prop_audio_index_.value< int >( ) >= 0 )
 				close_audio_codec( );
 			if ( context_ )
-				av_close_input_file( context_ );
+				avformat_close_input( &context_ );
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
 			av_free( audio_buf_temp_ );
@@ -321,9 +321,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			resource_ = resource;
 
 			// Attempt to open the resource
-			int error = av_open_input_file( &context_, pl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
+			int error = avformat_open_input( &context_, pl::to_string( resource ).c_str( ), format_, 0 ) < 0;
 
-            if (error == 0 && !url_is_streamed( context_->pb )) {
+            if (error == 0 && context_->pb && context_->pb->seekable) {
                 // Try to obtain the index specified
                 if ( !prop_gen_index_.value< int >( ))
                 {
@@ -338,7 +338,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
                     else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
                         return false;
                 }
-                else if ( url_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0 )
+                else if ( ffurl_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0 )
                 {
                     prop_genpts_ = 1;
                     is_seekable_ = false;
@@ -347,7 +347,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
             }
 
 			// Check for streaming
-			if ( error == 0 && context_->pb && url_is_streamed( context_->pb ) )
+			if ( error == 0 && context_->pb && context_->pb->seekable )
 			{
 				is_seekable_ = false;
 				key_search_ = true;
@@ -357,7 +357,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( error == 0 )
 			{
 				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
-				error = av_find_stream_info( context_ ) < 0;
+				error = avformat_find_stream_info( context_, 0 ) < 0;
 				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
 					error = true;
 			}
@@ -367,10 +367,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				format_ = 0;
 				if ( context_ )
-					av_close_input_file( context_ );
-				error = av_open_input_file( &context_, pl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
+					avformat_close_input( &context_ );
+				error = avformat_open_input( &context_, pl::to_string( resource ).c_str( ), format_, 0  ) < 0;
 				if ( !error )
-					error = av_find_stream_info( context_ ) < 0;
+					error = avformat_find_stream_info( context_, 0 ) < 0;
 			}
 
 			// Populate the input properties
@@ -528,7 +528,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			while( error >= 0 && ( !got_picture || !got_audio ) )
 			{
-				last_packet_pos_ = url_ftell( context_->pb );
+				last_packet_pos_ = avio_tell( context_->pb );
 				error = av_read_frame( context_, &pkt_ );
 				if ( error < 0)
 				{
@@ -536,7 +536,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						ARLOG_ERR( "Got EOF at position %1%" )( get_position( ) );
 						eof_ = true; //Mark eof to let get_frames start returning the correct number of frames
 					} else {
-						ARLOG_ERR( "Failed to read frame. Position = %1% Error = %2% real error = %3% eof = %4%" )( get_position( ) )( error ) ( url_ferror(context_->pb))(url_feof(context_->pb));
+						ARLOG_ERR( "Failed to read frame. Position = %1% real error = %2% eof = %3%" )( get_position( ) )( error )( url_feof(context_->pb) );
 
 					}
 					packet_failure = true;
@@ -624,13 +624,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			if ( prop_gen_index_.value< int >( ) && error < 0 )
 			{
-				indexer_.close( get_position( ), url_ftell( context_->pb ) );
+				indexer_.close( get_position( ), avio_tell( context_->pb ) );
 				std::vector< boost::uint8_t > buffer;
 				indexer_.flush( buffer );
 				if ( indexer_context_ )
 				{
-					url_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
-					url_close( indexer_context_ );
+					ffurl_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
+					ffurl_close( indexer_context_ );
 				}
 			}
 
@@ -663,7 +663,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			while( error >= 0 && got_packet == ml::stream_unknown )
 			{
-				last_packet_pos_ = url_ftell( context_->pb );
+				last_packet_pos_ = avio_tell( context_->pb );
 				error = av_read_frame( context_, &pkt_ );
 				if ( error >= 0 && is_video_stream( pkt_.stream_index ) )
 					got_packet = ml::stream_video;
@@ -754,15 +754,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			{
 				if ( aml_index_->total_frames( ) > frames_ )
 				{
-					boost::int64_t pos = context_->pb->pos;
-					av_url_read_pause( url_fileno( context_->pb ), 0 );
-					prop_file_size_ = boost::int64_t( url_seek( url_fileno( context_->pb ), 0, SEEK_END ) );
+					av_read_pause( context_ );
+					prop_file_size_ = boost::int64_t( avio_size( context_->pb ) );
 					int new_frames = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
 					ARENFORCE_MSG( new_frames >= frames_, "Media shrunk on sync! Last duration was: %1%, new duration is: %2% (index frames: %3%)" )
 						( frames_ )( new_frames )( aml_index_->total_frames( ) );
 					frames_ = new_frames;
 					ARLOG_DEBUG3( "Resynced with index. Calculated frames = %1%. Index frames = %2%" )( frames_ )( aml_index_->total_frames( ) );
-					url_seek( url_fileno( context_->pb ), pos, SEEK_SET );
 					last_frame_ = ml::frame_type_ptr( );
 				}
 			}
@@ -814,7 +812,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else if ( aml_index_ )
 			{
-				boost::int64_t bytes = boost::int64_t( context_->file_size );
+				boost::int64_t bytes = boost::int64_t( avio_size( context_->pb ) );
 				frames_ = aml_index_->calculate( bytes );
 			}
 		}
@@ -922,10 +920,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				// Determine the type and obtain the first index of each type
    				switch( codec_context->codec_type ) 
 				{
-					case CODEC_TYPE_VIDEO:
+					case AVMEDIA_TYPE_VIDEO:
 						video_indexes_.push_back( i );
 						break;
-					case CODEC_TYPE_AUDIO:
+					case AVMEDIA_TYPE_AUDIO:
 						audio_indexes_.push_back( i );
 		   				break;
 					default:
@@ -1047,7 +1045,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 
 			// Report the file size via the file_size and frames properties
-			prop_file_size_ = boost::int64_t( context_->file_size );
+			prop_file_size_ = boost::int64_t( avio_size( context_->pb ) );
 		}
 
 		bool should_size_media( std::string format )
@@ -1239,10 +1237,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
-			if ( video_codec_ == NULL || avcodec_open( codec_context, video_codec_ ) < 0 )
+			codec_context->thread_count = std::max< int >( 1, boost::thread::hardware_concurrency( ) / 2 );
+			if ( video_codec_ == NULL || avcodec_open2( codec_context, video_codec_, 0 ) < 0 )
 				prop_video_index_ = -1;
-			else
-				avcodec_thread_init( codec_context, std::max< int >( 1, boost::thread::hardware_concurrency( ) / 2 ) );
 		}
 
 		void close_video_codec( )
@@ -1259,7 +1256,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			AVStream *stream = get_audio_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			audio_codec_ = avcodec_find_decoder( codec_context->codec_id );
-			if ( audio_codec_ == NULL || avcodec_open( codec_context, audio_codec_ ) < 0 )
+			if ( audio_codec_ == NULL || avcodec_open2( codec_context, audio_codec_, 0 ) < 0 )
 				prop_audio_index_ = -1;
 		}
 
@@ -1465,7 +1462,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					std::vector< boost::uint8_t > buffer;
 					indexer_.flush( buffer );
 					if ( indexer_context_ )
-						url_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
+						ffurl_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
 				}
 				got_picture = true;
 			}
@@ -1857,10 +1854,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			URLContext *keepalive = 0;
 			if ( resource_.find( L"aml:cache:" ) == 0 )
 			{
-				url_open( &keepalive, pl::to_string( resource_ ).c_str( ), URL_RDONLY );
+				ffurl_open( &keepalive, pl::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
 
 				// AML specific reopen hack - enforces a reopen from a non-cached source
-				av_url_read_pause( url_fileno( context_->pb ), 0 );
+				av_read_pause( context_ );
 			}
 
 			// Preserve the current position (since we need to seek to start and end here)
@@ -1878,7 +1875,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				audio_indexes_.clear( );
 			}
 			if ( context_ )
-				av_close_input_file( context_ );
+				avformat_close_input( &context_ );
 
 			// Clear video and audio index vectors
 			video_indexes_.erase( video_indexes_.begin( ), video_indexes_.end( ) );
@@ -1891,7 +1888,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// Close the keep alive
 			if ( keepalive )
-				url_close( keepalive );
+				ffurl_close( keepalive );
 
 			// Restore the position request
 			seek( position );
@@ -1917,7 +1914,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		AVFormatContext *context_;
 		AVInputFormat *format_;
-		AVFormatParameters *params_;
 		pcos::property prop_video_index_;
 		pcos::property prop_audio_index_;
 		pcos::property prop_gop_size_;

@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavformat/url.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavutil/pixdesc.h>
@@ -98,18 +99,18 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_scplx_mask_( pcos::key::from_string( "scplx_mask" ) )
 			, prop_tcplx_mask_( pcos::key::from_string( "tcplx_mask" ) )
 			, prop_p_mask_( pcos::key::from_string( "p_mask" ) )
-			, prop_qns_( pcos::key::from_string( "qns" ) )
+			//, prop_qns_( pcos::key::from_string( "qns" ) )
 			, prop_video_qmin_( pcos::key::from_string( "video_qmin" ) )
 			, prop_video_qmax_( pcos::key::from_string( "video_qmax" ) )
 			, prop_video_lmin_( pcos::key::from_string( "video_lmin" ) )
 			, prop_video_lmax_( pcos::key::from_string( "video_lmax" ) )
-			, prop_video_mb_qmin_( pcos::key::from_string( "video_mb_qmin" ) )
-			, prop_video_mb_qmax_( pcos::key::from_string( "video_mb_qmax" ) )
+			//, prop_video_mb_qmin_( pcos::key::from_string( "video_mb_qmin" ) )
+			//, prop_video_mb_qmax_( pcos::key::from_string( "video_mb_qmax" ) )
 			, prop_video_qdiff_( pcos::key::from_string( "video_qdiff" ) )
 			, prop_video_qblur_( pcos::key::from_string( "video_qblur" ) )
 			, prop_video_qcomp_( pcos::key::from_string( "video_qcomp" ) )
-			, prop_mux_rate_( pcos::key::from_string( "mux_rate" ) )
-			, prop_mux_preload_( pcos::key::from_string( "mux_preload" ) )
+			//, prop_mux_rate_( pcos::key::from_string( "mux_rate" ) )
+			//, prop_mux_preload_( pcos::key::from_string( "mux_preload" ) )
 			, prop_mux_delay_( pcos::key::from_string( "mux_delay" ) )
 			, prop_video_packet_size_( pcos::key::from_string( "video_packet_size" ) )
 			, prop_video_rc_max_rate_( pcos::key::from_string( "video_rc_max_rate" ) )
@@ -235,18 +236,18 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_scplx_mask_ = 0.0 );
 			properties( ).append( prop_tcplx_mask_ = 0.0 );
 			properties( ).append( prop_p_mask_ = 0.0 );
-			properties( ).append( prop_qns_ = 0 );
+			//properties( ).append( prop_qns_ = 0 );
 			properties( ).append( prop_video_qmin_ = 2 );
 			properties( ).append( prop_video_qmax_ = 31 );
 			properties( ).append( prop_video_lmin_ = 2 * FF_QP2LAMBDA );
 			properties( ).append( prop_video_lmax_ = 31 * FF_QP2LAMBDA );
-			properties( ).append( prop_video_mb_qmin_ = 2 );
-			properties( ).append( prop_video_mb_qmax_ = 31 );
+			//properties( ).append( prop_video_mb_qmin_ = 2 );
+			//properties( ).append( prop_video_mb_qmax_ = 31 );
 			properties( ).append( prop_video_qdiff_ = 3 );
 			properties( ).append( prop_video_qblur_ = 0.5 );
 			properties( ).append( prop_video_qcomp_ = 0.5 );
-			properties( ).append( prop_mux_rate_ = 0 );
-			properties( ).append( prop_mux_preload_ = 0.5 );
+			//properties( ).append( prop_mux_rate_ = 0 );
+			//properties( ).append( prop_mux_preload_ = 0.5 );
 			properties( ).append( prop_mux_delay_ = 0.7 );
 			properties( ).append( prop_video_packet_size_ = 0 );
 			properties( ).append( prop_video_rc_max_rate_ = 0 );
@@ -397,7 +398,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				strncpy(oc_->filename, pl::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
 
 				// Set up the parameters and open all codecs
-				if ( av_set_parameters( oc_, NULL ) >= 0 )
+				//if ( av_set_parameters( oc_, NULL ) >= 0 )
 				{
 					// Attempt to open video and audio streams
 					if ( open_video_stream( ) && open_audio_stream( ) )
@@ -422,19 +423,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// We'll allow encoding to stdout
 			if ( !( fmt_->flags & AVFMT_NOFILE ) ) 
-				ret = url_fopen( &oc_->pb, pl::to_string( resource( ) ).c_str( ), URL_WRONLY ) >= 0;
+				ret = avio_open( &oc_->pb, pl::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
 			else
 				ret = true;
 
 			// Write the header
 			if ( ret )
 			{
-				av_write_header( oc_ );
+				avformat_write_header( oc_, 0 );
 
 				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< pl::wstring >( ) == L"" )
-					ret = url_open( &ts_context_, pl::to_string( pl::wstring( resource( ) + L".awi" ) ).c_str( ), URL_WRONLY ) >= 0;
+					ret = ffurl_open( &ts_context_, pl::to_string( pl::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
 				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					ret = url_open( &ts_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), URL_WRONLY ) >= 0;
+					ret = ffurl_open( &ts_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
 			}
 
 			return ret;
@@ -464,12 +465,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				ts_generator_audio_.close(audio_packet_num_, final);
 				ts_generator_video_.close(push_count_, final);
 				write_ts_index( );
-				url_close( ts_context_ );
+				ffurl_close( ts_context_ );
 			}
 
 			// Close the output file
 			if ( !( fmt_->flags & AVFMT_NOFILE ) )
-				url_fclose( oc_->pb );
+				avio_close( oc_->pb );
 
 			// Clean up the log
 			if ( log_file_ )
@@ -483,11 +484,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				std::vector< boost::uint8_t > buffer;
 				ts_generator_audio_.flush( buffer );
-				url_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				ffurl_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 
 
 				ts_generator_video_.flush( buffer );
-				url_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				ffurl_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 			}
 		}
 
@@ -633,7 +634,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 			else
 			{
-				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, CODEC_TYPE_VIDEO );
+				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_VIDEO );
 			}
 			if ( prop_debug_.value< int >( ) )
  				std::cerr << "obtain_video_codec_id: found: " << codec_id << " for "
@@ -657,7 +658,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 			else
 			{
-				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, CODEC_TYPE_AUDIO );
+				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_AUDIO );
 			}
 
 			if ( prop_debug_.value< int >( ) )
@@ -671,14 +672,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		// Generate a video stream
 		AVStream *add_video_stream( CodecID codec_id )
 		{
+			AVCodec *codec = avcodec_find_encoder( codec_id );
+
 			// Create a new stream
-			AVStream *st = av_new_stream( oc_, 0 );
+			AVStream *st = avformat_new_stream( oc_, codec );
 
 			if ( st != NULL ) 
 			{
 				AVCodecContext *c = st->codec;
-				c->codec_id = codec_id;
-				c->codec_type = CODEC_TYPE_VIDEO;
+				// ? unsure
 				c->reordered_opaque = AV_NOPTS_VALUE;
 
 				// Specify stream parameters
@@ -714,13 +716,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->spatial_cplx_masking = static_cast<float>(prop_scplx_mask_.value< double >( ));
 				c->temporal_cplx_masking = static_cast<float>(prop_tcplx_mask_.value< double >( ));
 				c->p_masking = static_cast<float>(prop_p_mask_.value< double >( ));
-				c->quantizer_noise_shaping= prop_qns_.value< int >( );
+				//c->quantizer_noise_shaping= prop_qns_.value< int >( );
 				c->qmin = prop_video_qmin_.value< int >( );
 				c->qmax = prop_video_qmax_.value< int >( );
 				c->lmin = prop_video_lmin_.value< int >( );
 				c->lmax = prop_video_lmax_.value< int >( );
-				c->mb_qmin = prop_video_mb_qmin_.value< int >( );
-				c->mb_qmax = prop_video_mb_qmax_.value< int >( );
+//				c->mb_qmin = prop_video_mb_qmin_.value< int >( );
+//				c->mb_qmax = prop_video_mb_qmax_.value< int >( );
 				c->max_qdiff = prop_video_qdiff_.value< int >( );
 				c->qblur = static_cast<float>(prop_video_qblur_.value< double >( ));
 				c->qcompress = static_cast<float>(prop_video_qcomp_.value< double >( ));
@@ -733,7 +735,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( prop_qscale_.value< double >( ) > 0.0 )
 				{
 					c->flags |= CODEC_FLAG_QSCALE;
-					st->quality = float( FF_QP2LAMBDA * prop_qscale_.value< double >( ) );
+					//st->quality = float( FF_QP2LAMBDA * prop_qscale_.value< double >( ) );
 				}
 		
 				// Allow the user to override the video fourcc
@@ -752,11 +754,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
 					c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 		
-				oc_->preload = int( prop_mux_preload_.value< double >( ) * AV_TIME_BASE );
+				//oc_->preload = int( prop_mux_preload_.value< double >( ) * AV_TIME_BASE );
 				oc_->max_delay = int( prop_mux_delay_.value< double >( ) * AV_TIME_BASE );
-				oc_->loop_output = AVFMT_NOOUTPUTLOOP;
+				//oc_->loop_output = AVFMT_NOOUTPUTLOOP;
 
-				oc_->mux_rate = prop_mux_rate_.value< int >( );
+				//oc_->mux_rate = prop_mux_rate_.value< int >( );
 				oc_->packet_size = prop_video_packet_size_.value< int >( );
 				c->rc_max_rate = prop_video_rc_max_rate_.value< int >( );
 				c->rc_min_rate = prop_video_rc_min_rate_.value< int >( );
@@ -821,7 +823,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			for( int i = 0; i < streams; i ++ )
 			{
 				// Create a new stream
-				AVStream *st = av_new_stream( oc_, i + 1 );
+				AVCodec *codec = avcodec_find_encoder( codec_id );
+
+				AVStream *st = avformat_new_stream( oc_, codec );
 
 				if ( !st )
 					std::cerr << "add_audio_stream: failed to create stream for: " << codec_id << std::endl;
@@ -830,8 +834,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( st != NULL ) 
 				{
 					AVCodecContext *c = st->codec;
-					c->codec_id = codec_id;
-					c->codec_type = CODEC_TYPE_AUDIO;
+					//c->codec_id = codec_id;
+					//c->codec_type = AVMEDIA_TYPE_AUDIO;
 					c->reordered_opaque = AV_NOPTS_VALUE;
 
 					// Specify sample parameters
@@ -913,11 +917,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				video_enc->opaque = ( void * )this;
 
 				// Open the codec safely
-				ret = codec != NULL && avcodec_open( video_enc, codec ) >= 0;
+				ret = codec != NULL && avcodec_open2( video_enc, codec, 0 ) >= 0;
 
 				#ifndef WIN32
 				if ( ret && prop_thread_count_.value< int >( ) > 1 )
-					avcodec_thread_init( video_enc, prop_thread_count_.value< int >( ) );
+					video_enc->thread_count = prop_thread_count_.value< int >( );
 				#endif
 			}
 
@@ -939,7 +943,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodec *codec = avcodec_find_encoder( c->codec_id );
 
 				// Continue if codec found and we can open it
-				ARENFORCE( codec != NULL && avcodec_open( c, codec ) >= 0 );
+				ARENFORCE( codec != NULL && avcodec_open2( c, codec, 0 ) >= 0 );
 
 				if ( c->frame_size <= 1 ) 
 				{
@@ -1048,7 +1052,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				{
 					ts_generator_video_.enroll( c->coded_frame->pts, oc_->pb->pos );
 					write_ts_index( );
-					pkt.flags |= PKT_FLAG_KEY;
+					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
 					ts_last_offset_ = oc_->pb->pos;
 				}
@@ -1131,7 +1135,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPacket pkt;
 				av_init_packet( &pkt );
 		
-				pkt.flags |= PKT_FLAG_KEY;
+				pkt.flags |= AV_PKT_FLAG_KEY;
 				pkt.stream_index = video_stream_->index;
 				pkt.data = ( uint8_t * )&av_image_;
 				pkt.size = sizeof( AVPicture );
@@ -1141,8 +1145,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			else 
 			{
 				// Set the quality
-				av_image_.quality = int( video_stream_->quality );
-				av_image_.pict_type = 0;
+				//av_image_.quality = int( video_stream_->quality );
+				//av_image_.pict_type = 0;
 
 				int out_size;
 				ret = do_video_encode(false, &out_size);
@@ -1211,7 +1215,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					if ( c->coded_frame && uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 						pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, ( *iter )->time_base );
 
-					pkt.flags |= PKT_FLAG_KEY;
+					pkt.flags |= AV_PKT_FLAG_KEY;
 					pkt.stream_index = ( *iter )->index;
 					pkt.data = audio_outbuf_;
 
@@ -1307,18 +1311,18 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property /* double */ prop_scplx_mask_;
 		pcos::property /* double */ prop_tcplx_mask_;
 		pcos::property /* double */ prop_p_mask_;
-		pcos::property /* int */ prop_qns_;
+		//pcos::property /* int */ prop_qns_;
 		pcos::property /* int */ prop_video_qmin_;
 		pcos::property /* int */ prop_video_qmax_;
 		pcos::property /* int */ prop_video_lmin_;
 		pcos::property /* int */ prop_video_lmax_;
-		pcos::property /* int */ prop_video_mb_qmin_;
-		pcos::property /* int */ prop_video_mb_qmax_;
+		//pcos::property /* int */ prop_video_mb_qmin_;
+		//pcos::property /* int */ prop_video_mb_qmax_;
 		pcos::property /* int */ prop_video_qdiff_;
 		pcos::property /* double */ prop_video_qblur_;
 		pcos::property /* double */ prop_video_qcomp_;
-		pcos::property /* int */ prop_mux_rate_;
-		pcos::property /* double */ prop_mux_preload_;
+		//pcos::property /* int */ prop_mux_rate_;
+		//pcos::property /* double */ prop_mux_preload_;
 		pcos::property /* double */ prop_mux_delay_;
 		pcos::property /* int */ prop_video_packet_size_;
 		pcos::property /* int */ prop_video_rc_max_rate_;

@@ -378,13 +378,10 @@ class stream_queue
 				// Work around for broken Omneon IMX streams which incorrectly assign the low delay flag in their encoder
 				if ( result->get_stream( )->estimated_gop_size( ) == 1 )
 					context_->flags |= CODEC_FLAG_LOW_DELAY;
-				avcodec_open( context_, codec_ );
-				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 				if ( threads_ )
-				{
 					context_->thread_count = threads_;
-					avcodec_thread_init( context_, threads_ );
-				}
+				avcodec_open2( context_, codec_, 0 );
+				ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 				avcodec_flush_buffers( context_ );
 			}
 

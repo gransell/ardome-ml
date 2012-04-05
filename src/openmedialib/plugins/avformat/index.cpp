@@ -6,6 +6,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavformat/url.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 
@@ -41,20 +42,20 @@ template <typename T> class aml_awi_index : public aml_index
 			URLContext *ts_context_;
 			boost::uint8_t temp[ 400 ];
 
-			if ( url_open( &ts_context_, file_.c_str( ), URL_RDONLY ) < 0 )
+			if ( ffurl_open( &ts_context_, file_.c_str( ), URL_RDONLY, 0, 0 ) < 0 )
 				return;
 
-			url_seek( ts_context_, position_, SEEK_SET );
+			ffurl_seek( ts_context_, position_, SEEK_SET );
 
 			while ( true )
 			{
-				int actual = url_read( ts_context_, ( unsigned char * )temp, sizeof( temp ) );
+				int actual = ffurl_read( ts_context_, ( unsigned char * )temp, sizeof( temp ) );
 				if ( actual <= 0 ) break;
 				position_ += actual;
 				awi_.parse( temp, actual );
 			}
 
-			url_close( ts_context_ );
+			ffurl_close( ts_context_ );
 		}
 
 		/// Find the byte position for the position
@@ -312,14 +313,14 @@ class aml_http_index : public aml_file_index
 
 			char temp[ 400 ];
 
-			if ( url_open( &ts_context_, file_.c_str( ), URL_RDONLY ) < 0 )
+			if ( ffurl_open( &ts_context_, file_.c_str( ), URL_RDONLY ) < 0 )
 			{
 				usable_ = false;
 				eof_ = true;
 				return;
 			}
 
-			url_seek( ts_context_, position_, SEEK_SET );
+			ffurl_seek( ts_context_, position_, SEEK_SET );
 
 			while ( true )
 			{
@@ -331,7 +332,7 @@ class aml_http_index : public aml_file_index
 				memset( temp, 0, sizeof( temp ) );
 				memcpy( temp, remainder_.c_str( ), bytes );
 
-				actual = url_read( ts_context_, ( unsigned char * )temp + bytes, requested );
+				actual = ffurl_read( ts_context_, ( unsigned char * )temp + bytes, requested );
 				if ( actual <= 0 ) break;
 
 				while( ptr && strchr( ptr, '\n' ) )
@@ -370,8 +371,8 @@ class aml_http_index : public aml_file_index
 					remainder_ = "";
 			}
 
-			position_ = url_seek( ts_context_, 0, SEEK_CUR );
-			url_close( ts_context_ );
+			position_ = ffurl_seek( ts_context_, 0, SEEK_CUR );
+			ffurl_close( ts_context_ );
 		}
 
 	private:
