@@ -953,38 +953,40 @@ class avformat_encode_filter : public filter_simple
 					}
 					else if ( !source->get_stream( ) )
 					{
-						std::cerr << "case 0: " << get_position( ) << " no stream component" << std::endl;
+						ARLOG_DEBUG3( "case 0: pos=%1%: no stream component")( get_position( ) );
 						encoding_ = true;
 					}
 					else if ( source->is_deferred( ) )
 					{
-						std::cerr << "case 1: " << get_position( ) << " deferred frame must be rendered" << std::endl;
+						ARLOG_DEBUG3( "case 1: pos=%1%: deferred frame must be rendered")( get_position( ) );
 						encoding_ = true;
 					}
 					else if ( !last_frame_ && source->get_stream( )->key( ) != source->get_stream( )->position( ) )
 					{
-						std::cerr << "case 2: " << get_position( ) << " first frame not an i frame" << std::endl;
+						ARLOG_DEBUG3( "case 2: pos=%1%: first frame not an I-frame")( get_position( ) );
 						encoding_ = true;
 					}
 					else if ( !encoding_ && !stream_types_match )
 					{
-						std::cerr << "case 3: " << get_position( ) << " stream of different type: " << source->get_stream( )->codec( ) << " vs. " << pl::to_string( prop_profile_.value< pl::wstring >( ) ) << std::endl;
+						ARLOG_DEBUG3( "case 3: pos=%1%: stream of different type: %2% vs %3%")( get_position( ) )
+							( source->get_stream( )->codec( ) )( prop_profile_.value< pl::wstring >( ) );
 						encoding_ = true;
 					}
 					else if ( !encoding_ && !continuous( last_frame_, source ) )
 					{
-						std::cerr << "case 4: " << get_position( ) << " started encoding due to non-contiguous packets" << std::endl;
+						ARLOG_DEBUG3( "case 4: pos=%1%: started encoding due to non-contiguous packets")( get_position( ) );
 						encoding_ = true;
 					}
 					else if ( encoding_ && ( !stream_types_match || source->get_stream( )->key( ) != source->get_stream( )->position( ) ) )
 					{
-						std::cerr << "case 5: " << get_position( ) << " already encoding and stream component does not indicate that we have reached the next key frame yet " << gop_closed << " " << source->get_stream( )->codec( ) << " " << video_wrapper_->serialise( "video_codec" ) << " " << source->get_stream( )->key( ) << " " << source->get_stream( )->position( ) << std::endl;
+						ARLOG_DEBUG3( "case 5: pos=%1%: already encoding and stream component does not indicate that we have reached the next key frame yet %2% %3% %4% %5% %6%")
+							( get_position( ) )( gop_closed )( source->get_stream( )->codec( ) )( video_wrapper_->serialise( "video_codec" ) )
+							( source->get_stream( )->key( ) )( source->get_stream( )->position( ) );
 					}
 					else if ( encoding_ && source->get_stream( )->key( ) == source->get_stream( )->position( ) && gop_closed )
 					{
-						std::cerr << "case 6: " << get_position( ) << " encoding turned off as next key is reached" << std::endl;
+						ARLOG_DEBUG3( "case 6: pos=%1%: encoding turned off as next key is reached" )( get_position( ) );
 						encoding_ = false;
-						
 					}
 	
 					if ( encoding_ )
