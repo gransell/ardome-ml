@@ -318,7 +318,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Attempt to open the resource
 			int error = av_open_input_file( &context_, pl::to_string( resource ).c_str( ), format_, 0, params_ ) < 0;
 
-            if (error == 0 && !url_is_streamed( context_->pb )) {
+            if (error == 0 && context_->pb && !url_is_streamed( context_->pb )) {
                 // Try to obtain the index specified
                 if ( !prop_gen_index_.value< int >( ))
                 {
