@@ -175,8 +175,6 @@ class Environment( BaseEnvironment ):
 			else :
 				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
 			
-			# Add the SDKs system frameworks path to the frame work search paths
-			self.Append( FRAMEWORKPATH = [ '/Developer/SDKs/MacOSX%s.sdk/System/Library/Frameworks/' % self[ 'min_osx_ver' ] ] )
 			
 		if os.name == 'posix':
 			if self[ 'compiler' ] == 'gcc':
