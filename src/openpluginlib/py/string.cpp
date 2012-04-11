@@ -5,10 +5,10 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
-#include <openpluginlib/pl/string.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
+#include <openpluginlib/pl/string.hpp>
+#include <openpluginlib/pl/utf8_utils.hpp>
 
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
