@@ -42,7 +42,7 @@ void opl_importer::operator( )( const boost::filesystem::path& file )
 
 	action_.set_opl_path( file );
 
-	SAX2XMLReader* parser = XMLReaderFactory::createXMLReader();
+	boost::scoped_ptr<SAX2XMLReader> parser( XMLReaderFactory::createXMLReader() );
 
 	parser->setContentHandler(this);
 	parser->setErrorHandler(this);
