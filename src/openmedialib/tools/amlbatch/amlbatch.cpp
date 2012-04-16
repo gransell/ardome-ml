@@ -144,11 +144,17 @@ void walk_and_assign( ml::input_type_ptr input, std::string name, int value )
 {
 	if ( input )
 	{
+		//Note: it is important that we assign to filters in upstream
+		//and downwards order. The reason for this is that we might be
+		//assigning the active property to a threader filter, which will
+		//start it, making any modification to its connected graph
+		//thread-unsafe.
+		for ( size_t i = 0; i < input->slot_count( ); i ++ )
+			walk_and_assign( input->fetch_slot( i ), name, value );
+
 		pl::pcos::property prop = input->property( name.c_str( ) );
 		if ( prop.valid( ) )
 			prop = value;
-		for ( size_t i = 0; i < input->slot_count( ); i ++ )
-			walk_and_assign( input->fetch_slot( i ), name, value );
 	}
 }
 
@@ -173,6 +179,8 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 
 	walk_and_assign( input, "deferred", defer ? 1 : 0 );
 	walk_and_assign( input, "dropping", drop ? 1 : 0 );
+
+	//Important: must assign active property last (see comment in walk_and_assign).
 	if ( input->is_thread_safe( ) )
 		walk_and_assign( input, "active", 1 );
 }
