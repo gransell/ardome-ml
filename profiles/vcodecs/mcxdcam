@@ -4,4 +4,4 @@ stream_codec_id = http://www.ardendo.com/apf/codec/mpeg/mpeg2
 # This is only here has an indicator of long gop behaviour for the encode filter
 video_gop_size = 12
 perf_mode = 0
-perf_level = 31
+perf_level = 12
