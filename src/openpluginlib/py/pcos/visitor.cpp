@@ -4,12 +4,12 @@
 // Copyright (C) 2005-2006 VM Inc.
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
+#include <openpluginlib/py/python.hpp>
+#include <openpluginlib/py/py.hpp>
 
 #include <openpluginlib/pl/pcos/visitor.hpp>
 #include <openpluginlib/pl/pcos/property.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
-#include <openpluginlib/py/python.hpp>
-#include <openpluginlib/py/py.hpp>
 
 #include <boost/utility.hpp>
 
