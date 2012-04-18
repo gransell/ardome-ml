@@ -347,7 +347,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
             }
 
 			// Check for streaming
-			if ( error == 0 && context_->pb && context_->pb->seekable )
+			if ( error == 0 && context_->pb && !context_->pb->seekable )
 			{
 				is_seekable_ = false;
 				key_search_ = true;
