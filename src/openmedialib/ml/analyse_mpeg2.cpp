@@ -175,7 +175,7 @@ mpeg_start_code::type analyse_mpeg2::find_start( boost::uint8_t *&p, boost::uint
 	
 		while( !found && p + 4 < end )
 		{
-			p = ( boost::uint8_t * )memchr( p + 2, 1, end - p );
+			p = ( boost::uint8_t * )memchr( p + 2, 1, end - ( p + 2 ) );
 			if ( p )
 			{
 				found = *( p - 2 ) == 0 && *( p - 1 ) == 0;
