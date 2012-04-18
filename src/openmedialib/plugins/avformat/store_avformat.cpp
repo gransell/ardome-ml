@@ -675,11 +675,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			AVCodec *codec = avcodec_find_encoder( codec_id );
 
 			// Create a new stream
-			AVStream *st = avformat_new_stream( oc_, codec );
+			AVStream *st = avformat_new_stream( oc_, 0 );
 
 			if ( st != NULL ) 
 			{
 				AVCodecContext *c = st->codec;
+
+				c->codec_type = avcodec_get_type( codec_id );
+				c->codec_id = codec_id;
+
 				// ? unsure
 				c->reordered_opaque = AV_NOPTS_VALUE;
 
@@ -823,9 +827,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			for( int i = 0; i < streams; i ++ )
 			{
 				// Create a new stream
-				AVCodec *codec = avcodec_find_encoder( codec_id );
-
-				AVStream *st = avformat_new_stream( oc_, codec );
+				AVStream *st = avformat_new_stream( oc_, 0 );
 
 				if ( !st )
 					std::cerr << "add_audio_stream: failed to create stream for: " << codec_id << std::endl;
@@ -834,6 +836,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( st != NULL ) 
 				{
 					AVCodecContext *c = st->codec;
+
+					c->codec_type = avcodec_get_type( codec_id );
+					c->codec_id = codec_id;
+
 					//c->codec_id = codec_id;
 					//c->codec_type = AVMEDIA_TYPE_AUDIO;
 					c->reordered_opaque = AV_NOPTS_VALUE;
@@ -942,13 +948,17 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Find the encoder
 				AVCodec *codec = avcodec_find_encoder( c->codec_id );
 
-				// Continue if codec found and we can open it
-				ARENFORCE( codec != NULL && avcodec_open2( c, codec, 0 ) >= 0 );
+				// Continue if codec found
+				ARENFORCE( codec != NULL );
+
+				c->sample_fmt = codec->sample_fmts[0];
+
+				// Continue if we can open it
+				ARENFORCE( avcodec_open2( c, codec, 0 ) >= 0 );
 
 				if ( c->frame_size <= 1 ) 
 				{
 				   audio_input_frame_size_ = audio_outbuf_size_ / c->channels;
-				   c->sample_fmt = codec->sample_fmts[0];
 				   switch( ( *iter )->codec->codec_id ) 
 				   {
 					  case CODEC_ID_PCM_S16LE:
