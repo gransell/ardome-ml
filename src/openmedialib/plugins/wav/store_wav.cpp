@@ -136,13 +136,13 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	if (!file_) {
 		//Try to open with read-write access first
-		int error = url_open( &file_, resource.c_str( ), URL_RDWR );
+		int error = ffurl_open( &file_, resource.c_str( ), AVIO_FLAG_READ_WRITE, 0, 0 );
 		if( !file_ || error )
 		{
 			//If that failed, open with just write access.
 			ARLOG_WARN( "Could not open %1% with read/write access. Attempting to open with just write. Will not be able to rewrite WAV header" )( resource );
 			writeonly = true;
-			error = url_open( &file_, resource.c_str( ), URL_WRONLY );
+			error = ffurl_open( &file_, resource.c_str( ), AVIO_FLAG_WRITE, 0, 0 );
 			ARENFORCE_MSG( file_ && !error, "Failed to open %1% for writing. error = %3%" )( resource )( error );
 		}
 	}
@@ -164,7 +164,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 		samples);
 
 #	define Write(block) \
-		url_write( file_, ( unsigned char * )&block, sizeof(block) )
+		ffurl_write( file_, ( unsigned char * )&block, sizeof(block) )
 
 	ARENFORCE( Write(w) >= 0 );
 	ARENFORCE( Write(fmt) >= 0 );
@@ -181,7 +181,7 @@ inline void saveRangeFast(URLContext* file, T* p, size_t nblocks) {
 	while (i < nblocks)
 		blocks[i++] = *p++;
 
-	url_write(file, ( unsigned char * ) blocks.get(), sizeof(T) * nblocks);
+	ffurl_write(file, ( unsigned char * ) blocks.get(), sizeof(T) * nblocks);
 }
 
 // Goes through p sample by sample and saves them. This is necessary when the
@@ -191,7 +191,7 @@ inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks) {
 	le<T> sample;
 	for (size_t i = 0; i < nblocks; ++i) {
 		sample = *p++;
-		url_write(file,  ( unsigned char * )&sample, realsizeofT);
+		ffurl_write(file,  ( unsigned char * )&sample, realsizeofT);
 	}
 }
 
@@ -228,7 +228,7 @@ bool store_wav::push(ml::frame_type_ptr frame)
 	{
 		// This is no doubt the fastest, just write the memory
 		// chunk down to file in one go.
-		url_write( file_, ( unsigned char * )audio->pointer(), size );
+		ffurl_write( file_, ( unsigned char * )audio->pointer(), size );
 
 	}
 	else
@@ -278,16 +278,16 @@ void store_wav::vitalizeHeader() {
 		return;
 	}
 
-	int64_t s_filelen = url_filesize(file_);
+	int64_t s_filelen = ffurl_size(file_);
 	ARENFORCE_MSG( s_filelen != -1 , "Could not get file size" );
 
 	uint64_t filelen = (uint64_t)s_filelen;
-	url_seek(file_, 0, SEEK_SET);
+	ffurl_seek(file_, 0, SEEK_SET);
 
 	size_t offset = 0;
 	std::vector<uint8_t> buf(4096);
 
-	ARENFORCE_MSG( url_read_complete( file_, &buf[0], buf.size( ) ) > 0 , "Could not read file" );
+	ARENFORCE_MSG( ffurl_read_complete( file_, &buf[0], buf.size( ) ) > 0 , "Could not read file" );
 
 	riff::wav::block* blk = NULL;
 	riff::wav::wave* wave = NULL;
@@ -345,8 +345,8 @@ void store_wav::vitalizeHeader() {
 
 #define Save(block) \
 	do { \
-		url_seek(file_, (uint8_t*)block - &buf[0], SEEK_SET); \
-		url_write(file_, (uint8_t *)block, sizeof(*block)); \
+		ffurl_seek(file_, (uint8_t*)block - &buf[0], SEEK_SET); \
+		ffurl_write(file_, (uint8_t *)block, sizeof(*block)); \
 	} while(0)
 
 	Save(wave);
@@ -408,7 +408,7 @@ void store_wav::closeFile() {
 			vitalizeHeader();
 		}
 
-		url_close(file_);
+		ffurl_close(file_);
 		file_ = NULL;
 	}
 }

@@ -241,7 +241,7 @@ if env.check_externals( ):
 	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml, il ] ) )
-	#plugins.append( env.build( 'src/openmedialib/plugins/wav', [ cl, pl, ml, il ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/wav', [ cl, pl, ml, il ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/quicktime_decoder', [ cl, pl, ml, il ] ) )
 
 	if env['PLATFORM'] == 'win32' :

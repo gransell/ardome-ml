@@ -16,7 +16,7 @@
 #include <sstream>
 
 extern "C" {
-#include <libavformat/avio.h>
+#include <libavformat/url.h>
 }
 
 #include "store_wav.hpp"
@@ -61,7 +61,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		virtual ~input_wav( ) 
 		{ 
 			if ( context_ )
-				url_close( context_ );
+				ffurl_close( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -95,14 +95,14 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			if ( resource.find( L"wav:" ) == 0 )
 				resource = resource.substr( 4 );
 
-			int error = url_open( &context_, pl::to_string( resource ).c_str( ), URL_RDONLY );
+			int error = ffurl_open( &context_, pl::to_string( resource ).c_str( ), AVIO_FLAG_READ, 0, 0 );
 			bool found_fmt = false;
 
 			if ( error == 0 )
 			{
 				std::vector< boost::uint8_t > buffer( 65536 );
 
-				bool error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
+				bool error = ffurl_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
 
 				bool rf64_mode = false;
 				if( memcmp( &buffer[ 0 ], "RIFF", 4 ) == 0 )
@@ -112,12 +112,12 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 				else
 					error = true;
 
-				error = !error && ( url_read_complete( context_, &buffer[ 0 ], 4 ) != 4 || memcmp( &buffer[ 0 ], "WAVE", 4 ) );
+				error = !error && ( ffurl_read_complete( context_, &buffer[ 0 ], 4 ) != 4 || memcmp( &buffer[ 0 ], "WAVE", 4 ) );
 				offset_ += 12;
 
 				while( !error )
 				{
-					error = url_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
+					error = ffurl_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
 					offset_ += 8;
 
 					if ( error )
@@ -131,7 +131,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					
 					//The next 4 bytes after the chunk ID is the size of the chunk
 					boost::uint32_t n = get_ule32( buffer, 4 );
-					if ( n > boost::uint32_t( buffer.size( ) ) || url_read_complete( context_, &buffer[ 0 ], n ) != (int)n ) break;
+					if ( n > boost::uint32_t( buffer.size( ) ) || ffurl_read_complete( context_, &buffer[ 0 ], n ) != (int)n ) break;
 					offset_ += n;
 
 					if ( memcmp( &chunk_id[ 0 ], "ds64", 4 ) == 0 )
@@ -226,17 +226,17 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		void size_media( )
 		{
 			if ( bytes_ == 0 )
-				bytes_ = url_filesize( context_ ) - offset_;
+				bytes_ = ffurl_size( context_ ) - offset_;
 			else
-				bytes_ = std::min< boost::int64_t >( bytes_, url_filesize( context_ ) - offset_ );
+				bytes_ = std::min< boost::int64_t >( bytes_, ffurl_size( context_ ) - offset_ );
 			frames_ = int( 0.5f + float( bytes_ * prop_fps_num_.value< int >( ) ) / ( bits_ / 8 * channels_ * frequency_ * prop_fps_den_.value< int >( ) ) );
-			prop_file_size_ = boost::int64_t( url_filesize( context_ ) );
+			prop_file_size_ = boost::int64_t( ffurl_size( context_ ) );
 		}
 
 		void seek_to_position( int position )
 		{
 			boost::int64_t offset = offset_ + ml::audio::samples_to_frame( position, frequency_, prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) ) * channels_ * bits_ / 8;
-			url_seek( context_, offset, SEEK_SET );
+			ffurl_seek( context_, offset, SEEK_SET );
 		}
 
 		ml::audio_type_ptr create( int position )
@@ -245,7 +245,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			int samples = ml::audio::samples_for_frame( position, frequency_, prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
 
 			std::vector< boost::uint8_t > buffer( samples * bits_ / 8 * channels_ );
-			int nread = url_read_complete( context_, &buffer[ 0 ], buffer.size( ) );
+			int nread = ffurl_read_complete( context_, &buffer[ 0 ], buffer.size( ) );
 
 			switch( bits_ )
 			{

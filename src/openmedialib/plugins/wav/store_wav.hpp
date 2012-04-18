@@ -15,7 +15,7 @@
 #include "wav.h"
 
 extern "C" {
-#include <libavformat/avio.h>
+#include <libavformat/url.h>
 }
 
 namespace ml = olib::openmedialib::ml;
