@@ -37,8 +37,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			, picture_( 0 )
 			, video_codec_( "" )
 			, stream_codec_id_( "" )
-			//, outbuf_size_( 0 )
-			//, outbuf_( 0 )
+			, outbuf_size_( 0 )
+			, outbuf_( 0 )
 			, position_( 0 )
 			, key_( 0 )
 			, dim_( 0, 0 )
@@ -52,7 +52,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			avcodec_close( context_ );
 			av_free( picture_ );
 
-			//free( outbuf_ );
+			free( outbuf_ );
 		}
 
 		void init( ml::frame_type_ptr frame )
@@ -69,8 +69,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			context_->time_base = avr;
 			AVRational sar = { frame->get_sar_num( ), frame->get_sar_den( ) };
 			context_->sample_aspect_ratio = sar;
-			//outbuf_size_ = std::max< int >( 1024 * 256, context_->width * context_->height * 6 + 200 );
-			//outbuf_ = ( boost::uint8_t * )malloc( outbuf_size_ );
+			outbuf_size_ = std::max< int >( 1024 * 256, context_->width * context_->height * 6 + 200 );
+			outbuf_ = ( boost::uint8_t * )malloc( outbuf_size_ );
 		}
 
 		void init( )
@@ -204,7 +204,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		void assign( const std::string &name, const cl::profile_op &op, const std::string &value )
 		{
 			if ( name == "video_codec" ) video_codec_ = value;
-			if( name == "stream_codec_id" ) stream_codec_id_ = value;
+			if ( name == "stream_codec_id" ) stream_codec_id_ = value;
 		}
 
 		/// String serialisation courtesy function
@@ -228,9 +228,14 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			{
 				codec_ = avcodec_find_encoder_by_name( video_codec_.c_str( ) );
 
+				if ( codec_ )
 				{
 					boost::recursive_mutex::scoped_lock lck( avcodec_open_lock_ );
-					if ( codec_ && avcodec_open2( context_, codec_, 0 ) < 0 ) 
+
+					context_->codec_type = avcodec_get_type( codec_->id );
+					context_->codec_id = codec_->id;
+
+					if ( avcodec_open2( context_, codec_, 0 ) < 0 ) 
 					{
 						std::cerr << "Unable to open codec" << std::endl;
 						codec_ = 0;
@@ -250,7 +255,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			{
 				int out_size = 0;
 				bool new_image = frame && frame->get_image( );
-				int got_packet = 0;
 
 				if ( new_image )
 				{
@@ -267,11 +271,11 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 						picture_->top_field_first = frame->get_image( )->field_order( ) == il::top_field_first;
 					}
 
-					out_size = avcodec_encode_video2( context_, &out_packet_, picture_, &got_packet );
+					out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
 				}
 				else
 				{
-					out_size = avcodec_encode_video2( context_, &out_packet_, 0, &got_packet );
+					out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, 0 );
 				}
 
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
@@ -279,8 +283,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, context_->gop_size );
 
-				if ( got_packet )
-					memcpy( stream->bytes( ), out_packet_.data, out_packet_.size );
+				if ( out_size )
+					memcpy( stream->bytes( ), outbuf_, out_size );
 
 				if ( out_size )
 					position_ ++;
@@ -305,9 +309,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		AVFrame *picture_;
 		std::string video_codec_;
 		std::string stream_codec_id_;
-		AVPacket out_packet_;
-		//int outbuf_size_;
-		//boost::uint8_t *outbuf_;
+		int outbuf_size_;
+		boost::uint8_t *outbuf_;
 		int position_;
 		int key_;
 		ml::dimensions dim_;
