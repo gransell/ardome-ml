@@ -527,7 +527,7 @@ class indexer
 			}
 			else
 			{
-				ARLOG_ERR( "Attempting to release non-existent indexer item job" );
+				ARLOG_DEBUG( "Attempting to cancel non-existent indexer item job. Already cancelled?" );
 			}
 		}
 

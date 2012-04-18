@@ -14,6 +14,8 @@
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/log_defines.hpp>
+#include <opencorelib/cl/media_definitions.hpp>
+#include <opencorelib/cl/media_time.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
@@ -144,11 +146,17 @@ void walk_and_assign( ml::input_type_ptr input, std::string name, int value )
 {
 	if ( input )
 	{
+		//Note: it is important that we assign to filters in upstream
+		//and downwards order. The reason for this is that we might be
+		//assigning the active property to a threader filter, which will
+		//start it, making any modification to its connected graph
+		//thread-unsafe.
+		for ( size_t i = 0; i < input->slot_count( ); i ++ )
+			walk_and_assign( input->fetch_slot( i ), name, value );
+
 		pl::pcos::property prop = input->property( name.c_str( ) );
 		if ( prop.valid( ) )
 			prop = value;
-		for ( size_t i = 0; i < input->slot_count( ); i ++ )
-			walk_and_assign( input->fetch_slot( i ), name, value );
 	}
 }
 
@@ -173,11 +181,13 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 
 	walk_and_assign( input, "deferred", defer ? 1 : 0 );
 	walk_and_assign( input, "dropping", drop ? 1 : 0 );
+
+	//Important: must assign active property last (see comment in walk_and_assign).
 	if ( input->is_thread_safe( ) )
 		walk_and_assign( input, "active", 1 );
 }
 
-void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, bool interactive, int speed, bool stats )
+void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, bool interactive, int speed, bool stats, bool show_source_tc )
 {
 	bool error = false;
 	std::vector< ml::store_type_ptr >::iterator iter;
@@ -229,7 +239,35 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		}
 
 		if ( stats )
-			std::cerr << input->get_position( ) << "/" << total_frames <<  " fps: " << last_fps << '\r';
+		{
+			std::cerr << input->get_position( ) << "/" << total_frames <<  " fps: " << last_fps;
+
+			if( show_source_tc && frame )
+			{
+				int fps_num, fps_den;
+				frame->get_fps( fps_num, fps_den );
+				cl::frame_rate::type fps_type = cl::frame_rate::get_type( cl::rational_time( fps_num, fps_den ) );
+				if( fps_type != cl::frame_rate::undef )
+				{
+					std::cerr << " - ";
+					pl::pcos::property source_timecode = frame->property( "source_timecode" );
+					pl::pcos::property source_timecode_dropframe = frame->property( "source_timecode_dropframe" );
+					if( source_timecode.valid() )
+					{
+						int tc_frames = source_timecode.value< int >();
+						bool tc_dropframe = false;
+						if( source_timecode_dropframe.valid() )
+						{
+							tc_dropframe = ( source_timecode_dropframe.value<int>() != 0 ? 1 : 0 );
+						}
+
+						T_CERR << cl::from_frame_number( fps_type, tc_frames ).to_time_code( fps_type, tc_dropframe, true ).to_string();
+						T_CERR << _CT("(") << cl::frame_rate::to_string( fps_type ) << ( tc_dropframe ? _CT(":DF") : _CT(":NDF") ) << ")";
+					}
+				}
+			}
+			std::cerr << "                      \r";
+		}
 
 		frame_count += 1;
 
@@ -456,6 +494,7 @@ int main( int argc, char *argv[ ] )
 		bool should_seek = false;
 		int seek_to = 0;
 		bool stats = true;
+		bool show_source_tc = false;
 
 		int index = 1;
 
@@ -469,6 +508,10 @@ int main( int argc, char *argv[ ] )
 			{
 				seek_to = atoi( argv[ ++ index ] );
 				should_seek = true;
+			}
+			else if ( arg == L"--show-source-tc" )
+			{
+				show_source_tc = true;
 			}
 			else if ( arg == L"--no-stats" )
 				stats = false;
@@ -549,7 +592,7 @@ int main( int argc, char *argv[ ] )
 			if ( store.size( ) == 0 )
 				return 3;
 
-			play( pitch, store, interactive, should_seek ? 0 : 1, stats );
+			play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );
 		}
 		else
 		{

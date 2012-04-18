@@ -6,9 +6,10 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
-#include <openpluginlib/pl/pcos/key.hpp>
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
+
+#include <openpluginlib/pl/pcos/key.hpp>
 
 #include <string>
 #include <sstream>

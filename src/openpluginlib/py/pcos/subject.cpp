@@ -5,10 +5,11 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
-#include <openpluginlib/pl/pcos/observer.hpp>
-#include <openpluginlib/pl/pcos/subject.hpp>
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
+
+#include <openpluginlib/pl/pcos/observer.hpp>
+#include <openpluginlib/pl/pcos/subject.hpp>
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 

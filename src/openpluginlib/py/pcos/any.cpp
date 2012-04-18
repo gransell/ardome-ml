@@ -5,10 +5,11 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
-#include <openpluginlib/pl/string.hpp>
-#include <openpluginlib/pl/pcos/any.hpp>
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
+
+#include <openpluginlib/pl/string.hpp>
+#include <openpluginlib/pl/pcos/any.hpp>
 #include <openimagelib/il/basic_image.hpp>
 
 namespace opl	= olib::openpluginlib;

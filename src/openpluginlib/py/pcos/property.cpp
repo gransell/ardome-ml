@@ -5,13 +5,14 @@
 // Released under the LGPL.
 // For more information, see http://www.openlibraries.org.
 
+#include <openpluginlib/py/python.hpp>
+#include <openpluginlib/py/py.hpp>
+
 #include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pcos/property.hpp>
 #include <openpluginlib/pl/pcos/subject.hpp>
 #include <openpluginlib/pl/pcos/key.hpp>
 #include <openpluginlib/pl/pcos/any.hpp>
-#include <openpluginlib/py/python.hpp>
-#include <openpluginlib/py/py.hpp>
 #include <openimagelib/il/basic_image.hpp>
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/store.hpp>
