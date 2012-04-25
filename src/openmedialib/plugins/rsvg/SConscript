@@ -1,10 +1,10 @@
 Import(['local_env'])
 import os
 
-if local_env['target'] == 'linux32' or local_env['target'] == 'ubuntu64' or local_env['target'] == 'vs2008':
+if local_env['target'] == 'linux32' or local_env['target'] == 'ubuntu64' or local_env['target'] == 'vs2008' or local_env['target'] == 'vs2010':
 	if local_env['target'] == 'linux32' or local_env['target'] == 'ubuntu64':
 		options = local_env.packages( 'gdk-pixbuf-2.0', 'librsvg-2.0', 'gthread-2.0', 'libswscale', 'boost_thread' )
-	elif local_env['target'] == 'vs2008':
+	elif local_env['target'] == 'vs2008' or local_env['target'] == 'vs2010':
 		options = local_env.packages( 'rsvg', 'libswscale', 'boost_thread', 'boost_date_time', 'boost_system', 'boost_filesystem' )
 
 	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )

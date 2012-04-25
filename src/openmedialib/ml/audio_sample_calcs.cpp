@@ -30,18 +30,18 @@ namespace {
 		rational_time p60( 60000, 1001 );
 		rational_time p24( 24000, 1001 );
 		
-		result[ std::make_pair( ntsc, L"imx" ) ] += 1602, 1601, 1602, 1601, 1602;
-		result[ std::make_pair( ntsc, L"dv" ) ] += 1600, 1602, 1602, 1602, 1602;
-		result[ std::make_pair( p60, L"imx" ) ] += 800, 801, 801, 801, 801;
+		result[ std::make_pair( ntsc, std::wstring( L"imx" ) ) ] += 1602, 1601, 1602, 1601, 1602;
+		result[ std::make_pair( ntsc, std::wstring( L"dv" ) ) ] += 1600, 1602, 1602, 1602, 1602;
+		result[ std::make_pair( p60, std::wstring( L"imx" ) ) ] += 800, 801, 801, 801, 801;
 
 		//DV p60 is special in that it combines two frames into one block, so the
 		//audio for each block is the same as the NTSC DV cycle. This means that
 		//DV p60 will have 10 frames per cycle.
-		result[ std::make_pair( p60, L"dv" ) ] += 800, 800, 801, 801, 801, 801, 801, 801, 801, 801;
+		result[ std::make_pair( p60, std::wstring( L"dv" ) ) ] += 800, 800, 801, 801, 801, 801, 801, 801, 801, 801;
 
 		// 24P material seems to want 2002 samples per frame even though its 23.98 fps
-		result[ std::make_pair( p24, L"imx" ) ] += 2002;
-		result[ std::make_pair( p24, L"dv" ) ] += 2002;
+		result[ std::make_pair( p24, std::wstring( L"imx" ) ) ] += 2002;
+		result[ std::make_pair( p24, std::wstring( L"dv" ) ) ] += 2002;
 		
 		return result;
 	}

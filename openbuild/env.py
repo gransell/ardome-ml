@@ -191,6 +191,8 @@ class Environment( BaseEnvironment ):
 				self[ 'LINK' ] = 'clang++'
 			else:
 				raise Exception( "Invalid compiler " )
+		elif self[ 'target' ] == 'vs2010' :
+			self.Append( CPPDEFINES = [ '_HAS_CPP0X=0' ] )
 
 	def install_config( self, src, dst ):
 		"""	Installs config files for bcomp usage.

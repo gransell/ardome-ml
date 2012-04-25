@@ -27,6 +27,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 	def install_packages( self ):
 		if self[ 'target' ] == 'vs2003': pass
 		elif self[ 'target' ] == 'vs2008': pass
+		elif self[ 'target' ] == 'vs2010': pass
 		elif self[ 'target' ] == 'osx':
 			self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
@@ -113,7 +114,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
 
-		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008':
+		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008' or self [ 'target' ] == 'vs2010' :
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'site-packages' )
 		else:
 			version = sys.version_info
@@ -134,9 +135,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def check_externals( self ):
 		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl", "uuid" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_signals", "libavformat", "loki", "xerces", "sdl", "uuid" )
 		else:
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
 		common = ' -DBOOST_FILESYSTEM_VERSION=2'
@@ -210,15 +211,17 @@ if env.check_externals( ):
 	cl = env.build( 'src/opencorelib/cl' )
 	
 	# Build to test opencorelib:
-	cl_unit_test = env.build('tests/opencorelib/unit_tests/', [ cl ] )
-	cl_test_plugin = env.build( 'tests/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
+	if env[ 'target' ] != 'vs2010' :
+		cl_unit_test = env.build('tests/opencorelib/unit_tests/', [ cl ] )
+		cl_test_plugin = env.build( 'tests/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
 	
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
 
 	#Openmedialib tests
-	ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
+	if env[ 'target' ] != 'vs2010' :
+		ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
 
 	cairo = None
 	if env['PLATFORM'] != 'darwin':

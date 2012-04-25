@@ -8,8 +8,11 @@ import os
 build = False
 
 if local_env[ 'PLATFORM' ] != 'darwin':
-	options = local_env.optional( 'openal' )
-	build = options[ 'have_openal' ]
+	if local_env[ 'target'] == 'vs2010' :
+		build = False
+	else :
+		options = local_env.optional( 'openal' )
+		build = options[ 'have_openal' ]
 else:
 	local_env.Append( CPPDEFINES = [ 'HAVE_OPENALFRAMEWORK' ] )
 	local_env.Append( FRAMEWORKS = [ 'OpenAL' ] )
