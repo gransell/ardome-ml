@@ -28,11 +28,11 @@ class AMLEnvironment( openbuild.env.Environment ):
 		if self[ 'target' ] == 'vs2003': pass
 		elif self[ 'target' ] == 'vs2008': pass
 		elif self[ 'target' ] == 'osx':
-			self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
+			#self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
 			if os.path.exists( 'bcomp/SDL' ):
 				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
-			self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
+			#self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'ubuntu32':
 			if os.path.exists( 'bcomp/boost' ):
 				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
