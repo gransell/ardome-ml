@@ -37,7 +37,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self[ 'target' ] == 'ubuntu32':
 			if os.path.exists( 'bcomp/boost' ):
 				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
-								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_signals.pc', 'boost_system.pc' ]:
+								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_system.pc' ]:
 					self.install_config( 'config/ubuntu32/' + package, 'bcomp/boost' )
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
@@ -53,7 +53,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self.install_config( 'config/linux32/boost_filesystem.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_python.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_regex.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_signals.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_system.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_thread.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_unit_test_framework.pc', 'bcomp/boost' )
@@ -135,9 +134,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def check_externals( self ):
 		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_signals", "libavformat", "loki", "xerces", "sdl", "uuid" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "libavformat", "loki", "xerces", "sdl", "uuid" )
 		else:
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
 		common = ' -DBOOST_FILESYSTEM_VERSION=2'
