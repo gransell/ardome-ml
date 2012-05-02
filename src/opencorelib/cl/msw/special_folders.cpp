@@ -128,6 +128,7 @@ namespace olib
             else if( sf == special_folder::user_config ) return get_home_dir();
             else if( sf == special_folder::user_data ) return get(user_config, app_name) / to_wstring(app_name) ;
             else if( sf == special_folder::temp ) return get_temp_dir();
+            else if( sf == special_folder::fix_header ) return get_this_modules_path() / L"fix_header";
             else /*( sf == special_folder::user_local_data )*/ desired_folder |= CSIDL_LOCAL_APPDATA;
             
             wchar_t sz_path[MAX_PATH];

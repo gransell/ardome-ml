@@ -12,6 +12,7 @@ src = [ 'analyse_mpeg2.cpp',
         'audio_utilities.cpp',
         'awi.cpp',
         'filter.cpp',
+        'fix_stream.cpp',
         'frame.cpp',
         'indexer.cpp',
         'ml.cpp',
@@ -27,6 +28,7 @@ object = local_env.shared_library( 'openmedialib_ml', src )
 local_env.release( object )
 
 local_env.copy_files( local_env[ 'stage_profiles' ], Dir('#').abspath + '/profiles', perms = 0755 )
+local_env.copy_files( local_env[ 'stage_share' ], Dir('#').abspath + '/data', perms = 0755 )
 
 if local_env[ 'PLATFORM' ] != 'win32' :
 	local_env.copy_project_files( local_env[ 'ml_include' ], 
@@ -48,6 +50,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'filter.hpp', 
 			'filter_encode.hpp', 
 			'filter_simple.hpp', 
+			'fix_stream.hpp', 
 			'frame.hpp', 
 			'input_creator_handler.hpp', 
 			'input.hpp', 

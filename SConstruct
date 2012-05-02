@@ -78,6 +78,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'lib' )
 				self[ 'stage_profiles' ] = os.path.join( '$stage_prefix', 'Resources', 'profiles' )
 				self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
+				self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'Resources' )
 			else:
 				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
 				self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
@@ -85,6 +86,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'examples' )
 				self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'plugins' )
 				self[ 'stage_profiles' ] = os.path.join( '$stage_prefix', 'share', 'aml', 'profiles' )
+				self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'share', 'aml' )
 				
 			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
@@ -106,6 +108,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'stage_examples' ] = os.path.join( '$stage_prefix', '$examples' )
 			self[ 'stage_profiles' ] = os.path.join( '$stage_bin', 'profiles' )
 			self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
+			self[ 'stage_share' ] = os.path.join( '$stage_bin' )
 
 		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
 		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
