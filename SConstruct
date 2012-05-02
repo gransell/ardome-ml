@@ -210,17 +210,15 @@ if env.check_externals( ):
 	cl = env.build( 'src/opencorelib/cl' )
 	
 	# Build to test opencorelib:
-	if env[ 'target' ] != 'vs2010' :
-		cl_unit_test = env.build('tests/opencorelib/unit_tests/', [ cl ] )
-		cl_test_plugin = env.build( 'tests/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
+	cl_unit_test = env.build('tests/opencorelib/unit_tests/', [ cl ] )
+	cl_test_plugin = env.build( 'tests/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
 	
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
 	il = env.build( 'src/openimagelib/il', [ pl ] )
 	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
 
 	#Openmedialib tests
-	if env[ 'target' ] != 'vs2010' :
-		ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
+	ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
 
 	cairo = None
 	if env['PLATFORM'] != 'darwin':
