@@ -48,9 +48,18 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
 
+extern std::map< CodecID, std::string > codec_name_lookup_;
+extern std::map< std::string, CodecID > name_codec_lookup_;
+
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
+
+pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
+pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
+pl::pcos::key key_rc_max_rate_ = pl::pcos::key::from_string( "max_rate" );
+pl::pcos::key key_rc_buffer_size_ = pl::pcos::key::from_string( "buffer_size" );
+pl::pcos::key key_b_frames_ = pl::pcos::key::from_string( "b_frames" );
 
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 {
@@ -157,6 +166,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, last_audio_( -1 )
 			, audio_packet_num_( 0 )
 			, audio_variable_( false )
+			, first_frame_( frame )
+			, video_copy_( false )
 		{
 			// Show stats
 			properties( ).append( prop_show_stats_ = 0 );
@@ -215,7 +226,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_vcodec_ = pl::wstring( L"" ) );
 			properties( ).append( prop_vfourcc_ = pl::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = pl::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = pl::wstring( L"" ) );
+			properties( ).append( prop_pix_fmt_ = frame->get_image( ) ? frame->get_image( )->pf( ) : pl::wstring( L"" ) );
 
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
@@ -288,7 +299,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			if ( oc_ )
 			{
-				if ( video_stream_ )
+				if ( video_stream_ && !video_copy_ )
 				{
 					int out_size = 0;
 					do 
@@ -297,12 +308,22 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					} 
 					while(out_size > 0);
 				}
+				else if ( video_stream_ && video_copy_ )
+				{
+					while( video_queue_.size( ) )
+					{
+						frame_type_ptr frame = *( video_queue_.begin( ) );
+						video_queue_.pop_front( );
+						do_stream_write( frame );
+					}
+				}
 
 				// Close the container
 				close_container( );
 
 				// Clean up the codecs
-				close_video_codec( );
+				if ( !video_copy_ )
+					close_video_codec( );
 				close_audio_codec( );
 
 				// Free the streams
@@ -314,7 +335,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 
 			// Clean up the allocated image
-			if ( video_stream_ )
+			if ( video_stream_ && !video_copy_ )
 				av_free( av_image_.data[0] );
 
 			// Clean up audio buffer
@@ -395,6 +416,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( prop_enable_audio_.value< int >( ) == 1 && audio_codec != CODEC_ID_NONE )
 					add_audio_streams( audio_codec );
 
+				bitstream_filters_.resize( oc_->nb_streams );
+
 				strncpy(oc_->filename, pl::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
 
 				// Set up the parameters and open all codecs
@@ -410,7 +433,22 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						ret = open_container( );
 					}
 				}
+
+				std::cerr << pl::to_string( prop_acodec_.value< pl::wstring >( ) ) << " " << fmt_->name << std::endl;
+
+				if ( prop_acodec_.value< pl::wstring >( ) == L"aac" && std::string( fmt_->name ) == "mp4" )
+				{
+					for ( size_t i = 0; i < bitstream_filters_.size( ); i ++ )
+					{
+						if ( oc_->streams[ i ]->codec->codec_type == AVMEDIA_TYPE_AUDIO )
+						{
+							bitstream_filters_[ i ] = av_bitstream_filter_init( "aac_adtstoasc" );
+						}
+					}
+				}
 			}
+
+			first_frame_ = frame_type_ptr( );
 
 			return ret;
 		}
@@ -626,7 +664,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		CodecID obtain_video_codec_id( )
 		{
 			CodecID codec_id = fmt_->video_codec;
-			if ( prop_vcodec_.value< pl::wstring >( ) != L"" )
+			if ( prop_vcodec_.value< pl::wstring >( ) == L"copy" )
+			{
+				ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
+				stream_type_ptr stream = first_frame_->get_stream( );
+				ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
+				codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+				return codec_id;
+			}
+			else if ( prop_vcodec_.value< pl::wstring >( ) != L"" )
 			{
 				AVCodec *codec = avcodec_find_encoder_by_name( pl::to_string( prop_vcodec_.value< pl::wstring >( ) ).c_str( ) );
 				if ( codec != NULL )
@@ -696,8 +742,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
 				pl::string pixfmt = pl::to_string( prop_pix_fmt_.value< pl::wstring >( ) );
-				c->pix_fmt = pixfmt != "" ? av_get_pix_fmt( pixfmt.c_str( ) ) : PIX_FMT_YUV420P;
-		
+				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< pl::wstring >( ) );
+
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
 				{
@@ -761,6 +807,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//oc_->preload = int( prop_mux_preload_.value< double >( ) * AV_TIME_BASE );
 				oc_->max_delay = int( prop_mux_delay_.value< double >( ) * AV_TIME_BASE );
 				//oc_->loop_output = AVFMT_NOOUTPUTLOOP;
+				oc_->flags |= AVFMT_FLAG_NONBLOCK;
 
 				//oc_->mux_rate = prop_mux_rate_.value< int >( );
 				oc_->packet_size = prop_video_packet_size_.value< int >( );
@@ -880,6 +927,30 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 		}
 
+		int h264_split( const uint8_t *buf, int buf_size )
+		{
+			int i;
+			uint32_t state = -1;
+			int has_sps= 0;
+		
+			for(i=0; i<=buf_size; i++)
+			{
+				if( ( state & 0xFFFFFF1F ) == 0x107 )
+					has_sps = 1;
+				if( ( state & 0xFFFFFF00 ) == 0x100 && ( state & 0xFFFFFF1F ) != 0x107 && ( state & 0xFFFFFF1F ) != 0x108 && ( state & 0xFFFFFF1F ) != 0x109 )
+				{
+					if(has_sps)
+					{
+						while ( i > 4 && buf[ i - 5 ] == 0 ) i--;
+						return i - 4;
+					}
+				}
+				if ( i < buf_size )
+					state= ( state << 8 ) | buf[ i ];
+			}
+			return 0;
+		}
+
 		// Open the video stream
 		// Note: This method returns true if there is no video stream created
 		bool open_video_stream( )
@@ -891,44 +962,95 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Get the codec
 				AVCodecContext *video_enc = video_stream_->codec;
 
-				// find the video encoder
-				AVCodec *codec = avcodec_find_encoder( video_enc->codec_id );
-
-				if( codec && codec->pix_fmts )
+				if ( prop_vcodec_.value< pl::wstring >( ) == L"copy" )
 				{
-					const enum PixelFormat *p = codec->pix_fmts;
-					for( ; *p != -1; p++ )
+					ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
+					stream_type_ptr stream = first_frame_->get_stream( );
+					ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
+					video_enc->codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+					video_enc->codec_type = AVMEDIA_TYPE_VIDEO;
+
+					//video_stream_->stream_copy = 1;
+
+					//if( !video_enc->codec_tag )
+						//if( !os->oformat->codec_tag || av_codec_get_id (os->oformat->codec_tag, ivideo_enc->codec_tag) == video_enc->codec_id || av_codec_get_tag(os->oformat->codec_tag, ivideo_enc->codec_id) <= 0)
+							//video_enc->codec_tag = icodec->codec_tag;
+
+					int size = h264_split( stream->bytes( ), stream->length( ) );
+					if ( size )
 					{
-						if( *p == video_enc->pix_fmt )
-							break;
+						uint64_t extra_size = ( uint64_t )size + FF_INPUT_BUFFER_PADDING_SIZE;
+						video_enc->extradata = ( uint8_t * )av_mallocz(extra_size);
+						memcpy( video_enc->extradata, stream->bytes( ), size );
+						video_enc->extradata_size = size;
 					}
-					if( *p == -1 )
-						video_enc->pix_fmt = codec->pix_fmts[ 0 ];
-				}
 
-				if ( prop_pass_.value< int >( ) )
+					//video_enc->bit_rate = stream->bitrate( );
+					//if ( stream->properties( ).get_property_with_key( key_rc_max_rate_ ).valid( ) )
+						//video_enc->rc_max_rate = stream->properties( ).get_property_with_key( key_rc_max_rate_ ).value< int >( );
+					//if ( stream->properties( ).get_property_with_key( key_rc_buffer_size_ ).valid( ) )
+						//video_enc->rc_buffer_size = stream->properties( ).get_property_with_key( key_rc_buffer_size_ ).value< int >( );
+
+					video_enc->time_base.num = first_frame_->get_fps_den( );
+					video_enc->time_base.den = first_frame_->get_fps_num( );
+
+					video_enc->pix_fmt = oil_to_avformat( stream->pf( ) );
+					video_enc->width = stream->size( ).width;
+					video_enc->height = stream->size( ).height;
+
+					if ( stream->properties( ).get_property_with_key( key_b_frames_ ).valid( ) )
+					{
+	 					video_enc->max_b_frames = stream->properties( ).get_property_with_key( key_b_frames_ ).value< int >( );
+						video_enc->has_b_frames = video_enc->max_b_frames ? 1 : 0;
+					}
+
+					if ( !video_enc->sample_aspect_ratio.num ) 
+						video_enc->sample_aspect_ratio = video_stream_->sample_aspect_ratio = (AVRational){ stream->sar( ).num, stream->sar( ).den };
+
+					video_copy_ = true;
+				}
+				else
 				{
-					if ( prop_pass_.value< int >( ) == 1 )
-						video_enc->flags |= CODEC_FLAG_PASS1;
-					else 
-						video_enc->flags |= CODEC_FLAG_PASS2;
-					video_enc->stats_in = log_;
+
+					// find the video encoder
+					AVCodec *codec = avcodec_find_encoder( video_enc->codec_id );
+
+					if( codec && codec->pix_fmts )
+					{
+						const enum PixelFormat *p = codec->pix_fmts;
+						for( ; *p != -1; p++ )
+						{
+							if( *p == video_enc->pix_fmt )
+								break;
+						}
+						if( *p == -1 )
+							video_enc->pix_fmt = codec->pix_fmts[ 0 ];
+					}
+	
+					if ( prop_pass_.value< int >( ) )
+					{
+						if ( prop_pass_.value< int >( ) == 1 )
+							video_enc->flags |= CODEC_FLAG_PASS1;
+						else 
+							video_enc->flags |= CODEC_FLAG_PASS2;
+						video_enc->stats_in = log_;
+					}
+	
+					// Allocate the image
+					avcodec_get_frame_defaults( &av_image_ );
+					avpicture_alloc( ( AVPicture * )&av_image_, video_enc->pix_fmt, prop_width_.value< int >( ), prop_height_.value< int >( ) );
+	
+					// Provide access to properties for custom codecs
+					video_enc->opaque = ( void * )this;
+	
+					// Open the codec safely
+					ret = codec != NULL && avcodec_open2( video_enc, codec, 0 ) >= 0;
+	
+					#ifndef WIN32
+					if ( ret && prop_thread_count_.value< int >( ) > 1 )
+						video_enc->thread_count = prop_thread_count_.value< int >( );
+					#endif
 				}
-
-				// Allocate the image
-				avcodec_get_frame_defaults( &av_image_ );
-				avpicture_alloc( ( AVPicture * )&av_image_, video_enc->pix_fmt, prop_width_.value< int >( ), prop_height_.value< int >( ) );
-
-				// Provide access to properties for custom codecs
-				video_enc->opaque = ( void * )this;
-
-				// Open the codec safely
-				ret = codec != NULL && avcodec_open2( video_enc, codec, 0 ) >= 0;
-
-				#ifndef WIN32
-				if ( ret && prop_thread_count_.value< int >( ) > 1 )
-					video_enc->thread_count = prop_thread_count_.value< int >( );
-				#endif
 			}
 
 			return ret;
@@ -992,7 +1114,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			// Queue video - this is simply the frames image
 			if ( video_stream_ && frame->get_image( ) )
-				video_queue_.push_back( frame->get_image( ) );
+			{
+				AVCodecContext *c = video_stream_->codec;
+				const std::wstring pf = avformat_to_oil( c->pix_fmt );
+				if ( pf != L"" && !video_copy_ )
+				{
+					frame = ml::frame_convert( frame, pf );
+					video_queue_.push_back( frame );
+				}
+				else
+				{
+					video_queue_.push_back( frame );
+				}
+			}
 
 			// Queue audio - audio is carved up here to match the number of bytes required by the audio codec
 			if ( audio_stream_.size( ) && frame->get_audio( ) )
@@ -1075,7 +1209,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					fprintf( log_file_, "%s", c->stats_out );
 
 				// Write the compressed frame in the media file
-				int err = av_interleaved_write_frame( oc_, &pkt );
+				int err = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] );
 				ret = err >= 0;
 
 				if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
@@ -1088,6 +1222,74 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 			return ret;
 		}
+		bool do_stream_write( frame_type_ptr frame )
+		{
+			bool ret = true;
+			AVCodecContext *c = video_stream_->codec;
+
+			stream_type_ptr stream = frame->get_stream( );
+
+			if ( stream )
+			{
+				AVPacket pkt;
+				av_init_packet( &pkt );
+
+				pkt.stream_index = video_stream_->index;
+				pkt.data = stream->bytes( );
+				pkt.size = stream->length( );
+				pkt.pts = av_rescale_q( stream->properties( ).get_property_with_key( key_pts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
+				//pkt.dts = av_rescale_q( stream->properties( ).get_property_with_key( key_dts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
+
+				//std::cerr << "ts: " << pkt.pts << " " << pkt.dts << std::endl;
+
+				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
+				{
+					ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+					write_ts_index( );
+					pkt.flags |= AV_PKT_FLAG_KEY;
+					ts_last_position_ = push_count_ - 1;
+					ts_last_offset_ = oc_->pb->pos;
+				}
+
+
+				if ( log_file_ && prop_pass_.value< int >( ) == 1 && c->stats_out )
+					fprintf( log_file_, "%s", c->stats_out );
+
+				// Write the compressed frame in the media file
+				int err = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] );
+				ret = err >= 0;
+
+				if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
+					fprintf( log_file_, "%s", c->stats_out );
+			}
+
+			return ret;
+		}
+
+		int write_packet( AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx, AVBitStreamFilterContext *bsfc )
+		{
+			int ret = 0;
+
+			while( bsfc )
+			{
+				AVPacket new_pkt = *pkt;
+				int a = av_bitstream_filter_filter(bsfc, avctx, NULL, &new_pkt.data, &new_pkt.size, pkt->data, pkt->size, pkt->flags & AV_PKT_FLAG_KEY);
+				if ( a > 0 )
+				{
+					av_free_packet(pkt);
+					new_pkt.destruct= av_destruct_packet;
+				} 
+				else if ( a < 0 )
+				{
+					return -1;
+				}
+				*pkt= new_pkt;
+
+				bsfc= bsfc->next;
+			}
+
+			return av_interleaved_write_frame(s, pkt);
+		}
 
 		// Process and output an image
 		// Precondition: the video queue is not empty
@@ -1096,9 +1298,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			bool ret = true;
 
 			// Obtain the next image
-			il::image_type_ptr image = *( video_queue_.begin( ) );
+			frame_type_ptr frame = *( video_queue_.begin( ) );
 			video_queue_.pop_front( );
 
+			if ( video_copy_ )
+				return do_stream_write( frame );
+
+			il::image_type_ptr image = frame->get_image( );
 			AVCodecContext *c = video_stream_->codec;
 
 			// Convert the image to the colour space required
@@ -1150,7 +1356,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				pkt.data = ( uint8_t * )&av_image_;
 				pkt.size = sizeof( AVPicture );
 
-				ret = av_interleaved_write_frame( oc_, &pkt ) == 0;
+				ret = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] ) == 0;
  			} 
 			else 
 			{
@@ -1244,7 +1450,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 							}
 						}
 
-						ret = av_interleaved_write_frame( oc_, &pkt ) == 0;
+						ret = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] ) == 0;
 						if( !first )
 							break;
 					}
@@ -1268,6 +1474,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVFormatContext *oc_;
 		AVOutputFormat *fmt_;
 		std::vector< AVStream * > audio_stream_;
+		std::vector< AVBitStreamFilterContext * > bitstream_filters_;
 		AVStream *video_stream_;
 		struct SwsContext *img_convert_;
 		int audio_input_frame_size_;
@@ -1281,7 +1488,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int video_outbuf_size_;
 
 		// oml structures
-		std::deque< il::image_type_ptr > video_queue_;
+		std::deque< frame_type_ptr > video_queue_;
 		std::deque< audio_type_ptr > audio_queue_;
 		audio_type_ptr audio_block_;
 		int audio_block_used_;
@@ -1384,6 +1591,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int last_audio_;
 		boost::uint32_t audio_packet_num_;
 		bool audio_variable_;
+
+		frame_type_ptr first_frame_;
+		bool video_copy_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &resource, const frame_type_ptr &frame )
