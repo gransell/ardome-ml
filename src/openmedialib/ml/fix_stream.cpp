@@ -168,7 +168,7 @@ namespace fixers
 						table_[ type( id ++ ) ] = block;
 				}
 
-				ARENFORCE_MSG( type( id ) == UNKNOWN, "Unable to parse %1% - should be %1% blocks of 518 bytes" )( path.string( ).c_str( ) )( UNKNOWN );
+				ARENFORCE_MSG( type( id ) == UNKNOWN, "Unable to parse %1% - should be %2% blocks of 518 bytes" )( path.string( ).c_str( ) )( UNKNOWN );
 
 				size_[ AVCI50_720p_59_94   ] = 116736;
 				size_[ AVCI50_720p_50      ] = 140800;
