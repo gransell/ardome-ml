@@ -1,0 +1,5 @@
+video_gop_size = 12
+# Set the distance between B-frames
+reordering_delay = 3
+
+stream_codec_id = http://www.ardendo.com/apf/codec/h264/h264

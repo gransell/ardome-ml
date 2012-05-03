@@ -1,0 +1,5 @@
+setting_preset = 2
+
+include vcodecs/h264_common
+
+reordering_delay = 1

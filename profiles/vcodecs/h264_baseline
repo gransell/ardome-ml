@@ -1,0 +1,7 @@
+setting_preset = 0
+
+include vcodecs/h264_common
+reordering_delay = 0
+
+bit_rate = 1639000
+max_bit_rate = 1639000
