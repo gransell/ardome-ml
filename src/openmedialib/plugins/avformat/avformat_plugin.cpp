@@ -213,7 +213,8 @@ namespace
 			ml::avformat_opts = avformat_alloc_context( );
 			if ( getenv( "AML_AVFORMAT_DEBUG" ) == 0 )
 				av_log_set_level( -1 );
-			
+			else
+				av_log_set_level( atoi(  getenv( "AML_AVFORMAT_DEBUG" ) ) );
 
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg2" );
