@@ -79,6 +79,8 @@ namespace olib
                     return olib::t_path( home );
                 else if( folder_type == special_folder::amf_resources ) 
                     return olib::t_path( prefix ) / "share" / app_name;
+                else if( folder_type == special_folder::fix_stream ) 
+                    return olib::t_path( prefix ) / "share" / "aml" / "fix_stream";
                 
                 olib::t_path fpath( "" );
                 fpath /= app_name;

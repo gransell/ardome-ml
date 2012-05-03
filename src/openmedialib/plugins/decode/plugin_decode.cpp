@@ -15,6 +15,7 @@
 #include <opencorelib/cl/uuid_16b.hpp>
 #include <opencorelib/cl/str_util.hpp>
 #include <openmedialib/ml/filter_encode.hpp>
+#include <openmedialib/ml/fix_stream.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -200,6 +201,9 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 						pusher->property_with_key( key_length_ ) = frames_;
 						filter->sync( );
 					}
+
+					// Do any codec specific modifications of the packet to make it decodable
+					ml::fix_stream( other );
 
 					pusher->push( other );
 					filter->seek( other->get_position( ) );

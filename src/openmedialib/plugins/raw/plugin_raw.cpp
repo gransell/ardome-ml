@@ -266,6 +266,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			, prop_fps_den_( pl::pcos::key::from_string( "fps_den" ) )
 			, prop_profile_( pl::pcos::key::from_string( "profile" ) )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
+			, prop_stream_( pl::pcos::key::from_string( "stream" ) )
 			, context_( 0 )
 			, frames_( ( std::numeric_limits< int >::max )( ) )
 			, expected_( 0 )
@@ -279,6 +280,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_profile_ = pl::wstring( L"" ) );
 			properties( ).append( prop_header_ = 1 );
+			properties( ).append( prop_stream_ = 0 );
 		}
 
 		virtual ~input_aud( ) 
@@ -296,7 +298,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
-		virtual bool is_seekable( ) const { return context_ ? context_->seekable : 0; }
+		virtual bool is_seekable( ) const { return context_ ? context_->seekable : !prop_stream_.value< int >( ); }
 
 		// Visual
 		virtual int get_video_streams( ) const { return 0; }
@@ -339,6 +341,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 					else if ( token.find( "fps_den=" ) == 0 ) prop_fps_den_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "profile=" ) == 0 ) prop_profile_ = pl::to_wstring( token.substr( 8 ) );
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
+					else if ( token.find( "stream=" ) == 0 ) prop_stream_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else std::cerr << "unrecognised header entry " << token;
 				}
 				offset_ = avio_tell( context_ );
@@ -392,7 +395,13 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 
 			// Generate an audio object
 			bool error = false;
-			int samples = ml::audio::samples_for_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
+			int samples = 0;
+
+			if ( prop_stream_.value< int >( ) == 0 )
+				samples = ml::audio::samples_for_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
+			else
+				error = avio_read( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) != sizeof( samples );
+
 			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples );
 
 			if ( audio )
@@ -416,6 +425,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		pl::pcos::property prop_fps_den_;
 		pl::pcos::property prop_profile_;
 		pl::pcos::property prop_header_;
+		pl::pcos::property prop_stream_;
 		AVIOContext *context_;
 		boost::int64_t size_;
 		int frames_;
@@ -565,11 +575,13 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		store_aud( const pl::wstring spec, const frame_type_ptr &frame ) 
 			: store_type( )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
+			, prop_stream_( pl::pcos::key::from_string( "stream" ) )
 			, spec_( spec )
 			, context_( 0 )
 			, valid_( false )
 		{
 			properties( ).append( prop_header_ = 1 );
+			properties( ).append( prop_stream_ = 0 );
 			if ( frame->has_audio( ) )
 			{
 				valid_ = true;
@@ -608,6 +620,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 								<< " af=" << pl::to_string( af_ )
 								<< " frequency=" << frequency_ << " channels=" << channels_
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
+								<< " stream=" << prop_stream_.value< int >( )
 								<< std::endl;
 						else
 							str << pl::to_string( spec_ )
@@ -635,6 +648,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			str << "af=" << pl::to_string( af_ )
 				<< " frequency=" << frequency_ << " channels=" << channels_
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
+				<< " stream=" << prop_stream_.value< int >( )
 				<< std::endl;
 			std::string string = str.str( );
 			ffurl_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
@@ -645,7 +659,15 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			ml::audio_type_ptr audio = frame->get_audio( );
 			bool success = true;
 			if ( audio != 0 )
-				success = ffurl_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
+			{
+				if ( prop_stream_.value< int >( ) )
+				{
+					int samples = audio->samples( );
+					success = ffurl_write( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) == sizeof( samples );
+				}
+				if ( success )
+					success = ffurl_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
+			}
 			return success;
 		}
 
@@ -657,6 +679,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 
 	private:
 		pl::pcos::property prop_header_;
+		pl::pcos::property prop_stream_;
 		pl::wstring spec_;
 		URLContext *context_;
 		pl::wstring af_;

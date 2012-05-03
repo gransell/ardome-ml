@@ -68,7 +68,7 @@ namespace olib
                                         <li>Mac:
                                         <li>Linux:
                                         </ul>*/
-                amf_resources /**< This folder is where the resources related to amf should be found.
+                amf_resources,  /**< This folder is where the resources related to amf should be found.
                                     For instance, the xml-schemas used by amf should be
                                     found in a sub-folder of amf_resources called schemas.
                                     Examples:
@@ -77,6 +77,8 @@ namespace olib
                                     <li>Mac: the app folder
                                     <li>Linux: /usr/local/share/amf/1.0/ 
                                     </ul>*/
+
+                fix_stream      /**< This is folder is where the data files for stream fixing are stored. */
             };
     
             /// Get the location of one of the special folders.
