@@ -434,8 +434,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}
 
-				std::cerr << pl::to_string( prop_acodec_.value< pl::wstring >( ) ) << " " << fmt_->name << std::endl;
-
 				if ( prop_acodec_.value< pl::wstring >( ) == L"aac" && std::string( fmt_->name ) == "mp4" )
 				{
 					for ( size_t i = 0; i < bitstream_filters_.size( ); i ++ )
