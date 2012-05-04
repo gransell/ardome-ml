@@ -9,7 +9,7 @@ local_env.packages( 'boost', 'boost_system', 'loki', )
 local_env[ 'FRAMEWORKS' ] = [ 'Foundation', 'QuickTime' ]
 
 # Only build on OSX for now. Windows could be possible as well.
-if local_env[ 'target' ] == 'osx':
+if local_env[ 'target' ] == 'osx' and local_env[ 'arch' ] == 'i386':
 	print "Buliding Quicktime codec"
 	object = local_env.plugin( 'openmedialib_qt_codec', [ 'plugin_qt_codec.cpp' ] )
 	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'plugin_qt_codec.opl' ] )

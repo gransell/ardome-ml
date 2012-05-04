@@ -6,9 +6,6 @@ cd bcomp
 echo Extracting sdl...
 tar -jxf SDL.tar.bz2 || exit 1
 
-echo Extracting Xercesc...
-tar -jxf xercesc.tar.bz2 || exit 1
-
 echo Changing install names
 find ./ -name "*.dylib" |
 (
@@ -33,6 +30,9 @@ while read dylib ;
     fi
 done
 )
+
+echo Extracting Xercesc...
+tar -jxf xercesc.tar.bz2 || exit 1
 
 echo "Extracting boost..."
 tar -jxf boost.tar.bz2 || exit 1
