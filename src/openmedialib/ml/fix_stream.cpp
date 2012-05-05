@@ -156,7 +156,7 @@ namespace fixers
 				std::ifstream stream;
 
 				int id = 0;
-				stream.open( path.string( ).c_str( ) );
+				stream.open( path.string( ).c_str( ), std::ios::in | std::ios::binary );
 
 				ARENFORCE_MSG( stream.good( ), "Unable to open %1%" )( path.string( ).c_str( ) );
 
