@@ -90,6 +90,9 @@ namespace olib
 
 			boost::condition_variable_any idle_worker_cond_;
 		};
+
+		/// Shared pointer wrapper for a thread pool
+		typedef boost::shared_ptr< thread_pool > thread_pool_ptr;
 	}
 }
 

@@ -2,6 +2,7 @@
 #ifndef OPENMEDIALIB_TYPES_H_
 #define OPENMEDIALIB_TYPES_H_
 
+#include <opencorelib/cl/lru_cache.hpp>
 #include <openmedialib/ml/config.hpp>
 #include <openmedialib/ml/audio_types.hpp>
 #include <boost/shared_ptr.hpp>
@@ -81,6 +82,21 @@ struct dimensions
 
 /// dimensions typedef
 typedef struct dimensions dimensions;
+
+/// Frame Cache
+typedef olib::opencorelib::lru< int, frame_type_ptr > lru_frame_type;
+typedef olib::opencorelib::lru_cache< lru_frame_type > lru_frame_cache;
+typedef boost::shared_ptr< lru_frame_type > lru_frame_ptr;
+
+/// Audio Cache
+typedef olib::opencorelib::lru< int, audio_type_ptr > lru_audio_type;
+typedef olib::opencorelib::lru_cache< lru_audio_type > lru_audio_cache;
+typedef boost::shared_ptr< lru_audio_type > lru_audio_ptr;
+
+/// Stream Cache
+typedef olib::opencorelib::lru< int, stream_type_ptr > lru_stream_type;
+typedef olib::opencorelib::lru_cache< lru_stream_type > lru_stream_cache;
+typedef boost::shared_ptr< lru_stream_type > lru_stream_ptr;
 
 } } }
 

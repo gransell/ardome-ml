@@ -254,7 +254,7 @@ class priority_list
 
 				// We want to avoid inputs which are are threaded
 				// TODO: Introduce a generic test for this
-				if ( uri == L"threader" || uri == L"compositor" )
+				if ( uri == L"threader" || uri == L"compositor" || uri == L"distributor" )
 					return;
 
 				// We need to determine the real in point of this clip

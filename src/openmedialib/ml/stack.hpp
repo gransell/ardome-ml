@@ -11,7 +11,7 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-class ML_DECLSPEC stack
+class stack
 {
 	public:
 		stack( )

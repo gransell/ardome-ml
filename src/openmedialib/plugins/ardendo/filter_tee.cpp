@@ -126,7 +126,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		{
 			if ( graph )
 			{
-				if ( graph->get_uri( ) == L"pusher:" )
+				if ( graph->get_uri( ) == L"pusher:" || graph->get_uri( ) == L"nudger:" )
 				{
 					graph->properties( ).get_property_with_key( key_length_ ) = get_frames( );
 					pushers.push_back( graph );

@@ -31,7 +31,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_out_ = 25 );
+			properties( ).append( prop_out_ = INT_MAX );
 			properties( ).append( prop_profile_ = pl::wstring( L"" ) );
 		}
 

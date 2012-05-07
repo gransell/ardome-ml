@@ -115,20 +115,18 @@ namespace olib
 					idle_worker_cond_.notify_all();
 
 					//Wait for new jobs to pop into the job queue
-					cond_.wait( lock );
+					if ( !is_terminating_ )
+						cond_.wait( lock );
+					else
+						break;
+
 					//Sanity check
 					ARENFORCE( m_idle_workers > 0 );
-
-					//If the thread pool is terminating, we should
-					//break out here, so that the calling worker thread
-					//can have stop() called on it.
-					if( is_terminating_ )
-						break;
 
 					--m_idle_workers;
 				}
 
-				if ( jobs_.size( ) )
+				if ( !is_terminating_ && jobs_.size( ) )
 				{
 					base_job_ptr next = jobs_.front( );
 					jobs_.pop_front( );
