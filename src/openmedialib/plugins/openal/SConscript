@@ -8,11 +8,8 @@ import os
 build = False
 
 if local_env[ 'PLATFORM' ] != 'darwin':
-	if local_env[ 'target'] == 'vs2010' :
-		build = False
-	else :
-		options = local_env.optional( 'openal' )
-		build = options[ 'have_openal' ]
+	options = local_env.optional( 'openal' )
+	build = options[ 'have_openal' ]
 else:
 	local_env.Append( CPPDEFINES = [ 'HAVE_OPENALFRAMEWORK' ] )
 	local_env.Append( FRAMEWORKS = [ 'OpenAL' ] )
@@ -28,7 +25,10 @@ if build:
 		#Add the include path manually, since requiring the package will make us link
 		#against the DirectX .lib which in turn would make us statically dependent on
 		#the DirectX DLL's.
-		local_env.Append( CPPPATH= [ os.path.join( local_env.root, 'bcomp', 'vs2008', 'direct_x_june_2006', 'Include' ) ] )
+		if local_env[ 'target' ] == 'vs2010' :
+			local_env.Append( CPPPATH= [ os.path.join( local_env.root, 'bcomp', local_env['target'], 'direct_x_june_2010', 'include' ) ] )
+		else :
+			local_env.Append( CPPPATH= [ os.path.join( local_env.root, 'bcomp', local_env['target'], 'direct_x_june_2006', 'Include' ) ] )
 
 	local_env.packages( 'boost_thread', 'boost_date_time', 'boost_system' )
 	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
