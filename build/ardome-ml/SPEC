@@ -1,6 +1,6 @@
 PRODUCT: ardome-ml
 MAJORVER: 1
-MINORVER: 9.2
+MINORVER: 9.2_msvc_10_support
 # PRODGROUP: amf
 
 # Replaces the string $ARDENDO$ with a version string based on the major and minor version 
