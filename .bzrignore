@@ -1,5 +1,6 @@
 build/debug
 build/release
+build/projects
 bcomp
 .sconsign.dblite
 options.conf
