@@ -1003,7 +1003,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 
 					if ( !video_enc->sample_aspect_ratio.num ) 
-						video_enc->sample_aspect_ratio = video_stream_->sample_aspect_ratio = (AVRational){ stream->sar( ).num, stream->sar( ).den };
+					{
+						AVRational rate;
+						rate.num = stream->sar( ).num;
+						rate.den = stream->sar( ).den;
+						video_enc->sample_aspect_ratio = rate;
+						video_stream_->sample_aspect_ratio = rate;
+					}
 
 					video_copy_ = true;
 				}
