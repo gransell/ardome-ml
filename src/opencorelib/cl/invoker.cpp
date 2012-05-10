@@ -148,7 +148,7 @@ namespace olib
             }
 
             boost::shared_ptr< explicit_step_invoker > exp_inv;
-            if( exp_inv = boost::dynamic_pointer_cast< explicit_step_invoker >( m_parent ) )
+            if( (exp_inv = boost::dynamic_pointer_cast< explicit_step_invoker >( m_parent )) )
             {
                 exp_inv->step( );
             }
