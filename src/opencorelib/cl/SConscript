@@ -154,6 +154,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'loghandler.hpp',
 		'logprinter.hpp',
 		'logtarget.hpp',
+		'lru.hpp',
 		'machine_readable_errors.hpp',
 		'macro_definitions.hpp',
 		'media_definitions.hpp',
