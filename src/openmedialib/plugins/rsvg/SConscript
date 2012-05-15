@@ -3,20 +3,23 @@ import os
 
 if local_env['target'] == 'linux32' or local_env['target'] == 'ubuntu64' or local_env['target'] == 'vs2008':
 	if local_env['target'] == 'linux32' or local_env['target'] == 'ubuntu64':
-		options = local_env.packages( 'gdk-pixbuf-2.0', 'librsvg-2.0', 'gthread-2.0', 'libswscale', 'boost_thread' )
+		options = local_env.optional( 'gdk-pixbuf-2.0', 'librsvg-2.0', 'gthread-2.0', 'boost_thread' )
+		available = options[ 'have_librsvg-2.0' ]
 	elif local_env['target'] == 'vs2008':
-		options = local_env.packages( 'rsvg', 'libswscale', 'boost_thread', 'boost_date_time', 'boost_system', 'boost_filesystem' )
+		options = local_env.optional( 'rsvg', 'libswscale', 'boost_thread', 'boost_date_time', 'boost_system', 'boost_filesystem' )
+		available = options[ 'have_rsvg' ]
 
-	local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
+	if available:
+		local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
 
-	srcs = [ 'rsvg_plugin.cpp',
-		'filter_title.cpp',
-		'input_librsvg.cpp',  
-		'filter_librsvg.cpp', ]
+		srcs = [ 'rsvg_plugin.cpp',
+			'filter_title.cpp',
+			'input_librsvg.cpp',  
+			'filter_librsvg.cpp', ]
 
-	bin = local_env.plugin( 'openmedialib_rsvg', srcs )
+		bin = local_env.plugin( 'openmedialib_rsvg', srcs )
+	
+		local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'aml_rsvg.opl' ])
 
-	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'aml_rsvg.opl' ])
-
-	Return( 'bin' )
+		Return( 'bin' )
 
