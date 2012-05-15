@@ -147,10 +147,11 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 				const pl::pcos::property_container &props = input->properties( );
 				pl::pcos::key_vector keys = props.get_keys( );
 
-				if ( -- limit != 0 && !props.get_property_with_string( "serialise_terminator" ).valid( ) )
+				if ( !props.get_property_with_string( "serialise_terminator" ).valid( ) )
 				{
-					for( size_t i = 0; i < input->slot_count( ); i ++ )
-						create_aml( stream, input->fetch_slot( i ), limit );
+					if ( -- limit != 0 )
+						for( size_t i = 0; i < input->slot_count( ); i ++ )
+							create_aml( stream, input->fetch_slot( i ), limit );
 				}
 				else
 				{
