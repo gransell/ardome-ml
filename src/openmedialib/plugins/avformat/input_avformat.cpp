@@ -1014,10 +1014,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				if ( format == "mpeg" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
-				else if ( format == "mp3" && prop_gop_size_.value< int >( ) == -1 )
-					prop_gop_size_ = 12;
-				else if ( format == "mp2" && prop_gop_size_.value< int >( ) == -1 )
-					prop_gop_size_ = 12;
 				else if ( format == "mpegts" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
 				else if ( prop_gop_size_.value< int >( ) == -1 )
@@ -1025,7 +1021,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else
 			{
-				if ( prop_gop_size_.value< int >( ) == -1 )
+				if ( format == "mp3" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 12;
+				else if ( format == "mp2" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 12;
+				else if ( format == "mpegts" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 24;
+				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 1;
 			}
 
