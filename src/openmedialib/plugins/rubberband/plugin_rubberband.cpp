@@ -180,7 +180,7 @@ class rubber
 			// Reset the state if necessary
 			if ( position != expected_ || speed != old_speed_ )
 			{
-				increment_ = position < expected_ ? -1 : 1;
+				increment_ = expected_ - position == 2 ? -1 : 1;
 				if ( rubber_ ) rubber_->reset( );
 				expected_ = position;
 				source_ = position;
