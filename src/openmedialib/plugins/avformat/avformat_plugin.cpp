@@ -219,7 +219,6 @@ namespace
 
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg2" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/imx/imx" );
 			ml::register_lookup( CODEC_ID_MPEG4, "http://www.ardendo.com/apf/codec/mpeg/mpeg4" );
 			ml::register_lookup( CODEC_ID_H264, "http://www.ardendo.com/apf/codec/h264/h264" );
 			ml::register_lookup( CODEC_ID_MP2, "http://www.ardendo.com/apf/codec/mp2" );

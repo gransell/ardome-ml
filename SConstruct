@@ -254,7 +254,8 @@ if env.check_externals( ):
 	
 	os.system( "chmod +x scripts/amldocs.aml" )
 
-	if env.have_boost_python( ):
+	if env.have_boost_python( ) and env[ 'generate_xcode' ] != 'yes':
+		print 'Building python bindings'
 		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
 		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
 		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )

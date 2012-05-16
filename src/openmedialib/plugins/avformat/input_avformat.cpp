@@ -709,7 +709,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 50000000, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"yuv422p", 12 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, 
+																		  key_last_, codec_context->bit_rate, 
+																		  ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), 
+																		  avformat_to_oil( codec_context->pix_fmt ), codec_context->gop_size ) );
 						break;
 
 					case ml::stream_audio:

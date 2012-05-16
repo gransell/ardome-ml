@@ -148,7 +148,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 		stream << "Audio Info  : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
 		stream << "Has Stream  : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( ) 
-        << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << endl;
+        << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << " gop = " << frame->get_stream()->estimated_gop_size() << endl;
 	else
 		stream << "Has Stream  : No" << endl;
 
