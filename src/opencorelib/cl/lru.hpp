@@ -6,20 +6,34 @@
 #ifndef CORE_LRU_H_
 #define CORE_LRU_H_
 
+#include "export_defines.hpp"
+
 #include <boost/thread.hpp>
 #include <map>
 #include <list>
 
 namespace olib { namespace opencorelib {
 
-template< typename Tkey, typename Tval >
+/// Provides a generic mechanism for controlling collections of objects based 
+/// on usage - the least recently used objects will be automatically discarded
+/// as new objects are added.
+///
+/// Notes:
+///
+/// * it is assumed that pointer val_type's are wrapped by a boost::shared_ptr 
+///   or similar.
+/// * to avoid escalation of memory usage in parts of a graph which aren't 
+///   currently in use, it is advised that lru objects are obtained from the
+///   lru_cache mechanism rather than instantiated directly from here.
+
+template< typename key_type, typename val_type >
 class CORE_API lru
 {
 	public:
-		typedef Tkey key_type;
-		typedef Tval val_type;
 		typedef std::map< key_type, val_type > map;
 		typedef typename map::iterator iterator;
+		typedef typename map::const_iterator const_iterator;
+		typedef std::pair< const_iterator, const_iterator > pair;
 		typedef std::list< key_type > list;
 
 		lru( )
@@ -27,9 +41,17 @@ class CORE_API lru
 		{
 		}
 
+		/// Returns the number of items in the lru
+		size_t count( ) const 
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			return queue_.size( );
+		}
+
+		/// Specify the maximum number of items stored
 		void resize( size_t size )
 		{
-			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			while( queue_.size( ) > size )
 			{
 				queue_.erase( queue_.find( *( lru_.begin( ) ) ) );
@@ -38,9 +60,10 @@ class CORE_API lru
 			size_ = size;
 		}
 
+		/// Append an object with the specified index - becomes the most recently used
 		void append( key_type index, val_type value )
 		{
-			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( queue_.find( index ) == queue_.end( ) )
 			{
 				queue_[ index ] = value;
@@ -55,9 +78,10 @@ class CORE_API lru
 			cond_.notify_all( );
 		}
 
+		/// Obtain an object for the specified index - becomes the most recently used when available
 		val_type fetch( key_type index )
 		{
-			boost::recursive_mutex::scoped_lock lck( mutex_ );
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			val_type result;
 			iterator iter = queue_.find( index );
 			if ( iter != queue_.end( ) )
@@ -69,6 +93,7 @@ class CORE_API lru
 			return result;
 		}
 
+		/// Wait for an object of the specified index - becomes the most recently used when available
 		val_type wait( key_type index, boost::posix_time::time_duration time )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
@@ -79,6 +104,19 @@ class CORE_API lru
 			return result;
 		}
 
+		/// Remove the item with the specified index
+		void remove( key_type index )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			iterator iter = queue_.find( index );
+			if ( iter != queue_.end( ) )
+			{
+				queue_.erase( iter );
+				lru_.remove( index );
+			}
+		}
+
+		/// Remove all items stored
 		void clear( )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
@@ -86,8 +124,22 @@ class CORE_API lru
 			lru_.clear( );
 		}
 
+		// Determine if the index still exists and if not, return the following one if
+		// it exists - if neither the requested or next exist, return missing
+		key_type following( key_type &index, key_type missing ) const
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			pair range = queue_.equal_range( index );
+			key_type result = missing;
+			if ( range.first != queue_.end( ) )
+				result = range.first->first;
+			else if ( range.second != queue_.end( ) )
+				result = range.second->first;
+			return result;
+		}
+
 	private:
-		boost::recursive_mutex mutex_;
+		mutable boost::recursive_mutex mutex_;
 		boost::condition_variable_any cond_;
 		map queue_;
 		list lru_;

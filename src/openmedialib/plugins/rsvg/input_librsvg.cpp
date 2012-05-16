@@ -44,6 +44,8 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
+#include <opencorelib/cl/log_defines.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <iostream>
 #include <boost/thread.hpp>
@@ -154,8 +156,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		virtual bool is_seekable( ) const { return true; }
 		virtual int get_video_streams( ) const { return 1; }
 		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream ) const { assert("No audio streams in svg input!"); return 0; }
-				
+		virtual int get_audio_channels_in_stream( int stream ) const { ARENFORCE_MSG(false, "No audio streams in svg input!"); return 0; }
+
 		// FIXME: Currently librsvg breaks in threaded use
 		virtual bool is_thread_safe( ) { return false; }
 

@@ -134,7 +134,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, check_indexer_( true )
 			, image_type_( false )
 			, first_audio_dts_( -1.0 )
-			, aac_first_packet_after_seek_( true )
+			, discard_audio_packet_count_( 0 )
+			, discard_audio_after_seek_( false )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -1029,7 +1030,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				if ( format == "mpeg" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
-				else if ( format == "mp3" && prop_gop_size_.value< int >( ) == -1 )
+				else if ( format == "mpegts" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 24;
+				else if ( prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 0;
+			}
+			else
+			{
+				if ( format == "mp3" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 12;
 				else if ( format == "mp2" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 12;
@@ -1038,16 +1046,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 12;
 				else if ( prop_gop_size_.value< int >( ) == -1 )
-					prop_gop_size_ = 0;
-			}
-			else
-			{
-				if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 1;
 			}
 
 			// Report the file size via the file_size and frames properties
 			prop_file_size_ = boost::int64_t( context_->file_size );
+
+			if ( has_audio( ) )
+			{
+				AVCodecContext *codec_context = get_audio_stream( )->codec;
+				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_AAC;
+				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_MP2;
+				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_MP3;
+			}
 		}
 
 		bool should_size_media( std::string format )
@@ -1275,7 +1286,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		{
 			if ( is_seekable_ )
 			{
-				aac_first_packet_after_seek_ = true;
+				// For compressed audio (mp2, mp3 and aac at least) we need to decode 3 
+				// packets before we start getting reliable output from the codec - as a
+				// result, we discard the audio obtained from the 3 packets immediately 
+				// after a seek.
+				if ( discard_audio_after_seek_ )
+					discard_audio_packet_count_ = 3;
 
 				int position = get_position( );
 
@@ -1343,8 +1359,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				audio_buf_used_ = 0;
 				audio_buf_offset_ = 0;
 
-				//if ( get_audio_stream( ) )
-				//	avcodec_flush_buffers( get_audio_stream( )->codec );
+				if ( get_audio_stream( ) )
+					avcodec_flush_buffers( get_audio_stream( )->codec );
 
 				if ( get_video_stream( ) )
 					avcodec_flush_buffers( get_video_stream( )->codec );
@@ -1644,6 +1660,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				// Decode the audio into the buffer
 		   		ret = avcodec_decode_audio3( codec_context, ( short * )( audio_buf_temp_ ), &audio_size, &pkt_ );
 
+				// If we need to discard packets, do that now
+				if( discard_audio_packet_count_ )
+				{
+					discard_audio_packet_count_ --;
+					ret = 0;
+					got_audio = false;
+					audio_buf_used_ = 0;
+					break;
+				}
+
 				// If no samples are returned, then break now
 				if ( ret < 0 )
 				{
@@ -1689,7 +1715,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						break;
 
 					// Create an audio frame
-					if ( !( ignore || ( codec_context->codec_id == CODEC_ID_AAC && aac_first_packet_after_seek_ ) ) )
+					if ( !ignore )
 					{
 						index += store_audio( audio_buf_offset_, audio_buf_ + index, samples );
 						audio_buf_offset_ = audio_.back( )->position( );
@@ -1702,10 +1728,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						index += samples * channels * 2;
 					}
 
-					if( aac_first_packet_after_seek_ )
-					{
-						aac_first_packet_after_seek_ = false;
-					}
 				}
 
 				audio_buf_used_ = std::max< int >( 0, audio_buf_used_ - index );	// Warning audio_buf_used_ could become negative here.
@@ -1983,7 +2005,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		bool image_type_;
 
 		double first_audio_dts_;
-		bool aac_first_packet_after_seek_;
+		int discard_audio_packet_count_;
+		bool discard_audio_after_seek_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )

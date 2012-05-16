@@ -580,7 +580,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 			, frame_duration_(40)
 
 		{
-			properties( ).append( prop_buffer_ = 2048 );
+			properties( ).append( prop_buffer_ = 1024 );
 			properties( ).append( prop_preroll_ = 8 );
             properties( ).append( prop_pause_ = 1 );
             prop_pause_.attach( obs_pause_ );
