@@ -257,7 +257,7 @@ class Environment( BaseEnvironment ):
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )
 
 		if os.name == 'posix' and self[ 'compiler' ] == 'clang':
-			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses' ] )
+			self.Append( CCFLAGS = [ '-Wno-char-subscripts', '-Wno-unused-function', '-Wno-unused-variable', '-Wno-parentheses', '-Wno-delete-non-virtual-dtor', '-Wno-parentheses-equality' ] )
 	
 	def prep_release( self ):
 		"""	Prepare the environment for release use - provides some hard coded debug and link flags."""

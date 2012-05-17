@@ -49,7 +49,7 @@ class reseat_impl : public reseat
 		virtual audio_type_ptr retrieve( int requested, bool pad )
 		{
 			audio_type_ptr result;
-			if ( has( requested ) )
+			if ( ( pad && queue.size( ) ) || has( requested ) )
 			{
 				int index = 0;
 				audio_type_ptr audio = queue[ 0 ];

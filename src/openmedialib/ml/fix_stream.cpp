@@ -27,6 +27,8 @@ namespace fixers
 			fix_stream_type( const header_ptr &header, const stream_type_ptr &stream )
 				: ml::stream_type( )
 				, id_( stream->id( ) )
+				, container_( stream->container() )
+				, codec_( stream->codec() )
 				, length_( header->size( ) + stream->length( ) - 6 )
 				, data_( length_ + 32 )
 				, position_( stream->position( ) )
@@ -156,7 +158,7 @@ namespace fixers
 				std::ifstream stream;
 
 				int id = 0;
-				stream.open( path.string( ).c_str( ) );
+				stream.open( path.string( ).c_str( ), std::ios::in | std::ios::binary );
 
 				ARENFORCE_MSG( stream.good( ), "Unable to open %1%" )( path.string( ).c_str( ) );
 

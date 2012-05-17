@@ -160,6 +160,19 @@ void walk_and_assign( ml::input_type_ptr input, std::string name, int value )
 	}
 }
 
+void walk_and_reconnect( ml::input_type_ptr input )
+{
+	if ( input )
+	{
+		for ( size_t i = 0; i < input->slot_count( ); i ++ )
+		{
+			walk_and_reconnect( input->fetch_slot( i ) );
+			if ( input->get_uri( ) == L"fft_pitch" )
+				input->connect( input->fetch_slot( i ), i );
+		}
+	}
+}
+
 void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store )
 {
 	bool defer = true;
@@ -181,7 +194,7 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 
 	walk_and_assign( input, "deferred", defer ? 1 : 0 );
 	walk_and_assign( input, "dropping", drop ? 1 : 0 );
-
+	walk_and_reconnect( input );
 	//Important: must assign active property last (see comment in walk_and_assign).
 	if ( input->is_thread_safe( ) )
 		walk_and_assign( input, "active", 1 );

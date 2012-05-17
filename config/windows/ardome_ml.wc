@@ -82,6 +82,5 @@ def install( env, prefix ):
 	env.install_dir( os.path.join( env[ 'stage_bin' ], 'aml-plugins' ), os.path.join( prefix, 'bin', folder_name, 'aml-plugins') )
 	env.install_dir( os.path.join( env[ 'stage_bin' ], 'profiles' ), os.path.join( prefix, 'bin', folder_name, 'profiles') )
 	env.install_dir( os.path.join( env[ 'stage_bin' ], 'schemas' ), os.path.join( prefix, 'bin', folder_name, 'schemas') )
-
-
+	env.install_dir( os.path.join( env[ 'stage_bin' ], 'fix_stream' ), os.path.join( prefix, 'bin', folder_name, 'fix_stream') )
 
