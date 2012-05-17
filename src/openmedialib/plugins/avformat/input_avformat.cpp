@@ -136,6 +136,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, first_audio_dts_( -1.0 )
 			, discard_audio_packet_count_( 0 )
 			, discard_audio_after_seek_( false )
+			, lru_key_( lru_stream_cache::allocate( ) )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -643,17 +644,57 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// We need to ensure that we only have one valid component
 			ARENFORCE_MSG( ( get_video_stream( ) || get_audio_stream( ) ) && !( get_audio_stream( ) && get_video_stream( ) ), "Can only use one component in packet streaming mode" );
 
+			// Get the requested position
+			int position = get_position( );
+
 			// Create the output frame
 			result = frame_type_ptr( new frame_type( ) );
-			result->set_position( get_position( ) );
+			result->set_position( position );
 			result->set_fps( fps_num_, fps_den_ );
 
+			// Fetch the lru stream object for this input
+			lru_stream_ptr lru = lru_stream_cache::fetch( lru_key_ );
+
+			// Try to obtain the stream component from the cache
+			ml::stream_type_ptr packet = lru->fetch( position );
+
+			// If it's not in the cache yet, get it now
+			if ( !packet )
+				packet = obtain_packet( lru, position );
+
+			// Update the output frame
+			result->set_stream( packet );
+		}
+
+		ml::stream_type_ptr obtain_packet( ml::lru_stream_ptr &lru, int position )
+		{
 			// Correct position in media if necessary
-			if ( get_position( ) != expected_ )
+			if ( position != expected_ )
 			{
 				seek_to_position( );
 				expected_ = -1;
 			}
+
+			// Loop until we have the packet or the loop is terminated
+			while ( !lru->fetch( position ) )
+			{
+				// Get the next packet
+				ml::stream_type_ptr packet = obtain_next_packet( );
+
+				// If we have a packet, append it, otherwise terminate the loop
+				if ( packet )
+					lru->append( packet->position( ), packet );
+				else
+					break;
+			}
+	
+			// Return the request stream_type_ptr
+			return lru->fetch( position );
+		}
+
+		ml::stream_type_ptr obtain_next_packet( )
+		{
+			ml::stream_type_ptr packet;
 
 			// Clear the packet
 			av_init_packet( &pkt_ );
@@ -696,24 +737,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					}
 				}
 
-				result->set_position( expected_ );
-				result->set_fps( fps_num_, fps_den_ );
-
 				AVCodecContext *codec_context = stream->codec;
 				video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 
 				if ( pkt_.flags )
 					key_last_ = expected_;
 
-				ml::stream_type_ptr packet;
-
 				switch( got_packet )
 				{
 					case ml::stream_video:
 						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, 
-																		  key_last_, codec_context->bit_rate, 
-																		  ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), 
-																		  avformat_to_oil( codec_context->pix_fmt ), codec_context->gop_size ) );
+																		   key_last_, codec_context->bit_rate, 
+																		   ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), 
+																		   avformat_to_oil( codec_context->pix_fmt ), codec_context->gop_size ) );
 						break;
 
 					case ml::stream_audio:
@@ -730,7 +766,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					pl::pcos::property prop_uri( key_uri_ );
 					packet->properties( ).append( prop_uri = get_uri( ) );
 					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
-					result->set_stream( packet );
 				}
 
 				av_free_packet( &pkt_ );
@@ -743,6 +778,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						frames_ = expected_ + 1;
 				}
 			}
+
+			return packet;
 		}
 
 		void sync_frames( )
@@ -2006,6 +2043,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		double first_audio_dts_;
 		int discard_audio_packet_count_;
 		bool discard_audio_after_seek_;
+
+		cl::lru_key lru_key_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
