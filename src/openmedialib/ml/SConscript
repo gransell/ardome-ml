@@ -6,7 +6,11 @@ Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
 
-src = [ 'analyse_mpeg2.cpp',
+src = [ 
+		'analyse.cpp',
+		'analyse_dnxhd.cpp',
+		'analyse_dv.cpp',
+		'analyse_mpeg2.cpp',
 		'audio_channel_convert.cpp',
         'audio_sample_calcs.cpp',
         'audio_utilities.cpp',
@@ -32,7 +36,11 @@ local_env.copy_files( local_env[ 'stage_share' ], Dir('#').abspath + '/data', pe
 
 if local_env[ 'PLATFORM' ] != 'win32' :
 	local_env.copy_project_files( local_env[ 'ml_include' ], 
-		[ 	'analyse_mpeg2.hpp',
+		[ 	'analyse.hpp',
+			'analyse_avc.hpp',
+			'analyse_dnxhd.hpp',
+			'analyse_dv.hpp',
+			'analyse_mpeg2.hpp',
 			'audio.hpp', 
 			'audio_cast.hpp', 
 			'audio_channel_convert.hpp', 

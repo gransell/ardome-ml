@@ -8,6 +8,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/analyse.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -54,7 +55,7 @@ typedef struct sequence_header
 	int aspect_ratio_information;		// 4 bits
 	int frame_rate_code;				// 4 bits
 	int bit_rate_value;					// 18 bits
-	int marker_bit;					// 1 bits
+	int marker_bit;						// 1 bits
 	int vbv_buffer_size_value;			// 10 bits
 	int constrained_parameters_flag;	// 1 bits
 } sequence_header;
@@ -70,7 +71,7 @@ typedef struct sequence_extension {
 	int horizontal_size_extension;			// 2 bits
 	int vertical_size_extension;			// 2 bits
 	int bit_rate_extension;					// 12 bits
-	int marker_bit;						// 1 bits
+	int marker_bit;							// 1 bits
 	int vbv_buffer_size_extension;			// 8 bits
 	int low_delay;							// 1 bits
 	int frame_rate_extension_n;				// 2 bits
@@ -83,7 +84,7 @@ typedef struct gop_header
 {
 	bool found;
 	int time_code;		// 25 bits
-	int closed_gop;	// 1 bit
+	int closed_gop;		// 1 bit
 	int broken_link;	// 1 bit
 } gop_header;
 
@@ -126,14 +127,19 @@ typedef struct picture_coding_extension
 	int sub_carrier_phase;					// 8 bits
 } picture_coding_extension;
 
-class ML_DECLSPEC analyse_mpeg2
+class ML_DECLSPEC analyse_mpeg2 : public analyse_type
 {
 	public:
 		analyse_mpeg2( );
-		bool analyse( olib::openmedialib::ml::stream_type_ptr stream );
+		virtual ~analyse_mpeg2( ) { }
+
+		bool valid( const std::string &codec );
+
+		bool analysis( boost::uint8_t *data, const size_t size );
+
+		bool collect( olib::openpluginlib::pcos::property_container &properties );
 
 	private:
-		int get( boost::uint8_t *p, int bit_offset, int bit_count );
 		mpeg_start_code::type find_start( boost::uint8_t *&p, boost::uint8_t *end );
 		void parse_sequence_header( boost::uint8_t *&buf );
 		void parse_sequence_extension( boost::uint8_t *&buf );
@@ -151,32 +157,6 @@ class ML_DECLSPEC analyse_mpeg2
 		picture_header pict_hdr_;
 		/// Hold the last extensions to picture header
 		picture_coding_extension pict_ext_;
-
-	public:
-		const olib::openpluginlib::pcos::key key_temporal_offset_;
-		const olib::openpluginlib::pcos::key key_temporal_stream_;
-
-		/// Sequence header info
-		const olib::openpluginlib::pcos::key key_frame_rate_code_;
-		const olib::openpluginlib::pcos::key key_bit_rate_value_;
-		const olib::openpluginlib::pcos::key key_vbv_buffer_size_;
-	
-		/// Sequence extension info
-		const olib::openpluginlib::pcos::key key_chroma_format_;
-
-		// Extended picture params
-		const olib::openpluginlib::pcos::key key_temporal_reference_;
-		const olib::openpluginlib::pcos::key key_picture_coding_type_;
-		const olib::openpluginlib::pcos::key key_vbv_delay_;
-		const olib::openpluginlib::pcos::key key_top_field_first_;
-		const olib::openpluginlib::pcos::key key_frame_pred_frame_dct_;
-		const olib::openpluginlib::pcos::key key_progressive_frame_;
-	
-		// GOP header info
-		const olib::openpluginlib::pcos::key key_closed_gop_;
-		const olib::openpluginlib::pcos::key key_broken_link_;
-
-		const olib::openpluginlib::pcos::key key_analysed_;
 };
 
 } } }
