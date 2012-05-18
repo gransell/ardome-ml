@@ -3,7 +3,7 @@
 // Copyright (C) 2010 Vizrt
 // Released under the LGPL.
 
-#include <openmedialib/ml/analyse_mpeg2.hpp>
+#include <openmedialib/ml/analyse.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/packet.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
@@ -339,13 +339,12 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		int evaluated_;
 };
 
-class filter_analyse : public ml::filter_simple, ml::analyse_mpeg2
+class filter_analyse : public ml::filter_simple
 {
 public:
     // Filter_type overloads
     filter_analyse( )
     	: ml::filter_simple( )
-		, analyse_mpeg2( )
     {
 	}
     
@@ -380,7 +379,7 @@ protected:
 				{
 					inner_fetch( temp, index ++ );
 					if ( !temp || !temp->get_stream( ) || start != temp->get_stream( )->key( ) ) break;
-					int sorted = start + temp->get_stream( )->properties( ).get_property_with_key( key_temporal_reference_ ).value< int >( );
+					int sorted = start + temp->get_stream( )->properties( ).get_property_with_key( ml::analyse_type::key_temporal_reference_ ).value< int >( );
 					gop_[ temp->get_position( ) ] = temp;
 					streams[ sorted ] = temp->get_stream( );
 				}
@@ -388,8 +387,8 @@ protected:
 				// Ensure that the recipient has access to the temporally sorted frames too
 				for ( std::map< int, ml::frame_type_ptr >::iterator iter = gop_.begin( ); iter != gop_.end( ); iter ++ )
 				{
-					pl::pcos::property temporal_offset( key_temporal_offset_ );
-					pl::pcos::property temporal_stream( key_temporal_stream_ );
+					pl::pcos::property temporal_offset( ml::analyse_type::key_temporal_offset_ );
+					pl::pcos::property temporal_stream( ml::analyse_type::key_temporal_stream_ );
 					if ( streams.find( ( *iter ).first ) != streams.end( ) )
 					{
 						( *iter ).second->properties( ).append( temporal_offset = streams[ ( *iter ).first ]->position( ) );
@@ -423,11 +422,15 @@ protected:
 		
 		// If the frame has no stream then there is nothing to analyse.
 		if( !stream ) return false;
+
+		if ( !analyse_ )
+			analyse_ = ml::analyse_factory( stream );
 		
-		return analyse( stream );
+		return analyse_ ? analyse_->analyse( stream ) : false;
 	}
 
 	std::map< int, ml::frame_type_ptr > gop_;
+	ml::analyse_ptr analyse_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
