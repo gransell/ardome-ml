@@ -78,6 +78,8 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 			lru->resize( prop_queue_.value< int >( ) );
 			if ( frame )
 				lru->append( frame->get_position( ), frame );
+			else
+				lru->clear( );
 			return true;
 		}
 
