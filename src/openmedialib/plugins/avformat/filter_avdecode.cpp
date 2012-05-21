@@ -677,7 +677,8 @@ class avformat_decode_filter : public filter_simple
 			}
 
 			// Make sure all frames are shallow copied here
-			result = result->shallow( );
+			if ( result )
+				result = result->shallow( );
 		}
 
 	private:
