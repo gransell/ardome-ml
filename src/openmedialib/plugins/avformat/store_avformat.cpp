@@ -55,11 +55,21 @@ extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
-pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
-pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
-pl::pcos::key key_rc_max_rate_ = pl::pcos::key::from_string( "max_rate" );
-pl::pcos::key key_rc_buffer_size_ = pl::pcos::key::from_string( "buffer_size" );
-pl::pcos::key key_b_frames_ = pl::pcos::key::from_string( "b_frames" );
+static const pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
+static const pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
+static const pl::pcos::key key_has_b_frames_ = pl::pcos::key::from_string( "has_b_frames" );
+static const pl::pcos::key key_timebase_num_ = pl::pcos::key::from_string( "timebase_num" );
+static const pl::pcos::key key_timebase_den_ = pl::pcos::key::from_string( "timebase_den" );
+static const pl::pcos::key key_duration_ = pl::pcos::key::from_string( "duration" );
+
+static const pl::pcos::key key_codec_id_ = pcos::key::from_string( "codec_id" );
+static const pl::pcos::key key_codec_type_ = pcos::key::from_string( "codec_type" );
+static const pl::pcos::key key_codec_tag_ = pcos::key::from_string( "codec_tag" );
+static const pl::pcos::key key_max_rate_ = pl::pcos::key::from_string( "max_rate" );
+static const pl::pcos::key key_buffer_size_ = pl::pcos::key::from_string( "buffer_size" );
+static const pl::pcos::key key_bit_rate_ = pcos::key::from_string( "bit_rate" );
+static const pl::pcos::key key_field_order_ = pcos::key::from_string( "field_order" );
+static const pl::pcos::key key_bits_per_coded_sample_ = pcos::key::from_string( "bits_per_coded_sample" );
 
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 {
@@ -154,6 +164,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_ts_index_( pcos::key::from_string( "ts_index" ) )
 			, prop_ts_auto_( pcos::key::from_string( "ts_auto" ) )
 			, prop_audio_split_( pcos::key::from_string( "audio_split" ) )
+			, prop_frag_key_frame_( pcos::key::from_string( "frag_key_frame" ) )
 			, ts_generator_video_( 1 )
 			, ts_generator_audio_( 2, false ) //Will not write index header/footer
 			, ts_context_( 0 )
@@ -183,7 +194,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Extract rules from the frame
 			// TODO: Ensure this doesn't cause a foul up...
 			properties( ).append( prop_enable_audio_ = frame->get_audio( ) != 0 ? 1 : 0 );
-			properties( ).append( prop_enable_video_ = frame->get_image( ) != 0 ? 1 : 0 );
+			properties( ).append( prop_enable_video_ = frame->has_image( ) != 0 ? 1 : 0 );
 
 			// Extract video related info from frame
 			properties( ).append( prop_width_ = 0 );
@@ -194,8 +205,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			if ( prop_enable_video_.value< int >( ) == 1 )
 			{
-				prop_width_ = frame->get_image( )->width( );
-				prop_height_ = frame->get_image( )->height( );
+				prop_width_ = frame->width( );
+				prop_height_ = frame->height( );
 				prop_aspect_ratio_ = frame->aspect_ratio( );
 				int num;
 				int den;
@@ -226,7 +237,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_vcodec_ = pl::wstring( L"" ) );
 			properties( ).append( prop_vfourcc_ = pl::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = pl::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = frame->get_image( ) ? frame->get_image( )->pf( ) : pl::wstring( L"" ) );
+			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : pl::wstring( L"" ) );
 
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
@@ -293,6 +304,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_ts_index_ = pl::wstring( L"" ) );
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_audio_split_ = 0 );
+			properties( ).append( prop_frag_key_frame_ = 0 );
 		}
 
 		virtual ~avformat_store( )
@@ -313,6 +325,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					while( video_queue_.size( ) )
 					{
 						frame_type_ptr frame = *( video_queue_.begin( ) );
+						std::cerr << "flushing " << frame->get_position( ) << std::endl;
 						video_queue_.pop_front( );
 						do_stream_write( frame );
 					}
@@ -882,6 +895,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				{
 					AVCodecContext *c = st->codec;
 
+					c->strict_std_compliance = prop_strict_.value< int >( );
 					c->codec_type = avcodec_get_type( codec_id );
 					c->codec_id = codec_id;
 
@@ -989,18 +1003,18 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					//if ( stream->properties( ).get_property_with_key( key_rc_buffer_size_ ).valid( ) )
 						//video_enc->rc_buffer_size = stream->properties( ).get_property_with_key( key_rc_buffer_size_ ).value< int >( );
 
-					video_enc->time_base.num = first_frame_->get_fps_den( );
-					video_enc->time_base.den = first_frame_->get_fps_num( );
+					//video_enc->time_base.num = first_frame_->get_fps_den( );
+					//video_enc->time_base.den = first_frame_->get_fps_num( );
+					video_enc->time_base.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
+					video_enc->time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
+
 
 					video_enc->pix_fmt = oil_to_avformat( stream->pf( ) );
 					video_enc->width = stream->size( ).width;
 					video_enc->height = stream->size( ).height;
 
-					if ( stream->properties( ).get_property_with_key( key_b_frames_ ).valid( ) )
-					{
-	 					video_enc->max_b_frames = stream->properties( ).get_property_with_key( key_b_frames_ ).value< int >( );
-						video_enc->has_b_frames = video_enc->max_b_frames ? 1 : 0;
-					}
+					if ( stream->properties( ).get_property_with_key( key_has_b_frames_ ).valid( ) )
+	 					video_enc->has_b_frames = stream->properties( ).get_property_with_key( key_has_b_frames_ ).value< int >( );
 
 					if ( !video_enc->sample_aspect_ratio.num ) 
 					{
@@ -1117,7 +1131,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		void queue( frame_type_ptr frame )
 		{
 			// Queue video - this is simply the frames image
-			if ( video_stream_ && frame->get_image( ) )
+			if ( video_stream_ && frame->has_image( ) )
 			{
 				AVCodecContext *c = video_stream_->codec;
 				const std::wstring pf = avformat_to_oil( c->pix_fmt );
@@ -1226,6 +1240,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 			return ret;
 		}
+
 		bool do_stream_write( frame_type_ptr frame )
 		{
 			bool ret = true;
@@ -1238,12 +1253,23 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPacket pkt;
 				av_init_packet( &pkt );
 
+				AVRational time_base;
+
+				time_base.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
+				time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
+
 				pkt.stream_index = video_stream_->index;
 				pkt.data = stream->bytes( );
 				pkt.size = stream->length( );
 				pkt.pts = av_rescale_q( stream->properties( ).get_property_with_key( key_pts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
-				//pkt.dts = av_rescale_q( stream->properties( ).get_property_with_key( key_dts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
+				pkt.dts = av_rescale_q( stream->properties( ).get_property_with_key( key_dts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
+				pkt.duration = stream->properties( ).get_property_with_key( key_duration_ ).value< int >( );
 
+				int64_t ost_tb_start_time = av_rescale_q(0, AV_TIME_BASE_Q, video_stream_->time_base);
+				pkt.pts = av_rescale_q(pkt.pts, time_base, video_stream_->time_base) - ost_tb_start_time;
+				pkt.dts = av_rescale_q(pkt.dts, time_base, video_stream_->time_base);
+
+				//opkt.duration = av_rescale_q(pkt->duration, ist->st->time_base, ost->st->time_base);
 				//std::cerr << "ts: " << pkt.pts << " " << pkt.dts << std::endl;
 
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
@@ -1580,6 +1606,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_ts_index_;
 		pcos::property prop_ts_auto_;
 		pcos::property prop_audio_split_;
+
+		pcos::property prop_frag_key_frame_;
 
 		awi_generator_v4 ts_generator_video_;
 		awi_generator_v4 ts_generator_audio_;
