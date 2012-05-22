@@ -4,10 +4,7 @@ import os
 local_env.packages( 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_filesystem', 'boost_system', 'libavformat' )
 local_env.optional( 'ffmpeg' )
 
-#options = local_env.optional( 'librsvg-2.0', 'gdk-pixbuf-2.0', 'libswscale' )
 options = local_env.optional(  'libswscale' )
-
-#if options[ 'have_librsvg-2.0' ]: local_env.Append( CPPDEFINES = [ 'HAVE_LIBRSVG' ] )
 
 srcs = [ 'aml_ardendo.cpp',
          'filter_aml.cpp',
@@ -21,7 +18,7 @@ srcs = [ 'aml_ardendo.cpp',
          'filter_invert.cpp',
          'filter_locked_audio.cpp',
          'filter_loop.cpp',
-	 'filter_lowpass.cpp',
+		 'filter_lowpass.cpp',
          'filter_micro_vitc.cpp',
          'filter_mix_matrix.cpp',
          'filter_mono.cpp',
@@ -43,6 +40,7 @@ srcs = [ 'aml_ardendo.cpp',
          'input_awi.cpp',
          'input_silence.cpp',
          'input_tone.cpp',
+         'store_awi.cpp',
          'store_null.cpp',
          'store_ppm.cpp',
          'store_preview.cpp',
