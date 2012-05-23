@@ -82,8 +82,13 @@ class rubber
 
 					// Options for realtime
 					int options = RubberBandStretcher::OptionProcessRealTime | 
-								  RubberBandStretcher::OptionStretchPrecise | 
-								  RubberBandStretcher::OptionWindowStandard;
+								  RubberBandStretcher::OptionPitchHighConsistency | 
+								  RubberBandStretcher::OptionFormantPreserved | 
+								  RubberBandStretcher::OptionWindowLong | 
+								  RubberBandStretcher::OptionPhaseLaminar | 
+								  RubberBandStretcher::OptionDetectorSoft | 
+								  RubberBandStretcher::OptionTransientsMixed | 
+								  RubberBandStretcher::OptionStretchPrecise;
 
 					// Create the rubberband
 					rubber_ = new RubberBandStretcher( frequency, channels, options, 1.0, 1.0 );
@@ -151,7 +156,7 @@ class rubber
 			return my_key;
 		}
 
-  ml::frame_type_ptr fetch( ml::input_type_ptr input, int position, int total_frames, double speed, double pitch, int lowpass_ )
+		ml::frame_type_ptr fetch( ml::input_type_ptr input, int position, int total_frames, double speed, double pitch, int lowpass_ )
 		{
 			ml::frame_type_ptr result;
 
@@ -175,8 +180,6 @@ class rubber
 				sync( speed, pitch );
 			}
 
-			int difference = abs( position - expected_ );
-
 			// Reset the state if necessary
 			if ( position != expected_ || speed != old_speed_ )
 			{
@@ -186,7 +189,7 @@ class rubber
 				source_ = position;
 			}
 
-			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || difference != 0 )
+			if ( ( result && !result->get_audio( ) ) || speed > 2.0 )
 			{
 				if ( !result )
 				{
@@ -194,6 +197,7 @@ class rubber
 					result = input_->fetch( );
 				}
 				ARENFORCE_MSG( result, "Frame required for rubberband %d" )( position );
+				result = result->shallow( );
 				if ( result->get_audio( ) )
 				{
 					int samples = result->get_audio( )->samples( );
@@ -223,6 +227,7 @@ class rubber
 					ml::audio_type_ptr audio = frame->get_audio( );
 					ARLOG_DEBUG7( "Caching frame %d of %d" )( source_ )( total_frames );
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
+					frame = frame->shallow( );
 					source_ += increment_;
 					audio = reverse_audio( frame, increment_ );
 					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
@@ -243,6 +248,7 @@ class rubber
 
 				// Create the result frame
 				result = cache_->frame_for_position( lru_key_for_position( position ) );
+				result = result->shallow( );
 				ARENFORCE_MSG( result, "Frame inaccessible from cache %d" )( position );
 				result->set_fps( fps_num_, fps_den_ );
 				result->set_pts( position * double( fps_den_ ) / fps_num_ );
@@ -257,14 +263,19 @@ class rubber
 				    pusher_->push( result );
 				    result = lowpass_filter_->fetch( );
 				}
-				if ( increment_ < 0 )
-					result->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 1 );
+				if ( !result->property_with_key( key_audio_reversed_ ).valid( ) )
+					result->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 0 );
+				pl::pcos::property reverse = result->property_with_key( key_audio_reversed_ );
+				reverse = increment_ < 0 ? 1 : 0;
 			}
 			else if ( !result )
 			{
 				input_->seek( position );
 				result = input_->fetch( );
 			}
+
+			result = result->shallow( );
+			result->set_audio( reverse_audio( result, increment_ ) );
 
 			// We expect the next frame to follow...
 			expected_ += increment_;
@@ -277,6 +288,8 @@ class rubber
 		{
 			ml::audio_type_ptr audio = frame->get_audio( );
 
+			if ( !audio ) return audio;
+
 			// Make sure we have a propery on the frame
 			if ( !frame->property_with_key( key_audio_reversed_ ).valid( ) )
 				frame->properties( ).append( pl::pcos::property( key_audio_reversed_ ) = 0 );
@@ -287,6 +300,7 @@ class rubber
 			if ( ( increment_ < 0 && reverse.value< int >( ) == 0 ) || ( increment_ > 0 && reverse.value< int >( ) == 1 ) )
 			{
 				audio = ml::audio::reverse( audio );
+				frame->set_audio( audio );
 				reverse = (int)( reverse.value< int >( ) ? 0 : 1 );
 			}
 
