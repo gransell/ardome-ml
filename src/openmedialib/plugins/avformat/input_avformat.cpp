@@ -396,7 +396,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				}
 
 				// Align with first frame
-				if ( !aml_index_ && error == 0 && !image_type_ )
+				if ( error == 0 && !image_type_ )
 				{
 					seek_to_position( );
 					fetch( );
