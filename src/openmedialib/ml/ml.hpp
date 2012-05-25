@@ -18,13 +18,14 @@
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/store.hpp>
 #include <openmedialib/ml/utilities.hpp>
+#include <openmedialib/ml/indexer.hpp>
 
-namespace olib { namespace openmedialib {
+namespace olib { namespace openmedialib { namespace ml {
 
 ML_DECLSPEC bool init( );
 ML_DECLSPEC bool uninit( );
 
-} }
+} } }
 
 #endif
 

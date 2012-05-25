@@ -6,14 +6,23 @@
 // For more information, see http://www.openlibraries.org.
 
 #include <openmedialib/ml/ml.hpp>
+#include <opencorelib/cl/thread_monitor.hpp>
+#include <opencorelib/cl/thread_cache.hpp>
 
-namespace olib { namespace openmedialib {
+namespace cl = olib::opencorelib;
+
+namespace olib { namespace openmedialib { namespace ml {
 
 ML_DECLSPEC bool init( )
 { return true; }
 
 ML_DECLSPEC bool uninit( )
-{ return true; }
+{
+	indexer_shutdown( );
+	cl::thread_monitor::destroy( );
+	cl::thread_cache::destroy( );
+	return true; 
+}
 
-} }
+} } }
 
