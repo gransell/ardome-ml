@@ -127,6 +127,7 @@ class rubber
 					rubber_->setTimeRatio( 1.0 / speed );
 					rubber_->setPitchScale( pitch );
 					rubber_->reset( );
+					ARLOG_DEBUG7( "Changed rubber to speed = %1%, pitch = %2%, force = %3%" )( speed )( pitch )( force );
 				}
 				catch( const std::exception& e )
 				{
