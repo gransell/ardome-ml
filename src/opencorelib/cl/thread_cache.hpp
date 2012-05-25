@@ -29,12 +29,12 @@ class CORE_API thread_cache
 		/// Return a thread pool to the cache to allow reuse
 		static void release( thread_pool_ptr pool );
 
+		/// Destroy the whole cache
+		static void destroy( );
+
 	private:
 		/// Create the instance for this type
 		static instance_type &instance( );
-
-		/// Destroy the whole cache
-		static void destroy( );
 
 		static boost::recursive_mutex mutex_;
 		static instance_type *instance_;

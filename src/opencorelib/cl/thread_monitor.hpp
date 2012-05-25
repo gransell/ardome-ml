@@ -25,12 +25,12 @@ class CORE_API thread_monitor
 		/// Withdraw a previously enrolled job
 		static void withdraw( const base_job_ptr &job );
 
+		/// Destroy the whole cache
+		static void destroy( );
+
 	private:
 		/// Create the instance for this type
 		static worker *instance( );
-
-		/// Destroy the whole cache
-		static void destroy( );
 
 		static boost::recursive_mutex mutex_;
 		static worker *instance_;
