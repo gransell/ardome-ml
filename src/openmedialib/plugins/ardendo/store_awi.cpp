@@ -31,7 +31,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			: ml::store_type( )
 			, resource_( resource )
 			, context_( 0 )
-			, index_( 1 )
+			, index_( )
 			, count_( 0 )
 			, size_( 0 )
 		{
@@ -106,7 +106,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 	protected:
 		pl::wstring resource_;
 		URLContext *context_;
-		ml::awi_generator_v4 index_;
+		ml::awi_generator_v3 index_;
 		int count_;
 		boost::int64_t size_;
 };
