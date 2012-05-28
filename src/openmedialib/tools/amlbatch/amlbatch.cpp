@@ -52,7 +52,7 @@ void assign( pl::pcos::property_container &props, const std::string name, const 
 	}
 	else
 	{
-		throw( std::string( "Invalid property " ) + name );
+		ARENFORCE_MSG( false, "Invalid property %1%" )( name );
 	}
 }
 
@@ -210,7 +210,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 
 	if ( error )
 	{
-		fprintf( stderr, "Failed on init\n" );
+		fprintf( stderr, "Store failed on init\n" );
 		return;
 	}
 
