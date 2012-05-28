@@ -68,6 +68,30 @@ void assign( pl::pcos::property_container &props, const pl::wstring pair )
 	assign( props, name, value );
 }
 
+void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, pl::wstring arg, ml::frame_type_ptr &frame )
+{
+	if ( arg.find( L"=" ) != pl::wstring::npos )
+	{
+		assign( properties, arg );
+	}
+	else
+	{
+		ml::store_type_ptr st = ml::create_store( arg, frame );
+		if( st )
+		{
+			result.push_back( st );
+		}
+		else
+		{
+			std::wcerr << L"Error: Could not find a plugin providing the store \"" << arg << L"\"" << std::endl;
+			exit(-1);
+		}
+	}
+
+	if ( result.size( ) )
+		properties = result.back( )->properties( );
+}
+ 
 std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, ml::frame_type_ptr frame )
 {
 	std::vector< ml::store_type_ptr > result;
@@ -78,27 +102,18 @@ std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, 
 		while( index < argc )
 		{
 			pl::wstring arg = pl::to_wstring( argv[ index ++ ] );
-
-			if ( arg.find( L"=" ) != pl::wstring::npos )
-			{
-				assign( properties, arg );
-			}
-			else
-			{
-				ml::store_type_ptr st = ml::create_store( arg, frame );
-				if( st )
-				{
-					result.push_back( st );
-				}
-				else
-				{
-					std::wcerr << L"Error: Could not find a plugin providing the store \"" << arg << L"\"" << std::endl;
-					exit(-1);
-				}
-			}
-
-			if ( result.size( ) )
-				properties = result.back( )->properties( );
+			handle_token( result, properties, arg, frame );
+		}
+	}
+	else if ( cl::str_util::env_var_exists( "AML_STORE" ) )
+	{
+		olib::t_string store = cl::str_util::get_env_var( "AML_STORE" );
+		std::vector < olib::t_string > tokens;
+		cl::str_util::split_string( store, " ", tokens, cl::quote::respect );
+		for ( std::vector < olib::t_string >::iterator iter = tokens.begin( ); iter != tokens.end( ); iter ++ )
+		{
+			pl::wstring arg = pl::to_wstring( *iter );
+			handle_token( result, properties, arg, frame );
 		}
 	}
 	else
