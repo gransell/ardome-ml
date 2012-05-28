@@ -649,7 +649,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		bool video_push( ml::frame_type_ptr frame )
 		{
 			scoped_lock lock( video_mutex_ );
-			if ( frame && frame->get_image( ) )
+			if ( frame )
 			{
 				last_frame_shown_ = frame;
             			return video_->push( frame );
