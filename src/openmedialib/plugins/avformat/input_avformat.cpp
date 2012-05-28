@@ -71,6 +71,10 @@ static const pl::pcos::key key_buffer_size_ = pl::pcos::key::from_string( "buffe
 static const pl::pcos::key key_bit_rate_ = pcos::key::from_string( "bit_rate" );
 static const pl::pcos::key key_field_order_ = pcos::key::from_string( "field_order" );
 static const pl::pcos::key key_bits_per_coded_sample_ = pcos::key::from_string( "bits_per_coded_sample" );
+static const pl::pcos::key key_ticks_per_frame_ = pcos::key::from_string( "ticks_per_frame" );
+static const pl::pcos::key key_avg_fps_num_ = pcos::key::from_string( "avg_fps_num" );
+static const pl::pcos::key key_avg_fps_den_ = pcos::key::from_string( "avg_fps_den" );
+static const pl::pcos::key key_picture_coding_type_ = pcos::key::from_string( "picture_coding_type" );
 
 static const pl::pcos::key key_source_tc_ = pcos::key::from_string( "source_timecode" );
 static const pl::pcos::key key_source_byte_offset_ = pcos::key::from_string( "source_byte_offset" );
@@ -144,10 +148,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			, ts_pusher_( )
 			, ts_filter_( )
 			, next_time_( boost::get_system_time( ) + boost::posix_time::seconds( 2 ) )
-			, indexer_context_( 0 )
 			, unreliable_container_( false )
 			, check_indexer_( true )
 			, image_type_( false )
+			, first_video_dts_( -1.0 )
 			, first_audio_dts_( -1.0 )
 			, discard_audio_packet_count_( 0 )
 			, discard_audio_after_seek_( false )
@@ -340,28 +344,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Attempt to open the resource
 			int error = avformat_open_input( &context_, pl::to_string( resource ).c_str( ), format_, 0 ) < 0;
 
-            if (error == 0 && context_->pb && context_->pb->seekable) {
-                // Try to obtain the index specified
-                if ( !prop_gen_index_.value< int >( ))
-                {
-                    boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
-                    if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-                        indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
-                    else
-                        indexer_item_ = ml::indexer_request( resource, index_entry_type );
+            if (error == 0 && context_->pb && context_->pb->seekable) 
+			{
+				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
+				if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
+					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
+				else
+					indexer_item_ = ml::indexer_request( resource, index_entry_type );
 
-                    if ( indexer_item_ && indexer_item_->index( ) )
-                        aml_index_ = indexer_item_->index( );
-                    else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-                        return false;
-                }
-                else if ( ffurl_open( &indexer_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0 )
-                {
-                    prop_genpts_ = 1;
-                    is_seekable_ = false;
-                    prop_audio_index_ = -1;
-                }
-            }
+				if ( indexer_item_ && indexer_item_->index( ) )
+					aml_index_ = indexer_item_->index( );
+				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" && prop_ts_auto_.value< int >( ) != -1 )
+					return false;
+			}
 
 			// Check for streaming
 			if ( error == 0 && context_->pb && !context_->pb->seekable )
@@ -627,22 +622,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				exact_audio = find_audio( result );
 
 			// Update the next expected position
-			if ( prop_gen_index_.value< int >( ) && error >= 0 )
+			if ( exact_image || exact_audio )
 				expected_ ++;
-			else if ( exact_image || exact_audio )
-				expected_ ++;
-
-			if ( prop_gen_index_.value< int >( ) && error < 0 )
-			{
-				indexer_.close( get_position( ), avio_tell( context_->pb ) );
-				std::vector< boost::uint8_t > buffer;
-				indexer_.flush( buffer );
-				if ( indexer_context_ )
-				{
-					ffurl_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
-					ffurl_close( indexer_context_ );
-				}
-			}
 
 			last_frame_ = result->shallow( );
 		}
@@ -754,7 +735,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				AVCodecContext *codec_context = stream->codec;
 				video_codec_ = avcodec_find_decoder( codec_context->codec_id );
 
-				if ( pkt_.flags )
+				if ( pkt_.flags == AV_PKT_FLAG_KEY )
 					key_last_ = expected_;
 
 				switch( got_packet )
@@ -795,16 +776,33 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					packet->properties( ).append( source_byte_offset = last_packet_pos_ );
 					pl::pcos::property duration( key_duration_ );
 					packet->properties( ).append( duration = pkt_.duration );
-/*
-					static const pl::pcos::key key_codec_id_
-					static const pl::pcos::key key_codec_type_
-					static const pl::pcos::key key_codec_tag_
-					static const pl::pcos::key key_max_rate_
-					static const pl::pcos::key key_buffer_size_
-					static const pl::pcos::key key_bit_rate_
-					static const pl::pcos::key key_field_order_
-					static const pl::pcos::key key_bits_per_coded_sample_
-*/
+
+					pl::pcos::property codec_id( key_codec_id_ );
+					packet->properties( ).append( codec_id = int( codec_context->codec_id ) );		
+					pl::pcos::property codec_type( key_codec_type_ );
+					packet->properties( ).append( codec_type = int( codec_context->codec_type ) );
+					pl::pcos::property codec_tag( key_codec_tag_ );
+					packet->properties( ).append( codec_tag = boost::int64_t( codec_context->codec_tag ) );
+					pl::pcos::property max_rate( key_max_rate_ );
+					packet->properties( ).append( max_rate = codec_context->rc_max_rate );
+					pl::pcos::property buffer_size( key_buffer_size_ );
+					packet->properties( ).append( buffer_size = codec_context->rc_buffer_size );
+					pl::pcos::property bit_rate( key_bit_rate_ );
+					packet->properties( ).append( bit_rate = codec_context->bit_rate );
+					pl::pcos::property field_order( key_field_order_ );
+					packet->properties( ).append( field_order = int( codec_context->field_order ) );
+					pl::pcos::property bits_per_coded_sample( key_bits_per_coded_sample_ );
+					packet->properties( ).append( bits_per_coded_sample = codec_context->bits_per_coded_sample );
+					pl::pcos::property ticks_per_frame( key_ticks_per_frame_ );
+					packet->properties( ).append( ticks_per_frame = codec_context->ticks_per_frame );
+
+					pl::pcos::property avg_fps_num( key_avg_fps_num_ );
+					packet->properties( ).append( avg_fps_num = stream->avg_frame_rate.num );
+					pl::pcos::property avg_fps_den( key_avg_fps_den_ );
+					packet->properties( ).append( avg_fps_den = stream->avg_frame_rate.den );
+
+					pl::pcos::property picture_coding_type( key_picture_coding_type_ );
+					packet->properties( ).append( picture_coding_type = pkt_.flags == AV_PKT_FLAG_KEY ? 1 : 0 );
 				}
 
 				av_free_packet( &pkt_ );
@@ -1104,6 +1102,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					prop_gop_size_ = 24;
 				else if ( format == "mpegts" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
+				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" && prop_gop_size_.value< int >( ) == -1 )
+					prop_gop_size_ = 12;
 				else if ( prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 0;
 			}
@@ -1457,6 +1457,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			if ( packet && uint64_t( packet->dts ) != AV_NOPTS_VALUE )
 				dts = av_q2d( get_video_stream( )->time_base ) * ( packet->dts - av_rescale_q( start_time_, ml_av_time_base_q, get_video_stream( )->time_base ) );
 
+			if ( first_video_frame_ )
+				first_video_dts_ = dts;
+
 			// Approximate frame position (maybe 0 if dts is present)
 			int position = int( dts * fps( ) + 0.5 );
 
@@ -1477,7 +1480,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// If we have just done a search, then we need to locate the first key frame
 			// all others are discarded.
-			if ( prop_gen_index_.value< int >( ) == 0 )
+			// NOTE: if replaces prop_gen_index_ logic which is now removed (use packet_stream=1 and the awi store instead)
+			if ( true )
 			{
 				il::image_type_ptr image;
 
@@ -1544,18 +1548,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				expected_packet_ ++;
 			}
-			else if ( prop_gen_index_.value< int >( ) )
-			{
-				if ( packet->flags )
-				{
-					indexer_.enroll( get_position( ), last_packet_pos_ );
-					std::vector< boost::uint8_t > buffer;
-					indexer_.flush( buffer );
-					if ( indexer_context_ )
-						ffurl_write( indexer_context_, &buffer[ 0 ], buffer.size( ) );
-				}
-				got_picture = true;
-			}
 				
 			return ret;
 		}
@@ -1620,6 +1612,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			int found = 0;
 			double dts = av_q2d( get_audio_stream( )->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, get_audio_stream( )->time_base ) );
 			int64_t packet_idx = 0;
+
+			// Sync with video
+			if ( has_video( ) && first_audio_frame_ )
+				if ( first_video_dts_ == -1.0 || dts < first_video_dts_ ) return 0;
 
 			if( first_audio_dts_ < 0.0 )
 			{
@@ -2067,13 +2063,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		boost::system_time next_time_;
 
-		awi_generator_v2 indexer_;
-		URLContext *indexer_context_;
-
 		bool unreliable_container_;
 		bool check_indexer_;
 		bool image_type_;
 
+		double first_video_dts_;
 		double first_audio_dts_;
 		int discard_audio_packet_count_;
 		bool discard_audio_after_seek_;

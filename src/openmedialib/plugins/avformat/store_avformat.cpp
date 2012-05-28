@@ -70,6 +70,9 @@ static const pl::pcos::key key_buffer_size_ = pl::pcos::key::from_string( "buffe
 static const pl::pcos::key key_bit_rate_ = pcos::key::from_string( "bit_rate" );
 static const pl::pcos::key key_field_order_ = pcos::key::from_string( "field_order" );
 static const pl::pcos::key key_bits_per_coded_sample_ = pcos::key::from_string( "bits_per_coded_sample" );
+static const pl::pcos::key key_ticks_per_frame_ = pcos::key::from_string( "ticks_per_frame" );
+static const pl::pcos::key key_avg_fps_num_ = pcos::key::from_string( "avg_fps_num" );
+static const pl::pcos::key key_avg_fps_den_ = pcos::key::from_string( "avg_fps_den" );
 
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 {
@@ -325,7 +328,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					while( video_queue_.size( ) )
 					{
 						frame_type_ptr frame = *( video_queue_.begin( ) );
-						std::cerr << "flushing " << frame->get_position( ) << std::endl;
 						video_queue_.pop_front( );
 						do_stream_write( frame );
 					}
@@ -997,7 +999,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						video_enc->extradata_size = size;
 					}
 
-					//video_enc->bit_rate = stream->bitrate( );
+					video_enc->bit_rate = stream->bitrate( );
 					//if ( stream->properties( ).get_property_with_key( key_rc_max_rate_ ).valid( ) )
 						//video_enc->rc_max_rate = stream->properties( ).get_property_with_key( key_rc_max_rate_ ).value< int >( );
 					//if ( stream->properties( ).get_property_with_key( key_rc_buffer_size_ ).valid( ) )
@@ -1007,7 +1009,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					//video_enc->time_base.den = first_frame_->get_fps_num( );
 					video_enc->time_base.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
 					video_enc->time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
-
+					av_reduce(&video_enc->time_base.num, &video_enc->time_base.den, stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( ), stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( ), INT_MAX);
 
 					video_enc->pix_fmt = oil_to_avformat( stream->pf( ) );
 					video_enc->width = stream->size( ).width;
@@ -1015,6 +1017,21 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					if ( stream->properties( ).get_property_with_key( key_has_b_frames_ ).valid( ) )
 	 					video_enc->has_b_frames = stream->properties( ).get_property_with_key( key_has_b_frames_ ).value< int >( );
+
+					video_enc->codec_id = CodecID( stream->properties( ).get_property_with_key( key_codec_id_ ).value< int >( ) );
+					video_enc->codec_type = AVMediaType( stream->properties( ).get_property_with_key( key_codec_type_ ).value< int >( ) );
+					//if ( stream->properties( ).get_property_with_key( key_codec_tag_ ).value< boost::int64_t >( ) != 0 )
+						//if ( video_enc->codec_tag == 0 )
+							//video_enc->codec_tag = stream->properties( ).get_property_with_key( key_codec_tag_ ).value< boost::int64_t >( );
+					video_enc->rc_max_rate = stream->properties( ).get_property_with_key( key_max_rate_ ).value< int >( );
+					video_enc->rc_buffer_size = stream->properties( ).get_property_with_key( key_buffer_size_ ).value< int >( );
+					video_enc->bit_rate = stream->properties( ).get_property_with_key( key_bit_rate_ ).value< int >( );
+					video_enc->field_order = AVFieldOrder( stream->properties( ).get_property_with_key( key_field_order_ ).value< int >( ) );
+					video_enc->bits_per_coded_sample = stream->properties( ).get_property_with_key( key_bits_per_coded_sample_ ).value< int >( );
+					video_enc->ticks_per_frame = stream->properties( ).get_property_with_key( key_ticks_per_frame_ ).value< int >( );
+
+					video_stream_->avg_frame_rate.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
+					video_stream_->avg_frame_rate.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
 
 					if ( !video_enc->sample_aspect_ratio.num ) 
 					{
