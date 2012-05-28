@@ -240,6 +240,7 @@ class graphs
 		void clone_graphs( input_type_ptr input, int graphs )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			if ( graphs < 0 ) graphs = boost::thread::hardware_concurrency( );
 			while( graphs -- )
 			{
 				stack parser;
@@ -405,7 +406,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 				initialised_ = false;
 				runnable_ = true;
 			}
-			else if ( prop_threads_.value< int >( ) > 0 && is_thread_safe( ) )
+			else if ( prop_threads_.value< int >( ) != 0 && is_thread_safe( ) )
 			{
 				initialised_ = false;
 				runnable_ = true;
@@ -595,7 +596,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( !pool_ )
 			{
-				pool_ = cl::thread_cache::acquire( prop_threads_.value< int >( ) );
+				int threads = prop_threads_.value< int >( );
+				if ( threads < 0 ) threads = boost::thread::hardware_concurrency( );
+				pool_ = cl::thread_cache::acquire( threads );
 				cl::thread_monitor::enroll( monitor_ );
 			}
 			last_used_ = boost::get_system_time( );
