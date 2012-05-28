@@ -33,6 +33,13 @@ public:
     openimagelib::il::image_type_ptr image_for_position( const key_type &pos );
     void insert_image_for_position( const key_type &pos, const openimagelib::il::image_type_ptr& f );
 
+	void clear( )
+	{
+		frames_.clear( );
+		images_.clear( );
+		audios_.clear( );
+	}
+
 private:
     
     void used( const key_type & pos );
