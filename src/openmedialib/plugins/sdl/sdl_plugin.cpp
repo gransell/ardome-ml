@@ -196,22 +196,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				frame->set_sar( last_sar_num_, last_sar_den_ );
 			}
 
-			// If we still don't have an image, bail now
-			if ( img == 0 )
-				return false;
-
-			// Check that we have something in the image...
- 			if ( img->width( ) * img->height( ) == 0 || img->width( ) < 4 )
-			{
-				wipe_overlay( sdl_overlay_ );
-				return false;
-			}
-
-			// Convert to requested colour space
-			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
-			last_image_ = img;
-			frame->get_sar( last_sar_num_, last_sar_den_ );
-
 			// TODO: Provide an alternative mechanism window event handling (via properties)
 			SDL_Event event;
 			while ( SDL_PollEvent( &event ) )
@@ -219,8 +203,11 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				switch( event.type )
 				{
 					case SDL_VIDEORESIZE:
-						prop_width_ = event.resize.w;
-						prop_height_ = event.resize.h;
+						if ( prop_full_.value< int >( ) == 0 )
+						{
+							prop_width_ = event.resize.w;
+							prop_height_ = event.resize.h;
+						}
 						break;
 
 					case SDL_QUIT:
@@ -242,6 +229,22 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 						break;
 				}
 			}
+
+			// If we still don't have an image, bail now
+			if ( img == 0 )
+				return true;
+
+			// Check that we have something in the image...
+ 			if ( img->width( ) * img->height( ) == 0 || img->width( ) < 4 )
+			{
+				wipe_overlay( sdl_overlay_ );
+				return false;
+			}
+
+			// Convert to requested colour space
+			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
+			last_image_ = img;
+			frame->get_sar( last_sar_num_, last_sar_den_ );
 
 			if ( prop_native_.value< double >( ) > 0.0 )
 			{
