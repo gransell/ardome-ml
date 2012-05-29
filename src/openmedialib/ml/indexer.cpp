@@ -433,8 +433,20 @@ class indexer
 		/// Provides the singleton instance of this object
 		static indexer_ptr instance( )
 		{
-			static indexer_ptr instance_( new indexer( ) );
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			if ( !instance_ )
+				instance_ = indexer_ptr( new indexer( ) );
 			return instance_;
+		}
+
+		static void shutdown( )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			if ( instance_ )
+			{
+				instance_->index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
+				instance_ = indexer_ptr( );
+			}
 		}
 
 		/// Destructor of the singleton
@@ -531,27 +543,25 @@ class indexer
 			}
 		}
 
-		void shutdown( )
-		{
-			index_read_worker_.stop( boost::posix_time::seconds( 5 ) );
-		}
-
 	private:
 		/// Constructor for the indexer collection
 		indexer( )
-		: mutex_( )
-		, map_( )
+		: map_( )
 		, index_read_worker_( _CT("Indexer") )
 		{
 			index_read_worker_.start( );
 		}
 
-		mutable boost::recursive_mutex mutex_;
+		static boost::recursive_mutex mutex_;
+		static indexer_ptr instance_;
+
 		typedef std::map< pl::wstring, std::pair< indexer_job_ptr, boost::int32_t > > map_type;
 		map_type map_;
 		opencorelib::worker index_read_worker_;
 };
 
+indexer_ptr indexer::instance_;
+boost::recursive_mutex indexer::mutex_;
 
 void ML_DECLSPEC indexer_init( )
 {
@@ -570,7 +580,7 @@ void ML_DECLSPEC indexer_cancel_request( const indexer_item_ptr &item )
 
 void ML_DECLSPEC indexer_shutdown( )
 {
-	indexer::instance( )->shutdown( );
+	indexer::shutdown( );
 }
 
 } } }
