@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function streams
+{
+	ffprobe $1 2>&1 | 
+	grep "Stream #" | 
+	sed -e "s/.*#//" -e "s/\[.*: / /" -e "s/ (.*$//"
+}
+
+[ $# -ne 2 ] && echo "Usage: `basename $0` input output" && exit 1
+
+switches="-i $1 "
+
+while read i j
+do
+	case "$j" in
+		"h264" ) switches="$switches -map $i -vcodec copy " ;;
+		"aac" )  switches="$switches -map $i -acodec copy -absf aac_adtstoasc " ;;
+		"*" )    echo "Unrecognised stream - ignoring $i $j" ;;
+	esac
+done < <( streams $1 )
+
+exec ffmpeg $switches $2
