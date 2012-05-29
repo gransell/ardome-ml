@@ -163,6 +163,14 @@ class stack:
 			if result != "OK":
 				raise Exception( result + " (" + str( cmd ) + ")" )
 
+	def clone( self, input, limit = 0 ):
+		a = ml.create_filter( 'aml' )
+		a.property( 'filename' ).set( u'@' )
+		a.property( 'limit' ).set( limit )
+		a.connect( input, 0 )
+		text = a.property( 'stdout' ).value_as_string( )
+		self.stack.property( 'parse' ).set( unicode( text ) )
+		
 	def pop( self ):
 		"""Returns the input object at the top of the stack"""
 
