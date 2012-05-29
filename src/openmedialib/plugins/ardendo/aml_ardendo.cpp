@@ -27,7 +27,7 @@ extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstrin
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_awi( const pl::wstring & );
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( );
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const pl::wstring & );
-extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( );
+extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const pl::wstring &, const ml::frame_type_ptr & );
 
 // OML Filter plugins
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring & );
@@ -82,7 +82,7 @@ public:
 		return ml::input_type_ptr( );
 	}
 
-	virtual ml::store_type_ptr store( const pl::wstring &resource, const ml::frame_type_ptr & )
+	virtual ml::store_type_ptr store( const pl::wstring &resource, const ml::frame_type_ptr &frame )
 	{
 		if ( resource.find( L".awi" ) != pl::wstring::npos || resource.find( L"awi:" ) == 0 )
 			return create_store_awi( resource );
@@ -90,7 +90,7 @@ public:
 			return create_store_ppm( resource );
 		if ( resource == L"null:" )
 			return create_store_null( );
-		return create_store_preview( );
+		return create_store_preview( resource, frame );
 	}
 	
 	virtual ml::filter_type_ptr filter( const pl::wstring &resource )

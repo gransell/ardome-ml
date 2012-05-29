@@ -200,7 +200,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 	typedef boost::mutex::scoped_lock scoped_lock;
 
 	public:
-		store_preview(  )
+		store_preview( const pl::wstring &resource, const ml::frame_type_ptr &frame )
 			: ml::store_type( )
 			, prop_video_( pcos::key::from_string( "video" ) )
 			, prop_audio_( pcos::key::from_string( "audio" ) )
@@ -221,6 +221,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			, prop_preroll_( pcos::key::from_string( "preroll" ) )
 			, prop_keys_wanted_( pcos::key::from_string( "keys_wanted" ) )
 			, prop_deinterlace_( pcos::key::from_string( "deinterlace" ) )
+			, prop_native_( pcos::key::from_string( "native" ) )
 			, key_box_( pcos::key::from_string( "box" ) )
 			, key_deferrable_( pcos::key::from_string( "deferrable" ) )
 			, key_preroll_( pcos::key::from_string( "preroll" ) )
@@ -241,6 +242,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			, last_frame_shown_( )
 			, first_( true )
 			, last_audio_push_result_( false )
+			, first_frame_( frame )
 		{
 			timer_ = aml::openmedialib::create_timer( );
 
@@ -266,6 +268,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			properties( ).append( prop_preroll_ = 1 );
 			properties( ).append( prop_keys_wanted_ = 1 );
 			properties( ).append( prop_deinterlace_ = 1 );
+			properties( ).append( prop_native_ = 0.0 );
 			prop_box_.attach( obs_box_ );
 			prop_grab_audio_.attach( obs_grab_audio_ );
 			prop_sync_.attach( obs_sync_ );
@@ -356,13 +359,23 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			{
 				pl::wstring store = prop_video_.value< pl::wstring >( );
 
-				video_ = ml::create_store( store, ml::frame_type_ptr( ) );
+				video_ = ml::create_store( store, first_frame_ );
 
 				if ( !video_ )
 					throw std::runtime_error( ( boost::format( "Unable to create store %s" ) % pl::to_string( store ) ).str( ) );
 
 				if ( video_->properties( ).get_property_with_key( key_deferrable_ ).valid( ) )
                     prop_deferrable_ = video_->properties( ).get_property_with_key( key_deferrable_ ).value< int >( );
+
+				if ( prop_native_.value< double >( ) > 0.0 )
+				{
+					int num, den;
+					first_frame_->get_sar( num, den );
+					int native_width = first_frame_->width( ) * num / den;
+					int native_height = first_frame_->height( );
+					video_->property( "width" ) = int( prop_native_.value< double >( ) * native_width );
+					video_->property( "height" ) = int( prop_native_.value< double >( ) * native_height );
+				}
 
             	prop_video_store_ = video_;
 				update_box( );
@@ -373,6 +386,8 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				grab_audio( );
 
 				timer_->start( );
+
+				first_frame_ = ml::frame_type_ptr( );
 			
 				return video_ && video_->init( );
 			}
@@ -710,6 +725,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		pl::pcos::property prop_preroll_;
 		pl::pcos::property prop_keys_wanted_;
 		pl::pcos::property prop_deinterlace_;
+		pl::pcos::property prop_native_;
 		pl::pcos::key key_box_;
 		pl::pcos::key key_deferrable_;
 		pl::pcos::key key_preroll_;
@@ -732,11 +748,12 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		ml::frame_type_ptr last_frame_shown_;
 		bool first_;
 		bool last_audio_push_result_;
+		ml::frame_type_ptr first_frame_;
 };
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const pl::wstring &resource, const ml::frame_type_ptr &frame )
 {
-	return ml::store_type_ptr( new store_preview( ) );
+	return ml::store_type_ptr( new store_preview( resource, frame ) );
 }
 
 } }
