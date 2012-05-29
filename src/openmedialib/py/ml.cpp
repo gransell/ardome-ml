@@ -265,6 +265,8 @@ int audio_samples_to_frame( int frame, int frequency, int fps_num, int fps_den )
 
 void py_plugin( )
 {
+	py::def( "init", &ml::init );
+	py::def( "uninit", &ml::uninit );
 	py::def( "create_input", &detail::create_input0 );
 	py::def( "create_input", &detail::create_input );
 	py::def( "create_store", &detail::create_store );
