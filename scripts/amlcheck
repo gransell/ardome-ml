@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+die( )
+{
+	echo >&2 "$*" ; exit 1
+}
+
+run( )
+{
+	echo "+ $@" && $@ || die "Test run failed - aborting"
+}
+
+[ "$#" -eq 0 ] && die "Usage: `basename $0` <graph>"
+
+hash amlbatch 2> /dev/null || PATH=`pwd`:$PATH
+hash amlbatch 2>/dev/null || die "No amlbatch available - aborting"
+hash md5sum 2>/dev/null && MD5=md5sum || MD5=md5
+hash $MD5 2>/dev/null || die "No md5 or md5sum available - aborting"
+
+# We don't care too much about maintaining aspect ratio here, we just want to avoid using too much disk space
+visualise="filter:visualise width=160 height=90"
+rescale="filter:rescale width=160 height=90"
+#threader="filter:distributor threads=-1"
+
+run amlbatch --no-stats "$*" $rescale $visualise $threader -- t1.raw
+run amlbatch --no-stats t1.raw.aml filter:clip in=-1 out=0 -- t2.raw
+run amlbatch --no-stats "$*" $rescale $visualise $threader filter:clip in=-1 out=0 -- t3.raw
+
+r1=`$MD5 < t2.raw | cut -f1 -d ' '`
+r2=`$MD5 < t3.raw | cut -f1 -d ' '`
+
+[ "$r1" = "$r2" ] && echo "Success $r1" || echo "Fail $r1 $r2"
+
+[ "$AML_CHECK_KEEP" = "" ] && rm t[123].raw t[123].raw.aml
