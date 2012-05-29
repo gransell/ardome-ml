@@ -368,7 +368,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			// Get the stream info
 			if ( error == 0 )
 			{
-				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				error = avformat_find_stream_info( context_, 0 ) < 0;
 				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
 					error = true;
@@ -1318,7 +1317,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Opens the video codec associated to the current stream
 		void open_video_codec( )
 		{
-			boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
@@ -1337,7 +1335,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 		// Opens the audio codec associated to the current stream
 		void open_audio_codec( )
 		{
-			boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 			AVStream *stream = get_audio_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			audio_codec_ = avcodec_find_decoder( codec_context->codec_id );

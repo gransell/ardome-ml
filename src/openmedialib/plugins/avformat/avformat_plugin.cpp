@@ -162,6 +162,31 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
 	return image;
 }
 
+// Lock manager
+static int lockmgr(void **mtx, enum AVLockOp op)
+{
+	boost::mutex *mutex = static_cast< boost::mutex * >( *mtx );
+
+	switch(op) 
+	{
+		case AV_LOCK_CREATE:
+			*mtx = new boost::mutex( );
+			if(!*mtx)
+				return 1;
+			return 0;
+		case AV_LOCK_OBTAIN:
+			if ( mutex ) mutex->lock( );
+			return 0;
+		case AV_LOCK_RELEASE:
+			if ( mutex ) mutex->unlock( );
+			return 0;
+		case AV_LOCK_DESTROY:
+			delete mutex;
+			return 0;
+	}
+	return 1;
+}
+
 //
 // Plugin object
 //
@@ -216,6 +241,8 @@ namespace
 				av_log_set_level( -1 );
 			else
 				av_log_set_level( atoi(  getenv( "AML_AVFORMAT_DEBUG" ) ) );
+
+			av_lockmgr_register( ml::lockmgr );
 
 			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg1" );
 			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg2" );

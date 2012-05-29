@@ -230,8 +230,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 				if ( codec_ )
 				{
-					boost::recursive_mutex::scoped_lock lck( avcodec_open_lock_ );
-
 					context_->codec_type = avcodec_get_type( codec_->id );
 					context_->codec_id = codec_->id;
 
@@ -316,9 +314,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		ml::dimensions dim_;
 		ml::fraction sar_;
 		pl::wstring pf_;
-
-	public:
-		static boost::recursive_mutex avcodec_open_lock_;
 };
 
 } } }

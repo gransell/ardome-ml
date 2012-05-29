@@ -70,8 +70,6 @@ static bool is_imx( const std::string &codec )
 	return boost::algorithm::ends_with( codec, "imx" );
 }
 
-boost::recursive_mutex avformat_video::avcodec_open_lock_; 
-
 class stream_queue
 {
 	public:
@@ -370,7 +368,6 @@ class stream_queue
 
 			if ( context_ == 0 )
 			{
-				boost::recursive_mutex::scoped_lock lock( avformat_video::avcodec_open_lock_ );
 				ARLOG_DEBUG5( "Creating decoder context" );
 				context_ = avcodec_alloc_context( );
 				codec_ = avcodec_find_decoder( name_codec_lookup_[ result->get_stream( )->codec( ) ] );
