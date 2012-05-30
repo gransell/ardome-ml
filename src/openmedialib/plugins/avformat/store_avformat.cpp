@@ -74,6 +74,8 @@ static const pl::pcos::key key_ticks_per_frame_ = pcos::key::from_string( "ticks
 static const pl::pcos::key key_avg_fps_num_ = pcos::key::from_string( "avg_fps_num" );
 static const pl::pcos::key key_avg_fps_den_ = pcos::key::from_string( "avg_fps_den" );
 
+static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
+
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 {
 	public:
@@ -1282,7 +1284,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				pkt.dts = av_rescale_q( stream->properties( ).get_property_with_key( key_dts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
 				pkt.duration = stream->properties( ).get_property_with_key( key_duration_ ).value< int >( );
 
-				int64_t ost_tb_start_time = av_rescale_q(0, AV_TIME_BASE_Q, video_stream_->time_base);
+				boost::int64_t ost_tb_start_time = av_rescale_q( 0, ml_av_time_base_q, video_stream_->time_base );
 				pkt.pts = av_rescale_q(pkt.pts, time_base, video_stream_->time_base) - ost_tb_start_time;
 				pkt.dts = av_rescale_q(pkt.dts, time_base, video_stream_->time_base);
 
