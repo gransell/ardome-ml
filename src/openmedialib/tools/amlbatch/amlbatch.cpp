@@ -105,15 +105,14 @@ std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, 
 			handle_token( result, properties, arg, frame );
 		}
 	}
-	else if ( cl::str_util::env_var_exists( L"AML_STORE" ) )
+	else if ( cl::str_util::env_var_exists( olib::t_string( _CT( "AML_STORE" ) ) ) )
 	{
-		olib::t_string store = cl::str_util::get_env_var( L"AML_STORE" );
+		olib::t_string store = cl::str_util::get_env_var( olib::t_string( _CT( "AML_STORE" ) ) );
 		std::vector < olib::t_string > tokens;
-		cl::str_util::split_string( store, L" ", tokens, cl::quote::respect );
+		cl::str_util::split_string( store, olib::t_string( _CT( " " ) ), tokens, cl::quote::respect );
 		for ( std::vector < olib::t_string >::iterator iter = tokens.begin( ); iter != tokens.end( ); iter ++ )
 		{
-			pl::wstring arg = pl::wstring( ( *iter ).c_str( ) );
-			handle_token( result, properties, arg, frame );
+			handle_token( result, properties, cl::str_util::to_wstring( *iter ), frame );
 		}
 	}
 	else
