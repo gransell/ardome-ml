@@ -583,6 +583,7 @@ int main( int argc, char *argv[ ] )
 			interactive = true;
 			push = pl::wstring( L"filter:resampler" );
 			push = pl::wstring( L"filter:visualise" );
+			push = pl::wstring( L"type=1" );
 			push = pl::wstring( L"colourspace=yuv420p" );
 			push = pl::wstring( L"width=640" );
 			push = pl::wstring( L"height=480" );
