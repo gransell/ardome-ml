@@ -648,7 +648,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			{
 				if ( prop_image_.value< int >( ) == 1 )
 				{
-					if ( !has_image( result ) )
+					if ( !result->has_image( ) )
 					{
 						default_image( result );
 					}
@@ -2309,6 +2309,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			, prop_type_( pcos::key::from_string( "type" ) )
 			, prop_hold_( pcos::key::from_string( "hold" ) )
 			, prop_colourspace_( pcos::key::from_string( "colourspace" ) )
+			, prop_scattered_( pcos::key::from_string( "scattered" ) )
 			, previous_( )
 			, previous_sar_num_( 59 )
 			, previous_sar_den_( 54 )
@@ -2321,6 +2322,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
 			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_scattered_ = 0 );
 		}
 
 		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
@@ -2402,6 +2404,8 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 					wave_rgb( frame );
 				else if ( type == 0 && colourspace == L"yuv420p" )
 					wave_yuv( frame );
+				else if ( type == 1 && colourspace == L"yuv420p" )
+					wave_yuv_split( frame );
 				else
 					wave_rgb( frame );
 			}
@@ -2430,25 +2434,76 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			int i, j;
 			int offset;
 
-			for ( i = 0; i < width; i ++ )
-			{
-				offset = i * 3;
+			if ( prop_scattered_.value< int >( ) == 0 ) {
+				for ( i = 0; i < width; i ++ )
+				{
+					offset = i * 3;
+					for ( j = 0; j < channels; j ++ )
+					{
+						sample = int( ( double( ( buff + int( sample_offset * i ) * channels )[ j ] ) / 32767.0 ) * ( height / 2 ) );
+						p = middle - sample * pitch + offset;
+						*p ++ = j == 0 ? 255 : 0;
+						*p ++ = j == 0 ? 0 : 255;
+						*p ++ = 0;
+					}
+				}
+			} else {
+				// We'll split the view into at most 2 columns
+				// and at most (channels / 2) rows, ordered as
+				// columns in a news paper.
+				// The grid layout will be:
+				// _Channels_ | _size_
+				//  1 {/2=0}  |  1 x 1
+				//  2 {/2=1}  |  1 x 2
+				//  3 {/2=1}  |  2 x 2 (bottom right empty)
+				//  4 {/2=2}  |  2 x 2
+				//  5 {/2=2}  |  2 x 3 (bottom right empty)
+				//  6 {/2=3}  |  2 x 3
+				//  7 {/2=3}  |  2 x 4 (bottom right empty)
+				//     ...
+
+				if (channels > 2)
+				{
+					width /= 2;
+					height /= ((channels + 1) / 2);
+				}
+				else
+					height /= channels;
+
+				sample_offset = double( samples ) / width;
+
 				for ( j = 0; j < channels; j ++ )
 				{
-					sample = int( ( double( ( buff + int( sample_offset * i ) * channels )[ j ] ) / 32767.0 ) * ( height / 2 ) );
-					p = middle - sample * pitch + offset;
-					*p ++ = j == 0 ? 255 : 0;
-					*p ++ = j == 0 ? 0 : 255;
-					*p ++ = 0;
+					size_t x, y;
+					if ( channels <= 2 || j < ((channels+1) / 2) ) {
+						x = 0;
+						y = j * height;
+					} else {
+						x = width;
+						y = (j - (channels + 1) / 2) * height;
+					}
+
+					middle = image->data( ) + pitch * ( y + height / 2 );
+
+					for ( i = 0; i < width; i ++ )
+					{
+						offset = (x + i) * 3;
+
+						sample = int( ( double( ( buff + int( sample_offset * i ) * channels )[ j ] ) / 32767.0 ) * ( height / 2 ) );
+						p = middle - sample * pitch + offset;
+						*p ++ = j == 0 ? 255 : 0;
+						*p ++ = j == 0 ? 0 : 255;
+						*p ++ = 0;
+					}
 				}
 			}
 		}
 
 		void line( unsigned char *p, unsigned char *m, int pitch, unsigned char v )
 		{
-			if ( p < m )
+			if ( p <= m + pitch )
 			{
-				while( p < m + pitch )
+				while( p <= m + pitch )
 				{
 					*p = 128 + ( *p + v - 256 ) / 2;
 					p += pitch;
@@ -2511,6 +2566,57 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			}
 		}
 
+		void wave_yuv_split( frame_type_ptr frame )
+		{
+			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
+
+			int ry, ru, rv;
+			il::rgb24_to_yuv444( ry, ru, rv, 255, 0, 0 );
+
+			int gy, gu, gv;
+			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
+
+			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
+			il::image_type_ptr image = frame->get_image( );
+			int width = image->width( );
+			int height = image->height( );
+
+			short *buff = ( short * )audio->pointer( );
+			int samples = audio->samples( );
+			int channels = audio->channels( );
+
+			double sample_offset = double( samples ) / width;
+			int pitch_y = image->pitch( 0 );
+			int pitch_u = image->pitch( 1 );
+			int pitch_v = image->pitch( 2 );
+
+			short sample;
+			unsigned char *p;
+			int i, j;
+
+			for ( i = 0; i < width; i ++ )
+			{
+				unsigned char *middle_y = image->data( 0 ) + pitch_y * height / ( 2 * channels );
+				unsigned char *middle_u = image->data( 1 ) + pitch_u * height / ( 4 * channels );
+				unsigned char *middle_v = image->data( 2 ) + pitch_v * height / ( 4 * channels );
+				for ( j = 0; j < channels; j ++ )
+				{
+					sample = int( ( double( ( buff + int( sample_offset * i ) * channels )[ j ] ) / 32769.0 ) * ( height / ( 2 * channels ) ) );
+					p = middle_y - sample * pitch_y + i;
+					line( p, middle_y, pitch_y, j % 2 == 0 ? ry : gy );
+					sample /= 2;
+					p = middle_u - sample * pitch_u + i / 2;
+					line( p, middle_u, pitch_u, j % 2 == 0 ? ru : gu );
+					p = middle_v - sample * pitch_v + i / 2;
+					line( p, middle_v, pitch_v, j % 2 == 0 ? rv : gv );
+					middle_y += pitch_y * height / channels;
+					middle_u += pitch_u * height / ( 2 * channels );
+					middle_v += pitch_v * height / ( 2 * channels );
+				}
+			}
+		}
+
+
 	private:
 		pcos::property prop_force_;
 		pcos::property prop_width_;
@@ -2520,6 +2626,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 		pcos::property prop_type_;
 		pcos::property prop_hold_;
 		pcos::property prop_colourspace_;
+		pcos::property prop_scattered_;
 		il::image_type_ptr previous_;
 		int previous_sar_num_;
 		int previous_sar_den_;
