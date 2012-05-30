@@ -66,10 +66,10 @@ class ML_DECLSPEC analyse_type
 typedef boost::shared_ptr< analyse_type > analyse_ptr;
 
 // Create an analyse object for the given codec
-analyse_ptr analyse_factory( const std::string &codec );
+analyse_ptr ML_DECLSPEC analyse_factory( const std::string &codec );
 
 // Create an analyse object for the stream
-analyse_ptr analyse_factory( const stream_type_ptr stream );
+analyse_ptr ML_DECLSPEC analyse_factory( const stream_type_ptr stream );
 
 } } }
 
