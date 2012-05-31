@@ -181,6 +181,8 @@ class rubber
 				sync( speed, pitch );
 			}
 
+			int difference = abs( position - expected_ );
+
 			// Reset the state if necessary
 			if ( position != expected_ || speed != old_speed_ )
 			{
@@ -190,7 +192,7 @@ class rubber
 				source_ = position;
 			}
 
-			if ( ( result && !result->get_audio( ) ) || speed > 2.0 )
+			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || difference > 2 )
 			{
 				if ( !result )
 				{
