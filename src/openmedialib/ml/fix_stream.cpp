@@ -40,6 +40,7 @@ namespace fixers
 				, channels_( stream->channels( ) )
 				, samples_( stream->samples( ) )
 				, pf_( stream->pf( ) )
+				, field_order_( stream->field_order( ) )
 				, estimated_gop_size_( stream->estimated_gop_size( ) )
 			{
 				memcpy( bytes( ), &( *header )[ 0 ], header->size( ) );
@@ -98,6 +99,9 @@ namespace fixers
 
 			/// Returns the picture format
 			virtual const olib::openpluginlib::wstring pf( ) const { return pf_; }
+
+			/// Returns the picture field order
+			virtual olib::openimagelib::il::field_order_flags field_order( ) const { return field_order_; }
 	
 		private:
 			enum ml::stream_id id_;
@@ -115,6 +119,7 @@ namespace fixers
 			int channels_;
 			int samples_;
 			olib::openpluginlib::wstring pf_;
+			olib::openimagelib::il::field_order_flags field_order_;
 			int estimated_gop_size_;
 	};
 
@@ -198,8 +203,7 @@ namespace fixers
 				int h = frame->height( );
 				int b = stream->bitrate( );
 
-				// TODO: Obtain field order from frame/stream/container
-				bool p = h != 1080;
+				bool p = ( stream->field_order( ) == il::progressive );
 
 				// TODO: Confirm that this is accurate enough
 				bool is50 = b <= 75000000;

@@ -6,7 +6,7 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/types.hpp>
 #include <openmedialib/ml/frame.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/scope_handler.hpp>
 
 #include <openpluginlib/pl/pcos/observer.hpp>

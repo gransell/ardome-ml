@@ -10,7 +10,7 @@
 // API.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/indexer.hpp>
 
@@ -710,11 +710,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 50000000, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"yuv422p", 12 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_,
+							50000000, ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), L"yuv422p", il::top_field_first, 12 ) );
 						break;
 
 					case ml::stream_audio:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0, L"", 0 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_,
+							0, codec_context->sample_rate, codec_context->channels, 0, L"", il::top_field_first, 0 ) );
 						break;
 
 					default:

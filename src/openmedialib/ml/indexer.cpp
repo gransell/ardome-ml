@@ -5,7 +5,7 @@
 
 #include <openmedialib/ml/ml.hpp>
 #include <openmedialib/ml/indexer.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/utilities.hpp>
 

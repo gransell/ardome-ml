@@ -6,7 +6,7 @@
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <cmath>
 
 #include <iostream>

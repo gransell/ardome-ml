@@ -5,7 +5,7 @@
 #include <opencorelib/cl/enforce.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/audio.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace wav {
 

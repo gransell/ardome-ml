@@ -76,7 +76,7 @@
 #include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 
 #include <opencorelib/cl/str_util.hpp>
 

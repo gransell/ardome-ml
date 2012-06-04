@@ -14,7 +14,7 @@
 // video and audio files.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 
 #ifdef WIN32

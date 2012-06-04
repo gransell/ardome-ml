@@ -1,7 +1,7 @@
 #ifndef AVFORMAT_STREAM_H_
 #define AVFORMAT_STREAM_H_
 
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -18,7 +18,9 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
+			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
+			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, length_( length )
@@ -32,6 +34,7 @@ class stream_avformat : public ml::stream_type
 			, channels_( 0 )
 			, samples_( 0 )
 			, pf_( pf )
+			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
@@ -39,7 +42,9 @@ class stream_avformat : public ml::stream_type
 		}
 
 		// Constructor with known codec name
-		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate, const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
+		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate,
+			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
+			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, codec_( codec )
@@ -54,12 +59,15 @@ class stream_avformat : public ml::stream_type
 			, channels_( 0 )
 			, samples_( 0 )
 			, pf_( pf )
+			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
 		}
 
 		/// Constructor for a audio packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate, int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf, int estimated_gop_size )
+		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
+			int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf, 
+			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
 			, length_( length )
@@ -73,6 +81,7 @@ class stream_avformat : public ml::stream_type
 			, channels_( channels )
 			, samples_( samples )
 			, pf_( pf )
+			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
 			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
@@ -178,6 +187,11 @@ class stream_avformat : public ml::stream_type
 			return pf_; 
 		}
 
+		virtual olib::openimagelib::il::field_order_flags field_order( ) const
+		{
+			return field_order_;
+		}
+
 	private:
 		enum ml::stream_id id_;
 		std::string container_;
@@ -194,6 +208,7 @@ class stream_avformat : public ml::stream_type
 		int channels_;
 		int samples_;
 		olib::openpluginlib::wstring pf_;
+		olib::openimagelib::il::field_order_flags field_order_;
 		int estimated_gop_size_;
 };
 
