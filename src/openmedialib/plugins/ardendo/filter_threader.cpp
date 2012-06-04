@@ -668,15 +668,16 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 
 				sync_time_ = boost::get_system_time() + boost::posix_time::milliseconds( TIME_BETWEEN_BACKGROUND_SYNCS );
 
-				int prefetch_position = 0;
-				bool fully_cached = false;
-
 				//Keep thread local copies of the position_ and speed_ members.
 				//This is needed to ensure that they do not change unexpectedly,
 				//since we unlock the mutex during lengthy operations in the code
 				//below.
 				int current_filter_position = position_;
 				int current_filter_speed = speed_;
+
+				int prefetch_position = current_filter_position;
+				bool fully_cached = false;
+
 				
 				cache_.clear();
 
