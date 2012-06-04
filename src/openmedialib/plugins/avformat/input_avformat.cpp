@@ -1667,6 +1667,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					ret = 0;
 					got_audio = false;
 					audio_buf_used_ = 0;
+					expected_packet_ ++;
 					break;
 				}
 
