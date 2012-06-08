@@ -1650,7 +1650,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			if ( result )
 			{
 				result->set_position( position_ );
-				result->set_fps( fps_num, fps_den );
+				if( fps_num > 0 && fps_den > 0 )
+					result->set_fps( fps_num, fps_den );
+
 				last_frame_ = result->shallow( );
 			}
 
