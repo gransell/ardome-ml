@@ -1584,7 +1584,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
 			if ( fps_num > 0 && fps_den > 0 )
-				return map_source_to_dest( src_frames_ );
+				return ceil( map_source_to_dest( src_frames_ ) );
 			else
 				return src_frames_;
 		}
@@ -1681,7 +1681,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			if ( result )
 			{
 				result->set_position( position_ );
-				result->set_fps( fps_num, fps_den );
+				if( fps_num > 0 && fps_den > 0 )
+					result->set_fps( fps_num, fps_den );
+
 				last_frame_ = result->shallow( );
 			}
 
@@ -1695,7 +1697,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		}
 
 	private:
-		inline int map_source_to_dest( int position ) const
+		inline double map_source_to_dest( int position ) const
 		{
 			double t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
 			double t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
@@ -1725,7 +1727,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			ml::frame_type_ptr result;
 
 			// Determine frame position in input and number of samples that we require
-			const int requested = map_dest_to_source( position_ );
+			const int target = ( current_dir_ > 0 ) ? map_dest_to_source( position_ ) : ceil( map_dest_to_source( position_ + 1 ) ) - 1;
 			const int samples = audio::samples_for_frame( position_, src_frequency_, fps_num, fps_den );
 
 			// After a seek, we need to know how many samples to discard from the first audio packet we extract
@@ -1734,30 +1736,57 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			// Handle a seek now
 			if ( position_ != expected_ )
 			{
+				int start_input = target;
+
 				// We always need to clear the reseat after a seek - the cache is cleared to allow for non-sample accurate inputs
 				reseat_->clear( );
 				cache_.clear( );
 
 				// We now need to align ourselves with the exact sample in the input that is required to satisfy the output
-				int start_input = requested;
-				boost::int64_t samples_in = audio::samples_to_frame( start_input, src_frequency_, src_fps_num_, src_fps_den_ );
-				boost::int64_t samples_out = audio::samples_to_frame( position_, src_frequency_, fps_num, fps_den );
 
-				// If the sample offset of the input is after the output, we need to step back
-				while ( samples_in > samples_out )
-					samples_in = audio::samples_to_frame( -- start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+				if( current_dir_ > 0 )
+				{
+					boost::int64_t samples_in  = audio::samples_to_frame( start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+					boost::int64_t samples_out = audio::samples_to_frame( position_, src_frequency_, fps_num, fps_den );
 
-				// We will now discard the samples we don't need
-				discard = samples_out - samples_in;
+					// If the sample offset of the input is after the output, we need to step back
+					if ( samples_in > samples_out )
+						samples_in = audio::samples_to_frame( -- start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+
+					ARENFORCE_MSG( samples_in <= samples_out, "Forward miscalculation - samples_in %1% > samples_out %2%" )( samples_in )( samples_out );
+
+					// We will now discard the samples we don't need
+					discard = samples_out - samples_in;
+				}
+				else
+				{
+					boost::int64_t samples_in  = audio::samples_to_frame( start_input + 1, src_frequency_, src_fps_num_, src_fps_den_ );
+					boost::int64_t samples_out = audio::samples_to_frame( position_ + 1, src_frequency_, fps_num, fps_den );
+
+					// If the sample offset of the input is before the output, we need to step forward
+					if ( samples_in < samples_out )
+						samples_in = audio::samples_to_frame( ++ start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+
+					ARENFORCE_MSG( samples_in >= samples_out, "Reverse miscalculation - samples_in %1% < samples_out %2%" )( samples_in )( samples_out );
+
+					// We will now discard the samples we don't need
+					discard = samples_in - samples_out;
+				}
 
 				// Reset the input position we shall start reading from
 				next_input_ = start_input;
 			}
 
-			// While we're able seek on the input, and the number of samples we want has not been obtained or the the frame we wish to output
-			// has not yet been cached
-			while ( next_input_ < src_frames_ && next_input_ >= 0 && ( !reseat_->has( samples ) || cache_.fetch( requested ) == ml::frame_type_ptr( ) ) )
+			// Keep fetching while we're able seek on the input, and the number of samples we want has not been obtained
+			while ( next_input_ >= 0 && next_input_ < src_frames_ && !reseat_->has( samples ) )
 			{
+				// Break if we haven't got the target and we're moving away from it
+				if ( !cache_.fetch( target ) )
+				{
+					ARENFORCE_MSG( ( next_input_ <= target && current_dir_ == 1 ) || ( next_input_ >= target && current_dir_ == -1 ), 
+								   "Moving away from target %1% at %2% + %3%" )( target )( next_input_ )( current_dir_ );
+				}
+
 				// Seek and fetch the next input frame
 				input->seek( next_input_ );
 				frame_type_ptr frame = input->fetch( );
@@ -1789,9 +1818,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 			// Finally, if we have the frame from the input that we want, clone it and modify as required 
 			// (note that fps and position are handled in the do_fetch to avoid duplication)
-			if ( cache_.fetch( requested ) )
+			if ( cache_.fetch( target ) )
 			{
-				result = cache_.fetch( requested )->deep( );
+				result = cache_.fetch( target )->deep( );
 
 				if ( reseat_->size( ) )
 					result->set_audio( reseat_->retrieve( samples, true ) );
@@ -1931,7 +1960,12 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 					input->seek( get_in( src_frames_ ) - get_position( ) );
 					result = input->fetch( );
 					if ( result && result->get_audio( ) )
-						result->set_audio( audio::reverse( result->get_audio( ) ) );
+					{
+						int reversed = pl::pcos::value< int >( result->properties( ), key_audio_reversed_, 0 );
+						if ( reversed == 0 )
+							result->set_audio( audio::reverse( result->get_audio( ) ) );
+						pl::pcos::assign< int >( result->properties( ), key_audio_reversed_, 0 );
+					}
 				}
 
 				if ( result )
@@ -2326,6 +2360,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			, prop_type_( pcos::key::from_string( "type" ) )
 			, prop_hold_( pcos::key::from_string( "hold" ) )
 			, prop_colourspace_( pcos::key::from_string( "colourspace" ) )
+			, prop_reverse_( pcos::key::from_string( "reverse" ) )
 			, previous_( )
 			, previous_sar_num_( 59 )
 			, previous_sar_den_( 54 )
@@ -2338,6 +2373,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
 			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_reverse_ = 0 );
 		}
 
 		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
@@ -2429,6 +2465,10 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
 
 			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
+
+			if ( prop_reverse_.value< int >( ) )
+				audio = ml::audio::reverse( audio );
+
 			il::image_type_ptr image = frame->get_image( );
 
 			int width = image->width( );
@@ -2492,6 +2532,10 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
 
 			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
+
+			if ( prop_reverse_.value< int >( ) )
+				audio = ml::audio::reverse( audio );
+
 			il::image_type_ptr image = frame->get_image( );
 			int width = image->width( );
 			int height = image->height( );
@@ -2537,6 +2581,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 		pcos::property prop_type_;
 		pcos::property prop_hold_;
 		pcos::property prop_colourspace_;
+		pcos::property prop_reverse_;
 		il::image_type_ptr previous_;
 		int previous_sar_num_;
 		int previous_sar_den_;
