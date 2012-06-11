@@ -1705,6 +1705,8 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			// Handle a seek now
 			if ( position_ != expected_ )
 			{
+				int start_input = target;
+
 				// We always need to clear the reseat after a seek - the cache is cleared to allow for non-sample accurate inputs
 				reseat_->clear( );
 				cache_.clear( );
@@ -1713,32 +1715,41 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 				if( current_dir_ > 0 )
 				{
-					boost::int64_t samples_in  = audio::samples_to_frame( target, src_frequency_, src_fps_num_, src_fps_den_ );
+					boost::int64_t samples_in  = audio::samples_to_frame( start_input, src_frequency_, src_fps_num_, src_fps_den_ );
 					boost::int64_t samples_out = audio::samples_to_frame( position_, src_frequency_, fps_num, fps_den );
-					ARENFORCE( samples_in <= samples_out );
+
+					// If the sample offset of the input is after the output, we need to step back
+					if ( samples_in > samples_out )
+						samples_in = audio::samples_to_frame( -- start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+
+					ARENFORCE_MSG( samples_in <= samples_out, "Forward miscalculation - samples_in %1% > samples_out %2%" )( samples_in )( samples_out );
 
 					// We will now discard the samples we don't need
 					discard = samples_out - samples_in;
 				}
 				else
 				{
-					boost::int64_t samples_in  = audio::samples_to_frame( target + 1, src_frequency_, src_fps_num_, src_fps_den_ );
+					boost::int64_t samples_in  = audio::samples_to_frame( start_input + 1, src_frequency_, src_fps_num_, src_fps_den_ );
 					boost::int64_t samples_out = audio::samples_to_frame( position_ + 1, src_frequency_, fps_num, fps_den );
-					ARENFORCE( samples_in >= samples_out );
+
+					// If the sample offset of the input is before the output, we need to step forward
+					if ( samples_in < samples_out )
+						samples_in = audio::samples_to_frame( ++ start_input, src_frequency_, src_fps_num_, src_fps_den_ );
+
+					ARENFORCE_MSG( samples_in >= samples_out, "Reverse miscalculation - samples_in %1% < samples_out %2%" )( samples_in )( samples_out );
 
 					// We will now discard the samples we don't need
 					discard = samples_in - samples_out;
 				}
 
 				// Reset the input position we shall start reading from
-				next_input_ = target;
+				next_input_ = start_input;
 			}
 
-			// While we're able seek on the input, and the number of samples we want has not been obtained or the the frame we wish to output
-			// has not yet been cached
+			// Keep fetching while we're able seek on the input, and the number of samples we want has not been obtained
 			while ( next_input_ >= 0 && next_input_ < src_frames_ && !reseat_->has( samples ) )
 			{
-				// Break if we're moving away from the target
+				// Break if we haven't got the target and we're moving away from it
 				if ( !cache_.fetch( target ) )
 				{
 					ARENFORCE_MSG( ( next_input_ <= target && current_dir_ == 1 ) || ( next_input_ >= target && current_dir_ == -1 ), 
