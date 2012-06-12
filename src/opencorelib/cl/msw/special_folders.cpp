@@ -107,8 +107,12 @@ namespace olib
                     return wp;
                 }
                 
-                ARLOG_ERR(_CT("Could not find TEMP environment variable"));
                 olib::t_path wp = get( special_folder::user_data ) / L"temp";
+
+                //Cannot use ARLOG here, since it will call this method
+                T_CERR << _CT("Could not find TEMP environment variable.\n") <<
+                    _CT("Will use temp directory: ") << wp << std::endl;
+
                 fs::create_directory(wp);
                 return wp;
             }
