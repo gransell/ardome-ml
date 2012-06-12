@@ -172,6 +172,9 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Obtain colourspace from packet or image
 		std::wstring pf( ) const;
 
+		/// Obtain field order from packet or image
+		virtual olib::openimagelib::il::field_order_flags field_order( ) const;
+
 		/// Indicates the input's audio codec if known ("" if unknown or n/a)
 		virtual std::string audio_codec( ) const;
 

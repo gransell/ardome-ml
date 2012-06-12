@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <opencorelib/cl/profile.hpp>
 
 #include "avformat_stream.hpp"
@@ -60,6 +60,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			init( ); 
 			pf_ = frame->pf( );
 			frame->get_image( );
+			field_order_ = frame->field_order( );
 			dim_ = ml::dimensions( frame->width( ), frame->height( ) );
 			sar_ = ml::fraction( frame->get_sar_num( ), frame->get_sar_den( ) );
 			context_->pix_fmt = oil_to_avformat( frame->pf( ) );
@@ -263,10 +264,10 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 					picture_->linesize[ 1 ] = frame->get_image( )->pitch( 1 );
 					picture_->linesize[ 2 ] = frame->get_image( )->pitch( 2 );
 
-					if ( frame->get_image( )->field_order( ) != il::progressive )
+					if ( field_order_ != il::progressive )
 					{
-						picture_->interlaced_frame  = 1;
-						picture_->top_field_first = frame->get_image( )->field_order( ) == il::top_field_first;
+						picture_->interlaced_frame = 1;
+						picture_->top_field_first = ( field_order_ == il::top_field_first );
 					}
 
 					out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
@@ -279,7 +280,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
 					key_ = position_;
 
-				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, context_->gop_size );
+				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, field_order_, context_->gop_size );
 
 				if ( out_size )
 					memcpy( stream->bytes( ), outbuf_, out_size );
@@ -314,6 +315,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		ml::dimensions dim_;
 		ml::fraction sar_;
 		pl::wstring pf_;
+		il::field_order_flags field_order_;
 };
 
 } } }

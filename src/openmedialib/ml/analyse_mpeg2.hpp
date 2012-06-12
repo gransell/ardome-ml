@@ -7,7 +7,7 @@
 #define ML_ANALYSE_MPEG2
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/analyse.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 

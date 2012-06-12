@@ -65,7 +65,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'indexer.hpp', 
 			'ml.hpp', 
 			'openmedialib_plugin.hpp', 
-			'packet.hpp', 
+			'stream.hpp', 
 			'scope_handler.hpp', 
 			'stack.hpp',
 			'store.hpp', 

@@ -68,6 +68,9 @@ class ML_DECLSPEC stream_type
 		/// Returns the picture format of the image associated to this packet
 		virtual const olib::openpluginlib::wstring pf( ) const { return olib::openpluginlib::wstring( L"" ); }
 
+		/// Returns the field order of the image associated with this packet
+		virtual olib::openimagelib::il::field_order_flags field_order( ) const = 0;
+
 		/// Returns the frequency associated to the audio in the packet (0 if n/a)
 		virtual const int frequency( ) const { return 0; }
 

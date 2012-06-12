@@ -23,6 +23,8 @@
 
 namespace aml { namespace openmedialib {
 
+static pl::pcos::key key_audio_reversed_( pcos::key::from_string( "audio_reversed" ) );
+
 class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 {
 	public:
@@ -73,6 +75,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 					if ( result && overlay )
 					{
 						result->set_audio( overlay->get_audio( ) );
+						pl::pcos::assign< int >( result->properties( ), overlay->properties( ), key_audio_reversed_ );
 						join_peaks( result, overlay );
 					}
 				}

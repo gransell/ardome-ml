@@ -7,7 +7,7 @@
 #define ML_FIX_PACKET
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/types.hpp>
 
 #include <opencorelib/cl/enforce_defines.hpp>

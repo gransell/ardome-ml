@@ -10,7 +10,7 @@
 // API.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/indexer.hpp>
 
@@ -743,11 +743,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, 
 																		   key_last_, codec_context->bit_rate, 
 																		   ml::dimensions( width_, height_ ), ml::fraction( sar_num_, sar_den_ ), 
-																		   avformat_to_oil( codec_context->pix_fmt ), codec_context->gop_size ) );
+																		   avformat_to_oil( codec_context->pix_fmt ), il::top_field_first, codec_context->gop_size ) );
 						break;
 
 					case ml::stream_audio:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_, 0, codec_context->sample_rate, codec_context->channels, 0, L"", 0 ) );
+						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, expected_, key_last_,
+							0, codec_context->sample_rate, codec_context->channels, 0, L"", il::top_field_first, 0 ) );
 						break;
 
 					default:
@@ -1096,6 +1097,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				if ( format == "mpeg" && prop_gop_open_.value< int >( ) == 0 )
 					prop_gop_open_ = 2;
+				else if ( format == "mpegts" && prop_gop_open_.value< int >( ) == 0 )
+					prop_gop_open_ = 2;
 
 				if ( format == "mpeg" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 24;
@@ -1108,6 +1111,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			}
 			else
 			{
+				if ( format == "mpeg" && prop_gop_open_.value< int >( ) == 0 )
+					prop_gop_open_ = 2;
+				else if ( format == "mpegts" && prop_gop_open_.value< int >( ) == 0 )
+					prop_gop_open_ = 2;
+
 				if ( format == "mp3" && prop_gop_size_.value< int >( ) == -1 )
 					prop_gop_size_ = 12;
 				else if ( format == "mp2" && prop_gop_size_.value< int >( ) == -1 )
@@ -1731,6 +1739,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					ret = 0;
 					got_audio = false;
 					audio_buf_used_ = 0;
+					if ( !has_video( ) ) expected_packet_ ++;
 					break;
 				}
 

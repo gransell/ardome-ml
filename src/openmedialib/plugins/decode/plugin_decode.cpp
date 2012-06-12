@@ -5,7 +5,7 @@
 
 #include <openmedialib/ml/analyse.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/thread_pool.hpp>
 #include <opencorelib/cl/function_job.hpp>

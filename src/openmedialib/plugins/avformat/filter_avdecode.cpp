@@ -17,7 +17,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/filter_simple.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 #include <opencorelib/cl/profile.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
@@ -849,6 +849,11 @@ class avformat_video_streamer : public ml::stream_type
 		virtual const olib::openpluginlib::wstring pf( ) const 
 		{ 
 			return stream_ ? stream_->pf( ) : pl::wstring( L"" );
+		}
+
+		virtual olib::openimagelib::il::field_order_flags field_order( ) const 
+		{ 
+			return stream_ ? stream_->field_order( ) : olib::openimagelib::il::top_field_first;
 		}
 
 	private:

@@ -72,6 +72,46 @@ private:
 
 OPENPLUGINLIB_DECLSPEC std::ostream& operator<<( std::ostream&, const property_container& );
 
+template < typename T > void assign( property_container &dest, property_container &src, key &key )
+{
+	property original = src.get_property_with_key( key );
+	property target = dest.get_property_with_key( key );
+	if( original.valid( ) && !target.valid( ) )
+		dest.append( property( key ) = original.value< T >( ) );
+	else if( original.valid( ) && target.valid( ) )
+		target = original.value< T >( );
+}
+
+template < typename T > void assign( property_container &dest, property_container &src, key &key, const T &default_value )
+{
+	property original = src.get_property_with_key( key );
+	property target = dest.get_property_with_key( key );
+	if( original.valid( ) && !target.valid( ) )
+		dest.append( property( key ) = original.value< T >( ) );
+	else if( original.valid( ) && target.valid( ) )
+		target = original.value< T >( );
+	else
+		dest.append( property( key ) = default_value );
+}
+
+template < typename T > void assign( property_container &dest, key &key, const T &default_value )
+{
+	property target = dest.get_property_with_key( key );
+	if( !target.valid( ) )
+		dest.append( property( key ) = default_value );
+	else
+		target = default_value;
+}
+
+template < typename T > T value( property_container &dest, key &key, const T &default_value )
+{
+	T result = default_value;
+	property target = dest.get_property_with_key( key );
+	if( target.valid( ) )
+		result = target.value< T >( );
+	return result;
+}
+
 } } }
 
 #if _MSC_VER

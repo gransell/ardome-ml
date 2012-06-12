@@ -7,7 +7,7 @@
 #define ML_ANALYSE_
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openmedialib/ml/packet.hpp>
+#include <openmedialib/ml/stream.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 

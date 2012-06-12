@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include "frame.hpp"
-#include "packet.hpp"
+#include "stream.hpp"
 #include <deque>
 
 namespace pcos = olib::openpluginlib::pcos;
@@ -300,6 +300,15 @@ std::wstring frame_type::pf( ) const
 	else if ( stream_ )
 		return stream_->pf( );
 	return L"";
+}
+
+il::field_order_flags frame_type::field_order( ) const
+{
+	if ( image_ )
+		return image_->field_order( );
+	else if ( stream_ )
+		return stream_->field_order( );
+	return il::top_field_first;
 }
 
 /// Indicates the input's audio codec if known ("" if unknown or n/a)
