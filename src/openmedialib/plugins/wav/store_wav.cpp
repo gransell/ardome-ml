@@ -115,15 +115,9 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	// Figure out the total clip length. If we can do this, we can write a
 	// proper header right now. Otherwise we'll need to fix the header
-	// afterwords.
+	// afterwards.
 
 	int samples = 0;
-/*
-	int count = -1;
-	try {
-		count = property("count").value<int>();
-	} catch (...) {}
-*/
 
 	uint64_t header_size =
 		  sizeof(w)
@@ -326,6 +320,10 @@ void store_wav::vitalizeHeader() {
 			ARLOG_DEBUG4("store_wav::vitalizeHeader(): Found data block");
 			data = (riff::wav::data*)blk;
 
+			//J#AMF-1554: Since the data length is not set, we cannot continue
+			//parsing from this point. Since we don't know how much to jump
+			//forward, we would start interpreting the sample data as headers.
+			break;
 		}
 
 		offset += blk->size + 8;
@@ -334,7 +332,7 @@ void store_wav::vitalizeHeader() {
 	ARENFORCE_MSG( wave && fmt && ds64 && data , "Could not find all necessary blocks in file" );
 
 	// Header size
-	uint64_t headerlen = ((uint8_t*)data - &buf[0]) - sizeof(*data);
+	uint64_t headerlen = ((uint8_t*)data - &buf[0]) + sizeof(*data);
 
 	ARENFORCE_MSG( filelen >= headerlen , "File is broken" );
 

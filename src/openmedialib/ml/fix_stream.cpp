@@ -141,6 +141,14 @@ namespace fixers
 				AVCI100_1080p_29_97,
 				AVCI100_1080i_25,
 				AVCI100_1080p_25,
+				AVCI100_1080p_24,
+				AVCI50_1080p_24,
+				AVCI100_720p_29_97,
+				AVCI50_720p_29_97,
+				AVCI100_720p_24,
+				AVCI50_720p_24,
+				AVCI100_720p_25,
+				AVCI50_720p_25,
 				UNKNOWN
 			}
 			type;
@@ -189,6 +197,14 @@ namespace fixers
 				size_[ AVCI100_1080p_29_97 ] = 472576;
 				size_[ AVCI100_1080i_25    ] = 568832;
 				size_[ AVCI100_1080p_25    ] = 568832;
+				size_[ AVCI100_1080p_24    ] = 472576;
+				size_[ AVCI50_1080p_24     ] = 232960;
+				size_[ AVCI100_720p_29_97  ] = 236544;
+				size_[ AVCI50_720p_29_97   ] = 116736;
+				size_[ AVCI100_720p_24     ] = 236544;
+				size_[ AVCI50_720p_24      ] = 116736;
+				size_[ AVCI100_720p_25     ] = 284672;
+				size_[ AVCI50_720p_25      ] = 140800;
 			}
 
 		public:
@@ -208,18 +224,26 @@ namespace fixers
 				// TODO: Confirm that this is accurate enough
 				bool is50 = b <= 75000000;
 
-				if      ( is50  && w == 1280 && h == 720  && n == 60000 && d == 1001 && p  ) id = AVCI50_720p_59_94;
-				else if ( is50  && w == 1280 && h == 720  && n == 50    && d == 1    && p  ) id = AVCI50_720p_50;
+				if      ( is50  && w == 960  && h == 720  && n == 60000 && d == 1001 && p  ) id = AVCI50_720p_59_94;
+				else if ( is50  && w == 960  && h == 720  && n == 50    && d == 1    && p  ) id = AVCI50_720p_50;
 				else if ( is50  && w == 1440 && h == 1080 && n == 30000 && d == 1001 && !p ) id = AVCI50_1080i_29_97;
 				else if ( is50  && w == 1440 && h == 1080 && n == 30000 && d == 1001 && p  ) id = AVCI50_1080p_29_97;
 				else if ( is50  && w == 1440 && h == 1080 && n == 25    && d == 1    && !p ) id = AVCI50_1080i_25;
 				else if ( is50  && w == 1440 && h == 1080 && n == 25    && d == 1    && p  ) id = AVCI50_1080p_25;
+				else if ( is50  && w == 1440 && h == 1080 && n == 24000 && d == 1001 && p  ) id = AVCI50_1080p_24;
+				else if ( is50  && w == 960  && h == 720  && n == 30000 && d == 1001 && p  ) id = AVCI50_720p_29_97;
+				else if ( is50  && w == 960  && h == 720  && n == 24000 && d == 1001 && p  ) id = AVCI50_720p_24;
+				else if ( is50  && w == 960  && h == 720  && n == 25    && d == 1    && p  ) id = AVCI50_720p_25;
 				else if ( !is50 && w == 1280 && h == 720  && n == 60000 && d == 1001 && p  ) id = AVCI100_720p_59_94;
 				else if ( !is50 && w == 1280 && h == 720  && n == 50    && d == 1    && p  ) id = AVCI100_720p_50;
 				else if ( !is50 && w == 1920 && h == 1080 && n == 30000 && d == 1001 && !p ) id = AVCI100_1080i_29_97;
 				else if ( !is50 && w == 1920 && h == 1080 && n == 30000 && d == 1001 && p  ) id = AVCI100_1080p_29_97;
 				else if ( !is50 && w == 1920 && h == 1080 && n == 25    && d == 1    && !p ) id = AVCI100_1080i_25;
 				else if ( !is50 && w == 1920 && h == 1080 && n == 25    && d == 1    && p  ) id = AVCI100_1080p_25;
+				else if ( !is50 && w == 1920 && h == 1080 && n == 24000 && d == 1001 && p  ) id = AVCI100_1080p_24;
+				else if ( !is50 && w == 1280 && h == 720  && n == 30000 && d == 1001 && p  ) id = AVCI100_720p_29_97;
+				else if ( !is50 && w == 1280 && h == 720  && n == 24000 && d == 1001 && p  ) id = AVCI100_720p_24;
+				else if ( !is50 && w == 1280 && h == 720  && n == 25    && d == 1    && p  ) id = AVCI100_720p_25;
 
 				// Determine location in the table for this id
 				table_type::const_iterator chunk = table_.find( id );
