@@ -16,6 +16,8 @@ namespace olib { namespace openmedialib { namespace ml {
 class ML_DECLSPEC analyse_type
 {
 	public:
+		// Once a stream_type is analysed, we set a property on the stream to avoid re-analysis
+		static olib::openpluginlib::pcos::key key_analysed_;
 		// Common keys which may be provided in the analysis collect method
 		static olib::openpluginlib::pcos::key key_fps_num_;
 		static olib::openpluginlib::pcos::key key_fps_den_;
@@ -38,6 +40,7 @@ class ML_DECLSPEC analyse_type
 		static olib::openpluginlib::pcos::key key_broken_link_;
 		static olib::openpluginlib::pcos::key key_frame_rate_code_;
 		static olib::openpluginlib::pcos::key key_vbv_buffer_size_;
+		static olib::openpluginlib::pcos::key key_profile_and_level_;
 		static olib::openpluginlib::pcos::key key_chroma_format_;
 		static olib::openpluginlib::pcos::key key_top_field_first_;
 		static olib::openpluginlib::pcos::key key_frame_pred_frame_dct_;

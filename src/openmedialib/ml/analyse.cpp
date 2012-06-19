@@ -12,9 +12,7 @@ namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-// Once a stream_type is analysed, we set a property on the stream to avoid re-analysis
-static const olib::openpluginlib::pcos::key key_analysed_ = olib::openpluginlib::pcos::key::from_string( "analysed" );
-
+pl::pcos::key analyse_type::key_analysed_ = pl::pcos::key::from_string( "analysed" );
 pl::pcos::key analyse_type::key_fps_num_ = pl::pcos::key::from_string( "fps_num" );
 pl::pcos::key analyse_type::key_fps_den_ = pl::pcos::key::from_string( "fps_den" );
 pl::pcos::key analyse_type::key_packet_size_ = pl::pcos::key::from_string( "packet_size" );
@@ -31,6 +29,7 @@ pl::pcos::key analyse_type::key_temporal_stream_ = pl::pcos::key::from_string( "
 pl::pcos::key analyse_type::key_temporal_reference_ = pl::pcos::key::from_string( "temporal_reference" );
 
 pl::pcos::key analyse_type::key_vbv_delay_ = pl::pcos::key::from_string( "vbv_delay" );
+pl::pcos::key analyse_type::key_profile_and_level_ = pl::pcos::key::from_string( "profile_and_level" );
 pl::pcos::key analyse_type::key_closed_gop_ = pl::pcos::key::from_string( "closed_gop" );
 pl::pcos::key analyse_type::key_broken_link_ = pl::pcos::key::from_string( "broken_link" );
 pl::pcos::key analyse_type::key_frame_rate_code_ = pl::pcos::key::from_string( "frame_rate_code" );

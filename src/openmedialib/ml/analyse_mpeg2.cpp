@@ -120,7 +120,10 @@ bool analyse_mpeg2::collect( pl::pcos::property_container &properties )
 	properties.append( pl::pcos::property( key_closed_gop_ ) = gop_hdr_.closed_gop );
 
 	if ( seq_ext_.found )
+	{
 		properties.append( pl::pcos::property( key_chroma_format_ ) = seq_ext_.chroma_format );
+		properties.append( pl::pcos::property( key_profile_and_level_ ) = seq_ext_.profile_and_level_indication );
+	}
 	
 	if ( pict_ext_.found )
 	{
