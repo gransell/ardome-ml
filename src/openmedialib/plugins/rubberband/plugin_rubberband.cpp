@@ -195,7 +195,7 @@ class rubber
 
 			int difference = abs( position - last_position_ );
 
-			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || ( last_position_ != -1 && difference >= 1 ) )
+			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || ( last_position_ != -1 && difference > 1 ) )
 			{
 				if ( !result )
 				{
