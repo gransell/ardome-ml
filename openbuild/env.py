@@ -189,6 +189,10 @@ class Environment( BaseEnvironment ):
 				self[ 'CC' ] = 'clang'
 				self[ 'CXX' ] = 'clang++'
 				self[ 'LINK' ] = 'clang++'
+			elif self[ 'compiler' ] == 'llvm-gcc':
+				self[ 'CC' ] = 'llvm-gcc'
+				self[ 'CXX' ] = 'llvm-g++'
+				self[ 'LINK' ] = 'llvm-g++'
 			else:
 				raise Exception( "Invalid compiler " )
 
