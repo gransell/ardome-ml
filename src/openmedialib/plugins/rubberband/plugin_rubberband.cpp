@@ -46,6 +46,7 @@ class rubber
 			, increment_( 1 )
 			, cache_( ml::the_scope_handler::Instance().lru_cache( L"rubberband" ) )
 			, old_speed_( 1.0 )
+			, last_position_( -1 )
 		{
 		}
 
@@ -107,6 +108,10 @@ class rubber
 
 				sync( speed, pitch, true );
 
+			}
+
+			if ( !pusher_ || !lowpass_filter_ )
+			{
 				pusher_         = ml::create_input(  L"pusher:" );
 				lowpass_filter_ = ml::create_filter( L"lowpass" );
 
@@ -181,8 +186,6 @@ class rubber
 				sync( speed, pitch );
 			}
 
-			int difference = abs( position - expected_ );
-
 			// Reset the state if necessary
 			if ( position != expected_ || speed != old_speed_ )
 			{
@@ -192,7 +195,9 @@ class rubber
 				source_ = position;
 			}
 
-			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || difference > 2 )
+			int difference = abs( position - last_position_ );
+
+			if ( ( result && !result->get_audio( ) ) || speed > 2.0 || ( last_position_ != -1 && difference > 1 ) )
 			{
 				if ( !result )
 				{
@@ -251,8 +256,8 @@ class rubber
 
 				// Create the result frame
 				result = cache_->frame_for_position( lru_key_for_position( position ) );
-				result = result->shallow( );
 				ARENFORCE_MSG( result, "Frame inaccessible from cache %d" )( position );
+				result = result->shallow( );
 				result->set_fps( fps_num_, fps_den_ );
 				result->set_pts( position * double( fps_den_ ) / fps_num_ );
 				result->set_duration( double( fps_den_ ) / fps_num_ );
@@ -281,6 +286,7 @@ class rubber
 			result->set_audio( reverse_audio( result, increment_ ) );
 
 			// We expect the next frame to follow...
+			last_position_ = position;
 			expected_ += increment_;
 			old_speed_ = speed;
 
@@ -376,6 +382,7 @@ class rubber
 		int increment_;
 		lru_cache_type_ptr cache_;
 		double old_speed_;
+		int last_position_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple

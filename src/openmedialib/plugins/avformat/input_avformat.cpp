@@ -494,6 +494,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					 ( !has_video( ) && has_audio( ) && got_audio ) )
 				{
 				}
+				else if ( key_last_ != -1 && current >= first && current < int( key_last_ + prop_gop_cache_.value< int >( ) ) )
+				{
+				}
+				else if ( current >= first && current < int( last + prop_gop_cache_.value< int >( ) ) )
+				{
+				}
 				else if ( aml_index_ && aml_index_->usable( ) )
 				{
 					if ( aml_index_->key_frame_of( current ) != aml_index_->key_frame_of( last ) )
@@ -501,12 +507,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 						if ( ( current < first || current > last + 2 ) && seek_to_position( ) )
 							clear_stores( true );
 					}
-				}
-				else if ( key_last_ != -1 && current >= first && current < int( key_last_ + prop_gop_cache_.value< int >( ) ) )
-				{
-				}
-				else if ( current >= first && current < int( last + prop_gop_cache_.value< int >( ) ) )
-				{
 				}
 				else if ( seek_to_position( ) )
 				{
