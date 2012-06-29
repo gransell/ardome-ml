@@ -41,6 +41,8 @@
 
 namespace aml { namespace openmedialib {
 
+static pl::pcos::key key_audio_reversed_ =  pl::pcos::key::from_string( "audio_reversed" );
+
 class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 {
 	public:
@@ -51,6 +53,8 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_speed_( pcos::key::from_string( "speed" ) )
 			, prop_samples_( pcos::key::from_string( "samples" ) )
+			, expected_( -1 )
+			, direction_( 1 )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -68,16 +72,21 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			// Acquire values
-			acquire_values( );
+			// Get the current position
+			int position = get_position( );
 
 			// Frame to return
 			result = fetch_from_slot( );
+			ARENFORCE_MSG( result, "Couldn't obtain frame %1% from the cache" )( position );
+			result = result->shallow( );
 
 			// Save on typing
 			double speed = prop_speed_.value< double >( );
 			int num = prop_fps_num_.value< int >( );
 			int den = prop_fps_den_.value< int >( );
+
+			if ( position != expected_ )
+				direction_ = expected_ - position == 2 ? -1 : 1;
 
 			if ( num == -1 || den == -1 )
 				result->get_fps( num, den );
@@ -128,12 +137,35 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 			{
 				result->set_fps( num, den );
 			}
+
+			// Handle the direction of the audio now
+			reverse( result );
+
+			// We expect this frame to be requested next
+			expected_ = position + direction_;
 		}
+
+		// Handles the audio direction
+		void reverse( ml::frame_type_ptr &frame )
+		{
+			ml::audio_type_ptr audio = frame->get_audio( );
+			int frame_direction = pl::pcos::value< int >( frame->properties( ), key_audio_reversed_, 0 ) == 0 ? 1 : -1;
+
+			if ( audio && frame_direction != direction_ )
+			{
+				audio = ml::audio::reverse( audio );
+				frame->set_audio( audio );
+				pl::pcos::assign< int >( frame->properties( ), key_audio_reversed_, direction_ == 1 ? 0 : 1 );
+			}
+		}
+
 
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_speed_;
 		pcos::property prop_samples_;
+		int expected_;
+		int direction_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring &resource )
