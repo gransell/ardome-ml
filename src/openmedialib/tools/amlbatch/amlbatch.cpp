@@ -37,7 +37,7 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
-void assign( pl::pcos::property_container &props, const std::string name, const pl::wstring value )
+void assign( pl::pcos::property_container &props, const std::string &name, const pl::wstring &value )
 {
 	pl::pcos::property property = props.get_property_with_string( name.c_str( ) );
 	if ( property.valid( ) )
@@ -56,7 +56,7 @@ void assign( pl::pcos::property_container &props, const std::string name, const 
 	}
 }
 
-void assign( pl::pcos::property_container &props, const pl::wstring pair )
+void assign( pl::pcos::property_container &props, const pl::wstring &pair )
 {
 	size_t pos = pair.find( L"=" );
 	std::string name = pl::to_string( pair.substr( 0, pos ) );
@@ -68,7 +68,7 @@ void assign( pl::pcos::property_container &props, const pl::wstring pair )
 	assign( props, name, value );
 }
 
-void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, pl::wstring arg, ml::frame_type_ptr &frame )
+void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, const pl::wstring &arg, ml::frame_type_ptr &frame )
 {
 	if ( arg.find( L"=" ) != pl::wstring::npos )
 	{
@@ -156,7 +156,7 @@ void report_frame_errors( ml::frame_type_ptr &frame )
 		std::cerr << i->first->what( ) << " " << pl::to_string( i->second->get_uri( ) ) << std::endl;
 }
 
-void walk_and_assign( ml::input_type_ptr input, std::string name, int value )
+void walk_and_assign( ml::input_type_ptr input, const std::string &name, int value )
 {
 	if ( input )
 	{
