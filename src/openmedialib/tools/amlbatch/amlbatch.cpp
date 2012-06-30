@@ -152,7 +152,7 @@ bool toggle_fullscreen( const std::vector< ml::store_type_ptr >& stores, bool is
 void report_frame_errors( ml::frame_type_ptr &frame )
 {
 	ml::exception_list list = frame->exceptions( );
-	for ( ml::exception_list::iterator i = list.begin( ); i != list.end( ); i ++ )
+	for ( ml::exception_list::iterator i = list.begin( ); i != list.end( ); ++i )
 		std::cerr << i->first->what( ) << " " << pl::to_string( i->second->get_uri( ) ) << std::endl;
 }
 
@@ -192,7 +192,7 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 	bool defer = true;
 	bool drop = true;
 
-	for ( std::vector< ml::store_type_ptr >::iterator iter = store.begin( ); iter < store.end( ); iter ++ )
+	for ( std::vector< ml::store_type_ptr >::iterator iter = store.begin( ); iter < store.end( ); ++iter )
 	{
 		if ( defer )
 		{
@@ -219,7 +219,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 	bool error = false;
 	std::vector< ml::store_type_ptr >::iterator iter;
 
-	for ( iter = store.begin( ); !error && iter < store.end( ); iter ++ )
+	for ( iter = store.begin( ); !error && iter < store.end( ); ++iter )
 		error = !( *iter )->init( );
 
 	if ( error )
@@ -306,7 +306,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		if ( frame->in_error( ) )
 			report_frame_errors( frame );
 
-		for ( iter = store.begin( ); !error && iter < store.end( ); iter ++ )
+		for ( iter = store.begin( ); !error && iter < store.end( ); ++iter )
 		{
 			error = !( *iter )->push( frame );
 			pl::pcos::property keydown = ( *iter )->properties( ).get_property_with_string( "keydown" );
@@ -421,7 +421,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		}
 	}
 
-	for ( iter = store.begin( ); iter < store.end( ); iter ++ )
+	for ( iter = store.begin( ); iter < store.end( ); ++iter )
 		( *iter )->complete( );
 
 	walk_and_assign( input, "active", 0 );

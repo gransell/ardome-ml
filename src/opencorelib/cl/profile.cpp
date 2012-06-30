@@ -139,7 +139,7 @@ class profile_impl : public profile
 			if ( tokens.size( ) == 2 )
 			{
 				profile_ptr profile = profile_load( tokens[ 1 ] );
-				for( profile::list::const_iterator i = profile->begin( ); i != profile->end( ); i ++ )
+				for( profile::list::const_iterator i = profile->begin( ); i != profile->end( ); ++i )
 					entries_.push_back( *i );
 			}
 			else
@@ -187,7 +187,7 @@ profile_wrapper::profile_wrapper( bool managed )
 
 profile_wrapper::~profile_wrapper( ) 
 {
-	for ( map::iterator it = begin( ); it != end( ); it ++ )
+	for ( map::iterator it = begin( ); it != end( ); ++it )
 		if ( ( *it ).second->managed_property( ) )
 			delete ( *it ).second;
 	map_.clear( );
@@ -260,7 +260,7 @@ profile_manager::profile_manager( )
 
 profile_manager::~profile_manager( )
 {
-	for ( targets::iterator it = targets_.begin( ); it != targets_.end( ); it ++ )
+	for ( targets::iterator it = targets_.begin( ); it != targets_.end( ); ++it )
 		if ( ( *it )->managed_wrapper( ) )
 			delete ( *it );
 	targets_.clear( );
@@ -274,7 +274,7 @@ void profile_manager::enroll( profile_wrapper *wrapper )
 void profile_manager::load( const std::string &id )
 {
 	profile_ptr profile = profile_load( id );
-	for( profile::list::const_iterator i = profile->begin( ); i != profile->end( ); i ++ )
+	for( profile::list::const_iterator i = profile->begin( ); i != profile->end( ); ++i )
 	{
 		bool found = false;
 		for( size_t j = 0; j != targets_.size( ); j ++ )

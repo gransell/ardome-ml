@@ -557,7 +557,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		void close_audio_codec( )
 		{
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); iter ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); ++iter )
 			{
 				AVStream *stream = *iter;
 				if ( stream && stream->codec ) 
@@ -1099,7 +1099,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			bool ret = true;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); iter ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); ++iter )
 			{
 				// Get the context
 				AVCodecContext *c = ( *iter )->codec;
@@ -1445,7 +1445,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			static int first = true;
 			int encode_tries = 1;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); iter ++, stream ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); ++iter, ++stream )
 			{
 				for( int ec=0; ec<encode_tries; ec++ )
 				{

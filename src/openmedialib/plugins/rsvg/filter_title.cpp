@@ -265,7 +265,7 @@ class filter_title : public ml::filter_simple
 			if ( w != -1 && h != -1 )
 				stream << "<rect x='0' y='0' width='" << w << "' height='" << h << "' style='fill:" << bg << ";opacity:" << opacity << "' rx='" << bevel << "' ry='" << bevel << "' />";
 			stream << "<text x='0' y='0' text-anchor='" << anchor << "' fill='" << fg << "' stroke='" << stroke << "' style='font-size:" << size << "px;font-family:" << font << "' >";
-			for ( std::vector< std::wstring >::iterator it = lines.begin( ); it != lines.end( ); it ++ )
+			for ( std::vector< std::wstring >::iterator it = lines.begin( ); it != lines.end( ); ++it )
 				stream << "<tspan x='" << x << "' dy='1em' text-anchor='" << anchor << "'>" << *it << "</tspan>";
 			stream << "</text>";
 			stream << "</svg>";

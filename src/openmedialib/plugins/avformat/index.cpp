@@ -207,7 +207,7 @@ class aml_file_index : public aml_index
 			if ( key_index_.size( ) )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( position );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				byte = ( *iter ).second;
 			}
 
@@ -225,7 +225,7 @@ class aml_file_index : public aml_index
 			if ( current < frames_ )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( frames_ - 100 );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				result = ( *iter ).first >= current ? ( *iter ).first + 1 : current + 1;
 			}
 
@@ -246,7 +246,7 @@ class aml_file_index : public aml_index
 			if ( off_index_.size( ) )
 			{
 				std::map< boost::int64_t, int >::iterator iter = off_index_.upper_bound( size );
-				if ( iter == off_index_.end( ) ) iter --;
+				if ( iter == off_index_.end( ) ) --iter;
 				result = ( *iter ).second;
 			}
 			return result;
@@ -272,7 +272,7 @@ class aml_file_index : public aml_index
 			if ( key_index_.size( ) )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( position );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				result = ( *iter ).first;
 			}
 			return result;
@@ -283,7 +283,7 @@ class aml_file_index : public aml_index
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			std::map< boost::int64_t, int >::iterator iter = off_index_.upper_bound( offset );
-			if ( iter != off_index_.begin( ) ) iter --;
+			if ( iter != off_index_.begin( ) ) --iter;
 			return ( *iter ).second;
 		}
 

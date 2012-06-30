@@ -40,7 +40,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 			{
 				std::cout << "--------------------------------------------------------------------------------" << std::endl;
 				std::deque< ml::frame_type_ptr > queue = ml::frame_type::unfold( frame );
-				for( std::deque< ml::frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); iter ++ )
+				for( std::deque< ml::frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); ++iter )
 				{
 					frame_report_basic( *iter );
 					frame_report_image( *iter );

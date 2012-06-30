@@ -238,7 +238,7 @@ class priority_list
 
 			find_nearest( nearest, position );
 
-			for ( priority_items::iterator iter = nearest.begin( ); iter != nearest.end( ); iter ++ )
+			for ( priority_items::iterator iter = nearest.begin( ); iter != nearest.end( ); ++iter )
 			{
 				( *iter )->request( position );
 			}
@@ -274,7 +274,7 @@ class priority_list
 		// Update the map
 		void update_map( node_map &new_map, node_list &nodes, int in, int out )
 		{
-			for ( node_list::iterator iter = nodes.begin( ); iter != nodes.end( ); iter ++ )
+			for ( node_list::iterator iter = nodes.begin( ); iter != nodes.end( ); ++iter )
 			{
 				if ( new_map.find( *iter ) == new_map.end( ) )
 				{
@@ -323,7 +323,7 @@ class priority_list
 		{
 			list_.erase( list_.begin( ), list_.end( ) );
 
-			for ( node_map::iterator iter = map_.begin( ); iter != map_.end( ); iter ++ )
+			for ( node_map::iterator iter = map_.begin( ); iter != map_.end( ); ++iter )
 			{
 				if ( list_.find( iter->second->in( ) ) == list_.end( ) )
 					list_[ iter->second->in( ) ] = priority_items( );
@@ -344,7 +344,7 @@ class priority_list
 			bool result = false;
 			if ( items.size( ) )
 			{
-				for ( priority_items::iterator item = items.begin( ); !result && item != items.end( ); item ++ )
+				for ( priority_items::iterator item = items.begin( ); !result && item != items.end( ); ++item )
 					result = ( *item )->in_range( position );
 			}
 			return result;
@@ -358,10 +358,10 @@ class priority_list
 
 			while ( iter != list_.end( ) )
 			{
-				for ( priority_items::iterator item = iter->second.begin( ); item != iter->second.end( ); item ++ )
+				for ( priority_items::iterator item = iter->second.begin( ); item != iter->second.end( ); ++item )
 					if ( !( *item )->complete( ) && ( ( *item )->in_range( position ) || iter->first > position ) )
 						nearest.push_back( *item );
-				iter ++;
+				++iter;
 				if ( iter == list_.end( ) || ( nearest.size( ) != 0 && !in_range( iter->second, position ) ) )
 					break;
 			}
@@ -584,7 +584,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				pl::pcos::property vitc( key_vitc_image_ );
 
 				// Composite in z order
-				for( std::vector< ml::frame_type_ptr >::iterator iter = frames.begin( ); iter != frames.end( ); iter ++ )
+				for( std::vector< ml::frame_type_ptr >::iterator iter = frames.begin( ); iter != frames.end( ); ++iter )
 				{
 					if ( !deferred )
 					{

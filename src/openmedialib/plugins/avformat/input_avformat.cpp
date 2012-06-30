@@ -1872,7 +1872,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			std::deque< il::image_type_ptr >::iterator result = images_.end( );
 			std::deque< il::image_type_ptr >::iterator iter;
 
-			for ( iter = images_.begin( ); iter != images_.end( ); iter ++ )
+			for ( iter = images_.begin( ); iter != images_.end( ); ++iter )
 			{
 				il::image_type_ptr img = *iter;
 				int diff = current - img->position( );
@@ -1904,7 +1904,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 			std::deque< audio_type_ptr >::iterator result = audio_.end( );
 			std::deque< audio_type_ptr >::iterator iter;
 
-			for ( iter = audio_.begin( ); iter != audio_.end( ); iter ++ )
+			for ( iter = audio_.begin( ); iter != audio_.end( ); ++iter )
 			{
 				audio_type_ptr aud = *iter;
 				int diff = current - aud->position( );

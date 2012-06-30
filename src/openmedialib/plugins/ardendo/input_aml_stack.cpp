@@ -496,7 +496,7 @@ struct sequence
 	sequence( const pl::wstring_list &words, bool parseable = false )
 		: parseable_( parseable )
 	{ 
-		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); i ++ )
+		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); ++i )
 			words_.push_back( *i );
 		iter_ = words_.begin( );
 	}
@@ -1154,7 +1154,7 @@ class aml_stack
 			{
 				std::vector< pl::wstring > function = inline_[ name ];
 				*output_ << ": " << pl::to_string( name ) << std::endl << "inline ";
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); i ++ )
+				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
 					if ( ( *i ).find( L" " ) == pl::wstring::npos )
 						*output_ << pl::to_string( *i ) << " ";
@@ -1167,7 +1167,7 @@ class aml_stack
 			{
 				std::vector< pl::wstring > function = words_[ name ];
 				*output_ << ": " << pl::to_string( name ) << std::endl;
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); i ++ )
+				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
 					if ( ( *i ).find( L" " ) == pl::wstring::npos )
 						*output_ << pl::to_string( *i ) << " ";
@@ -1182,20 +1182,20 @@ class aml_stack
 		void print_words( )
 		{
 			*output_ << "# Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 					*output_ << "# " << pl::to_string( i->first ) << ": " << i->second.description( ) << std::endl;
 			}
 
 			*output_ << std::endl << "# Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
 			}
 			*output_ << std::endl << "# Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
@@ -1205,7 +1205,7 @@ class aml_stack
 		void dict( )
 		{
 			*output_ << "Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 				{
@@ -1216,7 +1216,7 @@ class aml_stack
 			}
 
 			*output_ << std::endl << std::endl << "Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				if ( i != words_.begin( ) )
 					*output_ << ", ";
@@ -1224,7 +1224,7 @@ class aml_stack
 			}
 
 			*output_ << std::endl << std::endl << "Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				if ( i != inline_.begin( ) )
 					*output_ << ", ";
@@ -1496,7 +1496,7 @@ class aml_stack
 		void debug( const std::string msg )
 		{
 			*output_ << msg << ": ";
-			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); iter ++ )
+			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); ++iter )
 				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
@@ -1505,7 +1505,7 @@ class aml_stack
 		void rdebug( const std::string msg )
 		{
 			*output_ << msg << ": ";
-			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); iter ++ )
+			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); ++iter )
 				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
@@ -1965,7 +1965,7 @@ static void op_prop_matches( aml_stack *stack )
 	boost::regex match( name );
 	pl::pcos::key_vector keys = b->properties( ).get_keys( );
 	int count = 0;
-	for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+	for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 	{
 		if ( boost::regex_match( ( *it ).as_string( ), match ) )
 		{
@@ -2142,13 +2142,13 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 	( *stack->output_ ) << pl::to_string( type ) << ":" << std::endl << std::endl;
 
-	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
+	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); ++i )
 	{
 		std::vector< pl::wstring > files = ( *i ).filenames( );
 		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 
-		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); f ++ )
+		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
 		{
 			if ( fs::exists( pl::to_string( *f ) ) )
 			{
@@ -2159,7 +2159,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 		if ( found )
 		{
-			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); j ++ )
+			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); ++j )
 			{
 				( *stack->output_ ) << pl::to_string( j->str() ) << " ";
 			}
@@ -2821,7 +2821,7 @@ static void op_iter_props( aml_stack *stack )
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
 		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
 
-		for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+		for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 		{
 			std::string name( ( *it ).as_string( ) );
 			pl::pcos::property p = props.get_property_with_string( name.c_str( ) );

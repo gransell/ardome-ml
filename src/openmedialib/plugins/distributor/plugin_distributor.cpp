@@ -254,7 +254,7 @@ class graphs
 		void sync_graphs( )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			for ( std::vector< input_type_ptr >::iterator iter = graphs_.begin( ); iter != graphs_.end( ); iter ++ )
+			for ( std::vector< input_type_ptr >::iterator iter = graphs_.begin( ); iter != graphs_.end( ); ++iter )
 				( *iter )->sync( );
 		}
 

@@ -192,7 +192,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 					if ( samples == audio_span_->samples( ) )
 					{
 						boost::uint8_t *ptr = ( boost::uint8_t * )audio_span_->pointer( );
-						for( std::vector< ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); iter ++ )
+						for( std::vector< ml::frame_type_ptr >::iterator iter = frames_.begin( ); iter != frames_.end( ); ++iter )
 						{
 							ARENFORCE_MSG( ( *iter )->get_audio( ), 
 										   "We should not have frames with NULL audio if we have matching sample count when locking audio." );

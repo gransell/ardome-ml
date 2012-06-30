@@ -68,7 +68,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 			std::string prefix = "@store.";
 			int ps = static_cast< int >( prefix.size( ) );
 			pcos::key_vector keys = properties( ).get_keys( );
-			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 			{
 				std::string name( ( *it ).as_string( ) );
 				if ( name.find( prefix ) == 0 )

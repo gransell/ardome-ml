@@ -199,7 +199,7 @@ static bool has_image( frame_type_ptr &frame )
 	if ( !result )
 	{
 		std::deque< frame_type_ptr > queue = frame_type::unfold( frame->shallow( ) );
-		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
+		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); ++iter )
 		{
 			if ( *iter && ( *iter )->has_image( ) )
 			{
@@ -2104,7 +2104,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 					int frames = get_frames( );
 					pcos::property_container input_props = properties( );
 					pcos::property_container &frame_props = result->properties( );
-					for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); it ++ )
+					for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); ++it )
 						evaluate( frame_props, input_props, *it, frames );
 				}
 			}

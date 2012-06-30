@@ -41,7 +41,7 @@ frame_type::frame_type( const frame_type *other )
 	std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
 	properties_ = *clone.get( );
 	audio_ = other->audio_;
-	for ( std::deque< ml::frame_type_ptr >::const_iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; iter ++ )
+	for ( std::deque< ml::frame_type_ptr >::const_iterator iter = other->queue_.begin( ); iter != other->queue_.end( ) ; ++iter )
 		queue_.push_back( ( *iter )->shallow( ) );
 }
 
@@ -231,7 +231,7 @@ frame_type_ptr frame_type::fold( std::deque< frame_type_ptr > &queue )
 	{
 		result = queue[ 0 ];
 		queue.pop_front( );
-		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); iter ++ )
+		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); ++iter )
 			result->push( *iter );
 	}
 
