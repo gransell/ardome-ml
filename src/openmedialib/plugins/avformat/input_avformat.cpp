@@ -1230,8 +1230,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 		int size_media_by_packets( )
 		{
-			std::string format = context_->iformat->name;
-
 			AVStream *stream = get_video_stream( ) ? get_video_stream( ) : get_audio_stream( );
 
 			int max = frames_;
@@ -1421,7 +1419,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 				if ( must_reopen_ )
 					reopen( );
 
-				std::string format = context_->iformat->name;
 				int result = -1;
 
 				if ( byte != -1 )
@@ -1611,7 +1608,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 			// The number of bytes in the packet
 			int len = pkt_.size;
-			uint8_t *data = pkt_.data;
 
 			// This is the pts of the packet
 			int found = 0;
@@ -1757,7 +1753,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 
 				// Decrement the length by the number of bytes parsed
 				len -= ret;
-				data += ret;
 
 				// Increment the number of bytes used in the buffer
 				if ( audio_size > 0 )

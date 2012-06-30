@@ -733,8 +733,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		// Generate a video stream
 		AVStream *add_video_stream( CodecID codec_id )
 		{
-			AVCodec *codec = avcodec_find_encoder( codec_id );
-
 			// Create a new stream
 			AVStream *st = avformat_new_stream( oc_, 0 );
 
@@ -1317,8 +1315,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		int write_packet( AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx, AVBitStreamFilterContext *bsfc )
 		{
-			int ret = 0;
-
 			while( bsfc )
 			{
 				AVPacket new_pkt = *pkt;
