@@ -1493,7 +1493,7 @@ class aml_stack
 			return result;
 		}
 
-		void debug( const std::string msg )
+		void debug( const std::string &msg )
 		{
 			*output_ << msg << ": ";
 			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); ++iter )
@@ -1502,7 +1502,7 @@ class aml_stack
 			flush( );
 		}
 
-		void rdebug( const std::string msg )
+		void rdebug( const std::string &msg )
 		{
 			*output_ << msg << ": ";
 			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); ++iter )
