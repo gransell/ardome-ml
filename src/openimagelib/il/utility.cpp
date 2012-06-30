@@ -217,8 +217,6 @@ IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int heig
 		dst_img = image_type_ptr( new image_type( r16g16b16_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16f" )
 		dst_img = image_type_ptr( new image_type( r16g16b16f_image_type( width, height, 1 ) ) );
-	else if( pf == L"r16g16b16a16f" )
-		dst_img = image_type_ptr( new image_type( r16g16b16a16f_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16a16p" )
 		dst_img = image_type_ptr( new image_type( r16g16b16a16p_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16p" )
