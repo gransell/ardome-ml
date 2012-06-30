@@ -173,12 +173,11 @@ inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, u
 	unsigned char *ptr = img->data( );
 	int width = img->width( );
 	int height = img->height( );
-	int x;
 	if ( ptr )
 	{
 		while( height -- )
 		{
-			x = width;
+			int x = width;
 			while ( x -- )
 			{
 				memset( ptr++, r, 1 );
@@ -2296,11 +2295,11 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 
 				correct_in_out( in, out, frames );
 
-				double x = 0.0;
-				double y = 0.0;
-
 				if ( count > 0 && position >= in && position <= out )
 				{
+					double x = 0.0;
+					double y = 0.0;
+				
 					calculate( x, y, points, double( position - in ) / double( out - in ) );
 
 					size_t index = name.rfind( "," );
