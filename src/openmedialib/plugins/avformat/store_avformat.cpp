@@ -198,8 +198,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// Extract rules from the frame
 			// TODO: Ensure this doesn't cause a foul up...
-			properties( ).append( prop_enable_audio_ = frame->get_audio( ) != 0 ? 1 : 0 );
-			properties( ).append( prop_enable_video_ = frame->has_image( ) != 0 ? 1 : 0 );
+			properties( ).append( prop_enable_audio_ = ( ( frame->get_audio( ) != 0 ) ? 1 : 0 ) );
+			properties( ).append( prop_enable_video_ = ( ( frame->has_image( ) != 0 ) ? 1 : 0 ) );
 
 			// Extract video related info from frame
 			properties( ).append( prop_width_ = 0 );

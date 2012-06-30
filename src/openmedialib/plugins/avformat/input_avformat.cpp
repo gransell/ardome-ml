@@ -802,7 +802,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					packet->properties( ).append( avg_fps_den = stream->avg_frame_rate.den );
 
 					pl::pcos::property picture_coding_type( key_picture_coding_type_ );
-					packet->properties( ).append( picture_coding_type = pkt_.flags == AV_PKT_FLAG_KEY ? 1 : 0 );
+					packet->properties( ).append( picture_coding_type = ( ( pkt_.flags == AV_PKT_FLAG_KEY ) ? 1 : 0 ) );
 				}
 
 				av_free_packet( &pkt_ );
