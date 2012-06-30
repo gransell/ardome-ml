@@ -251,7 +251,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 					ARENFORCE_MSG( !xml_str.empty(), "SVG input: no file was given and the xml property is empty. Nothing to render." );
 					
 					handle = rsvg_handle_new( );
-					ARENFORCE_MSG( handle, "SVG input: failed to create libsrvg handle: \"%1%\"" )( error->message );
+					ARENFORCE_MSG( handle, "SVG input: failed to create librsvg handle (rsvg_handle_new failed)." );
 
 					ARENFORCE_MSG( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( xml_str.c_str( ) ), xml_str.size( ), &error ),
 						"SVG input: error when loading SVG data from xml property: \"%1%\"" )( error->message );
