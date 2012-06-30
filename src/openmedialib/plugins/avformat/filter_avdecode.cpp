@@ -733,12 +733,12 @@ class avformat_video_streamer : public ml::stream_type
 
 		bool more( )
 		{
-			return queue_.size( ) > 0 || pending_ > 0;
+			return !queue_.empty( ) || pending_ > 0;
 		}
 
 		bool next( )
 		{
-			if ( queue_.size( ) )
+			if ( !queue_.empty( ) )
 			{
 				stream_ = queue_[ 0 ];
 				queue_.pop_front( );

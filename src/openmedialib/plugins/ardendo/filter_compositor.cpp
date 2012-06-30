@@ -342,7 +342,7 @@ class priority_list
 		bool in_range( priority_items &items, int position )
 		{
 			bool result = false;
-			if ( items.size( ) )
+			if ( !items.empty( ) )
 			{
 				for ( priority_items::iterator item = items.begin( ); !result && item != items.end( ); ++item )
 					result = ( *item )->in_range( position );
@@ -362,7 +362,7 @@ class priority_list
 					if ( !( *item )->complete( ) && ( ( *item )->in_range( position ) || iter->first > position ) )
 						nearest.push_back( *item );
 				++iter;
-				if ( iter == list_.end( ) || ( nearest.size( ) != 0 && !in_range( iter->second, position ) ) )
+				if ( iter == list_.end( ) || ( !nearest.empty( ) && !in_range( iter->second, position ) ) )
 					break;
 			}
 		}
@@ -522,7 +522,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				{
 					result = fetch_from_slot( 0, false );
 				}
-				else if ( frames.size( ) )
+				else if ( !frames.empty( ) )
 				{
 					result = frames[ 0 ];
 					frames.erase( frames.begin( ) );
@@ -534,7 +534,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 				// Avoid compositing if backgrounds match and geometry is covers background
 				if ( result && 
-					 frames.size( ) && 
+					 !frames.empty( ) && 
 					 result->properties( ).get_property_with_key( key_is_background_ ).valid( ) )
 				{
 					ml::frame_type_ptr frame = frames[ 0 ];
@@ -666,7 +666,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						result->properties( ).append( vitc );
 				}
 
-				if ( deferred && frames.size() && prop_track_.value<int>() == 0 )
+				if ( deferred && !frames.empty() && prop_track_.value<int>() == 0 )
 				{
 					if ( !result->properties( ).get_property_with_key( key_background_ ).valid( ) )
 					{

@@ -88,7 +88,7 @@ void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_c
 		}
 	}
 
-	if ( result.size( ) )
+	if ( !result.empty( ) )
 		properties = result.back( )->properties( );
 }
  
@@ -617,7 +617,7 @@ int main( int argc, char *argv[ ] )
 		if ( index == argc || strcmp( argv[ index + 1 ], "env:" ) )
 		{
 			std::vector< ml::store_type_ptr > store = fetch_store( index, argc, argv, frame );
-			if ( store.size( ) == 0 )
+			if ( store.empty( ) )
 				return 3;
 
 			play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );

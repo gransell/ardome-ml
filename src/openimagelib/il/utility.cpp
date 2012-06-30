@@ -2619,7 +2619,7 @@ static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr&
 
 				static std::vector< std::vector< int > >ratio;
 
-				if ( ratio.size( ) == 0 )
+				if ( ratio.empty() )
 				{
 					for ( int t = 0; t < 0x800; t ++ )
 					{
