@@ -250,6 +250,7 @@ namespace
 			ml::register_lookup( CODEC_ID_H264, "http://www.ardendo.com/apf/codec/h264/h264" );
 			ml::register_lookup( CODEC_ID_MP2, "http://www.ardendo.com/apf/codec/mp2" );
 			ml::register_lookup( CODEC_ID_MP3, "http://www.ardendo.com/apf/codec/mp3" );
+			ml::register_lookup( CODEC_ID_AAC, "http://www.ardendo.com/apf/codec/aac" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv25" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dvcpro" );
