@@ -642,6 +642,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
 
+			last_frame_ = first_frame->shallow();
+
 			precharged_frames_ = 0;
 			input_type_ptr slot = fetch_slot( 0 );
 			if ( slot->has_first_valid_frame( ) )
@@ -656,30 +658,37 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		}
 
 	private:
-		int estimated_gop_size( ) const {
-			if ( estimated_gop_size_ )
-				return estimated_gop_size_;
+		int estimated_gop_size( ) const
+		{
+			if ( estimated_gop_size_ <= 0 )
+			{
+				frame_type_ptr frame = last_frame_;
+				if ( !frame )
+				{
+					//We need a frame to be able to draw any conclusions
+					//about gop size.
+					input_type_ptr input = fetch_slot(0);
+					ARENFORCE( input );
+					ARENFORCE( frame = input->fetch() );
+				}
 
-			int gop = 0;
-			do {
-				stream_type_ptr stream;
-
-				if ( !last_frame_ )
-					break;
-
-				stream = last_frame_->get_stream( );
+				stream_type_ptr stream = frame->get_stream( );
+				int gop = 0;
 
 				if ( stream )
 					gop = stream->estimated_gop_size( );
 
-				if ( !gop ) {
+				if ( gop <= 0 )
+				{
 					// Guess gop size = framerate / 2
-					int fps = ::ceil( last_frame_->fps() );
+					int fps = ::ceil( frame->fps() );
 					gop = fps / 2;
 				}
-			} while ( false );
 
-			return estimated_gop_size_ = gop;
+				estimated_gop_size_ = gop;
+			}
+
+			return estimated_gop_size_;
 		}
 };
 
