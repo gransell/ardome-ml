@@ -35,6 +35,6 @@ r2=`$MD5 < t3.raw | cut -f1 -d ' '`
 
 [ "$r1" = "$r2" ] && echo "Success $r1" || echo "Fail $r1 $r2"
 
-[ "$playit" = "1" ] && amlbatch colour: t2.raw filter:lerp @@w=0.5 t3.raw filter:lerp @@w=0.5 @@x=0.5 filter:compositor slots=3
+[ "$playit" = "1" ] && amlbatch colour: width=320 height=90 t2.raw filter:lerp @@w=0.5 t3.raw filter:lerp @@w=0.5 @@x=0.5 filter:compositor slots=3
 
 rm t[123].raw t[123].raw.aml
