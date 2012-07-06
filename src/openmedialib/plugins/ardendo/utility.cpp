@@ -141,29 +141,41 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	int num, den;
 	frame->get_fps( num, den );
 	stream << "Frame Report" << endl << endl;
-	stream << "Position    : " << frame->get_position( ) << endl;
+	stream << "Position     : " << frame->get_position( ) << endl;
 	if ( frame->has_image( ) )
-		stream << "Image Info  : pf = " << pl::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
+		stream << "Image Info   : pf = " << pl::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
 	if ( frame->has_audio( ) )
-		stream << "Audio Info  : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
+		stream << "Audio Info    : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
-		stream << "Has Stream  : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( ) 
+		stream << "Video Stream : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( )
         << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << " gop = " << frame->get_stream()->estimated_gop_size() << endl;
 	else
-		stream << "Has Stream  : No" << endl;
+		stream << "Video Stream : No" << endl;
+	
+	if( frame->audio_block( ) ) {
+		ml::audio::block_type_ptr audio_block = frame->audio_block();
+		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << ", first = " << audio_block->first << ", count = " << audio_block->count << ", discard = " << audio_block->discard << ", tracks = " << audio_block->tracks.size( ) << endl;
+		ml::audio::block_type::track_map::iterator it = frame->audio_block()->tracks.begin();
+		for( ; it != frame->audio_block()->tracks.end(); ++it ) {
+			stream << "     Track " << it->first << " : packets = " << it->second.size() << ", codec = " << it->second.begin()->second->codec( ) << ", channels = " << it->second.begin()->second->channels() << endl;
+		}
+	}
+	else {
+		stream << "Audio Stream : No" << endl;
+	}
 
 	if ( frame->get_image( ) )
-		stream << "Has Image   : Yes, position = " << frame->get_image( )->position( ) << endl;
+		stream << "Has Image    : Yes, position = " << frame->get_image( )->position( ) << endl;
 	else
-		stream << "Has Image   : No" << endl;
+		stream << "Has Image    : No" << endl;
 
 	if ( frame->get_audio( ) )
-		stream << "Has Audio   : Yes, position = " << frame->get_audio( )->position( ) << endl;
+		stream << "Has Audio    : Yes, position = " << frame->get_audio( )->position( ) << endl;
 	else
-		stream << "Has Audio   : No" << endl;
+		stream << "Has Audio    : No" << endl;
 
-	stream << "Has Alpha   : " << ( frame->get_alpha( ) ? "Yes" : "No" ) << endl;
-	stream << "Frame Rate  : " << frame->fps( ) << " (" << num << ":" << den << ")" << endl;
+	stream << "Has Alpha    : " << ( frame->get_alpha( ) ? "Yes" : "No" ) << endl;
+	stream << "Frame Rate   : " << frame->fps( ) << " (" << num << ":" << den << ")" << endl;
 	stream << endl;
 }
 
