@@ -15,6 +15,9 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 typedef struct
 {
+	typedef std::map< int, ml::stream_type_ptr > channel_map;
+	typedef std::map< int, channel_map > track_map;
+	
 	// Position of requested frame
 	int position;
 
@@ -30,7 +33,7 @@ typedef struct
 	// Number of samples to discard after seeking
 	int discard;
 
-	std::map< int, std::map< int, ml::stream_type_ptr > > tracks;
+	track_map tracks;
 }
 block_type;
 
