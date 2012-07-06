@@ -72,7 +72,7 @@ private:
 
 OPENPLUGINLIB_DECLSPEC std::ostream& operator<<( std::ostream&, const property_container& );
 
-template < typename T > void assign( property_container dest, property_container &src, key &key )
+template < typename T > void assign( property_container dest, property_container &src, const key &key )
 {
 	property original = src.get_property_with_key( key );
 	property target = dest.get_property_with_key( key );
@@ -82,7 +82,7 @@ template < typename T > void assign( property_container dest, property_container
 		target = original.value< T >( );
 }
 
-template < typename T > void assign( property_container dest, property_container &src, key &key, const T &default_value )
+template < typename T > void assign( property_container dest, property_container &src, const key &key, const T &default_value )
 {
 	property original = src.get_property_with_key( key );
 	property target = dest.get_property_with_key( key );
@@ -94,7 +94,7 @@ template < typename T > void assign( property_container dest, property_container
 		dest.append( property( key ) = default_value );
 }
 
-template < typename T > void assign( property_container dest, key &key, const T &default_value )
+template < typename T > void assign( property_container dest, const key &key, const T &default_value )
 {
 	property target = dest.get_property_with_key( key );
 	if( !target.valid( ) )
@@ -103,7 +103,7 @@ template < typename T > void assign( property_container dest, key &key, const T 
 		target = default_value;
 }
 
-template < typename T > T value( const property_container &dest, key &key, const T &default_value )
+template < typename T > T value( const property_container &dest, const key &key, const T &default_value )
 {
 	T result = default_value;
 	property target = dest.get_property_with_key( key );
