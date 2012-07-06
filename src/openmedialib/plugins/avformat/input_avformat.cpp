@@ -239,16 +239,20 @@ class stream_manager
 			switch( audio->codec->codec_id )
 			{
 				case CODEC_ID_AAC:
-					// If we're reading AAC with index, the index "frames" will be
-					// one AAC packet. 1024 samples per packet is 375/8 fps at 48 KHz.
+					// If we're reading AAC we have 1024 samples per packet = 375/8 fps at 48 KHz.
 					calculator.set_frequency( audio->codec->sample_rate, 1024 );
+					calculator.set_lead_in( 3 );
+					break;
+
+				case CODEC_ID_AC3:
+					// If we're reading AC3 we have 1536 samples per packet = 31.25 fps at 48 KHz.
+					calculator.set_frequency( audio->codec->sample_rate, 1536 );
 					calculator.set_lead_in( 3 );
 					break;
 
 				case CODEC_ID_MP2:
 				case CODEC_ID_MP3:
-					// If we're reading MP2 with index, the index "frames" will be
-					// one MP2 packet. 1152 samples per packet is 125/3 fps at 48 KHz.
+					// If we're reading MP2 we have 1152 samples per packet is 125/3 fps at 48 KHz.
 					calculator.set_frequency( audio->codec->sample_rate, 1152 );
 					calculator.set_lead_in( 3 );
 					break;
@@ -350,6 +354,11 @@ class stream_manager
 		{
 			return caches[ id ];
 		}
+
+		bool has_cache_for( size_t id )
+		{
+			return caches.find( id ) != caches.end( );
+		}
 };
 
 class avformat_demux
@@ -427,7 +436,7 @@ class avformat_demux
 					source->last_packet_pos_ = pkt_.pos;
 				if ( error >= 0 && source->is_video_stream( pkt_.stream_index ) )
 					got_packet = ml::stream_video;
-				else if ( error >= 0 && source->is_audio_stream( pkt_.stream_index ) )
+				else if ( error >= 0 && manager.has_cache_for( id ) )
 					got_packet = ml::stream_audio;
 				else if ( error >= 0 )
 					av_free_packet( &pkt_ );
@@ -437,7 +446,7 @@ class avformat_demux
 
 			if ( got_packet != ml::stream_unknown )
 			{
-				AVStream *stream = got_packet == ml::stream_video ? source->get_video_stream( ) : source->get_audio_stream( );
+				AVStream *stream = got_packet == ml::stream_video ? source->get_video_stream( ) : source->context_->streams[ id ];
 
 				manager.found( pkt_ );
 
@@ -1373,6 +1382,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				AVCodecContext *codec_context = get_audio_stream( )->codec;
 				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_AAC;
+				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_AC3;
 				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_MP2;
 				discard_audio_after_seek_ |= codec_context->codec_id == CODEC_ID_MP3;
 			}
