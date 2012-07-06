@@ -11,6 +11,9 @@
 #include <openmedialib/ml/types.hpp>
 #include <openimagelib/il/il.hpp>
 #include <openmedialib/ml/audio.hpp>
+#include <openmedialib/ml/stream.hpp>
+#include <openmedialib/ml/audio_block.hpp>
+
 #include <boost/shared_ptr.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
 
@@ -190,7 +193,17 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Indicates if the frame is deferred
 		bool is_deferred( ) const { return queue_.size( ) > 0; }
 
+		/// Return the deferred frames associated to this frame
 		std::deque< frame_type_ptr > queue( ) const { return queue_; }
+
+		/// Return the list of audio stream components associated to this frame
+		void set_audio_block( const audio::block_type_ptr &block ) { audio_block_ = block; }
+
+		/// Return the list of audio stream components associated to this frame
+		audio::block_type_ptr &audio_block( ) { return audio_block_; }
+
+		/// Return the const list of audio stream components associated to this frame
+		const audio::block_type_ptr &audio_block( ) const { return audio_block_; }
 
 	protected:
 	
@@ -211,6 +224,7 @@ namespace olib { namespace openmedialib { namespace ml {
 		int fps_den_;
 		std::deque< frame_type_ptr > queue_;
 		exception_list exceptions_;
+		audio::block_type_ptr audio_block_;
 };
 
 } } }
