@@ -37,6 +37,7 @@ frame_type::frame_type( const frame_type *other )
 	, fps_num_( other->fps_num_ )
 	, fps_den_( other->fps_den_ )
 	, exceptions_( other->exceptions_ )
+	, audio_block_( other->audio_block_ )
 {
 	std::auto_ptr< pcos::property_container > clone( other->properties_.clone() );
 	properties_ = *clone.get( );
