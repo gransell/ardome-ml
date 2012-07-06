@@ -89,11 +89,11 @@ block_type_ptr calculator::calculate( const int position ) const
 		boost::int64_t samples_out = audio::samples_to_frame( position, frequency_, fps_num_, fps_den_ );
 
 		block->discard = int( samples_lead - samples_in );
-		block->discard += int( samples_out - samples_lead );
+		block->discard += int( samples_out + lead_in_ * samples_in_packet - samples_lead );
 
 		int samples_left = ( lead_in_ + 1 ) * samples_in_packet - block->discard;
 
-		block->count = 1 + lead_in_ + ( samples_in_frame - samples_left ) / samples_in_packet;
+		block->count = 1 + lead_in_ + int( ceil( double( samples_in_frame - samples_left ) / samples_in_packet ) );
 	}
 	else
 	{
