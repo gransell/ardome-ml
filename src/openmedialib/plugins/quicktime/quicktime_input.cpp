@@ -128,7 +128,7 @@ protected:
 						std::map < int, image_type_ptr>::iterator iter;
 						int first = images_.begin()->first;
 						iter = images_.end( );
-						iter--;
+						--iter;
 						int last = iter->first;
 						if ( current < last )
 							images_.clear( );
@@ -285,7 +285,7 @@ protected:
 		std::deque< audio_type_ptr >::iterator result = audios_.end( );
 		std::deque< audio_type_ptr >::iterator iter;
 
-		for ( iter = audios_.begin( ); iter != audios_.end( ); iter ++ )
+		for ( iter = audios_.begin( ); iter != audios_.end( ); ++iter )
 		{
 			int diff = current - (*iter)->position( );
 			if ( std::abs( diff ) <= closest )
@@ -315,7 +315,7 @@ protected:
 		std::map< int, image_type_ptr>::iterator result = images_.end( );
 		std::map< int, image_type_ptr>::iterator iter;
 
-		for ( iter = images_.begin( ); iter != images_.end( ); iter ++ )
+		for ( iter = images_.begin( ); iter != images_.end( ); ++iter )
 		{
 			int diff = current - iter->second->position( );
 			if ( std::abs( diff ) <= closest )

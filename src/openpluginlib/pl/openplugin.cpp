@@ -182,7 +182,7 @@ void unload_shared_library( )
 	while( i != plugin_cache.end( ) )
 	{
 		fs::path key = i->first;
-		i ++;
+		++i;
 		plugin_cache.erase( key );
 	}
 }

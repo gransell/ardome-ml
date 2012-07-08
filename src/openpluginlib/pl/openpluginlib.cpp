@@ -347,7 +347,7 @@ namespace detail
 void auto_load( )
 {
 	const detail::registry::list &l = detail::registry::instance( ).auto_load( );
-	for ( detail::registry::list::const_iterator i = l.begin( ); i != l.end( ); i ++ )
+	for ( detail::registry::list::const_iterator i = l.begin( ); i != l.end( ); ++i )
 	{
 		struct detail::plugin_resolver resolver;
 		ARENFORCE_MSG( load_shared_library( resolver, i->filenames ), 

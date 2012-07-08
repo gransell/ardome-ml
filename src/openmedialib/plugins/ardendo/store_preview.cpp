@@ -676,7 +676,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
 			int ps = static_cast<int>(prefix.size( ));
 			pcos::key_vector keys = properties( ).get_keys( );
-			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 			{
 				std::string name( ( *it ).as_string( ) );
 				if ( name.find( prefix ) == 0 )

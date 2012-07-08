@@ -496,7 +496,7 @@ struct sequence
 	sequence( const pl::wstring_list &words, bool parseable = false )
 		: parseable_( parseable )
 	{ 
-		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); i ++ )
+		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); ++i )
 			words_.push_back( *i );
 		iter_ = words_.begin( );
 	}
@@ -890,7 +890,7 @@ class aml_stack
 
 		void push( const pl::wstring &token )
 		{
-			if ( next_op_.size( ) == 0 && token == L"" ) return;
+			if ( next_op_.empty( ) && token == L"" ) return;
 
 			if ( int( execution_stack_.size( ) ) + 1 <= trace_ )
 			{
@@ -921,7 +921,7 @@ class aml_stack
 			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
 				url = olib::t_path( paths_.back( ) / url ).external_directory_string( );
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 				properties = inputs_.back( )->properties( );
 
 			if ( ( ( arg != L":" && arg != L";" ) || ignore_ ) && state_ == 1 )
@@ -932,13 +932,13 @@ class aml_stack
 				else
 					word_.push_back( L"\"" + arg + L"\"" );
 			}
-			else if ( next_op_.size( ) == 0 && inline_.find( arg ) != inline_.end( ) )
+			else if ( next_op_.empty( ) && inline_.find( arg ) != inline_.end( ) )
 				execute_inline( arg );
 			else if ( arg != L"begin" && arg != L"until" && arg != L"repeat" && arg.find( L"iter_" ) != 0 && state_ == 2 )
 				loops_.push_back( arg );
 			else if ( arg != L"if" && arg != L"else" && arg != L"then" && !conds_.back( ) )
 				;
-			else if ( next_op_.size( ) != 0 )
+			else if ( !next_op_.empty( ) )
 				execute_operation( arg );
 			else if ( get_locals( ).find( arg ) != get_locals( ).end( ) )
 				inputs_.push_back( ml::input_type_ptr( new input_value( arg ) ) );
@@ -1140,7 +1140,7 @@ class aml_stack
 
 		bool empty( ) const
 		{
-			return inputs_.size( ) == 0;
+			return inputs_.empty( );
 		}
 
 		void set_trace( int level )
@@ -1154,7 +1154,7 @@ class aml_stack
 			{
 				std::vector< pl::wstring > function = inline_[ name ];
 				*output_ << ": " << pl::to_string( name ) << std::endl << "inline ";
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); i ++ )
+				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
 					if ( ( *i ).find( L" " ) == pl::wstring::npos )
 						*output_ << pl::to_string( *i ) << " ";
@@ -1167,7 +1167,7 @@ class aml_stack
 			{
 				std::vector< pl::wstring > function = words_[ name ];
 				*output_ << ": " << pl::to_string( name ) << std::endl;
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); i ++ )
+				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
 					if ( ( *i ).find( L" " ) == pl::wstring::npos )
 						*output_ << pl::to_string( *i ) << " ";
@@ -1182,20 +1182,20 @@ class aml_stack
 		void print_words( )
 		{
 			*output_ << "# Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 					*output_ << "# " << pl::to_string( i->first ) << ": " << i->second.description( ) << std::endl;
 			}
 
 			*output_ << std::endl << "# Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
 			}
 			*output_ << std::endl << "# Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
@@ -1205,7 +1205,7 @@ class aml_stack
 		void dict( )
 		{
 			*output_ << "Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); i ++ )
+			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 				{
@@ -1216,7 +1216,7 @@ class aml_stack
 			}
 
 			*output_ << std::endl << std::endl << "Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				if ( i != words_.begin( ) )
 					*output_ << ", ";
@@ -1224,7 +1224,7 @@ class aml_stack
 			}
 
 			*output_ << std::endl << std::endl << "Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); i ++ )
+			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				if ( i != inline_.begin( ) )
 					*output_ << ", ";
@@ -1264,7 +1264,7 @@ class aml_stack
 		{
 			bool result = false;
 
-			if ( next_op_.size( ) != 0 )
+			if ( !next_op_.empty( ) )
 				result = next_op_.back( ) == op;
 
 			if ( !result )
@@ -1318,7 +1318,7 @@ class aml_stack
 		void execute_word( pl::wstring name )
 		{
 			const std::vector< pl::wstring > &function = words_[ name ];
-			if ( function.size( ) )
+			if ( !function.empty( ) )
 			{
 				variables_push( );
 				run( function );
@@ -1335,7 +1335,7 @@ class aml_stack
 		void execute_operation( const pl::wstring &name )
 		{
 			if ( state_ == 0 && !empty( ) ) push( pop( ) );
-			if ( next_op_.size( ) == 0 )
+			if ( next_op_.empty( ) )
 			{
 				aml_operation op = operations_[ name ];
 				op.run( this );
@@ -1405,7 +1405,7 @@ class aml_stack
 			if ( state_ != 0 )
 				throw std::string( "Syntax error - unclosed function" );
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 			{
 				result = inputs_.back( );
 				inputs_.pop_back( );
@@ -1445,7 +1445,7 @@ class aml_stack
 		{
 			double result = 0.0;
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 			{
 				ml::input_type_ptr value = inputs_.back( );
 				inputs_.pop_back( );
@@ -1493,19 +1493,19 @@ class aml_stack
 			return result;
 		}
 
-		void debug( const std::string msg )
+		void debug( const std::string &msg )
 		{
 			*output_ << msg << ": ";
-			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); iter ++ )
+			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); ++iter )
 				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
 		}
 
-		void rdebug( const std::string msg )
+		void rdebug( const std::string &msg )
 		{
 			*output_ << msg << ": ";
-			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); iter ++ )
+			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); ++iter )
 				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
@@ -1713,7 +1713,7 @@ static void op_str( aml_stack *stack )
 			}
 
 			boost::format fmtr( pl::to_string( fmt ) );
-			while( tokens.size( ) )
+			while( !tokens.empty( ) )
 			{
 				fmtr % pl::to_string( tokens.back( ) );
 				tokens.pop_back( );
@@ -1740,7 +1740,7 @@ static void op_parse( aml_stack *stack )
 	{
 		bool found = false;
 
-		if ( stack->execution_stack_.size( ) )
+		if ( !stack->execution_stack_.empty( ) )
 		{
 			bool hosting_extension = stack->execution_stack_.back( ) == dummy_sequence_;
 
@@ -1773,7 +1773,7 @@ static void op_parse( aml_stack *stack )
 
 static void op_parseable( aml_stack *stack )
 {
-	if ( stack->execution_stack_.size( ) )
+	if ( !stack->execution_stack_.empty( ) )
 		stack->execution_stack_.back( )->parseable( true );
 }
 
@@ -1821,14 +1821,14 @@ static void op_execute( aml_stack *stack )
 			stack->next_exec_op_( stack );
 		}
 
-		if ( stack->next_op_.size( ) )
+		if ( stack->next_op_.empty( ) )
 		{
-			stack->next_exec_op_ = stack->next_op_.back( );
-			stack->next_op_.pop_back( );
+			stack->next_exec_op_ = 0;
 		}
 		else
 		{
-			stack->next_exec_op_ = 0;
+			stack->next_exec_op_ = stack->next_op_.back( );
+			stack->next_op_.pop_back( );
 		}
 	}
 }
@@ -1965,7 +1965,7 @@ static void op_prop_matches( aml_stack *stack )
 	boost::regex match( name );
 	pl::pcos::key_vector keys = b->properties( ).get_keys( );
 	int count = 0;
-	for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+	for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 	{
 		if ( boost::regex_match( ( *it ).as_string( ), match ) )
 		{
@@ -2077,7 +2077,7 @@ static void op_rpush( aml_stack *stack )
 
 static void op_rpop( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		ml::input_type_ptr a = stack->rstack_.back( );
 		stack->rstack_.pop_back( );
@@ -2091,7 +2091,7 @@ static void op_rpop( aml_stack *stack )
 
 static void op_rdup( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		ml::input_type_ptr a = stack->rstack_.back( );
 		stack->push( a );
@@ -2104,7 +2104,7 @@ static void op_rdup( aml_stack *stack )
 
 static void op_rdrop( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		stack->rstack_.pop_back( );
 	}
@@ -2142,13 +2142,13 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 	( *stack->output_ ) << pl::to_string( type ) << ":" << std::endl << std::endl;
 
-	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); i ++ )
+	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); ++i )
 	{
 		std::vector< pl::wstring > files = ( *i ).filenames( );
 		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 
-		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); f ++ )
+		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
 		{
 			if ( fs::exists( pl::to_string( *f ) ) )
 			{
@@ -2159,7 +2159,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 		if ( found )
 		{
-			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); j ++ )
+			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); ++j )
 			{
 				( *stack->output_ ) << pl::to_string( j->str() ) << " ";
 			}
@@ -2821,7 +2821,7 @@ static void op_iter_props( aml_stack *stack )
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
 		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
 
-		for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+		for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 		{
 			std::string name( ( *it ).as_string( ) );
 			pl::pcos::property p = props.get_property_with_string( name.c_str( ) );
@@ -3142,7 +3142,7 @@ class input_aml_stack : public ml::input_type
 				stack_.push( prop_command_.value< pl::wstring >( ) );
 				prop_result_ = pl::to_wstring( "OK" );
 			}
-			catch( std::string exc )
+			catch( const std::string &exc )
 			{
 				stack_.reset( );
 				prop_result_ = pl::to_wstring( exc );
@@ -3169,7 +3169,7 @@ class input_aml_stack : public ml::input_type
 				stack_.parse_stream( stream );
 				prop_result_ = pl::to_wstring( "OK" );
 			}
-			catch( std::string exc )
+			catch( const std::string &exc )
 			{
 				stack_.reset( );
 				prop_result_ = pl::to_wstring( exc );
@@ -3197,7 +3197,7 @@ class input_aml_stack : public ml::input_type
 					stack_.run( prop_commands_.value< pl::wstring_list >( ), true );
 					prop_result_ = pl::to_wstring( "OK" );
 				}
-				catch( std::string exc )
+				catch( const std::string &exc )
 				{
 					stack_.reset( );
 					prop_result_ = pl::to_wstring( exc );

@@ -251,7 +251,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 					ARENFORCE_MSG( !xml_str.empty(), "SVG input: no file was given and the xml property is empty. Nothing to render." );
 					
 					handle = rsvg_handle_new( );
-					ARENFORCE_MSG( handle, "SVG input: failed to create libsrvg handle: \"%1%\"" )( error->message );
+					ARENFORCE_MSG( handle, "SVG input: failed to create librsvg handle (rsvg_handle_new failed)." );
 
 					ARENFORCE_MSG( rsvg_handle_write( handle, reinterpret_cast< const guchar * >( xml_str.c_str( ) ), xml_str.size( ), &error ),
 						"SVG input: error when loading SVG data from xml property: \"%1%\"" )( error->message );
@@ -282,7 +282,6 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				int src_pitch = gdk_pixbuf_get_rowstride( pixbuf );
 				int w = gdk_pixbuf_get_width( pixbuf );
 				int h = gdk_pixbuf_get_height( pixbuf );
-				int bytes = 0;
 
 				w -= w % 2;
 				h -= h % 2;
@@ -291,6 +290,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 
 				if ( w > 0 && h > 0 )
 				{
+					int bytes = 0;
 					if ( gdk_pixbuf_get_has_alpha( pixbuf ) )
 					{
 						image = il::allocate( L"r8g8b8a8", w, h );

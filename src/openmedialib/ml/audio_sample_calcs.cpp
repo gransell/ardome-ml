@@ -100,7 +100,7 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 	std::vector< int > cycle;
 	if( get_audio_cycle( samplefreq, fps.numerator(), fps.denominator(), locked_profile, cycle ) )
 	{
-		assert( cycle.size() > 0 );
+		assert( !cycle.empty() );
 		return cycle[ frameoffset % cycle.size() ];
 	}
 

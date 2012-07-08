@@ -87,7 +87,7 @@ void join_peaks( ml::frame_type_ptr &result, std::vector< double > &max_levels )
 	{
 		pcos::property frame_peaks = result->properties( ).get_property_with_key( key_peaks_ );
 		std::vector< double > current = frame_peaks.value< std::vector< double > >( );
-		for ( std::vector< double >::iterator iter = max_levels.begin( ); iter != max_levels.end( ); iter ++ )
+		for ( std::vector< double >::iterator iter = max_levels.begin( ); iter != max_levels.end( ); ++iter )
 			current.push_back( *iter );
 		frame_peaks = current;
 	}
@@ -263,7 +263,7 @@ void report_audio( std::ostream &stream, const ml::audio_type_ptr &audio )
 void to_stream( std::ostream &stream, const std::string &name, std::vector< double > l )
 {
 	stream << name << "=";
-	for ( vector< double >::iterator iter = l.begin( ); iter != l.end( ); iter ++ )
+	for ( vector< double >::iterator iter = l.begin( ); iter != l.end( ); ++iter )
 		stream << *iter << " ";
 	stream << endl;
 }
@@ -271,7 +271,7 @@ void to_stream( std::ostream &stream, const std::string &name, std::vector< doub
 void to_stream( std::ostream &stream, const std::string &name, std::vector< int > l )
 {
 	stream << name << "=";
-	for ( vector< int >::iterator iter = l.begin( ); iter != l.end( ); iter ++ )
+	for ( vector< int >::iterator iter = l.begin( ); iter != l.end( ); ++iter )
 		stream << *iter << " ";
 	stream << endl;
 }
@@ -284,7 +284,7 @@ void report_props( std::ostream &stream, const pl::pcos::property_container &pro
 	if ( keys.size( ) )
 	{
 		// For each key...
-		for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+		for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 		{
 			std::string name( ( *it ).as_string( ) );
 			pcos::property p = props.get_property_with_key( *it );

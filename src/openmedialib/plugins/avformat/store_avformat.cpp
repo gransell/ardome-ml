@@ -198,8 +198,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// Extract rules from the frame
 			// TODO: Ensure this doesn't cause a foul up...
-			properties( ).append( prop_enable_audio_ = frame->get_audio( ) != 0 ? 1 : 0 );
-			properties( ).append( prop_enable_video_ = frame->has_image( ) != 0 ? 1 : 0 );
+			properties( ).append( prop_enable_audio_ = ( ( frame->get_audio( ) != 0 ) ? 1 : 0 ) );
+			properties( ).append( prop_enable_video_ = ( ( frame->has_image( ) != 0 ) ? 1 : 0 ) );
 
 			// Extract video related info from frame
 			properties( ).append( prop_width_ = 0 );
@@ -557,7 +557,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		void close_audio_codec( )
 		{
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); iter ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); ++iter )
 			{
 				AVStream *stream = *iter;
 				if ( stream && stream->codec ) 
@@ -733,8 +733,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		// Generate a video stream
 		AVStream *add_video_stream( CodecID codec_id )
 		{
-			AVCodec *codec = avcodec_find_encoder( codec_id );
-
 			// Create a new stream
 			AVStream *st = avformat_new_stream( oc_, 0 );
 
@@ -1099,7 +1097,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			bool ret = true;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); iter ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); ++iter )
 			{
 				// Get the context
 				AVCodecContext *c = ( *iter )->codec;
@@ -1317,8 +1315,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		int write_packet( AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx, AVBitStreamFilterContext *bsfc )
 		{
-			int ret = 0;
-
 			while( bsfc )
 			{
 				AVPacket new_pkt = *pkt;
@@ -1445,7 +1441,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			static int first = true;
 			int encode_tries = 1;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); iter ++, stream ++ )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); ++iter, ++stream )
 			{
 				for( int ec=0; ec<encode_tries; ec++ )
 				{

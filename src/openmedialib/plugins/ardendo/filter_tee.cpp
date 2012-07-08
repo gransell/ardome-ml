@@ -97,7 +97,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			}
 
 			// Push the frame to each discovered pusher
-			for( std::vector < ml::input_type_ptr >::iterator iter = pushers.begin( ); iter != pushers.end( ); iter ++ )
+			for( std::vector < ml::input_type_ptr >::iterator iter = pushers.begin( ); iter != pushers.end( ); ++iter )
 				( *iter )->push(  frame->shallow( ) );
 		}
 

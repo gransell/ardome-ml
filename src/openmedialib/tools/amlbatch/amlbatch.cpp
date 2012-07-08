@@ -37,7 +37,7 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
-void assign( pl::pcos::property_container &props, const std::string name, const pl::wstring value )
+void assign( pl::pcos::property_container &props, const std::string &name, const pl::wstring &value )
 {
 	pl::pcos::property property = props.get_property_with_string( name.c_str( ) );
 	if ( property.valid( ) )
@@ -56,7 +56,7 @@ void assign( pl::pcos::property_container &props, const std::string name, const 
 	}
 }
 
-void assign( pl::pcos::property_container &props, const pl::wstring pair )
+void assign( pl::pcos::property_container &props, const pl::wstring &pair )
 {
 	size_t pos = pair.find( L"=" );
 	std::string name = pl::to_string( pair.substr( 0, pos ) );
@@ -68,7 +68,7 @@ void assign( pl::pcos::property_container &props, const pl::wstring pair )
 	assign( props, name, value );
 }
 
-void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, pl::wstring arg, ml::frame_type_ptr &frame )
+void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, const pl::wstring &arg, ml::frame_type_ptr &frame )
 {
 	if ( arg.find( L"=" ) != pl::wstring::npos )
 	{
@@ -88,7 +88,7 @@ void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_c
 		}
 	}
 
-	if ( result.size( ) )
+	if ( !result.empty( ) )
 		properties = result.back( )->properties( );
 }
  
@@ -152,11 +152,11 @@ bool toggle_fullscreen( const std::vector< ml::store_type_ptr >& stores, bool is
 void report_frame_errors( ml::frame_type_ptr &frame )
 {
 	ml::exception_list list = frame->exceptions( );
-	for ( ml::exception_list::iterator i = list.begin( ); i != list.end( ); i ++ )
+	for ( ml::exception_list::iterator i = list.begin( ); i != list.end( ); ++i )
 		std::cerr << i->first->what( ) << " " << pl::to_string( i->second->get_uri( ) ) << std::endl;
 }
 
-void walk_and_assign( ml::input_type_ptr input, std::string name, int value )
+void walk_and_assign( ml::input_type_ptr input, const std::string &name, int value )
 {
 	if ( input )
 	{
@@ -192,7 +192,7 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 	bool defer = true;
 	bool drop = true;
 
-	for ( std::vector< ml::store_type_ptr >::iterator iter = store.begin( ); iter < store.end( ); iter ++ )
+	for ( std::vector< ml::store_type_ptr >::iterator iter = store.begin( ); iter < store.end( ); ++iter )
 	{
 		if ( defer )
 		{
@@ -219,7 +219,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 	bool error = false;
 	std::vector< ml::store_type_ptr >::iterator iter;
 
-	for ( iter = store.begin( ); !error && iter < store.end( ); iter ++ )
+	for ( iter = store.begin( ); !error && iter < store.end( ); ++iter )
 		error = !( *iter )->init( );
 
 	if ( error )
@@ -306,7 +306,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		if ( frame->in_error( ) )
 			report_frame_errors( frame );
 
-		for ( iter = store.begin( ); !error && iter < store.end( ); iter ++ )
+		for ( iter = store.begin( ); !error && iter < store.end( ); ++iter )
 		{
 			error = !( *iter )->push( frame );
 			pl::pcos::property keydown = ( *iter )->properties( ).get_property_with_string( "keydown" );
@@ -421,7 +421,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		}
 	}
 
-	for ( iter = store.begin( ); iter < store.end( ); iter ++ )
+	for ( iter = store.begin( ); iter < store.end( ); ++iter )
 		( *iter )->complete( );
 
 	walk_and_assign( input, "active", 0 );
@@ -617,7 +617,7 @@ int main( int argc, char *argv[ ] )
 		if ( index == argc || strcmp( argv[ index + 1 ], "env:" ) )
 		{
 			std::vector< ml::store_type_ptr > store = fetch_store( index, argc, argv, frame );
-			if ( store.size( ) == 0 )
+			if ( store.empty( ) )
 				return 3;
 
 			play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );

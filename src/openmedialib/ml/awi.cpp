@@ -130,7 +130,7 @@ boost::int64_t awi_index_v2::find( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		byte = ( *iter ).second.offset;
 	}
 
@@ -173,8 +173,8 @@ int awi_index_v2::frames( int current )
 	if ( !eof_ && current < frames_ )
 	{
 		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( frames_ - 1000 );
-		if ( iter != items_.begin( ) ) iter --;
-        if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
+        if ( iter != items_.begin( ) ) --iter;
         result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;
     }
 
@@ -185,7 +185,7 @@ int awi_index_v2::frames( int current )
 boost::int64_t awi_index_v2::bytes( )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	std::map< boost::int32_t, awi_item >::iterator iter = -- items_.end( );
+	std::map< boost::int32_t, awi_item >::iterator iter = --items_.end( );
 	return ( *iter ).second.offset + ( *iter ).second.length;
 }
 
@@ -258,7 +258,7 @@ int awi_index_v2::key_frame_of( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -272,7 +272,7 @@ int awi_index_v2::key_frame_from( boost::int64_t offset )
 	if ( offsets_.size( ) )
 	{
 		std::map< boost::int64_t, awi_item >::iterator iter = offsets_.upper_bound( offset );
-		if ( iter != offsets_.begin( ) ) iter --;
+		if ( iter != offsets_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -551,7 +551,7 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, b
 			set( item );
 
 			if ( refresh )
-				current_ = items_.end( ) != items_.begin( ) ?  -- items_.end( ) : items_.end( );
+				current_ = items_.end( ) != items_.begin( ) ?  --items_.end( ) : items_.end( );
 
 			position_ = position;
 			offset_ = offset;
@@ -717,7 +717,7 @@ boost::int64_t awi_index_v3::find( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		byte = ( *iter ).second.offset;
 	}
 
@@ -760,7 +760,7 @@ int awi_index_v3::frames( int current )
 	if ( !eof_ && current < frames_ )
 	{
 		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( frames_ - 1000 );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;
 	}
 
@@ -771,7 +771,7 @@ int awi_index_v3::frames( int current )
 boost::int64_t awi_index_v3::bytes( )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	std::map< boost::int32_t, awi_item_v3 >::iterator iter = -- items_.end( );
+	std::map< boost::int32_t, awi_item_v3 >::iterator iter = --items_.end( );
 	return ( *iter ).second.offset + ( *iter ).second.length;
 }
 
@@ -844,7 +844,7 @@ int awi_index_v3::key_frame_of( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item_v3 >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -858,7 +858,7 @@ int awi_index_v3::key_frame_from( boost::int64_t offset )
 	if ( offsets_.size( ) )
 	{
 		std::map< boost::int64_t, awi_item_v3 >::iterator iter = offsets_.upper_bound( offset );
-		if ( iter != offsets_.begin( ) ) iter --;
+		if ( iter != offsets_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -1283,7 +1283,7 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, b
 			set( item );
 
 			if ( refresh )
-				current_ = items_.end( ) != items_.begin( ) ?  -- items_.end( ) : items_.end( );
+				current_ = items_.end( ) != items_.begin( ) ?  --items_.end( ) : items_.end( );
 
 			position_ = position;
 			offset_ = offset;
@@ -1452,7 +1452,7 @@ boost::int64_t awi_index_v4::find( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item_v4 >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		byte = ( *iter ).second.offset;
 	}
 
@@ -1495,8 +1495,8 @@ int awi_index_v4::frames( int current )
 	if ( !eof_ && current < frames_ )
 	{
 		std::map< boost::int32_t, awi_item_v4 >::iterator iter = items_.upper_bound( frames_ - 1000 );
-		if ( iter != items_.begin( ) ) iter --;
-        if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
+        if ( iter != items_.begin( ) ) --iter;
         result = ( *iter ).first >= current ? std::max<boost::int32_t>( 0, ( *iter ).first - 1 ) : current;
     }
 
@@ -1507,7 +1507,7 @@ int awi_index_v4::frames( int current )
 boost::int64_t awi_index_v4::bytes( )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex_ );
-	std::map< boost::int32_t, awi_item_v4 >::iterator iter = -- items_.end( );
+	std::map< boost::int32_t, awi_item_v4 >::iterator iter = --items_.end( );
 	return ( *iter ).second.offset + ( *iter ).second.length;
 }
 
@@ -1580,7 +1580,7 @@ int awi_index_v4::key_frame_of( int position )
 	if ( items_.size( ) )
 	{
 		std::map< boost::int32_t, awi_item_v4 >::iterator iter = items_.upper_bound( position );
-		if ( iter != items_.begin( ) ) iter --;
+		if ( iter != items_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -1594,7 +1594,7 @@ int awi_index_v4::key_frame_from( boost::int64_t offset )
 	if ( offsets_.size( ) )
 	{
 		std::map< boost::int64_t, awi_item_v4 >::iterator iter = offsets_.upper_bound( offset );
-		if ( iter != offsets_.begin( ) ) iter --;
+		if ( iter != offsets_.begin( ) ) --iter;
 		result = ( *iter ).second.frame;
 	}
 	return result;
@@ -1891,7 +1891,7 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, b
 			set( item );
 
 			if ( refresh )
-				current_ = items_.end( ) != items_.begin( ) ?  -- items_.end( ) : items_.end( );
+				current_ = items_.end( ) != items_.begin( ) ?  --items_.end( ) : items_.end( );
 
 			position_ = position;
 			offset_ = offset;

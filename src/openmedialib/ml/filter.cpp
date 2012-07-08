@@ -159,7 +159,7 @@ frame_type_ptr filter_type::fetch( )
 {
 	collated_.erase( collated_.begin( ), collated_.end( ) );
 	ml::frame_type_ptr result = input_type::fetch( );
-	for ( exception_list::iterator i = collated_.begin( ); i != collated_.end( ); i ++ )
+	for ( exception_list::iterator i = collated_.begin( ); i != collated_.end( ); ++i )
 		result->push_exception( ( *i ).first, ( *i ).second );
 	return result;
 }
@@ -169,9 +169,9 @@ bool filter_type::connect( input_type_ptr input, size_t slot )
 	if ( slots_.size( ) != slot_count( ) )
 	{
 		size_t i;
-		for ( i = slots_.size( ); i > slot_count( ); i -- )
+		for ( i = slots_.size( ); i > slot_count( ); --i )
 			slots_.pop_back( );
-		for ( i = slots_.size( ); i < slot_count( ); i ++ )
+		for ( i = slots_.size( ); i < slot_count( ); ++i )
 			slots_.push_back( input_type_ptr( ) );
 	}
 
@@ -189,7 +189,7 @@ bool filter_type::connect( input_type_ptr input, size_t slot )
 void filter_type::set_process_flags( int flags ) 
 {
 	input_type::set_process_flags( flags );
-	for( std::vector< input_type_ptr >::iterator iter = slots_.begin( ); iter < slots_.end( ); iter ++ )
+	for( std::vector< input_type_ptr >::iterator iter = slots_.begin( ); iter < slots_.end( ); ++iter )
 		if ( *iter )
 			( *iter )->set_process_flags( get_process_flags( ) );
 }
@@ -212,7 +212,7 @@ void filter_type::acquire_values( )
 bool filter_type::is_thread_safe( )
 {
 	size_t count = 0;
-	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); iter != slots_.end( ); iter ++ )
+	for( std::vector< input_type_ptr >::const_iterator iter = slots_.begin( ); iter != slots_.end( ); ++iter )
 		if ( !( *iter ) || ( *iter && ( *iter )->is_thread_safe( ) ) )
 			count ++;
 	return count == slots_.size( );
@@ -234,7 +234,7 @@ frame_type_ptr filter_type::fetch_from_slot( int index, bool assign )
 		if ( result )
 		{
 			exception_list list = result->exceptions( );
-			for ( exception_list::iterator i = list.begin( ); i != list.end( ); i ++ )
+			for ( exception_list::iterator i = list.begin( ); i != list.end( ); ++i )
 				collated_.push_back( *i );
 			result->clear_exceptions( );
 		}
@@ -250,7 +250,7 @@ void filter_type::assign_frame_props( frame_type_ptr frame )
 		pcos::key_vector props = properties( ).get_keys( );
 
 		// For each key...
-		for( pcos::key_vector::iterator it = props.begin( ); it != props.end( ); it ++ )
+		for( pcos::key_vector::iterator it = props.begin( ); it != props.end( ); ++it )
 		{
 			// Fetch the name and value property
 			std::string name( ( *it ).as_string( ) );

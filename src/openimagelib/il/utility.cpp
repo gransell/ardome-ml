@@ -217,8 +217,6 @@ IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int heig
 		dst_img = image_type_ptr( new image_type( r16g16b16_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16f" )
 		dst_img = image_type_ptr( new image_type( r16g16b16f_image_type( width, height, 1 ) ) );
-	else if( pf == L"r16g16b16a16f" )
-		dst_img = image_type_ptr( new image_type( r16g16b16a16f_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16a16p" )
 		dst_img = image_type_ptr( new image_type( r16g16b16a16p_image_type( width, height, 1 ) ) );
 	else if( pf == L"r16g16b16p" )
@@ -2347,7 +2345,6 @@ static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr&
 		{
 			image_type::const_pointer	tmp;
 			image_type::const_pointer	row;
-			int k, dk;
 			int ho = ( ( src_w - 1 ) << 16 ) / new_w;
 			int hm = ho * new_w;
 			int vo = ( ( src_h - 1 ) << 16 ) / new_h;
@@ -2359,9 +2356,9 @@ static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr&
 
 			if ( new_d != 1 || bs != 1 )
 			{
-				for( k = 0; k < new_d; ++k )
+				for( int k = 0; k < new_d; ++k )
 				{
-					dk = ( k * src_d / new_d ) * src_h;
+					int dk = ( k * src_d / new_d ) * src_h;
 					vt = 0;
 	
 					while( vt < vm )
@@ -2621,7 +2618,7 @@ static void rescale_plane_default( image_type_ptr &new_im, const image_type_ptr&
 
 				static std::vector< std::vector< int > >ratio;
 
-				if ( ratio.size( ) == 0 )
+				if ( ratio.empty() )
 				{
 					for ( int t = 0; t < 0x800; t ++ )
 					{

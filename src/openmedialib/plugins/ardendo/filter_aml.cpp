@@ -106,7 +106,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			stream << name << "=";
 			if ( l.begin( ) != l.end( ) )
 			{
-				for ( std::vector< double >::iterator iter = l.begin( ); iter != l.end( ); iter ++ )
+				for ( std::vector< double >::iterator iter = l.begin( ); iter != l.end( ); ++iter )
 					stream << *iter << " ";
 			}
 			else
@@ -120,7 +120,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			stream << name << "=";
 			if ( l.begin( ) != l.end( ) )
 			{
-				for ( std::vector< int >::iterator iter = l.begin( ); iter != l.end( ); iter ++ )
+				for ( std::vector< int >::iterator iter = l.begin( ); iter != l.end( ); ++iter )
 					stream << *iter << " ";
 			}
 			else
@@ -187,7 +187,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 					if ( keys.begin( ) != keys.end( ) )
 						stream << " ";
 
-					for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+					for( pl::pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 					{
 						std::string name( ( *it ).as_string( ) );
 						pl::pcos::property p = props.get_property_with_string( name.c_str( ) );

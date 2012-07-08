@@ -52,7 +52,7 @@ class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_simple
 				if ( prop_ramp_.is_a< std::vector< double > >( ) )
 				{
 					std::vector< double > ramp = prop_ramp_.value< std::vector< double > >( );
-    				if ( ramp.size( ) )
+    				if ( !ramp.empty( ) )
 						apply_volume( result, volume * ramp[ 0 ], volume * ramp.back( ) );
 					else
 						apply_volume( result, volume, volume );

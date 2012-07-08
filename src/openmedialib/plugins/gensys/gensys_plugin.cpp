@@ -173,12 +173,11 @@ inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, u
 	unsigned char *ptr = img->data( );
 	int width = img->width( );
 	int height = img->height( );
-	int x;
 	if ( ptr )
 	{
 		while( height -- )
 		{
-			x = width;
+			int x = width;
 			while ( x -- )
 			{
 				memset( ptr++, r, 1 );
@@ -199,7 +198,7 @@ static bool has_image( frame_type_ptr &frame )
 	if ( !result )
 	{
 		std::deque< frame_type_ptr > queue = frame_type::unfold( frame->shallow( ) );
-		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); iter ++ )
+		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); ++iter )
 		{
 			if ( *iter && ( *iter )->has_image( ) )
 			{
@@ -2104,7 +2103,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 					int frames = get_frames( );
 					pcos::property_container input_props = properties( );
 					pcos::property_container &frame_props = result->properties( );
-					for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); it ++ )
+					for( pcos::key_vector::iterator it = keys.begin( ); result && it != keys.end( ); ++it )
 						evaluate( frame_props, input_props, *it, frames );
 				}
 			}
@@ -2296,11 +2295,11 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 
 				correct_in_out( in, out, frames );
 
-				double x = 0.0;
-				double y = 0.0;
-
 				if ( count > 0 && position >= in && position <= out )
 				{
+					double x = 0.0;
+					double y = 0.0;
+				
 					calculate( x, y, points, double( position - in ) / double( out - in ) );
 
 					size_t index = name.rfind( "," );

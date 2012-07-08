@@ -67,7 +67,7 @@ static int default_width_ = 640;
 static int default_height_ = 480;
 static int default_full_ = 0;
 
-static void sdl_setenv( const std::string name, int value )
+static void sdl_setenv( const std::string &name, int value )
 {
 #ifdef NEED_SDL_GETENV
 	boost::format fmt( "%s=%d" );

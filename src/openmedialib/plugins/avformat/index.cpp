@@ -204,10 +204,10 @@ class aml_file_index : public aml_index
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			boost::int64_t byte = -1;
 
-			if ( key_index_.size( ) )
+			if ( !key_index_.empty( ) )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( position );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				byte = ( *iter ).second;
 			}
 
@@ -225,7 +225,7 @@ class aml_file_index : public aml_index
 			if ( current < frames_ )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( frames_ - 100 );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				result = ( *iter ).first >= current ? ( *iter ).first + 1 : current + 1;
 			}
 
@@ -243,10 +243,10 @@ class aml_file_index : public aml_index
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			int result = -1;
-			if ( off_index_.size( ) )
+			if ( !off_index_.empty( ) )
 			{
 				std::map< boost::int64_t, int >::iterator iter = off_index_.upper_bound( size );
-				if ( iter == off_index_.end( ) ) iter --;
+				if ( iter == off_index_.end( ) ) --iter;
 				result = ( *iter ).second;
 			}
 			return result;
@@ -269,10 +269,10 @@ class aml_file_index : public aml_index
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			int result = -1;
 
-			if ( key_index_.size( ) )
+			if ( !key_index_.empty( ) )
 			{
 				std::map< int, boost::int64_t >::iterator iter = key_index_.upper_bound( position );
-				if ( iter != key_index_.begin( ) ) iter --;
+				if ( iter != key_index_.begin( ) ) --iter;
 				result = ( *iter ).first;
 			}
 			return result;
@@ -283,7 +283,7 @@ class aml_file_index : public aml_index
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			std::map< boost::int64_t, int >::iterator iter = off_index_.upper_bound( offset );
-			if ( iter != off_index_.begin( ) ) iter --;
+			if ( iter != off_index_.begin( ) ) --iter;
 			return ( *iter ).second;
 		}
 
@@ -312,15 +312,16 @@ class aml_http_index : public aml_file_index
 			if ( eof_ ) return;
 
 			char temp[ 400 ];
+			URLContext *ts_context;
 
-			if ( ffurl_open( &ts_context_, file_.c_str( ), URL_RDONLY ) < 0 )
+			if ( ffurl_open( &ts_context, file_.c_str( ), URL_RDONLY ) < 0 )
 			{
 				usable_ = false;
 				eof_ = true;
 				return;
 			}
 
-			ffurl_seek( ts_context_, position_, SEEK_SET );
+			ffurl_seek( ts_context, position_, SEEK_SET );
 
 			while ( true )
 			{
@@ -332,7 +333,7 @@ class aml_http_index : public aml_file_index
 				memset( temp, 0, sizeof( temp ) );
 				memcpy( temp, remainder_.c_str( ), bytes );
 
-				actual = ffurl_read( ts_context_, ( unsigned char * )temp + bytes, requested );
+				actual = ffurl_read( ts_context, ( unsigned char * )temp + bytes, requested );
 				if ( actual <= 0 ) break;
 
 				while( ptr && strchr( ptr, '\n' ) )
@@ -371,12 +372,11 @@ class aml_http_index : public aml_file_index
 					remainder_ = "";
 			}
 
-			position_ = ffurl_seek( ts_context_, 0, SEEK_CUR );
-			ffurl_close( ts_context_ );
+			position_ = ffurl_seek( ts_context, 0, SEEK_CUR );
+			ffurl_close( ts_context );
 		}
 
 	private:
-		URLContext *ts_context_;
 		std::string remainder_;
 };
 

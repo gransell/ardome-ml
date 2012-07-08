@@ -385,7 +385,7 @@ protected:
 				}
 
 				// Ensure that the recipient has access to the temporally sorted frames too
-				for ( std::map< int, ml::frame_type_ptr >::iterator iter = gop_.begin( ); iter != gop_.end( ); iter ++ )
+				for ( std::map< int, ml::frame_type_ptr >::iterator iter = gop_.begin( ); iter != gop_.end( ); ++iter )
 				{
 					pl::pcos::property temporal_offset( ml::analyse_type::key_temporal_offset_ );
 					pl::pcos::property temporal_stream( ml::analyse_type::key_temporal_stream_ );
@@ -1138,7 +1138,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 			filters_.pop_back( );
 
 			pcos::key_vector keys = properties_.get_keys( );
-			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); it ++ )
+			for( pcos::key_vector::iterator it = keys.begin( ); it != keys.end( ); ++it )
 			{
 				if ( result->property_with_key( *it ).valid( ) )
 					result->property_with_key( *it ).set_from_property( properties_.get_property_with_key( *it ) );

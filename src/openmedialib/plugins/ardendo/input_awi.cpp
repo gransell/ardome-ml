@@ -59,8 +59,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 
 				if ( video && audio )
 				{
-					int num = 25, den = 1;
-
 					video->property( "video_index" ) = prop_video_index_.value< int >( );
 					video->property( "audio_index" ) = -1;
 					video->property( "ts_auto" ) = 1;
@@ -72,6 +70,7 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 					if ( video->init( ) )
 					{
 						ml::frame_type_ptr sample = video->fetch( );
+						int num = 25, den = 1;
 						if ( sample && sample->has_image( ) )
 							sample->get_fps( num, den );
 						audio->property( "fps_num" ) = num;
