@@ -3142,7 +3142,7 @@ class input_aml_stack : public ml::input_type
 				stack_.push( prop_command_.value< pl::wstring >( ) );
 				prop_result_ = pl::to_wstring( "OK" );
 			}
-			catch( std::string exc )
+			catch( const std::string &exc )
 			{
 				stack_.reset( );
 				prop_result_ = pl::to_wstring( exc );
@@ -3169,7 +3169,7 @@ class input_aml_stack : public ml::input_type
 				stack_.parse_stream( stream );
 				prop_result_ = pl::to_wstring( "OK" );
 			}
-			catch( std::string exc )
+			catch( const std::string &exc )
 			{
 				stack_.reset( );
 				prop_result_ = pl::to_wstring( exc );
@@ -3197,7 +3197,7 @@ class input_aml_stack : public ml::input_type
 					stack_.run( prop_commands_.value< pl::wstring_list >( ), true );
 					prop_result_ = pl::to_wstring( "OK" );
 				}
-				catch( std::string exc )
+				catch( const std::string &exc )
 				{
 					stack_.reset( );
 					prop_result_ = pl::to_wstring( exc );
