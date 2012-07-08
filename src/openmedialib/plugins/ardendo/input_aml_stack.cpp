@@ -890,7 +890,7 @@ class aml_stack
 
 		void push( const pl::wstring &token )
 		{
-			if ( next_op_.size( ) == 0 && token == L"" ) return;
+			if ( next_op_.empty( ) && token == L"" ) return;
 
 			if ( int( execution_stack_.size( ) ) + 1 <= trace_ )
 			{
@@ -921,7 +921,7 @@ class aml_stack
 			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
 				url = olib::t_path( paths_.back( ) / url ).external_directory_string( );
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 				properties = inputs_.back( )->properties( );
 
 			if ( ( ( arg != L":" && arg != L";" ) || ignore_ ) && state_ == 1 )
@@ -932,13 +932,13 @@ class aml_stack
 				else
 					word_.push_back( L"\"" + arg + L"\"" );
 			}
-			else if ( next_op_.size( ) == 0 && inline_.find( arg ) != inline_.end( ) )
+			else if ( next_op_.empty( ) && inline_.find( arg ) != inline_.end( ) )
 				execute_inline( arg );
 			else if ( arg != L"begin" && arg != L"until" && arg != L"repeat" && arg.find( L"iter_" ) != 0 && state_ == 2 )
 				loops_.push_back( arg );
 			else if ( arg != L"if" && arg != L"else" && arg != L"then" && !conds_.back( ) )
 				;
-			else if ( next_op_.size( ) != 0 )
+			else if ( !next_op_.empty( ) )
 				execute_operation( arg );
 			else if ( get_locals( ).find( arg ) != get_locals( ).end( ) )
 				inputs_.push_back( ml::input_type_ptr( new input_value( arg ) ) );
@@ -1140,7 +1140,7 @@ class aml_stack
 
 		bool empty( ) const
 		{
-			return inputs_.size( ) == 0;
+			return inputs_.empty( );
 		}
 
 		void set_trace( int level )
@@ -1264,7 +1264,7 @@ class aml_stack
 		{
 			bool result = false;
 
-			if ( next_op_.size( ) != 0 )
+			if ( !next_op_.empty( ) )
 				result = next_op_.back( ) == op;
 
 			if ( !result )
@@ -1318,7 +1318,7 @@ class aml_stack
 		void execute_word( pl::wstring name )
 		{
 			const std::vector< pl::wstring > &function = words_[ name ];
-			if ( function.size( ) )
+			if ( !function.empty( ) )
 			{
 				variables_push( );
 				run( function );
@@ -1335,7 +1335,7 @@ class aml_stack
 		void execute_operation( const pl::wstring &name )
 		{
 			if ( state_ == 0 && !empty( ) ) push( pop( ) );
-			if ( next_op_.size( ) == 0 )
+			if ( next_op_.empty( ) )
 			{
 				aml_operation op = operations_[ name ];
 				op.run( this );
@@ -1405,7 +1405,7 @@ class aml_stack
 			if ( state_ != 0 )
 				throw std::string( "Syntax error - unclosed function" );
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 			{
 				result = inputs_.back( );
 				inputs_.pop_back( );
@@ -1445,7 +1445,7 @@ class aml_stack
 		{
 			double result = 0.0;
 
-			if ( inputs_.size( ) )
+			if ( !inputs_.empty( ) )
 			{
 				ml::input_type_ptr value = inputs_.back( );
 				inputs_.pop_back( );
@@ -1713,7 +1713,7 @@ static void op_str( aml_stack *stack )
 			}
 
 			boost::format fmtr( pl::to_string( fmt ) );
-			while( tokens.size( ) )
+			while( !tokens.empty( ) )
 			{
 				fmtr % pl::to_string( tokens.back( ) );
 				tokens.pop_back( );
@@ -1740,7 +1740,7 @@ static void op_parse( aml_stack *stack )
 	{
 		bool found = false;
 
-		if ( stack->execution_stack_.size( ) )
+		if ( !stack->execution_stack_.empty( ) )
 		{
 			bool hosting_extension = stack->execution_stack_.back( ) == dummy_sequence_;
 
@@ -1773,7 +1773,7 @@ static void op_parse( aml_stack *stack )
 
 static void op_parseable( aml_stack *stack )
 {
-	if ( stack->execution_stack_.size( ) )
+	if ( !stack->execution_stack_.empty( ) )
 		stack->execution_stack_.back( )->parseable( true );
 }
 
@@ -1821,14 +1821,14 @@ static void op_execute( aml_stack *stack )
 			stack->next_exec_op_( stack );
 		}
 
-		if ( stack->next_op_.size( ) )
+		if ( stack->next_op_.empty( ) )
 		{
-			stack->next_exec_op_ = stack->next_op_.back( );
-			stack->next_op_.pop_back( );
+			stack->next_exec_op_ = 0;
 		}
 		else
 		{
-			stack->next_exec_op_ = 0;
+			stack->next_exec_op_ = stack->next_op_.back( );
+			stack->next_op_.pop_back( );
 		}
 	}
 }
@@ -2077,7 +2077,7 @@ static void op_rpush( aml_stack *stack )
 
 static void op_rpop( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		ml::input_type_ptr a = stack->rstack_.back( );
 		stack->rstack_.pop_back( );
@@ -2091,7 +2091,7 @@ static void op_rpop( aml_stack *stack )
 
 static void op_rdup( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		ml::input_type_ptr a = stack->rstack_.back( );
 		stack->push( a );
@@ -2104,7 +2104,7 @@ static void op_rdup( aml_stack *stack )
 
 static void op_rdrop( aml_stack *stack )
 {
-	if ( stack->rstack_.size( ) > 0 )
+	if ( !stack->rstack_.empty( ) )
 	{
 		stack->rstack_.pop_back( );
 	}
