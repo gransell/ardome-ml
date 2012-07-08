@@ -12,6 +12,9 @@ run( )
 
 [ "$#" -eq 0 ] && die "Usage: `basename $0` <graph>"
 
+playit=0
+[ "$1" == "--play" ] && playit=1 && shift
+
 hash amlbatch 2> /dev/null || PATH=`pwd`:$PATH
 hash amlbatch 2>/dev/null || die "No amlbatch available - aborting"
 hash md5sum 2>/dev/null && MD5=md5sum || MD5=md5
@@ -32,4 +35,6 @@ r2=`$MD5 < t3.raw | cut -f1 -d ' '`
 
 [ "$r1" = "$r2" ] && echo "Success $r1" || echo "Fail $r1 $r2"
 
-[ "$AML_CHECK_KEEP" = "" ] && rm t[123].raw t[123].raw.aml
+[ "$playit" = "1" ] && amlbatch colour: width=320 height=90 t2.raw filter:lerp @@w=0.5 t3.raw filter:lerp @@w=0.5 @@x=0.5 filter:compositor slots=3
+
+rm t[123].raw t[123].raw.aml
