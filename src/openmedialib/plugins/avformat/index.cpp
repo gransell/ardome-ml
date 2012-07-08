@@ -312,15 +312,16 @@ class aml_http_index : public aml_file_index
 			if ( eof_ ) return;
 
 			char temp[ 400 ];
+			URLContext *ts_context;
 
-			if ( ffurl_open( &ts_context_, file_.c_str( ), URL_RDONLY ) < 0 )
+			if ( ffurl_open( &ts_context, file_.c_str( ), URL_RDONLY ) < 0 )
 			{
 				usable_ = false;
 				eof_ = true;
 				return;
 			}
 
-			ffurl_seek( ts_context_, position_, SEEK_SET );
+			ffurl_seek( ts_context, position_, SEEK_SET );
 
 			while ( true )
 			{
@@ -332,7 +333,7 @@ class aml_http_index : public aml_file_index
 				memset( temp, 0, sizeof( temp ) );
 				memcpy( temp, remainder_.c_str( ), bytes );
 
-				actual = ffurl_read( ts_context_, ( unsigned char * )temp + bytes, requested );
+				actual = ffurl_read( ts_context, ( unsigned char * )temp + bytes, requested );
 				if ( actual <= 0 ) break;
 
 				while( ptr && strchr( ptr, '\n' ) )
@@ -371,12 +372,11 @@ class aml_http_index : public aml_file_index
 					remainder_ = "";
 			}
 
-			position_ = ffurl_seek( ts_context_, 0, SEEK_CUR );
-			ffurl_close( ts_context_ );
+			position_ = ffurl_seek( ts_context, 0, SEEK_CUR );
+			ffurl_close( ts_context );
 		}
 
 	private:
-		URLContext *ts_context_;
 		std::string remainder_;
 };
 
