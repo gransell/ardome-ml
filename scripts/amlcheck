@@ -26,9 +26,9 @@ visualise="filter:visualise width=160 height=90"
 rescale="filter:rescale width=160 height=90"
 #threader="filter:distributor threads=-1"
 
-run amlbatch --no-stats "$*" $rescale $visualise $threader -- t1.raw
+run amlbatch --no-stats "$@" $colourspace $rescale $visualise $threader -- t1.raw
 run amlbatch --no-stats t1.raw.aml filter:clip in=-1 out=0 -- t2.raw
-run amlbatch --no-stats "$*" $rescale $threader filter:clip in=-1 out=0 $visualise reverse=1 -- t3.raw
+run amlbatch --no-stats "$@" $colourspace $rescale $threader filter:clip in=-1 out=0 $visualise reverse=1 -- t3.raw
 
 r1=`$MD5 < t2.raw | cut -f1 -d ' '`
 r2=`$MD5 < t3.raw | cut -f1 -d ' '`
