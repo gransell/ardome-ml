@@ -11,6 +11,7 @@
 #include "amf_filter_plugin.hpp"
 #include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
+#include <openmedialib/ml/keys.hpp>
 
 extern "C" {
 #include <libavformat/url.h>
@@ -20,9 +21,6 @@ namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 
 namespace aml { namespace openmedialib {
-
-static const pl::pcos::key key_source_byte_offset_ = pcos::key::from_string( "source_byte_offset" );
-static const pl::pcos::key key_picture_coding_type_ = pcos::key::from_string( "picture_coding_type" );
 
 class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 {
@@ -65,8 +63,8 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 
 				ml::stream_type_ptr stream = frame->get_stream( );
 
-				pl::pcos::property coding_type = stream->properties( ).get_property_with_key( key_picture_coding_type_ );
-				pl::pcos::property byte_offset = stream->properties( ).get_property_with_key( key_source_byte_offset_ );
+				pl::pcos::property coding_type = stream->properties( ).get_property_with_key( ml::keys::picture_coding_type );
+				pl::pcos::property byte_offset = stream->properties( ).get_property_with_key( ml::keys::source_byte_offset );
 
 				result = coding_type.valid( ) && byte_offset.valid( );
 
