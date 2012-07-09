@@ -3,7 +3,7 @@
 // Copyright (C) 2012 Ardendo
 // Released under the LGPL.
 
-#include <openmedialib/ml/config.hpp>
+#include <openmedialib/ml/audio_types.hpp>
 #include <openmedialib/ml/stream.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
@@ -13,7 +13,7 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
-typedef struct
+typedef ML_DECLSPEC struct block
 {
 	typedef std::map< int, ml::stream_type_ptr > channel_map;
 	typedef std::map< int, channel_map > track_map;
@@ -36,8 +36,6 @@ typedef struct
 	track_map tracks;
 }
 block_type;
-
-typedef boost::shared_ptr< block_type > block_type_ptr;
 
 inline double map( int position, int fps_in_num, int fps_in_den, int fps_out_num, int fps_out_den )
 {

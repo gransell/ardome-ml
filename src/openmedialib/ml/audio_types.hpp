@@ -53,6 +53,11 @@ typedef ML_DECLSPEC boost::shared_ptr < pcm24 > pcm24_ptr;
 typedef ML_DECLSPEC boost::shared_ptr < pcm32 > pcm32_ptr;
 typedef ML_DECLSPEC boost::shared_ptr < floats > floats_ptr;
 
+/// Audio block definitions
+struct block;
+typedef ML_DECLSPEC struct block block_type;
+typedef ML_DECLSPEC boost::shared_ptr< block_type > block_type_ptr;
+
 // Forward declaration to audio reseat interface
 class ML_DECLSPEC reseat;
 

@@ -12,7 +12,6 @@
 #include <openimagelib/il/il.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/stream.hpp>
-#include <openmedialib/ml/audio_block.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>

@@ -7,6 +7,7 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 #include <openmedialib/ml/stream.hpp>
+#include <openmedialib/ml/audio_block.hpp>
 #include <cmath>
 
 #include <iostream>
