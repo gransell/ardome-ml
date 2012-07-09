@@ -82,7 +82,7 @@ block_type_ptr calculator::calculate( const int position ) const
 	block->samples = samples_in_frame;
 	block->first = packet_position;
 
-	if ( lead_in_ )
+	if ( lead_in_ || fps_num_ != pps_num_ || fps_den_ != pps_den_ )
 	{
 		boost::int64_t samples_in = audio::samples_to_frame( packet_position, frequency_, pps_num_, pps_den_ );
 		boost::int64_t samples_lead = audio::samples_to_frame( packet_position + lead_in_, frequency_, pps_num_, pps_den_ );
