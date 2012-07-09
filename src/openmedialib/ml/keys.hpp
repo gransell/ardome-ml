@@ -12,9 +12,9 @@
 namespace olib { namespace openmedialib { namespace ml { namespace keys {
 
 #ifndef ML_KEY_DEFINE
-#	define ML_KEY( name ) extern const ML_DECLSPEC olib::openpluginlib::pcos::key name
+#	define ML_KEY( name ) extern ML_DECLSPEC olib::openpluginlib::pcos::key name
 #else
-#	define ML_KEY( name ) const ML_DECLSPEC olib::openpluginlib::pcos::key name = olib::openpluginlib::pcos::key::from_string( #name )
+#	define ML_KEY( name ) ML_DECLSPEC olib::openpluginlib::pcos::key name = olib::openpluginlib::pcos::key::from_string( #name )
 #endif
 
 // Once a stream_type is analysed, we set a property on the stream to avoid re-analysis
