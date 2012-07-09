@@ -14,6 +14,7 @@
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/indexer.hpp>
 #include <openmedialib/ml/audio_block.hpp>
+#include <openmedialib/ml/keys.hpp>
 
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
@@ -53,32 +54,6 @@ namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
-
-static const pl::pcos::key key_enable_( pcos::key::from_string( "enable" ) );
-static const pl::pcos::key key_uri_ = pl::pcos::key::from_string( "uri" );
-
-static const pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
-static const pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
-static const pl::pcos::key key_has_b_frames_ = pl::pcos::key::from_string( "has_b_frames" );
-static const pl::pcos::key key_timebase_num_ = pl::pcos::key::from_string( "timebase_num" );
-static const pl::pcos::key key_timebase_den_ = pl::pcos::key::from_string( "timebase_den" );
-static const pl::pcos::key key_duration_ = pcos::key::from_string( "duration" );
-
-static const pl::pcos::key key_codec_id_ = pcos::key::from_string( "codec_id" );
-static const pl::pcos::key key_codec_type_ = pcos::key::from_string( "codec_type" );
-static const pl::pcos::key key_codec_tag_ = pcos::key::from_string( "codec_tag" );
-static const pl::pcos::key key_max_rate_ = pl::pcos::key::from_string( "max_rate" );
-static const pl::pcos::key key_buffer_size_ = pl::pcos::key::from_string( "buffer_size" );
-static const pl::pcos::key key_bit_rate_ = pcos::key::from_string( "bit_rate" );
-static const pl::pcos::key key_field_order_ = pcos::key::from_string( "field_order" );
-static const pl::pcos::key key_bits_per_coded_sample_ = pcos::key::from_string( "bits_per_coded_sample" );
-static const pl::pcos::key key_ticks_per_frame_ = pcos::key::from_string( "ticks_per_frame" );
-static const pl::pcos::key key_avg_fps_num_ = pcos::key::from_string( "avg_fps_num" );
-static const pl::pcos::key key_avg_fps_den_ = pcos::key::from_string( "avg_fps_den" );
-static const pl::pcos::key key_picture_coding_type_ = pcos::key::from_string( "picture_coding_type" );
-
-static const pl::pcos::key key_source_tc_ = pcos::key::from_string( "source_timecode" );
-static const pl::pcos::key key_source_byte_offset_ = pcos::key::from_string( "source_byte_offset" );
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -412,7 +387,7 @@ class avformat_demux
 			}
 
 			// Set the source timecode
-			pl::pcos::assign< int >( result->properties( ), key_source_tc_, position );
+			pl::pcos::assign< int >( result->properties( ), ml::keys::source_tc, position );
 		}
 
 		ml::stream_type_ptr obtain_next_packet( )
@@ -476,50 +451,50 @@ class avformat_demux
 
 				if ( packet )
 				{
-					pl::pcos::property prop_uri( key_uri_ );
+					pl::pcos::property prop_uri( ml::keys::uri );
 					packet->properties( ).append( prop_uri = source->get_uri( ) );
 					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
 
-					pl::pcos::property pts_prop( key_pts_ );
+					pl::pcos::property pts_prop( ml::keys::pts );
 					packet->properties( ).append( pts_prop = pkt_.pts );		
-					pl::pcos::property dts_prop( key_dts_ );
+					pl::pcos::property dts_prop( ml::keys::dts );
 					packet->properties( ).append( dts_prop = pkt_.dts );
-					pl::pcos::property has_b_frames( key_has_b_frames_ );
+					pl::pcos::property has_b_frames( ml::keys::has_b_frames );
 					packet->properties( ).append( has_b_frames = stream->codec->has_b_frames );
-					pl::pcos::property timebase_num( key_timebase_num_ );
+					pl::pcos::property timebase_num( ml::keys::timebase_num );
 					packet->properties( ).append( timebase_num = stream->time_base.num );
-					pl::pcos::property timebase_den( key_timebase_den_ );
+					pl::pcos::property timebase_den( ml::keys::timebase_den );
 					packet->properties( ).append( timebase_den = stream->time_base.den );
-					pl::pcos::property source_byte_offset( key_source_byte_offset_ );
+					pl::pcos::property source_byte_offset( ml::keys::source_byte_offset );
 					packet->properties( ).append( source_byte_offset = source->last_packet_pos_ );
-					pl::pcos::property duration( key_duration_ );
+					pl::pcos::property duration( ml::keys::duration );
 					packet->properties( ).append( duration = pkt_.duration );
 
-					pl::pcos::property codec_id( key_codec_id_ );
+					pl::pcos::property codec_id( ml::keys::codec_id );
 					packet->properties( ).append( codec_id = int( codec_context->codec_id ) );		
-					pl::pcos::property codec_type( key_codec_type_ );
+					pl::pcos::property codec_type( ml::keys::codec_type );
 					packet->properties( ).append( codec_type = int( codec_context->codec_type ) );
-					pl::pcos::property codec_tag( key_codec_tag_ );
+					pl::pcos::property codec_tag( ml::keys::codec_tag );
 					packet->properties( ).append( codec_tag = boost::int64_t( codec_context->codec_tag ) );
-					pl::pcos::property max_rate( key_max_rate_ );
+					pl::pcos::property max_rate( ml::keys::max_rate );
 					packet->properties( ).append( max_rate = codec_context->rc_max_rate );
-					pl::pcos::property buffer_size( key_buffer_size_ );
+					pl::pcos::property buffer_size( ml::keys::buffer_size );
 					packet->properties( ).append( buffer_size = codec_context->rc_buffer_size );
-					pl::pcos::property bit_rate( key_bit_rate_ );
+					pl::pcos::property bit_rate( ml::keys::bit_rate );
 					packet->properties( ).append( bit_rate = codec_context->bit_rate );
-					pl::pcos::property field_order( key_field_order_ );
+					pl::pcos::property field_order( ml::keys::field_order );
 					packet->properties( ).append( field_order = int( codec_context->field_order ) );
-					pl::pcos::property bits_per_coded_sample( key_bits_per_coded_sample_ );
+					pl::pcos::property bits_per_coded_sample( ml::keys::bits_per_coded_sample );
 					packet->properties( ).append( bits_per_coded_sample = codec_context->bits_per_coded_sample );
-					pl::pcos::property ticks_per_frame( key_ticks_per_frame_ );
+					pl::pcos::property ticks_per_frame( ml::keys::ticks_per_frame );
 					packet->properties( ).append( ticks_per_frame = codec_context->ticks_per_frame );
 
-					pl::pcos::property avg_fps_num( key_avg_fps_num_ );
+					pl::pcos::property avg_fps_num( ml::keys::avg_fps_num );
 					packet->properties( ).append( avg_fps_num = stream->avg_frame_rate.num );
-					pl::pcos::property avg_fps_den( key_avg_fps_den_ );
+					pl::pcos::property avg_fps_den( ml::keys::avg_fps_den );
 					packet->properties( ).append( avg_fps_den = stream->avg_frame_rate.den );
 
-					pl::pcos::property picture_coding_type( key_picture_coding_type_ );
+					pl::pcos::property picture_coding_type( ml::keys::picture_coding_type );
 					packet->properties( ).append( picture_coding_type = ( pkt_.flags == AV_PKT_FLAG_KEY ? 1 : 0 ) );
 
 					manager.cache( id ).put( packet );
@@ -878,7 +853,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
                 do_decode_fetch( result );
             
             // Add the source_timecode prop
-            pcos::property tc_prop( key_source_tc_ );
+            pcos::property tc_prop( ml::keys::source_tc );
             tc_prop = result->get_position( );
             result->properties().append( tc_prop );
         }
@@ -1761,7 +1736,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					image = il::image_type_ptr( images_.back( )->clone( ) );
 
 				// mvitc is deprecated - only supported now to remove the signal
-				if ( ts_pusher_ && ts_filter_->properties( ).get_property_with_key( key_enable_ ).value< int >( ) && image )
+				if ( ts_pusher_ && ts_filter_->properties( ).get_property_with_key( ml::keys::enable ).value< int >( ) && image )
 				{
 					frame_type_ptr temp = frame_type_ptr( new frame_type( ) );
 					temp->set_position( position );
