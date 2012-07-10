@@ -73,6 +73,12 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"r8g8b8";
 	else if ( fmt == PIX_FMT_BGR24 )
 		return L"b8g8r8";
+	else if ( fmt == PIX_FMT_ARGB )
+		return L"a8r8g8b8";
+	else if ( fmt == PIX_FMT_ABGR )
+		return L"a8b8g8r8";
+	else if ( fmt == PIX_FMT_BGRA )
+		return L"b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGBA )
 		return L"b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGB32 )
