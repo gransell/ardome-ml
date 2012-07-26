@@ -429,9 +429,9 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 			, filter_( ml::create_filter( L"rubberband" ) )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
+ 		    , prop_lowpass_( pl::pcos::key::from_string( "lowpass" ) )
 			, prop_speed_( filter_->property( "speed" ) )
 			, prop_samples_( pcos::key::from_string( "samples" ) )
- 		        , prop_lowpass_( pl::pcos::key::from_string( "lowpass" ) )
 			, total_frames_( 0 )
 		{
 			properties( ).append( prop_fps_num_ = 25 );

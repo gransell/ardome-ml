@@ -5,6 +5,6 @@
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/xercesc-2.8-macosx-10.5-universal.tar.bz2 -> xercesc.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/loki-0.1.6.tbz2 -> loki.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/doxygen-1.5.7.1.tbz2 -> doxygen.tbz2
-: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/rubberband-1.5.0-i386_x86.tbz2 -> rubberband.tbz2
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/rubberband-1.7.0-osx_i386_x86_64.tbz2 -> rubberband.tbz2
  owl : bzr://bzr.ardendo.se/data/bzr/owl/trunk
 
