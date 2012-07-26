@@ -338,6 +338,36 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 	return result;
 }
 
+ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
+{
+	ARENFORCE_MSG( !audios.empty(), "Trying to combine empty audio vector" );
+	ARENFORCE_MSG( *audios.begin(), "Null audio objects are not allowed in audio vector" );
+	
+	std::wstring af = (*audios.begin())->af();
+	
+	int channels = 0;
+	for( int i = 0; i < audios.size(); ++i )
+	{
+		if( audios[ i ]->af() != af ) audios[ i ] = coerce( af, audios[ i ] );
+		
+		channels += audios[ i ]->channels();
+	}
+	
+	audio_type_ptr ret = allocate( af, (*audios.begin())->frequency(), channels, (*audios.begin())->samples() );
+	
+	int current_channel = 0;
+	for( int i = 0; i < audios.size(); ++i )
+	{
+		audio_type_ptr a = audios[ i ];
+		for( int ch = 0; ch < a->channels(); ++ch, ++current_channel )
+		{
+			channel_place( ret, a, current_channel, ch );
+		}
+	}
+	
+	return ret;
+}
+
 ML_DECLSPEC audio_type_ptr mix_matrix( audio_type_ptr &a, const std::vector< double > &b, int c )
 {
 	audio_type_ptr result;

@@ -251,6 +251,14 @@ namespace
 			ml::register_lookup( CODEC_ID_MP2, "http://www.ardendo.com/apf/codec/mp2" );
 			ml::register_lookup( CODEC_ID_MP3, "http://www.ardendo.com/apf/codec/mp3" );
 			ml::register_lookup( CODEC_ID_AAC, "http://www.ardendo.com/apf/codec/aac" );
+			ml::register_lookup( CODEC_ID_PCM_S16LE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_S16BE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_U16LE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_U16BE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_S24LE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_S24BE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_U24LE, "http://www.ardendo.com/apf/codec/pcm" );
+			ml::register_lookup( CODEC_ID_PCM_U24BE, "http://www.ardendo.com/apf/codec/pcm" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv25" );
 			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dvcpro" );

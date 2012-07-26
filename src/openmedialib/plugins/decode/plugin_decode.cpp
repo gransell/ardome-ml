@@ -6,6 +6,7 @@
 #include <openmedialib/ml/analyse.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/stream.hpp>
+#include <openmedialib/ml/audio_block.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/thread_pool.hpp>
 #include <opencorelib/cl/function_job.hpp>
@@ -439,10 +440,12 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
+		pl::pcos::property prop_audio_filter_;
 		pl::pcos::property prop_scope_;
 		pl::pcos::property prop_source_uri_;
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
+		ml::filter_type_ptr audio_decoder_;
 		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr codec_to_decoder_;
 		bool initialized_;
@@ -457,6 +460,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			: filter_type( )
 			, prop_inner_threads_( pl::pcos::key::from_string( "inner_threads" ) )
 			, prop_filter_( pl::pcos::key::from_string( "filter" ) )
+			, prop_audio_filter_( pl::pcos::key::from_string( "audio_filter" ) )
 			, prop_scope_( pl::pcos::key::from_string( "scope" ) )
 			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
 			, decoder_( )
@@ -469,6 +473,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		{
 			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
+			properties( ).append( prop_audio_filter_ = pl::wstring( L"" ) );
 			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
 			properties( ).append( prop_source_uri_ = pl::wstring( L"" ) );
 			
@@ -512,19 +517,22 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 	protected:
 
-		ml::filter_type_ptr filter_create( )
+		ml::filter_type_ptr filter_create( const pl::wstring& codec_filter )
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
 			fg->property( "length" ) = get_frames( );
 			
-			ml::filter_type_ptr decode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
+			// FIXME: Create audio decode filter
+			ml::filter_type_ptr decode = ml::create_filter( codec_filter );
 			if ( decode->property( "threads" ).valid( ) ) 
 				decode->property( "threads" ) = prop_inner_threads_.value< int >( );
 			if ( decode->property( "scope" ).valid( ) ) 
 				decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
 			if ( decode->property( "source_uri" ).valid( ) ) 
 				decode->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
+			if ( decode->property( "decode_video" ).valid( ) )
+				decode->property( "decode_video" ) = 1;
 			
 			decode->connect( fg );
 			decode->sync( );
@@ -539,7 +547,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			
 			if ( decoder_.size( ) == 0 )
 			{
-				result = filter_create( );
+				result = filter_create( prop_filter_.value< pl::wstring >( ) );
 				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
 				decoder_.push_back( result );
 				ARLOG_INFO( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
@@ -570,6 +578,9 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 					gop_decoder_->property( "scope" ) = prop_scope_.value< pl::wstring >( );
 				if ( gop_decoder_->property( "source_uri" ).valid( ) ) 
 					gop_decoder_->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
+				if ( gop_decoder_->property( "decode_video" ).valid( ) )
+					gop_decoder_->property( "decode_video" ) = 1;
+				
 				gop_decoder_->connect( analyse );
 				gop_decoder_->sync( );
 				return true;
@@ -582,14 +593,18 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			if ( last_frame_ == 0 )
 			{
 				frame = fetch_from_slot( );
-			
+				
 				// If there is nothing to decode just return frame
-				if( !frame->get_stream( ) )
+				if( !frame->get_stream( ) && !frame->audio_block( ) )
 					return;
 		
 				if( !initialized_ )
 				{
-					initialize( frame );
+					if( frame->get_stream( ) )
+						initialize_video( frame );
+					
+					if( frame->audio_block( ) )
+						initialize_audio( frame );
 					initialized_ = true;
 				}
 				
@@ -613,6 +628,14 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				if ( !frame ) frame = fetch_from_slot( );
 				ml::filter_type_ptr graph;
 				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
+			}
+			
+			// If the frame has an audio block we need to decode that so pass it to the
+			// audio decoder
+			if( audio_decoder_ )
+			{
+				frame_type_ptr audio_frame = perform_audio_decode( frame );
+				frame->set_audio( audio_frame->get_audio( ) );
 			}
 
 			last_frame_ = frame->shallow();
@@ -640,7 +663,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			return frames;
 		}
 
-		void initialize( ml::frame_type_ptr &first_frame )
+		void initialize_video( ml::frame_type_ptr &first_frame )
 		{
 			ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 			ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
@@ -658,7 +681,45 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
 		}
 
+		void initialize_audio( ml::frame_type_ptr &first_frame )
+		{
+			// If the user has set the audio_filter property to something meaningfull
+			// then we honor that.
+			if( prop_audio_filter_.value< pl::wstring >() == L"" )
+			{
+				ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
+				ARENFORCE_MSG( first_frame && first_frame->audio_block( ), "No frame or no stream on frame" );
+				
+				ml::audio::block_type_ptr audio_block = first_frame->audio_block();
+				ARENFORCE_MSG( audio_block->tracks.size(), "No tracks in audio block" );
+				ARENFORCE_MSG( audio_block->tracks.begin()->second.size(),
+							   "No packets in first track in audio block" );
+				
+				olib::t_string codec = audio_block->tracks.begin()->second.begin( )->second->codec( );
+				cl::profile::list::const_iterator it = codec_to_decoder_->find( codec );
+				ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( codec );
+				
+				ARLOG_INFO( "Stream itentifier is %1%. Using decode filter %2%" )( codec )( it->value );
+				
+				prop_audio_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+			}
+			
+			ARENFORCE_MSG( audio_decoder_ = filter_create( prop_audio_filter_.value< pl::wstring >( ) ),
+						   "Failed to create audio decoder filter." )( prop_audio_filter_.value< pl::wstring >( ) );
+			if( audio_decoder_->property( "decode_video" ).valid( ) )
+				audio_decoder_->property( "decode_video" ) = 0;
+		}
+
 	private:
+	
+		frame_type_ptr perform_audio_decode( const frame_type_ptr& frame )
+		{
+			input_type_ptr pusher = audio_decoder_->fetch_slot( 0 );
+			pusher->push( frame );
+			audio_decoder_->seek( get_position( ) );
+			return audio_decoder_->fetch( );
+		}
+	
 		int estimated_gop_size( ) const {
 			if ( estimated_gop_size_ )
 				return estimated_gop_size_;

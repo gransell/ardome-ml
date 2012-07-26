@@ -236,8 +236,9 @@ class stream_manager
 				case CODEC_ID_PCM_S16BE:
 				case CODEC_ID_PCM_U16LE:
 				case CODEC_ID_PCM_U16BE:
-					// PCM packets delivered at the same as fps?
-					calculator.set_pps( source->fps_num_, source->fps_den_ );
+				case CODEC_ID_PCM_S24LE:
+					// PCM packets seem to be delivered in 1024 samples / packet. At least in mp4
+					calculator.set_pps( audio->codec->sample_rate, 1024 );
 					calculator.set_lead_in( 0 );
 					break;
 
