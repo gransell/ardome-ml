@@ -19,9 +19,9 @@ fi
 
 if [ ! -d rubberband-1.5.0 ]; then
 	echo "Extracting rubberband..."
-	unzip -oq ../tmp/rubberband-1.5.0.zip	
+	tar zxf ../tmp/rubberband-1.7.0-win32.tgz
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: unzip rubberband.zip. Terminating."
+		echo "Failed to run: tar zxf rubberband-1.7.0-win32.tgz. Terminating."
 		exit
 	fi
 fi
