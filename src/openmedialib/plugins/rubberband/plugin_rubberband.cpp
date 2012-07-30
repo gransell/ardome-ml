@@ -3,6 +3,7 @@
 // Copyright (C) 2009 Charles Yates
 // Released under the LGPL.
 
+#include <stddef.h>
 #include <rubberband/RubberBandStretcher.h>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
