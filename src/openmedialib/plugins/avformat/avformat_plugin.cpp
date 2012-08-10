@@ -6,6 +6,7 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 #include <map>
 
@@ -24,6 +25,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/algorithm/string.hpp>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -43,19 +45,6 @@ extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
-
-// libavformat codec codec context
-//static AVCodecContext *avctx_opts[ CODEC_TYPE_NB ];
-//static AVFormatContext *avformat_opts;
-
-std::map< CodecID, std::string > codec_name_lookup_;
-std::map< std::string, CodecID > name_codec_lookup_;
-
-static void register_lookup( CodecID codec, std::string name )
-{
-	codec_name_lookup_[ codec ] = name;
-	name_codec_lookup_[ name ] = codec;
-}
 
 const std::wstring avformat_to_oil( int fmt )
 {
@@ -91,6 +80,75 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"yuv422p";
 
 	return L"";
+}
+
+std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
+{
+	switch( codec_id )
+	{
+		case CODEC_ID_MPEG1VIDEO: return "http://www.ardendo.com/apf/codec/mpeg/mpeg1";
+		case CODEC_ID_MPEG2VIDEO: return "http://www.ardendo.com/apf/codec/mpeg/mpeg2";
+		case CODEC_ID_MPEG4: return "http://www.ardendo.com/apf/codec/mpeg/mpeg4";
+		case CODEC_ID_H264: return "http://www.ardendo.com/apf/codec/h264/h264";
+		case CODEC_ID_MP2: return "http://www.ardendo.com/apf/codec/mp2";
+		case CODEC_ID_MP3: return "http://www.ardendo.com/apf/codec/mp3";
+		case CODEC_ID_AAC: return "http://www.ardendo.com/apf/codec/aac";
+		case CODEC_ID_PCM_S16LE: return "http://www.ardendo.com/apf/codec/pcm";
+		case CODEC_ID_PCM_S16BE: return "http://www.ardendo.com/apf/codec/aiff";
+		case CODEC_ID_PCM_U16LE: return "http://www.ardendo.com/apf/codec/pcm";
+		case CODEC_ID_PCM_U16BE: return "http://www.ardendo.com/apf/codec/aiff";
+		case CODEC_ID_PCM_S24LE: return "http://www.ardendo.com/apf/codec/pcm";
+		case CODEC_ID_PCM_S24BE: return "http://www.ardendo.com/apf/codec/aiff";
+		case CODEC_ID_PCM_U24LE: return "http://www.ardendo.com/apf/codec/pcm";
+		case CODEC_ID_PCM_U24BE: return "http://www.ardendo.com/apf/codec/aiff";
+		case CODEC_ID_DVVIDEO: return "http://www.ardendo.com/apf/codec/dv/dvcpro";
+		case CODEC_ID_DNXHD: return "http://www.ardendo.com/apf/codec/vc3/vc3";
+	}
+
+	return "";
+}
+
+CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
+{
+	std::string apf_codec_id = stream->codec( );
+	const std::string prefix = "http://www.ardendo.com/apf/codec/";
+	ARENFORCE( boost::algorithm::starts_with( apf_codec_id, prefix ) );
+	apf_codec_id = apf_codec_id.substr( prefix.size() );
+
+	if( apf_codec_id == "mpeg/mpeg1" )
+		return CODEC_ID_MPEG1VIDEO;
+	else if( apf_codec_id == "mpeg/mpeg2" )
+		return CODEC_ID_MPEG2VIDEO;
+	else if( apf_codec_id == "h264/h264" )
+		return CODEC_ID_H264;
+	else if( apf_codec_id == "mp2" )
+		return CODEC_ID_MP2;
+	else if( apf_codec_id == "mp3" )
+		return CODEC_ID_MP3;
+	else if( apf_codec_id == "aac" )
+		return CODEC_ID_AAC;
+	else if( apf_codec_id == "dv/dv" || apf_codec_id == "dv/dv25" || apf_codec_id == "dv/dvcpro" )
+		return CODEC_ID_DVVIDEO;
+	else if( apf_codec_id == "vc3/vc3" )
+		return CODEC_ID_DNXHD;
+	else if( apf_codec_id == "pcm" )
+	{
+		int sample_size = stream->sample_size( );
+		if( sample_size == 2 )
+			return CODEC_ID_PCM_S16LE;
+		else if( sample_size == 3 )
+			return CODEC_ID_PCM_S24LE;
+	}
+	else if( apf_codec_id == "aiff" )
+	{
+		int sample_size = stream->sample_size( );
+		if( sample_size == 2 )
+			return CODEC_ID_PCM_S16BE;
+		else if( sample_size == 3 )
+			return CODEC_ID_PCM_S24BE;
+	}
+	
+	return CODEC_ID_NONE;
 }
 
 const PixelFormat oil_to_avformat( const std::wstring &fmt )
@@ -243,26 +301,6 @@ namespace
 				av_log_set_level( atoi(  getenv( "AML_AVFORMAT_DEBUG" ) ) );
 
 			av_lockmgr_register( ml::lockmgr );
-
-			ml::register_lookup( CODEC_ID_MPEG1VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg1" );
-			ml::register_lookup( CODEC_ID_MPEG2VIDEO, "http://www.ardendo.com/apf/codec/mpeg/mpeg2" );
-			ml::register_lookup( CODEC_ID_MPEG4, "http://www.ardendo.com/apf/codec/mpeg/mpeg4" );
-			ml::register_lookup( CODEC_ID_H264, "http://www.ardendo.com/apf/codec/h264/h264" );
-			ml::register_lookup( CODEC_ID_MP2, "http://www.ardendo.com/apf/codec/mp2" );
-			ml::register_lookup( CODEC_ID_MP3, "http://www.ardendo.com/apf/codec/mp3" );
-			ml::register_lookup( CODEC_ID_AAC, "http://www.ardendo.com/apf/codec/aac" );
-			ml::register_lookup( CODEC_ID_PCM_S16LE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_S16BE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_U16LE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_U16BE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_S24LE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_S24BE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_U24LE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_PCM_U24BE, "http://www.ardendo.com/apf/codec/pcm" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dv25" );
-			ml::register_lookup( CODEC_ID_DVVIDEO, "http://www.ardendo.com/apf/codec/dv/dvcpro" );
-			ml::register_lookup( CODEC_ID_DNXHD, "http://www.ardendo.com/apf/codec/vc3/vc3" );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

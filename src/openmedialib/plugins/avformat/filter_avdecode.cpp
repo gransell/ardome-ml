@@ -36,6 +36,8 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "utils.hpp"
+
 #include "avformat_wrappers.hpp"
 #include "avformat_stream.hpp"
 
@@ -45,9 +47,6 @@ namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml {
-
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -71,12 +70,12 @@ static bool is_imx( const std::string &codec )
 	return boost::algorithm::ends_with( codec, "imx" );
 }
 	
-void create_video_codec( const std::string& codec_id, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads )
+void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads )
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
 	*context = avcodec_alloc_context( );
-	*codec = avcodec_find_decoder( name_codec_lookup_[ codec_id ] );
-	ARENFORCE_MSG( codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ codec_id ] )( codec_id );
+	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
+	ARENFORCE_MSG( codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
 
 	// Work around for broken Omneon IMX streams which incorrectly assign the low delay flag in their encoder
 	if ( i_frame_only )
@@ -89,18 +88,18 @@ void create_video_codec( const std::string& codec_id, AVCodecContext **context, 
 
 }
 
-void create_audio_codec( const std::string& codec_id, AVCodecContext **context, AVCodec **codec, int sample_rate, int channels )
+void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, int sample_rate, int channels )
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
 	*context = avcodec_alloc_context( );
-	*codec = avcodec_find_decoder( name_codec_lookup_[ codec_id ] );
-	ARENFORCE_MSG( codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( name_codec_lookup_[ codec_id ] )( codec_id );
+	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
+	ARENFORCE_MSG( *codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
 	// We need to set these for avformat to know how to attach the codec
 	(*context)->sample_rate = sample_rate;
 	(*context)->channels = channels;
 	avcodec_open2( *context, *codec, 0 );
 
-	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( codec_id )( (*codec)->id );
+	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( stream->codec( ) )( (*codec)->id );
 	
 }
 
@@ -403,7 +402,7 @@ class stream_queue
 
 			if ( context_ == 0 )
 			{
-				create_video_codec( result->get_stream()->codec( ), &context_, &codec_, result->get_stream()->estimated_gop_size() == 1, threads_ );
+				create_video_codec( result->get_stream(), &context_, &codec_, result->get_stream()->estimated_gop_size() == 1, threads_ );
 				avcodec_flush_buffers( context_);
 			}
 
@@ -740,7 +739,7 @@ private:
 			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ][ 0 ];
 			ARENFORCE_MSG( strm, "No stream available for first requested track" )( tracks_to_decode_[ i ] );
 
-			create_audio_codec( strm->codec(), &audio_contexts_[ i ], &audio_codecs_[ i ], strm->frequency(), strm->channels() );
+			create_audio_codec( strm, &audio_contexts_[ i ], &audio_codecs_[ i ], strm->frequency(), strm->channels() );
 			
 			reseats_[ tracks_to_decode_[ i ] ] = audio::create_reseat( );
 		}

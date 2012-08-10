@@ -695,7 +695,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				ARENFORCE_MSG( audio_block->tracks.begin()->second.size(),
 							   "No packets in first track in audio block" );
 				
-				olib::t_string codec = audio_block->tracks.begin()->second.begin( )->second->codec( );
+				std::string codec = audio_block->tracks.begin()->second.begin( )->second->codec( );
 				cl::profile::list::const_iterator it = codec_to_decoder_->find( codec );
 				ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( codec );
 				

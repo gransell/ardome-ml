@@ -80,6 +80,9 @@ class ML_DECLSPEC stream_type
 		/// Returns the samples associated to the audio in the packet (0 if n/a)
 		virtual const int samples( ) const { return 0; }
 
+		/// Returns the sample size of the audio in the packet (0 if n/a)
+		virtual const int sample_size( ) const { return 0; }
+
 		/// Moves to the next packet (reimplement on relevant subclasses)
 		virtual bool next( ) { return false; }
 

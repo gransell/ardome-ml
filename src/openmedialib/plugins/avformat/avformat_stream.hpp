@@ -9,10 +9,9 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
-namespace olib { namespace openmedialib { namespace ml {
+#include "utils.hpp"
 
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
+namespace olib { namespace openmedialib { namespace ml {
 
 class stream_avformat : public ml::stream_type
 {
@@ -33,12 +32,12 @@ class stream_avformat : public ml::stream_type
 			, frequency_( 0 )
 			, channels_( 0 )
 			, samples_( 0 )
+			, sample_size_( 0 )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
-			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
-				codec_ = codec_name_lookup_[ codec ];
+			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
 
 		// Constructor with known codec name
@@ -58,6 +57,7 @@ class stream_avformat : public ml::stream_type
 			, frequency_( 0 )
 			, channels_( 0 )
 			, samples_( 0 )
+			, sample_size_( 0 )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
@@ -66,7 +66,7 @@ class stream_avformat : public ml::stream_type
 
 		/// Constructor for a audio packet
 		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
-			int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf, 
+			int frequency, int channels, int samples, int sample_size, const olib::openpluginlib::wstring& pf, 
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
@@ -80,12 +80,12 @@ class stream_avformat : public ml::stream_type
 			, frequency_( frequency )
 			, channels_( channels )
 			, samples_( samples )
+			, sample_size_( sample_size )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
-			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
-				codec_ = codec_name_lookup_[ codec ];
+			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
 
 		/// Virtual destructor
@@ -181,6 +181,12 @@ class stream_avformat : public ml::stream_type
 		{ 
 			return samples_; 
 		}
+
+		/// Returns the sample size of the audio in the packet (0 if n/a)
+		virtual const int sample_size( ) const
+		{
+			return sample_size_;
+		}
 	
 		virtual const olib::openpluginlib::wstring pf( ) const 
 		{ 
@@ -207,6 +213,7 @@ class stream_avformat : public ml::stream_type
 		int frequency_;
 		int channels_;
 		int samples_;
+		int sample_size_;
 		olib::openpluginlib::wstring pf_;
 		olib::openimagelib::il::field_order_flags field_order_;
 		int estimated_gop_size_;

@@ -14,3 +14,4 @@ http://www.ardendo.com/apf/codec/avc/avc = mcdecode
 http://www.ardendo.com/apf/codec/mp2 = avdecode
 http://www.ardendo.com/apf/codec/aac = avdecode
 http://www.ardendo.com/apf/codec/pcm = avdecode
+http://www.ardendo.com/apf/codec/aiff = avdecode

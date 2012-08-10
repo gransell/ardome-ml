@@ -171,7 +171,8 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	
 	if( frame->audio_block( ) ) {
 		ml::audio::block_type_ptr audio_block = frame->audio_block();
-		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << ", first = " << audio_block->first << ", count = " << audio_block->count << ", discard = " << audio_block->discard << ", tracks = " << audio_block->tracks.size( ) << endl;
+		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << 
+			", sample size = " << ( audio_block->tracks[0][0]->sample_size( ) * 8 ) << ", first = " << audio_block->first << ", count = " << audio_block->count << ", discard = " << audio_block->discard << ", tracks = " << audio_block->tracks.size( ) << endl;
 		ml::audio::block_type::track_map::iterator it = frame->audio_block()->tracks.begin();
 		for( ; it != frame->audio_block()->tracks.end(); ++it ) {
 			stream << "     Track " << it->first << " : packets = " << print_track_packets( it->second ) << ", codec = " << it->second.begin()->second->codec( ) << ", channels = " << it->second.begin()->second->channels() << endl;

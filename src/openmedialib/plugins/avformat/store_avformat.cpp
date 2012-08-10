@@ -39,6 +39,8 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 }
 
+#include "utils.hpp"
+
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
 
 namespace ml = olib::openmedialib::ml;
@@ -47,9 +49,6 @@ namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
-
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -683,8 +682,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 				stream_type_ptr stream = first_frame_->get_stream( );
-				ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
-				codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+				
+				codec_id = stream_to_avformat_codec_id( stream );
+				ARENFORCE( codec_id != CODEC_ID_NONE );
 				return codec_id;
 			}
 			else if ( prop_vcodec_.value< pl::wstring >( ) != L"" )
@@ -980,8 +980,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				{
 					ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 					stream_type_ptr stream = first_frame_->get_stream( );
-					ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
-					video_enc->codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+					video_enc->codec_id = stream_to_avformat_codec_id( stream );
+					ARENFORCE( video_enc->codec_id != CODEC_ID_NONE );
 					video_enc->codec_type = AVMEDIA_TYPE_VIDEO;
 
 					//video_stream_->stream_copy = 1;

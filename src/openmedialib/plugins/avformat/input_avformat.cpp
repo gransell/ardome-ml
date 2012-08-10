@@ -295,7 +295,6 @@ class stream_manager
 		bool populate( ml::frame_type_ptr result )
 		{
 			// TODO: CORRECTLY DETERMINE AVAILABILITY OF ALL AUDIO PACKETS
-			bool complete = true;
 			int position = result->get_position( );
 
 			// Try to obtain the stream component from the cache
@@ -314,8 +313,11 @@ class stream_manager
 					stream_cache &handler = caches[ *i ];
 					for( int offset = block->first; offset < block->first + block->count; offset ++ )
 					{
-						block->tracks[ track ][ offset ] = handler.fetch( offset );
-						complete = block->tracks[ track ][ offset ] != ml::stream_type_ptr( );
+						ml::stream_type_ptr s = handler.fetch( offset );
+						if( !s )
+							return false;
+
+						block->tracks[ track ][ offset ] = s;
 					}
 					track ++;
 				}
@@ -323,7 +325,7 @@ class stream_manager
 
 			result->set_audio_block( block );
 
-			return packet != ml::stream_type_ptr( ) && complete;
+			return packet != ml::stream_type_ptr( );
 		}
 
 		stream_cache &cache( size_t id )
@@ -442,7 +444,7 @@ class avformat_demux
 
 					case ml::stream_audio:
 						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, manager.cache( id ).expected( ), manager.cache( id ).expected( ),
-																		   0, codec_context->sample_rate, codec_context->channels, 0, L"", il::top_field_first, 0 ) );
+																		   0, codec_context->sample_rate, codec_context->channels, 0, av_get_bytes_per_sample(codec_context->sample_fmt), L"", il::top_field_first, 0 ) );
 						break;
 
 					default:
