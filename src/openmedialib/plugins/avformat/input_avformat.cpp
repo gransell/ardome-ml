@@ -62,25 +62,57 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 
+// The avformat_source abstract class provides the common functionality which 
+// is required for both the avformat_input class (which, by default, will demux 
+// and decode everything on demand) and the avformat_demux class which is used
+// by avformat_input when the packet_stream property is assigned - instead of 
+// decoding this usage will provide a frame with a non-decoded stream_type_ptr 
+// which holds the video packet and an audio::block_type_ptr which holds the 
+// associated and adjacent audio packets.
+//
+// To minimise the impact on the existing avformat_input, avformat_source just
+// holds a collection of member variables which were originally defined as 
+// private to the avformat_input, but are now public to allow access from both
+// avformat_input and avformat_demux.
+
 class avformat_source : public input_type
 {
 	public:
+		// This holds the next frame we expect to receive a request for
 		int expected_;
+
+		// This holds the next (video) packet we expect to receive while demuxing
 		int expected_packet_;
+
+		// This holds the position of the last I frame we demuxed
 		int key_last_;
+
+		// This holds the absolute byte offset in the source input of the last packet
 		boost::int64_t last_packet_pos_;
-		int fps_num_;
-		int fps_den_;
-		int sar_num_;
-		int sar_den_;
-		int width_;
-		int height_;
+
+		// These hold the frame rate of the container
+		int fps_num_, fps_den_;
+
+		// These hold the sample aspect ratio of the video
+		int sar_num_, sar_den_;
+
+		// These hold the dimensions of the video
+		int width_, height_;
+
+		// This holds the last packet read
 		AVPacket pkt_;
+
+		// This holds the avformat context for demuxing the input
 		AVFormatContext *context_;
+
+		// This holds the 'start time' of the first packet in the container
 		int64_t start_time_;
+
+		// This holds the awi index object and is derived from the ts_index property of the input
 		mutable awi_index_ptr aml_index_;
-		std::vector < int > audio_indexes_;
-		std::vector < int > video_indexes_;
+
+		// These hold our internal view of the streams in a media
+		std::vector < int > video_indexes_, audio_indexes_;
 
 		avformat_source( )
 			: expected_( 0 )
@@ -279,17 +311,21 @@ class stream_manager
 		void found( AVPacket &pkt )
 		{
 			// TODO: Handle unindexed positioning...
-
-#if 0
-			if ( source->expected_ == -1 )
+			if ( has_cache_for( pkt.stream_index ) && !source->is_video_stream( pkt.stream_index ) )
 			{
+				stream_cache &handler = caches[ pkt.stream_index ];
+				AVStream *stream = source->get_audio_stream( );
 				double dts = 0;
-				if ( uint64_t( pkt_.dts ) != AV_NOPTS_VALUE )
-					dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( source->start_time_, ml_av_time_base_q, stream->time_base ) );
-				int position = int( dts * source->fps( ) + 0.5 );
+				if ( uint64_t( pkt.pts ) != AV_NOPTS_VALUE )
+					dts = av_q2d( stream->time_base ) * ( pkt.pts - av_rescale_q( source->start_time_, ml_av_time_base_q, stream->time_base ) );
+				int position = ceil( dts * calculator.pps( ) ) - 2;
+				if ( position != handler.expected( ) )
+				{
+					std::cerr << "this packet is " << position << " but we think it's " << handler.expected( ) << std::endl;
+					handler.set_expected( position );
+				}
 				source->expected_ = position;
 			}
-#endif
 		}
 
 		bool populate( ml::frame_type_ptr result )
@@ -1825,6 +1861,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			return ml::audio::samples_for_frame( index, frequency, fps_num_, fps_den_ );
 		}
 
+		boost::uint8_t checksum( AVPacket &pkt )
+		{
+			boost::uint8_t check = 0;
+			for ( size_t i = 0; i < pkt.size; i ++ )
+				check ^= pkt.data[ i ];
+			return check;
+		}
+
 		int decode_audio( bool &got_audio )
 		{
 			int ret = 0;
@@ -1976,6 +2020,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 				// Copy the new samples to the main buffer
 				memcpy( audio_buf_ + audio_buf_used_, audio_buf_temp_, audio_size );
+
+				std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
 				// Decrement the length by the number of bytes parsed
 				len -= ret;
