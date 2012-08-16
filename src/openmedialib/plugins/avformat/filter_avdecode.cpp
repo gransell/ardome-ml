@@ -1042,13 +1042,13 @@ class avformat_video_streamer : public ml::stream_type
 		}
 
 		/// Returns the position of the key frame associated to this packet
-		virtual const int key( ) const
+		virtual const boost::int64_t key( ) const
 		{
 			return stream_ ? stream_->key( ) : 0;
 		}
 
 		/// Returns the position of this packet
-		virtual const int position( ) const
+		virtual const boost::int64_t position( ) const
 		{
 			return stream_ ? stream_->position( ) : 0;
 		}

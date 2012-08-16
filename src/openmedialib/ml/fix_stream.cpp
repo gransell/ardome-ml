@@ -71,10 +71,10 @@ namespace fixers
 			virtual boost::uint8_t *bytes( ) { return &data_[ 16 - boost::int64_t( &data_[ 0 ] ) % 16 ]; }
 
 			/// Returns the position of the key frame associated to this packet
-			virtual const int key( ) const { return key_; }
+			virtual const boost::int64_t key( ) const { return key_; }
 
 			/// Returns the position of this packet
-			virtual const int position( ) const { return position_; }
+			virtual const boost::int64_t position( ) const { return position_; }
 
 			/// Returns the bitrate of the stream this packet belongs to
 			virtual const int bitrate( ) const { return bitrate_; }
@@ -110,8 +110,8 @@ namespace fixers
 			size_t length_;
 			std::vector < boost::uint8_t > data_;
 			olib::openpluginlib::pcos::property_container properties_;
-			int position_;
-			int key_;
+			boost::int64_t position_;
+			boost::int64_t key_;
 			int bitrate_;
 			dimensions size_;
 			fraction sar_;

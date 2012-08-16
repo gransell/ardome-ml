@@ -47,10 +47,10 @@ class ML_DECLSPEC stream_type
 		virtual boost::uint8_t *bytes( ) = 0;
 
 		/// Returns the position of the key frame associated to this packet
-		virtual const int key( ) const = 0;
+		virtual const boost::int64_t key( ) const = 0;
 
 		/// Returns the position of the packet
-		virtual const int position( ) const = 0;
+		virtual const boost::int64_t position( ) const = 0;
 
 		/// Returns the bitrate of the packet
 		virtual const int bitrate( ) const = 0;

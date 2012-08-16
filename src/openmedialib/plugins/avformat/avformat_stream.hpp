@@ -17,7 +17,7 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
+		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -41,7 +41,7 @@ class stream_avformat : public ml::stream_type
 		}
 
 		// Constructor with known codec name
-		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate,
+		stream_avformat( std::string codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -65,7 +65,7 @@ class stream_avformat : public ml::stream_type
 		}
 
 		/// Constructor for a audio packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
+		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			int frequency, int channels, int samples, int sample_size, const olib::openpluginlib::wstring& pf, 
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -129,13 +129,13 @@ class stream_avformat : public ml::stream_type
 		}
 
 		/// Returns the position of the key frame associated to this packet
-		virtual const int key( ) const
+		virtual const boost::int64_t key( ) const
 		{
 			return key_;
 		}
 
 		/// Returns the position of this packet
-		virtual const int position( ) const
+		virtual const boost::int64_t position( ) const
 		{
 			return position_;
 		}
@@ -205,8 +205,8 @@ class stream_avformat : public ml::stream_type
 		size_t length_;
 		std::vector < boost::uint8_t > data_;
 		olib::openpluginlib::pcos::property_container properties_;
-		int position_;
-		int key_;
+		boost::int64_t position_;
+		boost::int64_t key_;
 		int bitrate_;
 		dimensions size_;
 		fraction sar_;
