@@ -93,6 +93,25 @@ class CORE_API lru
 			return result;
 		}
 
+		/// Obtain the highest object in the specified range of index - the selected object becomes the most recently used
+		val_type highest_in_range( key_type upper, key_type lower )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			val_type result;
+			iterator iter = queue_.upper_bound( upper );
+			if ( iter != queue_.begin( ) ) 
+			{
+				iter --;
+				if ( iter->first >= lower )
+				{
+					result = iter->second;
+					lru_.remove( index );
+					lru_.push_back( index );
+				}
+			}
+			return result;
+		}
+
 		/// Wait for an object of the specified index - becomes the most recently used when available
 		val_type wait( key_type index, boost::posix_time::time_duration time )
 		{
@@ -122,20 +141,6 @@ class CORE_API lru
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			queue_.clear( );
 			lru_.clear( );
-		}
-
-		// Determine if the index still exists and if not, return the following one if
-		// it exists - if neither the requested or next exist, return missing
-		key_type following( key_type &index, key_type missing ) const
-		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			pair range = queue_.equal_range( index );
-			key_type result = missing;
-			if ( range.first != queue_.end( ) )
-				result = range.first->first;
-			else if ( range.second != queue_.end( ) )
-				result = range.second->first;
-			return result;
 		}
 
 	private:
