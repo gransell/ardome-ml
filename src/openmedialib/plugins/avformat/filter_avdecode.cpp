@@ -775,36 +775,38 @@ private:
 			avpkt.data = strm->bytes( );
 			avpkt.size = strm->length( );
 			
-			if( avcodec_decode_audio3( track_context, ( short * )( audio_buf_ ), &audio_size, &avpkt ) >= 0 )
+			int error = avcodec_decode_audio3( track_context, ( short * )( audio_buf_ ), &audio_size, &avpkt );
+
+			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
+			
+			last_packet_to_decoder = packets_it->first;
+			
+			int channels = track_context->channels;
+			int frequency = track_context->sample_rate;
+			int samples = audio_size / channels / av_get_bytes_per_sample( track_context->sample_fmt );
+			int buffer_offset = 0;
+			
+			ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%" )
+			( strm->position() )( track )( audio_size )( channels )( frequency )( samples );
+			
+			if( left_to_discard )
 			{
-				ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
-				
-				last_packet_to_decoder = packets_it->first;
-				
-				int channels = track_context->channels;
-				int frequency = track_context->sample_rate;
-				int samples = audio_size / channels / av_get_bytes_per_sample( track_context->sample_fmt );
-				int buffer_offset = 0;
-				
-				if( left_to_discard )
+				if( samples <= left_to_discard )
 				{
-					if( samples <= left_to_discard )
-					{
-						left_to_discard -= samples;
-						continue;
-					}
-					
-					samples -= left_to_discard;
-					buffer_offset = left_to_discard;
-					left_to_discard = 0;
+					left_to_discard -= samples;
+					continue;
 				}
 				
-				ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, audio_size );
-				memcpy( audio->pointer( ), audio_buf_ + buffer_offset, audio->size( ) );
-				audio->set_position( position );
-				
-				track_reseater->append( audio );
+				samples -= left_to_discard;
+				buffer_offset = left_to_discard;
+				left_to_discard = 0;
 			}
+			
+			ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, audio_size );
+			memcpy( audio->pointer( ), audio_buf_ + buffer_offset, audio->size( ) );
+			audio->set_position( position );
+			
+			track_reseater->append( audio );
 		}
 		
 		ARENFORCE_MSG( track_reseater->has( wanted_samples ), "Did not managed to get samples out of audio block." )
