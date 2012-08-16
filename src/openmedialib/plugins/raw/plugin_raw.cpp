@@ -8,6 +8,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <opencorelib/cl/enforce_defines.hpp>
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -154,6 +156,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			}
 
 			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
+			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< pl::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 
