@@ -154,7 +154,7 @@ namespace olib
                 ARENFORCE_WIN( ::SetEnvironmentVariable(env_var_name.c_str(), val.c_str()));
             #else
                 t_format fmt(_CT("%s=%s"));
-                putenv( const_cast<char*>(to_string((fmt % env_var_name % val).str()).c_str()) );
+                setenv( env_var_name.c_str(), val.c_str(), 1 );
             #endif
         }
 

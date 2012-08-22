@@ -209,7 +209,7 @@ namespace fixers
 
 		public:
 			// Fixes the avci frames as required
-			void fix( frame_type_ptr &frame ) const
+			void fix( frame_type_ptr &frame, bool overwrite ) const
 			{
 				type id = UNKNOWN;
 				stream_type_ptr stream = frame->get_stream( );
@@ -254,6 +254,8 @@ namespace fixers
 				// Modify the stream component if required
 				if ( size->second - 512 == stream->length( ) )
 					frame->set_stream( ml::stream_type_ptr( new fix_stream_type( chunk->second, stream ) ) );
+				else if( overwrite && size->second == stream->length( ) )
+					memcpy( frame->get_stream()->bytes( ), &( *chunk->second )[ 0 ], chunk->second->size( ) );
 
 				ARENFORCE_MSG( size->second == frame->get_stream( )->length( ), "Invalid AVCI packet length %1% should be %2%" )( frame->get_stream( )->length( ) )( size->second );
 			}
@@ -288,14 +290,14 @@ namespace fixers
 }
 
 // Accessor for the fix_stream functionality
-ML_DECLSPEC void fix_stream( frame_type_ptr &frame )
+ML_DECLSPEC void fix_stream( frame_type_ptr &frame, bool overwrite )
 {
 	if ( frame && frame->get_stream( ) )
 	{
 		stream_type_ptr stream = frame->get_stream( );
 
 		if ( stream->codec( ) == "http://www.ardendo.com/apf/codec/avc/avc" )
-			fixers::avc::get( )->fix( frame );
+			fixers::avc::get( )->fix( frame, overwrite );
 	}
 }
 

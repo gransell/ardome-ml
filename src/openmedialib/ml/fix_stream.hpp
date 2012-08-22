@@ -14,8 +14,13 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
-// Do any necessary modifications to the stream to make them decodable
-ML_DECLSPEC void fix_stream( frame_type_ptr &frame );
+/** 
+	Do any necessary modifications to the stream to make them decodable
+	@param frame The frame containing the stream that will be modified.
+	@param overwrite If this set then the modifications to the stream will be made inplace
+					 and any existsing headers etc will be overwritten.
+*/
+ML_DECLSPEC void fix_stream( frame_type_ptr &frame, bool overwrite = false );
 
 } } }
 
