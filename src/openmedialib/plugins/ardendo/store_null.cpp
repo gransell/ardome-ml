@@ -28,7 +28,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 		{
 			properties( ).append( prop_enabled_ = 1 );
 			properties( ).append( prop_count_ = 1 );
-			properties( ).append( prop_deferrable_ = 1 );
+			properties( ).append( prop_deferrable_ = 0 );
 		}
 
 		virtual ~store_null( )
