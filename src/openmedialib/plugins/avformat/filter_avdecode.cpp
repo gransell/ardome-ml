@@ -736,7 +736,7 @@ private:
 		
 		for( int i = 0; i < tracks_to_decode_.size( ); ++i )
 		{
-			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ].packets[ 0 ];
+			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ].packets.begin( )->second;
 			ARENFORCE_MSG( strm, "No stream available for first requested track" )( tracks_to_decode_[ i ] );
 
 			create_audio_codec( strm, &audio_contexts_[ tracks_to_decode_[ i ] ], 
@@ -763,7 +763,7 @@ private:
 		audio::track_type::const_iterator packets_it =
 			track_packets.find( next_packets_to_decoders_[ track ] );
 		
-		ARENFORCE_MSG( packets_it != track_packets.end(),
+		ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
 					   "Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
 		
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
