@@ -93,7 +93,7 @@ class CORE_API lru
 			return result;
 		}
 
-		/// Obtain the highest object in the specified range of index - the selected object becomes the most recently used
+		/// Obtain the highest object in the specified range of indexes - the selected object becomes the most recently used
 		val_type highest_in_range( key_type upper, key_type lower )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
@@ -105,8 +105,8 @@ class CORE_API lru
 				if ( iter->first >= lower )
 				{
 					result = iter->second;
-					lru_.remove( index );
-					lru_.push_back( index );
+					lru_.remove( iter->first );
+					lru_.push_back( iter->first );
 				}
 			}
 			return result;

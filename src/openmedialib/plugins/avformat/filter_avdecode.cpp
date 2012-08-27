@@ -692,12 +692,12 @@ public:
 			if ( result->get_position( ) != expected_ )
 			{
 				// Reset the next expected packet pos to the first packet in the first track
-				next_packets_to_decoders_[ *tr_it ] = audio_block->tracks[ *tr_it ].begin()->first;
+				next_packets_to_decoders_[ *tr_it ] = audio_block->tracks[ *tr_it ].packets.begin()->first;
 				reseats_[ *tr_it ]->clear();
-				discard = audio_block->discard;
+				//discard = audio_block->discard;
 			}
 
-			result_audios[ tr_it - tracks_to_decode_.begin() ] = decode_track( audio_block->tracks[ *tr_it ], *tr_it,
+			result_audios[ tr_it - tracks_to_decode_.begin() ] = decode_track( audio_block->tracks[ *tr_it ].packets, *tr_it,
 																			   audio_block->samples, result->get_position( ),
 																			   discard );
 		}
@@ -728,7 +728,7 @@ private:
 		ARENFORCE_MSG( frame->audio_block()->tracks.size( ) >= tracks_to_decode_.back( ),
 					  "Not enough audio tracks in audio block" )( frame->audio_block()->tracks.size( ) )( tracks_to_decode_.back( ) );
 		// Get the codec id of the first track that we are to decode
-		ARENFORCE_MSG( !frame->audio_block()->tracks[ tracks_to_decode_[ 0 ] ].empty(),
+		ARENFORCE_MSG( !frame->audio_block()->tracks[ tracks_to_decode_[ 0 ] ].packets.empty(),
 					  "Audio track %1% not available in audio block. Can not initialize." )( tracks_to_decode_[ 0 ] );
 		
 		audio_contexts_.resize( tracks_to_decode_.size( ) );
@@ -736,7 +736,7 @@ private:
 		
 		for( int i = 0; i < tracks_to_decode_.size( ); ++i )
 		{
-			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ][ 0 ];
+			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ].packets[ 0 ];
 			ARENFORCE_MSG( strm, "No stream available for first requested track" )( tracks_to_decode_[ i ] );
 
 			create_audio_codec( strm, &audio_contexts_[ i ], &audio_codecs_[ i ], strm->frequency(), strm->channels() );
@@ -744,10 +744,9 @@ private:
 			reseats_[ tracks_to_decode_[ i ] ] = audio::create_reseat( );
 		}
 		
-		
 	}
-	
-	audio_type_ptr decode_track( const audio::block_type::channel_map& track_packets, const int track,
+
+	audio_type_ptr decode_track( const audio::track_type::map& track_packets, const int track,
 								 const int wanted_samples, const int position, const int discard )
 	{
 		AVCodecContext *track_context = audio_contexts_[ track ];
@@ -761,7 +760,7 @@ private:
 		int last_packet_to_decoder = 0;
 
 		audio::reseat_ptr track_reseater = reseats_[ track ];
-		audio::block_type::channel_map::const_iterator packets_it =
+		audio::track_type::const_iterator packets_it =
 			track_packets.find( next_packets_to_decoders_[ track ] );
 		
 		ARENFORCE_MSG( packets_it != track_packets.end(),
@@ -816,7 +815,6 @@ private:
 		
 		return track_reseater->retrieve( wanted_samples );
 	}
-	
 	
 	std::vector< AVCodecContext * > audio_contexts_;
 	std::vector< AVCodec * > audio_codecs_;

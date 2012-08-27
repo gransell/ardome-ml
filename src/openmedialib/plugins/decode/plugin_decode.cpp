@@ -692,10 +692,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				
 				ml::audio::block_type_ptr audio_block = first_frame->audio_block();
 				ARENFORCE_MSG( audio_block->tracks.size(), "No tracks in audio block" );
-				ARENFORCE_MSG( audio_block->tracks.begin()->second.size(),
+				ARENFORCE_MSG( audio_block->tracks.begin()->second.packets.size(),
 							   "No packets in first track in audio block" );
 				
-				std::string codec = audio_block->tracks.begin()->second.begin( )->second->codec( );
+				std::string codec = audio_block->tracks.begin()->second.packets.begin( )->second->codec( );
 				cl::profile::list::const_iterator it = codec_to_decoder_->find( codec );
 				ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( codec );
 				

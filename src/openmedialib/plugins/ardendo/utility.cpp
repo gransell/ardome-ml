@@ -136,12 +136,12 @@ void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample )
 		ptr += p;
 	}
 }
-	
-std::string print_track_packets( const ml::audio::block_type::channel_map& track_packets )
+
+std::string print_track_packets( const ml::audio::track_type::map& track_packets )
 {
 	std::stringstream res;
 	res << "[";
-	for( ml::audio::block_type::channel_map::const_iterator it = track_packets.begin(); it != track_packets.end(); ++ it )
+	for( ml::audio::track_type::const_iterator it = track_packets.begin(); it != track_packets.end(); ++ it )
 	{
 		
 		res << it->first;
@@ -168,14 +168,18 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
         << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << " gop = " << frame->get_stream()->estimated_gop_size() << endl;
 	else
 		stream << "Video Stream : No" << endl;
-	
+
 	if( frame->audio_block( ) ) {
 		ml::audio::block_type_ptr audio_block = frame->audio_block();
 		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << 
-			", sample size = " << ( audio_block->tracks.begin()->second.begin()->second->sample_size( ) * 8 ) << ", first = " << audio_block->first << ", count = " << audio_block->count << ", discard = " << audio_block->discard << ", tracks = " << audio_block->tracks.size( ) << endl;
-		ml::audio::block_type::track_map::iterator it = frame->audio_block()->tracks.begin();
+			", sample size = " << ( audio_block->tracks.begin()->second.packets.begin()->second->sample_size( ) * 8 ) << ", first = " << audio_block->first << ", last = " << audio_block->last << ", tracks = " << audio_block->tracks.size( ) << endl;
+		ml::audio::block_type::map::iterator it = frame->audio_block()->tracks.begin();
 		for( ; it != frame->audio_block()->tracks.end(); ++it ) {
-			stream << "     Track " << it->first << " : packets = " << print_track_packets( it->second ) << ", codec = " << it->second.begin()->second->codec( ) << ", channels = " << it->second.begin()->second->channels() << endl;
+			stream << "     Track " << it->first << 
+					  " : packets = " << print_track_packets( it->second.packets ) << 
+					  ", codec = " << it->second.packets.begin()->second->codec( ) << 
+					  ", channels = " << it->second.packets.begin()->second->channels() 
+					  << endl;
 		}
 	}
 	else {
