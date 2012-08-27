@@ -653,15 +653,13 @@ ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int 
 class avformat_audio_decoder
 {
 public:
-	avformat_audio_decoder( const std::vector< int >& tracks_to_decode )
-	: audio_contexts_( 0 )
-	, audio_codecs_( 0 )
-	, tracks_to_decode_( tracks_to_decode )
-	, next_packets_to_decoders_( )
-	, reseats_( )
-	, expected_( -1 )
-	, audio_buf_size_( (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2 )
-	, audio_buf_( static_cast< boost::uint8_t * >( av_malloc( audio_buf_size_ ) ) )
+	avformat_audio_decoder( const std::vector< size_t >& tracks_to_decode )
+		: tracks_to_decode_( tracks_to_decode )
+		, next_packets_to_decoders_( )
+		, reseats_( )
+		, expected_( -1 )
+		, audio_buf_size_( (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2 )
+		, audio_buf_( static_cast< boost::uint8_t * >( av_malloc( audio_buf_size_ ) ) )
 	{
 		ARENFORCE_MSG( tracks_to_decode_.size( ), "List of channels to decode can not be empty" );
 	}
@@ -686,7 +684,7 @@ public:
 		std::vector< audio_type_ptr > result_audios( tracks_to_decode_.size( ) );
 		
 		// Iterate through the tracks that we have been told to decode and get the audio out
-		for( std::vector< int >::const_iterator tr_it = tracks_to_decode_.begin(); tr_it != tracks_to_decode_.end(); ++tr_it )
+		for( std::vector< size_t >::const_iterator tr_it = tracks_to_decode_.begin(); tr_it != tracks_to_decode_.end(); ++tr_it )
 		{
 			int discard = 0;
 			if ( result->get_position( ) != expected_ )
@@ -713,13 +711,18 @@ private:
 	
 	void tear_down_codecs( )
 	{
-		while( !audio_contexts_.empty() )
+		std::map< size_t, AVCodecContext * >::const_iterator it;
+		for( it = audio_contexts_.begin(); it != audio_contexts_.end(); ++it )
 		{
-			AVCodecContext *ctx = audio_contexts_.back( );
-			audio_contexts_.pop_back( );
+			AVCodecContext *ctx = it->second;
 			avcodec_close( ctx );
 			av_free( ctx );
 		}
+
+		audio_contexts_.clear();
+		audio_codecs_.clear();
+		next_packets_to_decoders_.clear();
+		reseats_.clear();
 	}
 	
 	void initialize( const frame_type_ptr& frame )
@@ -731,15 +734,13 @@ private:
 		ARENFORCE_MSG( !frame->audio_block()->tracks[ tracks_to_decode_[ 0 ] ].packets.empty(),
 					  "Audio track %1% not available in audio block. Can not initialize." )( tracks_to_decode_[ 0 ] );
 		
-		audio_contexts_.resize( tracks_to_decode_.size( ) );
-		audio_codecs_.resize( tracks_to_decode_.size( ) );
-		
 		for( int i = 0; i < tracks_to_decode_.size( ); ++i )
 		{
 			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ].packets[ 0 ];
 			ARENFORCE_MSG( strm, "No stream available for first requested track" )( tracks_to_decode_[ i ] );
 
-			create_audio_codec( strm, &audio_contexts_[ i ], &audio_codecs_[ i ], strm->frequency(), strm->channels() );
+			create_audio_codec( strm, &audio_contexts_[ tracks_to_decode_[ i ] ], 
+				&audio_codecs_[ tracks_to_decode_[ i ] ], strm->frequency(), strm->channels() );
 			
 			reseats_[ tracks_to_decode_[ i ] ] = audio::create_reseat( );
 		}
@@ -757,7 +758,6 @@ private:
 		
 		// Discard will be set to 0 after a seek
 		int left_to_discard = discard;
-		int last_packet_to_decoder = 0;
 
 		audio::reseat_ptr track_reseater = reseats_[ track ];
 		audio::track_type::const_iterator packets_it =
@@ -777,8 +777,6 @@ private:
 			int error = avcodec_decode_audio3( track_context, ( short * )( audio_buf_ ), &audio_size, &avpkt );
 
 			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
-			
-			last_packet_to_decoder = packets_it->first;
 			
 			int channels = track_context->channels;
 			int frequency = track_context->sample_rate;
@@ -806,24 +804,27 @@ private:
 			audio->set_position( position );
 			
 			track_reseater->append( audio );
+
+			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
 		ARENFORCE_MSG( track_reseater->has( wanted_samples ), "Did not managed to get samples out of audio block." )
 			( wanted_samples )( discard )( position );
 		
-		next_packets_to_decoders_[ track ] = last_packet_to_decoder + 1;
-		
 		return track_reseater->retrieve( wanted_samples );
 	}
+
+	//The stream indexes of the tracks that we're interested in decoding
+	const std::vector< size_t > tracks_to_decode_;
 	
-	std::vector< AVCodecContext * > audio_contexts_;
-	std::vector< AVCodec * > audio_codecs_;
+	//Maps from stream index to context/codec for that stream
+	std::map< size_t, AVCodecContext * > audio_contexts_;
+	std::map< size_t, AVCodec * > audio_codecs_;
 	int bps_;
 	
-	const std::vector< int > tracks_to_decode_;
 	// Kep track of what packet to feed the decoder next. We need one for eack track
-	std::map< int, int > next_packets_to_decoders_;
-	std::map< int, audio::reseat_ptr > reseats_;
+	std::map< size_t, int > next_packets_to_decoders_;
+	std::map< size_t, audio::reseat_ptr > reseats_;
 	
 	const int audio_buf_size_;
 	boost::uint8_t *audio_buf_;
@@ -890,9 +891,12 @@ class avformat_decode_filter : public filter_simple
 				}
 				else
 				{
-					std::vector< int > tracks;
-					for( int i = 0; i < result->audio_block()->tracks.size(); ++i )
-						tracks.push_back( i );
+					const audio::block_type_ptr &block = result->audio_block();
+					ARENFORCE( block );
+					audio::block_type::const_iterator it;
+					std::vector< size_t > tracks;
+					for( it = block->tracks.begin(); it != block->tracks.end(); ++it )
+						tracks.push_back( it->first );
 					
 					audio_queue_ = avformat_audio_decoder_ptr( new avformat_audio_decoder( tracks ) );
 				}
