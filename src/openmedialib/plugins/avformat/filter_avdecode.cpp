@@ -808,7 +808,7 @@ private:
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
-		ARENFORCE_MSG( track_reseater->has( wanted_samples ), "Did not managed to get samples out of audio block." )
+		ARENFORCE_MSG( track_reseater->has( wanted_samples ), "Did not manage to get samples out of audio block." )
 			( wanted_samples )( discard )( position );
 		
 		return track_reseater->retrieve( wanted_samples );
