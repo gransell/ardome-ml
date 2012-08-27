@@ -783,8 +783,8 @@ private:
 			int samples = audio_size / channels / av_get_bytes_per_sample( track_context->sample_fmt );
 			int buffer_offset = 0;
 			
-			ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%" )
-			( strm->position() )( track )( audio_size )( channels )( frequency )( samples );
+			ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%, discard = %7%" )
+			( audio_size )( strm->position() )( track )( channels )( frequency )( samples )( left_to_discard );
 			
 			if( left_to_discard )
 			{
