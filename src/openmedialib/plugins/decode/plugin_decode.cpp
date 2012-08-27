@@ -623,11 +623,11 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				gop_decoder_->seek( frameno );
 				frame = gop_decoder_->fetch( );
 			}
-			else
+			else 
 			{
 				if ( !frame ) frame = fetch_from_slot( );
-				ml::filter_type_ptr graph;
-				frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
+				if ( frame && frame->get_stream( ) )
+					frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
 			}
 			
 			// If the frame has an audio block we need to decode that so pass it to the
