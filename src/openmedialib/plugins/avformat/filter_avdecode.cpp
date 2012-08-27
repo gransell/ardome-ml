@@ -634,13 +634,13 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 	
 	
 namespace {
-ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int audio_size )
+ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
 {
 	switch ( sample_fmt ) {
 		case AV_SAMPLE_FMT_S32:
-			return audio::pcm32_ptr( new audio::pcm32(freq, channels, audio_size / channels / av_get_bytes_per_sample( sample_fmt ) ) );
+			return audio::pcm32_ptr( new audio::pcm32(freq, channels, samples ) );
 		case AV_SAMPLE_FMT_S16:
-			return audio::pcm16_ptr( new audio::pcm16( freq, channels, audio_size / channels / av_get_bytes_per_sample( sample_fmt ) ) );
+			return audio::pcm16_ptr( new audio::pcm16( freq, channels, samples ) );
 		default:
 			ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
 	}
@@ -795,11 +795,11 @@ private:
 				}
 				
 				samples -= left_to_discard;
-				buffer_offset = left_to_discard;
+				buffer_offset = left_to_discard * channels * av_get_bytes_per_sample( track_context->sample_fmt );
 				left_to_discard = 0;
 			}
 			
-			ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, audio_size );
+			ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, samples );
 			memcpy( audio->pointer( ), audio_buf_ + buffer_offset, audio->size( ) );
 			audio->set_position( position );
 			
