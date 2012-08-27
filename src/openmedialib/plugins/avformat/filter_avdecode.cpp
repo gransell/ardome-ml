@@ -692,7 +692,7 @@ public:
 				// Reset the next expected packet pos to the first packet in the first track
 				next_packets_to_decoders_[ *tr_it ] = audio_block->tracks[ *tr_it ].packets.begin()->first;
 				reseats_[ *tr_it ]->clear();
-				//discard = audio_block->discard;
+				discard = audio_block->tracks[ *tr_it ].discard;
 			}
 
 			result_audios[ tr_it - tracks_to_decode_.begin() ] = decode_track( audio_block->tracks[ *tr_it ].packets, *tr_it,

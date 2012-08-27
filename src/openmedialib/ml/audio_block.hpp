@@ -37,9 +37,9 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 /// [p1][p2....][p3....][p4...]
 ///
 /// To decode the track after a seek, we need to decode all packets and discard
-/// lead_in + first - sample offset of the packet that first falls in. To decode
-/// in sequence, we need to hold any samples from the last decoded packet and
-/// decode any new packets which are provided in the subsequent track.
+/// the number of samples specified. To decode in sequence, we need to hold any 
+/// samples from the last decoded packet and decode any new packets which are 
+/// provided in the subsequent track.
 
 typedef ML_DECLSPEC struct track
 {
@@ -48,14 +48,15 @@ typedef ML_DECLSPEC struct track
 	typedef map::const_iterator const_iterator;
 
 	track( )
-	: lead_in( 0 )
+	: index( 0 )
+	, discard( 0 )
 	{ }
 
 	// Index of the stream
 	size_t index;
 
 	// Number of samples to discard after a seek from the first packet in the map
-	boost::int64_t lead_in;
+	int discard;
 
 	// Provides the audio packets associated to the block
 	map packets;

@@ -615,6 +615,7 @@ class avformat_demux
 					if ( success )
 					{
 						block->tracks[ index ].packets[ audio->position( ) ] = audio;
+						block->tracks[ index ].discard = cache.lead_in( );
 
 						for( boost::int64_t offset = audio->position( ) + audio->samples( ); offset < block->last + cache.lead_in( ); )
 						{
@@ -623,6 +624,10 @@ class avformat_demux
 							if ( !success ) break;
 							block->tracks[ index ].packets[ offset ] = audio;
 							offset += audio->samples( );
+
+							// Calculate the discard if the first sample we want for this frame falls in this stream component
+							if ( block->first >= audio->position( ) && block->first < offset )
+								block->tracks[ index ].discard += audio->position( ) - block->first;
 						}
 					}
 				}
