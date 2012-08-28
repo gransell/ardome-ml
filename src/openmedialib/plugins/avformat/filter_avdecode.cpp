@@ -786,6 +786,9 @@ private:
 			else
 				avcodec_get_frame_defaults( decoded_frame_ );
 			
+			avpkt.data = strm->bytes( );
+			avpkt.size = strm->length( );
+			
 			int got_frame = 0;
 			int length = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
 			
