@@ -73,10 +73,12 @@ static bool is_imx( const std::string &codec )
 void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads )
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
-	*context = avcodec_alloc_context( );
 	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
 	ARENFORCE_MSG( codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
-
+	
+	*context = avcodec_alloc_context3( *codec );
+	ARENFORCE_MSG( *context, "Failed to allocate codec context" );
+	
 	// Work around for broken Omneon IMX streams which incorrectly assign the low delay flag in their encoder
 	if ( i_frame_only )
 		(*context)->flags |= CODEC_FLAG_LOW_DELAY;
@@ -85,22 +87,37 @@ void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context
 	
 	avcodec_open2( *context, *codec, 0 );
 	ARLOG_DEBUG5( "Creating new avcodec decoder context" );
-
 }
 
 void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, int sample_rate, int channels )
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
-	*context = avcodec_alloc_context( );
 	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
 	ARENFORCE_MSG( *codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
+	
+	*context = avcodec_alloc_context3( *codec );
+	ARENFORCE_MSG( *context, "Failed to allocate codec context" );
+	
 	// We need to set these for avformat to know how to attach the codec
 	(*context)->sample_rate = sample_rate;
 	(*context)->channels = channels;
 	avcodec_open2( *context, *codec, 0 );
-
-	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( stream->codec( ) )( (*codec)->id );
 	
+	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( stream->codec( ) )( (*codec)->id );
+}
+	
+ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
+{
+	switch ( sample_fmt ) {
+		case AV_SAMPLE_FMT_S32:
+			return audio::pcm32_ptr( new audio::pcm32(freq, channels, samples ) );
+		case AV_SAMPLE_FMT_S16:
+			return audio::pcm16_ptr( new audio::pcm16( freq, channels, samples ) );
+		default:
+			ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
+	}
+	
+	return ml::audio_type_ptr();
 }
 
 	
@@ -485,24 +502,34 @@ class stream_queue
 					break;
 
 				case ml::stream_audio:
-
-					avpkt.data = pkt->bytes( );
-					avpkt.size = pkt->length( );
-
-					if ( avcodec_decode_audio3( context_, ( short * )( audio_buf_ ), &audio_size, &avpkt ) >= 0 )
 					{
-						int channels = context_->channels;
-						int frequency = context_->sample_rate;
 
-						audio::pcm16_ptr audio = audio::pcm16_ptr( new audio::pcm16( frequency, channels, audio_size / channels / 2 ) );
-						memcpy( audio->pointer( ), audio_buf_, audio->size( ) );
-						audio->set_position( pkt->position( ) );
-						result->set_audio( audio );
+						avpkt.data = pkt->bytes( );
+						avpkt.size = pkt->length( );
+						
+						avcodec_get_frame_defaults( frame_ );
+						
+						int got_frame = 0;
+						int length = avcodec_decode_audio4( context_, frame_, &got_frame, &avpkt );
+						
+						ARENFORCE_MSG( length >= 0 , "Error decoding audio. Error = %2%" )( length );
 
-						if ( result->get_position( ) >= position + offset_ )
-							found = true;
+						if ( got_frame )
+						{
+							int channels = context_->channels;
+							int frequency = context_->sample_rate;
+							int samples = frame_->nb_samples;
 
-						expected_ ++;
+							audio_type_ptr audio = av_sample_fmt_to_audio( context_->sample_fmt, frequency, channels, samples );
+							memcpy( audio->pointer( ), frame_->data[ 0 ], audio->size( ) );
+							audio->set_position( pkt->position( ) );
+							result->set_audio( audio );
+
+							if ( result->get_position( ) >= position + offset_ )
+								found = true;
+
+							expected_ ++;
+						}
 					}
 					break;
 
@@ -633,33 +660,15 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 };
 	
 	
-namespace {
-ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
-{
-	switch ( sample_fmt ) {
-		case AV_SAMPLE_FMT_S32:
-			return audio::pcm32_ptr( new audio::pcm32(freq, channels, samples ) );
-		case AV_SAMPLE_FMT_S16:
-			return audio::pcm16_ptr( new audio::pcm16( freq, channels, samples ) );
-		default:
-			ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
-	}
-	
-	return ml::audio_type_ptr();
-}
-}
-	
-	
 class avformat_audio_decoder
 {
 public:
 	avformat_audio_decoder( const std::vector< size_t >& tracks_to_decode )
 		: tracks_to_decode_( tracks_to_decode )
 		, next_packets_to_decoders_( )
+		, decoded_frame_( 0 )
 		, reseats_( )
 		, expected_( -1 )
-		, audio_buf_size_( (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2 )
-		, audio_buf_( static_cast< boost::uint8_t * >( av_malloc( audio_buf_size_ ) ) )
 	{
 		ARENFORCE_MSG( tracks_to_decode_.size( ), "List of channels to decode can not be empty" );
 	}
@@ -667,8 +676,6 @@ public:
 	virtual ~avformat_audio_decoder()
 	{
 		tear_down_codecs( );
-		
-		av_free( audio_buf_ );
 	}
 	
 	void decode( const frame_type_ptr& result )
@@ -718,6 +725,9 @@ private:
 			avcodec_close( ctx );
 			av_free( ctx );
 		}
+		
+		if( decoded_frame_ != 0 )
+			av_free( decoded_frame_ );
 
 		audio_contexts_.clear();
 		audio_codecs_.clear();
@@ -752,7 +762,6 @@ private:
 	{
 		AVCodecContext *track_context = audio_contexts_[ track ];
 		
-		int audio_size = audio_buf_size_;
 		AVPacket avpkt;
 		av_init_packet( &avpkt );
 		
@@ -771,40 +780,46 @@ private:
 			stream_type_ptr strm = packets_it->second;
 			ARENFORCE_MSG( strm, "No stream available on packet %1%" )( packets_it->first );
 	
-			avpkt.data = strm->bytes( );
-			avpkt.size = strm->length( );
+			if( decoded_frame_ == 0 ) {
+				ARENFORCE_MSG( decoded_frame_ = avcodec_alloc_frame( ) , "Failed to allocate AVFrame for decoding. Out of memory?" );
+			}
+			else
+				avcodec_get_frame_defaults( decoded_frame_ );
 			
-			int error = avcodec_decode_audio3( track_context, ( short * )( audio_buf_ ), &audio_size, &avpkt );
-
-			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
+			int got_frame = 0;
+			int length = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
 			
-			int channels = track_context->channels;
-			int frequency = track_context->sample_rate;
-			int samples = audio_size / channels / av_get_bytes_per_sample( track_context->sample_fmt );
-			int buffer_offset = 0;
+			ARENFORCE_MSG( length >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( length );
 			
-			ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%, discard = %7%" )
-			( audio_size )( strm->position() )( track )( channels )( frequency )( samples )( left_to_discard );
-			
-			if( left_to_discard )
-			{
-				if( samples <= left_to_discard )
+			if( got_frame )
+			{				
+				int channels = track_context->channels;
+				int frequency = track_context->sample_rate;
+				int samples = decoded_frame_->nb_samples;
+				int buffer_offset = 0;
+				
+				ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%" )
+				(length)( strm->position() )( track )( channels )( frequency )( samples );
+				
+				if( left_to_discard )
 				{
-					left_to_discard -= samples;
-					continue;
+					if( samples <= left_to_discard )
+					{
+						left_to_discard -= samples;
+						continue;
+					}
+					
+					samples -= left_to_discard;
+					buffer_offset = left_to_discard * channels * av_get_bytes_per_sample( track_context->sample_fmt );
+					left_to_discard = 0;
 				}
 				
-				samples -= left_to_discard;
-				buffer_offset = left_to_discard * channels * av_get_bytes_per_sample( track_context->sample_fmt );
-				left_to_discard = 0;
+				ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, samples );
+				memcpy( audio->pointer( ), decoded_frame_->data[ 0 ], audio->size( ) );
+				audio->set_position( position );
+				
+				track_reseater->append( audio );
 			}
-			
-			ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, samples );
-			memcpy( audio->pointer( ), audio_buf_ + buffer_offset, audio->size( ) );
-			audio->set_position( position );
-			
-			track_reseater->append( audio );
-
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
@@ -820,15 +835,12 @@ private:
 	//Maps from stream index to context/codec for that stream
 	std::map< size_t, AVCodecContext * > audio_contexts_;
 	std::map< size_t, AVCodec * > audio_codecs_;
-	int bps_;
+	AVFrame *decoded_frame_;
 	
 	// Kep track of what packet to feed the decoder next. We need one for eack track
 	std::map< size_t, int > next_packets_to_decoders_;
 	std::map< size_t, audio::reseat_ptr > reseats_;
 	
-	const int audio_buf_size_;
-	boost::uint8_t *audio_buf_;
-
 	int expected_;
 };
 	
