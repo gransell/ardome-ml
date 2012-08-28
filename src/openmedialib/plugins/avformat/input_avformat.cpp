@@ -510,7 +510,7 @@ class avformat_demux
 			{
 				case CODEC_ID_AAC:
 					// If we're reading AAC we have 1024 samples per packet = 375/8 fps at 48 KHz.
-					lead_in = 3 * 1024;
+					lead_in = 1 * 1024;
 					break;
 
 				case CODEC_ID_AC3:

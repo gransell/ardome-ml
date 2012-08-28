@@ -790,10 +790,12 @@ private:
 			avpkt.size = strm->length( );
 			
 			int got_frame = 0;
-			int length = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
+			int error = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
 			
-			ARENFORCE_MSG( length >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( length );
+			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
 			
+			next_packets_to_decoders_[ track ] += packets_it->second->samples();
+
 			if( got_frame )
 			{				
 				int channels = track_context->channels;
@@ -801,8 +803,8 @@ private:
 				int samples = decoded_frame_->nb_samples;
 				int buffer_offset = 0;
 				
-				ARLOG_DEBUG7( "Managed to decode %1% bytes of data from packet %2% on track %3%. Channels = %4%, frequency = %5%, samples = %6%" )
-				(length)( strm->position() )( track )( channels )( frequency )( samples );
+				ARLOG_DEBUG7( "Managed to decode packet %1% on track %2%. Channels = %3%, frequency = %4%, samples = %5%, discard = %6%" )
+				( strm->position() )( track )( channels )( frequency )( samples )( left_to_discard );
 				
 				if( left_to_discard )
 				{
@@ -823,7 +825,6 @@ private:
 				
 				track_reseater->append( audio );
 			}
-			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
 		audio_type_ptr ret;
