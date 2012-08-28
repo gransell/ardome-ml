@@ -826,10 +826,22 @@ private:
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
-		if( !track_reseater->has( wanted_samples ) )
-			ARLOG_WARN( "Did not manage to get enough samples out of audio block." )( wanted_samples )( discard )( position );
+		audio_type_ptr ret;
 		
-		return track_reseater->retrieve( wanted_samples, true );
+		if( !track_reseater->has( wanted_samples ) )
+		{
+			ARLOG_WARN( "Did not manage to get enough samples out of audio block." )( wanted_samples )( discard )( position );
+		}
+		
+		// Track reseater having 0 samples is a special case since we need to
+		// create the audio object manually. This is because the reseater does not
+		// cache the information
+		if( track_reseater->size( ) == 0 )
+			ret = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, wanted_samples );
+		else
+			ret = track_reseater->retrieve( wanted_samples, true );
+		
+		return ret;
 	}
 
 	//The stream indexes of the tracks that we're interested in decoding
