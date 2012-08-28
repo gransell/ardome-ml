@@ -818,7 +818,7 @@ private:
 				}
 				
 				ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, samples );
-				memcpy( audio->pointer( ), decoded_frame_->data[ 0 ], audio->size( ) );
+				memcpy( audio->pointer( ), decoded_frame_->data[ 0 ] + buffer_offset, audio->size( ) );
 				audio->set_position( position );
 				
 				track_reseater->append( audio );
@@ -826,10 +826,10 @@ private:
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 		}
 		
-		ARENFORCE_MSG( track_reseater->has( wanted_samples ), "Did not manage to get samples out of audio block." )
-			( wanted_samples )( discard )( position );
+		if( !track_reseater->has( wanted_samples ) )
+			ARLOG_WARN( "Did not manage to get enough samples out of audio block." )( wanted_samples )( discard )( position );
 		
-		return track_reseater->retrieve( wanted_samples );
+		return track_reseater->retrieve( wanted_samples, true );
 	}
 
 	//The stream indexes of the tracks that we're interested in decoding
