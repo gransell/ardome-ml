@@ -103,6 +103,7 @@ std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
 		case CODEC_ID_PCM_U24BE: return "http://www.ardendo.com/apf/codec/aiff";
 		case CODEC_ID_DVVIDEO: return "http://www.ardendo.com/apf/codec/dv/dvcpro";
 		case CODEC_ID_DNXHD: return "http://www.ardendo.com/apf/codec/vc3/vc3";
+		default: return "";
 	}
 
 	return "";
