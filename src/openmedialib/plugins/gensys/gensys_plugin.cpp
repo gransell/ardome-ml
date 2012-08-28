@@ -191,25 +191,6 @@ inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, u
 static pl::pcos::key key_is_background_( pcos::key::from_string( "is_background" ) );
 static pl::pcos::key key_use_last_image_( pcos::key::from_string( "use_last_image" ) );
 
-static bool has_image( frame_type_ptr &frame )
-{
-	pl::pcos::property use_last = frame->properties( ).get_property_with_key( key_use_last_image_ );
-	bool result = use_last.valid( ) && use_last.value< int >( ) == 1;
-	if ( !result )
-	{
-		std::deque< frame_type_ptr > queue = frame_type::unfold( frame->shallow( ) );
-		for ( std::deque< frame_type_ptr >::iterator iter = queue.begin( ); !result && iter != queue.end( ); ++iter )
-		{
-			if ( *iter && ( *iter )->has_image( ) )
-			{
-				pl::pcos::property prop = ( *iter )->properties( ).get_property_with_key( key_is_background_ );
-				result = !prop.valid( ) || prop.value< int >( ) == 0;
-			}
-		}
-	}
-	return result;
-}
-
 // A frame generator which provides a fixed colour
 //
 // NB: Decided to expose the user specified colour at a sample level rather 

@@ -9,16 +9,15 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
-namespace olib { namespace openmedialib { namespace ml {
+#include "utils.hpp"
 
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
+namespace olib { namespace openmedialib { namespace ml {
 
 class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
+		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -33,16 +32,16 @@ class stream_avformat : public ml::stream_type
 			, frequency_( 0 )
 			, channels_( 0 )
 			, samples_( 0 )
+			, sample_size_( 0 )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
-			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
-				codec_ = codec_name_lookup_[ codec ];
+			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
 
 		// Constructor with known codec name
-		stream_avformat( std::string codec, size_t length, int position, int key, int bitrate,
+		stream_avformat( std::string codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -58,6 +57,7 @@ class stream_avformat : public ml::stream_type
 			, frequency_( 0 )
 			, channels_( 0 )
 			, samples_( 0 )
+			, sample_size_( 0 )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
@@ -65,8 +65,8 @@ class stream_avformat : public ml::stream_type
 		}
 
 		/// Constructor for a audio packet
-		stream_avformat( CodecID codec, size_t length, int position, int key, int bitrate,
-			int frequency, int channels, int samples, const olib::openpluginlib::wstring& pf, 
+		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
+			int frequency, int channels, int samples, int sample_size, const olib::openpluginlib::wstring& pf, 
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
@@ -80,12 +80,12 @@ class stream_avformat : public ml::stream_type
 			, frequency_( frequency )
 			, channels_( channels )
 			, samples_( samples )
+			, sample_size_( sample_size )
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
 		{
-			if ( codec_name_lookup_.find( codec ) != codec_name_lookup_.end( ) )
-				codec_ = codec_name_lookup_[ codec ];
+			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
 
 		/// Virtual destructor
@@ -129,13 +129,13 @@ class stream_avformat : public ml::stream_type
 		}
 
 		/// Returns the position of the key frame associated to this packet
-		virtual const int key( ) const
+		virtual const boost::int64_t key( ) const
 		{
 			return key_;
 		}
 
 		/// Returns the position of this packet
-		virtual const int position( ) const
+		virtual const boost::int64_t position( ) const
 		{
 			return position_;
 		}
@@ -181,6 +181,12 @@ class stream_avformat : public ml::stream_type
 		{ 
 			return samples_; 
 		}
+
+		/// Returns the sample size of the audio in the packet (0 if n/a)
+		virtual const int sample_size( ) const
+		{
+			return sample_size_;
+		}
 	
 		virtual const olib::openpluginlib::wstring pf( ) const 
 		{ 
@@ -199,14 +205,15 @@ class stream_avformat : public ml::stream_type
 		size_t length_;
 		std::vector < boost::uint8_t > data_;
 		olib::openpluginlib::pcos::property_container properties_;
-		int position_;
-		int key_;
+		boost::int64_t position_;
+		boost::int64_t key_;
 		int bitrate_;
 		dimensions size_;
 		fraction sar_;
 		int frequency_;
 		int channels_;
 		int samples_;
+		int sample_size_;
 		olib::openpluginlib::wstring pf_;
 		olib::openimagelib::il::field_order_flags field_order_;
 		int estimated_gop_size_;

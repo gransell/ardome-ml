@@ -35,6 +35,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			, context_( 0 )
 			, codec_( 0 )
 			, picture_( 0 )
+			, pkt_( )
 			, video_codec_( "" )
 			, stream_codec_id_( "" )
 			, outbuf_size_( 0 )
@@ -252,8 +253,12 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 			if( codec( ) )
 			{
-				int out_size = 0;
 				bool new_image = frame && frame->get_image( );
+				int got_packet = 0, error = 0;
+				
+				av_init_packet( &pkt_ );
+				pkt_.data = outbuf_;
+				pkt_.size = outbuf_size_;
 
 				if ( new_image )
 				{
@@ -270,23 +275,24 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 						picture_->top_field_first = ( field_order_ == il::top_field_first );
 					}
 
-					out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, picture_ );
+					error = avcodec_encode_video2( context_, &pkt_, picture_, &got_packet );
 				}
 				else
 				{
-					out_size = avcodec_encode_video( context_, outbuf_, outbuf_size_, 0 );
+					error = avcodec_encode_video2( context_, &pkt_, 0, &got_packet );
 				}
+				
+				ARENFORCE_MSG( error == 0, "Failed to encode frame. Error = %1%" )( error );
 
 				if ( context_->coded_frame && context_->coded_frame->key_frame )
 					key_ = position_;
 
-				stream = new stream_avformat( stream_codec_id_, out_size, position_, key_, context_->bit_rate, dim_, sar_, pf_, field_order_, context_->gop_size );
+				stream = new stream_avformat( stream_codec_id_, pkt_.size, position_, key_, context_->bit_rate, dim_, sar_, pf_, field_order_, context_->gop_size );
 
-				if ( out_size )
-					memcpy( stream->bytes( ), outbuf_, out_size );
-
-				if ( out_size )
-					position_ ++;
+				if( got_packet ) {
+					memcpy( stream->bytes( ), outbuf_, pkt_.size );
+					position_++;
+				}
 			}
 
 			return ml::stream_type_ptr( stream );
@@ -306,6 +312,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		AVCodecContext *context_;
 		AVCodec *codec_;
 		AVFrame *picture_;
+		AVPacket pkt_;
 		std::string video_codec_;
 		std::string stream_codec_id_;
 		int outbuf_size_;

@@ -22,6 +22,7 @@ frame_type::frame_type( )
 	, fps_num_( 25 )
 	, fps_den_( 1 )
 	, queue_( )
+	, audio_block_( )
 { }
 
 frame_type::frame_type( const frame_type *other )

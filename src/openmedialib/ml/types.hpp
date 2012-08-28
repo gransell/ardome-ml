@@ -94,7 +94,7 @@ typedef olib::opencorelib::lru_cache< lru_audio_type > lru_audio_cache;
 typedef boost::shared_ptr< lru_audio_type > lru_audio_ptr;
 
 /// Stream Cache
-typedef olib::opencorelib::lru< int, stream_type_ptr > lru_stream_type;
+typedef olib::opencorelib::lru< boost::int64_t, stream_type_ptr > lru_stream_type;
 typedef olib::opencorelib::lru_cache< lru_stream_type > lru_stream_cache;
 typedef boost::shared_ptr< lru_stream_type > lru_stream_ptr;
 

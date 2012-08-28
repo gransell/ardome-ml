@@ -137,6 +137,22 @@ void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample )
 	}
 }
 
+std::string print_track_packets( const ml::audio::track_type::map& track_packets )
+{
+	std::stringstream res;
+	res << "[";
+	for( ml::audio::track_type::const_iterator it = track_packets.begin(); it != track_packets.end(); ++ it )
+	{
+		
+		res << it->first;
+		if( it != --track_packets.end() )
+			res << ", ";
+	}
+	res << "]";
+	
+	return res.str();
+}
+
 void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 {
 	int num, den;
@@ -146,19 +162,24 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	if ( frame->has_image( ) )
 		stream << "Image Info   : pf = " << pl::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
 	if ( frame->has_audio( ) )
-		stream << "Audio Info    : codec = " << frame->audio_codec( ) << ", samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
+		stream << "Audio Info   : samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
 		stream << "Video Stream : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( )
         << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << " gop = " << frame->get_stream()->estimated_gop_size() << endl;
 	else
 		stream << "Video Stream : No" << endl;
-	
+
 	if( frame->audio_block( ) ) {
 		ml::audio::block_type_ptr audio_block = frame->audio_block();
-		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << ", first = " << audio_block->first << ", count = " << audio_block->count << ", discard = " << audio_block->discard << ", tracks = " << audio_block->tracks.size( ) << endl;
-		ml::audio::block_type::track_map::iterator it = frame->audio_block()->tracks.begin();
+		stream << "Audio Stream : Yes, position = " <<  audio_block->position << ", samples = " << audio_block->samples << 
+			", sample size = " << ( audio_block->tracks.begin()->second.packets.begin()->second->sample_size( ) * 8 ) << ", first = " << audio_block->first << ", last = " << audio_block->last << ", tracks = " << audio_block->tracks.size( ) << endl;
+		ml::audio::block_type::map::iterator it = frame->audio_block()->tracks.begin();
 		for( ; it != frame->audio_block()->tracks.end(); ++it ) {
-			stream << "     Track " << it->first << " : packets = " << it->second.size() << ", codec = " << it->second.begin()->second->codec( ) << ", channels = " << it->second.begin()->second->channels() << endl;
+			stream << "     Track " << it->first << 
+					  " : packets = " << print_track_packets( it->second.packets ) << 
+					  ", codec = " << it->second.packets.begin()->second->codec( ) << 
+					  ", channels = " << it->second.packets.begin()->second->channels() 
+					  << endl;
 		}
 	}
 	else {

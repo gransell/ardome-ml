@@ -39,6 +39,8 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 }
 
+#include "utils.hpp"
+
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
 
 namespace ml = olib::openmedialib::ml;
@@ -47,9 +49,6 @@ namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
-
-extern std::map< CodecID, std::string > codec_name_lookup_;
-extern std::map< std::string, CodecID > name_codec_lookup_;
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -683,8 +682,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 				stream_type_ptr stream = first_frame_->get_stream( );
-				ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
-				codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+				
+				codec_id = stream_to_avformat_codec_id( stream );
+				ARENFORCE( codec_id != CODEC_ID_NONE );
 				return codec_id;
 			}
 			else if ( prop_vcodec_.value< pl::wstring >( ) != L"" )
@@ -980,8 +980,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				{
 					ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 					stream_type_ptr stream = first_frame_->get_stream( );
-					ARENFORCE( name_codec_lookup_.find( stream->codec( ) ) != name_codec_lookup_.end( ) );
-					video_enc->codec_id = name_codec_lookup_[ first_frame_->get_stream( )->codec( ) ];
+					video_enc->codec_id = stream_to_avformat_codec_id( stream );
+					ARENFORCE( video_enc->codec_id != CODEC_ID_NONE );
 					video_enc->codec_type = AVMEDIA_TYPE_VIDEO;
 
 					//video_stream_->stream_copy = 1;
@@ -1215,36 +1215,32 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			AVFrame *image = &av_image_;
 			if(finalize)
 				image = NULL;
+			
+			int got_packet = 0;
+			av_init_packet( &video_pkt_ );
+			video_pkt_.data = video_outbuf_;
+			video_pkt_.size = video_outbuf_size_;
 
-			*out_size = avcodec_encode_video( c, video_outbuf_, video_outbuf_size_, image );
+			int error = avcodec_encode_video2( c, &video_pkt_, image, &got_packet );
+			
+			ARENFORCE_MSG( error == 0, "Failed to encode frame. Error = %1%" )( error );
 
-			// If zero size, it means the image was buffered
-			if ( *out_size > 0 )
+			// The encoder might hold back on packets so not getting a packet is perfectly fine
+			if ( got_packet )
 			{
-				AVPacket pkt;
-				av_init_packet( &pkt );
-
-				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
-					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
-
 				if( oc_->pb && c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{
 					ts_generator_video_.enroll( c->coded_frame->pts, oc_->pb->pos );
 					write_ts_index( );
-					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
 					ts_last_offset_ = oc_->pb->pos;
 				}
-
-				pkt.stream_index = video_stream_->index;
-				pkt.data = video_outbuf_;
-				pkt.size = *out_size;
 
 				if ( log_file_ && prop_pass_.value< int >( ) == 1 && c->stats_out )
 					fprintf( log_file_, "%s", c->stats_out );
 
 				// Write the compressed frame in the media file
-				int err = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] );
+				int err = write_packet( oc_, &video_pkt_, c, bitstream_filters_[ video_pkt_.stream_index ] );
 				ret = err >= 0;
 
 				if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
@@ -1255,6 +1251,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				ret = true;
 			}
+			
+			*out_size = video_pkt_.size;
+			
 			return ret;
 		}
 
@@ -1528,7 +1527,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		uint8_t *audio_outbuf_;
 		uint8_t *audio_tmpbuf_ptr_;
 		uint8_t *audio_tmpbuf_;
-		AVFrame av_image_; 
+		AVFrame av_image_;
+		AVPacket video_pkt_;
 		uint8_t *video_outbuf_;
 		int video_outbuf_size_;
 

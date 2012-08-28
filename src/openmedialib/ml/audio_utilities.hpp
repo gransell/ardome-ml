@@ -42,6 +42,11 @@ extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, const audio_type_ptr &c = audio_type_ptr( ) );
 extern ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_ptr &b, const std::vector< double > &, double &, int, const audio_type_ptr &c = audio_type_ptr( ) );
+	
+// Function to take a number of audio objects and combine them into one.
+// The channels will be layed out in the order they are given in the vector. All audio objects
+// will be coerced to the same format as the first one.
+extern ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios );
 
 // Apply the mix matrix to the specified audio
 extern ML_DECLSPEC audio_type_ptr mix_matrix( audio_type_ptr &input, const std::vector< double > &matrix, int channels );

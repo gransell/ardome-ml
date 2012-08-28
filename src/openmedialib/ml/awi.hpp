@@ -133,19 +133,21 @@ struct awi_footer_v4
 };
 
 /// Parsing state enumeration
-enum awi_state
+namespace  awi_state
 {
-	header,
-	item,
-	footer,
-	error
-};
+	enum type {
+		header,
+		item,
+		footer,
+		error
+	};
+}
 
 class ML_DECLSPEC awi_index
 {
 	public:
 		awi_index( )
-			: state_( header )
+		: state_( awi_state::header )
 		{
 		}
 
@@ -176,7 +178,7 @@ class ML_DECLSPEC awi_index
 		// We need to be able to determine if the index is valid, particularly in a parser instance and after a read
 		// NB: this might not report itself sanely in the case where the index is an empty file (ie: no header available)
 		// and it's difficult to know if that's a case of 'not yet' or 'never'
-		virtual bool valid( ) { return state_ != error; }
+		virtual bool valid( ) { return state_ != awi_state::error; }
 
 		// This should be implemented in all subclasses to report the total number of frames which the index knows about
 		// NB: this should *never* be used to determine the number of frames in the media unless both index derived file
@@ -195,7 +197,7 @@ class ML_DECLSPEC awi_index
 		virtual bool set_index_data( const std::string &, const boost::uint32_t ) { return false; }
 
 	protected:
-		awi_state state_;
+		awi_state::type state_;
 };
 
 /// Index holder class - currently assumes v2. Allows look ups by position ->

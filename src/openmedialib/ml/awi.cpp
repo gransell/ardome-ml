@@ -306,7 +306,7 @@ awi_parser_v2::~awi_parser_v2( )
 
 bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 {
-	bool result = state_ == header || state_ == item;
+	bool result = state_ == awi_state::header || state_ == awi_state::item;
 
 	// Append data to internal buffer
 	if ( result )
@@ -316,11 +316,11 @@ bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 	{
 		switch( state_ )
 		{
-			case header:
+			case awi_state::header:
 				if ( buffer_.size( ) >= awi_header_size )
 				{
 					result = parse_header( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else
 				{
@@ -328,16 +328,16 @@ bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 				}
 				break;
 
-			case item:
+			case awi_state::item:
 				if ( buffer_.size( ) >= awi_item_size && is_item( ) )
 				{
 					result = parse_item( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else if ( buffer_.size( ) == awi_footer_size && !is_item( ) )
 				{
 					result = parse_footer( );
-					state_ = result ? footer : error;
+					state_ = result ? awi_state::footer : awi_state::error;
 				}
 				else
 				{
@@ -346,8 +346,8 @@ bool awi_parser_v2::parse( const boost::uint8_t *data, const size_t length )
 				}
 				break;
 
-			case footer:
-			case error:
+			case awi_state::footer:
+			case awi_state::error:
 				result = false;
 				break;
 		}
@@ -516,7 +516,7 @@ awi_generator_v2::awi_generator_v2( )
 
 bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
 	// if length has been specified once then we need it on all calls.
 	if( position_ != -1 && known_packet_length_ && length <= 0 )
@@ -561,7 +561,7 @@ bool awi_generator_v2::enroll( boost::int32_t position, boost::int64_t offset, b
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -578,7 +578,7 @@ bool awi_generator_v2::detail( boost::int32_t position, boost::int64_t offset, b
 // Mark the generation as complete
 bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 
 	if ( result )
 	{
@@ -600,7 +600,7 @@ bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -609,11 +609,11 @@ bool awi_generator_v2::close( boost::int32_t position, boost::int64_t offset )
 // Flush the pending data to the provided buffer
 bool awi_generator_v2::flush( std::vector< boost::uint8_t > &buffer )
 {
-	bool result = state_ != error;
+	bool result = state_ != awi_state::error;
 
-	if ( state_ != footer && result )
+	if ( state_ != awi_state::footer && result )
 	{
-		size_t size_h = state_ == header ? awi_header_size : 0;
+		size_t size_h = state_ == awi_state::header ? awi_header_size : 0;
 		size_t size_i = ( items_.size( ) - flushed_ ) * awi_item_size;
 		size_t size_f = ( finished( ) ? awi_footer_size : 0 );
 
@@ -621,15 +621,15 @@ bool awi_generator_v2::flush( std::vector< boost::uint8_t > &buffer )
 
 		boost::uint8_t *ptr = &buffer[ 0 ];
 
-		if ( state_ == header )
+		if ( state_ == awi_state::header )
 		{
 			write( ptr, header_.id, 3 );
 			write( ptr, header_.ver, 1 );
 			write( ptr, header_.created );
-			state_ = item;
+			state_ = awi_state::item;
 		}
 
-		while( state_ == item && current_ != items_.end( ) )
+		while( state_ == awi_state::item && current_ != items_.end( ) )
 		{
 			awi_item item = ( current_ ++ )->second;
 			write( ptr, item.reserved );
@@ -640,13 +640,13 @@ bool awi_generator_v2::flush( std::vector< boost::uint8_t > &buffer )
 			flushed_ ++;
 		}
 
-		if ( state_ != footer && finished( ) )
+		if ( state_ != awi_state::footer && finished( ) )
 		{
 			write( ptr, footer_.reserved );
 			write( ptr, footer_.closed );
 			write( ptr, footer_.id, 3 );
 			write( ptr, footer_.ver, 1 );
-			state_ = footer;
+			state_ = awi_state::footer;
 		}
 	}
 
@@ -872,7 +872,7 @@ int awi_index_v3::total_frames( ) const
 
 bool awi_index_v3::has_index_data( ) const
 {
-	return state_ != header && state_ != error;
+	return state_ != awi_state::header && state_ != awi_state::error;
 }
 
 bool awi_index_v3::get_index_data( const std::string &key, boost::uint8_t &value ) const
@@ -975,7 +975,7 @@ awi_parser_v3::~awi_parser_v3( )
 
 bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 {
-	bool result = state_ == header || state_ == item;
+	bool result = state_ == awi_state::header || state_ == awi_state::item;
 
 	// Append data to internal buffer
 	if ( result )
@@ -986,12 +986,12 @@ bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 	{
 		switch( state_ )
 		{
-			case header:
+			case awi_state::header:
 				// Make sure that we have enough data for the header
 				if ( buffer_.size( ) >= awi_header_size_v3 )
 				{
 					result = parse_header( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else
 				{
@@ -1000,16 +1000,16 @@ bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 				}
 				break;
 
-			case item:
+			case awi_state::item:
 				if ( buffer_.size( ) >= awi_item_size_v3 && is_item( ) )
 				{
 					result = parse_item( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else if ( buffer_.size( ) == awi_footer_size_v3 && !is_item( ) )
 				{
 					result = parse_footer( );
-					state_ = result ? footer : error;
+					state_ = result ? awi_state::footer : awi_state::error;
 				}
 				else
 				{
@@ -1018,8 +1018,8 @@ bool awi_parser_v3::parse( const boost::uint8_t *data, const size_t length )
 				}
 				break;
 
-			case footer:
-			case error:
+			case awi_state::footer:
+			case awi_state::error:
 				result = false;
 				break;
 		}
@@ -1248,7 +1248,7 @@ awi_generator_v3::awi_generator_v3( )
 
 bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
 	// if length has been specified once then we need it on all calls.
 	if( position_ != -1 && known_packet_length_ && length <= 0 )
@@ -1293,7 +1293,7 @@ bool awi_generator_v3::enroll( boost::int32_t position, boost::int64_t offset, b
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -1310,7 +1310,7 @@ bool awi_generator_v3::detail( boost::int32_t position, boost::int64_t offset, b
 // Mark the generation as complete
 bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 
 	if ( result )
 	{
@@ -1332,7 +1332,7 @@ bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -1341,11 +1341,11 @@ bool awi_generator_v3::close( boost::int32_t position, boost::int64_t offset )
 // Flush the pending data to the provided buffer
 bool awi_generator_v3::flush( std::vector< boost::uint8_t > &buffer )
 {
-	bool result = state_ != error;
+	bool result = state_ != awi_state::error;
 
-	if ( state_ != footer && result )
+	if ( state_ != awi_state::footer && result )
 	{
-		size_t size_h = state_ == header ? awi_header_size_v3 : 0;
+		size_t size_h = state_ == awi_state::header ? awi_header_size_v3 : 0;
 		size_t size_i = ( items_.size( ) - flushed_ ) * awi_item_size_v3;
 		size_t size_f = ( finished( ) ? awi_footer_size_v3 : 0 );
 
@@ -1353,15 +1353,15 @@ bool awi_generator_v3::flush( std::vector< boost::uint8_t > &buffer )
 
 		boost::uint8_t *ptr = &buffer[ 0 ];
 
-		if ( state_ == header )
+		if ( state_ == awi_state::header )
 		{
 			write( ptr, header_.id, 3 );
 			write( ptr, header_.ver, 1 );
 			write( ptr, header_.created );
-			state_ = item;
+			state_ = awi_state::item;
 		}
 
-		while( state_ == item && current_ != items_.end( ) )
+		while( state_ == awi_state::item && current_ != items_.end( ) )
 		{
 			awi_item_v3 item = ( current_ ++ )->second;
 			write( ptr, item.type );
@@ -1372,13 +1372,13 @@ bool awi_generator_v3::flush( std::vector< boost::uint8_t > &buffer )
 			flushed_ ++;
 		}
 
-		if ( state_ != footer && finished( ) )
+		if ( state_ != awi_state::footer && finished( ) )
 		{
 			write( ptr, footer_.type );
 			write( ptr, footer_.closed );
 			write( ptr, footer_.id, 3 );
 			write( ptr, footer_.ver, 1 );
-			state_ = footer;
+			state_ = awi_state::footer;
 		}
 	}
 
@@ -1627,7 +1627,7 @@ awi_parser_v4::~awi_parser_v4( )
 
 bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 {
-	bool result = state_ == header || state_ == item;
+	bool result = state_ == awi_state::header || state_ == awi_state::item;
 
 	// Append data to internal buffer
 	if ( result )
@@ -1640,29 +1640,29 @@ bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 
 		switch( state_ )
 		{
-			case header:
+			case awi_state::header:
 				if ( entry_is_type( type_index_header_v4 ) )
 				{
 					result = parse_header( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else
 				{
 					//We expected a header
-					state_ = error;
+					state_ = awi_state::error;
 				}
 				break;
 
-			case item:
+			case awi_state::item:
 				if ( entry_is_type( type_index_footer_v4 ) )
 				{
 					result = parse_footer( );
-					state_ = result ? footer : error;
+					state_ = result ? awi_state::footer : awi_state::error;
 				}
 				else if ( entry_is_type( entry_type_to_read_ ) )
 				{
 					result = parse_item( );
-					state_ = result ? item : error;
+					state_ = result ? awi_state::item : awi_state::error;
 				}
 				else
 				{
@@ -1672,8 +1672,8 @@ bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 				}
 				break;
 
-			case footer:
-			case error:
+			case awi_state::footer:
+			case awi_state::error:
 				result = false;
 				break;
 		}
@@ -1856,7 +1856,7 @@ awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete
 
 bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, boost::int32_t length )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 	// Some generators know the length of the packet up front so that we can enroll right away. Just make sure that
 	// if length has been specified once then we need it on all calls.
 	if( position_ != -1 && known_packet_length_ && length <= 0 )
@@ -1901,7 +1901,7 @@ bool awi_generator_v4::enroll( boost::int32_t position, boost::int64_t offset, b
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -1918,7 +1918,7 @@ bool awi_generator_v4::detail( boost::int32_t position, boost::int64_t offset, b
 // Mark the generation as complete
 bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 {
-	bool result = state_ != error && position > position_ && offset >= offset_;
+	bool result = state_ != awi_state::error && position > position_ && offset >= offset_;
 
 	if ( result )
 	{
@@ -1943,7 +1943,7 @@ bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 	}
 	else
 	{
-		state_ = error;
+		state_ = awi_state::error;
 	}
 
 	return result;
@@ -1952,12 +1952,12 @@ bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 // Flush the pending data to the provided buffer
 bool awi_generator_v4::flush( std::vector< boost::uint8_t > &buffer )
 {
-	bool result = state_ != error;
+	bool result = state_ != awi_state::error;
 
-	if ( state_ != footer && result )
+	if ( state_ != awi_state::footer && result )
 	{
 		size_t num_entries =
-			( ( state_ == header && complete_ ) ? 1 : 0 ) + 
+			( ( state_ == awi_state::header && complete_ ) ? 1 : 0 ) +
 			( items_.size( ) - flushed_ ) +
 			( ( finished( ) && complete_ ) ? 1 : 0 );
 
@@ -1965,7 +1965,7 @@ bool awi_generator_v4::flush( std::vector< boost::uint8_t > &buffer )
 
 		boost::uint8_t *ptr = &buffer[ 0 ];
 
-		if ( state_ == header )
+		if ( state_ == awi_state::header)
 		{
 			if( complete_ )
 			{
@@ -1975,10 +1975,10 @@ bool awi_generator_v4::flush( std::vector< boost::uint8_t > &buffer )
 				write( ptr, header_.created );
 				write( ptr, header_.reserved, sizeof( header_.reserved ) );
 			}
-			state_ = item;
+			state_ = awi_state::item;
 		}
 
-		while( state_ == item && current_ != items_.end( ) )
+		while( state_ == awi_state::item && current_ != items_.end( ) )
 		{
 			const awi_item_v4 &item = ( current_ ++ )->second;
 			write( ptr, item.type );
@@ -1989,7 +1989,7 @@ bool awi_generator_v4::flush( std::vector< boost::uint8_t > &buffer )
 			flushed_ ++;
 		}
 
-		if ( state_ != footer && finished( ) )
+		if ( state_ != awi_state::footer && finished( ) )
 		{
 			if( complete_ )
 			{
@@ -1999,7 +1999,7 @@ bool awi_generator_v4::flush( std::vector< boost::uint8_t > &buffer )
 				write( ptr, footer_.ver, 1 );
 				write( ptr, footer_.reserved, sizeof( footer_.reserved ) );
 			}
-			state_ = footer;
+			state_ = awi_state::footer;
 		}
 	}
 
