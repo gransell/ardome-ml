@@ -138,9 +138,6 @@ class stream_queue
 			, offset_( 0 )
 			, lru_cache_( )
 		{
-			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
-			audio_buf_ = ( uint8_t * )av_malloc( audio_buf_size_ );
-
 			lru_cache_ = ml::the_scope_handler::Instance().lru_cache( scope_ );
 		}
 
@@ -153,7 +150,6 @@ class stream_queue
 				av_free( context_ );
 			}
 			av_free( frame_ );
-            av_free( audio_buf_ );
 		}
 
 		ml::frame_type_ptr fetch( int position )
@@ -433,7 +429,6 @@ class stream_queue
 			}
 
 			int got = 0;
-			int audio_size = audio_buf_size_;
 			AVPacket avpkt;
 
 			switch( pkt->id( ) )
@@ -562,8 +557,6 @@ class stream_queue
 		AVCodec *codec_;
 		int expected_;
 		AVFrame *frame_;
-		int audio_buf_size_;
-		boost::uint8_t *audio_buf_;
 		int offset_;
 		lru_cache_type_ptr lru_cache_;
 };
@@ -665,8 +658,8 @@ class avformat_audio_decoder
 public:
 	avformat_audio_decoder( const std::vector< size_t >& tracks_to_decode )
 		: tracks_to_decode_( tracks_to_decode )
-		, next_packets_to_decoders_( )
 		, decoded_frame_( 0 )
+		, next_packets_to_decoders_( )
 		, reseats_( )
 		, expected_( -1 )
 	{
@@ -744,7 +737,7 @@ private:
 		ARENFORCE_MSG( !frame->audio_block()->tracks[ tracks_to_decode_[ 0 ] ].packets.empty(),
 					  "Audio track %1% not available in audio block. Can not initialize." )( tracks_to_decode_[ 0 ] );
 		
-		for( int i = 0; i < tracks_to_decode_.size( ); ++i )
+		for( size_t i = 0; i < tracks_to_decode_.size( ); ++i )
 		{
 			ml::stream_type_ptr strm = frame->audio_block()->tracks[ tracks_to_decode_[ i ] ].packets.begin( )->second;
 			ARENFORCE_MSG( strm, "No stream available for first requested track" )( tracks_to_decode_[ i ] );
@@ -797,7 +790,7 @@ private:
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 
 			if( got_frame )
-			{				
+			{
 				int channels = track_context->channels;
 				int frequency = track_context->sample_rate;
 				int samples = decoded_frame_->nb_samples;

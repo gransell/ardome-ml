@@ -710,7 +710,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
-			audio_buf_temp_ = ( uint8_t * )av_malloc( audio_buf_size_ );
 
 			// Allow property control of video and audio index
 			// NB: Should also have read only props for stream counts
@@ -747,7 +746,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				avformat_close_input( &context_ );
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
-			av_free( audio_buf_temp_ );
 
 			if( indexer_item_ )
 			{
@@ -1614,11 +1612,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 						if ( samples_per_packet_ == 0 )
 						{
 							AVCodecContext *codec_context = get_audio_stream( )->codec;
-							int audio_size = audio_buf_size_;
-		   					if ( avcodec_decode_audio3( codec_context, ( short * )( audio_buf_ ), &audio_size, &pkt_ ) >= 0 )
+							
+							int got_frame = 0;
+							int length = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
+							ARENFORCE_MSG( length >= 0, "Failed to decode audio while sizing" );
+
+		   					if ( got_frame )
 							{
 								samples_per_frame_ = double( int64_t( codec_context->sample_rate ) * fps_den_ ) / fps_num_;
-								samples_per_packet_ = audio_size / codec_context->channels / 2;
+								samples_per_packet_ = av_frame_->nb_samples;
 								samples_duration_ = pkt_.duration;
 							}
 						}
@@ -1965,7 +1967,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		boost::uint8_t checksum( AVPacket &pkt )
 		{
 			boost::uint8_t check = 0;
-			for ( size_t i = 0; i < pkt.size; i ++ )
+			for ( int i = 0; i < pkt.size; i ++ )
 				check ^= pkt.data[ i ];
 			return check;
 		}
@@ -2094,11 +2096,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			// Each packet may need multiple parses
 			while( len > 0 )
 			{
-				int audio_size = audio_buf_size_;
+				avcodec_get_frame_defaults( av_frame_ );
+				
+				int got_frame = 0;
+				ret = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
 
-				// Decode the audio into the buffer
-		   		ret = avcodec_decode_audio3( codec_context, ( short * )( audio_buf_temp_ ), &audio_size, &pkt_ );
-
+				ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
+				
 				// If we need to discard packets, do that now
 				if( discard_audio_packet_count_ )
 				{
@@ -2111,7 +2115,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				}
 
 				// If no samples are returned, then break now
-				if ( ret < 0 )
+				if ( !got_frame )
 				{
 					ret = 0;
 					//got_audio = true;
@@ -2119,8 +2123,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					break;
 				}
 
+				int audio_size = av_samples_get_buffer_size( NULL, codec_context->channels,
+														     av_frame_->nb_samples, codec_context->sample_fmt, 1);
 				// Copy the new samples to the main buffer
-				memcpy( audio_buf_ + audio_buf_used_, audio_buf_temp_, audio_size );
+				memcpy( audio_buf_ + audio_buf_used_, av_frame_->data[ 0 ], audio_size );
 
 				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
@@ -2403,7 +2409,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		int key_last_;
 
 		boost::uint8_t *audio_buf_;
-		boost::uint8_t *audio_buf_temp_;
 		int audio_buf_size_;
 		int audio_buf_used_;
 		int audio_buf_offset_;
