@@ -748,6 +748,8 @@ private:
 			reseats_[ tracks_to_decode_[ i ] ] = audio::create_reseat( );
 		}
 		
+		ARENFORCE_MSG( decoded_frame_ = avcodec_alloc_frame( ) , "Failed to allocate AVFrame for decoding. Out of memory?" ); 
+		
 	}
 
 	audio_type_ptr decode_track( const audio::track_type::map& track_packets, const int track,
@@ -773,11 +775,7 @@ private:
 			stream_type_ptr strm = packets_it->second;
 			ARENFORCE_MSG( strm, "No stream available on packet %1%" )( packets_it->first );
 	
-			if( decoded_frame_ == 0 ) {
-				ARENFORCE_MSG( decoded_frame_ = avcodec_alloc_frame( ) , "Failed to allocate AVFrame for decoding. Out of memory?" );
-			}
-			else
-				avcodec_get_frame_defaults( decoded_frame_ );
+			avcodec_get_frame_defaults( decoded_frame_ );
 			
 			avpkt.data = strm->bytes( );
 			avpkt.size = strm->length( );
