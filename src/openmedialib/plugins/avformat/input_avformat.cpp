@@ -337,18 +337,18 @@ class avformat_demux
 					}
 				}
 
-				std::cerr << "Started analysing first packets" << std::endl;
+				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Started analysing first packets" << std::endl;
 
 				while ( unsampled_.size( ) )
 				{
 					if ( !obtain_next_packet( ) )
 					{
-						std::cerr << "End of stream before all first packets found" << std::endl;
+						if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "End of stream before all first packets found" << std::endl;
 						break;
 					}
 				}
 
-				std::cerr << "Finished analysing first packets" << std::endl;
+				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Finished analysing first packets" << std::endl;
 
 				initialised_ = true;
 			}
@@ -374,7 +374,7 @@ class avformat_demux
 
 				if ( unsampled_.find( index ) != unsampled_.end( ) )
 				{
-					std::cerr << "encountered stream " << index << " for the first time starting at " << pkt_.dts << std::endl;
+					if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "encountered stream " << index << " for the first time starting at " << pkt_.dts << std::endl;
 					calculator.set_stream_offset( index, pkt_.dts );
 					unsampled_.erase( index );
 				}
@@ -405,11 +405,11 @@ class avformat_demux
 				int duration = calculator.packet_duration( index, pkt_.duration );
 
 				// Temporary diagnostics
-				std::cerr << "pkt: " << index << " " << pkt_.dts << " + " << pkt_.duration << " = " << position << " + " << duration << std::endl;
+				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "pkt: " << index << " " << pkt_.dts << " + " << pkt_.duration << " = " << position << " + " << duration << std::endl;
 
 				// Temporary test to ensure that we can map back from the position to the dts
 				boost::int64_t test = calculator.position_to_dts( index, position );
-				if ( test != pkt_.dts ) std::cerr << "Mismatch " << index << ": " << position << " " << pkt_.dts << " != " << test << std::endl;
+				if ( test != pkt_.dts ) if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Mismatch " << index << ": " << position << " " << pkt_.dts << " != " << test << std::endl;
 
 				// Sync the expected position with the found one for this stream
 				found( pkt_, position );
@@ -568,7 +568,7 @@ class avformat_demux
 				stream_cache &handler = caches[ pkt.stream_index ];
 				if ( position != handler.expected( ) )
 				{
-					std::cerr << "this packet is " << pkt_.stream_index << " " << position << " but we think it's " << handler.expected( ) << std::endl;
+					if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "this packet is " << pkt_.stream_index << " " << position << " but we think it's " << handler.expected( ) << std::endl;
 					handler.set_expected( position );
 				}
 			}
@@ -2122,7 +2122,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				// Copy the new samples to the main buffer
 				memcpy( audio_buf_ + audio_buf_used_, audio_buf_temp_, audio_size );
 
-				std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
+				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
 				// Decrement the length by the number of bytes parsed
 				len -= ret;
