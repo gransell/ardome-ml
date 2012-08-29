@@ -717,6 +717,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		frame_type_ptr perform_audio_decode( const frame_type_ptr& frame )
 		{
 			input_type_ptr pusher = audio_decoder_->fetch_slot( 0 );
+			pusher->property_with_key( key_length_ ) = get_frames( );
+			audio_decoder_->sync( );
 			pusher->push( frame );
 			audio_decoder_->seek( get_position( ) );
 			return audio_decoder_->fetch( );
