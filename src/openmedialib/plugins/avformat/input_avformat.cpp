@@ -267,7 +267,7 @@ class avformat_demux
 			}
 
 			// Set the source timecode
-			pl::pcos::assign< int >( result->properties( ), ml::keys::source_tc, position );
+			pl::pcos::assign< int >( result->properties( ), ml::keys::source_timecode, position );
 		}
 
 	private:
@@ -991,7 +991,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
                 do_decode_fetch( result );
             
             // Add the source_timecode prop
-            pcos::property tc_prop( ml::keys::source_tc );
+            pcos::property tc_prop( ml::keys::source_timecode );
             tc_prop = result->get_position( );
             result->properties().append( tc_prop );
         }
