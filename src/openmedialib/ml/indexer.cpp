@@ -560,8 +560,8 @@ class indexer
 		opencorelib::worker index_read_worker_;
 };
 
-indexer_ptr indexer::instance_;
 boost::recursive_mutex indexer::mutex_;
+indexer_ptr indexer::instance_;
 
 void ML_DECLSPEC indexer_init( )
 {
