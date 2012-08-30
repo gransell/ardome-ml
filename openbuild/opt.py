@@ -52,6 +52,8 @@ def create_options( file, args ):
 	if os.name == 'posix':
 		opts.Add( 'compiler', 'What compiler to build with. Valid options are gcc and clang.', 'gcc' )
 
+	opts.Add( 'boost_assert_handler', 'If this is set to yes all assertions in boost will call our function which will print a stack trace. Good for debugging.', 'no' )
+
 	return opts
 
 def determine_target( ):

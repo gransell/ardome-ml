@@ -196,6 +196,10 @@ class Environment( BaseEnvironment ):
 			else:
 				raise Exception( "Invalid compiler " )
 
+		if self[ 'boost_assert_handler' ] == 'yes':
+			self.Append( CPPDEFINES = [ 'BOOST_ENABLE_ASSERT_HANDLER' ] )
+
+
 	def install_config( self, src, dst ):
 		"""	Installs config files for bcomp usage.
 

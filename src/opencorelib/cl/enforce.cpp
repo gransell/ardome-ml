@@ -2,6 +2,7 @@
 #include "enforce.hpp"
 #include "base_exception.hpp"
 #include "loghandler.hpp"
+#include "log_defines.hpp"
 #include "utilities.hpp"
 #include <iostream>
 
@@ -158,8 +159,11 @@ void assertion_failed(char const * expr, char const * function, char const * fil
 	msg += file;
 	msg += ":";
 	msg += buf;
+	msg += "Backtrace:\n";
+	msg += olib::opencorelib::utilities::get_stack_trace( 4 );
 
-	ARENFORCE_MSG( false , msg );
+	std::cerr << msg << std::endl;
+	ARLOG_CRIT( msg );
 }
 }
 
