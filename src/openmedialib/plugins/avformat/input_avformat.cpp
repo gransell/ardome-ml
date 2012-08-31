@@ -1316,6 +1316,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				fps_num_ = stream->codec->time_base.den;
 				fps_den_ = stream->codec->time_base.num;
 			}
+			
+			// Correct some fps values coming form avformat
+			if( fps_num_ == 2997 && fps_den_ == 100 )
+			{
+				fps_num_ = 30000;
+				fps_den_ = 1001;
+			}
 
 			if ( prop_fake_fps_.value< int >( ) )
 			{
