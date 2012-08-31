@@ -1460,7 +1460,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public input_type
 					// Correct position
 					if ( images_.size( ) == 0 && ( aml_index_ && aml_index_->usable( ) ) )
 						position = expected_packet_;
-					else if ( images_.size( ) )
+					else if ( images_.size( ) && !( aml_index_ && aml_index_->usable( ) ) )
 						position = images_[ images_.size( ) - 1 ]->position( ) + first_video_found_ + 1;
 				}
 
