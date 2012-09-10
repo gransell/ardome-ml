@@ -128,7 +128,8 @@ class ML_DECLSPEC template_ : public base
 	private:
 		void init_data( )
 		{
-			data_size_ = channels_ * samples_ * sizeof( sample_type );
+			// 16 bytes padding
+			data_size_ = channels_ * samples_ * sizeof( sample_type ) + 16;
 			
 			if( data_size_ == 0 )
 			{

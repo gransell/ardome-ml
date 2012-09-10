@@ -79,13 +79,95 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 	
 	unsigned char * dst = s->frame.data[ 0 ];
 	
-	int samples_handled = 0;
-	
 	if( avctx->bits_per_raw_sample == 16 )
 	{
-		
+		if( tpf == 4 || avctx->channels <= 4 )
+		{
+			int source_step_size = 4 * tpf;
+			int dst_step_size = 2 * avctx->channels;
+			
+			int num_steps_in_src = buf_size / source_step_size;
+			int num_steps_in_dest = s->frame.nb_samples;
+			
+			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+			
+			if( avctx->channels == 4 )
+			{
+				// We can do double the amount in one iterations since each _mm_packs_epi32
+				// now can contain valid data in both arguments
+				total_iterations /= 2;
+				
+				while( total_iterations-- > 0 )
+				{
+					__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					__m128i l_shift = _mm_slli_epi32( src, 4 );
+					__m128i final = _mm_srai_epi32( l_shift, 16 );
+					
+					buf += source_step_size;
+
+					src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					l_shift = _mm_slli_epi32( src, 4 );
+					__m128i final_2 = _mm_srai_epi32( l_shift, 16 );
+					
+					__m128i res = _mm_packs_epi32( final, final_2 );
+					
+					_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), res );
+					
+					buf += source_step_size;
+					dst += dst_step_size * 2;
+				}
+			}
+			else
+			{
+				while( total_iterations-- > 0 )
+				{
+					__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					__m128i l_shift = _mm_slli_epi32( src, 4 );
+					__m128i final = _mm_srai_epi32( l_shift, 16 );
+					
+					__m128i res = _mm_packs_epi32( final, final );
+					
+					_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), res );
+					
+					buf += source_step_size;
+					dst += dst_step_size;
+				}
+			}
+		}
+		else
+		{
+			assert( tpf == 8 );
+			
+			int source_step_size = 16;
+			int dst_step_size = 8 + ( ( avctx->channels - 4 ) * 2 );
+			
+			int num_steps_in_src = buf_size / ( source_step_size * 2 );
+			int num_steps_in_dest = s->frame.nb_samples;
+			
+			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+						
+			while( total_iterations-- > 0 )
+			{
+				__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				__m128i l_shift = _mm_slli_epi32( src, 4 );
+				__m128i final = _mm_srai_epi32( l_shift, 16 );
+				
+				buf += source_step_size;
+				
+				src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				l_shift = _mm_slli_epi32( src, 4 );
+				__m128i final_2 = _mm_srai_epi32( l_shift, 16 );
+				
+				__m128i res = _mm_packs_epi32( final, final_2 );
+				
+				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), res );
+				
+				buf += source_step_size;
+				dst += dst_step_size;
+			}
+		}
 	}
-	else
+	else if( avctx->bits_per_raw_sample == 24 )
 	{
 		if( tpf == 4 || avctx->channels <= 4 )
 		{
@@ -93,7 +175,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int dst_step_size = 4 * avctx->channels;
 			
 			int num_steps_in_src = buf_size / source_step_size;
-			int num_steps_in_dest = ( ( s->frame.nb_samples * avctx->channels ) - ( avctx->channels % 4 ) ) / avctx->channels;
+			int num_steps_in_dest = s->frame.nb_samples;
 			
 			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
 			
@@ -107,8 +189,6 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 				buf += source_step_size;
 				dst += dst_step_size;
 			}
-			
-			samples_handled = total_iterations * avctx->channels;
 		}
 		else
 		{
@@ -119,7 +199,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int dst_step_size_2 = ( avctx->channels - 4 ) * 4;
 			
 			int num_steps_in_src = buf_size / ( source_step_size * 2 );
-			int num_steps_in_dest = ( ( s->frame.nb_samples * avctx->channels ) - ( avctx->channels % 4 ) ) / avctx->channels;
+			int num_steps_in_dest = s->frame.nb_samples;
 			
 			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
 			
@@ -142,10 +222,11 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 				buf += source_step_size;
 				dst += dst_step_size_2;
 			}
-			
-			samples_handled = total_iterations * avctx->channels;
-
 		}
+	}
+	else
+	{
+		return 0;
 	}
 	
 	*got_frame_ptr   = 1;
