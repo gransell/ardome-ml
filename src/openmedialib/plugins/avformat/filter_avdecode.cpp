@@ -47,6 +47,8 @@ namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml {
+	
+extern const int AML_AES3_CODEC_ID;
 
 extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
@@ -68,6 +70,58 @@ static bool is_mpeg2( const std::string &codec )
 static bool is_imx( const std::string &codec )
 {
 	return boost::algorithm::ends_with( codec, "imx" );
+}
+
+	
+	
+audio::base *sample_fmt_to_audio( int bits_per_sample, const int freq, const int channels, const int samples )
+{
+	switch ( bits_per_sample ) {
+		case 32:
+			return new audio::pcm32(freq, channels, samples );
+		case 24:
+			return new audio::pcm24(freq, channels, samples );
+		case 16:
+			return new audio::pcm16(freq, channels, samples );
+		default:
+			ARLOG_ERR( "Unsupported sample format %1%" )( bits_per_sample );
+	}
+	
+	return NULL;
+	
+}
+
+
+audio::base *av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
+{
+	int bits = 0;
+	switch ( sample_fmt ) {
+		case AV_SAMPLE_FMT_S32:
+			bits = 32;
+		case AV_SAMPLE_FMT_S16:
+			bits = 16;
+		default:
+			ARLOG_ERR( "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
+	}
+	
+	return sample_fmt_to_audio( bits, freq, channels, samples );
+}
+	
+		
+int custom_get_buffer( struct AVCodecContext *ctx, AVFrame *frame )
+{
+	audio::base *resulting = sample_fmt_to_audio( ctx->bits_per_raw_sample, ctx->sample_rate, ctx->channels, frame->nb_samples );
+	
+	frame->data[ 0 ] = reinterpret_cast< uint8_t * >( resulting->pointer( ) );
+	
+	frame->opaque = reinterpret_cast< void * >( resulting );
+	
+	return 0;
+}
+
+void custom_release_buffer( struct AVCodecContext *c, AVFrame *pic )
+{
+	// Do nothing since the audio object allocated in custom_get_buffer will be destroyed by the client
 }
 	
 void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads )
@@ -101,23 +155,17 @@ void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context
 	// We need to set these for avformat to know how to attach the codec
 	(*context)->sample_rate = sample_rate;
 	(*context)->channels = channels;
+	
+	// In the case of AES3 we need to set the sample width as well
+	if( (*codec)->id == AML_AES3_CODEC_ID )
+		(*context)->bits_per_raw_sample = stream->sample_size( ) * 8;
+	
 	avcodec_open2( *context, *codec, 0 );
 	
+	(*context)->get_buffer = custom_get_buffer;
+	(*context)->release_buffer = custom_release_buffer;
+	
 	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( stream->codec( ) )( (*codec)->id );
-}
-	
-ml::audio_type_ptr av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
-{
-	switch ( sample_fmt ) {
-		case AV_SAMPLE_FMT_S32:
-			return audio::pcm32_ptr( new audio::pcm32(freq, channels, samples ) );
-		case AV_SAMPLE_FMT_S16:
-			return audio::pcm16_ptr( new audio::pcm16( freq, channels, samples ) );
-		default:
-			ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
-	}
-	
-	return ml::audio_type_ptr();
 }
 
 	
@@ -515,7 +563,7 @@ class stream_queue
 							int frequency = context_->sample_rate;
 							int samples = frame_->nb_samples;
 
-							audio_type_ptr audio = av_sample_fmt_to_audio( context_->sample_fmt, frequency, channels, samples );
+							audio_type_ptr audio( av_sample_fmt_to_audio( context_->sample_fmt, frequency, channels, samples ) );
 							memcpy( audio->pointer( ), frame_->data[ 0 ], audio->size( ) );
 							audio->set_position( pkt->position( ) );
 							result->set_audio( audio );
@@ -776,7 +824,7 @@ private:
 			ARENFORCE_MSG( strm, "No stream available on packet %1%" )( packets_it->first );
 	
 			avcodec_get_frame_defaults( decoded_frame_ );
-			
+						
 			avpkt.data = strm->bytes( );
 			avpkt.size = strm->length( );
 			
@@ -810,11 +858,14 @@ private:
 					left_to_discard = 0;
 				}
 				
-				ml::audio_type_ptr audio = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, samples );
-				memcpy( audio->pointer( ), decoded_frame_->data[ 0 ] + buffer_offset, audio->size( ) );
-				audio->set_position( position );
+				audio_type_ptr decoded_audio( reinterpret_cast< audio::base * >( decoded_frame_->opaque ) );
 				
-				track_reseater->append( audio );
+				ARENFORCE_MSG( decoded_audio,
+							   "No audio object was allocated by the decoder even though it said we got a frame" );
+				
+				decoded_audio->set_position( position );
+				
+				track_reseater->append( decoded_audio );
 			}
 		}
 		
@@ -829,7 +880,8 @@ private:
 		// create the audio object manually. This is because the reseater does not
 		// cache the information
 		if( track_reseater->size( ) == 0 )
-			ret = av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate, track_context->channels, wanted_samples );
+			ret.reset( av_sample_fmt_to_audio( track_context->sample_fmt, track_context->sample_rate,
+											   track_context->channels, wanted_samples ) );
 		else
 			ret = track_reseater->retrieve( wanted_samples, true );
 		
