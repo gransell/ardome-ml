@@ -652,7 +652,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			cl::profile::list::const_iterator it = codec_to_decoder_->find( first_frame->get_stream( )->codec( ) );
 			ARENFORCE_MSG( it != codec_to_decoder_->end( ), "Failed to find a apropriate codec" )( first_frame->get_stream( )->codec( ) );
 			
-			ARLOG_INFO( "Stream itentifier is %1%. Using decode filter %2%" )( first_frame->get_stream( )->codec( ) )( it->value );
+			ARLOG_DEBUG( "Stream identifier is %1%. Using decode filter %2%" )( first_frame->get_stream( )->codec( ) )( it->value );
 			
 			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
 		}
