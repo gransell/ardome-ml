@@ -16,6 +16,35 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
+namespace {
+	bool mix_matrix_is_passthrough( const std::vector< double > &matrix, int channels )
+	{
+		int next_active_mix_line = 0;
+
+		//Go through the mix matrix and make sure that it only has ones
+		//on the diagonal, and zeros everywhere else (i.e. it's the
+		//identity matrix).
+		for( int i = 0; i < matrix.size( ); ++i )
+		{
+			double val = matrix[ i ];
+			if( i == next_active_mix_line )
+			{
+				if( val < 0.999 || val > 1.001 )
+					return false;
+
+				next_active_mix_line += ( channels + 1 );
+			}
+			else
+			{
+				if( val > 0.001 )
+					return false;
+			}
+		}
+
+		return true;
+	}
+}
+
 template < typename T >
 boost::shared_ptr< T > mix_matrix( audio_type_ptr &a, const std::vector< double > &matrix, int channels )
 {
@@ -36,6 +65,18 @@ boost::shared_ptr< T > mix_matrix( audio_type_ptr &a, const std::vector< double 
 	// Allocate an output with the same number of samples with the target channel count
 	ml::audio_type_ptr result = allocate( input, -1, channels );
 	boost::shared_ptr< T > output = coerce< T >( result );
+
+	if( a->channels( ) == channels )
+	{
+		if( mix_matrix_is_passthrough( matrix, channels ) )
+		{
+			//The mix matrix is passthrough, i.e. it won't change the audio,
+			//so we can just do a straight copy instead of processing each
+			//sample individually.
+			memcpy( output->data( ), input->data( ), input->size( ) );
+			return output;
+		}
+	}
 
 	// Extract samples, number of channels and data
 	int samples = input->samples( );
