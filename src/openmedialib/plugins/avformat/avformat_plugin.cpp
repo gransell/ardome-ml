@@ -128,7 +128,7 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 
 	if( apf_codec_id == "mpeg/mpeg1" )
 		return CODEC_ID_MPEG1VIDEO;
-	else if( apf_codec_id == "mpeg/mpeg2" )
+	else if( apf_codec_id == "mpeg/mpeg2" || apf_codec_id == "imx/imx" )
 		return CODEC_ID_MPEG2VIDEO;
 	else if( apf_codec_id == "h264/h264" )
 		return CODEC_ID_H264;
@@ -151,6 +151,9 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 			return CODEC_ID_PCM_S16LE;
 		else if( sample_size == 3 )
 			return CODEC_ID_PCM_S24LE;
+		else if( sample_size == 4 )
+			return CODEC_ID_PCM_U32LE;
+
 		ARENFORCE_MSG( false, "Unsupported audio sample width" )( sample_size );
 	}
 	else if( apf_codec_id == "aiff" )
@@ -160,6 +163,9 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 			return CODEC_ID_PCM_S16BE;
 		else if( sample_size == 3 )
 			return CODEC_ID_PCM_S24BE;
+		else if( sample_size == 4 )
+			return CODEC_ID_PCM_U32BE;
+		
 		ARENFORCE_MSG( false, "Unsupported audio sample width" )( sample_size );
 	}
 	

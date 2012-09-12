@@ -62,6 +62,24 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
+	
+	
+namespace {
+	int context_to_sample_width( const AVCodecContext *ctx )
+	{
+		switch( ctx->sample_fmt )
+		{
+			case AV_SAMPLE_FMT_S16:
+				return 2;
+			case AV_SAMPLE_FMT_S32:
+				return 3;
+			default:
+				ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( ctx->sample_fmt ) );
+		}
+		return 0;
+	}
+}
+	
 
 // The avformat_source abstract class provides the common functionality which 
 // is required for both the avformat_input class (which, by default, will demux 
@@ -429,8 +447,7 @@ class avformat_demux
 
 					case ml::stream_audio:
 						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
-																		   0, codec->sample_rate, codec->channels, duration, av_get_bytes_per_sample(codec->sample_fmt), 
-																		   L"", il::top_field_first, 0 ) );
+																		   0, codec->sample_rate, codec->channels, duration, context_to_sample_width( codec ) ) );
 						break;
 
 					default:

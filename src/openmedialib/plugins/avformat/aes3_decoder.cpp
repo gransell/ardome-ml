@@ -16,18 +16,6 @@ typedef struct aml_AES3DecodeContext {
 	AVFrame frame;
 } aml_AES3DecodeContext;
 	
-
-#define CONV_SLOW_16() dst[b0] = buf[1]>>4 | buf[2]<<4; \
-						dst[b1] = buf[2]>>4 | buf[3]<<4; dst += 2; buf += 4
-#define CONV_SLOW_24() dst[b0] = buf[0]>>4 | buf[1]<<4; \
-						dst[b1] = buf[1]>>4 | buf[2]<<4; dst[b2] = buf[2]>>4 | buf[3]<<4; \
-						dst += 3; buf += 4
-#define CONV_SLOW_32() dst[b0] = (buf[0]>>4&0xff) | (buf[1]<<4&0xff); \
-						dst[b1] = (buf[1]>>4&0xff) | (buf[2]<<4&0xff); \
-						dst[b2] = (buf[2]>>4&0xff) | (buf[3]<<4&0xff); \
-						dst[b3] = 0; dst += 4; buf += 4
-
-	
 static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 								  int *got_frame_ptr, AVPacket *avpkt)
 {
@@ -60,14 +48,12 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 		{
 			tpf = 8;
 			s->frame.nb_samples = samps_per_frame[ i ];
-			avctx->sample_fmt = AV_SAMPLE_FMT_S32;
 			break;
 		}
 		else if( samps_per_frame[ i ] * 16 == buf_size )
 		{
 			tpf = 4;
 			s->frame.nb_samples = samps_per_frame[ i ];
-			avctx->sample_fmt = AV_SAMPLE_FMT_S16;
 			break;
 		}
 	}

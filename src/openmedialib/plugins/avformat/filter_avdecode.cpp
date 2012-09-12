@@ -72,49 +72,38 @@ static bool is_imx( const std::string &codec )
 	return boost::algorithm::ends_with( codec, "imx" );
 }
 
-	
-	
-audio::base *sample_fmt_to_audio( int bits_per_sample, const int freq, const int channels, const int samples )
-{
-	switch ( bits_per_sample ) {
-		case 32:
-			return new audio::pcm32(freq, channels, samples );
-		case 24:
-			return new audio::pcm24(freq, channels, samples );
-		case 16:
-			return new audio::pcm16(freq, channels, samples );
-		default:
-			ARLOG_ERR( "Unsupported sample format %1%" )( bits_per_sample );
-	}
-	
-	return NULL;
-	
-}
-
 
 audio::base *av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
 {
 	int bits = 0;
 	switch ( sample_fmt ) {
 		case AV_SAMPLE_FMT_S32:
-			bits = 32;
+			// Return 24 bit audio here since that is all we support.
+			// We will memmove the entire buffer one byte to the "left" after decode
+			return new audio::pcm24(freq, channels, samples );
 		case AV_SAMPLE_FMT_S16:
-			bits = 16;
+			return new audio::pcm16(freq, channels, samples );
 		default:
 			ARLOG_ERR( "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
 	}
 	
-	return sample_fmt_to_audio( bits, freq, channels, samples );
+	return new audio::pcm24(freq, channels, samples );
 }
-	
 		
 int custom_get_buffer( struct AVCodecContext *ctx, AVFrame *frame )
 {
-	audio::base *resulting = sample_fmt_to_audio( ctx->bits_per_raw_sample, ctx->sample_rate, ctx->channels, frame->nb_samples );
-	
-	frame->data[ 0 ] = reinterpret_cast< uint8_t * >( resulting->pointer( ) );
-	
-	frame->opaque = reinterpret_cast< void * >( resulting );
+	if( ctx->codec_type == AVMEDIA_TYPE_AUDIO )
+	{
+		audio::base *resulting = av_sample_fmt_to_audio( ctx->sample_fmt, ctx->sample_rate, ctx->channels, frame->nb_samples );
+		
+		frame->data[ 0 ] = reinterpret_cast< uint8_t * >( resulting->pointer( ) );
+		
+		frame->opaque = reinterpret_cast< void * >( resulting );
+	}
+	else
+	{
+		ARLOG_ERR( "Unsupported media type for custom_get_buffer" );
+	}
 	
 	return 0;
 }
@@ -128,7 +117,7 @@ void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
 	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
-	ARENFORCE_MSG( codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
+	ARENFORCE_MSG( *codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
 	
 	*context = avcodec_alloc_context3( *codec );
 	ARENFORCE_MSG( *context, "Failed to allocate codec context" );
@@ -140,6 +129,7 @@ void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context
 		(*context)->thread_count = threads;
 	
 	avcodec_open2( *context, *codec, 0 );
+	
 	ARLOG_DEBUG5( "Creating new avcodec decoder context" );
 }
 
@@ -155,12 +145,14 @@ void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context
 	// We need to set these for avformat to know how to attach the codec
 	(*context)->sample_rate = sample_rate;
 	(*context)->channels = channels;
-	
-	// In the case of AES3 we need to set the sample width as well
-	if( (*codec)->id == AML_AES3_CODEC_ID )
-		(*context)->bits_per_raw_sample = stream->sample_size( ) * 8;
-	
+		
 	avcodec_open2( *context, *codec, 0 );
+	
+	if( (*context)->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
+	{
+		(*context)->bits_per_raw_sample = stream->sample_size( ) * 8;
+		(*context)->sample_fmt = stream->sample_size( ) == 2 ? AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_S32;
+	}
 	
 	(*context)->get_buffer = custom_get_buffer;
 	(*context)->release_buffer = custom_release_buffer;
@@ -864,6 +856,17 @@ private:
 							   "No audio object was allocated by the decoder even though it said we got a frame" );
 				
 				decoded_audio->set_position( position );
+				
+				// If we got AV_SAMPLE_FMT_S32 out it means that we actually want 24 bit since that is
+				// the largest we support. So we memmove away the lest sginificant byte in the 32 bit values
+				// In the case of AES3 decoded by use we dont have to do this since we get it in 24 bit
+				if( track_context->sample_fmt == AV_SAMPLE_FMT_S32 &&
+				    track_context->codec_id != static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
+				{
+					char * src = static_cast< char * >( decoded_audio->pointer( ) );
+					memmove( src, src + 1, decoded_audio->size( ) - 1 );
+					src[ decoded_audio->size( ) - 1 ] = 0;
+				}
 				
 				track_reseater->append( decoded_audio );
 			}
