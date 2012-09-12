@@ -74,11 +74,11 @@ namespace olib
             /// character to its output buffer.
             /** @param val The byte value to convert.
                 @param buf A pointer to the result buffer, which must contain
-                       space for 2 wchar_t values.
+                       space for 2 TCHAR values.
             */
-            inline void byte_val_to_hex( boost::uint8_t val, wchar_t *buf )
+            inline void byte_val_to_hex( boost::uint8_t val, TCHAR *buf )
             {
-                const wchar_t *hex_chars = _CT("0123456789ABCDEF");
+                const TCHAR *hex_chars = _CT("0123456789ABCDEF");
 
                 buf[ 0 ] = hex_chars[ val >> 4 ];
                 buf[ 1 ] = hex_chars[ val & 0x0F ];
@@ -114,8 +114,8 @@ namespace olib
         /// Convert the unique identifier to a hex string.
         t_string uuid_16b::to_hex_string() const
         {
-            t_string result( 36, '-' );
-            wchar_t *buf = &result[0];
+            t_string result( 36, _CT('-') );
+            TCHAR *buf = &result[0];
 
             for( int i = 0; i < 4; ++i, buf += 2 )
                 byte_val_to_hex( m_data[ i ], buf );
