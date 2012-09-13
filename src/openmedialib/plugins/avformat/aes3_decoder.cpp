@@ -22,8 +22,6 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 	const uint8_t *buf = avpkt->data;
 	int buf_size       = avpkt->size;
 	
-	__m128i (*sse_load_funtion)(__m128i const *p) = _mm_load_si128;
-	
 	if (memcmp(buf, "\x80\x80\x07", 3) == 0 || memcmp(buf, "\x00\x80\x07", 3) == 0) {
 		// PAL
 		buf += 4;
@@ -38,7 +36,10 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 	
 	// If we dont have correct byte allignment then use unalligned SSE load
 	if( ( reinterpret_cast< boost::int64_t >( buf ) % 16 ) != 0 )
-		sse_load_funtion = _mm_loadu_si128;
+	{
+		ARLOG_ERR( "AES audio samples not 16 byte aligned" );
+		return -1;
+	}
 	
 	int tpf = 0, samps_per_frame[] = { 1920, 1601, 1602 };
 	for( int i = 0; i < (int)(sizeof(samps_per_frame) / sizeof(int)); i++) {
@@ -83,13 +84,13 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 				
 				while( total_iterations-- > 0 )
 				{
-					__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 					__m128i l_shift = _mm_slli_epi32( src, 4 );
 					__m128i final = _mm_srai_epi32( l_shift, 16 );
 					
 					buf += source_step_size;
 
-					src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 					l_shift = _mm_slli_epi32( src, 4 );
 					__m128i final_2 = _mm_srai_epi32( l_shift, 16 );
 					
@@ -105,7 +106,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			{
 				while( total_iterations-- > 0 )
 				{
-					__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+					__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 					__m128i l_shift = _mm_slli_epi32( src, 4 );
 					__m128i final = _mm_srai_epi32( l_shift, 16 );
 					
@@ -132,13 +133,13 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 						
 			while( total_iterations-- > 0 )
 			{
-				__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 				__m128i l_shift = _mm_slli_epi32( src, 4 );
 				__m128i final = _mm_srai_epi32( l_shift, 16 );
 				
 				buf += source_step_size;
 				
-				src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 				l_shift = _mm_slli_epi32( src, 4 );
 				__m128i final_2 = _mm_srai_epi32( l_shift, 16 );
 				
@@ -165,7 +166,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			
 			while( total_iterations-- > 0 )
 			{
-				__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 				__m128i l_shift = _mm_slli_epi32( src, 4 );
 				__m128i final = _mm_srai_epi32( l_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
@@ -189,7 +190,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			
 			while( total_iterations-- > 0 )
 			{
-				__m128i src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 				__m128i l_shift = _mm_slli_epi32( src, 4 );
 				__m128i final = _mm_srai_epi32( l_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
@@ -198,7 +199,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 				dst += dst_step_size_1;
 				
 				
-				src = sse_load_funtion( reinterpret_cast< const __m128i * >( buf ) );
+				src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
 				l_shift = _mm_slli_epi32( src, 4 );
 				final = _mm_srai_epi32( l_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
