@@ -66,8 +66,7 @@ class stream_avformat : public ml::stream_type
 
 		/// Constructor for a audio packet
 		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
-			int frequency, int channels, int samples, int sample_size, const olib::openpluginlib::wstring& pf, 
-			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
+			int frequency, int channels, int samples, int sample_size )
 			: ml::stream_type( )
 			, id_( ml::stream_audio )
 			, length_( length )
@@ -81,9 +80,9 @@ class stream_avformat : public ml::stream_type
 			, channels_( channels )
 			, samples_( samples )
 			, sample_size_( sample_size )
-			, pf_( pf )
-			, field_order_( field_order )
-			, estimated_gop_size_( estimated_gop_size )
+			, pf_( L"" )
+			, field_order_( olib::openimagelib::il::top_field_first )
+			, estimated_gop_size_( 0 )
 		{
 			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}

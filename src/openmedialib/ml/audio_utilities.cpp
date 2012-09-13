@@ -343,6 +343,9 @@ ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 	ARENFORCE_MSG( !audios.empty(), "Trying to combine empty audio vector" );
 	ARENFORCE_MSG( *audios.begin(), "Null audio objects are not allowed in audio vector" );
 	
+	if( audios.size() == 1 )
+		return audios[ 0 ];
+	
 	std::wstring af = (*audios.begin())->af();
 	
 	int channels = 0;
