@@ -349,7 +349,7 @@ ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 	std::wstring af = (*audios.begin())->af();
 	
 	int channels = 0;
-	for( int i = 0; i < audios.size(); ++i )
+	for( size_t i = 0; i < audios.size(); ++i )
 	{
 		if( audios[ i ]->af() != af ) audios[ i ] = coerce( af, audios[ i ] );
 		
@@ -359,7 +359,7 @@ ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 	audio_type_ptr ret = allocate( af, (*audios.begin())->frequency(), channels, (*audios.begin())->samples() );
 	
 	int current_channel = 0;
-	for( int i = 0; i < audios.size(); ++i )
+	for( size_t i = 0; i < audios.size(); ++i )
 	{
 		audio_type_ptr a = audios[ i ];
 		for( int ch = 0; ch < a->channels(); ++ch, ++current_channel )

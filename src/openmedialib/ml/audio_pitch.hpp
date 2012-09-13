@@ -26,7 +26,7 @@ boost::shared_ptr< T > pitch( const audio_type_ptr &input, int required )
 	double ratio = double( audio->samples( ) ) / required;
 	int upper = channels * ( audio->samples( ) - 1 );
 
-	output->original_samples( audio->original_samples( ) / ratio );
+	output->original_samples( int( audio->original_samples( ) / ratio ) );
 
 	for ( int i = 0; i < required; i ++ )
 	{

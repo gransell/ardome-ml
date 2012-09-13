@@ -11,6 +11,17 @@
 #include <string.h>
 #include <string>
 
+// Needed for 16 byte memalign functions on all platforms except os x
+#if defined( OLIB_ON_WINDOWS )
+#include <malloc.h>
+#elif defined( OLIB_ON_LINUX )
+#include <stdlib.h>
+#endif
+
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // The template which provides all the types
@@ -145,7 +156,8 @@ class ML_DECLSPEC template_ : public base
 #elif defined( OLIB_ON_MAC )
 				data_ = reinterpret_cast< sample_type * >( malloc( data_size_ ) );
 #else
-				data_ = reinterpret_cast< sample_type * >( memalign( data_size_, 16 ) );
+				int ret = posix_memalign( reinterpret_cast< void** >( &data_ ), 16, data_size_ );
+			   	ARENFORCE_MSG( ret == 0, "Failed to allocate aligned memory. Error = %1%" )( strerror( ret ) )( data_size_ );	
 #endif
 				
 			}
