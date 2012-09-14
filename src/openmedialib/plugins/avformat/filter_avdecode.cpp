@@ -75,7 +75,6 @@ static bool is_imx( const std::string &codec )
 
 audio::base *av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, const int channels, const int samples )
 {
-	int bits = 0;
 	switch ( sample_fmt ) {
 		case AV_SAMPLE_FMT_S32:
 			// Return 24 bit audio here since that is all we support.

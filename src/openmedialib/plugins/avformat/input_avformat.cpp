@@ -328,7 +328,7 @@ class avformat_demux
 								calculator.set_stream_type( i, stream_video, stream->time_base.num, stream->time_base.den );
 
 								// Create and initialise the cache
-								stream_cache &handler = caches[ i ];
+								caches[ i ];
 
 								// Indicate that we have not found a packet for this stream yet
 								unsampled_.insert( i );
@@ -617,9 +617,8 @@ class avformat_demux
 				// Iterate through the tracks in the audio block
 				for ( ml::audio::block_type::iterator iter = block->tracks.begin( ); iter != block->tracks.end( ); iter ++ )
 				{
-					// Obtain the stream index and block track object
+					// Obtain the stream index
 					size_t index = iter->first;
-					ml::audio::track_type &track = iter->second;
 
 					// Obtain the cache object for this stream
 					stream_cache &cache = caches[ index ];
@@ -746,7 +745,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_gop_open_ = 0 );
 			properties( ).append( prop_gen_index_ = 0 );
-			properties( ).append( prop_packet_stream_ = 0 );
+			properties( ).append( prop_packet_stream_ = 1 );
 			properties( ).append( prop_fake_fps_ = 0 );
 
 			// Allocate an av frame

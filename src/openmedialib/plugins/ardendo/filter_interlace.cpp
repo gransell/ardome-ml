@@ -70,7 +70,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			{
 				ml::audio_type_ptr a = frame0->get_audio( );
 				ml::audio_type_ptr b = frame1->get_audio( );
-				ml::audio_type_ptr audio = ml::audio::allocate( a, -1, -1, a->samples( ) + b->samples( ) );
+				ml::audio_type_ptr audio = ml::audio::allocate( a, -1, -1, a->samples( ) + b->samples( ), false );
 				memcpy( ( boost::uint8_t * )audio->pointer( ), a->pointer( ), a->size( ) );
 				memcpy( ( boost::uint8_t * )audio->pointer( ) + a->size( ), b->pointer( ), b->size( ) );
 				frame0->set_audio( audio );

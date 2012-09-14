@@ -23,7 +23,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 static const std::wstring id_to_af_table[ ] = { FORMAT_PCM8, FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
 
 // Convenience function to allocate an audio type by the string identifier
-ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int channels, int samples )
+ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int channels, int samples, bool init_to_zero )
 {
 	audio_type_ptr result;
 
@@ -37,12 +37,15 @@ ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int 
 		result = pcm32_ptr( new pcm32( frequency, channels, samples ) );
 	else if ( af == FORMAT_FLOAT )
 		result = floats_ptr( new floats( frequency, channels, samples ) );
+	
+	if( init_to_zero )
+		memset( result->pointer( ), 0, result->size() );
 
 	return result;
 }
 
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
-ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency, int channels, int samples )
+ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency, int channels, int samples, bool init_to_zero )
 {
 	audio_type_ptr result;
 
@@ -55,7 +58,7 @@ ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency
 		if ( samples == -1 )
 			samples = source->samples( );
 
-		result = allocate( source->af( ), frequency, channels, samples );
+		result = allocate( source->af( ), frequency, channels, samples, init_to_zero );
 	}
 
 	return result;

@@ -159,7 +159,6 @@ class ML_DECLSPEC template_ : public base
 				int ret = posix_memalign( reinterpret_cast< void** >( &data_ ), 16, data_size_ );
 			   	ARENFORCE_MSG( ret == 0, "Failed to allocate aligned memory. Error = %1%" )( strerror( ret ) )( data_size_ );	
 #endif
-				
 			}
 		}
 	
