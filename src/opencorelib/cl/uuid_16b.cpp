@@ -17,8 +17,6 @@ namespace olib
         t_regex uuid_16b::m_uuid_regex( _CT("([A-Fa-f0-9]{8})-([A-Fa-f0-9]{4})") 
                                         _CT("-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{4})-([A-Fa-f0-9]{8})([A-Fa-f0-9]{4})"));
 
-        t_format uuid_16b::m_uuid_fmt(_CT("%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X"));
-
         uuid_16b::uuid_16b()
         {
             fill_with_unique_data(); 
@@ -69,6 +67,22 @@ namespace olib
                 return static_cast<boost::uint16_t>(hex_to_long(str));
             }
 
+
+            /// Converts from a byte value to its two-character, uppercase
+            /// hexadecimal representation.
+            /// Note that this function does not write a null terminator
+            /// character to its output buffer.
+            /** @param val The byte value to convert.
+                @param buf A pointer to the result buffer, which must contain
+                       space for 2 TCHAR values.
+            */
+            inline void byte_val_to_hex( boost::uint8_t val, TCHAR *buf )
+            {
+                const TCHAR *hex_chars = _CT("0123456789ABCDEF");
+
+                buf[ 0 ] = hex_chars[ val >> 4 ];
+                buf[ 1 ] = hex_chars[ val & 0x0F ];
+            }
         }
 
         void uuid_16b::fill_with_unique_data()
@@ -100,9 +114,25 @@ namespace olib
         /// Convert the unique identifier to a hex string.
         t_string uuid_16b::to_hex_string() const
         {
-            t_stringstream ss;
-            ss << *this;
-            return ss.str();
+            t_string result( 36, _CT('-') );
+            TCHAR *buf = &result[0];
+
+            for( int i = 0; i < 4; ++i, buf += 2 )
+                byte_val_to_hex( m_data[ i ], buf );
+            ++buf;
+            for( int i = 4; i < 6; ++i, buf += 2 )
+                byte_val_to_hex( m_data[ i ], buf );
+            ++buf;
+            for( int i = 6; i < 8; ++i, buf += 2 )
+                byte_val_to_hex( m_data[ i ], buf );
+            ++buf;
+            for( int i = 8; i < 10; ++i, buf += 2 )
+                byte_val_to_hex( m_data[ i ], buf );
+            ++buf;
+            for( int i = 10; i < 16; ++i, buf += 2 )
+                byte_val_to_hex( m_data[ i ], buf );
+
+            return result;
         }
 
         /// Create a unique id from a serialized hex string.
@@ -137,13 +167,11 @@ namespace olib
             return memcmp(lhs.m_data, rhs.m_data, 16) < 0;
         }
 
+
+
         t_ostream& operator << ( t_ostream& os, const uuid_16b& uid)
-        {	
-            t_format fmt( uuid_16b::m_uuid_fmt );
-            for(boost::uint32_t i = 0; i < 16; ++i)
-                fmt % static_cast<boost::uint32_t>(uid.m_data[i]);
-            
-            os << fmt.str();
+        {
+            os << uid.to_hex_string();
             return os;
         }
 
