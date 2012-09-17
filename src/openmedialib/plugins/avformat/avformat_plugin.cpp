@@ -96,6 +96,7 @@ std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
 		case CODEC_ID_MPEG2VIDEO: return "http://www.ardendo.com/apf/codec/mpeg/mpeg2";
 		case CODEC_ID_MPEG4: return "http://www.ardendo.com/apf/codec/mpeg/mpeg4";
 		case CODEC_ID_H264: return "http://www.ardendo.com/apf/codec/h264/h264";
+		case CODEC_ID_AC3: return "http://www.ardendo.com/apf/codec/ac3";
 		case CODEC_ID_MP2: return "http://www.ardendo.com/apf/codec/mp2";
 		case CODEC_ID_MP3: return "http://www.ardendo.com/apf/codec/mp3";
 		case CODEC_ID_AAC: return "http://www.ardendo.com/apf/codec/aac";
@@ -128,6 +129,8 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 		return CODEC_ID_MPEG2VIDEO;
 	else if( apf_codec_id == "h264/h264" )
 		return CODEC_ID_H264;
+	else if( apf_codec_id == "ac3" )
+		return CODEC_ID_AC3;
 	else if( apf_codec_id == "mp2" )
 		return CODEC_ID_MP2;
 	else if( apf_codec_id == "mp3" )
