@@ -5,6 +5,10 @@
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/log_defines.hpp>
 
+#include <algorithm>
+
+using namespace std;
+
 extern "C" {
 
 #include <libavutil/intreadwrite.h>
@@ -74,7 +78,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int num_steps_in_src = buf_size / source_step_size;
 			int num_steps_in_dest = s->frame.nb_samples;
 			
-			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+			int total_iterations = min( num_steps_in_src, num_steps_in_dest );
 			
 			if( avctx->channels == 4 )
 			{
@@ -129,7 +133,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int num_steps_in_src = buf_size / ( source_step_size * 2 );
 			int num_steps_in_dest = s->frame.nb_samples;
 			
-			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+			int total_iterations = min( num_steps_in_src, num_steps_in_dest );
 						
 			while( total_iterations-- > 0 )
 			{
@@ -162,7 +166,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int num_steps_in_src = buf_size / source_step_size;
 			int num_steps_in_dest = s->frame.nb_samples;
 			
-			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+			int total_iterations = min( num_steps_in_src, num_steps_in_dest );
 			
 			while( total_iterations-- > 0 )
 			{
@@ -186,7 +190,7 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			int num_steps_in_src = buf_size / ( source_step_size * 2 );
 			int num_steps_in_dest = s->frame.nb_samples;
 			
-			int total_iterations = std::min( num_steps_in_src, num_steps_in_dest );
+			int total_iterations = min( num_steps_in_src, num_steps_in_dest );
 			
 			while( total_iterations-- > 0 )
 			{

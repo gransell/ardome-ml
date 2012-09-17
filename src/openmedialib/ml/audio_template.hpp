@@ -60,7 +60,11 @@ class ML_DECLSPEC template_ : public base
 
 		virtual ~template_( )
 		{
+#ifdef OLIB_ON_WINDOWS
+			_aligned_free( data_ );
+#else
 			free( data_ );
+#endif
 		}
 
 		const sample_type min_sample( ) const
