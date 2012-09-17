@@ -126,7 +126,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_p_masking", context_->p_masking );
 			enroll( "video_dark_masking", context_->dark_masking );
 			enroll( "video_idct_algo", context_->idct_algo );
-			enroll( "video_dsp_mask", context_->dsp_mask );
+			//enroll( "video_dsp_mask", context_->dsp_mask );
 			enroll( "video_prediction_method", context_->prediction_method );
 			enroll( "video_me_cmp", context_->me_cmp );
 			enroll( "video_me_sub_cmp", context_->me_sub_cmp );
