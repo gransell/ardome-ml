@@ -150,12 +150,18 @@ class avformat_source : public input_type
 		{
 		}
 
+		// Physically seek to the requested position within the media
 		virtual bool seek_to_position( ) = 0;
-		virtual double fps( ) const = 0;
+
+		// Get the selected video stream
 		virtual AVStream *get_video_stream( ) = 0;
+
+		// Get the selected audio stream
 		virtual AVStream *get_audio_stream( ) = 0;
+
 		virtual bool is_video_stream( int index ) = 0;
-		virtual bool is_audio_stream( int index ) = 0;
+
+		virtual bool is_indexing( ) = 0;
 };
 
 class stream_cache
@@ -207,6 +213,7 @@ class stream_cache
 		void put( ml::stream_type_ptr stream, int duration )
 		{
 			lru_stream_ptr lru = lru_stream_cache::fetch( key_ );
+			lru->resize( 300 );
 			lru->append( stream->position( ), stream );
 			expected_ = stream->position( ) + duration;
 		}
@@ -220,7 +227,7 @@ class stream_cache
 			if ( stream )
 			{
 				boost::int64_t from = stream->position( );
-				boost::int64_t to = stream->position( ) + stream->samples( );
+				boost::int64_t to = from + stream->samples( );
 				while( position > to )
 				{
 					stream_type_ptr stream = lru->fetch( to );
@@ -235,6 +242,7 @@ class stream_cache
 		ml::stream_type_ptr fetch( boost::int64_t position )
 		{
 			lru_stream_ptr lru = lru_stream_cache::fetch( key_ );
+			lru->resize( 300 );
 			return lru->fetch( position );
 		}
 };
@@ -242,12 +250,14 @@ class stream_cache
 class avformat_demux
 {
 	private:
+		typedef boost::shared_ptr< stream_avformat > stream_avformat_ptr;
+
 		bool initialised_;
 		avformat_source *source;
 		std::map< size_t, stream_cache > caches;
 		ml::audio::calculator calculator;
 		AVPacket pkt_;
-		std::set< size_t > unsampled_;
+		std::map< size_t, boost::int64_t > unsampled_;
 
 	public:
 		avformat_demux( avformat_source *src )
@@ -319,50 +329,61 @@ class avformat_demux
 				for( size_t i = 0; i < source->context_->nb_streams; i++ )
 				{
 					AVStream *stream = source->context_->streams[ i ];
+					ml::stream_id type = ml::stream_unknown;
+
    					switch( stream->codec->codec_type ) 
 					{
 						case AVMEDIA_TYPE_VIDEO:
 							if ( stream == video )
-							{
-								// Inform the calculator of the video related information
-								calculator.set_stream_type( i, stream_video, stream->time_base.num, stream->time_base.den );
-
-								// Create and initialise the cache
-								caches[ i ];
-
-								// Indicate that we have not found a packet for this stream yet
-								unsampled_.insert( i );
-							}
+								type = ml::stream_video;
 							break;
 
 						case AVMEDIA_TYPE_AUDIO:
 							if ( audio && stream->codec->sample_rate == frequency )
-							{
-								// Inform the calculator of the audio related information for this stream
-								calculator.set_stream_type( i, stream_audio, stream->time_base.num, stream->time_base.den );
-
-								// Create and initialise the cache
-								stream_cache &handler = caches[ i ];
-								handler.set_lead_in( lead_in( stream ) );
-
-								// Indicate that we have not found a packet for this stream yet
-								unsampled_.insert( i );
-							}
+								type = ml::stream_audio;
 		   					break;
 
 						default:
 		   					break;
 					}
+
+					if ( type != ml::stream_unknown )
+					{
+						// Inform the calculator of the video related information
+						calculator.set_stream_type( i, type, stream->time_base.num, stream->time_base.den );
+
+						// Create and initialise the cache
+						stream_cache &handler = caches[ i ];
+						handler.set_lead_in( lead_in( stream ) );
+
+						// Indicate that we have not found a packet for this stream yet
+						unsampled_[ i ] = 0;
+					}
 				}
 
 				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Started analysing first packets" << std::endl;
 
+				std::map< size_t, std::map< boost::int64_t, stream_avformat_ptr > > temporary_cache;
+
 				while ( unsampled_.size( ) )
 				{
-					if ( !obtain_next_packet( ) )
+					stream_avformat_ptr packet = obtain_next_packet( );
+
+					if ( !packet )
 					{
 						if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "End of stream before all first packets found" << std::endl;
 						break;
+					}
+
+					size_t index = packet->index( );
+
+					if ( unsampled_.find( index ) != unsampled_.end( ) )
+					{
+						if ( contiguous( index, temporary_cache[ index ], packet ) )
+						{
+							cache_block( index, temporary_cache[ index ] );
+							unsampled_.erase( index );
+						}
 					}
 				}
 
@@ -372,10 +393,75 @@ class avformat_demux
 			}
 		}
 
-		ml::stream_type_ptr obtain_next_packet( )
+		bool contiguous( size_t index, std::map< boost::int64_t, stream_avformat_ptr > &block, stream_avformat_ptr packet )
+		{
+			bool result = false;
+
+			pl::pcos::property_container properties = packet->properties( );
+			boost::int64_t dts = pl::pcos::value< boost::int64_t >( properties, ml::keys::dts, 0 );
+			int duration = pl::pcos::value< int >( properties, ml::keys::duration, 0 );
+			int key_frame = pl::pcos::value< int >( properties, ml::keys::picture_coding_type, 0 );
+
+			if ( block.size( ) == 0 )
+			{
+				if ( key_frame )
+				{
+					block[ dts ] = packet;
+					calculator.set_stream_offset( index, dts );
+				}
+			}
+			else
+			{
+				stream_avformat_ptr previous = ( -- block.end( ) )->second;
+				pl::pcos::property_container prev_properties = previous->properties( );
+				boost::int64_t prev_dts = pl::pcos::value< boost::int64_t >( prev_properties, ml::keys::dts, 0 );
+				int prev_duration = pl::pcos::value< int >( prev_properties, ml::keys::duration, 0 );
+
+				if ( prev_duration == 0 ) prev_duration = duration;
+
+				if ( dts == prev_dts + prev_duration )
+				{
+					block[ dts ] = packet;
+					result = key_frame == 1;
+				}
+				else
+				{
+					block.erase( block.begin( ), block.end( ) );
+					if ( key_frame )
+						block[ dts ] = packet;
+				}
+			}
+
+			return result;
+		}
+
+		void cache_block( size_t index, std::map< boost::int64_t, stream_avformat_ptr > &block )
+		{
+			source->key_last_ = 0;
+			for ( std::map< boost::int64_t, stream_avformat_ptr >::iterator iter = block.begin( ); iter != block.end( ); iter ++ )
+			{
+				stream_avformat_ptr packet = iter->second;
+				pl::pcos::property_container properties = packet->properties( );
+				boost::int64_t dts = pl::pcos::value< boost::int64_t >( properties, ml::keys::dts, 0 );
+				int key_frame = pl::pcos::value< int >( properties, ml::keys::picture_coding_type, 0 );
+				int pkt_duration = pl::pcos::value< int >( properties, ml::keys::duration, 0 );
+				if ( iter == block.begin( ) )
+					calculator.set_stream_offset( index, dts );
+				boost::int64_t position = calculator.dts_to_position( index, dts );
+				int duration = calculator.packet_duration( index, pkt_duration );
+				size_t index = packet->index( );
+				if ( index == 0 && key_frame )
+					source->key_last_ = position;
+				packet->set_position( position );
+				packet->set_key( source->key_last_ );
+				cache( index ).put( packet, duration );
+			}
+		}
+
+		stream_avformat_ptr obtain_next_packet( )
 		{
 			size_t index = 0;
-			ml::stream_type_ptr packet;
+			stream_avformat_ptr packet;
 
 			// Loop until we find the packet we want or an error occurs
 			ml::stream_id got_packet = ml::stream_unknown;
@@ -390,13 +476,6 @@ class avformat_demux
 				error = av_read_frame( source->context_, &pkt_ );
 				index = pkt_.stream_index;
 
-				if ( unsampled_.find( index ) != unsampled_.end( ) )
-				{
-					if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "encountered stream " << index << " for the first time starting at " << pkt_.dts << std::endl;
-					calculator.set_stream_offset( index, pkt_.dts );
-					unsampled_.erase( index );
-				}
-
 				if ( pkt_.pos != -1 )
 					source->last_packet_pos_ = pkt_.pos;
 
@@ -406,8 +485,6 @@ class avformat_demux
 					got_packet = ml::stream_audio;
 				else if ( error >= 0 )
 					av_free_packet( &pkt_ );
-				if ( error >= 0 && source->key_last_ == -1 && got_packet == ml::stream_video && !pkt_.flags )
-					got_packet = ml::stream_unknown;
 			}
 
 			if ( got_packet != ml::stream_unknown )
@@ -422,15 +499,19 @@ class avformat_demux
 				boost::int64_t position = calculator.dts_to_position( index, pkt_.dts );
 				int duration = calculator.packet_duration( index, pkt_.duration );
 
-				// Temporary diagnostics
-				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "pkt: " << index << " " << pkt_.dts << " + " << pkt_.duration << " = " << position << " + " << duration << std::endl;
+				// During the initial gop parsing, we rely entirely on dts evaluation, but subsequently we follow the expected packet
+				if ( unsampled_.find( index ) == unsampled_.end( ) )
+				{
+					// Temporary diagnostics
+					if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "pkt: " << index << " " << pkt_.dts << " + " << pkt_.duration << " = " << position << " + " << duration << std::endl;
 
-				// Temporary test to ensure that we can map back from the position to the dts
-				boost::int64_t test = calculator.position_to_dts( index, position );
-				if ( test != pkt_.dts ) if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Mismatch " << index << ": " << position << " " << pkt_.dts << " != " << test << std::endl;
+					// Temporary test to ensure that we can map back from the position to the dts
+					boost::int64_t test = calculator.position_to_dts( index, position );
+					if ( test != pkt_.dts ) if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "Mismatch " << index << ": " << position << " " << pkt_.dts << " != " << test << std::endl;
 
-				// Sync the expected position with the found one for this stream
-				found( pkt_, position );
+					// Sync the expected position with the found one for this stream
+					found( pkt_, position );
+				}
 
 				// Sync the last key found with the calculated position
 				if ( got_packet == ml::stream_video && pkt_.flags == AV_PKT_FLAG_KEY )
@@ -440,13 +521,13 @@ class avformat_demux
 				switch( got_packet )
 				{
 					case ml::stream_video:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
+						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
 																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
 																		   avformat_to_oil( codec->pix_fmt ), il::top_field_first, codec->gop_size ) );
 						break;
 
 					case ml::stream_audio:
-						packet = ml::stream_type_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
+						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
 																		   0, codec->sample_rate, codec->channels, duration, context_to_sample_width( codec ) ) );
 						break;
 
@@ -461,11 +542,15 @@ class avformat_demux
 					// Extract the properties object now
 					pl::pcos::property_container properties = packet->properties( );
 
+					// Set the stream index on the packet
+					packet->set_index( index );
+
 					// Copy the data from the avpacket to the stream_type_ptr
 					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
 
 					// Input related properties
 					pl::pcos::assign< pl::wstring >( properties,  ml::keys::uri, source->get_uri( ) );
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, source->context_->pb->pos );
 
 					// Packet related properties
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts, pkt_.pts );
@@ -474,20 +559,18 @@ class avformat_demux
 
 					// Absolute byte offset derived from packet and location in stream before a read
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_byte_offset, source->last_packet_pos_ );
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::codec_tag, boost::int64_t( codec->codec_tag ) );
+					pl::pcos::assign< int >( properties, ml::keys::codec_id, int( codec->codec_id ) );
+					pl::pcos::assign< int >( properties, ml::keys::codec_type, int( codec->codec_type ) );
 
 					// Codec related properties
-					pl::pcos::assign< int >( properties, ml::keys::has_b_frames, stream->codec->has_b_frames );
+					pl::pcos::assign< int >( properties, ml::keys::has_b_frames, codec->has_b_frames );
 
 					// Stream related properties
+					pl::pcos::assign< int >( properties, ml::keys::pid, stream->id );
 					pl::pcos::assign< int >( properties, ml::keys::timebase_num, stream->time_base.num );
 					pl::pcos::assign< int >( properties, ml::keys::timebase_den, stream->time_base.den );
 
-					pl::pcos::property codec_id( ml::keys::codec_id );
-					packet->properties( ).append( codec_id = int( codec->codec_id ) );		
-					pl::pcos::property codec_type( ml::keys::codec_type );
-					packet->properties( ).append( codec_type = int( codec->codec_type ) );
-					pl::pcos::property codec_tag( ml::keys::codec_tag );
-					packet->properties( ).append( codec_tag = boost::int64_t( codec->codec_tag ) );
 					pl::pcos::property max_rate( ml::keys::max_rate );
 					packet->properties( ).append( max_rate = codec->rc_max_rate );
 					pl::pcos::property buffer_size( ml::keys::buffer_size );
@@ -509,7 +592,10 @@ class avformat_demux
 					pl::pcos::property picture_coding_type( ml::keys::picture_coding_type );
 					packet->properties( ).append( picture_coding_type = ( pkt_.flags == AV_PKT_FLAG_KEY ? 1 : 0 ) );
 
-					cache( index ).put( packet, duration );
+					// While we're caching the first gop, we don't have fixed positions, so don't cache yet
+					// this will be done during the call to cache_block
+					if ( unsampled_.find( index ) == unsampled_.end( ) && position >= 0 )
+						cache( index ).put( packet, duration );
 				}
 
 				av_free_packet( &pkt_ );
@@ -532,13 +618,13 @@ class avformat_demux
 
 				case CODEC_ID_AC3:
 					// If we're reading AC3 we have 1536 samples per packet = 31.25 fps at 48 KHz.
-					lead_in = 3 * 1536;
+					lead_in = 1 * 1536;
 					break;
 
 				case CODEC_ID_MP2:
 				case CODEC_ID_MP3:
 					// If we're reading MP2 or MP3 we have 1152 samples per packet is 125/3 fps at 48 KHz.
-					lead_in = 3 * 1152;
+					lead_in = 1 * 1152;
 					break;
 
 				default:
@@ -577,7 +663,7 @@ class avformat_demux
 			}
 		}
 
-		void found( AVPacket &pkt, boost::int64_t position )
+		void found( AVPacket &pkt, boost::int64_t &position )
 		{
 			// TODO: Handle unindexed positioning...
 			if ( has_cache_for( pkt.stream_index ) )
@@ -586,16 +672,16 @@ class avformat_demux
 				if ( position != handler.expected( ) )
 				{
 					if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "this packet is " << pkt_.stream_index << " " << position << " but we think it's " << handler.expected( ) << std::endl;
-					handler.set_expected( position );
+					if ( source->is_indexing( ) )
+						position = handler.expected( );
+					else
+						handler.set_expected( position );
 				}
 			}
 		}
 
 		bool populate( ml::frame_type_ptr result )
 		{
-			// TODO: CORRECTLY DETERMINE AVAILABILITY OF ALL AUDIO PACKETS
-			// TODO: Handle non-0 based video
-
 			bool success = true;
 			int position = result->get_position( );
 
@@ -1133,17 +1219,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
                  ( aml_index_ == 0 || ( aml_index_ != 0 && aml_index_->finished( ) ) ) )
 			{
 				bool temp = false;
+				int ret = 0;
+				int count = first_video_found_;
 
-        		av_init_packet( &pkt_ );
-        		pkt_.data = NULL;
-        		pkt_.size = 0;
+				while ( count -- >= 0 )
+				{
+					av_init_packet( &pkt_ );
+					pkt_.data = NULL;
+					pkt_.size = 0;
 
-				int ret = decode_image( temp, &pkt_ );
-				if ( !temp )
-                {
-                    error =-1;
-                    ARLOG_WARN( "Failed to decode null packet at eof. Error = %1%" )( ret );
-                } 
+					ret = decode_image( temp, &pkt_ );
+					if ( !temp )
+					{
+						error =-1;
+						ARLOG_WARN( "Failed to decode null packet at eof. Error = %1%" )( ret );
+					} 
+				}
 
 				if ( frames_ == 1 << 30 && images_.size( ) )
 				{
@@ -1265,6 +1356,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				frames_ = aml_index_->calculate( bytes );
 			}
 		}
+
+		virtual bool is_indexing( ) { return !is_seekable_; }
 
 		bool is_video_stream( int index )
 		{
@@ -1753,7 +1846,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				// result, we discard the audio obtained from the 3 packets immediately 
 				// after a seek.
 				if ( discard_audio_after_seek_ )
-					discard_audio_packet_count_ = 3;
+					discard_audio_packet_count_ = 1;
 
 				int position = get_position( );
 
@@ -1778,7 +1871,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				
 				if ( position < 0 ) position = 0;
 
-				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE );
+				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ) + context_->start_time;
 				int stream = -1;
 				boost::int64_t byte = -1;
 
@@ -1788,12 +1881,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				{
 					if ( has_video( ) )
 					{
-						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_video_stream( )->time_base ) );
+						offset = get_video_stream( )->start_time + boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_video_stream( )->time_base ) );
 						stream = video_indexes_[ prop_video_index_.value< int >( ) ];
 					}
 					else if ( has_audio( ) )
 					{
-						offset = boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_audio_stream( )->time_base ) );
+						offset = get_audio_stream( )->start_time + boost::int64_t( ( ( double )position / avformat_input::fps( ) ) / av_q2d( get_audio_stream( )->time_base ) );
 						stream = audio_indexes_[ prop_audio_index_.value< int >( ) ];
 					}
 				}
@@ -1820,10 +1913,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				audio_buf_used_ = 0;
 				audio_buf_offset_ = 0;
 
-				if ( get_audio_stream( ) )
+				if ( get_audio_stream( ) && get_audio_stream( )->codec )
 					avcodec_flush_buffers( get_audio_stream( )->codec );
 
-				if ( get_video_stream( ) )
+				if ( get_video_stream( ) && get_video_stream( )->codec )
 					avcodec_flush_buffers( get_video_stream( )->codec );
 
 				return result >= 0;
@@ -1854,8 +1947,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			int position = int( dts * fps( ) + 0.5 );
 
 			// Ignore if less than 0
-			if ( position < 0 )
-				return 0;
+			//if ( position < 0 )
+				//return 0;
 
 			// If we have no position, then use the last position + 1
 			if ( ( packet == 0 || packet->data == 0 || position == 0 || prop_genpts_.value< int >( ) || !is_seekable( ) ) && images_.size( ) )
@@ -2051,8 +2144,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			got_audio = 0;
 
 			// Ignore packets before 0
-			if ( found < 0 )
-				return 0;
+			//if ( found < 0 )
+				//return 0;
 
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;

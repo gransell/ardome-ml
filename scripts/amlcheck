@@ -7,7 +7,7 @@ die( )
 
 run( )
 {
-	echo "+ $@" && $@ || die "Test run failed - aborting"
+	echo "+ $@" && "$@" || die "Test run failed - aborting"
 }
 
 [ "$#" -eq 0 ] && die "Usage: `basename $0` <graph>"

@@ -36,6 +36,7 @@ class stream_avformat : public ml::stream_type
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
+			, index_( 0 )
 		{
 			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
@@ -61,6 +62,7 @@ class stream_avformat : public ml::stream_type
 			, pf_( pf )
 			, field_order_( field_order )
 			, estimated_gop_size_( estimated_gop_size )
+			, index_( 0 )
 		{
 		}
 
@@ -83,6 +85,7 @@ class stream_avformat : public ml::stream_type
 			, pf_( L"" )
 			, field_order_( olib::openimagelib::il::top_field_first )
 			, estimated_gop_size_( 0 )
+			, index_( 0 )
 		{
 			codec_ = avformat_codec_id_to_apf_codec( codec );
 		}
@@ -90,6 +93,26 @@ class stream_avformat : public ml::stream_type
 		/// Virtual destructor
 		virtual ~stream_avformat( ) 
 		{ }
+
+		void set_position( boost::int64_t position )
+		{
+			position_ = position;
+		}
+
+		void set_key( boost::int64_t key )
+		{
+			key_ = key;
+		}
+
+		void set_index( size_t index )
+		{
+			index_ = index;
+		}
+
+		size_t index( )
+		{
+			return index_;
+		}
 
 		/// Return the properties associated to this frame.
 		virtual olib::openpluginlib::pcos::property_container &properties( )
@@ -216,6 +239,7 @@ class stream_avformat : public ml::stream_type
 		olib::openpluginlib::wstring pf_;
 		olib::openimagelib::il::field_order_flags field_order_;
 		int estimated_gop_size_;
+		size_t index_;
 };
 
 } } }

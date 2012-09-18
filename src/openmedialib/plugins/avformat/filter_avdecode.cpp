@@ -770,8 +770,8 @@ private:
 	void initialize( const frame_type_ptr& frame )
 	{
 		// Make sure that we have enough tracks in our audio block to match the amount in the tracks we are to decode
-		ARENFORCE_MSG( frame->audio_block()->tracks.size( ) >= tracks_to_decode_.back( ),
-					  "Not enough audio tracks in audio block" )( frame->audio_block()->tracks.size( ) )( tracks_to_decode_.back( ) );
+		//ARENFORCE_MSG( frame->audio_block()->tracks.size( ) >= tracks_to_decode_.back( ),
+					  //"Not enough audio tracks in audio block" )( frame->audio_block()->tracks.size( ) )( tracks_to_decode_.back( ) );
 		// Get the codec id of the first track that we are to decode
 		ARENFORCE_MSG( !frame->audio_block()->tracks[ tracks_to_decode_[ 0 ] ].packets.empty(),
 					  "Audio track %1% not available in audio block. Can not initialize." )( tracks_to_decode_[ 0 ] );
@@ -806,8 +806,8 @@ private:
 		audio::track_type::const_iterator packets_it =
 			track_packets.find( next_packets_to_decoders_[ track ] );
 		
-		ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
-					   "Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
+		//ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
+		//			   "Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
 		
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
 		{

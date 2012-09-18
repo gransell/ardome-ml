@@ -74,9 +74,11 @@ ML_KEY( bits_per_coded_sample );
 ML_KEY( ticks_per_frame );
 ML_KEY( avg_fps_num );
 ML_KEY( avg_fps_den );
+ML_KEY( pid );
 
 ML_KEY( source_timecode );
 ML_KEY( source_byte_offset );
+ML_KEY( source_position );
 
 } } } }
 
