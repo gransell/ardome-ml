@@ -100,7 +100,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 
 			if ( channels )
 			{
-				ml::audio::floats_ptr aud = ml::audio::floats_ptr( new ml::audio::floats( frequency, channels, samples ) );
+				ml::audio::floats_ptr aud = ml::audio::floats_ptr( new ml::audio::floats( frequency, channels, samples, false ) );
 				float *ptr = aud->data( );
 				for ( int i = 0; i < samples; i ++ )
 					for ( int j = 0; j < channels; j ++ )

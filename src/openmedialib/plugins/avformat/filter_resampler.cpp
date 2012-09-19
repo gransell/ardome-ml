@@ -205,7 +205,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			int output_samples = audio_resample(context_, &out_buffer_[ 0 ], &in_buffer_[ 0 ], input_samples_per_chan);
 			
 			// Create a new audio object to hold the determined portion of the output buffer
-			audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16( prop_output_sample_freq_.value<int>(), prop_output_channels_.value<int>(), output_samples) );
+			audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16( prop_output_sample_freq_.value<int>(), prop_output_channels_.value<int>(), output_samples, true) );
 			if(!output_audio)
 				return;
 		

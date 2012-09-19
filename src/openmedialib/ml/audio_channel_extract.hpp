@@ -19,7 +19,7 @@ boost::shared_ptr< T > channel_extract( const audio_type_ptr &input, int channel
 	int samples = audio->samples( );
 	int channels = audio->channels( );
 
-	boost::shared_ptr< T > result = boost::shared_ptr< T >( new T( audio->frequency( ), 1, samples ) );
+	boost::shared_ptr< T > result = boost::shared_ptr< T >( new T( audio->frequency( ), 1, samples, false ) );
 
 	if ( channel < channels )
 	{

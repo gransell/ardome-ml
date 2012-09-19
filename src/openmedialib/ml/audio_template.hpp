@@ -11,6 +11,10 @@
 #include <string.h>
 #include <string>
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/utilities.hpp>
+
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // The template which provides all the types
@@ -20,7 +24,7 @@ class ML_DECLSPEC template_ : public base
 	public:
 		typedef T sample_type;
 
-		template_( int frequency, int channels, int samples )
+		template_( int frequency, int channels, int samples, bool init_to_zero )
 			: id_( B )
 			, frequency_( frequency )
 			, channels_( channels )
@@ -28,7 +32,7 @@ class ML_DECLSPEC template_ : public base
 			, orig_samples_( samples )
 			, position_( 0 )
 		{
-			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
+			init_data( init_to_zero );
 		}
 
 		template_( const base &other )
@@ -39,7 +43,7 @@ class ML_DECLSPEC template_ : public base
 			, orig_samples_( other.original_samples( ) )
 			, position_( other.position( ) )
 		{
-			data_ = boost::shared_ptr< std::vector< sample_type > >( new std::vector< sample_type >( channels_ * samples_ ) );
+			init_data( false );
 			other.convert( *this );
 		}
 
@@ -48,7 +52,9 @@ class ML_DECLSPEC template_ : public base
 		template_( const template_< T, B, min_val, max_val > &other );
 
 		virtual ~template_( )
-		{ }
+		{
+			opencorelib::utilities::aligned_free( data_ );
+		}
 
 		const sample_type min_sample( ) const
 		{ return sample_type( min_val ); }
@@ -96,10 +102,10 @@ class ML_DECLSPEC template_ : public base
 
 		sample_type *data( ) const 
 		{
-			if( data_->size() == 0 )
+			if( data_size_ == 0 )
 				return NULL;
 			else
-				return &( *data_ )[ 0 ];
+				return data_;
 		}
 
 		int position( ) const 
@@ -124,13 +130,32 @@ class ML_DECLSPEC template_ : public base
 		{ audio::convert< floats, template_< T, B, min_val, max_val > >( dst, *this ); }
 
 	private:
+		void init_data( bool init_to_zero )
+		{
+			// 16 bytes padding
+			data_size_ = channels_ * samples_ * sizeof( sample_type ) + 16;
+			
+			if( data_size_ == 0 )
+			{
+				data_ = NULL;
+			}
+			else
+			{
+				data_ = static_cast< sample_type * >( opencorelib::utilities::aligned_alloc( 16, data_size_ ) );
+
+				if( init_to_zero )
+					memset( data_, 0, data_size_ );
+			}
+		}
+	
 		identity id_;
 		int frequency_;
 		int channels_;
 		int samples_;
 		int orig_samples_;
 		int position_;
-		boost::shared_ptr < std::vector< sample_type > > data_;
+		size_t data_size_;
+		sample_type *data_;
 };
 
 } } } }

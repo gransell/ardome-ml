@@ -345,7 +345,7 @@ class rubber
 		ml::audio_type_ptr retrieve( int position, int samples )
 		{
 			float_ptr *array = allocate( samples );
-			ml::audio_type_ptr output = ml::audio::allocate( L"float", frequency_, channels_, samples );
+			ml::audio_type_ptr output = ml::audio::allocate( L"float", frequency_, channels_, samples, false );
 			try
 			{
 				rubber_->retrieve( array, samples );	

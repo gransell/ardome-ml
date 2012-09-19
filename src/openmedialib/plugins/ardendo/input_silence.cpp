@@ -81,7 +81,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			int channels = prop_channels_.value< int >( );
 			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, prop_profile_.value< pl::wstring >( ) );
 
-			result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples ) );
+			result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples, true ) );
 
 			result->set_fps( fps_num, fps_den );
 			result->set_pts( get_position( ) * 1.0 / fps( ) );

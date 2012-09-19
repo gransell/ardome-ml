@@ -16,6 +16,10 @@ namespace olib { namespace openmedialib { namespace ml {
 class ML_DECLSPEC analyse_type
 {
 	public:
+
+		virtual ~analyse_type()
+		{}
+
 		// Once a stream_type is analysed, we set a property on the stream to avoid re-analysis
 		static olib::openpluginlib::pcos::key key_analysed_;
 		// Common keys which may be provided in the analysis collect method

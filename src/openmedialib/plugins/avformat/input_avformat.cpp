@@ -62,6 +62,24 @@ extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
+	
+	
+namespace {
+	int context_to_sample_width( const AVCodecContext *ctx )
+	{
+		switch( ctx->sample_fmt )
+		{
+			case AV_SAMPLE_FMT_S16:
+				return 2;
+			case AV_SAMPLE_FMT_S32:
+				return 3;
+			default:
+				ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( ctx->sample_fmt ) );
+		}
+		return 0;
+	}
+}
+	
 
 // The avformat_source abstract class provides the common functionality which 
 // is required for both the avformat_input class (which, by default, will demux 
@@ -583,8 +601,7 @@ class avformat_demux
 
 					case ml::stream_audio:
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
-																		   0, codec->sample_rate, codec->channels, duration, av_get_bytes_per_sample(codec->sample_fmt), 
-																		   L"", il::top_field_first, 0 ) );
+																		   0, codec->sample_rate, codec->channels, duration, context_to_sample_width( codec ) ) );
 						break;
 
 					default:
@@ -776,7 +793,7 @@ class avformat_demux
 				// Iterate through the tracks in the audio block
 				for ( ml::audio::block_type::iterator iter = block->tracks.begin( ); iter != block->tracks.end( ); iter ++ )
 				{
-					// Obtain the stream index and block track object
+					// Obtain the stream index
 					size_t index = iter->first;
 
 					// Obtain the cache object for this stream
@@ -914,7 +931,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_gop_open_ = 0 );
 			properties( ).append( prop_gen_index_ = 0 );
-			properties( ).append( prop_packet_stream_ = 0 );
+			properties( ).append( prop_packet_stream_ = 1 );
 			properties( ).append( prop_fake_fps_ = 0 );
 
 			// Allocate an av frame
@@ -2092,7 +2109,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					// Correct position
 					if ( images_.size( ) == 0 && ( aml_index_ && aml_index_->usable( ) ) )
 						position = expected_packet_;
-					else if ( images_.size( ) )
+					else if ( images_.size( ) && !( aml_index_ && aml_index_->usable( ) ) )
 						position = images_[ images_.size( ) - 1 ]->position( ) + first_video_found_ + 1;
 				}
 
@@ -2400,7 +2417,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				first_audio_frame_ = false;
 			}
 
-			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
+			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, false ) );
 			aud->set_position( position );
 			memcpy( aud->pointer( ), buf, aud->size( ) );
 
@@ -2508,7 +2525,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if( channels != 0 && frequency != 0 )
 				{
 					int samples = samples_for_frame( frequency, current );
-					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
+					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, true ) );
 					aud->set_position( current );
 					frame->set_audio( aud );
 					frame->set_duration( double( samples ) / double( frequency ) );

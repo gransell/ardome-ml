@@ -38,13 +38,17 @@ namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 namespace ml = olib::openmedialib::ml;
 
-namespace olib { namespace openmedialib { namespace ml { 
+namespace olib { namespace openmedialib { namespace ml {
+	
+extern const int AML_AES3_CODEC_ID;
 
 extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
+	
+extern void register_aml_aes3( );
 
 const std::wstring avformat_to_oil( int fmt )
 {
@@ -125,7 +129,7 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 
 	if( apf_codec_id == "mpeg/mpeg1" )
 		return CODEC_ID_MPEG1VIDEO;
-	else if( apf_codec_id == "mpeg/mpeg2" )
+	else if( apf_codec_id == "mpeg/mpeg2" || apf_codec_id == "imx/imx" )
 		return CODEC_ID_MPEG2VIDEO;
 	else if( apf_codec_id == "h264/h264" )
 		return CODEC_ID_H264;
@@ -141,6 +145,8 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 		return CODEC_ID_DVVIDEO;
 	else if( apf_codec_id == "vc3/vc3" )
 		return CODEC_ID_DNXHD;
+	else if( apf_codec_id == "aes" )
+		return static_cast< enum CodecID >( AML_AES3_CODEC_ID );
 	else if( apf_codec_id == "pcm" )
 	{
 		int sample_size = stream->sample_size( );
@@ -148,6 +154,10 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 			return CODEC_ID_PCM_S16LE;
 		else if( sample_size == 3 )
 			return CODEC_ID_PCM_S24LE;
+		else if( sample_size == 4 )
+			return CODEC_ID_PCM_U32LE;
+
+		ARENFORCE_MSG( false, "Unsupported audio sample width" )( sample_size );
 	}
 	else if( apf_codec_id == "aiff" )
 	{
@@ -156,6 +166,10 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 			return CODEC_ID_PCM_S16BE;
 		else if( sample_size == 3 )
 			return CODEC_ID_PCM_S24BE;
+		else if( sample_size == 4 )
+			return CODEC_ID_PCM_U32BE;
+		
+		ARENFORCE_MSG( false, "Unsupported audio sample width" )( sample_size );
 	}
 	
 	return CODEC_ID_NONE;
@@ -311,6 +325,8 @@ namespace
 				av_log_set_level( atoi(  getenv( "AML_AVFORMAT_DEBUG" ) ) );
 
 			av_lockmgr_register( ml::lockmgr );
+			
+			olib::openmedialib::ml::register_aml_aes3( );
 		}
 		else if( init < 0 && --refs == 0 )
 		{

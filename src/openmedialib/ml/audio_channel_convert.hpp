@@ -271,7 +271,7 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 
 	// Create audio object for output
 	const int samples = input_audio->samples( );
-	T *base = new T( input_audio->frequency( ), channels, samples );
+	T *base = new T( input_audio->frequency( ), channels, samples, false );
 
 	boost::shared_ptr< T > output_audio = boost::shared_ptr< T >( base );
 	typename T::sample_type min_sample = output_audio->min_sample( );

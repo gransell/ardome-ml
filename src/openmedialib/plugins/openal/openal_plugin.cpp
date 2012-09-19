@@ -396,7 +396,7 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 						//are more input channels than outputs, we drop the extra ones.
 						audio_type_ptr original = converted_audio;
 						const int samples = original->samples( );
-						converted_audio = audio::allocate( audio::FORMAT_PCM16, original->frequency( ), output_channels, samples );
+						converted_audio = audio::allocate( audio::FORMAT_PCM16, original->frequency( ), output_channels, samples, false );
 
 						int channels_to_copy = std::min< int >( incoming_channels, output_channels );
 						const boost::int16_t *src = static_cast< boost::int16_t * >( original->pointer( ) );

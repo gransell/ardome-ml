@@ -169,6 +169,20 @@ namespace olib
 			CORE_API std::vector< library_info_ptr > get_loaded_libraries();
 
             CORE_API multivalue_property_map parse_multivalue_property( const olib::t_string &prop_str);
+			
+			/** 
+			 * Allocate size amount of bytes aligned to alignment. Make sure to use aligned_free to free the memory.
+			 * @param alignment Bytes to align to
+			 * @param size Amount to allocate
+			 * @return A valid pointer to a block of memory or NULL if allocation failed.
+			 * @sa aligmned_free
+			 */
+			CORE_API void *aligned_alloc( size_t alignment, size_t size );
+			
+			/**
+			 * Free memory allocated with aligned_alloc.
+			 */
+			CORE_API void aligned_free( void *ptr );
 		}
 	}
 }

@@ -39,7 +39,7 @@ boost::shared_ptr< T > mixer( const audio_type_ptr &a_, const audio_type_ptr &b_
 	const int samples_out  = a->samples();   // a & b are the same.
 	const int channels_out = a->channels();
 	
-	boost::shared_ptr< T > mix = boost::shared_ptr< T >( new T( a->frequency( ), channels_out, samples_out ) );
+	boost::shared_ptr< T > mix = boost::shared_ptr< T >( new T( a->frequency( ), channels_out, samples_out, true ) );
 
 	// Set the output "original" sample count to the maximum of the inputs
 	mix->original_samples( std::max<int>( a->original_samples(), b->original_samples() ) );
@@ -86,7 +86,7 @@ boost::shared_ptr< T > channel_mixer( audio_type_ptr &a, const audio_type_ptr &b
 	{
 		const int frequency = input->frequency( );
 		const int samples = input->samples( );
-		output = boost::shared_ptr< T >( new T( frequency, volume.size( ), samples ) );
+		output = boost::shared_ptr< T >( new T( frequency, volume.size( ), samples, true ) );
 	}
 
 	// Do I reject or do a rough resample?

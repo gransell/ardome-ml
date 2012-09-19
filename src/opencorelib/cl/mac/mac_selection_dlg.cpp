@@ -15,12 +15,12 @@ namespace olib
 			CFStringRef title = CFStringCreateWithCString( NULL, str_util::to_string(mText).c_str(), kCFStringEncodingUTF8 );
 			CFStringRef message = CFStringCreateWithCString( NULL, str_util::to_string(mMessage).c_str(), kCFStringEncodingUTF8 );
             CFStringRef altButton = CFStringCreateWithCString( NULL, "Break", kCFStringEncodingUTF8 );
-			SInt32 ret = CFUserNotificationDisplayAlert(0, 
-                                                        kCFUserNotificationStopAlertLevel, // Alert level
-                                                        NULL, NULL, NULL, // Resources (Icon, Sound, localization)
-                                                        title, message, // Messages
-                                                        NULL, altButton, NULL, // Buttons (Default, Alternate, Other)
-                                                        &responseFlags );
+			CFUserNotificationDisplayAlert(0, 
+					kCFUserNotificationStopAlertLevel, // Alert level
+					NULL, NULL, NULL, // Resources (Icon, Sound, localization)
+					title, message, // Messages
+					NULL, altButton, NULL, // Buttons (Default, Alternate, Other)
+					&responseFlags );
             
             if( responseFlags == kCFUserNotificationAlternateResponse ) {
                 mResult = dialog_result::selection_made;
