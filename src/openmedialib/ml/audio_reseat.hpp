@@ -85,6 +85,11 @@ class reseat_impl : public reseat
 					index += samples_from_packet;
 					dst = ( void * )( ( boost::uint8_t * )( dst ) + samples_from_packet * channels * audio->sample_size( ) );
 				}
+				
+				// If index < requested we did not have enough samples in our queue so we should silence the last samples
+				if( index < requested )
+					memset( dst, 0, ( requested - index ) * channels * audio->sample_size( ) );
+				
 			}
 			return result;
 		}
