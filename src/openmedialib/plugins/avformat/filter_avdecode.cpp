@@ -767,8 +767,8 @@ private:
 		audio::track_type::const_iterator packets_it =
 			track_packets.find( next_packets_to_decoders_[ track ] );
 		
-		//ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
-		//			   "Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
+		ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
+					   "Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
 		
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
 		{

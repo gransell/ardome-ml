@@ -150,26 +150,33 @@ class stream_cache
 {
 	private:
 		cl::lru_key key_;
+		enum AVMediaType type_;
+		size_t index_;
 		boost::int64_t expected_;
-		boost::int64_t packet_;
 		int lead_in_;
 
 	public:
 		stream_cache( )
 		: key_( lru_stream_cache::allocate( ) )
+		, type_( AVMEDIA_TYPE_UNKNOWN )
+		, index_( 0 )
 		, expected_( 0 )
-		, packet_( 0 )
 		, lead_in_( 0 )
 		{ }
 
-		void set_packet( boost::int64_t packet )
+		void set_type( enum AVMediaType type )
 		{
-			packet_ = packet;
+			type_ = type;
 		}
 
-		const boost::int64_t packet( ) const
+		void set_index( size_t index )
 		{
-			return packet_;
+			index_ = index;
+		}
+
+		size_t index( ) const
+		{
+			return index_;
 		}
 
 		void set_expected( boost::int64_t expected )
@@ -200,6 +207,29 @@ class stream_cache
 			expected_ = stream->position( ) + duration;
 		}
 
+		ml::stream_type_ptr fetch( boost::int64_t position )
+		{
+			ml::stream_type_ptr result;
+
+			switch( type_ )
+			{
+				case AVMEDIA_TYPE_VIDEO:
+					result = find_video( position );
+					break;
+
+				case AVMEDIA_TYPE_AUDIO:
+					result = find_audio( position );
+					break;
+
+				default:
+					ARENFORCE_MSG( false, "Unkown stream type %2%" )( type_ );
+					break;
+			};
+
+			return result;
+		}
+
+	private:
 		ml::stream_type_ptr find_audio( boost::int64_t position )
 		{
 			lru_stream_ptr lru = lru_stream_cache::fetch( key_ );
@@ -209,19 +239,21 @@ class stream_cache
 			if ( stream )
 			{
 				boost::int64_t from = stream->position( );
-				boost::int64_t to = from + stream->samples( );
+				boost::int64_t to = stream->position( ) + stream->samples( );
 				while( position > to )
 				{
 					stream_type_ptr stream = lru->fetch( to );
 					if ( !stream ) break;
 					from = stream->position( );
-					to = stream->position( ) + stream->samples( );
+					to = from + stream->samples( );
 				}
+				if ( position < from || position >= to )
+					stream = ml::stream_type_ptr( );
 			}
 			return stream;
 		}
 
-		ml::stream_type_ptr fetch( boost::int64_t position )
+		ml::stream_type_ptr find_video( boost::int64_t position )
 		{
 			lru_stream_ptr lru = lru_stream_cache::fetch( key_ );
 			lru->resize( 300 );
@@ -263,7 +295,10 @@ class avformat_demux
 			if ( !populate( result ) )
 			{
 				// Handle unexpected position here
-				seek( );
+				if ( seek( ) )
+				{
+					ARENFORCE_MSG( check_direction( position ), "Unable to get to %1%" )( position );
+				}
 
 				// Keep going until we have the full frame
 				while( !populate( result ) )
@@ -272,12 +307,48 @@ class avformat_demux
 						break;
 				}
 
+				if ( result->audio_block( ) )
+				{
+					
+				}
+
 				// Increment the next expected frame
 				source->expected_ = position + 1;
 			}
 
 			// Set the source timecode
 			pl::pcos::assign< int >( result->properties( ), ml::keys::source_timecode, position );
+		}
+
+		bool check_direction( int position )
+		{
+			typedef std::map< size_t, stream_cache >::iterator iterator;
+			bool result = true;
+
+			do
+			{
+				// Check that we have at least one packet per stream
+				for ( iterator iter = caches.begin( ); result && iter != caches.end( ); iter ++ )
+					result = iter->second.expected( ) != -1;
+
+				// If result is false, then obtain another packet and check streams again unless eof is hit
+				if ( !result )
+				{
+					result = obtain_next_packet( );
+					ARENFORCE_MSG( result, "End of file reached" );
+				}
+			}
+			while( !result );
+
+			// Now we need to confirm that we either have the packet in each stream or it's expected
+			for ( iterator iter = caches.begin( ); result && iter != caches.end( ); iter ++ )
+			{
+				boost::int64_t stream_position = calculator.frame_to_position( iter->second.index( ), position ) - iter->second.lead_in( );
+				if ( stream_position < 0 ) stream_position = 0;
+				result = !( iter->second.fetch( stream_position ) == ml::stream_type_ptr( ) && iter->second.expected( ) > stream_position );
+			}
+
+			return result;
 		}
 
 	private:
@@ -336,6 +407,8 @@ class avformat_demux
 
 						// Create and initialise the cache
 						stream_cache &handler = caches[ i ];
+						handler.set_index( i );
+						handler.set_type( stream->codec->codec_type );
 						handler.set_lead_in( lead_in( stream ) );
 
 						// Indicate that we have not found a packet for this stream yet
@@ -596,18 +669,18 @@ class avformat_demux
 			{
 				case CODEC_ID_AAC:
 					// If we're reading AAC we have 1024 samples per packet = 375/8 fps at 48 KHz.
-					lead_in = 1 * 1024;
+					lead_in = 1024;
 					break;
 
 				case CODEC_ID_AC3:
 					// If we're reading AC3 we have 1536 samples per packet = 31.25 fps at 48 KHz.
-					lead_in = 1 * 1536;
+					lead_in = 1536;
 					break;
 
 				case CODEC_ID_MP2:
 				case CODEC_ID_MP3:
 					// If we're reading MP2 or MP3 we have 1152 samples per packet is 125/3 fps at 48 KHz.
-					lead_in = 1 * 1152;
+					lead_in = 1152;
 					break;
 
 				default:
@@ -617,7 +690,7 @@ class avformat_demux
 			return lead_in;
 		}
 
-		void set_expected( int position )
+		void set_expected( int position, bool calc = true )
 		{
 			source->expected_ = position;
 
@@ -626,24 +699,38 @@ class avformat_demux
 				if ( has_cache_for( i ) )
 				{
 					stream_cache &handler = caches[ i ];
-					boost::int64_t stream_position = calculator.frame_to_position( i, position );
-					handler.set_expected( stream_position );
-					handler.set_packet( stream_position );
+					if ( calc )
+					{
+						boost::int64_t stream_position = calculator.frame_to_position( i, position );
+						handler.set_expected( stream_position );
+					}
+					else
+					{
+						handler.set_expected( position );
+					}
 				}
 			}
 		}
 
-		void seek( )
+		bool seek( )
 		{
+			bool result = false;
 			int position = source->get_position( );
 			if ( source->expected_ != position )
 			{
 				source->seek_to_position( );
+				result = true;
 				if ( source->aml_index_ && source->aml_index_->usable( ) )
+				{
 					set_expected( source->expected_packet_ );
+				}
 				else
+				{
 					source->expected_ = -1;
+					set_expected( -1, false );
+				}
 			}
+			return result;
 		}
 
 		void found( AVPacket &pkt, boost::int64_t &position )
@@ -665,7 +752,10 @@ class avformat_demux
 
 		bool populate( ml::frame_type_ptr result )
 		{
-			bool success = true;
+			// Count the number of tracks that fail
+			int failures = 0;
+
+			// Absolute frame position to populate
 			int position = result->get_position( );
 
 			// Try to obtain the video stream component from the cache
@@ -674,11 +764,11 @@ class avformat_demux
 				// Update the output frame
 				ml::stream_type_ptr packet = caches[ 0 ].fetch( position );
 				result->set_stream( packet );
-				success = packet != ml::stream_type_ptr( );
+				if ( packet == ml::stream_type_ptr( ) ) failures ++;
 			}
 
 			// Try to obtain the audio stream components from the cache
-			if ( success && calculator.has_audio( ) )
+			if ( calculator.has_audio( ) )
 			{
 				// Generate the unpopulated audio blocks
 				ml::audio::block_type_ptr block = calculator.calculate( position );
@@ -693,34 +783,44 @@ class avformat_demux
 					stream_cache &cache = caches[ index ];
 
 					// Find the first audio stream component for this block
-					ml::stream_type_ptr audio = cache.find_audio( block->first );
-					success = audio != ml::stream_type_ptr( );
+					ml::stream_type_ptr audio = cache.fetch( block->first );
 
 					// If we have the first, continue to see if we can get the rest
-					if ( success )
+					if ( audio != ml::stream_type_ptr( ) )
 					{
 						block->tracks[ index ].discard = cache.lead_in( );
 
 						for( boost::int64_t offset = audio->position( ); offset < block->last + cache.lead_in( ); )
 						{
 							audio = cache.fetch( offset );
-							success = audio != ml::stream_type_ptr( );
-							if ( !success ) break;
-							block->tracks[ index ].packets[ offset ] = audio;
-							offset += audio->samples( );
+							if ( audio != ml::stream_type_ptr( ) )
+							{
+								block->tracks[ index ].packets[ offset ] = audio;
+								offset += audio->samples( );
 
-							// Calculate the discard if the first sample we want for this frame falls in this stream component
-							if ( block->first >= audio->position( ) && block->first < offset )
-								block->tracks[ index ].discard += block->first - audio->position( );
+								// Calculate the discard if the first sample we want for this frame falls in this stream component
+								if ( block->first >= audio->position( ) && block->first < offset )
+									block->tracks[ index ].discard += block->first - audio->position( );
+							}
+							else
+							{
+								failures ++;
+								break;
+							}
 						}
 					}
+					else
+					{
+						failures ++;
+					}
 				}
+
 
 				// Set the derived block on the result frame
 				result->set_audio_block( block );
 			}
 
-			return success;
+			return failures == 0;
 		}
 
 		stream_cache &cache( size_t id )
