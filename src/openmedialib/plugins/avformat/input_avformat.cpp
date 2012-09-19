@@ -2417,7 +2417,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				first_audio_frame_ = false;
 			}
 
-			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
+			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, false ) );
 			aud->set_position( position );
 			memcpy( aud->pointer( ), buf, aud->size( ) );
 
@@ -2525,7 +2525,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if( channels != 0 && frequency != 0 )
 				{
 					int samples = samples_for_frame( frequency, current );
-					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples ) );
+					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, true ) );
 					aud->set_position( current );
 					frame->set_audio( aud );
 					frame->set_duration( double( samples ) / double( frequency ) );

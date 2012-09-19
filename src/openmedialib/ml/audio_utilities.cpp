@@ -28,19 +28,16 @@ ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int 
 	audio_type_ptr result;
 
 	if ( af == FORMAT_PCM8 )
-		result = pcm8_ptr( new pcm8( frequency, channels, samples ) );
+		result = pcm8_ptr( new pcm8( frequency, channels, samples, init_to_zero ) );
 	else if ( af == FORMAT_PCM16 )
-		result = pcm16_ptr( new pcm16( frequency, channels, samples ) );
+		result = pcm16_ptr( new pcm16( frequency, channels, samples, init_to_zero ) );
 	else if ( af == FORMAT_PCM24 )
-		result = pcm24_ptr( new pcm24( frequency, channels, samples ) );
+		result = pcm24_ptr( new pcm24( frequency, channels, samples, init_to_zero ) );
 	else if ( af == FORMAT_PCM32 )
-		result = pcm32_ptr( new pcm32( frequency, channels, samples ) );
+		result = pcm32_ptr( new pcm32( frequency, channels, samples, init_to_zero ) );
 	else if ( af == FORMAT_FLOAT )
-		result = floats_ptr( new floats( frequency, channels, samples ) );
+		result = floats_ptr( new floats( frequency, channels, samples, init_to_zero ) );
 	
-	if( init_to_zero )
-		memset( result->pointer( ), 0, result->size() );
-
 	return result;
 }
 

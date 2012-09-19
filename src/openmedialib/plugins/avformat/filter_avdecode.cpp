@@ -78,14 +78,15 @@ audio::base *av_sample_fmt_to_audio( AVSampleFormat sample_fmt, const int freq, 
 		case AV_SAMPLE_FMT_S32:
 			// Return 24 bit audio here since that is all we support.
 			// We will memmove the entire buffer one byte to the "left" after decode
-			return new audio::pcm32(freq, channels, samples );
+			return new audio::pcm24( freq, channels, samples, false );
 		case AV_SAMPLE_FMT_S16:
-			return new audio::pcm16(freq, channels, samples );
+			return new audio::pcm16( freq, channels, samples, false );
 		default:
 			ARLOG_ERR( "Unsupported sample format" )( av_get_sample_fmt_name( sample_fmt ) );
 	}
 	
-	return new audio::pcm24(freq, channels, samples );
+	// Make sure we return something so we dont crash
+	return new audio::pcm24(freq, channels, samples, false );
 }
 
 int custom_get_buffer( struct AVCodecContext *ctx, AVFrame *frame )

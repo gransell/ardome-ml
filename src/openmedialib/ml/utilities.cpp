@@ -211,7 +211,7 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	double	num_samples			= (double(samples_in) * sampling_freq) / input_audio->frequency();
 	int		num_samples_rounded	= int(0.5 + num_samples);
 	
-	audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16(sampling_freq, channels_in, num_samples_rounded));
+	audio::pcm16_ptr output_audio = audio::pcm16_ptr(new audio::pcm16(sampling_freq, channels_in, num_samples_rounded, false));
 	
 	double ratio = double(samples_in) / num_samples;
 	

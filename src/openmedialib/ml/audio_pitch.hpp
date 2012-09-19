@@ -19,7 +19,7 @@ boost::shared_ptr< T > pitch( const audio_type_ptr &input, int required )
 	int channels = audio->channels( );
 	int frequency = audio->frequency( );
 
-	boost::shared_ptr< T > output = boost::shared_ptr< T >( new T( frequency, channels, required ) );
+	boost::shared_ptr< T > output = boost::shared_ptr< T >( new T( frequency, channels, required, false ) );
 
 	typename T::sample_type *dst = output->data( );
 	typename T::sample_type *src = audio->data( );

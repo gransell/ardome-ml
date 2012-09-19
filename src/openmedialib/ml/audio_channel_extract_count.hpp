@@ -19,7 +19,7 @@ boost::shared_ptr< T > channel_extract_count( const audio_type_ptr &input, int c
 	int samples = audio->samples( );
 	int channels = audio->channels( );
 
-	boost::shared_ptr< T > result = boost::shared_ptr< T >( new T( audio->frequency( ), count, samples ) );
+	boost::shared_ptr< T > result = boost::shared_ptr< T >( new T( audio->frequency( ), count, samples, false ) );
 
 	typename T::sample_type *src = audio->data( );
 	typename T::sample_type *dst = result->data( );

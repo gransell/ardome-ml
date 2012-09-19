@@ -1172,7 +1172,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
-					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
+					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_, true ) );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -1192,7 +1192,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					available -= bytes - audio_block_used_;
 					offset += bytes - audio_block_used_;
 					audio_block_used_ = 0;
-					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_ ) );
+					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_, true ) );
 					audio_block_->set_position( push_count_ );
 				}
 

@@ -13,6 +13,7 @@
 	#include "msw/enum_process_modules.hpp"
 #endif
 
+#include "log_defines.hpp"
 #include "base_exception.hpp"
 #include "enforce.hpp"
 #include "enforce_defines.hpp"
@@ -36,7 +37,12 @@
 #include <boost/tokenizer.hpp>
 
 #if defined(OLIB_ON_MAC) || defined(OLIB_ON_LINUX)
-	#include "mac/stack_dump.hpp"
+#include "mac/stack_dump.hpp"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#else
+#include <malloc.h>
 #endif
 
 namespace olib
@@ -386,6 +392,32 @@ namespace olib
 
                 return result;
             }
+			
+			void *aligned_alloc( size_t alignment, size_t size )
+			{
+#if defined( OLIB_ON_WINDOWS )
+				return _aligned_malloc( size, alignment );
+#else
+				void *ret = NULL;
+				int error = posix_memalign( &ret, alignment, size );
+				if( error != 0 ) {
+					ARLOG_ERR( "Failed to allocate aligned memory. Error = %1%" )( error );
+				}
+				
+				return ret;
+#endif
+
+			}
+			
+			void aligned_free( void *ptr )
+			{
+#if defined( OLIB_ON_WINDOWS )
+				_aligned_free( ptr );
+#else
+				free( ptr );
+#endif
+				
+			}
 		}
 	}
 }
