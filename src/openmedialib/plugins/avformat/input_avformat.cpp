@@ -931,7 +931,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_gop_open_ = 0 );
 			properties( ).append( prop_gen_index_ = 0 );
-			properties( ).append( prop_packet_stream_ = 1 );
+			properties( ).append( prop_packet_stream_ = 0 );
 			properties( ).append( prop_fake_fps_ = 0 );
 
 			// Allocate an av frame
