@@ -1093,6 +1093,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				key_search_ = true;
 			}
 
+			// Allows url to be treated as a non-seekable, unknown length source
+			if ( resource.find( L"avindex:" ) == 0 )
+			{
+				resource = resource.substr( 8 );
+				is_seekable_ = false;
+				key_search_ = true;
+			}
+
 			// Corrections for file formats
 			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
 				 resource.find( L".mpeg" ) == resource.length( ) - 5 )
