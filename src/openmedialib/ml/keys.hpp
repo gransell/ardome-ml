@@ -79,6 +79,7 @@ ML_KEY( pid );
 ML_KEY( source_timecode );
 ML_KEY( source_byte_offset );
 ML_KEY( source_position );
+ML_KEY( source_format );
 
 } } } }
 

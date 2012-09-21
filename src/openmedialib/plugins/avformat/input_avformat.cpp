@@ -172,6 +172,7 @@ class stream_cache
 		size_t index_;
 		boost::int64_t expected_;
 		int lead_in_;
+		boost::int64_t offset_;
 
 	public:
 		stream_cache( )
@@ -180,6 +181,7 @@ class stream_cache
 		, index_( 0 )
 		, expected_( 0 )
 		, lead_in_( 0 )
+		, offset_( 0 )
 		{ }
 
 		void set_type( enum AVMediaType type )
@@ -215,6 +217,16 @@ class stream_cache
 		void set_lead_in( int lead_in )
 		{
 			lead_in_ = lead_in;
+		}
+
+		void set_offset( boost::int64_t offset )
+		{
+			offset_ = offset;
+		}
+
+		boost::int64_t offset( ) const
+		{
+			return offset_;
 		}
 
 		void put( ml::stream_type_ptr stream, int duration )
@@ -313,7 +325,7 @@ class avformat_demux
 			if ( !populate( result ) )
 			{
 				// Handle unexpected position here
-				if ( seek( ) )
+				if( seek( ) )
 				{
 					ARENFORCE_MSG( check_direction( position ), "Unable to get to %1%" )( position );
 				}
@@ -612,6 +624,13 @@ class avformat_demux
 				// Populate the stream_type_ptr
 				if ( packet )
 				{
+					// Obtain the handler because it's holding the byte offset state
+					stream_cache &handler = caches[ index ];
+
+					// If this packet has a position, use it, otherwise use the previously computed position
+					if ( pkt_.pos != -1 )
+						handler.set_offset( pkt_.pos );
+
 					// Extract the properties object now
 					pl::pcos::property_container properties = packet->properties( );
 
@@ -631,7 +650,7 @@ class avformat_demux
 					pl::pcos::assign< int >( properties, ml::keys::duration, pkt_.duration );
 
 					// Absolute byte offset derived from packet and location in stream before a read
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_byte_offset, source->last_packet_pos_ );
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_byte_offset, handler.offset( ) );
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::codec_tag, boost::int64_t( codec->codec_tag ) );
 					pl::pcos::assign< int >( properties, ml::keys::codec_id, int( codec->codec_id ) );
 					pl::pcos::assign< int >( properties, ml::keys::codec_type, int( codec->codec_type ) );
@@ -669,6 +688,9 @@ class avformat_demux
 					// this will be done during the call to cache_block
 					if ( unsampled_.find( index ) == unsampled_.end( ) && position >= 0 )
 						cache( index ).put( packet, duration );
+
+					// Update the byte offset for the next packet
+					handler.set_offset( handler.offset( ) + packet->length( ) );
 				}
 
 				av_free_packet( &pkt_ );
@@ -733,7 +755,7 @@ class avformat_demux
 		{
 			bool result = false;
 			int position = source->get_position( );
-			if ( source->expected_ != position )
+			if ( !source->is_indexing( ) && source->expected_ != position )
 			{
 				source->seek_to_position( );
 				result = true;
@@ -1193,9 +1215,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
                 do_decode_fetch( result );
             
             // Add the source_timecode prop
-            pcos::property tc_prop( ml::keys::source_timecode );
-            tc_prop = result->get_position( );
-            result->properties().append( tc_prop );
+			pl::pcos::assign< int >( result->properties( ), ml::keys::source_timecode, result->get_position( ) );
+			pl::pcos::assign< pl::wstring >( result->properties( ), ml::keys::source_format, pl::to_wstring( context_->iformat->name ) );
         }
 
 		// Fetch method
