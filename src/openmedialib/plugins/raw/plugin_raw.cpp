@@ -107,13 +107,6 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		virtual int get_frames( ) const { return frames_; }
 		virtual bool is_seekable( ) const { return context_ ? context_->seekable : 0; }
 
-		// Visual
-		virtual int get_video_streams( ) const { return 1; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
-
 	protected:
 
 		bool initialize( )
@@ -302,13 +295,6 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
 		virtual bool is_seekable( ) const { return context_ ? context_->seekable : !prop_stream_.value< int >( ); }
-
-		// Visual
-		virtual int get_video_streams( ) const { return 0; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 1; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return prop_channels_.value< int >( ); }
 
 	protected:
 

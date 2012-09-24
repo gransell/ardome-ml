@@ -22,8 +22,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 			, resource_( resource )
 			, prop_video_index_( pcos::key::from_string( "video_index" ) )
 			, prop_audio_index_( pcos::key::from_string( "audio_index" ) )
-			, video_streams_( 0 )
-			, audio_streams_( 0 )
 			, internal_( )
 		{
 			properties( ).append( prop_video_index_ = 0 );
@@ -42,10 +40,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return internal_ ? internal_->get_frames( ) : 0; }
 		virtual bool is_seekable( ) const { return true; }
-
-		virtual int get_video_streams( ) const { return video_streams_; }
-		virtual int get_audio_streams( ) const { return audio_streams_; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for awi inputs" ); return -1; }
 
 	protected:
 		virtual bool initialize( )
@@ -89,8 +83,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 						audio_avdecode->connect( audio );
 						muxer->connect( audio_avdecode, 1 );
 						internal_ = muxer;
-						video_streams_ = video->get_video_streams( );
-						audio_streams_ = video->get_audio_streams( );
 					}
 				}
 			}
@@ -105,8 +97,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 
 					if ( input->init( ) )
 					{
-						video_streams_ = input->get_video_streams( );
-						audio_streams_ = input->get_audio_streams( );
 						ml::filter_type_ptr avdecode = ml::create_filter( L"avdecode" );
 						ml::filter_type_ptr mvitc = ml::create_filter( L"mvitc_decode" );
 						avdecode->connect( input );
@@ -127,9 +117,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 					if ( input->init( ) )
 					{
 						int num = 25, den = 1;
-
-						video_streams_ = input->get_video_streams( );
-						audio_streams_ = input->get_audio_streams( );
 
 						ml::frame_type_ptr sample = input->fetch( );
 
@@ -172,8 +159,6 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 		pl::wstring resource_;
 		pcos::property prop_video_index_;
 		pcos::property prop_audio_index_;
-		int video_streams_;
-		int audio_streams_;
 		ml::input_type_ptr internal_;
 };
 

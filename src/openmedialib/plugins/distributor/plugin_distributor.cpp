@@ -63,14 +63,6 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_length_.value< int >( ); }
 
-		// Visual
-		virtual int get_video_streams( ) const { return 1; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 1; }
-
-		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for pusher inputs" ); return -1; }
-
 		// Push method
 		virtual bool push( frame_type_ptr frame )
 		{

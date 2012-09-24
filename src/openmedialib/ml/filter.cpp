@@ -131,25 +131,10 @@ bool filter_type::is_seekable( ) const
 	return slots_[ 0 ] ? slots_[ 0 ]->is_seekable( ) : false; 
 }
 
-int filter_type::get_video_streams( ) const
-{ 
-	return slots_[ 0 ] ? slots_[ 0 ]->get_video_streams( ) : 0; 
-}
-
-int filter_type::get_audio_streams( ) const
-{
-	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_streams( ) : 0; 
-}
-
-int filter_type::get_audio_channels_in_stream( int stream_index ) const
-{
-	return slots_[ 0 ] ? slots_[ 0 ]->get_audio_channels_in_stream( stream_index ) : 0; 
-}
-
 void filter_type::on_slot_change( input_type_ptr, int ) 
 {
 }
-
+	
 input_type_ptr filter_type::fetch_slot( size_t slot ) const
 {
 	return slot < slots_.size( ) ? slots_[ slot ] : input_type_ptr( ); 

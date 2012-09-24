@@ -884,6 +884,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, prop_gen_index_( pcos::key::from_string( "gen_index" ) )
 			, prop_packet_stream_( pcos::key::from_string( "packet_stream" ) )
 			, prop_fake_fps_( pcos::key::from_string( "fake_fps" ) )
+			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
 			, audio_codec_( 0 )
@@ -933,6 +934,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_gen_index_ = 0 );
 			properties( ).append( prop_packet_stream_ = 0 );
 			properties( ).append( prop_fake_fps_ = 0 );
+			properties( ).append( prop_frequency_ = -1 );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -997,21 +999,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 		// Audio
 		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
-		virtual int get_audio_channels_in_stream( int stream_index ) const
-		{
-			ARENFORCE_MSG( stream_index >= 0 && stream_index < get_audio_streams(), "Invalid audio stream index: %1%" )
-				( stream_index )( get_audio_streams() );
 
-			ARENFORCE_MSG( context_, "Codec context not initialized (did you forget to initialize the input?)" );
-
-			int effective_index = audio_indexes_[stream_index];
-
-			ARENFORCE( context_->streams );
-			ARENFORCE( context_->streams[ effective_index ] );
-			ARENFORCE( context_->streams[ effective_index ]->codec );
-			
-			return context_->streams[ effective_index ]->codec->channels;
-		}
 		virtual bool set_video_stream( const int stream ) { prop_video_index_ = stream; return true; }
 
 		virtual bool set_audio_stream( const int stream ) 
@@ -1140,7 +1128,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( error == 0 )
 				image_type_ = std::string( context_->iformat->name ) == "image2" ||
 							  std::string( context_->iformat->name ) == "yuv4mpegpipe";
-
+			
 			if ( prop_packet_stream_.value< int >( ) == 0 )
 			{
 				// Check for and create the timestamp correction filter graph
@@ -1388,6 +1376,23 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		}
 
 	private:
+		void select_audio_stream_from_freq( const int frequency )
+		{
+			size_t i = 0, ai = 0;
+			for( ; i < context_->nb_streams; ++i ) {
+				if( context_->streams[ i ]->codec->sample_rate == frequency ) {
+					prop_audio_index_ = int( ai );
+					break;
+				}
+				if( context_->streams[ i ]->codec->codec_type == AVMEDIA_TYPE_AUDIO ) ++ai;
+			}
+			
+			if( i == context_->nb_streams ) {
+				ARLOG_WARN( "No audio stream with frequency %1% found" )( frequency );
+				prop_audio_index_ = -1;
+			}
+		}
+	
 		void sync_with_index( )
 		{
 			if ( aml_index_ )
@@ -1579,6 +1584,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		   				break;
 				}
 			}
+			
+			// If the client has selected a frequency then we set audio_index to the first
+			// stream with that frequency
+			if( prop_frequency_.value< int >() != -1 )
+				select_audio_stream_from_freq( prop_frequency_.value< int >( ) );
+
 
 			// Configure video input properties
 			if ( has_video( ) )
@@ -2613,6 +2624,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		pcos::property prop_gen_index_;
 		pcos::property prop_packet_stream_;
 		pcos::property prop_fake_fps_;
+		pcos::property prop_frequency_;
 		AVFrame *av_frame_;
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;

@@ -110,15 +110,7 @@ class ML_DECLSPEC filter_type : public input_type
 		/// Invoke the callback associated to this input
 		/// DEPRECATE?
 		virtual void acquire_values( );
-
-		/// Visual
-		virtual int get_video_streams( ) const;
-
-		/// Audio
-		virtual int get_audio_streams( ) const;
-
-		virtual int get_audio_channels_in_stream( int stream_index ) const;
-
+	
 	protected:
 
 		// Convenience function - fetch a frame from the slot and optionally ensure frame properties
