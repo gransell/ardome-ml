@@ -57,13 +57,8 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		// Visual
 		virtual void get_fps( int &num, int &den ) const { num = 25; den = 1; }
 		virtual void get_sar( int &num, int &den ) const { num = 1; den = 1; }
-		virtual int get_video_streams( ) const { return 1; }
 		virtual int get_width( ) const { return 512; }
 		virtual int get_height( ) const { return 512; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		// Fetch method

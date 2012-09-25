@@ -279,14 +279,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			den = prop_sar_den_.value< int >( );
 		}
 
-		virtual int get_video_streams( ) const { return 1; }
-
 		virtual int get_width( ) const { return prop_width_.value< int >( ); }
 		virtual int get_height( ) const { return prop_height_.value< int >( ); }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		// Fetch method
@@ -452,13 +446,8 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		// Visual
 		virtual void get_fps( int &num, int &den ) const { }
 		virtual void get_sar( int &num, int &den ) const { }
-		virtual int get_video_streams( ) const { return 1; }
 		virtual int get_width( ) const { return 0; }
 		virtual int get_height( ) const { return 0; }
-
-		// Audio
-		virtual int get_audio_streams( ) const { return 1; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { ARENFORCE_MSG( false, "Not supported for pusher inputs" ); return -1; }
 
 		// Push method
 		virtual bool push( frame_type_ptr frame )

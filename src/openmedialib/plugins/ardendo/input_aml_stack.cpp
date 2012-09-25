@@ -178,10 +178,7 @@ class input_value : public ml::input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return 0; }
 		virtual bool is_seekable( ) const { return true; }
-		virtual int get_video_streams( ) const { return 0; }
-		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0 ;}
-
+	
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
 
@@ -189,8 +186,6 @@ class input_value : public ml::input_type
 		pl::wstring value_;
 };
 
-static pl::pcos::key key_input_video_streams_ = pl::pcos::key::from_string( "@input_video_streams" );
-static pl::pcos::key key_input_audio_streams_ = pl::pcos::key::from_string( "@input_audio_streams" );
 static pl::pcos::key key_input_slots_ = pl::pcos::key::from_string( "@input_slots" );
 static pl::pcos::key key_input_position_ = pl::pcos::key::from_string( "@input_position" );
 static pl::pcos::key key_input_frames_ = pl::pcos::key::from_string( "@input_frames" );
@@ -246,8 +241,6 @@ class frame_value : public ml::input_type
 	public:
 		frame_value( const ml::frame_type_ptr &value, ml::input_type_ptr &input )
 			: input_type( )
-			, prop_input_video_streams_( key_input_video_streams_ )
-			, prop_input_audio_streams_( key_input_audio_streams_ )
 			, prop_input_slots_( key_input_slots_ )
 			, prop_input_frames_( key_input_frames_ )
 			, prop_input_position_( key_input_position_ )
@@ -295,8 +288,6 @@ class frame_value : public ml::input_type
 
 			if ( input )
 			{
-				properties( ).append( prop_input_video_streams_ = input->get_video_streams( ) );
-				properties( ).append( prop_input_audio_streams_ = input->get_audio_streams( ) );
 				properties( ).append( prop_input_slots_ = int( input->slot_count( ) ) );
 				properties( ).append( prop_input_position_ = int( input->get_position( ) ) );
 				properties( ).append( prop_input_frames_ = int( input->get_frames( ) ) );
@@ -373,17 +364,12 @@ class frame_value : public ml::input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return value_ ? 1 : 0; }
 		virtual bool is_seekable( ) const { return true; }
-		virtual int get_video_streams( ) const { return value_ && value_->has_image( ) ? 1 : 0; }
-		virtual int get_audio_streams( ) const { return value_ && value_->has_audio( ) ? 1 : 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { if ( value_ && get_position( ) == 0 ) { f = value_->shallow( ); f->set_position( 0 ); } }
 
 	private:
 		ml::frame_type_ptr value_;
-		pl::pcos::property prop_input_video_streams_;
-		pl::pcos::property prop_input_audio_streams_;
 		pl::pcos::property prop_input_slots_;
 		pl::pcos::property prop_input_frames_;
 		pl::pcos::property prop_input_position_;
@@ -462,9 +448,6 @@ template < typename T > class stack_value : public ml::input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return 0; }
 		virtual bool is_seekable( ) const { return true; }
-		virtual int get_video_streams( ) const { return 0; }
-		virtual int get_audio_streams( ) const { return 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return 0; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
@@ -3253,12 +3236,6 @@ class input_aml_stack : public ml::input_type
 		// Audio/Visual
 		virtual int get_frames( ) const { return tos_ ? tos_->get_frames( ) : 0; }
 		virtual bool is_seekable( ) const { return tos_ ? tos_->is_seekable( ) : false; }
-		virtual int get_video_streams( ) const { return tos_ ? tos_->get_video_streams( ) : 0; }
-		virtual int get_audio_streams( ) const { return tos_ ? tos_->get_audio_streams( ) : 0; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const
-		{
-			return tos_ ? tos_->get_audio_channels_in_stream( stream_index ) : 0;
-		}
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
