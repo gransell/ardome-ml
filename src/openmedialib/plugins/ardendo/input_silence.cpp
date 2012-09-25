@@ -61,11 +61,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			get_fps( num, den );
 			return den != 0 ? double( num ) / double( den ) : 1;
 		}
-
-		virtual int get_video_streams( ) const { return 0; }
-		virtual int get_audio_streams( ) const { return 1; }
-		virtual int get_audio_channels_in_stream( int stream_index ) const { return prop_channels_.value<int>(); }
-
+	
 		virtual bool reuse( ) { return false; }
 
 	protected:

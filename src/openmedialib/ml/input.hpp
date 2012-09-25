@@ -109,7 +109,7 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		// Basic information
 		virtual const openpluginlib::wstring get_uri( ) const = 0;
 		virtual const openpluginlib::wstring get_mime_type( ) const = 0;
-
+	
 		// Audio/Visual
 		virtual void sync( )
 		{
@@ -131,16 +131,6 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 
 		virtual int get_frames( ) const = 0;
 		virtual bool is_seekable( ) const = 0;
-
-		// Visual
-		virtual int get_video_streams( ) const = 0;
-
-		// Audio
-		virtual int get_audio_streams( ) const = 0;
-
-		// Returns the number of audio channel in the specified stream.
-		// The index should be between 0 and the result from get_audio_streams() minus 1.
-		virtual int get_audio_channels_in_stream( int stream_index ) const = 0;
 
 		// Provides a hint to the input implementation - allows the user to say 
 		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch
