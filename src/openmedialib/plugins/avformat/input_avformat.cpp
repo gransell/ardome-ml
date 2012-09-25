@@ -606,9 +606,13 @@ class avformat_demux
 				switch( got_packet )
 				{
 					case ml::stream_video:
+					{
+						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
+						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
 																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
-																		   avformat_to_oil( codec->pix_fmt ), il::top_field_first, codec->gop_size ) );
+																		   avformat_to_oil( codec->pix_fmt ), il::top_field_first, estimated_gop_size ) );
+					}
 						break;
 
 					case ml::stream_audio:
