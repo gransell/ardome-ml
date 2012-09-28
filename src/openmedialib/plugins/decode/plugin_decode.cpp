@@ -381,6 +381,8 @@ protected:
 					inner_fetch( temp, index ++ );
 					if ( !temp || !temp->get_stream( ) || start != temp->get_stream( )->key( ) ) break;
 					int sorted = start + temp->get_stream( )->properties( ).get_property_with_key( ml::analyse_type::key_temporal_reference_ ).value< int >( );
+					pl::pcos::property temporal_offset( ml::analyse_type::key_temporal_offset_ );
+					temp->get_stream( )->properties( ).append( temporal_offset = boost::int64_t( sorted ) );
 					gop_[ temp->get_position( ) ] = temp;
 					streams[ sorted ] = temp->get_stream( );
 				}
@@ -388,13 +390,9 @@ protected:
 				// Ensure that the recipient has access to the temporally sorted frames too
 				for ( std::map< int, ml::frame_type_ptr >::iterator iter = gop_.begin( ); iter != gop_.end( ); ++iter )
 				{
-					pl::pcos::property temporal_offset( ml::analyse_type::key_temporal_offset_ );
 					pl::pcos::property temporal_stream( ml::analyse_type::key_temporal_stream_ );
 					if ( streams.find( ( *iter ).first ) != streams.end( ) )
-					{
-						( *iter ).second->properties( ).append( temporal_offset = streams[ ( *iter ).first ]->position( ) );
 						( *iter ).second->properties( ).append( temporal_stream = streams[ ( *iter ).first ] );
-					}
 				}
 
 				result = gop_[ get_position( ) ];
