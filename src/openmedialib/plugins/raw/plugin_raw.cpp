@@ -8,6 +8,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <opencorelib/cl/str_util.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
 #include <iostream>
@@ -27,6 +28,7 @@ namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace raw {
 
@@ -274,7 +276,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
-			properties( ).append( prop_profile_ = pl::wstring( L"" ) );
+			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
 			properties( ).append( prop_header_ = 1 );
 			properties( ).append( prop_stream_ = 0 );
 		}
@@ -365,7 +367,9 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			// Seek to requested position when required
 			if ( get_position( ) != expected_ && is_seekable( ) )
 			{
-				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
+				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), 
+					prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), 
+					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
 				avio_seek( context_, offset_ + samples * samples_size_, SEEK_SET );
 			}
 			else
@@ -387,7 +391,9 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			int samples = 0;
 
 			if ( prop_stream_.value< int >( ) == 0 )
-				samples = ml::audio::samples_for_frame( get_position( ), prop_frequency_.value< int >( ), prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), prop_profile_.value< pl::wstring >( ) );
+				samples = ml::audio::samples_for_frame( get_position( ), prop_frequency_.value< int >( ), 
+					prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), 
+					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
 			else
 				error = avio_read( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) != sizeof( samples );
 

@@ -77,10 +77,10 @@ extern ML_DECLSPEC reseat_ptr create_reseat( );
 // p60 dv: 800, 800, 801, 801, 801, 801, 801, 801, 801, 801
 // p60 imx: 800, 801, 801, 801, 801
 // 24p: 2002
-extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den, const std::wstring& locked_profile = L"" );
+extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num, int fps_den, locked_profile::type profile = locked_profile::unknown );
 
 // Method to determine the sample offset for a given frame number at a specified frequency and frame rate
-extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, const std::wstring& locked_profile = L"" );
+extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, locked_profile::type profile = locked_profile::unknown );
 
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );

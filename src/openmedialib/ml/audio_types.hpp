@@ -13,6 +13,9 @@
 #include <deque>
 #include <string>
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/minimal_string_defines.hpp>
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Supported audio formats
@@ -32,6 +35,20 @@ typedef enum
 	float_id
 }
 identity;
+
+
+namespace locked_profile
+{
+	enum type
+	{
+		dv,
+		mpeg,
+		unknown
+	};
+	
+	ML_DECLSPEC type from_string( const olib::t_string& p );
+}
+
 
 // Forward declaration to the base audio interface which all formats share
 class ML_DECLSPEC base;

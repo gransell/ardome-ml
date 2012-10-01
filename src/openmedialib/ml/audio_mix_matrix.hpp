@@ -19,12 +19,12 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 namespace {
 	bool mix_matrix_is_passthrough( const std::vector< double > &matrix, int channels )
 	{
-		int next_active_mix_line = 0;
+		size_t next_active_mix_line = 0;
 
 		//Go through the mix matrix and make sure that it only has ones
 		//on the diagonal, and zeros everywhere else (i.e. it's the
 		//identity matrix).
-		for( int i = 0; i < matrix.size( ); ++i )
+		for( size_t i = 0; i < matrix.size( ); ++i )
 		{
 			double val = matrix[ i ];
 			if( i == next_active_mix_line )

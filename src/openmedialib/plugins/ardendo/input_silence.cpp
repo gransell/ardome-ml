@@ -11,6 +11,11 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/str_util.hpp>
+
+namespace cl = olib::opencorelib;
+
 namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
@@ -32,7 +37,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_out_ = INT_MAX );
-			properties( ).append( prop_profile_ = pl::wstring( L"" ) );
+			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
 		}
 
 		virtual ~input_silence( ) { }
@@ -75,7 +80,8 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			int fps_den = prop_fps_den_.value< int >( );
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
-			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, prop_profile_.value< pl::wstring >( ) );
+			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, 
+				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
 
 			result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples, true ) );
 

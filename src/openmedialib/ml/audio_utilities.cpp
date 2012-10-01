@@ -415,5 +415,21 @@ const std::wstring &id_to_af( const identity &id )
 	return id_to_af_table[ id ];
 }
 
+namespace locked_profile {
+
+ML_DECLSPEC type from_string( const olib::t_string& p )
+{
+	if( p == _CT("dv") ) 
+		return dv;
+	if( p == _CT("imx") || p == _CT("mpeg") )
+		return mpeg;
+	
+	ARENFORCE_MSG( false, "Could not convert string to locked_profile" )( p );
+	return dv;
+}
+
+}
+
+
 } } } }
 
