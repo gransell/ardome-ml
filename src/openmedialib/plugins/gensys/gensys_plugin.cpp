@@ -1535,13 +1535,16 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
 			, prop_audio_direction_( pcos::key::from_string( "audio_direction" ) )
+			, prop_check_on_connect_( pcos::key::from_string( "check_on_connect" ) )
 			, current_dir_( 1 )
 			, reseat_( )
 			, next_input_( 0 )
+			, valid_on_connect_( false )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_audio_direction_ = 0 );
+			properties( ).append( prop_check_on_connect_ = 1 );
 			reseat_ = audio::create_reseat( );
 		}
 
@@ -1582,6 +1585,12 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 		virtual void on_slot_change( input_type_ptr input, int )
 		{
+			if ( prop_check_on_connect_.value< int >( ) && input )
+				check_input( input );
+		}
+
+		void check_input( input_type_ptr input )
+		{
 			if ( input )
 			{
 				frame_type_ptr frame = input->fetch( );
@@ -1593,11 +1602,16 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 				if ( frame )
 				{
+					valid_on_connect_ = true;
 					src_fps_num_ = frame->get_fps_num( );
 					src_fps_den_ = frame->get_fps_den( );
 					src_has_image_ = frame->has_image( );
 					if ( frame->get_audio( ) )
 						src_frequency_ = frame->get_audio( )->frequency( );
+				}
+				else
+				{
+					valid_on_connect_ = false;
 				}
 			}
 		}
@@ -1606,6 +1620,12 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		void do_fetch( frame_type_ptr &result )
 		{
 			input_type_ptr input = fetch_slot( );
+
+			if ( !valid_on_connect_ )
+			{
+				check_input( input );
+				ARENFORCE_MSG( valid_on_connect_, "Can't obtain info" );
+			}
 
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
@@ -1845,12 +1865,14 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		pcos::property prop_fps_num_;
 		pcos::property prop_fps_den_;
 		pcos::property prop_audio_direction_;
+		pcos::property prop_check_on_connect_;
 		int current_dir_;
 		audio::reseat_ptr reseat_;
 		std::map < int, frame_type_ptr > map_;
 		frame_type_ptr last_frame_;
 		int next_input_;
 		frame_cache cache_;
+		bool valid_on_connect_;
 };
 
 //
