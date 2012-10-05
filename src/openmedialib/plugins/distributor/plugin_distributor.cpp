@@ -233,10 +233,11 @@ class graphs
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			if ( graphs < 0 ) graphs = boost::thread::hardware_concurrency( );
+			int total = graphs;
 			while( graphs -- )
 			{
 				stack parser;
-				clone( parser, input->fetch_slot( ), input );
+				clone( total, parser, input->fetch_slot( ), input );
 				graphs_.push_back( parser.pop( ) );
 			}
 		}
@@ -282,7 +283,7 @@ class graphs
 		// Clone a graph taking into account special case filters (such as nested threaders which
 		// are responsible for their own subgraphs, decode filters which provide deferred evaluation,
 		// inputs which are considered as terminating points and locks which force synchronisation).
-		void clone( stack &parser, input_type_ptr graph, input_type_ptr parent, size_t parent_slot = 0 )
+		void clone( int graphs, stack &parser, input_type_ptr graph, input_type_ptr parent, size_t parent_slot = 0 )
 		{
 			ARENFORCE_MSG( graph, "Malformed graph - null input detected" );
 
@@ -290,7 +291,7 @@ class graphs
 				 graph->get_uri( ) == L"decode" || 
 				 graph->get_uri( ) == L"distributor" || 
 				 graph->get_uri( ) == L"threader" || 
-				 graph->get_uri( ) == L"store" || 
+				 ( graph->get_uri( ) == L"store" && graphs != 1 ) || 
 				 graph->get_uri( ) == L"tee" )
 			{
 				filter_type_ptr lock = create_filter( L"lock" );
@@ -305,7 +306,7 @@ class graphs
 			else
 			{
 				for ( size_t i = 0; i < graph->slot_count( ); i ++ )
-					clone( parser, graph->fetch_slot( i ), graph, i );
+					clone( graphs, parser, graph->fetch_slot( i ), graph, i );
 				parser.copy( graph );
 			}
 		}
