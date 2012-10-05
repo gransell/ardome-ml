@@ -235,6 +235,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 					context_->codec_type = avcodec_get_type( codec_->id );
 					context_->codec_id = codec_->id;
 
+					if ( video_codec_ == "mjpeg" ) context_->pix_fmt = PIX_FMT_YUVJ420P;
+
 					if ( avcodec_open2( context_, codec_, 0 ) < 0 ) 
 					{
 						std::cerr << "Unable to open codec" << std::endl;
