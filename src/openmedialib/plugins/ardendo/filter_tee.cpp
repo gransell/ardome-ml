@@ -72,13 +72,28 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		virtual void sync( )
 		{
 			fetch_slot( 0 )->sync( );
-			sync_frames();
+			sync_frames( );
+
+			ml::frame_type_ptr temp = fetch_slot( 0 )->fetch( );
 
 			// For each input, collect pushers, update their duration (via collect)
 			// and then sync up the slots that are connected to them
 			std::vector < ml::input_type_ptr > pushers;
 			for ( size_t i = 1; i < slot_count( ); i ++ )
 			{
+				if ( fetch_slot( i )->get_uri( ) != L"frame_rate" )
+				{
+					ml::filter_type_ptr conform = ml::create_filter( L"conform" );
+					conform->property( "image" ).set( 0 );
+					conform->property( "audio" ).set( 0 );
+					conform->connect( fetch_slot( i ), 0 );
+					ml::filter_type_ptr frame_rate = ml::create_filter( L"frame_rate" );
+					frame_rate->property( "check_on_connect" ).set( 0 );
+					frame_rate->property( "fps_num" ).set( temp->get_fps_num( ) );
+					frame_rate->property( "fps_den" ).set( temp->get_fps_den( ) );
+					frame_rate->connect( conform, 0 );
+					connect( frame_rate, i );
+				}
 				collect( pushers, fetch_slot( i ) );
 				fetch_slot( i )->sync( );
 			}
