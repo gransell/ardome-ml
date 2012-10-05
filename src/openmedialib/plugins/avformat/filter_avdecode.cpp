@@ -862,14 +862,18 @@ private:
 				decoded_audio->set_position( position );
 				
 				// If we got AV_SAMPLE_FMT_S32 out it means that we actually want 24 bit since that is
-				// the largest we support. So we memmove away the lest sginificant byte in the 32 bit values
+				// the largest we support. So we shift away the lest sginificant byte in the 32 bit values
 				// In the case of AES3 decoded by use we dont have to do this since we get it in 24 bit
 				if( track_context->sample_fmt == AV_SAMPLE_FMT_S32 &&
 					track_context->codec_id != static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
 				{
-					char * src = static_cast< char * >( decoded_audio->pointer( ) );
-					memmove( src, src + 1, decoded_audio->size( ) - 1 );
-					src[ decoded_audio->size( ) - 1 ] = 0;
+					boost::int32_t * start = static_cast< boost::int32_t * >( decoded_audio->pointer( ) );
+					boost::int32_t * end = start + decoded_audio->size( ) / sizeof(boost::int32_t);
+					
+					for (boost::int32_t *ptr = start; ptr != end; ++ptr)
+					{
+						*(ptr) >>= 8;
+					}
 				}
 				
 				track_reseater->append( decoded_audio );
