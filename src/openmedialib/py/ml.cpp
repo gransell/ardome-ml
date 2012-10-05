@@ -95,6 +95,26 @@ class stream_handler_delegate : public ml::stream_handler, public py::wrapper< m
 
 namespace detail {
 
+static std::string stream_to_string( ml::stream_type_ptr stream )
+{
+	std::string result;
+
+	if ( stream )
+		result = std::string( ( char * )stream->bytes( ), stream->length( ) );
+
+	return result;
+}
+
+static std::string audio_to_string( ml::audio_type_ptr audio )
+{
+	std::string result;
+
+	if ( audio )
+		result = std::string( ( char * )audio->pointer( ), audio->size( ) );
+
+	return result;
+}
+
 void py_audio( )
 {
 	py::class_<ml::audio::base, boost::noncopyable, ml::audio_type_ptr>( "audio", py::no_init )
@@ -107,6 +127,16 @@ void py_audio( )
 		.def( "set_position", &ml::audio::base::set_position )
 		.def( "size", &ml::audio::base::size )
 	;
+	py::def( "to_string", &audio_to_string );
+}
+
+void py_stream_type( )
+{
+	py::class_<ml::stream_type, boost::noncopyable, ml::stream_type_ptr>( "stream", py::no_init )
+		.def( "length", &ml::stream_type::length )
+		.def( "bytes", &ml::stream_type::bytes, py::return_value_policy< py::return_by_value >( ) )
+	;
+	py::def( "to_string", &stream_to_string );
 }
 
 void py_frame( )
@@ -121,6 +151,8 @@ void py_frame( )
 		.def( "get_alpha", &ml::frame_type::get_alpha )
 		.def( "set_image", &ml::frame_type::set_image )
 		.def( "get_image", &ml::frame_type::get_image )
+		.def( "set_stream", &ml::frame_type::set_stream )
+		.def( "get_stream", &ml::frame_type::get_stream )
 		.def( "set_audio", &ml::frame_type::set_audio )
 		.def( "get_audio", &ml::frame_type::get_audio )
 		.def( "set_pts", &ml::frame_type::set_pts )

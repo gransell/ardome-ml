@@ -13,6 +13,7 @@ BOOST_PYTHON_MODULE( openmedialib )
 {
 	ml::detail::py_audio( );
 	ml::detail::py_audio_reseat( );
+	ml::detail::py_stream_type( );
 	ml::detail::py_frame( );
 	ml::detail::py_input( );
 	ml::detail::py_store( );

@@ -11,6 +11,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace detail {
 
 void py_input( );
 void py_store( );
+void py_stream_type( );
 void py_frame( );
 void py_audio( );
 void py_audio_reseat( );
