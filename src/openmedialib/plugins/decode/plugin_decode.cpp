@@ -1025,17 +1025,25 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame )
 		{
-			frame = fetch_from_slot( );
-			if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
+			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				il::image_type_ptr image = frame->get_image( );
-				if ( prop_progressive_.value< int >( ) == 1 )
-					image = il::deinterlace( image );
-				else if ( prop_progressive_.value< int >( ) == -1 )
-					image->set_field_order( il::progressive );
-				image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
-				frame->set_image( image );
-				frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
+				frame = last_frame_->shallow( );
+			}
+			else
+			{
+				frame = fetch_from_slot( );
+				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
+				{
+					il::image_type_ptr image = frame->get_image( );
+					if ( prop_progressive_.value< int >( ) == 1 )
+						image = il::deinterlace( image );
+					else if ( prop_progressive_.value< int >( ) == -1 )
+						image->set_field_order( il::progressive );
+					image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
+					frame->set_image( image );
+					frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
+				}
+				last_frame_ = frame->shallow( );
 			}
 		}
 
@@ -1047,6 +1055,7 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 		pl::pcos::property prop_height_;
 		pl::pcos::property prop_sar_num_;
 		pl::pcos::property prop_sar_den_;
+		ml::frame_type_ptr last_frame_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
