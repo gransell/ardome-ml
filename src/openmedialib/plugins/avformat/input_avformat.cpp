@@ -804,8 +804,10 @@ class avformat_demux
 			// Try to obtain the video stream component from the cache
 			if ( calculator.has_video( ) )
 			{
+				AVStream *video_stream = source->get_video_stream();
+				ARENFORCE_MSG( video_stream, "Video stream is null even though calculator.has_video( ) returned true" )( position );
 				// Update the output frame
-				ml::stream_type_ptr packet = caches[ 0 ].fetch( position );
+				ml::stream_type_ptr packet = caches[ video_stream->index ].fetch( position );
 				result->set_stream( packet );
 				if ( packet == ml::stream_type_ptr( ) ) failures ++;
 			}
