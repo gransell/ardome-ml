@@ -123,6 +123,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_tcplx_mask_( pcos::key::from_string( "tcplx_mask" ) )
 			, prop_p_mask_( pcos::key::from_string( "p_mask" ) )
 			//, prop_qns_( pcos::key::from_string( "qns" ) )
+			, prop_video_profile_( pcos::key::from_string( "video_profile" ) )
+			, prop_video_level_( pcos::key::from_string( "video_level" ) )
 			, prop_video_qmin_( pcos::key::from_string( "video_qmin" ) )
 			, prop_video_qmax_( pcos::key::from_string( "video_qmax" ) )
 			, prop_video_lmin_( pcos::key::from_string( "video_lmin" ) )
@@ -263,6 +265,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_tcplx_mask_ = 0.0 );
 			properties( ).append( prop_p_mask_ = 0.0 );
 			//properties( ).append( prop_qns_ = 0 );
+			properties( ).append( prop_video_profile_ = -99 );
+			properties( ).append( prop_video_level_ = -99 );
 			properties( ).append( prop_video_qmin_ = 2 );
 			properties( ).append( prop_video_qmax_ = 31 );
 			properties( ).append( prop_video_lmin_ = 2 * FF_QP2LAMBDA );
@@ -780,6 +784,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->temporal_cplx_masking = static_cast<float>(prop_tcplx_mask_.value< double >( ));
 				c->p_masking = static_cast<float>(prop_p_mask_.value< double >( ));
 				//c->quantizer_noise_shaping= prop_qns_.value< int >( );
+				c->profile = prop_video_profile_.value< int >( );
+				c->level = prop_video_level_.value< int >( );
 				c->qmin = prop_video_qmin_.value< int >( );
 				c->qmax = prop_video_qmax_.value< int >( );
 				c->lmin = prop_video_lmin_.value< int >( );
@@ -1574,6 +1580,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property /* double */ prop_tcplx_mask_;
 		pcos::property /* double */ prop_p_mask_;
 		//pcos::property /* int */ prop_qns_;
+		pcos::property /* int */ prop_video_profile_;
+		pcos::property /* int */ prop_video_level_;
 		pcos::property /* int */ prop_video_qmin_;
 		pcos::property /* int */ prop_video_qmax_;
 		pcos::property /* int */ prop_video_lmin_;
