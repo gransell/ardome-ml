@@ -18,7 +18,11 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 namespace {
 
+	// 48khz locked audio cycle for imx and dv
 	typedef std::map< std::pair< rational_time, locked_profile::type >, std::vector< int > > sample_cycle_map;
+
+	// General pre-calculated audio cycles
+	typedef std::map< std::pair< rational_time, int >, std::vector< int > > sample_frequency_map;
 
 	sample_cycle_map create_sample_cycles()
 	{
@@ -46,7 +50,22 @@ namespace {
 		return result;
 	}
 	
+	sample_frequency_map create_frequency_map()
+	{
+		//Nicer assignments to std::vector
+		using namespace boost::assign;
+
+		sample_frequency_map result;
+		rational_time pal( 25, 1 );
+
+		result[ std::make_pair( pal, 44100 ) ] += 1764, 1764, 1764, 1765;
+		
+		return result;
+	}
+
 	static sample_cycle_map sample_cycles = create_sample_cycles();
+
+	static sample_frequency_map sample_frequency = create_frequency_map();
 
 	int calculate_cycle_size(double frames_per_second, int samplefreq, double samples_per_frame, int &deficit)
 	{
@@ -81,6 +100,15 @@ namespace {
 		{
 			sample_cycle_map::const_iterator cycles = sample_cycles.find( std::make_pair( fps, profile  ) );
 			if( cycles != sample_cycles.end() )
+			{
+				result = cycles->second;
+				return true;
+			}
+		}
+		else
+		{
+			sample_frequency_map::const_iterator cycles = sample_frequency.find( std::make_pair( fps, samplefreq ) );
+			if( cycles != sample_frequency.end() )
 			{
 				result = cycles->second;
 				return true;
