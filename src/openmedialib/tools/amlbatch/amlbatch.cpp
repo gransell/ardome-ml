@@ -214,6 +214,51 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 		walk_and_assign( input, "active", 1 );
 }
 
+void run( ml::input_type_ptr input )
+{
+	boost::system_time last_time = boost::get_system_time( );
+	int frame_count = 0;
+	double last_fps = 0.0;
+
+	if ( input->is_thread_safe( ) )
+		walk_and_assign( input, "active", 1 );
+
+	input->sync( );
+	int total_frames = input->get_frames( );
+
+	for ( int i = 0; i < total_frames; i ++ )
+	{
+		boost::system_time curr_time = boost::get_system_time( );
+		boost::posix_time::time_duration diff = curr_time - last_time;
+
+		if ( i % 50 == 0 || i == total_frames - 1 )
+		{
+			input->sync( );
+			total_frames = input->get_frames( );
+		}
+
+		// Check if more than one second has passed
+		if( diff > boost::posix_time::seconds( 1 ) ) 
+		{
+			last_fps = frame_count / ( double( diff.total_milliseconds( ) ) / double( MILLI_SECS ) );
+			frame_count = 0;
+			last_time = curr_time;
+		}
+
+		std::cerr << i << "/" << total_frames << " fps: " << last_fps << "      \r";
+
+		input->seek( i );
+		ml::frame_type_ptr frame = input->fetch( );
+
+		if ( !( frame && !frame->in_error( ) && ( frame->has_image( ) || frame->has_audio( ) || frame->get_stream( ) || frame->audio_block( ) ) ) )
+			break;
+
+		frame_count ++;
+	}
+
+	std::cerr << std::endl;
+}
+
 void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, bool interactive, int speed, bool stats, bool show_source_tc )
 {
 	bool error = false;
@@ -563,11 +608,11 @@ int main( int argc, char *argv[ ] )
 			return 1;
 		}
 
-		// Duplicate top of stack and dot it - if the duped input is <= 0 frames, then print
+		// Dot the stack - by default this connects the input on the top of the stack
+		// to the first slot of the stack input - if the input is <= 0 frames, then print
 		// the inputs title (if it exists), otherwise just exit here (supports commands which
-		// have no stack output [such as available] or are just a computation)
-		push = pl::wstring( L"0" );
-		push = pl::wstring( L"pick" );
+		// have no stack output [such as available] or are just a computation). Additionally
+		// . itself can be overriden.
 		push = pl::wstring( L"." );
 
 		if ( input->get_frames( ) <= 0 )
@@ -577,9 +622,22 @@ int main( int argc, char *argv[ ] )
 			return 1;
 		}
 
+		// Allow us to just iterate through the graph if the last filter says so
+		if ( input->fetch_slot( ) && input->fetch_slot( )->property( "@loop" ).valid( ) )
+		{
+			run( input );
+			return 0;
+		}
+
+		// If a store is specified we use the input as is, otherwise we apply more filters
 		if ( index == argc )
 		{
 			interactive = true;
+
+			// Return the .'d item to the top of the stack for further manipuation
+			push = pl::wstring( L"recover" );
+
+			// Apply default normalisation filters when no store is specified
 			push = pl::wstring( L"filter:resampler" );
 			push = pl::wstring( L"filter:visualise" );
 			push = pl::wstring( L"type=1" );
@@ -590,10 +648,12 @@ int main( int argc, char *argv[ ] )
 			push = pl::wstring( L"filter:deinterlace" );
 			push = pl::wstring( L"filter:threader" );
 			push = pl::wstring( L"queue=50" );
+
+			// Dot the top of stack item again
+			push = pl::wstring( L"." );
 		}
 
-		push = pl::wstring( L"." );
-
+		// Check the frame count again just in case
 		if ( input->get_frames( ) <= 0 )
 			return 1;
 
@@ -629,7 +689,7 @@ int main( int argc, char *argv[ ] )
 	}
 	else
 	{
-		std::cerr << "Usage: amlbatch <graph> [ ( -- | @@ ) ( <store> )* ]" << std::endl;
+		std::cerr << "Usage: amlbatch <graph> [ -- ( <store> )* ]" << std::endl;
 	}
 
 	ml::uninit( );
