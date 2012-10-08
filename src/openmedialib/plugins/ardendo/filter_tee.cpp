@@ -85,7 +85,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 				{
 					ml::filter_type_ptr conform = ml::create_filter( L"conform" );
 					conform->property( "image" ).set( 0 );
-					conform->property( "audio" ).set( 0 );
+					conform->property( "audio" ).set( 1 );
 					conform->connect( fetch_slot( i ), 0 );
 					ml::filter_type_ptr frame_rate = ml::create_filter( L"frame_rate" );
 					frame_rate->property( "check_on_connect" ).set( 0 );
