@@ -1,0 +1,15 @@
+Import(['local_env'])
+
+local_env.packages( 'ardome_ml', 'boost', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'loki' )
+
+local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Mac/include', ] )
+
+srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp',  ]
+
+if local_env[ 'PLATFORM' ] == 'win32' :
+	srcs.append( 'src/msw/decklink.rc' )
+
+bin = local_env.plugin( 'openmedialib_aml_decklink', srcs )
+local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'src/plugin_decklink.opl' ])
+Return( 'bin' )
+
