@@ -10,6 +10,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/rational.hpp>
 
 using olib::opencorelib::rational_time;
 using std::vector;
@@ -18,11 +19,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 namespace {
 
-	// 48khz locked audio cycle for imx and dv
 	typedef std::map< std::pair< rational_time, locked_profile::type >, std::vector< int > > sample_cycle_map;
-
-	// General pre-calculated audio cycles
-	typedef std::map< std::pair< rational_time, int >, std::vector< int > > sample_frequency_map;
 
 	sample_cycle_map create_sample_cycles()
 	{
@@ -50,43 +47,7 @@ namespace {
 		return result;
 	}
 	
-	sample_frequency_map create_frequency_map()
-	{
-		//Nicer assignments to std::vector
-		using namespace boost::assign;
-
-		sample_frequency_map result;
-		rational_time pal( 25, 1 );
-
-		result[ std::make_pair( pal, 44100 ) ] += 1764, 1764, 1764, 1765;
-		
-		return result;
-	}
-
 	static sample_cycle_map sample_cycles = create_sample_cycles();
-
-	static sample_frequency_map sample_frequency = create_frequency_map();
-
-	int calculate_cycle_size(double frames_per_second, int samplefreq, double samples_per_frame, int &deficit)
-	{
-		int 	cycle_size	 	= int(floor(frames_per_second + 0.5));
-		double 	extra_samples	= (int(floor(samples_per_frame + 0.5)) * int(floor(frames_per_second + 0.5))) - (samplefreq * int(floor(frames_per_second + 0.5)) / frames_per_second);
-		
-		while(int(extra_samples*1000) % 1000 != 0 && cycle_size <= 3000)
-		{
-			cycle_size *= 10;
-			extra_samples *= 10;
-		}
-		
-		if(int(floor(extra_samples + 0.5)) == 0)
-			cycle_size = 1;
-		else
-			cycle_size /= int( gcd(cycle_size, int(floor(extra_samples + 0.5))) );
-	
-		deficit = int(extra_samples) < 0 ? -1 : 1;
-
-		return cycle_size;
-	}
 
 	// If there is a special audio cycle associated with the given sample frequency and frame rate, the 
 	// result parameter is filled with the cycle count values and true is returned.
@@ -100,15 +61,6 @@ namespace {
 		{
 			sample_cycle_map::const_iterator cycles = sample_cycles.find( std::make_pair( fps, profile  ) );
 			if( cycles != sample_cycles.end() )
-			{
-				result = cycles->second;
-				return true;
-			}
-		}
-		else
-		{
-			sample_frequency_map::const_iterator cycles = sample_frequency.find( std::make_pair( fps, samplefreq ) );
-			if( cycles != sample_frequency.end() )
 			{
 				result = cycles->second;
 				return true;
@@ -132,20 +84,12 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 		return cycle[ frameoffset % cycle.size() ];
 	}
 
-	double	frames_per_second	= double(fps.numerator()) / fps.denominator();
-	double	samples_per_frame	= double(samplefreq) / frames_per_second;
-	
-	int	deficit;
-	int frames_per_cycle = calculate_cycle_size(frames_per_second, samplefreq, samples_per_frame, deficit);
+	boost::rational< int > framerate = boost::rational< int >( framerate_numerator, framerate_denominator );
+	boost::rational< int > frequency = boost::rational< int >( samplefreq );
+	boost::rational< int > sequence = frequency / framerate;
+	int offset = frameoffset % sequence.denominator( );
 
-	int		samples_per_frame_base	= int((( long long )samplefreq * fps.denominator()) / fps.numerator());
-	double	extra_sample_spread		= samples_per_frame - double(samples_per_frame_base);
-	int		cycle_idx				= frameoffset % frames_per_cycle;
-
-	if(cycle_idx == 0)
-		return samples_per_frame_base + (extra_sample_spread > 0.5 ? deficit : 0);
-	else
-		return samples_per_frame_base + (int(floor((extra_sample_spread * cycle_idx) + 0.5)) > int(floor(extra_sample_spread * (cycle_idx - 1) + 0.5)) ? deficit : 0);
+	return boost::rational_cast< int >( sequence * ( offset + 1 ) ) - boost::rational_cast< int >( sequence * offset );
 }
 
 ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator, locked_profile::type profile )
@@ -177,30 +121,13 @@ ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int
 		return count * cycles + total;
 	}
 
-	double	frames_per_second	= double(framerate_numerator) / framerate_denominator;
-	double	samples_per_frame	= double(samplefreq) / frames_per_second;
-	
-	int deficit;
-	int frames_per_cycle = calculate_cycle_size(frames_per_second, samplefreq, samples_per_frame, deficit);
-	
-	int		samples_per_frame_base	= (samplefreq * framerate_denominator) / framerate_numerator;
-	int		samples_per_cycle		= int(float(samples_per_frame * double(frames_per_cycle)));
-	double	extra_sample_spread		= samples_per_frame - double(samples_per_frame_base);
-	int		cycle_idx				= frameoffset % frames_per_cycle;
-	
-	boost::int64_t offset = ((boost::int64_t)(frameoffset / frames_per_cycle) * samples_per_cycle);
-	
-	if(cycle_idx > 0)
-	{
-		offset += cycle_idx * samples_per_frame_base;
-		
-		if(extra_sample_spread > 0.5)
-			offset += deficit;
-		
-		offset += deficit * int(floor((extra_sample_spread * cycle_idx) - extra_sample_spread + 0.5));
-	}
+	boost::rational< int > fps = boost::rational< int >( framerate_numerator, framerate_denominator );
+	boost::rational< int > frequency = boost::rational< int >( samplefreq );
+	boost::rational< int > sequence = frequency / fps;
+	int offset = frameoffset % sequence.denominator( );
+	int cycles = ( frameoffset - offset ) / sequence.denominator( );
 
-	return offset;
+	return boost::int64_t( cycles ) * sequence.numerator( ) + boost::rational_cast< int >( sequence * offset );
 }
 
 } } } }
