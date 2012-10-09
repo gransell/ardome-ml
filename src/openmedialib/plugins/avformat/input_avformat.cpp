@@ -913,6 +913,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, prop_packet_stream_( pcos::key::from_string( "packet_stream" ) )
 			, prop_fake_fps_( pcos::key::from_string( "fake_fps" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
+			, prop_inner_threads_( pcos::key::from_string( "inner_threads" ) )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
 			, audio_codec_( 0 )
@@ -963,6 +964,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_packet_stream_ = 0 );
 			properties( ).append( prop_fake_fps_ = 0 );
 			properties( ).append( prop_frequency_ = -1 );
+			properties( ).append( prop_inner_threads_ = 1 );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -1953,7 +1955,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			video_codec_ = avcodec_find_decoder( codec_context->codec_id );
-			codec_context->thread_count = std::max< int >( 1, boost::thread::hardware_concurrency( ) / 2 );
+			if ( prop_inner_threads_.value< int >( ) <= 0 )
+				codec_context->thread_count = boost::thread::hardware_concurrency( );
+			else
+				codec_context->thread_count = prop_inner_threads_.value< int >( );
 			if ( video_codec_ == NULL || avcodec_open2( codec_context, video_codec_, 0 ) < 0 )
 				prop_video_index_ = -1;
 		}
@@ -2660,6 +2665,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		pcos::property prop_packet_stream_;
 		pcos::property prop_fake_fps_;
 		pcos::property prop_frequency_;
+		pcos::property prop_inner_threads_;
 		AVFrame *av_frame_;
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;
