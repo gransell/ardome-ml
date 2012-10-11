@@ -1653,9 +1653,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 					input->seek( int( map_dest_to_source( position_ ) ) );
 					result = input->fetch( );
 					ARENFORCE( result );
-					// We need to ensure that any image on the frame is decoded prior 
-					// to changing the frame
-					result->get_image( );
 					result = result->shallow( );
 				}
 				else
@@ -1785,9 +1782,6 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				frame_type_ptr frame = input->fetch( );
 				ARENFORCE( frame && frame->get_audio() );
 
-				// We need to ensure that any image on the frame is decoded prior to changing the frame
-				frame->get_image( );
-
 				// Make a shallow copy to allow modification (like audio direction)
 				frame = frame->shallow( );
 
@@ -1816,7 +1810,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			// (note that fps and position are handled in the do_fetch to avoid duplication)
 			if ( cache_.fetch( target ) )
 			{
-				result = cache_.fetch( target )->deep( );
+				result = cache_.fetch( target )->shallow( );
 
 				if ( reseat_->size( ) )
 					result->set_audio( reseat_->retrieve( samples, true ) );
