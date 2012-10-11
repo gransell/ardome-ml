@@ -28,10 +28,12 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_slots_( pcos::key::from_string( "slots" ) )
+			, prop_enforce_fps_( pcos::key::from_string( "enforce_fps" ) )
 			, position_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_slots_ = 2 );
+			properties( ).append( prop_enforce_fps_ = 0 );
 		}
 
 		virtual const size_t slot_count( ) const { return size_t( prop_slots_.value< int >( ) ); }
@@ -81,7 +83,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			std::vector < ml::input_type_ptr > pushers;
 			for ( size_t i = 1; i < slot_count( ); i ++ )
 			{
-				if ( fetch_slot( i )->get_uri( ) != L"frame_rate" )
+				if ( prop_enforce_fps_.value< int >( ) && fetch_slot( i )->get_uri( ) != L"frame_rate" )
 				{
 					ml::filter_type_ptr conform = ml::create_filter( L"conform" );
 					conform->property( "image" ).set( 0 );
@@ -158,6 +160,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 
 		pcos::property prop_enable_;
 		pcos::property prop_slots_;
+		pcos::property prop_enforce_fps_;
 		int position_;
 		std::deque< ml::frame_type_ptr > queue_;
 };
