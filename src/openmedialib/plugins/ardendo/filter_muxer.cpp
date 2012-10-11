@@ -75,7 +75,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 					if ( result && overlay )
 					{
 						result->set_audio( overlay->get_audio( ) );
-						pl::pcos::assign< int >( result->properties( ), overlay->properties( ), key_audio_reversed_ );
+						pl::pcos::assign< int >( result->properties( ), overlay->properties( ), key_audio_reversed_, 0 );
 						join_peaks( result, overlay );
 					}
 				}
