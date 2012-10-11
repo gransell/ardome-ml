@@ -539,7 +539,6 @@ int main( int argc, char *argv[ ] )
         
     #elif defined( __APPLE__ )
         olib::t_path plugins_path = cl::special_folder::get( cl::special_folder::plugins );
-        std::cerr << plugins_path.string( ) << std::endl;
         pl::init( plugins_path.string( ) );
     #else
 		setlocale(LC_CTYPE, "");
