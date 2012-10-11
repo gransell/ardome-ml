@@ -739,7 +739,7 @@ public:
 		
 		audio_type_ptr combined = audio::combine( result_audios );
 		
-		result->set_audio( combined );
+		result->set_audio( combined, true );
 
 		expected_ = result->get_position( ) + 1;
 	}

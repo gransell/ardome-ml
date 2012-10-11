@@ -289,11 +289,11 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		/// Set the audio associated to the frame.
 		virtual void set_audio( audio_type_ptr audio, bool decoded )
 		{
-			frame_type::set_audio( audio );
+			frame_type::set_audio( audio, decoded );
 			//We need to set the audio object on the inner frame as well to avoid
-			//our own audio object being overwritten incorrectly on an evaulate() call
+			//our own audio object being overwritten incorrectly on an evaluate() call
 			if( parent_ )
-				parent_->set_audio(audio);
+				parent_->set_audio( audio, decoded );
 		}
 
 		/// Get the audio associated to the frame.
@@ -633,7 +633,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			if( audio_decoder_ )
 			{
 				frame_type_ptr audio_frame = perform_audio_decode( frame );
-				frame->set_audio( audio_frame->get_audio( ) );
+				frame->set_audio( audio_frame->get_audio( ), true );
 			}
 
 			last_frame_ = frame->shallow();

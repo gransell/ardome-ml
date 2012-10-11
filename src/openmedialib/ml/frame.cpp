@@ -128,11 +128,13 @@ il::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
 void frame_type::set_audio( audio_type_ptr audio, bool decoded )
 {
 	audio_ = audio;
-	//Destroy the existing audio stream, since it is not a correct
-	//representation of the audio anymore
-	if( !decoded && audio && stream_ && stream_->id() == stream_audio )
+	//Destroy the existing audio block, since it is not a correct
+	//representation of the audio anymore (if the decoded flag is
+	//set, the caller guarantees that the audio object is the decoded
+	//result of the audio block).
+	if( !decoded && audio )
 	{
-		stream_.reset();
+		audio_block_.reset();
 	}
 }
 
