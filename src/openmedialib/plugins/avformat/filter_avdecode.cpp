@@ -801,11 +801,21 @@ private:
 		int left_to_discard = discard;
 
 		audio::reseat_ptr track_reseater = reseats_[ track ];
+		const boost::int64_t packet_position = next_packets_to_decoders_[ track ];
 		audio::track_type::const_iterator packets_it =
-			track_packets.find( next_packets_to_decoders_[ track ] );
-		
-		//ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
-					   //"Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
+			track_packets.find( packet_position );
+
+		//Special case for uncompressed audio or audio with simple compression (where we
+		//only have one packet per block and no lead in), i.e. pcm, aiff or aes3. In these
+		//cases, we can be a bit lenient if the input did not identify the correct NTSC
+		//audio cycle.
+		if( packets_it == track_packets.end() && track_packets.size() == 1 && discard == 0 )
+		{
+			if( boost::abs< boost::int64_t >( track_packets.begin()->first - packet_position ) <= 2 )
+			{
+				packets_it = track_packets.begin();
+			}
+		}
 		
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
 		{
