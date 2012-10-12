@@ -830,7 +830,7 @@ private:
 			int got_frame = 0;
 			int error = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
 			
-			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
+			//ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
 			
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 
