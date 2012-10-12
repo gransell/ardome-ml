@@ -570,6 +570,12 @@ class avformat_demux
 					got_packet = ml::stream_audio;
 				else if ( error >= 0 )
 					av_free_packet( &pkt_ );
+
+				if ( got_packet == ml::stream_video && source->key_last_ == -1 && pkt_.flags != AV_PKT_FLAG_KEY )
+				{
+					av_free_packet( &pkt_ );
+					got_packet = ml::stream_unknown;
+				}
 			}
 
 			if ( got_packet != ml::stream_unknown )
@@ -772,6 +778,7 @@ class avformat_demux
 					source->expected_ = -1;
 					set_expected( -1, false );
 				}
+				source->key_last_ = -1;
 			}
 			return result;
 		}
@@ -2368,7 +2375,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				int got_frame = 0;
 				ret = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
 
-				ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
+				//ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
 				
 				// If we need to discard packets, do that now
 				if( discard_audio_packet_count_ )
