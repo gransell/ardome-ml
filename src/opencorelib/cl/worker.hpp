@@ -71,7 +71,8 @@ namespace olib
 
 			/// Cancel the currently running job, if any is running.
 			/** The function sets the currently running job's 
-				job_base::set_should_terminate_job to true and returns. */
+				job_base::set_should_terminate_job to true and blocks
+				until the job is cancelled. */
 			void cancel_current_job() ;
 
 
@@ -87,9 +88,10 @@ namespace olib
             /// it will not be run again.
             bool cancel_and_remove_job( const base_job_ptr &job_to_cancel, const boost::posix_time::time_duration& time_out );
 
-			/// Remove all added jobs, will set job_base::set_should_terminate_job to true.
-			/** This function is called automatically by the Stop function. */
-			void cancel_and_clear_jobs() ;
+            /// Remove all added jobs and cancel the currently executing job.
+            /** Will block until the currently executing job is cancelled.
+                This function is called automatically by the stop function. */
+            void cancel_and_clear_jobs() ;
 
 			/// Returns true if a job is currently running, false otherwise.
 			bool get_is_running_job() const ;
