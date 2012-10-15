@@ -185,6 +185,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, audio_variable_( false )
 			, first_frame_( frame )
 			, video_copy_( false )
+			, first_audio_( true )
 		{
 			// Show stats
 			properties( ).append( prop_show_stats_ = 0 );
@@ -1444,7 +1445,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			int stream = 0;
 
-			static int first = true;
 			int encode_tries = 1;
 
 			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ( do_flush || ( ret && data ) ) && iter != audio_stream_.end( ); ++iter, ++stream )
@@ -1490,7 +1490,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					{
 						if( stream == 0)
 						{
-							if( !first || ec == encode_tries -1 )
+							if( !first_audio_ || ec == encode_tries -1 )
 							{
 								if( audio_packet_num_ % 8 == 0 )
 								{
@@ -1502,7 +1502,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						}
 
 						ret = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] ) == 0;
-						if( !first )
+						if( !first_audio_ )
 							break;
 					}
 					else if ( data == 0 )
@@ -1511,7 +1511,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}	
 			}
-			first = false;
+			first_audio_ = false;
 
 			return ret;
 		}
@@ -1649,6 +1649,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		frame_type_ptr first_frame_;
 		bool video_copy_;
+		bool first_audio_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &resource, const frame_type_ptr &frame )
