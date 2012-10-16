@@ -325,7 +325,7 @@ class avformat_demux
 			if ( !populate( result ) )
 			{
 				// Handle unexpected position here
-				if( seek( ) )
+				if( seek( ) && position != 0 )
 				{
 					ARENFORCE_MSG( check_direction( position ), "Unable to get to %1%" )( position );
 				}
@@ -357,16 +357,15 @@ class avformat_demux
 
 			do
 			{
+				// Set it back to true at the start of each iteration
+				result = true;
+
 				// Check that we have at least one packet per stream
 				for ( iterator iter = caches.begin( ); result && iter != caches.end( ); iter ++ )
 					result = iter->second.expected( ) != -1;
 
 				// If result is false, then obtain another packet and check streams again unless eof is hit
-				if ( !result )
-				{
-					result = obtain_next_packet( );
-					ARENFORCE_MSG( result, "End of file reached" );
-				}
+				ARENFORCE_MSG( result || obtain_next_packet( ), "End of file reached" );
 			}
 			while( !result );
 
@@ -785,7 +784,6 @@ class avformat_demux
 
 		void found( AVPacket &pkt, boost::int64_t &position )
 		{
-			// TODO: Handle unindexed positioning...
 			if ( has_cache_for( pkt.stream_index ) )
 			{
 				stream_cache &handler = caches[ pkt.stream_index ];
