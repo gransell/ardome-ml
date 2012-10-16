@@ -186,6 +186,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, first_frame_( frame )
 			, video_copy_( false )
 			, first_audio_( true )
+			, encoded_images_( 0 )
 		{
 			// Show stats
 			properties( ).append( prop_show_stats_ = 0 );
@@ -1234,12 +1235,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
 
-				if( oc_->pb && c->coded_frame && c->coded_frame->key_frame && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
+				if( oc_->pb && c->coded_frame && ( c->coded_frame->key_frame || c->coded_frame->pict_type == AV_PICTURE_TYPE_I ) && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) )
 				{
-					ts_generator_video_.enroll( c->coded_frame->pts, oc_->pb->pos );
+					ts_generator_video_.enroll( encoded_images_, oc_->pb->pos );
 					write_ts_index( );
 					pkt.flags |= AV_PKT_FLAG_KEY;
-					ts_last_position_ = push_count_ - 1;
+					ts_last_position_ = encoded_images_;
 					ts_last_offset_ = oc_->pb->pos;
 				}
 
@@ -1257,6 +1258,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( log_file_ && prop_pass_.value< int >( ) == 1  && c->stats_out )
 					fprintf( log_file_, "%s", c->stats_out );
 
+				encoded_images_ ++;
 			}
 			else
 			{
@@ -1650,6 +1652,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		frame_type_ptr first_frame_;
 		bool video_copy_;
 		bool first_audio_;
+		int encoded_images_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &resource, const frame_type_ptr &frame )
