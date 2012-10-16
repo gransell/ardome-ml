@@ -66,6 +66,9 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 				pl::pcos::property coding_type = stream->properties( ).get_property_with_key( ml::keys::picture_coding_type );
 				pl::pcos::property byte_offset = stream->properties( ).get_property_with_key( ml::keys::source_byte_offset );
 
+				if ( !byte_offset.valid( ) )
+					byte_offset = stream->properties( ).get_property_with_key( ml::keys::offset );
+
 				result = coding_type.valid( ) && byte_offset.valid( );
 
 				if ( result )
