@@ -458,6 +458,7 @@ namespace olib
             boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
             if( !m_current_job) return;
             m_current_job->set_should_terminate_job(true);
+            while(!m_current_job->wait_for_job_done(boost::posix_time::seconds(1)));
         }
 
         bool worker::cancel_current_job(const boost::posix_time::time_duration& time_out) 

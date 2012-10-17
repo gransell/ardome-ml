@@ -325,7 +325,7 @@ class avformat_demux
 			if ( !populate( result ) )
 			{
 				// Handle unexpected position here
-				if( seek( ) )
+				if( seek( ) && position != 0 )
 				{
 					ARENFORCE_MSG( check_direction( position ), "Unable to get to %1%" )( position );
 				}
@@ -357,16 +357,15 @@ class avformat_demux
 
 			do
 			{
+				// Set it back to true at the start of each iteration
+				result = true;
+
 				// Check that we have at least one packet per stream
 				for ( iterator iter = caches.begin( ); result && iter != caches.end( ); iter ++ )
 					result = iter->second.expected( ) != -1;
 
 				// If result is false, then obtain another packet and check streams again unless eof is hit
-				if ( !result )
-				{
-					result = obtain_next_packet( );
-					ARENFORCE_MSG( result, "End of file reached" );
-				}
+				ARENFORCE_MSG( result || obtain_next_packet( ), "End of file reached" );
 			}
 			while( !result );
 
@@ -570,6 +569,12 @@ class avformat_demux
 					got_packet = ml::stream_audio;
 				else if ( error >= 0 )
 					av_free_packet( &pkt_ );
+
+				if ( got_packet == ml::stream_video && source->key_last_ == -1 && pkt_.flags != AV_PKT_FLAG_KEY )
+				{
+					av_free_packet( &pkt_ );
+					got_packet = ml::stream_unknown;
+				}
 			}
 
 			if ( got_packet != ml::stream_unknown )
@@ -772,13 +777,13 @@ class avformat_demux
 					source->expected_ = -1;
 					set_expected( -1, false );
 				}
+				source->key_last_ = -1;
 			}
 			return result;
 		}
 
 		void found( AVPacket &pkt, boost::int64_t &position )
 		{
-			// TODO: Handle unindexed positioning...
 			if ( has_cache_for( pkt.stream_index ) )
 			{
 				stream_cache &handler = caches[ pkt.stream_index ];
@@ -939,6 +944,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, discard_audio_packet_count_( 0 )
 			, discard_audio_after_seek_( false )
 			, demuxer_( this )
+			, is_streaming_( false )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -1166,8 +1172,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( error == 0 )
 				image_type_ = std::string( context_->iformat->name ) == "image2" ||
 							  std::string( context_->iformat->name ) == "yuv4mpegpipe";
-			
-			if ( prop_packet_stream_.value< int >( ) == 0 )
+
+			// Determine if packet streaming has been requested
+			is_streaming_ = is_streaming( );
+
+			// Set up the input for decode or demux
+			if ( !is_streaming_ )
 			{
 				// Check for and create the timestamp correction filter graph
 				if ( prop_ts_filter_.value< pl::wstring >( ) != L"" )
@@ -1204,7 +1214,37 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			return error == 0;
 		}
 
-        void do_fetch( frame_type_ptr &result )
+		bool is_streaming( )
+		{
+			bool result = false;
+
+   			if ( context_ && prop_packet_stream_.value< int >( ) != 0 )
+			{
+				if ( prop_packet_stream_.value< int >( ) > 0 )
+				{
+					// If packet_stream > 0, then we will attempt to honour the request
+					result = true;
+				}
+				else
+				{
+					// If packet_stream < 0, then we will only accept it with specific combinations of container, indexing and codecs
+					std::string format = context_->iformat->name;
+					std::string codec = has_video( ) ? get_video_stream( )->codec->codec->name : "";
+
+					result |= format == "mpegts" && aml_index_;
+					result |= format == "mpegts" && codec == "mpeg2video";
+					result |= format == "mpeg" && codec == "mpeg2video";
+					result |= format == "mxf";
+					result |= format.find( "mov" ) == 0 && codec == "mpeg2video";
+
+					ARLOG_DEBUG3( "Packet stream is %s with %s/%s and indexing %s" )( result ? "on" : "off" )( format )( codec )( aml_index_ ? "on" : "off" );
+				}
+			}
+
+			return result;
+		}
+
+		void do_fetch( frame_type_ptr &result )
         {
             ARENFORCE_MSG( context_, "Invalid media" );
 
@@ -1213,7 +1253,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				sync( );
 
             // Route to either decoded or packet extraction mechanisms
-            if ( prop_packet_stream_.value< int >( ) )
+            if ( is_streaming_ )
                 demuxer_.do_packet_fetch( result );
             else
                 do_decode_fetch( result );
@@ -2368,7 +2408,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				int got_frame = 0;
 				ret = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
 
-				ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
+				//ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
 				
 				// If we need to discard packets, do that now
 				if( discard_audio_packet_count_ )
@@ -2706,6 +2746,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		bool discard_audio_after_seek_;
 
 		avformat_demux demuxer_;
+		bool is_streaming_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )

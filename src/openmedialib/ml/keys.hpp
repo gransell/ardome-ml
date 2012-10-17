@@ -81,6 +81,8 @@ ML_KEY( source_byte_offset );
 ML_KEY( source_position );
 ML_KEY( source_format );
 
+ML_KEY( offset );
+
 } } } }
 
 #endif

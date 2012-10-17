@@ -739,7 +739,7 @@ public:
 		
 		audio_type_ptr combined = audio::combine( result_audios );
 		
-		result->set_audio( combined );
+		result->set_audio( combined, true );
 
 		expected_ = result->get_position( ) + 1;
 	}
@@ -801,11 +801,21 @@ private:
 		int left_to_discard = discard;
 
 		audio::reseat_ptr track_reseater = reseats_[ track ];
+		const boost::int64_t packet_position = next_packets_to_decoders_[ track ];
 		audio::track_type::const_iterator packets_it =
-			track_packets.find( next_packets_to_decoders_[ track ] );
-		
-		//ARENFORCE_MSG( track_reseater->has( wanted_samples ) || packets_it != track_packets.end(),
-					   //"Next wanted packet %1% not found in audio_block" )( next_packets_to_decoders_[ track ] );
+			track_packets.find( packet_position );
+
+		//Special case for uncompressed audio or audio with simple compression (where we
+		//only have one packet per block and no lead in), i.e. pcm, aiff or aes3. In these
+		//cases, we can be a bit lenient if the input did not identify the correct NTSC
+		//audio cycle.
+		if( packets_it == track_packets.end() && track_packets.size() == 1 && discard == 0 )
+		{
+			if( boost::abs< boost::int64_t >( track_packets.begin()->first - packet_position ) <= 2 )
+			{
+				packets_it = track_packets.begin();
+			}
+		}
 		
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
 		{
@@ -820,7 +830,7 @@ private:
 			int got_frame = 0;
 			int error = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
 			
-			ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
+			//ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
 			
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 

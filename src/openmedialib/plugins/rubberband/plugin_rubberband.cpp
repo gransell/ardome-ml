@@ -210,7 +210,8 @@ class rubber
 				{
 					int samples = result->get_audio( )->samples( );
 					int required = int( samples / speed );
-					ml::audio_type_ptr audio = reverse_audio( result, increment_ );
+					reverse_audio( result, increment_ );
+					ml::audio_type_ptr audio = result->get_audio();
 					audio->set_position( result->get_position( ) );
 					result->set_audio( ml::audio::pitch( audio, required ) );
 				}
@@ -237,7 +238,8 @@ class rubber
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
 					frame = frame->shallow( );
 					source_ += increment_;
-					audio = reverse_audio( frame, increment_ );
+					reverse_audio( frame, increment_ );
+					audio = frame->get_audio();
 					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
 					ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
 					float_ptr *channels = convert( floats );
@@ -283,7 +285,7 @@ class rubber
 			}
 
 			result = result->shallow( );
-			result->set_audio( reverse_audio( result, increment_ ) );
+			reverse_audio( result, increment_ );
 
 			// We expect the next frame to follow...
 			last_position_ = position;
@@ -293,11 +295,11 @@ class rubber
 			return result;
 		}
 
-		ml::audio_type_ptr reverse_audio( ml::frame_type_ptr &frame, int increment_ )
+		void reverse_audio( ml::frame_type_ptr &frame, int increment_ )
 		{
 			ml::audio_type_ptr audio = frame->get_audio( );
 
-			if ( !audio ) return audio;
+			if ( !audio ) return;
 
 			// Make sure we have a propery on the frame
 			if ( !frame->property_with_key( key_audio_reversed_ ).valid( ) )
@@ -312,8 +314,6 @@ class rubber
 				frame->set_audio( audio );
 				reverse = (int)( reverse.value< int >( ) ? 0 : 1 );
 			}
-
-			return audio;
 		}
 
 		float_ptr *allocate( int samples )
