@@ -181,23 +181,30 @@ inline void saveRangeFast(URLContext* file, T* p, size_t nblocks) {
 // Goes through p sample by sample and saves them. This is necessary when the
 // sample is isn't a power of 2.
 template<typename T, size_t realsizeofT>
-inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks) {
+inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks, std::vector<unsigned char> &conversion_buffer) {
+	const size_t conversion_buffer_size = nblocks * realsizeofT;
+	if (conversion_buffer.size() < conversion_buffer_size)
+		conversion_buffer.resize(conversion_buffer_size);
+
+	unsigned char *dst = &conversion_buffer[0];
 	le<T> sample;
 	for (size_t i = 0; i < nblocks; ++i) {
 		sample = *p++;
-		ffurl_write(file,  ( unsigned char * )&sample, realsizeofT);
+		memcpy(dst, &sample, realsizeofT);
+		dst += realsizeofT;
 	}
+	ffurl_write(file, &conversion_buffer[0], nblocks * realsizeofT);
 }
 
 template<typename T, size_t realsizeofT>
-inline void saveRange(URLContext* file, void* array, size_t nbytes) {
+inline void saveRange(URLContext* file, void* array, size_t nbytes, std::vector<unsigned char> &conversion_buffer) {
 	size_t nblocks = nbytes / sizeof(T);
 	T* p = (T*)array;
 
 	if (realsizeofT == sizeof(T))
 		saveRangeFast<T>(file, p, nblocks);
 	else
-		saveRangeNormal<T, realsizeofT>(file, p, nblocks);
+		saveRangeNormal<T, realsizeofT>(file, p, nblocks, conversion_buffer);
 }
 
 bool store_wav::push(ml::frame_type_ptr frame)
@@ -229,19 +236,19 @@ bool store_wav::push(ml::frame_type_ptr frame)
 #endif // BYTE_ORDER == LITTLE_ENDIAN
 	if (real_bytes_per_sample == 1)
 	{
-		saveRange<uint8_t,  1>(file_, audio->pointer(), size);
+		saveRange<uint8_t,  1>(file_, audio->pointer(), size, conversion_buffer_);
 	}
 	else if (real_bytes_per_sample == 2)
 	{
-		saveRange<uint16_t, 2>(file_, audio->pointer(), size);
+		saveRange<uint16_t, 2>(file_, audio->pointer(), size, conversion_buffer_);
 	}
 	else if (real_bytes_per_sample == 3)
 	{
-		saveRange<uint32_t, 3>(file_, audio->pointer(), size);
+		saveRange<uint32_t, 3>(file_, audio->pointer(), size, conversion_buffer_);
 	}
 	else if (real_bytes_per_sample == 4)
 	{
-		saveRange<uint32_t, 4>(file_, audio->pointer(), size);
+		saveRange<uint32_t, 4>(file_, audio->pointer(), size, conversion_buffer_);
 	}
 
 	return true;

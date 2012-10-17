@@ -58,6 +58,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 		URLContext *file_;
 		bool writeonly;
 		pl::wstring resource_;
+		std::vector<unsigned char> conversion_buffer_;
 
 		pcos::property prop_enabled_;
 		pcos::property prop_count_;
