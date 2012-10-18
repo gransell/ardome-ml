@@ -149,8 +149,7 @@ public:
 		std::pair< int, du::decklink_mutable_video_frame_ptr > next_frame = downloaded_frames_.front();
 		downloaded_frames_.pop_front();
 		
-		ARENFORCE_MSG( device_->ScheduleVideoFrame( next_frame.second.get(), next_frame.second * frame_duration_, frame_duration_, time_scale_ ) == S_OK,
-					  "Failed to schedule frame" );
+		//ARENFORCE_MSG( device_->ScheduleVideoFrame( next_frame.second.get(), next_frame.second * frame_duration_, frame_duration_, time_scale_ ) == S_OK, "Failed to schedule frame" );
 		
 		return S_OK;
 	}

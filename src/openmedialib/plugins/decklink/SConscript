@@ -1,10 +1,10 @@
 Import(['local_env'])
 
-local_env.packages( 'ardome_ml', 'boost', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'loki' )
+local_env.packages( 'boost', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'loki' )
 
 local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Mac/include', ] )
 
-srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp',  ]
+srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp', 'src/decklink_utilities.cpp' ]
 
 if local_env[ 'PLATFORM' ] == 'win32' :
 	srcs.append( 'src/msw/decklink.rc' )
