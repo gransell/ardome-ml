@@ -154,6 +154,7 @@ typedef image< unsigned char, r32g32b32a32f >	r32g32b32a32f_image_type;
 typedef image< unsigned char, yuv444p >			yuv444p_image_type;
 typedef image< unsigned char, yuv444 >			yuv444_image_type;
 typedef image< unsigned char, yuv422 >			yuv422_image_type;
+typedef image< unsigned char, uyv422 >			uyv422_image_type;
 typedef image< unsigned char, yuv422p >			yuv422p_image_type;
 typedef image< unsigned char, yuv420p >			yuv420p_image_type;
 typedef image< unsigned char, yuv411 >			yuv411_image_type;
@@ -235,6 +236,8 @@ IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int heig
 		dst_img = image_type_ptr( new image_type( yuv444_image_type( width, height, 1 ) ) );
 	else if ( pf == L"yuv422" )
 		dst_img = image_type_ptr( new image_type( yuv422_image_type( width, height, 1 ) ) );
+	else if ( pf == L"uyv422" )
+		dst_img = image_type_ptr( new image_type( uyv422_image_type( width, height, 1 ) ) );
 	else if ( pf == L"yuv422p" )
 		dst_img = image_type_ptr( new image_type( yuv422p_image_type( width, height, 1 ) ) );
 	else if ( pf == L"yuv420p" )
@@ -881,6 +884,100 @@ static image_type_ptr yuvp_to_yuv422( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
+static image_type_ptr yuv422_to_uyv422( const image_type_ptr &src_img )
+{
+	image_type_ptr dst_img = allocate( src_img, L"uyv422" );
+	if ( dst_img )
+	{
+		boost::uint8_t *dst = ( boost::uint8_t * )dst_img->data( );
+		boost::uint8_t *src = ( boost::uint8_t * )src_img->data( );
+		boost::uint8_t *end = ( boost::uint8_t * )dst + dst_img->size( );
+		while ( dst < end )
+		{  
+			*dst ++ = src[ 1 ];
+			*dst ++ = src[ 0 ];
+			*dst ++ = src[ 3 ];
+			*dst ++ = src[ 2 ];
+			src += 4;
+		}
+	}
+	return dst_img;
+}
+
+static image_type_ptr uyv422_to_yuv422( const image_type_ptr &src_img )
+{
+	image_type_ptr dst_img = allocate( src_img, L"yuv422" );
+	if ( dst_img )
+	{
+		boost::uint8_t *dst = ( boost::uint8_t * )dst_img->data( );
+		boost::uint8_t *src = ( boost::uint8_t * )src_img->data( );
+		boost::uint8_t *end = ( boost::uint8_t * )dst + dst_img->size( );
+		while ( dst < end )
+		{  
+			*dst ++ = src[ 1 ];
+			*dst ++ = src[ 0 ];
+			*dst ++ = src[ 3 ];
+			*dst ++ = src[ 2 ];
+			src += 4;
+		}
+	}
+	return dst_img;
+}
+
+static image_type_ptr yuvp_to_uyv422( const image_type_ptr &src_img, const opl::wstring &format )
+{
+	image_type_ptr dst_img = allocate( src_img, format );
+
+	if ( dst_img != 0 )
+	{
+		size_type dst_width = dst_img->width( ) / 2;
+		size_type dst_height = dst_img->height( );
+		
+		size_type chroma_width = src_img->width( 1 );
+		size_type chroma_height = src_img->height( 1 );
+
+		size_type x_factor = ( chroma_width << 8 ) / dst_width;
+		size_type y_factor = ( chroma_height << 8 ) / dst_height;
+
+		pointer dst = dst_img->data( );
+		size_type dst_rem = dst_img->pitch( ) - dst_img->linesize( );
+		size_type y_src_rem = src_img->pitch( ) - src_img->linesize( );
+
+		int uv_offset;
+
+		const_pointer pu = src_img->data( 1 );
+		int ppu = src_img->pitch( 1 );
+		const_pointer pv = src_img->data( 2 );
+		int ppv = src_img->pitch( 2 );
+
+		const_pointer Y = src_img->data( 0 );
+		const_pointer U, V;
+
+		int mx = dst_width * x_factor;
+		int x = 0;
+
+		for ( int y = 0; y < dst_height; y ++ )
+		{
+			U = pu + ( ( y * y_factor ) >> 8 ) * ppu;
+			V = pv + ( ( y * y_factor ) >> 8 ) * ppv;
+
+			for( x = 0; x < mx; x += x_factor )
+			{
+   				uv_offset = x >> 8;
+				*dst ++ = U[ uv_offset ];
+				*dst ++ = *Y ++;
+				*dst ++ = V[ uv_offset ];
+				*dst ++ = *Y ++;
+ 			}
+
+			dst += dst_rem;
+			Y += y_src_rem;
+		}
+	}
+
+	return dst_img;
+}
+
 static image_type_ptr yuv422_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
@@ -917,6 +1014,62 @@ static image_type_ptr yuv422_to_yuvp( const image_type_ptr &src_img, const opl::
 			else
 			{
 				int uv_offset = 1 + ( p - 1 ) * 2;
+
+				size_type src_width = src_img->width( );
+				size_type x_factor = ( src_width << 8 ) / dst_width;
+
+				for ( int y = 0; y < dst_height; y ++ )
+				{
+					const_pointer line = src_img->data( ) + ( ( ( y * y_factor ) >> 8 ) * src_img->pitch( ) );
+
+					for ( int x = 0; x < dst_width; x ++ )
+						*dst ++ = ( unsigned char )( line[ 4 * ( ( x * x_factor ) >> 9 ) + uv_offset ] );
+
+					dst += dst_rem;
+				}
+			}
+		}
+	}
+
+	return dst_img;
+}
+
+static image_type_ptr uyv422_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
+{
+	image_type_ptr dst_img = allocate( src_img, format );
+
+	if ( dst_img != 0 )
+	{
+		for ( int p = 0; p < 3; p ++ )
+		{
+			size_type dst_width = dst_img->width( p );
+			size_type dst_height = dst_img->height( p );
+
+			pointer dst = dst_img->data( p );
+			size_type dst_rem = dst_img->pitch( p ) - dst_img->linesize( p );
+
+			size_type src_height = src_img->height( );
+
+			size_type y_factor = ( src_height << 8 ) / dst_height;
+
+			if ( p == 0 )
+			{
+				for ( int y = 0; y < dst_height; y ++ )
+				{
+					const_pointer line = src_img->data( ) + ( y * src_img->pitch( ) ) + 1;
+	
+					for ( int x = 0; x < dst_width; x ++ )
+					{
+						*dst ++ = ( unsigned char )( *line );
+						line += 2;
+					}
+
+					dst += dst_rem;
+				}
+			}
+			else
+			{
+				int uv_offset = ( p - 1 ) * 2;
 
 				size_type src_width = src_img->width( );
 				size_type x_factor = ( src_width << 8 ) / dst_width;
@@ -983,6 +1136,52 @@ static image_type_ptr yuv422_to_rgb( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
+static image_type_ptr uyv422_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+{
+	size_type width = src_img->width( );
+	size_type height = src_img->height( );
+
+	image_type_ptr dst_img = allocate( src_img, format );
+
+	if ( dst_img != 0 )
+	{
+		int rgb[ 4 ] = { 255, 255, 255, 255 };
+
+		const_pointer src = src_img->data( );
+		size_type src_pitch = src_img->pitch( ) - src_img->linesize( );
+		pointer dst = dst_img->data( );
+		size_type dst_pitch = dst_img->pitch( ) - dst_img->linesize( );
+
+		size_type orig_width = width;
+
+		while( height -- )
+		{
+			while( width > 1 )
+			{
+				yuv444_to_rgb24( rgb[ 0 ], rgb[ 1 ], rgb[ 2 ], *( src + 1 ), *( src ), *( src + 2 ) );
+				*dst ++ = ( unsigned char )rgb[ r ];
+				*dst ++ = ( unsigned char )rgb[ g ];
+				*dst ++ = ( unsigned char )rgb[ b ];
+				if ( a != -1 ) *dst ++ = ( unsigned char )rgb[ a ];
+				src += 2;
+				yuv444_to_rgb24( rgb[ 0 ], rgb[ 1 ], rgb[ 2 ], *( src + 1 ), *( src - 2 ), *( src ) );
+				*dst ++ = ( unsigned char )rgb[ r ];
+				*dst ++ = ( unsigned char )rgb[ g ];
+				*dst ++ = ( unsigned char )rgb[ b ];
+				if ( a != -1 ) *dst ++ = ( unsigned char )rgb[ a ];
+				src += 2;
+				width -= 2;
+			}
+
+			dst += dst_pitch;
+			src += src_pitch;
+			width = orig_width;
+		}
+	}
+
+	return dst_img;
+}
+
 static image_type_ptr rgb_to_yuv422( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
 {
 	size_type width = src_img->width( );
@@ -1015,6 +1214,49 @@ static image_type_ptr rgb_to_yuv422( const image_type_ptr &src_img, const opl::w
 				*dst ++ = ( unsigned char )( ( u[ 0 ] + u[ 1 ] ) >> 1 );
 				*dst ++ = ( unsigned char )y[ 1 ];
 				*dst ++ = ( unsigned char )( ( v[ 0 ] + v[ 1 ] ) >> 1 );
+				width -= 2;
+			}
+
+			dst += dst_pitch;
+			src += src_pitch;
+		}
+	}
+
+	return dst_img;
+}
+
+static image_type_ptr rgb_to_uyv422( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
+{
+	size_type width = src_img->width( );
+	size_type height = src_img->height( );
+
+	image_type_ptr dst_img = allocate( src_img, format );
+
+	if ( dst_img != 0 )
+	{
+		int y[ 2 ], u[ 2 ], v[ 2 ];
+
+		const_pointer src = src_img->data( );
+		size_type src_pitch = src_img->pitch( ) - src_img->linesize( );
+		pointer dst = dst_img->data( );
+		size_type dst_pitch = dst_img->pitch( ) - dst_img->linesize( );
+
+		size_type orig_width = width;
+
+		while( height -- )
+		{
+			width = orig_width;
+
+			while( width > 1 )
+			{
+				rgb24_to_yuv444( y[ 0 ], u[ 0 ], v[ 0 ], *( src + r ), *( src + g ), *( src + b ) );
+				src += bytes;
+				rgb24_to_yuv444( y[ 1 ], u[ 1 ], v[ 1 ], *( src + r ), *( src + g ), *( src + b ) );
+				src += bytes;
+				*dst ++ = ( unsigned char )( ( u[ 0 ] + u[ 1 ] ) >> 1 );
+				*dst ++ = ( unsigned char )y[ 0 ];
+				*dst ++ = ( unsigned char )( ( v[ 0 ] + v[ 1 ] ) >> 1 );
+				*dst ++ = ( unsigned char )y[ 1 ];
 				width -= 2;
 			}
 
@@ -1973,6 +2215,18 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 #endif
 		return yuvp_to_yuv422( src, dst_pf );
 	}
+	else if ( src_pf == L"yuv422" && dst_pf == L"uyv422" )
+	{
+		return yuv422_to_uyv422( src );
+	}
+	else if ( src_pf == L"uyv422" && dst_pf == L"yuv422" )
+	{
+		return uyv422_to_yuv422( src );
+	}
+	else if ( is_yuv_planar( src ) && dst_pf == L"uyv422" )
+	{
+		return yuvp_to_uyv422( src, dst_pf );
+	}
 	else if ( is_yuv_planar( src ) && dst_pf == L"yuv444" )
 	{
 		if ( src_pf == L"yuv420p" && dst_pf == L"yuv444" )
@@ -2017,6 +2271,10 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 	{
 		return yuv422_to_yuvp( src, dst_pf );
 	}
+	else if ( src_pf == L"uyv422" && is_yuv_planar( dst_pf ) )
+	{
+		return uyv422_to_yuvp( src, dst_pf );
+	}
 	else if ( src_pf == L"yuv444" && is_yuv_planar( dst_pf ) )
 	{
 		return yuv444_to_yuvp( src, dst_pf );
@@ -2033,6 +2291,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 3, 0, 1, 2 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 3, 0, 1, 2 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 3, 0, 1, 2 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 3, 0, 1, 2 );
 	}
@@ -2053,6 +2313,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 3, 2, 1, 0 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 3, 2, 1, 0 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 3, 2, 1, 0 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 3, 2, 1, 0 );
 	}
@@ -2068,6 +2330,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 4, 0, 1, 2 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 4, 0, 1, 2 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 4, 0, 1, 2 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 4, 0, 1, 2 );
 	}
@@ -2088,6 +2352,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 4, 2, 1, 0 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 4, 2, 1, 0 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 4, 2, 1, 0 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 4, 2, 1, 0 );
 	}
@@ -2103,6 +2369,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 4, 1, 2, 3 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 4, 1, 2, 3 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 4, 1, 2, 3 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 4, 1, 2, 3 );
 	}
@@ -2116,6 +2384,8 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return rgb_to_yuv444( src, dst_pf, 4, 3, 2, 1 );
 		else if ( dst_pf == L"yuv422" )
 			return rgb_to_yuv422( src, dst_pf, 4, 3, 2, 1 );
+		else if ( dst_pf == L"uyv422" )
+			return rgb_to_uyv422( src, dst_pf, 4, 3, 2, 1 );
 		else if ( dst_pf == L"yuv411" )
 			return rgb_to_yuv411( src, dst_pf, 4, 3, 2, 1 );
 	}
@@ -2249,6 +2519,17 @@ IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstrin
 			return yuv422_to_rgb( src, dst_pf, 0, 1, 2, 3 );
 		else if ( dst_pf == L"b8g8r8a8" )
 			return yuv422_to_rgb( src, dst_pf, 2, 1, 0, 3 );
+	}
+	else if ( src_pf == L"uyv422" )
+	{
+		if ( dst_pf == L"r8g8b8" )
+			return uyv422_to_rgb( src, dst_pf, 0, 1, 2, -1 );
+		else if ( dst_pf == L"b8g8r8" )
+			return uyv422_to_rgb( src, dst_pf, 2, 1, 0, -1 );
+		else if ( dst_pf == L"r8g8b8a8" )
+			return uyv422_to_rgb( src, dst_pf, 0, 1, 2, 3 );
+		else if ( dst_pf == L"b8g8r8a8" )
+			return uyv422_to_rgb( src, dst_pf, 2, 1, 0, 3 );
 	}
 	else if ( src_pf == L"yuv411" )
 	{

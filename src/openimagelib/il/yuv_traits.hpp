@@ -199,6 +199,50 @@ public:
 	}
 };
 
+// uyv422 - provides a single plane consisting of a raster of width * height * 2 bytes
+// neighbouring samples on a scanline are U Y0 V Y1
+// even RGB samples are calculated from Y0 U V
+// odd RGB samples are calculated from Y1 U V
+template<typename T, class storage = default_storage<T> >
+class uyv422 : public surface_format<T, storage>
+{
+public:
+	typedef typename storage::const_pointer					const_pointer;
+	typedef typename storage::pointer						pointer;
+	typedef typename surface_format<T, storage>::size_type	size_type;
+	typedef typename surface_format<T, storage>::plane		plane;
+	typedef typename surface_format<T, storage>::planes		planes;
+
+private:
+	static const int bs = 2;
+
+public:
+	explicit uyv422( size_type width, size_type height, size_type depth = 1, size_type count = 1, bool cubemap = false )
+		: surface_format<T, storage>( bs, width, height, depth, count, cubemap, L"uyv422" )
+	{ surface_format<T, storage>::allocate( ); }
+
+	uyv422( const uyv422& other, size_type w, size_type h )
+		: surface_format<T, storage>( other.bs, w, h, other.depth( ), other.count( ), other.is_cubemap( ), L"uyv422" )
+	{ surface_format<T, storage>::allocate( ); }
+
+	virtual ~uyv422( )
+	{ }
+
+public:
+	virtual size_type allocsize( size_type width, size_type height, size_type depth ) const
+	{
+		return detail::rgb_Allocate_size<T>( )( bs, width, height, depth ); 
+	}
+
+	virtual size_type bitdepth( ) const
+	{ return 8; }
+
+	virtual uyv422* clone( size_type w, size_type h )
+	{ 
+		return new uyv422( *this, w, h ); 
+	}
+};
+
 // yuv422p - provides a 3 planes - the name and size of each are shown:
 // 		Y: width * height 
 //		U: width * height / 2 
