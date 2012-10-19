@@ -10,7 +10,6 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
 #include "decklink_utilities.h"
-//#include <decklink.hpp>
 #include <DeckLinkAPIDispatch.cpp>
 
 namespace cl = olib::opencorelib;

@@ -1,4 +1,4 @@
-// AMF Decklink Media Plugin
+// VML Decklink Media Plugin
 //
 // Copyright (C) 2012 VizRT
 
@@ -35,8 +35,11 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		{
 		}
 
-		virtual ~DeckLinkCaptureDelegate( )
+		void reset( )
 		{
+			frame_count_ = 0;
+			lru_.clear( );
+			last_image_ = il::image_type_ptr( );
 		}
 
 		void set_fps( int fps_num, int fps_den )
@@ -66,27 +69,12 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 
 		virtual ULONG STDMETHODCALLTYPE AddRef( void )
 		{
-			{
-				boost::recursive_mutex::scoped_lock lock( mutex_ );
-				ref_count_ ++;
-			}
-			return ref_count_;
+			return 1;
 		}
 
 		virtual ULONG STDMETHODCALLTYPE Release( void )
 		{
-			{
-				boost::recursive_mutex::scoped_lock lock( mutex_ );
-				ref_count_ --;
-			}
-
-			if (ref_count_ == 0)
-			{
-				delete this;
-				return 0;
-			}
-
-			return ref_count_;
+			return 0;
 		}
 
 		virtual HRESULT STDMETHODCALLTYPE VideoInputFormatChanged( BMDVideoInputFormatChangedEvents events, IDeckLinkDisplayMode *mode, BMDDetectedVideoInputFormatFlags flags )
@@ -111,30 +99,21 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 				il::image_type_ptr image;
 				if ( picture->GetFlags() & bmdFrameHasNoInputSource )
 				{
-					fprintf(stderr, "Frame received (#%d) - No input signal detected\n", frame_count_ );
-					// TODO: Generate test card to image_type_ptr
+					ARLOG( "No video frame received for %d with %dx%d @ %d:%d fps" )( frame_count_ )( width_ )( height_ )( fps_num_ )( fps_den_ ).level( cl::log_level::error );
+					image = last_image_;
 				}
 				else
 				{
+					// TODO: sort out field order, sar and deal with non-matching pitch on the destination image
 					void *bytes;
 					picture->GetBytes( &bytes );
 					image = il::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
 					image->set_position( frame_count_ );
-					// TODO: Transfer bytes to image_type_ptr 
 					boost::uint8_t *dst = ( boost::uint8_t * )image->data( );
-					boost::uint8_t *src = ( boost::uint8_t * )bytes;
-					boost::uint8_t *end = ( boost::uint8_t * )image->data( ) + image->size( );
-					while ( dst < end )
-					{
-						*dst ++ = src[ 1 ];
-						*dst ++ = src[ 0 ];
-						*dst ++ = src[ 3 ];
-						*dst ++ = src[ 2 ];
-						src += 4;
-					}
-					// TODO: sort out field order
+					memcpy( dst, bytes, image->size( ) );
 				}
 				frame->set_image( image );
+				last_image_ = image;
 			}
 
 			// Handle Audio Frame
@@ -147,6 +126,11 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 				memcpy( audio->pointer( ), bytes, audio->size( ) );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
+			}
+			else
+			{
+				// TODO: Generate missing audio samples if they ever occur?
+				ARLOG( "No audio frame received for %d with %d hz %d channels @ %d:%d fps" )( frame_count_ )( frequency_ )( channels_ )( fps_num_ )( fps_den_ ).level( cl::log_level::error );
 			}
 
 			// Append to lru
@@ -164,8 +148,8 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		}
 
 	private:
-		mutable boost::recursive_mutex mutex_;
 		ml::lru_frame_type lru_;
+		il::image_type_ptr last_image_;
 		ULONG ref_count_;
 		int frame_count_;
 		int fps_num_;
@@ -177,7 +161,6 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		int frequency_;
 		int channels_;
 };
-
 
 class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 {
@@ -196,9 +179,9 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, decklink_iter_( 0 )
 		, decklink_delegate_( 0 )
 		{
-			properties( ).append( prop_pf_ = pl::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = pl::wstring( L"uyv422" ) );
 			properties( ).append( prop_af_ = pl::wstring( L"pcm16" ) );
-			properties( ).append( prop_mode_ = 8 );
+			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 		}
@@ -212,15 +195,23 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 		
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return uri_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const pl::wstring get_uri( ) const 
+		{
+			return uri_; 
+		}
+
+		virtual const pl::wstring get_mime_type( ) const 
+		{
+			return L""; 
+		}
 		
 		// Audio/Visual
 		virtual int get_frames( ) const
 		{
-			return std::numeric_limits< int >::max();
+			return std::numeric_limits< int >::max( );
 		}
 
+		// Indicates this input is not seekable
 		virtual bool is_seekable( ) const
 		{
 			return false;
@@ -239,27 +230,19 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		}
 		
 	protected:
-		
 		virtual bool initialize( )
 		{
-			HRESULT error = S_OK;
+			// TODO: Check sanity of audio paramaters and add suport for pcm32 and aes(?)
 
-			int fps_num = 0;
-			int fps_den = 0;
-			int width = 0;
-			int height = 0;
-
-			BMDDisplayMode selectedDisplayMode = bmdModeNTSC;
-			BMDPixelFormat pixelFormat = bmdFormat8BitYUV;
-			BMDVideoInputFlags inputFlags = 0;
+			// Provides the return value
+			bool found = false;
 
 			// Create the decklink iterator
 			decklink_iter_ = CreateDeckLinkIteratorInstance( );
-			if ( decklink_iter_ == 0 )
-			{
-				error = !S_OK;
-				ARLOG( "This input requires the DeckLink drivers installed." ).level( cl::log_level::error );
-			}
+
+			// Check if the drivers exist
+			HRESULT error = decklink_iter_ == 0 ? S_FALSE : S_OK;
+			ARLOG_IF( error != S_OK, "This input requires the DeckLink drivers installed." ).level( cl::log_level::error );
 
 			// Connect to the first deck instance
 			if ( error == S_OK )
@@ -283,92 +266,109 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			}
 
 			// Check that the picture format is valid
-			if ( error == S_OK && prop_pf_.value< pl::wstring >( ) != L"yuv422" )
+			if ( error == S_OK && prop_pf_.value< pl::wstring >( ) != L"uyv422" )
 			{
-				error = !S_OK;
-				ARLOG( "AML currently only supports a picture format of yuv422." ).level( cl::log_level::error );
+				error = S_FALSE;
+				ARLOG( "The AML decklink plugin currently only supports a picture format of uyv422." ).level( cl::log_level::error );
 			}
 
-			// Handle the requested display mode
+			// Attempt to find a valid mode
 			if ( error == S_OK )
 			{
 				IDeckLinkDisplayMode *display;
 				int mode = 0;
-				bool done = false;
+				int requested = prop_mode_.value< int >( );
 
-				while ( error == S_OK && decklink_display_mode_iter_->Next( &display ) == S_OK )
+				decklink_delegate_ = new DeckLinkCaptureDelegate( );
+				decklink_input_->SetCallback( decklink_delegate_ );
+
+				while ( error == S_OK && !found && decklink_display_mode_iter_->Next( &display ) == S_OK )
 				{
-					BMDTimeValue frameRateDuration, frameRateScale;
-					display->GetFrameRate(&frameRateDuration, &frameRateScale);
-				
-					fprintf(stderr, "%2d:  \t %li x %li \t %d:%d FPS\n",
-						mode, display->GetWidth(), display->GetHeight(), ( int )frameRateScale, ( int )frameRateDuration);
+					// If this is the requested one or we're in auto mode, attempt to start the input
+					if ( mode == requested || requested < 0 )
+						found = select( display, mode );
 
-					// Handle this one if it's the selected mode
-					if ( mode == prop_mode_.value< int >( ) )
-					{
-						fps_num = int( frameRateScale );
-						fps_den = int( frameRateDuration );
-						width = int( display->GetWidth( ) );
-						height = int( display->GetHeight( ) );
-						selectedDisplayMode = display->GetDisplayMode( );
-
-						// Indicate an error is unsupported
-						BMDDisplayModeSupport support;
-						decklink_input_->DoesSupportVideoMode( selectedDisplayMode, pixelFormat, bmdVideoInputFlagDefault, &support, NULL );
-						if ( support == bmdDisplayModeNotSupported )
-						{
-							error = !S_OK;
-							fprintf( stderr, "The requested display mode is not supported with the selected pixel format\n" );
-						}
-						else
-						{
-							done = true;
-						}
-					}
+					// Release the IDeckLinkDisplayMode object to prevent a leak
+					display->Release( );
 
 					// Increment the mode
 					mode ++;
-
-					// Release the IDeckLinkDisplayMode object to prevent a leak
-					display->Release();
 				}
-
-				// If the mode was invalid, indicate that now
-				if ( !done )
-					error = !S_OK;
 			}
 
-			// Register the callback object
+			return found;
+		}
+
+		bool select( IDeckLinkDisplayMode *display, int mode )
+		{
+			// Extract information for the delegate
+			BMDTimeValue frameRateDuration, frameRateScale;
+			display->GetFrameRate( &frameRateDuration, &frameRateScale );
+			int fps_num = int( frameRateScale );
+			int fps_den = int( frameRateDuration );
+			int width = int( display->GetWidth( ) );
+			int height = int( display->GetHeight( ) );
+			BMDDisplayMode selectedDisplayMode = display->GetDisplayMode( );
+			BMDPixelFormat pixelFormat = bmdFormat8BitYUV;
+			BMDVideoInputFlags inputFlags = 0;
+
+			// Indicate an error if unsupported
+			BMDDisplayModeSupport support;
+			decklink_input_->DoesSupportVideoMode( selectedDisplayMode, pixelFormat, bmdVideoInputFlagDefault, &support, NULL );
+			HRESULT error = support == bmdDisplayModeNotSupported ? S_FALSE : S_OK;
+			ARLOG_IF( error != S_OK, "The requested display mode %d is not supported with the selected pixel format" )( mode ).level( cl::log_level::error );
+
+			// Sync up this display mode with the delegate
 			if ( error == S_OK )
 			{
-				decklink_delegate_ = new DeckLinkCaptureDelegate( );
+				decklink_delegate_->reset( );
 				decklink_delegate_->set_fps( fps_num, fps_den );
 				decklink_delegate_->set_image( prop_pf_.value< pl::wstring >( ), width, height );
 				decklink_delegate_->set_audio( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
-				decklink_input_->SetCallback( decklink_delegate_ );
 			}
 
+			// Attempt to enable the video feed
 			if ( error == S_OK )
 			{
 				error = decklink_input_->EnableVideoInput( selectedDisplayMode, pixelFormat, inputFlags );
-				if( error != S_OK )
-					fprintf(stderr, "Failed to enable video input. Is another application using the card?\n");
+				ARLOG_IF( error != S_OK, "Failed to enable video input. Is another application using the card?" ).level( cl::log_level::error );
 			}
 
+			// Attempt to enable the audio feed
 			if ( error == S_OK )
 			{
-				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, 16, 2 );
+				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, 16, prop_channels_.value< int >( ) );
+				ARLOG_IF( error != S_OK, "Failed to enable audio input." ).level( cl::log_level::error );
 			}
 
+			// Start the feed
 			if ( error == S_OK )
 			{
 				error = decklink_input_->StartStreams( );
+				ARLOG_IF( error != S_OK, "Failed to start the streams." ).level( cl::log_level::error );
 			}
-			
+
+			// Check that the mode is valid
+			if ( error == S_OK )
+			{
+				ml::frame_type_ptr frame = decklink_delegate_->wait( 0, boost::posix_time::milliseconds( 500 ) );
+				error = frame && frame->get_image( ) ? S_OK : S_FALSE;
+				if ( error != S_OK )
+					decklink_input_->StopStreams( );
+			}
+
 			return error == S_OK;
 		}
 
+		// Fetch method
+		void do_fetch( ml::frame_type_ptr &result )
+		{
+			ARENFORCE_MSG( decklink_delegate_, "Delegate has not been constructed" );
+			result = decklink_delegate_->wait( get_position( ), boost::posix_time::seconds( 1 ) );
+			if ( result ) result = result->shallow( );
+		}
+
+		// Shut everything down
 		void stop( )
 		{
 			if ( decklink_display_mode_iter_ != 0 )
@@ -382,14 +382,8 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 
 			if ( decklink_iter_ != 0 )
 				decklink_iter_->Release( );
-		}
-		
-		// Fetch method
-		void do_fetch( ml::frame_type_ptr &result )
-		{
-			ARENFORCE_MSG( decklink_delegate_, "Delegate has not been constructed" );
-			result = decklink_delegate_->wait( get_position( ), boost::posix_time::seconds( 1 ) );
-			if ( result ) result = result->shallow( );
+
+			delete decklink_delegate_;
 		}
 
 	private:
@@ -408,14 +402,10 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		IDeckLinkIterator *decklink_iter_;
 		DeckLinkCaptureDelegate *decklink_delegate_;
 };
-	
-	
+
 ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_decklink( const pl::wstring &filename )
 {
 	return ml::input_type_ptr( new input_decklink( filename ) );
 }
-	
+
 } }
-
-
-
