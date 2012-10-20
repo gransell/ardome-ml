@@ -8,8 +8,6 @@
 #ifndef ML_INC_
 #define ML_INC_
 
-#include <openpluginlib/pl/string.hpp>
-
 #include <openmedialib/ml/config.hpp>
 #include <openmedialib/ml/types.hpp>
 #include <openmedialib/ml/filter.hpp>

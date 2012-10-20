@@ -12,8 +12,9 @@
 #include <boost/tokenizer.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_parser_action.hpp>
+#include <opencorelib/cl/export_defines.hpp>
+#include <opencorelib/cl/str_util.hpp>
 #include "../../opencorelib/cl/xerces_sax_traverser.hpp"
 
 namespace fs = boost::filesystem;
@@ -22,9 +23,9 @@ namespace olib { namespace openpluginlib { namespace actions {
 
 namespace
 {
-	wstring value_from_name( opl_parser_action& pa, const wstring& name )
+	std::wstring value_from_name( opl_parser_action& pa, const std::wstring& name )
 	{
-		wstring str;
+		std::wstring str;
 		const XMLCh *s = pa.attrs_->getValue(opencorelib::xml::from_string(name).c_str());
 
 		if (s)
@@ -35,9 +36,9 @@ namespace
 		return str;
 	}
 	
-	void vector_from_string( const wstring& str, std::vector<wstring>& values )
+	void vector_from_string( const std::wstring& str, std::vector<std::wstring>& values )
 	{
-		typedef boost::tokenizer<boost::char_separator<wchar_t>, wstring::const_iterator, wstring> wtokenizer;
+		typedef boost::tokenizer<boost::char_separator<wchar_t>, std::wstring::const_iterator, std::wstring> wtokenizer;
 
 		boost::char_separator<wchar_t> sep( L" ,\"" );
 		wtokenizer wtok( str.begin( ), str.end( ), sep );
@@ -45,7 +46,7 @@ namespace
 		std::copy( wtok.begin( ), wtok.end( ), std::back_inserter( values ) );
 	}
 
-	void regexes_from_strings( const std::vector<wstring> &strings, std::vector<boost::wregex>& regexes )
+	void regexes_from_strings( const std::vector<std::wstring> &strings, std::vector<boost::wregex>& regexes )
 	{
 		regexes.reserve(strings.size());
 		for( size_t i = 0; i < strings.size(); ++i )
@@ -54,22 +55,22 @@ namespace
 		}
 	}
 	
-	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<wstring>& filenames )
+	void add_opl_path_to_search( const opl_parser_action& pa, std::vector<std::wstring>& filenames )
 	{
 		namespace opl = olib::openpluginlib;
 		
-		typedef std::vector<wstring>::iterator 		 iterator;
-		typedef std::vector<wstring>::const_iterator const_iterator;
+		typedef std::vector<std::wstring>::iterator 		 iterator;
+		typedef std::vector<std::wstring>::const_iterator const_iterator;
 				
-		std::vector<wstring> filenames_copy( filenames );
+		std::vector<std::wstring> filenames_copy( filenames );
 		for( const_iterator I = filenames_copy.begin( ); I != filenames_copy.end( ); ++I )
 		{
-			fs::path tmp( to_string( *I ).c_str( ), fs::native );
+			fs::path tmp( olib::opencorelib::str_util::to_string( *I ).c_str( ), fs::native );
 
-			filenames.push_back( to_wstring( ( pa.get_opl_path().branch_path() / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( pa.get_opl_path().branch_path() / tmp.leaf( ) ).string( ).c_str( ) ) );
 			
 #	ifdef WIN32
-			filenames.push_back( to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
 #	endif
 		}
 	}
@@ -94,7 +95,7 @@ opl_parser_action::~opl_parser_action( )
 {
 }
 
-bool opl_parser_action::dispatch( const wstring& tag )
+bool opl_parser_action::dispatch( const std::wstring& tag )
 {
 	typedef opl_dispatcher_container::const_iterator const_iterator;
 	
@@ -155,9 +156,9 @@ bool plugin_opl_parser_action( opl_parser_action& pa )
 	item.out_filter	= value_from_name( pa, L"out_filter" );
 	item.libname	= pa.get_libname( );
 	item.merit		= static_cast<int>( wcstol( value_from_name( pa, L"merit" ).c_str( ), 0, 10 ) );
-	item.opl_path = to_wstring( pa.get_opl_path( ).string() );
+	item.opl_path = olib::opencorelib::str_util::to_wstring( pa.get_opl_path( ).string() );
 
-	std::vector<wstring> temp;
+	std::vector<std::wstring> temp;
 	vector_from_string( value_from_name( pa, L"extension" ), temp );
 	regexes_from_strings( temp, item.extension );
 	vector_from_string( value_from_name( pa, L"filename"  ), item.filenames );

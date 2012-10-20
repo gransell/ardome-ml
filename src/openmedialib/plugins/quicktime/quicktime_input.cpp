@@ -22,7 +22,7 @@ using namespace ml;
 //---------------------------LIFECYCLE-----------------------------------------------------------------------
 
 // Constructor and destructor
-quicktime_input::quicktime_input( opl::wstring resource, const opl::wstring mime_type ) 
+quicktime_input::quicktime_input( ostd::wstring resource, const ostd::wstring mime_type ) 
 : input_type( ) 
 , uri_( resource )
 , mime_type_( mime_type )
@@ -53,17 +53,17 @@ quicktime_input::quicktime_input( opl::wstring resource, const opl::wstring mime
 
 	// create a movie spec from the file name
 	#ifdef WIN32
-		err = NativePathNameToFSSpec( const_cast<char*>( opl::to_string( resource ).c_str( ) ), &movie_file_spec_, kErrorIfFileNotFound );
+		err = NativePathNameToFSSpec( const_cast<char*>( oolib::opencorelib::str_util::to_string( resource ).c_str( ) ), &movie_file_spec_, kErrorIfFileNotFound );
 	#else
 		FSRef ref;
-		err = FSPathMakeRef( ( const UInt8* ) opl::to_string( resource ).c_str( ), &ref, 0 );
+		err = FSPathMakeRef( ( const UInt8* ) oolib::opencorelib::str_util::to_string( resource ).c_str( ), &ref, 0 );
 		err = FSGetCatalogInfo( &ref, kFSCatInfoNone, NULL, NULL, &movie_file_spec_, NULL );
 	#endif
 
 
 	// make file spec
 	//	Str255	file;
-	//	c2pstrcpy(file, opl::to_string( resource ).c_str( ));
+	//	c2pstrcpy(file, oolib::opencorelib::str_util::to_string( resource ).c_str( ));
 	//	FSMakeFSSpec(0,0,file,&movie_file_spec_);
 	
 	// attempt to open the media file

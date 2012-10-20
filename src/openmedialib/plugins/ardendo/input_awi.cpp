@@ -17,7 +17,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 {
 	public:
-		input_awi( const pl::wstring &resource ) 
+		input_awi( const std::wstring &resource ) 
 			: ml::input_type( )
 			, resource_( resource )
 			, prop_video_index_( pcos::key::from_string( "video_index" ) )
@@ -34,8 +34,8 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return resource_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return resource_; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return internal_ ? internal_->get_frames( ) : 0; }
@@ -44,7 +44,7 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 	protected:
 		virtual bool initialize( )
 		{
-			pl::wstring uri = resource_.substr( 0, resource_.find( L".awi" ) );
+			std::wstring uri = resource_.substr( 0, resource_.find( L".awi" ) );
 
 			if ( prop_video_index_.value< int >( ) != -1 && prop_audio_index_.value< int >( ) != -1 )
 			{
@@ -156,13 +156,13 @@ class ML_PLUGIN_DECLSPEC input_awi : public ml::input_type
 		}
 
 	private:
-		pl::wstring resource_;
+		std::wstring resource_;
 		pcos::property prop_video_index_;
 		pcos::property prop_audio_index_;
 		ml::input_type_ptr internal_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const std::wstring &resource )
 {
 	return ml::input_type_ptr( new input_awi( resource ) );
 }

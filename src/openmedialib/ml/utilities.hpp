@@ -22,17 +22,17 @@ ML_DECLSPEC boost::int64_t gcd( boost::int64_t a, boost::int64_t b );
 ML_DECLSPEC boost::int64_t remove_gcd( boost::int64_t &a, boost::int64_t &b );
 
 // Courtesy functions for quick input/output plugin look ups
-ML_DECLSPEC bool has_plugin_for( const openpluginlib::wstring &resource, const openpluginlib::wstring &type );
-ML_DECLSPEC input_type_ptr create_delayed_input( const openpluginlib::wstring & );
-ML_DECLSPEC input_type_ptr create_input( const openpluginlib::wstring & );
-ML_DECLSPEC input_type_ptr create_input( const openpluginlib::string & );
-ML_DECLSPEC store_type_ptr create_store( const openpluginlib::wstring &, frame_type_ptr );
-ML_DECLSPEC store_type_ptr create_store( const openpluginlib::string &, frame_type_ptr );
-ML_DECLSPEC filter_type_ptr create_filter( const openpluginlib::wstring & );
+ML_DECLSPEC bool has_plugin_for( const std::wstring &resource, const std::wstring &type );
+ML_DECLSPEC input_type_ptr create_delayed_input( const std::wstring & );
+ML_DECLSPEC input_type_ptr create_input( const std::wstring & );
+ML_DECLSPEC input_type_ptr create_input( const std::string & );
+ML_DECLSPEC store_type_ptr create_store( const std::wstring &, frame_type_ptr );
+ML_DECLSPEC store_type_ptr create_store( const std::string &, frame_type_ptr );
+ML_DECLSPEC filter_type_ptr create_filter( const std::wstring & );
 
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );
 
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const openpluginlib::wstring & );
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const std::wstring & );
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, olib::openimagelib::il::rescale_filter filter );
 ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr );
 ML_DECLSPEC frame_type_ptr frame_crop( frame_type_ptr, int, int, int, int );
@@ -48,9 +48,9 @@ class ML_DECLSPEC stream_handler
 {
 	public:
 		virtual ~stream_handler( ) { }
-		virtual bool open( const openpluginlib::wstring, int ) { return false; }
-		virtual openpluginlib::string read( int ) { return openpluginlib::string( "" ); }
-		virtual int write( const openpluginlib::string & ) { return -1; }
+		virtual bool open( const std::wstring, int ) { return false; }
+		virtual std::string read( int ) { return std::string( "" ); }
+		virtual int write( const std::string & ) { return -1; }
 		virtual long seek( long, int ) { return long( -1 ); }
 		virtual int close( ) { return 0; }
 		virtual bool is_stream( ) { return true; }
@@ -61,13 +61,13 @@ typedef boost::shared_ptr< stream_handler > stream_handler_ptr;
 
 // Method to obtain an instance of a stream_handler (used by plugins)
 
-extern ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const openpluginlib::wstring, int );
+extern ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const std::wstring, int );
 
 // Method to register the stream_handling generator (used by application or libs)
 //
 // NB: We may eventually want more than one...
 
-extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const openpluginlib::wstring, int ) );
+extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const std::wstring, int ) );
 
 // Determine if the image associated to the frame is yuv planar
 

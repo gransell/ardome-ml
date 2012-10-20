@@ -121,7 +121,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		explicit filter_offset( const pl::wstring & )
+		explicit filter_offset( const std::wstring & )
 			: ml::filter_type( )
 			, prop_in_( pcos::key::from_string( "in" ) )
 			, prop_pad_audio_( pcos::key::from_string( "pad_audio" ) )
@@ -148,7 +148,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"offset"; }
+		virtual const std::wstring get_uri( ) const { return L"offset"; }
 
 		// Number of frames provided by this filter is in + frames in connected input
 		virtual int get_frames( ) const
@@ -254,7 +254,7 @@ class ML_PLUGIN_DECLSPEC filter_offset : public ml::filter_type
 		int total_frames_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_offset( resource ) );
 }

@@ -27,7 +27,7 @@ class ML_PLUGIN_DECLSPEC filter_mix_matrix : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_mix_matrix( const pl::wstring & )
+		explicit filter_mix_matrix( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_channels_( pcos::key::from_string( "channels" ) )
@@ -36,7 +36,7 @@ class ML_PLUGIN_DECLSPEC filter_mix_matrix : public ml::filter_simple
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_matrix_ = pl::wstring( L"1 0 0 1" ) );
+			properties( ).append( prop_matrix_ = std::wstring( L"1 0 0 1" ) );
 
 			prop_matrix_.attach( matrix_observer );
 		}
@@ -47,9 +47,9 @@ class ML_PLUGIN_DECLSPEC filter_mix_matrix : public ml::filter_simple
 			//Parse the mix matrix string property and store it in the matrix_ vector
 			matrix_.clear( );
 
-			pl::wstring matrix = prop_matrix_.value< pl::wstring >( );
+			std::wstring matrix = prop_matrix_.value< std::wstring >( );
 			std::stringstream stream;
-			stream << pl::to_string( matrix );
+			stream << olib::opencorelib::str_util::to_string( matrix );
 			while ( !stream.eof( ) )
 			{
 				double v;
@@ -63,7 +63,7 @@ class ML_PLUGIN_DECLSPEC filter_mix_matrix : public ml::filter_simple
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"mix_matrix"; }
+		virtual const std::wstring get_uri( ) const { return L"mix_matrix"; }
 		
 	protected:
 		// The main access point to the filter
@@ -84,7 +84,7 @@ class ML_PLUGIN_DECLSPEC filter_mix_matrix : public ml::filter_simple
 		std::vector< double > matrix_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mix_matrix( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mix_matrix( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_mix_matrix( resource ) );
 }

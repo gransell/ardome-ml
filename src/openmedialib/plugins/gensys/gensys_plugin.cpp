@@ -229,7 +229,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_background_( pcos::key::from_string( "background" ) )
 		{
 			// Default to a black PAL video
-			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
 			properties( ).append( prop_r_ = 0x00 );
 			properties( ).append( prop_g_ = 0x00 );
 			properties( ).append( prop_b_ = 0x00 );
@@ -252,8 +252,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		virtual bool requires_image( ) const { return prop_deferred_.value< int >( ) == 0; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"colour:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"colour:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_out_.value< int >( ); }
@@ -298,7 +298,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			// Create and populate the image
 			if ( prop_deferred_.value< int >( ) == 0 )
 			{
-				image = il::allocate( prop_colourspace_.value< pl::wstring >( ).c_str(), get_width( ), get_height( ) );
+				image = il::allocate( prop_colourspace_.value< std::wstring >( ).c_str(), get_width( ), get_height( ) );
 				if ( image )
 				{
 					image->set_writable( true );
@@ -321,7 +321,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			{
 				if ( deferred_image_ == 0 || deferred_image_->width( ) != get_width( ) || deferred_image_->height( ) != get_height( ) )
 				{
-					deferred_image_ = il::allocate( prop_colourspace_.value< pl::wstring >( ).c_str(), get_width( ), get_height( ) );
+					deferred_image_ = il::allocate( prop_colourspace_.value< std::wstring >( ).c_str(), get_width( ), get_height( ) );
 					if ( deferred_image_ )
 					{
 						deferred_image_->set_writable( false );
@@ -429,8 +429,8 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"pusher:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"pusher:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const 
@@ -534,7 +534,7 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"chroma"; }
+		virtual const std::wstring get_uri( ) const { return L"chroma"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -601,14 +601,14 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_pf_ = pl::wstring( L"yuv420p" ) );
-			properties( ).append( prop_default_ = pl::wstring( L"" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv420p" ) );
+			properties( ).append( prop_default_ = std::wstring( L"" ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"conform"; }
+		virtual const std::wstring get_uri( ) const { return L"conform"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -650,9 +650,9 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 
 		void default_image( frame_type_ptr &result )
 		{
-			if ( prop_default_.value< pl::wstring >( ) != L"" )
+			if ( prop_default_.value< std::wstring >( ) != L"" )
 			{
-				pl::wstring resource = prop_default_.value< pl::wstring >( );
+				std::wstring resource = prop_default_.value< std::wstring >( );
 
 				// Detect changes in default property
 				if ( resource != current_default_  )
@@ -665,7 +665,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 				// Create the input if we haven't done so before
 				if ( input_default_ == 0 )
 				{
-					if ( resource.substr( 0, 7 ) == pl::wstring( L"filter:" ) )
+					if ( resource.substr( 0, 7 ) == std::wstring( L"filter:" ) )
 					{
 						ml::filter_type_ptr filter = create_filter( resource.substr( 7 ) );
 						if ( filter )
@@ -676,7 +676,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 						}
 						else
 						{
-							PL_LOG( pl::level::error, boost::format( "Unable to create requested filter: %s" ) % pl::to_string( resource ) );
+							PL_LOG( pl::level::error, boost::format( "Unable to create requested filter: %s" ) % cl::str_util::to_string( resource ) );
 						}
 					}
 					else
@@ -684,7 +684,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 						input_default_ = create_input( resource );
 						if ( input_default_ == 0 || input_default_->get_frames( ) <= 0 )
 						{
-							PL_LOG( pl::level::error, boost::format( "Unable to create requested input: %s" ) % pl::to_string( resource ) );
+							PL_LOG( pl::level::error, boost::format( "Unable to create requested input: %s" ) % cl::str_util::to_string( resource ) );
 							input_default_ = input_type_ptr( );
 						}
 					}
@@ -728,7 +728,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 
 			if ( !result->has_image( ) )
 			{
-				il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ).c_str( ), 720, 576 );
+				il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ).c_str( ), 720, 576 );
 				fill( image, 0, ( unsigned char )16 );
 				fill( image, 1, ( unsigned char )128 );
 				fill( image, 2, ( unsigned char )128 );
@@ -746,7 +746,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 		pcos::property prop_default_;
 		input_type_ptr input_default_;
 		input_type_ptr input_pusher_;
-		pl::wstring current_default_;
+		std::wstring current_default_;
 };
 
 // Crop filter
@@ -791,7 +791,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"crop"; }
+		virtual const std::wstring get_uri( ) const { return L"crop"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -941,14 +941,14 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			, prop_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) ) //Deprecated
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_mode_ = pl::wstring( L"fill" ) );
+			properties( ).append( prop_mode_ = std::wstring( L"fill" ) );
 			properties( ).append( prop_swap_ = 0 );
 			properties( ).append( prop_rx_ = 0.0 );
 			properties( ).append( prop_ry_ = 0.0 );
 			properties( ).append( prop_rw_ = 1.0 );
 			properties( ).append( prop_rh_ = 1.0 );
 			properties( ).append( prop_mix_ = 1.0 );
-			properties( ).append( prop_interp_ = pl::wstring( L"bilinear" ) );
+			properties( ).append( prop_interp_ = std::wstring( L"bilinear" ) );
 			properties( ).append( prop_slot_ = 0 );
 
 			properties( ).append( prop_frame_rescale_cb_ = boost::uint64_t( 0 ) ); //Deprecated
@@ -958,7 +958,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"composite"; }
+		virtual const std::wstring get_uri( ) const { return L"composite"; }
 
 		virtual const size_t slot_count( ) const { return 2; }
 
@@ -1061,7 +1061,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			int pillar_w = int( 0.5 + ( result.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
 
 			// Handle the requested mode
-			if ( prop_mode_.value< pl::wstring >( ) == L"fill" )
+			if ( prop_mode_.value< std::wstring >( ) == L"fill" )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
@@ -1072,7 +1072,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result.h = letter_h;
 				}
 			}
-			else if ( prop_mode_.value< pl::wstring >( ) == L"smart" )
+			else if ( prop_mode_.value< std::wstring >( ) == L"smart" )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
@@ -1083,27 +1083,27 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					result.h = letter_h;
 				}
 			}
-			else if ( prop_mode_.value< pl::wstring >( ).find( L"letter" ) == 0 )
+			else if ( prop_mode_.value< std::wstring >( ).find( L"letter" ) == 0 )
 			{
 				result.w = dst_w;
 				result.h = letter_h;
 			}
-			else if ( prop_mode_.value< pl::wstring >( ).find( L"pillar" ) == 0 )
+			else if ( prop_mode_.value< std::wstring >( ).find( L"pillar" ) == 0 )
 			{
 				result.h = dst_h;
 				result.w = pillar_w;
 			}
-			else if ( prop_mode_.value< pl::wstring >( ).find( L"native" ) == 0 )
+			else if ( prop_mode_.value< std::wstring >( ).find( L"native" ) == 0 )
 			{
 				result.w = src_w;
 				result.h = src_h;
 			}
-			else if ( prop_mode_.value< pl::wstring >( ).find( L"corrected" ) == 0 )
+			else if ( prop_mode_.value< std::wstring >( ).find( L"corrected" ) == 0 )
 			{
 				result.w = int( 0.5 + ( src_w * src_sar_num * dst_sar_den ) / ( src_sar_den * dst_sar_num ) );
 				result.h = src_h;
 			}
-			else if ( prop_mode_.value< pl::wstring >( ).find( L"ardendo" ) == 0 )
+			else if ( prop_mode_.value< std::wstring >( ).find( L"ardendo" ) == 0 )
 			{
 				result.x = (src_w - result.w ) / 2 + prop_rx_.value< double >( );
 				result.y = (src_h - result.h ) / 2 + prop_ry_.value< double >( );
@@ -1151,7 +1151,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry geom )
 		{
 			// Ensure conformance
-			pl::wstring original_pf = background->pf();
+			std::wstring original_pf = background->pf();
 			if ( !is_yuv_planar( background ) )
 			{
 				background = frame_convert( background, L"yuv444p" );
@@ -1166,9 +1166,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			// Aquire requested rescaling algorithm
 			il::rescale_filter filter = il::BILINEAR_SAMPLING;
-			if ( prop_interp_.value< pl::wstring >( ) == L"point" )
+			if ( prop_interp_.value< std::wstring >( ) == L"point" )
 				filter = il::POINT_SAMPLING;
-			else if ( prop_interp_.value< pl::wstring >( ) == L"bicubic" )
+			else if ( prop_interp_.value< std::wstring >( ) == L"bicubic" )
 				filter = il::BICUBIC_SAMPLING;
 			if ( background->get_image( )->field_order( ) == il::progressive ) 
 			    foreground->set_image( il::deinterlace( foreground->get_image( ) ) );
@@ -1422,7 +1422,7 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"correction"; }
+		virtual const std::wstring get_uri( ) const { return L"correction"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -1562,7 +1562,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				return src_frames_;
 		}
 
-		virtual const pl::wstring get_uri( ) const { return L"frame_rate"; }
+		virtual const std::wstring get_uri( ) const { return L"frame_rate"; }
 
 		virtual void seek( const int position, const bool relative = false )
 		{
@@ -1919,7 +1919,7 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 			return ( frames <= 0 ? - frames : frames );
 		}
 
-		virtual const pl::wstring get_uri( ) const { return L"clip"; }
+		virtual const std::wstring get_uri( ) const { return L"clip"; }
 
 		virtual void seek( const int position, const bool relative = false )
 		{
@@ -2024,7 +2024,7 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"deinterlace"; }
+		virtual const std::wstring get_uri( ) const { return L"deinterlace"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -2076,7 +2076,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"lerp"; }
+		virtual const std::wstring get_uri( ) const { return L"lerp"; }
 
 	protected:
 		void do_fetch( frame_type_ptr &result )
@@ -2133,7 +2133,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 			}
 		}
 
-		void assign_property( pl::pcos::property_container &props, pcos::key &target, pl::wstring result )
+		void assign_property( pl::pcos::property_container &props, pcos::key &target, std::wstring result )
 		{
 			pl::pcos::property prop = props.get_property_with_key( target );
 			if ( prop.valid( ) )
@@ -2160,7 +2160,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 				pcos::key target = pcos::key::from_string( name.c_str( ) );
 
 				pcos::property prop = input.get_property_with_key( key );
-				pl::wstring value = prop.value< pl::wstring >( );
+				std::wstring value = prop.value< std::wstring >( );
 
 				double lower, upper, result;
 				int in = prop_in_.value< int >( );
@@ -2168,7 +2168,7 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 				int position = get_position( ) % frames;
 				int temp = 0;
 
-				int count = sscanf( pl::to_string( value ).c_str( ), "%lf:%lf:%d:%d:%d", &lower, &upper, &in, &out, &temp );
+				int count = sscanf( cl::str_util::to_string( value ).c_str( ), "%lf:%lf:%d:%d:%d", &lower, &upper, &in, &out, &temp );
 
 				if ( in < 0 || out < 0 )
 					correct_in_out( in, out, frames );
@@ -2194,14 +2194,14 @@ class ML_PLUGIN_DECLSPEC lerp_filter : public filter_simple
 						assign_property( props, target, result );
 						char temp[ 1024 ];
 						sprintf( temp, "%lf:%lf:%d:%d:%d", lower, upper, in + 1, out, 1 );
-						prop = pl::to_wstring( temp );
+						prop = cl::str_util::to_wstring( temp );
 					}
 				}
 				else if ( count == 0 )
 				{
-					if ( value.find( L":" ) != pl::wstring::npos )
+					if ( value.find( L":" ) != std::wstring::npos )
 					{
-						count = sscanf( pl::to_string( value.substr( value.find( L":" ) ) ).c_str( ), ":%d:%d", &in, &out );
+						count = sscanf( cl::str_util::to_string( value.substr( value.find( L":" ) ) ).c_str( ), ":%d:%d", &in, &out );
 						if ( in < 0 || out < 0 )
 							correct_in_out( in, out, frames );
 						if ( position >= in && position <= out )
@@ -2232,7 +2232,7 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 {
 	public:
 		bezier_filter( ) : lerp_filter( ) { }
-		virtual const pl::wstring get_uri( ) const { return L"bezier"; }
+		virtual const std::wstring get_uri( ) const { return L"bezier"; }
 
 	protected:
 		typedef struct
@@ -2273,13 +2273,13 @@ class ML_PLUGIN_DECLSPEC bezier_filter : public lerp_filter
 			{
 				int position = get_position( ) % frames;
 				pcos::property prop = input.get_property_with_key( key );
-				pl::wstring value = prop.value< pl::wstring >( );
+				std::wstring value = prop.value< std::wstring >( );
 
 				point points[ 4 ];
 				int in = prop_in_.value< int >( );
 				int out = prop_out_.value< int >( );
 
-				int count = sscanf( pl::to_string( value ).c_str( ), "%lf,%lf:%lf,%lf:%lf,%lf:%lf,%lf:%d:%d", 
+				int count = sscanf( cl::str_util::to_string( value ).c_str( ), "%lf,%lf:%lf,%lf:%lf,%lf:%lf,%lf:%d:%d", 
 																	  &points[ 0 ].x, &points[ 0 ].y,
 																	  &points[ 1 ].x, &points[ 1 ].y,
 																	  &points[ 2 ].x, &points[ 2 ].y,
@@ -2365,12 +2365,12 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
-			properties( ).append( prop_colourspace_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
 			properties( ).append( prop_scattered_ = 0 );
 			properties( ).append( prop_reverse_ = 0 );
 		}
 
-		virtual const pl::wstring get_uri( ) const { return L"visualise"; }
+		virtual const std::wstring get_uri( ) const { return L"visualise"; }
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_force_.value< int >( ) == 1; }
@@ -2412,7 +2412,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			if ( frame->get_audio( ) != 0 )
 			{
 				int type = prop_type_.value< int >( );
-				pl::wstring colourspace = prop_colourspace_.value< pl::wstring >( );
+				std::wstring colourspace = prop_colourspace_.value< std::wstring >( );
 				int width = prop_width_.value< int >( );
 				int height = prop_height_.value< int >( );
 				il::image_type_ptr image = frame->get_image( );
@@ -2717,7 +2717,7 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 
 		virtual const size_t slot_count( ) const { return size_t( prop_slots_.value< int >( ) ); }
 
-		virtual const pl::wstring get_uri( ) const { return L"playlist"; }
+		virtual const std::wstring get_uri( ) const { return L"playlist"; }
 
 		virtual int get_frames( ) const 
 		{
@@ -2782,7 +2782,7 @@ class ML_PLUGIN_DECLSPEC playlist_filter : public filter_type
 class ML_PLUGIN_DECLSPEC gensys_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring &request )
+	virtual input_type_ptr input( const std::wstring &request )
 	{
 		if ( request == L"nothing:" )
 			return input_type_ptr( );
@@ -2792,7 +2792,7 @@ public:
 			return input_type_ptr( new colour_input( ) );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &request )
+	virtual filter_type_ptr filter( const std::wstring &request )
 	{
 		if ( request == L"chroma" )
 			return filter_type_ptr( new chroma_filter( ) );

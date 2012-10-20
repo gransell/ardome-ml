@@ -25,7 +25,6 @@
 #include <openmedialib/ml/input_creator_handler.hpp>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <deque>
 
@@ -88,23 +87,23 @@ namespace
 // Query structure used
 struct ml_query_traits : public pl::default_query_traits
 {
-	ml_query_traits( const pl::wstring& filename, const pl::wstring &type )
+	ml_query_traits( const std::wstring& filename, const std::wstring &type )
 		: filename_( filename )
 		, type_( type )
 	{ }
 		
-	pl::wstring to_match( ) const
+	std::wstring to_match( ) const
 	{ return filename_; }
 
-	pl::wstring libname( ) const
-	{ return pl::wstring( L"openmedialib" ); }
+	std::wstring libname( ) const
+	{ return std::wstring( L"openmedialib" ); }
 
-	pl::wstring type( ) const
-	{ return pl::wstring( type_ ); }
+	std::wstring type( ) const
+	{ return std::wstring( type_ ); }
 	
 
-	const pl::wstring filename_;
-	const pl::wstring type_;
+	const std::wstring filename_;
+	const std::wstring type_;
 };
 
 static boost::recursive_mutex mutex_;
@@ -112,7 +111,7 @@ static boost::recursive_mutex mutex_;
 typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
 // Retrieve the first plugin which matches the resource and type (input or output)
-static openmedialib_plugin_ptr get_plug( const pl::wstring &resource, const pl::wstring type )
+static openmedialib_plugin_ptr get_plug( const std::wstring &resource, const std::wstring type )
 {
 	typedef pl::discovery< ml_query_traits > discovery;
 	openmedialib_plugin_ptr result = openmedialib_plugin_ptr( );
@@ -124,7 +123,7 @@ static openmedialib_plugin_ptr get_plug( const pl::wstring &resource, const pl::
 }
 
 // Check if a plugin is avaialble
-ML_DECLSPEC bool has_plugin_for( const pl::wstring &resource, const pl::wstring &type )
+ML_DECLSPEC bool has_plugin_for( const std::wstring &resource, const std::wstring &type )
 {
 	scoped_lock lock( mutex_ );
 	openmedialib_plugin_ptr plug = get_plug( resource, type );
@@ -132,10 +131,10 @@ ML_DECLSPEC bool has_plugin_for( const pl::wstring &resource, const pl::wstring 
 }
 
 // Return the first matching input object
-ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
+ML_DECLSPEC input_type_ptr create_delayed_input( const std::wstring &resource )
 {
 	scoped_lock lock( mutex_ );
-	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for: %1%" ) % opl::to_string( resource ) );
+	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for: %1%" ) % cl::str_util::to_string( resource ) );
 	
 	input_creator_ptr creator = the_input_creator_handler::Instance( ).input_creator_for_id( cl::str_util::to_t_string( resource ) );
 	if( creator )
@@ -146,12 +145,12 @@ ML_DECLSPEC input_type_ptr create_delayed_input( const pl::wstring &resource )
 	
 	openmedialib_plugin_ptr plug = get_plug( resource, L"input" );
 	if ( plug == 0 )
-		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % cl::str_util::to_string( resource ) );
 	return plug == 0 ? input_type_ptr( ) : plug->input( resource );
 }
 
 // Return the first matching input object
-ML_DECLSPEC input_type_ptr create_input( const pl::wstring &resource )
+ML_DECLSPEC input_type_ptr create_input( const std::wstring &resource )
 {
 	input_type_ptr result = create_delayed_input( resource );
 	if ( result )
@@ -160,34 +159,34 @@ ML_DECLSPEC input_type_ptr create_input( const pl::wstring &resource )
 }
 
 // Return the first matching input object
-ML_DECLSPEC input_type_ptr create_input( const pl::string &resource )
+ML_DECLSPEC input_type_ptr create_input( const std::string &resource )
 {
-	return create_input( pl::to_wstring( resource ) );
+	return create_input( cl::str_util::to_wstring( resource ) );
 }
 
 // Return the first matching store object
-ML_DECLSPEC store_type_ptr create_store( const pl::wstring &resource, frame_type_ptr frame )
+ML_DECLSPEC store_type_ptr create_store( const std::wstring &resource, frame_type_ptr frame )
 {
 	store_type_ptr result = store_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"output" );
 	if ( plug == 0 )
-		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % cl::str_util::to_string( resource ) );
 	return plug == 0 ? result : plug->store( resource, frame );
 }
 
 // Return the first matching store object
-ML_DECLSPEC store_type_ptr create_store( const pl::string &resource, frame_type_ptr frame )
+ML_DECLSPEC store_type_ptr create_store( const std::string &resource, frame_type_ptr frame )
 {
-	return create_store( pl::to_wstring( resource ), frame );
+	return create_store( cl::str_util::to_wstring( resource ), frame );
 }
 
-ML_DECLSPEC filter_type_ptr create_filter( const pl::wstring &resource )
+ML_DECLSPEC filter_type_ptr create_filter( const std::wstring &resource )
 {
 	filter_type_ptr result = filter_type_ptr( );
 	openmedialib_plugin_ptr plug = get_plug( resource, L"filter" );
-	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for filter: %1%" ) % opl::to_string( resource ) );
+	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for filter: %1%" ) % cl::str_util::to_string( resource ) );
 	if ( plug == 0 )
-		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % opl::to_string( resource ) );
+		PL_LOG( pl::level::error, boost::format( "Failed to find a plugin for: %1%" ) % cl::str_util::to_string( resource ) );
 	result = plug == 0 ? result : plug->filter( resource );
 	if ( result )
 		result->init( );
@@ -271,7 +270,7 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	return output_audio;
 }
 
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const openpluginlib::wstring &pf )
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const std::wstring &pf )
 {
 	frame_type_ptr result = frame;
 
@@ -360,16 +359,16 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 	return frame;
 }
 
-static stream_handler_ptr ( *stream_handler_callback )( const openpluginlib::wstring, int ) = 0;
+static stream_handler_ptr ( *stream_handler_callback )( const std::wstring, int ) = 0;
 
-ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const openpluginlib::wstring url, int flags )
+ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const std::wstring url, int flags )
 {
 	if ( stream_handler_callback )
 		return stream_handler_callback( url, flags );
 	return stream_handler_ptr( );
 }
 
-ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( *cb )( const openpluginlib::wstring, int ) )
+ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( *cb )( const std::wstring, int ) )
 {
 	stream_handler_callback = cb;
 }

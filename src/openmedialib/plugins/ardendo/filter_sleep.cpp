@@ -17,7 +17,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_sleep : public ml::filter_simple
 {
 	public:
-		filter_sleep( const pl::wstring & )
+		filter_sleep( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_ms_( pcos::key::from_string( "ms" ) )
 			, sleeper_( )
@@ -28,7 +28,7 @@ class ML_PLUGIN_DECLSPEC filter_sleep : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"sleep"; }
+		virtual const std::wstring get_uri( ) const { return L"sleep"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC filter_sleep : public ml::filter_simple
 		olib::opencorelib::thread_sleeper sleeper_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_sleep( resource ) );
 }

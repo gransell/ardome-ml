@@ -17,49 +17,49 @@
 namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring & );
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml( const std::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const std::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_awi( const std::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const std::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const std::wstring & );
 
 // OML Store plugins
-extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_awi( const pl::wstring & );
+extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_awi( const std::wstring & );
 extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( );
-extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const pl::wstring & );
-extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const pl::wstring &, const ml::frame_type_ptr & );
+extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const std::wstring & );
+extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const std::wstring &, const ml::frame_type_ptr & );
 
 // OML Filter plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_extract( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mix_matrix( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pulldown( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pass( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_extract( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mix_matrix( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pulldown( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pass( const std::wstring & );
 
 //
 // Plugin object
@@ -69,11 +69,11 @@ class ML_PLUGIN_DECLSPEC plugin : public ml::openmedialib_plugin
 {
 public:
 
-	virtual ml::input_type_ptr input( const pl::wstring &resource )
+	virtual ml::input_type_ptr input( const std::wstring &resource )
 	{
-		if ( resource.find( L".awi" ) != pl::wstring::npos )
+		if ( resource.find( L".awi" ) != std::wstring::npos )
 			return create_input_awi( resource );
-		if ( resource.find( L"aml_stack:" ) == 0 || ( resource.find( L"=" ) == pl::wstring::npos && resource.find( L".aml" ) != pl::wstring::npos ) )
+		if ( resource.find( L"aml_stack:" ) == 0 || ( resource.find( L"=" ) == std::wstring::npos && resource.find( L".aml" ) != std::wstring::npos ) )
 			return create_input_aml_stack( resource );
 		if ( resource.find( L"silence:" ) == 0 )
 			return create_input_silence( resource );
@@ -82,18 +82,18 @@ public:
 		return ml::input_type_ptr( );
 	}
 
-	virtual ml::store_type_ptr store( const pl::wstring &resource, const ml::frame_type_ptr &frame )
+	virtual ml::store_type_ptr store( const std::wstring &resource, const ml::frame_type_ptr &frame )
 	{
-		if ( resource.find( L".awi" ) != pl::wstring::npos || resource.find( L"awi:" ) == 0 )
+		if ( resource.find( L".awi" ) != std::wstring::npos || resource.find( L"awi:" ) == 0 )
 			return create_store_awi( resource );
-		if ( resource.find( L".ppm" ) != pl::wstring::npos || resource.find( L"ppm:" ) == 0  )
+		if ( resource.find( L".ppm" ) != std::wstring::npos || resource.find( L"ppm:" ) == 0  )
 			return create_store_ppm( resource );
 		if ( resource == L"null:" )
 			return create_store_null( );
 		return create_store_preview( resource, frame );
 	}
 	
-	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
+	virtual ml::filter_type_ptr filter( const std::wstring &resource )
 	{
 		if ( resource == L"aml" )
 			return create_aml( resource );

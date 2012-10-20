@@ -41,7 +41,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"tee"; }
+		virtual const std::wstring get_uri( ) const { return L"tee"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -165,7 +165,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		std::deque< ml::frame_type_ptr > queue_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_tee( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_tee( ) );
 }

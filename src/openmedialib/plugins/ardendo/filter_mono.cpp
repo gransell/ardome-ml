@@ -17,7 +17,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 {
 	public:
-		filter_mono( const pl::wstring & )
+		filter_mono( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_cut_off_( pcos::key::from_string( "cut_off" ) )
@@ -31,7 +31,7 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"mono"; }
+		virtual const std::wstring get_uri( ) const { return L"mono"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -83,7 +83,7 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 		pcos::property prop_chroma_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mono( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_mono( resource ) );
 }

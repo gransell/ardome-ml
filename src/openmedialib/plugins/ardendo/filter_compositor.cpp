@@ -141,7 +141,7 @@ class priority_node
 			{
 				PL_LOG( pl::level::info, boost::format( "Requesting %d from %s (%d to %d)" ) 
 										 % relative
-										 % pl::to_string( node( )->get_uri( ) )
+										 % olib::opencorelib::str_util::to_string( node( )->get_uri( ) )
 										 % in( )
 										 % out( ) );
 
@@ -250,7 +250,7 @@ class priority_list
 		{
 			if ( input )
 			{
-				const pl::wstring uri = input->get_uri( );
+				const std::wstring uri = input->get_uri( );
 
 				// We want to avoid inputs which are are threaded
 				// TODO: Introduce a generic test for this
@@ -294,7 +294,7 @@ class priority_list
 					// This indicates that the same filter exists at two points in the graph.
 					// This isn't strictly an error situation so can be (relatively) safely 
 					// ignored. For now, just log the case as a warning.
-					PL_LOG( pl::level::warning, boost::format( "Duplicate priority node %s" ) % pl::to_string( ( *iter )->get_uri( ) ) );
+					PL_LOG( pl::level::warning, boost::format( "Duplicate priority node %s" ) % olib::opencorelib::str_util::to_string( ( *iter )->get_uri( ) ) );
 				}
 			}
 		}
@@ -330,7 +330,7 @@ class priority_list
 
 				PL_LOG( pl::level::info, boost::format( "Priority %d: %s (%d to %d)" )
 										 % list_.size( )
-										 % pl::to_string( iter->second->node( )->get_uri( ) )
+										 % olib::opencorelib::str_util::to_string( iter->second->node( )->get_uri( ) )
 										 % iter->second->in( )
 										 % iter->second->out( ) );
 
@@ -400,7 +400,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		explicit filter_compositor( const pl::wstring &resource )
+		explicit filter_compositor( const std::wstring &resource )
 			: ml::filter_type( )
 			, resource_( resource )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
@@ -452,12 +452,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			pcos::property mix( pcos::key::from_string( "@mix" ) );
 			pcos::property mode( pcos::key::from_string( "@mode" ) );
 
-			composite_->properties( ).append( rx = pl::wstring( L"@@x:0" ) );
-			composite_->properties( ).append( ry = pl::wstring( L"@@y:0" ) );
-			composite_->properties( ).append( rw = pl::wstring( L"@@w:1" ) );
-			composite_->properties( ).append( rh = pl::wstring( L"@@h:1" ) );
-			composite_->properties( ).append( mix = pl::wstring( L"@@mix:1" ) );
-			composite_->properties( ).append( mode = pl::wstring( L"@@mode:fill" ) );
+			composite_->properties( ).append( rx = std::wstring( L"@@x:0" ) );
+			composite_->properties( ).append( ry = std::wstring( L"@@y:0" ) );
+			composite_->properties( ).append( rw = std::wstring( L"@@w:1" ) );
+			composite_->properties( ).append( rh = std::wstring( L"@@h:1" ) );
+			composite_->properties( ).append( mix = std::wstring( L"@@mix:1" ) );
+			composite_->properties( ).append( mode = std::wstring( L"@@mode:fill" ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -465,7 +465,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		{ return prop_enable_.value< int >( ) == 1 && prop_deferred_.value< int >( ) == 0; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return resource_; }
+		virtual const std::wstring get_uri( ) const { return resource_; }
 
 		virtual const size_t slot_count( ) const { return prop_slots_.value< int >( ); }
 
@@ -720,8 +720,8 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 
 		bool matching_modes( ml::frame_type_ptr frame1, ml::frame_type_ptr frame2 )
 		{
-			pl::wstring mode1 = get_prop< pl::wstring >( frame1, key_mode_, pl::wstring( L"fill" ) );
-			pl::wstring mode2 = get_prop< pl::wstring >( frame2, key_mode_, pl::wstring( L"fill" ) );
+			std::wstring mode1 = get_prop< std::wstring >( frame1, key_mode_, std::wstring( L"fill" ) );
+			std::wstring mode2 = get_prop< std::wstring >( frame2, key_mode_, std::wstring( L"fill" ) );
 
 			if( mode1 == mode2 )
 			{
@@ -764,7 +764,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 			return true;
 		}
 
-		pl::wstring resource_;
+		std::wstring resource_;
 		pcos::property prop_enable_;
 		pcos::property prop_slots_;
 		pcos::property prop_mono_;
@@ -785,7 +785,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 		std::vector< std::pair< int, int > > ranges_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_compositor( resource ) );
 }

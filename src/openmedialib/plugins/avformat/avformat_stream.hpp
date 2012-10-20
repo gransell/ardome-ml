@@ -18,7 +18,7 @@ class stream_avformat : public ml::stream_type
 	public:
 		/// Constructor for a video packet
 		stream_avformat( CodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
-			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
+			const dimensions &size, const fraction &sar, const std::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
@@ -43,7 +43,7 @@ class stream_avformat : public ml::stream_type
 
 		// Constructor with known codec name
 		stream_avformat( std::string codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
-			const dimensions &size, const fraction &sar, const olib::openpluginlib::wstring& pf,
+			const dimensions &size, const fraction &sar, const std::wstring& pf,
 			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
@@ -210,7 +210,7 @@ class stream_avformat : public ml::stream_type
 			return sample_size_;
 		}
 	
-		virtual const olib::openpluginlib::wstring pf( ) const 
+		virtual const std::wstring pf( ) const 
 		{ 
 			return pf_; 
 		}
@@ -236,7 +236,7 @@ class stream_avformat : public ml::stream_type
 		int channels_;
 		int samples_;
 		int sample_size_;
-		olib::openpluginlib::wstring pf_;
+		std::wstring pf_;
 		olib::openimagelib::il::field_order_flags field_order_;
 		int estimated_gop_size_;
 		size_t index_;

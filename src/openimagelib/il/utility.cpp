@@ -14,7 +14,6 @@
 #include <openimagelib/il/openimagelib_plugin.hpp>
 
 #include <openpluginlib/pl/fast_math.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/discovery_traits.hpp>
 
 namespace opl = olib::openpluginlib;
@@ -164,7 +163,7 @@ typedef unsigned char *							pointer;
 typedef int 									size_type;
 
 // Public allocation method
-IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int height )
+IL_DECLSPEC image_type_ptr allocate( const std::wstring &pf, int width, int height )
 {
 	image_type_ptr dst_img = image_type_ptr( );
 
@@ -264,7 +263,7 @@ IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int heig
 
 // Convenience method to allocate an image of the output format, ensuring all the required
 // information from the source is inherited
-IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img, const opl::wstring &format )
+IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = il::allocate( format, src_img->width( ), src_img->height( ) );
 
@@ -350,7 +349,7 @@ IL_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 	return im;
 }
 
-static int locate_alpha_offset( const opl::wstring &pf )
+static int locate_alpha_offset( const std::wstring &pf )
 {
 	int result = -1;
 
@@ -437,7 +436,7 @@ IL_DECLSPEC image_type_ptr merge_alpha( const image_type_ptr &im, const image_ty
 	return im;
 }
 
-static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuvp_to_yuvp( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -490,7 +489,7 @@ inline void yuv444_to_bgr( unsigned char *&dst, const int y, const int rc, const
 	*dst ++ = clamp_sample( ( y + rc ) >> 10 );
 }
 
-static image_type_ptr yuv420p_to_bgr( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv420p_to_bgr( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -541,7 +540,7 @@ static image_type_ptr yuv420p_to_bgr( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr yuv420p_to_rgb( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv420p_to_rgb( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -592,7 +591,7 @@ static image_type_ptr yuv420p_to_rgb( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr yuvp_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr yuvp_to_rgb( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -650,7 +649,7 @@ static image_type_ptr yuvp_to_rgb( const image_type_ptr &src_img, const opl::wst
 	return dst_img;
 }
 
-static image_type_ptr rgb_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr rgb_to_yuvp( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -700,7 +699,7 @@ static image_type_ptr rgb_to_yuvp( const image_type_ptr &src_img, const opl::wst
 }
 
 #ifdef HAVE_MMX
-static image_type_ptr yuv420p_to_yuv422( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv420p_to_yuv422( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -786,7 +785,7 @@ inline void yuv420p_to_yuv444( unsigned char *&dst0, unsigned char *&dst1, const
 	*dst1 ++ = v;
 }
 
-static image_type_ptr yuv420p_to_yuv444( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv420p_to_yuv444( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -830,7 +829,7 @@ static image_type_ptr yuv420p_to_yuv444( const image_type_ptr &src_img, const op
 	return dst_img;
 }
 
-static image_type_ptr yuvp_to_yuv422( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuvp_to_yuv422( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -924,7 +923,7 @@ static image_type_ptr uyv422_to_yuv422( const image_type_ptr &src_img )
 	return dst_img;
 }
 
-static image_type_ptr yuvp_to_uyv422( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuvp_to_uyv422( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -978,7 +977,7 @@ static image_type_ptr yuvp_to_uyv422( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr yuv422_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv422_to_yuvp( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -1034,7 +1033,7 @@ static image_type_ptr yuv422_to_yuvp( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr uyv422_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr uyv422_to_yuvp( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -1090,7 +1089,7 @@ static image_type_ptr uyv422_to_yuvp( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr yuv422_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr yuv422_to_rgb( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1136,7 +1135,7 @@ static image_type_ptr yuv422_to_rgb( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr uyv422_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr uyv422_to_rgb( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1182,7 +1181,7 @@ static image_type_ptr uyv422_to_rgb( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr rgb_to_yuv422( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
+static image_type_ptr rgb_to_yuv422( const image_type_ptr &src_img, const std::wstring &format, int bytes, int r, int g, int b )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1225,7 +1224,7 @@ static image_type_ptr rgb_to_yuv422( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr rgb_to_uyv422( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
+static image_type_ptr rgb_to_uyv422( const image_type_ptr &src_img, const std::wstring &format, int bytes, int r, int g, int b )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1268,7 +1267,7 @@ static image_type_ptr rgb_to_uyv422( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr yuvp_to_yuv444( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuvp_to_yuv444( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -1309,7 +1308,7 @@ static image_type_ptr yuvp_to_yuv444( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr yuv444_to_yuvp( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv444_to_yuvp( const image_type_ptr &src_img, const std::wstring &format )
 {
 	image_type_ptr dst_img = allocate( src_img, format );
 
@@ -1363,7 +1362,7 @@ static image_type_ptr yuv444_to_yuvp( const image_type_ptr &src_img, const opl::
 	return dst_img;
 }
 
-static image_type_ptr rgb_to_yuv444( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
+static image_type_ptr rgb_to_yuv444( const image_type_ptr &src_img, const std::wstring &format, int bytes, int r, int g, int b )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1402,7 +1401,7 @@ static image_type_ptr rgb_to_yuv444( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr yuv444_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr yuv444_to_rgb( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1441,7 +1440,7 @@ static image_type_ptr yuv444_to_rgb( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr yuv444_to_yuv422( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr yuv444_to_yuv422( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1479,7 +1478,7 @@ static image_type_ptr yuv444_to_yuv422( const image_type_ptr &src_img, const opl
 	return dst_img;
 }
 
-static image_type_ptr rgb_to_yuv411( const image_type_ptr &src_img, const opl::wstring &format, int bytes, int r, int g, int b )
+static image_type_ptr rgb_to_yuv411( const image_type_ptr &src_img, const std::wstring &format, int bytes, int r, int g, int b )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1528,7 +1527,7 @@ static image_type_ptr rgb_to_yuv411( const image_type_ptr &src_img, const opl::w
 	return dst_img;
 }
 
-static image_type_ptr yuv411_to_rgb( const image_type_ptr &src_img, const opl::wstring &format, int r, int g, int b, int a )
+static image_type_ptr yuv411_to_rgb( const image_type_ptr &src_img, const std::wstring &format, int r, int g, int b, int a )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1585,8 +1584,8 @@ static image_type_ptr yuv411_to_rgb( const image_type_ptr &src_img, const opl::w
 
 struct rgb_map
 {
-	opl::wstring from;
-	opl::wstring to;
+	std::wstring from;
+	std::wstring to;
 	int bytes_in;
 	int in[ 4 ];
 	int bytes_out;
@@ -1621,7 +1620,7 @@ struct rgb_map rgb_mapping[ ] =
 	{ L"", L"", 0, { 0, 0, 0, 0 }, 0, { 0, 0, 0, 0 } }
 };
 
-static image_type_ptr rgb_to_rgb( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr rgb_to_rgb( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1679,7 +1678,7 @@ static image_type_ptr rgb_to_rgb( const image_type_ptr &src_img, const opl::wstr
 	return dst_img;
 }
 
-static image_type_ptr r8g8b8p_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr r8g8b8p_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1726,7 +1725,7 @@ static image_type_ptr r8g8b8p_to_b8g8r8a8( const image_type_ptr &src_img, const 
 	return dst_img;
 }
 
-static image_type_ptr r8g8b8a8p_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr r8g8b8a8p_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1777,7 +1776,7 @@ static image_type_ptr r8g8b8a8p_to_b8g8r8a8( const image_type_ptr &src_img, cons
 	return dst_img;
 }
 
-static image_type_ptr rgb10_rgb12_rgb16_ushort_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr rgb10_rgb12_rgb16_ushort_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1817,7 +1816,7 @@ static image_type_ptr rgb10_rgb12_rgb16_ushort_to_b8g8r8a8( const image_type_ptr
 	return dst_img;
 }
 
-static image_type_ptr rgb10_rgb12_rgb16_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr rgb10_rgb12_rgb16_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1857,7 +1856,7 @@ static image_type_ptr rgb10_rgb12_rgb16_ushort_with_alpha_to_b8g8r8a8( const ima
 	return dst_img;
 }
 
-static image_type_ptr rgb10_rgb12_rgb16p_ushort_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr rgb10_rgb12_rgb16p_ushort_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1905,7 +1904,7 @@ static image_type_ptr rgb10_rgb12_rgb16p_ushort_to_b8g8r8a8( const image_type_pt
 	return dst_img;
 }
 
-static image_type_ptr rgb10_rgb12_rgb16p_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr rgb10_rgb12_rgb16p_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -1957,7 +1956,7 @@ static image_type_ptr rgb10_rgb12_rgb16p_ushort_with_alpha_to_b8g8r8a8( const im
 	return dst_img;
 }
 
-static image_type_ptr l8a8p_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr l8a8p_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -2000,7 +1999,7 @@ static image_type_ptr l8a8p_to_b8g8r8a8( const image_type_ptr &src_img, const op
 	return dst_img;
 }
 
-static image_type_ptr l10_l12_l16p_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const opl::wstring &format )
+static image_type_ptr l10_l12_l16p_ushort_with_alpha_to_b8g8r8a8( const image_type_ptr &src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -2047,7 +2046,7 @@ static image_type_ptr l10_l12_l16p_ushort_with_alpha_to_b8g8r8a8( const image_ty
 
 // Truncates 32-bit float to b8g8r8a8. The intention is to perform all tonemaps at the float level and convert to 8-bit only when needed.
 // Assumes normalise( im, 255.0f ) has already been called.
-static image_type_ptr r32g32b32f_to_b8g8r8a8( image_type_ptr src_img, const opl::wstring &format )
+static image_type_ptr r32g32b32f_to_b8g8r8a8( image_type_ptr src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -2101,7 +2100,7 @@ static void fill( image_type_ptr img, int plane, boost::uint8_t value )
 	}
 }
 
-static image_type_ptr l8_to_yuv_planar( image_type_ptr src_img, const opl::wstring &format )
+static image_type_ptr l8_to_yuv_planar( image_type_ptr src_img, const std::wstring &format )
 {
 	size_type width = src_img->width( );
 	size_type height = src_img->height( );
@@ -2129,7 +2128,7 @@ static image_type_ptr l8_to_yuv_planar( image_type_ptr src_img, const opl::wstri
 	return dst_img;
 }
 
-static image_type_ptr f32_to_yuv_planar( image_type_ptr src_img, const opl::wstring &format )
+static image_type_ptr f32_to_yuv_planar( image_type_ptr src_img, const std::wstring &format )
 {
 	size_type height = src_img->height( );
 
@@ -2184,19 +2183,19 @@ static image_type_ptr yuv_planar_to_l8( image_type_ptr src_img )
 	return dst_img;
 }
 
-inline bool is_rgb_packed( const opl::wstring &pf )
+inline bool is_rgb_packed( const std::wstring &pf )
 {
 	return pf == L"a8b8g8r8" || pf == L"a8r8g8b8" || pf == L"b8g8r8" || pf == L"b8g8r8a8" || pf == L"r8g8b8" || pf == L"r8g8b8a8";
 }
 
-IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const opl::wstring &dst_pf, int )
+IL_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const std::wstring &dst_pf, int )
 {
 	// Sanity check
 	if ( src == 0 )
 		return src;
 
 	// Get the format of the source
-	opl::wstring src_pf = src->pf( );
+	std::wstring src_pf = src->pf( );
 
 	// Convert
 	if ( dst_pf == src_pf )
@@ -3120,7 +3119,7 @@ void histogram( const image_type_ptr& im, int size, histogram_filter filter, his
 	histogram( im, size, mask, hist );
 }
 
-image_type_ptr project( const image_type_ptr& im, const opl::string& channel )
+image_type_ptr project( const image_type_ptr& im, const std::string& channel )
 {
 	// Goncalo: project to a single (for now) channel. This function should be generic enough to accept
 	// any of the supported traits. Just do RGBA (and swizzling equivalents) for now - most pertinent 
@@ -3510,28 +3509,28 @@ namespace {
 	// Query structure used
 	struct il_query_traits : public opl::default_query_traits
 	{
-		il_query_traits( const opl::wstring& filename, const opl::wstring &type )
+		il_query_traits( const std::wstring& filename, const std::wstring &type )
 			: filename_( filename )
 			, type_( type )
 		{ }
 			
-		opl::wstring to_match( ) const
+		std::wstring to_match( ) const
 		{ return filename_; }
 
-		opl::wstring libname( ) const
-		{ return opl::wstring( L"openimagelib" ); }
+		std::wstring libname( ) const
+		{ return std::wstring( L"openimagelib" ); }
 
-		opl::wstring type( ) const
-		{ return opl::wstring( type_ ); }
+		std::wstring type( ) const
+		{ return std::wstring( type_ ); }
 
-		const opl::wstring filename_;
-		const opl::wstring type_;
+		const std::wstring filename_;
+		const std::wstring type_;
 
 	private:
 		il_query_traits& operator=( const il_query_traits& );
 	};
 
-	static openimagelib_plugin_ptr get_plug( const opl::wstring &resource, const opl::wstring type )
+	static openimagelib_plugin_ptr get_plug( const std::wstring &resource, const std::wstring type )
 	{
 		typedef opl::discovery< il_query_traits > discovery;
 		openimagelib_plugin_ptr result = openimagelib_plugin_ptr( );
@@ -3544,16 +3543,16 @@ namespace {
 	}
 }
 
-image_type_ptr load_image( const opl::wstring &resource )
+image_type_ptr load_image( const std::wstring &resource )
 {
 	openimagelib_plugin_ptr plug = get_plug( resource, L"" );
 	if ( !plug )
 		return image_type_ptr( );
 	
-	return plug->load( fs::path( opl::to_string( resource ).c_str(), fs::native ) );
+	return plug->load( fs::wpath( resource.c_str(), fs::native ) );
 }
 
-bool store_image( const opl::wstring &resource, image_type_ptr image )
+bool store_image( const std::wstring &resource, image_type_ptr image )
 {
 	openimagelib_plugin_ptr plug = get_plug( resource, L"" );
 	if ( !plug )
@@ -3562,7 +3561,7 @@ bool store_image( const opl::wstring &resource, image_type_ptr image )
 		return false;
 	}
 	
-	return plug->store( fs::path( opl::to_string( resource ).c_str(), fs::native ), image );	
+	return plug->store( fs::wpath( resource.c_str(), fs::native ), image );	
 }
 
 } } }

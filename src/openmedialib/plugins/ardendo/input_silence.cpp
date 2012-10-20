@@ -31,13 +31,13 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			, prop_out_( pcos::key::from_string( "out" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
 		{
-			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_PCM16 ) );
+			properties( ).append( prop_af_ = std::wstring( ml::audio::FORMAT_PCM16 ) );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_out_ = INT_MAX );
-			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"dv" ) );
 		}
 
 		virtual ~input_silence( ) { }
@@ -46,8 +46,8 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"silence:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"silence:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_out_.value< int >( ); }
@@ -81,9 +81,9 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
 			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, 
-				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
+				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< std::wstring >( ) ) ) );
 
-			result->set_audio( ml::audio::allocate( prop_af_.value< pl::wstring >( ), frequency, channels, samples, true ) );
+			result->set_audio( ml::audio::allocate( prop_af_.value< std::wstring >( ), frequency, channels, samples, true ) );
 
 			result->set_fps( fps_num, fps_den );
 			result->set_pts( get_position( ) * 1.0 / fps( ) );
@@ -101,7 +101,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 		pcos::property prop_profile_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_silence( const std::wstring &resource )
 {
 	return ml::input_type_ptr( new input_silence( ) );
 }

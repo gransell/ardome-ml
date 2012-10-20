@@ -41,9 +41,9 @@ template < typename C > class fn_observer : public pcos::observer
 		void ( C::*fn_ )( pcos::isubject * );
 };
 
-static std::string basename( const pl::wstring &spec )
+static std::string basename( const std::wstring &spec )
 {
-	std::string base = pl::to_string( spec );
+	std::string base = olib::opencorelib::str_util::to_string( spec );
 
 	// Chop out all the cruft first
 	if ( base.find( "sox_doc_" ) == 0 )
@@ -58,7 +58,7 @@ static std::string basename( const pl::wstring &spec )
 class ML_PLUGIN_DECLSPEC filter_sox : public filter_type
 {
 public:
-	filter_sox( const pl::wstring &spec )
+	filter_sox( const std::wstring &spec )
 	: filter_type( )
 	, spec_( spec )
 	, prop_speed_( pl::pcos::key::from_string( "speed" ) )
@@ -78,7 +78,7 @@ public:
 	// Indicates if the input will enforce a packet decode
 	virtual bool requires_image( ) const { return false; }
 	
-	virtual const pl::wstring get_uri( ) const { return spec_; }
+	virtual const std::wstring get_uri( ) const { return spec_; }
 	
 	virtual const size_t slot_count( ) const { return 1; }
 	
@@ -198,7 +198,7 @@ protected:
 	}
 	
 private:
-	pl::wstring spec_;
+	std::wstring spec_;
 	pl::pcos::property prop_speed_;
 	sox_effect_t *eff_;
 	sox_encodinginfo_t enc_;
@@ -216,17 +216,17 @@ private:
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring &spec )
+	virtual input_type_ptr input(  const std::wstring &spec )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &name, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &name, const frame_type_ptr &frame )
 	{
 		return store_type_ptr( );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &spec )
+	virtual filter_type_ptr filter( const std::wstring &spec )
 	{
 		return filter_type_ptr( new filter_sox( spec ) );
 	}

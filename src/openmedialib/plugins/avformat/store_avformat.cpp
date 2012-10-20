@@ -92,7 +92,7 @@ avformat_audio_stream;
 class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 {
 	public:
-		avformat_store( const pl::wstring &resource, const frame_type_ptr &frame )
+		avformat_store( const std::wstring &resource, const frame_type_ptr &frame )
 			: store_type( )
 			, resource_( resource )
 			, prop_enable_audio_( pcos::key::from_string( "enable_audio" ) )
@@ -254,12 +254,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			}
 
 			// All of these need to migrate to application accessible properties
-			properties( ).append( prop_format_ = pl::wstring( L"" ) );
-			properties( ).append( prop_acodec_ = pl::wstring( L"" ) );
-			properties( ).append( prop_vcodec_ = pl::wstring( L"" ) );
-			properties( ).append( prop_vfourcc_ = pl::wstring( L"" ) );
-			properties( ).append( prop_afourcc_ = pl::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : pl::wstring( L"" ) );
+			properties( ).append( prop_format_ = std::wstring( L"" ) );
+			properties( ).append( prop_acodec_ = std::wstring( L"" ) );
+			properties( ).append( prop_vcodec_ = std::wstring( L"" ) );
+			properties( ).append( prop_vfourcc_ = std::wstring( L"" ) );
+			properties( ).append( prop_afourcc_ = std::wstring( L"" ) );
+			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : std::wstring( L"" ) );
 
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
@@ -324,8 +324,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_context_ = 0 );
 			properties( ).append( prop_predictor_ = 0 );
 			properties( ).append( prop_pass_ = 0 );
-			properties( ).append( prop_pass_log_ = pl::wstring( L"oml_avformat.log" ) );
-			properties( ).append( prop_ts_index_ = pl::wstring( L"" ) );
+			properties( ).append( prop_pass_log_ = std::wstring( L"oml_avformat.log" ) );
+			properties( ).append( prop_ts_index_ = std::wstring( L"" ) );
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_audio_split_ = 0 );
 			properties( ).append( prop_frag_key_frame_ = 0 );
@@ -399,14 +399,14 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				if ( prop_pass_.value< int >( ) == 1 )
 				{
-					log_file_ = fopen( pl::to_string( prop_pass_log_.value< pl::wstring >( ) ).c_str( ), "w" );
+					log_file_ = fopen( olib::opencorelib::str_util::to_string( prop_pass_log_.value< std::wstring >( ) ).c_str( ), "w" );
 					ret = log_file_ != 0;
 					if ( !ret )
-						fprintf( stderr, "Unable to open log file for write %s\n", pl::to_string( prop_pass_log_.value< pl::wstring >( ) ).c_str( ) );
+						fprintf( stderr, "Unable to open log file for write %s\n", olib::opencorelib::str_util::to_string( prop_pass_log_.value< std::wstring >( ) ).c_str( ) );
 				}
 				else if ( prop_pass_.value< int >( ) == 2 )
 				{
-					FILE *f = fopen( pl::to_string( prop_pass_log_.value< pl::wstring >( ) ).c_str( ), "r" );
+					FILE *f = fopen( olib::opencorelib::str_util::to_string( prop_pass_log_.value< std::wstring >( ) ).c_str( ), "r" );
 					ret = f != 0;
 					if ( ret )
 					{
@@ -422,13 +422,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						}
 						else
 						{
-							fprintf( stderr, "Unable to allocate log for %s\n", pl::to_string( prop_pass_log_.value< pl::wstring >( ) ).c_str( ) );
+							fprintf( stderr, "Unable to allocate log for %s\n", olib::opencorelib::str_util::to_string( prop_pass_log_.value< std::wstring >( ) ).c_str( ) );
 						}
 						fclose( f );
 					}
 					else
 					{
-						fprintf( stderr, "Unable to open log file for read %s\n", pl::to_string( prop_pass_log_.value< pl::wstring >( ) ).c_str( ) );
+						fprintf( stderr, "Unable to open log file for read %s\n", olib::opencorelib::str_util::to_string( prop_pass_log_.value< std::wstring >( ) ).c_str( ) );
 					}
 				}
 			}
@@ -454,7 +454,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				bitstream_filters_.resize( oc_->nb_streams );
 
-				strncpy(oc_->filename, pl::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
+				strncpy(oc_->filename, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
 
 				// Set up the parameters and open all codecs
 				//if ( av_set_parameters( oc_, NULL ) >= 0 )
@@ -470,7 +470,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}
 
-				if ( prop_acodec_.value< pl::wstring >( ) == L"aac" && std::string( fmt_->name ) == "mp4" )
+				if ( prop_acodec_.value< std::wstring >( ) == L"aac" && std::string( fmt_->name ) == "mp4" )
 				{
 					for ( size_t i = 0; i < bitstream_filters_.size( ); i ++ )
 					{
@@ -491,11 +491,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			bool ret = true;
 
-			strncpy(oc_->filename, pl::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
+			strncpy(oc_->filename, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), sizeof(oc_->filename));
 
 			// We'll allow encoding to stdout
 			if ( !( fmt_->flags & AVFMT_NOFILE ) ) 
-				ret = avio_open( &oc_->pb, pl::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
+				ret = avio_open( &oc_->pb, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
 			else
 				ret = true;
 
@@ -504,10 +504,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				avformat_write_header( oc_, 0 );
 
-				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< pl::wstring >( ) == L"" )
-					ret = ffurl_open( &ts_context_, pl::to_string( pl::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
-				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					ret = ffurl_open( &ts_context_, pl::to_string( prop_ts_index_.value< pl::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
+				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< std::wstring >( ) == L"" )
+					ret = ffurl_open( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
+				else if ( prop_ts_index_.value< std::wstring >( ) != L"" )
+					ret = ffurl_open( &ts_context_, olib::opencorelib::str_util::to_string( prop_ts_index_.value< std::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
 			}
 
 			return ret;
@@ -670,7 +670,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		}
 
 	private:
-		pl::wstring resource( )
+		std::wstring resource( )
 		{
 			if ( resource_.find( L"avformat:" ) == 0 )
 				return resource_.substr( 9 );
@@ -682,11 +682,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			AVOutputFormat *fmt = NULL;
 
-			if ( prop_format_.value< pl::wstring >( ) != L"" )
-				fmt = av_guess_format( pl::to_string( prop_format_.value< pl::wstring >( ) ).c_str( ), NULL, NULL );
+			if ( prop_format_.value< std::wstring >( ) != L"" )
+				fmt = av_guess_format( olib::opencorelib::str_util::to_string( prop_format_.value< std::wstring >( ) ).c_str( ), NULL, NULL );
 
 			if ( fmt == NULL )
-				fmt = av_guess_format( NULL, pl::to_string( resource( ) ).c_str( ), NULL );
+				fmt = av_guess_format( NULL, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), NULL );
 
 			if ( fmt == NULL )
 				fmt = av_guess_format( "mpeg", NULL, NULL );
@@ -698,7 +698,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		CodecID obtain_video_codec_id( )
 		{
 			CodecID codec_id = fmt_->video_codec;
-			if ( prop_vcodec_.value< pl::wstring >( ) == L"copy" )
+			if ( prop_vcodec_.value< std::wstring >( ) == L"copy" )
 			{
 				ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 				stream_type_ptr stream = first_frame_->get_stream( );
@@ -707,19 +707,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				ARENFORCE( codec_id != CODEC_ID_NONE );
 				return codec_id;
 			}
-			else if ( prop_vcodec_.value< pl::wstring >( ) != L"" )
+			else if ( prop_vcodec_.value< std::wstring >( ) != L"" )
 			{
-				AVCodec *codec = avcodec_find_encoder_by_name( pl::to_string( prop_vcodec_.value< pl::wstring >( ) ).c_str( ) );
+				AVCodec *codec = avcodec_find_encoder_by_name( olib::opencorelib::str_util::to_string( prop_vcodec_.value< std::wstring >( ) ).c_str( ) );
 				if ( codec != NULL )
 					codec_id = codec->id;
 			}
 			else
 			{
-				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_VIDEO );
+				codec_id = av_guess_codec( oc_->oformat, NULL, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_VIDEO );
 			}
 			if ( prop_debug_.value< int >( ) )
  				std::cerr << "obtain_video_codec_id: found: " << codec_id << " for "
-						  << pl::to_string( prop_vcodec_.value< pl::wstring >( ) ) << std::endl;
+						  << olib::opencorelib::str_util::to_string( prop_vcodec_.value< std::wstring >( ) ) << std::endl;
 			return codec_id;
 		}
 
@@ -727,24 +727,24 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		CodecID obtain_audio_codec_id( )
 		{
 			CodecID codec_id = fmt_->audio_codec;
-			if ( prop_acodec_.value< pl::wstring >( ) != L"" )
+			if ( prop_acodec_.value< std::wstring >( ) != L"" )
 			{
-				AVCodec *codec = avcodec_find_encoder_by_name( pl::to_string( prop_acodec_.value< pl::wstring >( ) ).c_str( ) );
+				AVCodec *codec = avcodec_find_encoder_by_name( olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) ).c_str( ) );
 				if ( codec != NULL )
 					codec_id = codec->id;
 				else if ( prop_debug_.value< int >( ) )
 					std::cerr << "obtain_audio_codec_id: failed to find codec for value: "
-							   << pl::to_string( prop_acodec_.value< pl::wstring >( ) )
+							   << olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) )
 							   << std::endl;
 			}
 			else
 			{
-				codec_id = av_guess_codec( oc_->oformat, NULL, pl::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_AUDIO );
+				codec_id = av_guess_codec( oc_->oformat, NULL, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_AUDIO );
 			}
 
 			if ( prop_debug_.value< int >( ) )
  				std::cerr << "obtain_audio_codec_id: found: " << codec_id << " for "
- 						  << pl::to_string( prop_acodec_.value< pl::wstring >( ) ) << std::endl;
+ 						  << olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) ) << std::endl;
 
 			return codec_id;
 		}
@@ -774,8 +774,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.den = prop_fps_num_.value< int >( );
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
-				pl::string pixfmt = pl::to_string( prop_pix_fmt_.value< pl::wstring >( ) );
-				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< pl::wstring >( ) );
+				std::string pixfmt = olib::opencorelib::str_util::to_string( prop_pix_fmt_.value< std::wstring >( ) );
+				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< std::wstring >( ) );
 
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
@@ -824,7 +824,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 		
 				// Allow the user to override the video fourcc
-				pl::string vfourcc = pl::to_string( prop_vfourcc_.value< pl::wstring >( ) );
+				std::string vfourcc = olib::opencorelib::str_util::to_string( prop_vfourcc_.value< std::wstring >( ) );
 				if ( vfourcc != "" )
 				{
 					char *tail = NULL;
@@ -947,7 +947,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 	
 					// Allow the user to override the audio fourcc
-					pl::string afourcc = pl::to_string( prop_afourcc_.value< pl::wstring >( ) );
+					std::string afourcc = olib::opencorelib::str_util::to_string( prop_afourcc_.value< std::wstring >( ) );
 					if ( afourcc != "" )
 					{
 						char *tail = NULL;
@@ -998,7 +998,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Get the codec
 				AVCodecContext *video_enc = video_stream_->codec;
 
-				if ( prop_vcodec_.value< pl::wstring >( ) == L"copy" )
+				if ( prop_vcodec_.value< std::wstring >( ) == L"copy" )
 				{
 					ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
 					stream_type_ptr stream = first_frame_->get_stream( );
@@ -1571,7 +1571,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		}
 
 		// The output file or device
-		pl::wstring resource_;
+		std::wstring resource_;
 		pcos::property prop_enable_audio_;
 		pcos::property prop_enable_video_;
 
@@ -1707,7 +1707,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int encoded_images_;
 };
 
-store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &resource, const frame_type_ptr &frame )
+store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &resource, const frame_type_ptr &frame )
 {
 	return store_type_ptr( new avformat_store( resource, frame ) );
 }

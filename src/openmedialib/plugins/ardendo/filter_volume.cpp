@@ -20,7 +20,7 @@ class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_volume( const pl::wstring & )
+		explicit filter_volume( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_volume_( pcos::key::from_string( "volume" ) )
@@ -32,7 +32,7 @@ class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_simple
 		}
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"volume"; }
+		virtual const std::wstring get_uri( ) const { return L"volume"; }
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
@@ -69,7 +69,7 @@ class ML_PLUGIN_DECLSPEC filter_volume : public ml::filter_simple
 		pcos::property prop_ramp_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_volume( resource ) );
 }

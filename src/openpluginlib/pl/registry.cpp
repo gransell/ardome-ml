@@ -28,7 +28,6 @@
 #endif
 
 #include <openpluginlib/pl/registry.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/opl_importer.hpp>
 
 namespace fs = boost::filesystem;
@@ -38,7 +37,7 @@ namespace olib { namespace openpluginlib { namespace detail {
 namespace
 {
 	// Insert all the opl plugins found in lookup_path into the specified db
-	bool insert( const string& lookup_path, detail::registry::container& db, detail::registry::list &auto_load )
+	bool insert( const std::string& lookup_path, detail::registry::container& db, detail::registry::list &auto_load )
 	{
 		namespace fs = boost::filesystem;
 
@@ -90,7 +89,7 @@ registry*	registry::instance_		 = 0;
 bool		registry::destroyed_	 = false;
 bool		registry::was_destroyed_ = false;
 
-registry::registry( const string& /*lookup_path*/ )
+registry::registry( const std::string& /*lookup_path*/ )
 {
 }
 
@@ -98,12 +97,12 @@ registry::~registry( )
 {
 }
 
-bool registry::insert_std( const string& lookup_path )
+bool registry::insert_std( const std::string& lookup_path )
 {
 	return insert( lookup_path, std_db_, auto_load_ );
 }
 
-bool registry::insert_custom( const string& lookup_path )
+bool registry::insert_custom( const std::string& lookup_path )
 {
 	return insert( lookup_path, custom_db_, auto_load_ );
 }

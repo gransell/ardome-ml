@@ -25,7 +25,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_extract : public ml::filter_type
 {
 	public:
-		filter_extract( const pl::wstring & )
+		filter_extract( const std::wstring & )
 			: filter_type( )
 			, prop_frames_( pcos::key::from_string( "frames" ) )
 		{
@@ -40,7 +40,7 @@ class ML_PLUGIN_DECLSPEC filter_extract : public ml::filter_type
 			return prop_frames_.value< int >( );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"extract"; }
+		virtual const std::wstring get_uri( ) const { return L"extract"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -65,7 +65,7 @@ class ML_PLUGIN_DECLSPEC filter_extract : public ml::filter_type
 		pl::pcos::property prop_frames_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_extract( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_extract( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_extract( resource ) );
 }

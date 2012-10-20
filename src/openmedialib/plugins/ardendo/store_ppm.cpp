@@ -18,7 +18,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC store_ppm : public ml::store_type
 {
 	public:
-		store_ppm( const pl::wstring &resource ) 
+		store_ppm( const std::wstring &resource ) 
 			: ml::store_type( )
 			, resource_( resource )
 			, file_( 0 )
@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC store_ppm : public ml::store_type
 			bool result = true;
 			if ( frame && frame->get_image( ) )
 			{
-				std::string resource = pl::to_string( resource_ );
+				std::string resource = olib::opencorelib::str_util::to_string( resource_ );
 
 				if ( file_ == 0 )
 				{
@@ -107,13 +107,13 @@ class ML_PLUGIN_DECLSPEC store_ppm : public ml::store_type
 		{ }
 
 	protected:
-		pl::wstring resource_;
+		std::wstring resource_;
 		FILE *file_;
 		ml::input_type_ptr pusher_;
 		ml::input_type_ptr render_;
 };
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const pl::wstring &resource )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_ppm( const std::wstring &resource )
 {
 	return ml::store_type_ptr( new store_ppm( resource ) );
 }

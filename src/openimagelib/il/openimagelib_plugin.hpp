@@ -23,8 +23,8 @@ namespace olib { namespace openimagelib { namespace il {
 
 struct IL_DECLSPEC openimagelib_plugin : public olib::openpluginlib::openplugin
 {
-	virtual image_type_ptr	load(  const boost::filesystem::path& path ) = 0;
-	virtual bool			store( const boost::filesystem::path& path, const image_type_ptr& image ) = 0;
+	virtual image_type_ptr	load(  const boost::filesystem::wpath& path ) = 0;
+	virtual bool			store( const boost::filesystem::wpath& path, const image_type_ptr& image ) = 0;
 };
 
 typedef boost::shared_ptr< openimagelib_plugin > openimagelib_plugin_ptr;

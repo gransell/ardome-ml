@@ -48,14 +48,14 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			fps_den_ = fps_den;
 		}
 
-		void set_audio( const pl::wstring af, int frequency, int channels )
+		void set_audio( const std::wstring af, int frequency, int channels )
 		{
 			af_ = af;
 			frequency_ = frequency;
 			channels_ = channels;
 		}
 
-		void set_image( const pl::wstring pf, int width, int height )
+		void set_image( const std::wstring pf, int width, int height )
 		{
 			pf_ = pf;
 			width_ = width;
@@ -154,10 +154,10 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		int frame_count_;
 		int fps_num_;
 		int fps_den_;
-		pl::wstring pf_;
+		std::wstring pf_;
 		int width_;
 		int height_;
-		pl::wstring af_;
+		std::wstring af_;
 		int frequency_;
 		int channels_;
 };
@@ -166,7 +166,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 {
 	public:
 		// Constructor and destructor
-		input_decklink( const pl::wstring &filename ) 
+		input_decklink( const std::wstring &filename ) 
 		: uri_( filename )
 		, prop_mode_( pl::pcos::key::from_string( "mode" ) )
 		, prop_pf_( pl::pcos::key::from_string( "pf" ) )
@@ -179,8 +179,8 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, decklink_iter_( 0 )
 		, decklink_delegate_( 0 )
 		{
-			properties( ).append( prop_pf_ = pl::wstring( L"uyv422" ) );
-			properties( ).append( prop_af_ = pl::wstring( L"pcm16" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"uyv422" ) );
+			properties( ).append( prop_af_ = std::wstring( L"pcm16" ) );
 			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
@@ -195,12 +195,12 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 		
 		// Basic information
-		virtual const pl::wstring get_uri( ) const 
+		virtual const std::wstring get_uri( ) const 
 		{
 			return uri_; 
 		}
 
-		virtual const pl::wstring get_mime_type( ) const 
+		virtual const std::wstring get_mime_type( ) const 
 		{
 			return L""; 
 		}
@@ -266,7 +266,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			}
 
 			// Check that the picture format is valid
-			if ( error == S_OK && prop_pf_.value< pl::wstring >( ) != L"uyv422" )
+			if ( error == S_OK && prop_pf_.value< std::wstring >( ) != L"uyv422" )
 			{
 				error = S_FALSE;
 				ARLOG( "The AML decklink plugin currently only supports a picture format of uyv422." ).level( cl::log_level::error );
@@ -323,8 +323,8 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			{
 				decklink_delegate_->reset( );
 				decklink_delegate_->set_fps( fps_num, fps_den );
-				decklink_delegate_->set_image( prop_pf_.value< pl::wstring >( ), width, height );
-				decklink_delegate_->set_audio( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
+				decklink_delegate_->set_image( prop_pf_.value< std::wstring >( ), width, height );
+				decklink_delegate_->set_audio( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
 			}
 
 			// Attempt to enable the video feed
@@ -387,7 +387,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		}
 
 	private:
-		const pl::wstring uri_;
+		const std::wstring uri_;
 
 		pl::pcos::property prop_mode_;
 		pl::pcos::property prop_pf_;
@@ -403,7 +403,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		DeckLinkCaptureDelegate *decklink_delegate_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_decklink( const pl::wstring &filename )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_decklink( const std::wstring &filename )
 {
 	return ml::input_type_ptr( new input_decklink( filename ) );
 }

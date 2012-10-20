@@ -10,7 +10,6 @@
 
 #include <vector>
 
-#include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pool.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstring>
@@ -142,7 +141,7 @@ protected:
 							 size_type	  depth, 
 							 size_type	  count, 
 							 bool		  cubemap, 
-							 opl::wstring pf )
+							 std::wstring pf )
 		: block_size_( block_size )
 		, width_( width )
 		, height_( height )
@@ -209,7 +208,7 @@ public:
 public:
 	bool			is_cubemap( )		const { return cubemap_; }
 	bool			is_volume( )		const { return volume_; }
-	opl::wstring	pf( )				const { return pf_; }
+	std::wstring	pf( )				const { return pf_; }
 	
 	virtual bool	is_float( )			const { return false; }
 	
@@ -285,7 +284,7 @@ private:
 	size_type 		count_;
 	bool	  		cubemap_;
 	bool	  		volume_;
-	opl::wstring 	pf_;
+	std::wstring 	pf_;
 	planes			planes_;
 };
 
@@ -503,7 +502,7 @@ public:
 	bool			is_cubemap( )	const { return structure_->is_cubemap( ); }
 	bool			is_volume( )	const { return structure_->is_volume( ); }
 	bool			is_float( )		const { return structure_->is_float( ); }
-	opl::wstring	pf( )			const { return structure_->pf( ); }
+	std::wstring	pf( )			const { return structure_->pf( ); }
 
 public:
 	// This returns the size of the full image

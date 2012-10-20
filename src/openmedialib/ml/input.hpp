@@ -13,7 +13,6 @@
 
 #include <openpluginlib/pl/pcos/property_container.hpp>
 #include <openpluginlib/pl/log.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/base_exception.hpp>
@@ -107,8 +106,8 @@ class ML_DECLSPEC input_type : public boost::enable_shared_from_this< input_type
 		virtual void reset( ) { }
 
 		// Basic information
-		virtual const openpluginlib::wstring get_uri( ) const = 0;
-		virtual const openpluginlib::wstring get_mime_type( ) const = 0;
+		virtual const std::wstring get_uri( ) const = 0;
+		virtual const std::wstring get_mime_type( ) const = 0;
 	
 		// Audio/Visual
 		virtual void sync( )

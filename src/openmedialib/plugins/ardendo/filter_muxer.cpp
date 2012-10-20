@@ -45,7 +45,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"muxer"; }
+		virtual const std::wstring get_uri( ) const { return L"muxer"; }
 
 		virtual const size_t slot_count( ) const { return 2; }
 
@@ -118,7 +118,7 @@ class ML_PLUGIN_DECLSPEC filter_muxer : public ml::filter_type
 		int total_frames_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const pl::wstring & )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_muxer( const std::wstring & )
 {
 	return ml::filter_type_ptr( new filter_muxer( ) );
 }

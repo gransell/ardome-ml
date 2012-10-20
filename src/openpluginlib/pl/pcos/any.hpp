@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <cassert>
 #include <typeinfo>
+#include <list>
+#include <vector>
 
 #include <boost/type_traits/remove_reference.hpp>
 #include <boost/type_traits/is_reference.hpp>
@@ -22,12 +24,10 @@
 #include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
 
-// openlibraries
-#include <openpluginlib/pl/string.hpp>
 
 namespace olib { namespace openpluginlib { namespace pcos {
 
-    template < typename T > T parse_string( const wstring& );
+    template < typename T > T parse_string( const std::wstring& );
 
     class any
     {
@@ -75,7 +75,7 @@ namespace olib { namespace openpluginlib { namespace pcos {
             return *this;
         }
 
-	any & from_string( const wstring& str )
+	any & from_string( const std::wstring& str )
 	{
 	    assert( !empty() );
 	    content->from_string( str );
@@ -121,7 +121,7 @@ namespace olib { namespace openpluginlib { namespace pcos {
 	    
 	    virtual bool operator==( placeholder* ) const = 0;
 
-	    virtual void from_string( const wstring& ) = 0;
+	    virtual void from_string( const std::wstring& ) = 0;
         };
 
         template<typename ValueType>
@@ -151,7 +151,7 @@ namespace olib { namespace openpluginlib { namespace pcos {
 		return rhs && type() == rhs->type() && held == static_cast< holder< ValueType >* >( rhs )->held;
 	    }
 
-	    virtual void from_string( const wstring& str )
+	    virtual void from_string( const std::wstring& str )
 	    {
 		held = parse_string< ValueType >( str );
 	    }

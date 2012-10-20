@@ -11,7 +11,6 @@
 // compositord on to the image from the connected input.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -40,7 +39,7 @@ class filter_title : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_title( const pl::wstring & )
+		explicit filter_title( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_title_( pcos::key::from_string( "title" ) )
@@ -66,18 +65,18 @@ class filter_title : public ml::filter_simple
 			, compositor_( )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_title_ = pl::wstring( L"" ) );
-			properties( ).append( prop_font_ = pl::wstring( L"Terminal" ) );
+			properties( ).append( prop_title_ = std::wstring( L"" ) );
+			properties( ).append( prop_font_ = std::wstring( L"Terminal" ) );
 			properties( ).append( prop_size_ = 36 );
 			properties( ).append( prop_x_ = 0.1 );
 			properties( ).append( prop_y_ = 0.75 );
 			properties( ).append( prop_w_ = 0.8 );
 			properties( ).append( prop_h_ = 0.225 );
-			properties( ).append( prop_fg_ = pl::wstring( L"#FFFFFF" ) );
-			properties( ).append( prop_bg_ = pl::wstring( L"#000000" ) );
-			properties( ).append( prop_stroke_ = pl::wstring( L"#000000" ) );
+			properties( ).append( prop_fg_ = std::wstring( L"#FFFFFF" ) );
+			properties( ).append( prop_bg_ = std::wstring( L"#000000" ) );
+			properties( ).append( prop_stroke_ = std::wstring( L"#000000" ) );
 			properties( ).append( prop_deferred_ = 0 );
-			properties( ).append( prop_mode_ = pl::wstring( L"corrected" ) );
+			properties( ).append( prop_mode_ = std::wstring( L"corrected" ) );
 			properties( ).append( prop_bevel_ = 0 );
 			properties( ).append( prop_halign_ = 0 );
 			properties( ).append( prop_valign_ = 0 );
@@ -113,7 +112,7 @@ class filter_title : public ml::filter_simple
 		{ return prop_enable_.value< int >( ) == 1 && prop_deferred_.value< int >( ) == 0; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"title"; }
+		virtual const std::wstring get_uri( ) const { return L"title"; }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -125,7 +124,7 @@ class filter_title : public ml::filter_simple
 		{
 			result = fetch_from_slot( );
 
-			if ( result && result->get_image( ) && prop_enable_.value< int >( ) && prop_title_.value< pl::wstring >( ) != L"" )
+			if ( result && result->get_image( ) && prop_enable_.value< int >( ) && prop_title_.value< std::wstring >( ) != L"" )
 			{
 				// Ensure the inner components agrees with the deferred state
 				compositor_->properties( ).get_property_with_key( key_deferred_ ) = prop_deferred_.value< int >( );
@@ -147,7 +146,7 @@ class filter_title : public ml::filter_simple
 				assign( fg, key_h_, prop_h_.value< double >( ) );
 
 				pl::pcos::property prop( key_mode_ );
-				fg->properties( ).append( prop = prop_mode_.value< pl::wstring >( ) );
+				fg->properties( ).append( prop = prop_mode_.value< std::wstring >( ) );
 
 				if( !result->properties( ).get_property_with_key( key_background_ ).valid( ) )
 				{
@@ -197,14 +196,14 @@ class filter_title : public ml::filter_simple
 			}
 		}
 
-		pl::wstring create_doc( ml::frame_type_ptr &result, int w, int h )
+		std::wstring create_doc( ml::frame_type_ptr &result, int w, int h )
 		{
 			std::wstringstream stream;
-			std::wstring title = prop_title_.value< pl::wstring >( );
-			std::wstring font = prop_font_.value< pl::wstring >( );
-			std::wstring fg = prop_fg_.value< pl::wstring >( );
-			std::wstring bg = prop_bg_.value< pl::wstring >( );
-			std::wstring stroke = prop_stroke_.value< pl::wstring >( );
+			std::wstring title = prop_title_.value< std::wstring >( );
+			std::wstring font = prop_font_.value< std::wstring >( );
+			std::wstring fg = prop_fg_.value< std::wstring >( );
+			std::wstring bg = prop_bg_.value< std::wstring >( );
+			std::wstring stroke = prop_stroke_.value< std::wstring >( );
 			int size = prop_size_.value< int >( );
 			int bevel = prop_bevel_.value< int >( );
 			int halign = prop_halign_.value< int >( );
@@ -270,7 +269,7 @@ class filter_title : public ml::filter_simple
 			stream << "</text>";
 			stream << "</svg>";
 
-			return pl::wstring( stream.str( ) );
+			return std::wstring( stream.str( ) );
 		}
 
 		pcos::property prop_enable_;
@@ -297,7 +296,7 @@ class filter_title : public ml::filter_simple
 		ml::filter_type_ptr compositor_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_title( resource ) );
 }

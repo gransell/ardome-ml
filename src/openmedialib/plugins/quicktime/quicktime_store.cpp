@@ -4,15 +4,12 @@
 
 #include <openmedialib/plugins/quicktime/quicktime_store.h>
 
-// OL INCLUDES
-#include <openpluginlib/pl/utf8_utils.hpp>
-
 namespace ml = olib::openmedialib::ml;
 using namespace ml;
 
 //---------------------------LIFECYCLE------------------------------------------------------------
 
-quicktime_store::quicktime_store( const opl::wstring &resource, const frame_type_ptr &frame ):
+quicktime_store::quicktime_store( const ostd::wstring &resource, const frame_type_ptr &frame ):
 store_type( ),
 video_index_( -1 ),
 audio_index_( -1 ),
@@ -45,10 +42,10 @@ prop_enable_audio_( pcos::key::from_string( "enable_audio" ) )
 
 	// create a movie spec from the file name
 	#ifdef WIN32
-		err = NativePathNameToFSSpec( const_cast<char*>( opl::to_string( resource ).c_str( ) ), &movie_file_spec_, 0 );
+		err = NativePathNameToFSSpec( const_cast<char*>( oolib::opencorelib::str_util::to_string( resource ).c_str( ) ), &movie_file_spec_, 0 );
 	#else
 		FSRef ref;
-		err = FSPathMakeRef( ( const UInt8* ) opl::to_string( resource ).c_str( ), &ref, 0 );
+		err = FSPathMakeRef( ( const UInt8* ) oolib::opencorelib::str_util::to_string( resource ).c_str( ), &ref, 0 );
 		err = FSGetCatalogInfo( &ref, kFSCatInfoNone, NULL, NULL, &movie_file_spec_, NULL );
 	#endif
 
@@ -78,7 +75,7 @@ prop_enable_audio_( pcos::key::from_string( "enable_audio" ) )
 		prop_fps_den_ = den;
 	}
 
-	properties( ).append( prop_vfourcc_ = opl::wstring( L"avc1" ) ); // default codec is h264
+	properties( ).append( prop_vfourcc_ = ostd::wstring( L"avc1" ) ); // default codec is h264
 	properties( ).append( prop_video_bit_rate_ = 400000 );
 
 	// set audio properties
@@ -116,7 +113,7 @@ bool quicktime_store::init( )
 																	  1);
 
 		// initialise
-		if( !video_track->open_for_encode( opl::to_string( prop_vfourcc_.value< opl::wstring >( ) ),
+		if( !video_track->open_for_encode( oolib::opencorelib::str_util::to_string( prop_vfourcc_.value< ostd::wstring >( ) ),
 											prop_video_bit_rate_.value< int >( ) ) )
 			return false;
 

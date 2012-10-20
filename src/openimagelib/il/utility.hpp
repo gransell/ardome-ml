@@ -9,7 +9,6 @@
 #define UTILITY_INC_
 
 #include <openimagelib/il/config.hpp>
-#include <openpluginlib/pl/string.hpp>
 
 #include <cassert>
 
@@ -41,10 +40,10 @@ inline void rgb24_to_yuv444( int &y, int &u, int &v, unsigned char r, unsigned c
 	v = ( ( 450 * r - 377 * g - 73 * b ) >> 10 ) + 128;
 }
 
-IL_DECLSPEC image_type_ptr convert( const image_type_ptr &image, const opl::wstring &pf, int flags = 0 );
+IL_DECLSPEC image_type_ptr convert( const image_type_ptr &image, const std::wstring &pf, int flags = 0 );
 
-IL_DECLSPEC image_type_ptr allocate( const opl::wstring &pf, int width, int height );
-IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img, const opl::wstring &format );
+IL_DECLSPEC image_type_ptr allocate( const std::wstring &pf, int width, int height );
+IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img, const std::wstring &format );
 IL_DECLSPEC image_type_ptr allocate( const image_type_ptr &src_img );
 
 IL_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field );
@@ -114,7 +113,7 @@ enum IL_DECLSPEC histogram_filter { LUMINANCE, RED, GREEN, BLUE, ALPHA }; // RED
 IL_DECLSPEC void histogram( const image_type_ptr& im, int size, float mask[ ], histogram_type& hist );
 IL_DECLSPEC void histogram( const image_type_ptr& im, int size, histogram_filter filter, histogram_type& hist );
 
-IL_DECLSPEC image_type_ptr project( const image_type_ptr& im, const opl::string& channel );
+IL_DECLSPEC image_type_ptr project( const image_type_ptr& im, const std::string& channel );
 IL_DECLSPEC void min_and_max( const image_type_ptr& im, float& min, float& max );
 IL_DECLSPEC void swab( image_type_ptr im, int i );
 IL_DECLSPEC void swab( image_type_ptr im );
@@ -123,7 +122,7 @@ IL_DECLSPEC image_type_ptr normalise( image_type_ptr im, float output_range );
 IL_DECLSPEC image_type_ptr tm_linear( image_type_ptr im, float factor = 100.0f, float gamma = 2.0f, float minval = 0.0f, float maxval = 1e20 );
 IL_DECLSPEC image_type_ptr gamma( image_type_ptr im, float gamma );
 
-inline bool is_yuv_planar( const opl::wstring &pf )
+inline bool is_yuv_planar( const std::wstring &pf )
 {
 	return pf.length( ) > 4 && pf.substr( 0, 3 ) == L"yuv" && pf.substr( pf.length( ) - 1, 1 ) == L"p";
 }
@@ -133,8 +132,8 @@ inline bool is_yuv_planar( const image_type_ptr &img )
 	return img ? is_yuv_planar( img->pf( ) ) : false;
 }
 
-IL_DECLSPEC image_type_ptr load_image( const opl::wstring &resource );
-IL_DECLSPEC bool store_image( const opl::wstring &resource, image_type_ptr image );
+IL_DECLSPEC image_type_ptr load_image( const std::wstring &resource );
+IL_DECLSPEC bool store_image( const std::wstring &resource, image_type_ptr image );
 
 } } }
 

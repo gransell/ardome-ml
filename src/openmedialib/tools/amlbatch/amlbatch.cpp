@@ -17,7 +17,6 @@
 #include <opencorelib/cl/media_definitions.hpp>
 #include <opencorelib/cl/media_time.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/indexer.hpp>
@@ -37,7 +36,7 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
-void assign( pl::pcos::property_container &props, const std::string &name, const pl::wstring &value )
+void assign( pl::pcos::property_container &props, const std::string &name, const std::wstring &value )
 {
 	pl::pcos::property property = props.get_property_with_string( name.c_str( ) );
 	if ( property.valid( ) )
@@ -56,11 +55,11 @@ void assign( pl::pcos::property_container &props, const std::string &name, const
 	}
 }
 
-void assign( pl::pcos::property_container &props, const pl::wstring &pair )
+void assign( pl::pcos::property_container &props, const std::wstring &pair )
 {
 	size_t pos = pair.find( L"=" );
-	std::string name = pl::to_string( pair.substr( 0, pos ) );
-	pl::wstring value = pair.substr( pos + 1 );
+	std::string name = cl::str_util::to_string( pair.substr( 0, pos ) );
+	std::wstring value = pair.substr( pos + 1 );
 
 	if ( value[ 0 ] == L'"' && value[ value.size( ) - 1 ] == L'"' )
 		value = value.substr( 1, value.size( ) - 2 );
@@ -68,9 +67,9 @@ void assign( pl::pcos::property_container &props, const pl::wstring &pair )
 	assign( props, name, value );
 }
 
-void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, const pl::wstring &arg, ml::frame_type_ptr &frame )
+void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_container &properties, const std::wstring &arg, ml::frame_type_ptr &frame )
 {
-	if ( arg.find( L"=" ) != pl::wstring::npos )
+	if ( arg.find( L"=" ) != std::wstring::npos )
 	{
 		assign( properties, arg );
 	}
@@ -101,7 +100,7 @@ std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, 
 	{
 		while( index < argc )
 		{
-			pl::wstring arg = pl::to_wstring( argv[ index ++ ] );
+			std::wstring arg = cl::str_util::to_wstring( argv[ index ++ ] );
 			handle_token( result, properties, arg, frame );
 		}
 	}
@@ -153,7 +152,7 @@ void report_frame_errors( ml::frame_type_ptr &frame )
 {
 	ml::exception_list list = frame->exceptions( );
 	for ( ml::exception_list::iterator i = list.begin( ); i != list.end( ); ++i )
-		std::cerr << i->first->what( ) << " " << pl::to_string( i->second->get_uri( ) ) << std::endl;
+		std::cerr << i->first->what( ) << " " << cl::str_util::to_string( i->second->get_uri( ) ) << std::endl;
 }
 
 void walk_and_assign( ml::input_type_ptr input, const std::string &name, int value )
@@ -553,7 +552,7 @@ int main( int argc, char *argv[ ] )
 	if ( argc > 1 )
 	{
 		bool interactive = false;
-		ml::input_type_ptr input = ml::create_input( pl::wstring( L"aml_stack:" ) );
+		ml::input_type_ptr input = ml::create_input( std::wstring( L"aml_stack:" ) );
 		pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
 		pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
 		pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
@@ -569,11 +568,11 @@ int main( int argc, char *argv[ ] )
 
 		int index = 1;
 
-		pl::wstring_list tokens;
+		std::list< std::wstring > tokens;
 
 		while( index < argc )
 		{
-			pl::wstring arg = pl::to_wstring( argv[ index ] );
+			std::wstring arg = cl::str_util::to_wstring( argv[ index ] );
 
 			if ( arg == L"--seek" )
 			{
@@ -601,9 +600,9 @@ int main( int argc, char *argv[ ] )
 		// Execute the tokens
 		execute = tokens;
 
-		if ( result.value< pl::wstring >( ) != L"OK" )
+		if ( result.value< std::wstring >( ) != L"OK" )
 		{
-			std::cerr << pl::to_string( result.value< pl::wstring >( ) ) << std::endl;
+			std::cerr << cl::str_util::to_string( result.value< std::wstring >( ) ) << std::endl;
 			return 1;
 		}
 
@@ -612,12 +611,12 @@ int main( int argc, char *argv[ ] )
 		// the inputs title (if it exists), otherwise just exit here (supports commands which
 		// have no stack output [such as available] or are just a computation). Additionally
 		// . itself can be overriden.
-		push = pl::wstring( L"." );
+		push = std::wstring( L"." );
 
 		if ( input->get_frames( ) <= 0 )
 		{
 			if ( input->fetch_slot( 0 ) )
-				std::cerr << pl::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
+				std::cerr << cl::str_util::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
 			return 1;
 		}
 
@@ -634,22 +633,22 @@ int main( int argc, char *argv[ ] )
 			interactive = true;
 
 			// Return the .'d item to the top of the stack for further manipuation
-			push = pl::wstring( L"recover" );
+			push = std::wstring( L"recover" );
 
 			// Apply default normalisation filters when no store is specified
-			push = pl::wstring( L"filter:resampler" );
-			push = pl::wstring( L"filter:visualise" );
-			push = pl::wstring( L"type=1" );
-			push = pl::wstring( L"colourspace=yuv420p" );
-			push = pl::wstring( L"width=640" );
-			push = pl::wstring( L"height=480" );
-			push = pl::wstring( L"filter:conform" );
-			push = pl::wstring( L"filter:deinterlace" );
-			push = pl::wstring( L"filter:threader" );
-			push = pl::wstring( L"queue=50" );
+			push = std::wstring( L"filter:resampler" );
+			push = std::wstring( L"filter:visualise" );
+			push = std::wstring( L"type=1" );
+			push = std::wstring( L"colourspace=yuv420p" );
+			push = std::wstring( L"width=640" );
+			push = std::wstring( L"height=480" );
+			push = std::wstring( L"filter:conform" );
+			push = std::wstring( L"filter:deinterlace" );
+			push = std::wstring( L"filter:threader" );
+			push = std::wstring( L"queue=50" );
 
 			// Dot the top of stack item again
-			push = pl::wstring( L"." );
+			push = std::wstring( L"." );
 		}
 
 		// Check the frame count again just in case

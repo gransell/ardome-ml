@@ -99,9 +99,9 @@ namespace
 		}
 	}
 				
-	il::image_type_ptr load_image( const fs::path& path )
+	il::image_type_ptr load_image( const fs::wpath& path )
 	{
-		Gdiplus::Bitmap bitmap( ( to_wstring( path.native_directory_string( ) ) ).c_str( ) );
+		Gdiplus::Bitmap bitmap( ( path.native_directory_string( ) ).c_str( ) );
 
 		Gdiplus::BitmapData bitmapData;
 		Gdiplus::Rect rect( 0, 0, bitmap.GetWidth( ), bitmap.GetHeight( ) );
@@ -164,7 +164,7 @@ namespace
 */
 }
 
-il::image_type_ptr GDI_plugin::load( const fs::path& path )
+il::image_type_ptr GDI_plugin::load( const fs::wpath& path )
 { return load_image( path ); }
 
 bool GDI_plugin::store( const fs::path& path, const il::image_type_ptr& )

@@ -142,7 +142,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_active_.value< int >( ) != 0; }
 
-		virtual const pl::wstring get_uri( ) const 
+		virtual const std::wstring get_uri( ) const 
 		{ return L"threader"; }
 
 		int get_frames() const
@@ -880,7 +880,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		boost::system_time next_cache_size_report_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const pl::wstring & )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const std::wstring & )
 {
 	return ml::filter_type_ptr( new filter_threader( ) );
 }

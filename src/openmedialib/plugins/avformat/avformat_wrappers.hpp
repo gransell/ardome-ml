@@ -323,7 +323,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		int key_;
 		ml::dimensions dim_;
 		ml::fraction sar_;
-		pl::wstring pf_;
+		std::wstring pf_;
 		il::field_order_flags field_order_;
 };
 

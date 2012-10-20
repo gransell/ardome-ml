@@ -26,7 +26,6 @@
 #endif
 
 #include <openpluginlib/pl/config.hpp>
-#include <openpluginlib/pl/string.hpp>
 
 namespace olib { namespace openpluginlib {
 
@@ -60,7 +59,7 @@ namespace detail
 		bool dlopened;		
 	};
 
-	bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>& shared_name );
+	bool load_shared_library( plugin_resolver& resolver, const std::vector<std::wstring>& shared_name );
 
 	void unload_shared_library( );
 
@@ -71,10 +70,10 @@ namespace detail
 			, context( 0 )
 		{ }
 
-		std::vector<wstring> filenames;
+		std::vector<std::wstring> filenames;
 		std::vector<boost::wregex> extension;
-		wstring name, type, mime, category, libname, in_filter, out_filter;
-		wstring opl_path; //The path to the opl file that references this plugin
+		std::wstring name, type, mime, category, libname, in_filter, out_filter;
+		std::wstring opl_path; //The path to the opl file that references this plugin
 		int merit;
 
 		// 3rd party plugin API support.

@@ -129,7 +129,7 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 {
 	public:
 		// Constructor and destructor
-		explicit mlt_input( const opl::wstring media )
+		explicit mlt_input( const ostd::wstring media )
 			: input_type( ) 
 			, media_( media )
 			, producer_( 0 )
@@ -144,12 +144,12 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 		}
 
 		// Basic information
-		virtual const opl::wstring get_uri( ) const 
+		virtual const ostd::wstring get_uri( ) const 
 		{ 
 			return media_;
 		}
 
-		virtual const opl::wstring get_mime_type( ) const 
+		virtual const ostd::wstring get_mime_type( ) const 
 		{ 
 			return L""; 
 		}
@@ -223,14 +223,14 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 
 		virtual bool initialize( )
 		{
-			producer_ = new Mlt::Producer( ( char * )( opl::to_string( media_ ).c_str( ) ) );
+			producer_ = new Mlt::Producer( ( char * )( oolib::opencorelib::str_util::to_string( media_ ).c_str( ) ) );
 			if ( producer_ && producer_->is_valid( ) )
 				fetch( );
 			return producer_ && producer_->is_valid( );
 		}
 
 	private:
-		const opl::wstring media_;
+		const ostd::wstring media_;
 		Mlt::Producer *producer_;
 		bool has_video_;
 		bool has_audio_;
@@ -243,7 +243,7 @@ class ML_PLUGIN_DECLSPEC mlt_input : public input_type
 class ML_PLUGIN_DECLSPEC mlt_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const opl::wstring& media )
+	virtual input_type_ptr input( const ostd::wstring& media )
 	{
 		input_type_ptr input = input_type_ptr( new mlt_input( media ) );
 		if ( input->get_frames( ) > 0 )
@@ -252,7 +252,7 @@ public:
 			return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const opl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const ostd::wstring &, const frame_type_ptr & )
 	{
 		return store_type_ptr( );
 	}

@@ -29,7 +29,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace wav {
 class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 {
 	public:
-		store_wav(const pl::wstring &resource);
+		store_wav(const std::wstring &resource);
 		/*virtual*/ ~store_wav();
 
 		/*virtual*/ bool init();
@@ -57,7 +57,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 
 		URLContext *file_;
 		bool writeonly;
-		pl::wstring resource_;
+		std::wstring resource_;
 		std::vector<unsigned char> conversion_buffer_;
 
 		pcos::property prop_enabled_;

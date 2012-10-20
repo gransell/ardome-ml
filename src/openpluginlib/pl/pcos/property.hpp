@@ -75,7 +75,7 @@ public:
 
     /// allow set of a property value from a string
     /// i.e. parse string for value of appropriate type
-    void set_from_string( const wstring& );
+    void set_from_string( const std::wstring& );
 
     /// allow set of a property value from a property
     void set_from_property( const property& );

@@ -7,7 +7,6 @@
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
 #ifdef WIN32
@@ -37,22 +36,22 @@ namespace olib { namespace openmedialib { namespace ml {
 // Query structure used
 struct il_query_traits : public pl::default_query_traits
 {
-	il_query_traits( const pl::wstring& filename, const pl::wstring &type )
+	il_query_traits( const std::wstring& filename, const std::wstring &type )
 		: filename_( filename )
 		, type_( type )
 	{ }
 		
-	pl::wstring to_match( ) const
+	std::wstring to_match( ) const
 	{ return filename_; }
 
-	pl::wstring libname( ) const
-	{ return pl::wstring( L"openimagelib" ); }
+	std::wstring libname( ) const
+	{ return std::wstring( L"openimagelib" ); }
 
-	pl::wstring type( ) const
-	{ return pl::wstring( type_ ); }
+	std::wstring type( ) const
+	{ return std::wstring( type_ ); }
 	
-	const pl::wstring filename_;
-	const pl::wstring type_;
+	const std::wstring filename_;
+	const std::wstring type_;
 };
 
 class ML_PLUGIN_DECLSPEC oil_frame : public frame_type
@@ -68,10 +67,10 @@ class ML_PLUGIN_DECLSPEC oil_frame : public frame_type
 class ML_PLUGIN_DECLSPEC oil_input : public input_type
 {
 	public:
-		typedef pl::wstring::size_type size_type;
+		typedef std::wstring::size_type size_type;
 
 		// Constructor and destructor
-		oil_input( const pl::wstring &resource ) 
+		oil_input( const std::wstring &resource ) 
 			: input_type( )
 			, resource_( resource )
 			, path_( "" )
@@ -225,8 +224,8 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 		}
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return resource_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return resource_; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 		virtual bool has_video( ) const { return files_.size( ) > 0; }
 		virtual bool has_audio( ) const { return false; }
 
@@ -339,7 +338,7 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 
 		virtual bool initialize( )
 		{
-			const pl::string resource = pl::to_string( resource_ );
+			const pl::string resource = olib::opencorelib::str_util::to_string( resource_ );
 			const pl::string identifier = "/sequence:";
 
 			// Locate the sequence identifier
@@ -372,7 +371,7 @@ class ML_PLUGIN_DECLSPEC oil_input : public input_type
 
 
 	private:
-		pl::wstring resource_;
+		std::wstring resource_;
 		pl::string path_;
 		std::vector < pl::string > files_;
 		int width_;
@@ -394,7 +393,7 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 	public:
 		typedef std::wstring::size_type size_type;
 
-		oil_store( const pl::wstring &resource )
+		oil_store( const std::wstring &resource )
 			: store_type( )
 			, resource_( resource )
 			, path_( "" )
@@ -402,7 +401,7 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 			, digits_( 5 )
 			, current_( 0 )
 		{
-			parse_resource( pl::to_string( resource ) );
+			parse_resource( olib::opencorelib::str_util::to_string( resource ) );
 		}
 
 		virtual ~oil_store( )
@@ -489,7 +488,7 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 		}
 
 	private:
-		pl::wstring resource_;
+		std::wstring resource_;
 		pl::string path_;
 		pl::string extension_;
 		int digits_;
@@ -503,12 +502,12 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 class ML_PLUGIN_DECLSPEC oil_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring &resource )
+	virtual input_type_ptr input(  const std::wstring &resource )
 	{
 		return input_type_ptr( new oil_input( resource ) );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &resource, const frame_type_ptr & )
+	virtual store_type_ptr store( const std::wstring &resource, const frame_type_ptr & )
 	{
 		return store_type_ptr( new oil_store( resource ) );
 	}

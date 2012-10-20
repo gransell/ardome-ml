@@ -403,7 +403,7 @@ class avformat_demux
 				int frequency = audio ? audio->codec->sample_rate : 0;
 
 				// Set the calculator's fps and derived frequency
-				calculator.set_source( pl::to_string( source->get_uri( ) ) );
+				calculator.set_source( olib::opencorelib::str_util::to_string( source->get_uri( ) ) );
 				calculator.set_fps( source->fps_num_, source->fps_den_ );
 				calculator.set_frequency( frequency );
 
@@ -650,7 +650,7 @@ class avformat_demux
 					memcpy( packet->bytes( ), pkt_.data, pkt_.size );
 
 					// Input related properties
-					pl::pcos::assign< pl::wstring >( properties,  ml::keys::uri, source->get_uri( ) );
+					pl::pcos::assign< std::wstring >( properties,  ml::keys::uri, source->get_uri( ) );
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, source->context_->pb->pos );
 
 					// Packet related properties
@@ -888,7 +888,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 {
 	public:
 		// Constructor and destructor
-		avformat_input( pl::wstring resource, const pl::wstring mime_type = L"" ) 
+		avformat_input( std::wstring resource, const std::wstring mime_type = L"" ) 
 			: uri_( resource )
 			, mime_type_( mime_type )
 			, frames_( 0 )
@@ -955,15 +955,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_audio_index_ = 0 );
 			properties( ).append( prop_gop_size_ = -1 );
 			properties( ).append( prop_gop_cache_ = 25 );
-			properties( ).append( prop_format_ = pl::wstring( L"" ) );
+			properties( ).append( prop_format_ = std::wstring( L"" ) );
 			properties( ).append( prop_genpts_ = 0 );
 			properties( ).append( prop_frames_ = -1 );
 			properties( ).append( prop_file_size_ = boost::int64_t( 0 ) );
 			properties( ).append( prop_estimate_ = 0 );
 			properties( ).append( prop_fps_num_ = -1 );
 			properties( ).append( prop_fps_den_ = -1 );
-			properties( ).append( prop_ts_filter_ = pl::wstring( L"" ) );
-			properties( ).append( prop_ts_index_ = pl::wstring( L"" ) );
+			properties( ).append( prop_ts_filter_ = std::wstring( L"" ) );
+			properties( ).append( prop_ts_index_ = std::wstring( L"" ) );
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_gop_open_ = 0 );
 			properties( ).append( prop_gen_index_ = 0 );
@@ -1010,8 +1010,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		}
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return uri_; }
-		virtual const pl::wstring get_mime_type( ) const { return mime_type_; }
+		virtual const std::wstring get_uri( ) const { return uri_; }
+		virtual const std::wstring get_mime_type( ) const { return mime_type_; }
 		virtual bool has_video( ) const { return prop_video_index_.value< int >( ) >= 0 && prop_video_index_.value< int >( ) < int( video_indexes_.size( ) ); }
 		virtual bool has_audio( ) const { return prop_audio_index_.value< int >( ) >= 0 && prop_audio_index_.value< int >( ) < int( audio_indexes_.size( ) ); }
 
@@ -1056,7 +1056,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		virtual bool initialize( )
 		{
 			// We will modify the input uri as required here
-			pl::wstring resource = uri_;
+			std::wstring resource = uri_;
 
 			// A mechanism to ensure that avformat can always be accessed
 			if ( resource.find( L"avformat:" ) == 0 )
@@ -1064,24 +1064,24 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			// Convenience expansion for *nix based people
 			if ( resource.find( L"~" ) == 0 )
-				resource = pl::to_wstring( getenv( "HOME" ) ) + resource.substr( 1 );
-			if ( prop_ts_index_.value< pl::wstring >( ).find( L"~" ) == 0 )
-				resource = pl::to_wstring( getenv( "HOME" ) ) + prop_ts_index_.value< pl::wstring >( ).substr( 1 );
+				resource = olib::opencorelib::str_util::to_wstring( getenv( "HOME" ) ) + resource.substr( 1 );
+			if ( prop_ts_index_.value< std::wstring >( ).find( L"~" ) == 0 )
+				resource = olib::opencorelib::str_util::to_wstring( getenv( "HOME" ) ) + prop_ts_index_.value< std::wstring >( ).substr( 1 );
 
 			// Handle the auto generation of the ts_index url when requested
-			if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< pl::wstring >( ) == L"" )
-				prop_ts_index_ = pl::wstring( resource + L".awi" );
+			if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< std::wstring >( ) == L"" )
+				prop_ts_index_ = std::wstring( resource + L".awi" );
 
 			// Ugly - looking to see if a dv1394 device has been specified
-			if ( resource.find( L"/dev/" ) == 0 && resource.find( L"1394" ) != pl::wstring::npos )
+			if ( resource.find( L"/dev/" ) == 0 && resource.find( L"1394" ) != std::wstring::npos )
 			{
-				prop_format_ = pl::wstring( L"dv" );
+				prop_format_ = std::wstring( L"dv" );
 			}
 
 			// Allow dv on stdin
 			if ( resource == L"dv:-" )
 			{
-				prop_format_ = pl::wstring( L"dv" );
+				prop_format_ = std::wstring( L"dv" );
 				resource = L"pipe:";
 				is_seekable_ = false;
 			}
@@ -1089,7 +1089,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			// Allow mpeg on stdin
 			if ( resource == L"mpeg:-" )
 			{
-				prop_format_ = pl::wstring( L"mpeg" );
+				prop_format_ = std::wstring( L"mpeg" );
 				resource = L"pipe:";
 				is_seekable_ = false;
 				key_search_ = true;
@@ -1107,35 +1107,35 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
 				 resource.find( L".mpeg" ) == resource.length( ) - 5 )
 			{
-				prop_format_ = pl::wstring( L"mpeg" );
+				prop_format_ = std::wstring( L"mpeg" );
 				key_search_ = true;
 			}
 			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
-				prop_format_ = pl::wstring( L"dv" );
+				prop_format_ = std::wstring( L"dv" );
 			else if ( resource.find( L".mp2" ) == resource.length( ) - 4 )
-				prop_format_ = pl::wstring( L"mpeg" );
+				prop_format_ = std::wstring( L"mpeg" );
 
 			// Obtain format
-			if ( prop_format_.value< pl::wstring >( ) != L"" )
-				format_ = av_find_input_format( pl::to_string( prop_format_.value< pl::wstring >( ) ).c_str( ) );
+			if ( prop_format_.value< std::wstring >( ) != L"" )
+				format_ = av_find_input_format( olib::opencorelib::str_util::to_string( prop_format_.value< std::wstring >( ) ).c_str( ) );
 
 			// Since we may need to reopen the file, we'll store the modified version now
 			resource_ = resource;
 
 			// Attempt to open the resource
-			int error = avformat_open_input( &context_, pl::to_string( resource ).c_str( ), format_, 0 ) < 0;
+			int error = avformat_open_input( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), format_, 0 ) < 0;
 
             if (error == 0 && context_->pb && context_->pb->seekable) 
 			{
 				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
-				if ( prop_ts_index_.value< pl::wstring >( ) != L"" )
-					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), index_entry_type );
+				if ( prop_ts_index_.value< std::wstring >( ) != L"" )
+					indexer_item_ = ml::indexer_request( prop_ts_index_.value< std::wstring >( ), index_entry_type );
 				else
 					indexer_item_ = ml::indexer_request( resource, index_entry_type );
 
 				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
-				else if ( prop_ts_index_.value< pl::wstring >( ) != L"" && prop_ts_auto_.value< int >( ) != -1 )
+				else if ( prop_ts_index_.value< std::wstring >( ) != L"" && prop_ts_auto_.value< int >( ) != -1 )
 					return false;
 			}
 
@@ -1150,7 +1150,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( error == 0 )
 			{
 				error = avformat_find_stream_info( context_, 0 ) < 0;
-				if ( !error && prop_format_.value< pl::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+				if ( !error && prop_format_.value< std::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
 					error = true;
 			}
 			
@@ -1160,7 +1160,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				format_ = 0;
 				if ( context_ )
 					avformat_close_input( &context_ );
-				error = avformat_open_input( &context_, pl::to_string( resource ).c_str( ), format_, 0  ) < 0;
+				error = avformat_open_input( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), format_, 0  ) < 0;
 				if ( !error )
 					error = avformat_find_stream_info( context_, 0 ) < 0;
 			}
@@ -1180,9 +1180,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( !is_streaming_ )
 			{
 				// Check for and create the timestamp correction filter graph
-				if ( prop_ts_filter_.value< pl::wstring >( ) != L"" )
+				if ( prop_ts_filter_.value< std::wstring >( ) != L"" )
 				{
-					ts_filter_ = create_filter( prop_ts_filter_.value< pl::wstring >( ) );
+					ts_filter_ = create_filter( prop_ts_filter_.value< std::wstring >( ) );
 					if ( ts_filter_ )
 					{
 						ts_pusher_ = create_input( L"pusher:" );
@@ -1260,7 +1260,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
             
             // Add the source_timecode prop
 			pl::pcos::assign< int >( result->properties( ), ml::keys::source_timecode, result->get_position( ) );
-			pl::pcos::assign< pl::wstring >( result->properties( ), ml::keys::source_format, pl::to_wstring( context_->iformat->name ) );
+			pl::pcos::assign< std::wstring >( result->properties( ), ml::keys::source_format, olib::opencorelib::str_util::to_wstring( context_->iformat->name ) );
         }
 
 		// Fetch method
@@ -2633,7 +2633,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			URLContext *keepalive = 0;
 			if ( resource_.find( L"aml:cache:" ) == 0 )
 			{
-				ffurl_open( &keepalive, pl::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
+				ffurl_open( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
 
 				// AML specific reopen hack - enforces a reopen from a non-cached source
 				av_read_pause( context_ );
@@ -2674,9 +2674,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		}
 
 	private:
-		pl::wstring uri_;
-		pl::wstring resource_;
-		pl::wstring mime_type_;
+		std::wstring uri_;
+		std::wstring resource_;
+		std::wstring mime_type_;
 		int frames_;
 		bool is_seekable_;
 		bool eof_;
@@ -2749,7 +2749,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		bool is_streaming_;
 };
 
-input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring &resource )
+input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const std::wstring &resource )
 {
 	return input_type_ptr( new avformat_input( resource ) );
 }

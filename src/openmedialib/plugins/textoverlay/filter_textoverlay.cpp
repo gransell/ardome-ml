@@ -67,7 +67,6 @@
 //
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
@@ -94,7 +93,7 @@ class filter_textoverlay : public ml::filter_simple
 {
 public:
 	// Filter_type overloads
-	explicit filter_textoverlay( const pl::wstring & );
+	explicit filter_textoverlay( const std::wstring & );
 	virtual ~filter_textoverlay( );
 
 	DEFINE_PROPERTY( bool, dirty )
@@ -119,7 +118,7 @@ public:
 	virtual bool requires_image( ) const { return true; } // No deferred support yet
 
 	// This provides the name of the plugin (used in serialisation)
-	virtual const pl::wstring get_uri( ) const { return L"subtitle"; }
+	virtual const std::wstring get_uri( ) const { return L"subtitle"; }
 
 	virtual const size_t slot_count( ) const { return 1; }
 
@@ -158,7 +157,7 @@ protected:
 };
 
 
-filter_textoverlay::filter_textoverlay( const pl::wstring & )
+filter_textoverlay::filter_textoverlay( const std::wstring & )
 : ml::filter_simple( )
 , pusher_bg_( )
 , pusher_fg_( )
@@ -466,7 +465,7 @@ void filter_textoverlay::do_fetch( ml::frame_type_ptr& frame )
 }
 
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_textoverlay( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_textoverlay( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_textoverlay( resource ) );
 }

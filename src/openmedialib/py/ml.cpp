@@ -17,6 +17,7 @@ namespace ml  = olib::openmedialib;
 namespace py  = boost::python;
 namespace pl  = olib::openpluginlib;
 namespace pcos= olib::openpluginlib::pcos;
+namespace cl  = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -29,7 +30,7 @@ class stream_handler_delegate : public ml::stream_handler, public py::wrapper< m
 		stream_handler_delegate( ) : stream_handler( ) { }
 		virtual ~stream_handler_delegate( ) { }
 
-		virtual bool open( const pl::wstring url, int flags )
+		virtual bool open( const std::wstring url, int flags )
 		{
 			bool result = false;
 			py::override method = get_override( "open" );
@@ -38,16 +39,16 @@ class stream_handler_delegate : public ml::stream_handler, public py::wrapper< m
 			return result;
 		}
 
-		virtual pl::string read( int size )
+		virtual std::string read( int size )
 		{
-			pl::string result( "" );
+			std::string result( "" );
 			py::override method = get_override( "read" );
 			if ( method )
-				result = py::call< pl::string >( method.ptr( ), size );
+				result = py::call< std::string >( method.ptr( ), size );
 			return result;
 		}
 
-		virtual int write( const pl::string &data )
+		virtual int write( const std::string &data )
 		{
 			int result = -1;
 			py::override method = get_override( "write" );
@@ -239,7 +240,7 @@ void py_audio_reseat( )
 	;
 }
 
-ml::input_type_ptr create_input0( const pl::wstring &resource )
+ml::input_type_ptr create_input0( const std::wstring &resource )
 {
 	ml::input_type_ptr input = ml::create_input( resource );
 	if ( input )
@@ -249,7 +250,7 @@ ml::input_type_ptr create_input0( const pl::wstring &resource )
 
 ml::input_type_ptr create_input( const std::string &resource )
 {
-	ml::input_type_ptr input = ml::create_input( pl::to_wstring( resource ) );
+	ml::input_type_ptr input = ml::create_input( cl::str_util::to_wstring( resource ) );
 	if ( input )
 		input->report_exceptions( false );
 	return input;
@@ -257,12 +258,12 @@ ml::input_type_ptr create_input( const std::string &resource )
 
 ml::store_type_ptr create_store( const std::string &resource, const ml::frame_type_ptr &frame )
 {
-	return ml::create_store( pl::to_wstring( resource ), frame );
+	return ml::create_store( cl::str_util::to_wstring( resource ), frame );
 }
 
 ml::filter_type_ptr create_filter( const std::string &resource )
 {
-	ml::filter_type_ptr filter = ml::create_filter( pl::to_wstring( resource ) );
+	ml::filter_type_ptr filter = ml::create_filter( cl::str_util::to_wstring( resource ) );
 	if ( filter )
 		filter->report_exceptions( false );
 	return filter;
@@ -326,7 +327,7 @@ void py_plugin( )
 
 PyObject *stream_handler_object = 0;
 
-static stream_handler_ptr stream_handler_callback( const opl::wstring url, int flags )
+static stream_handler_ptr stream_handler_callback( const std::wstring url, int flags )
 {
 	if ( stream_handler_object )
 		return py::call< stream_handler_ptr >( stream_handler_object, url, flags );

@@ -33,7 +33,7 @@ class opl_importer :
 	private DefaultHandler
 {
 public:
-	typedef wstring key_type;
+	typedef std::wstring key_type;
 	
 #if _MSC_VER >= 1400
 	typedef stdext::hash_multimap<key_type, detail::plugin_item> container;

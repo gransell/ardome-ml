@@ -8,7 +8,6 @@
 // Provides a plugin for svg use.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -21,11 +20,11 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring & );
+extern ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const std::wstring & );
 
 // OML Filter plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const pl::wstring & );
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_librsvg( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_title( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_librsvg( const std::wstring & );
 
 extern void olib_rsvg_init();
 
@@ -37,16 +36,16 @@ class ML_PLUGIN_DECLSPEC rsvg_plugin : public ml::openmedialib_plugin
 {
 public:
 
-	virtual ml::input_type_ptr input( const pl::wstring &resource )
+	virtual ml::input_type_ptr input( const std::wstring &resource )
 	{
 		if ( resource.find( L"svg:" ) == 0 )
 			return create_input_librsvg( resource );
-		if ( resource.find( L".svg" ) != pl::wstring::npos )
+		if ( resource.find( L".svg" ) != std::wstring::npos )
 			return create_input_librsvg( resource );
 		return ml::input_type_ptr( );
 	}
 
-	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
+	virtual ml::filter_type_ptr filter( const std::wstring &resource )
 	{
 		if ( resource == L"title" )
 			return create_title( resource );

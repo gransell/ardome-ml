@@ -22,7 +22,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 			, prop_store_( pcos::key::from_string( "store" ) )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_store_ = pl::wstring( L"" ) );
+			properties( ).append( prop_store_ = std::wstring( L"" ) );
 		}
 
 		virtual ~filter_store( )
@@ -34,7 +34,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return true; }
 
-		virtual const pl::wstring get_uri( ) const { return L"store"; }
+		virtual const std::wstring get_uri( ) const { return L"store"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -47,13 +47,13 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 				{
 					if ( store_ == 0 )
 					{
-						store_ = ml::create_store( prop_store_.value< pl::wstring >( ), result );
-						ARENFORCE_MSG( store_, "Failed to create a store from %s" )( prop_store_.value< pl::wstring >( ) );
+						store_ = ml::create_store( prop_store_.value< std::wstring >( ), result );
+						ARENFORCE_MSG( store_, "Failed to create a store from %s" )( prop_store_.value< std::wstring >( ) );
 						pass_properties( store_ );
-						ARENFORCE_MSG( store_->init( ), "Failed to initalise a store from %s" )( prop_store_.value< pl::wstring >( ) );
+						ARENFORCE_MSG( store_->init( ), "Failed to initalise a store from %s" )( prop_store_.value< std::wstring >( ) );
 					}
 
-					ARENFORCE_MSG(store_->push( result->shallow( ) ), "Pushing to store %1% failed.") (prop_store_.value<pl::wstring>());
+					ARENFORCE_MSG(store_->push( result->shallow( ) ), "Pushing to store %1% failed.") (prop_store_.value<std::wstring>());
 				}
 				last_frame_ = result->shallow();
 			}
@@ -77,7 +77,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 					pcos::property p = store->properties( ).get_property_with_string( prop.c_str( ) );
 					pcos::property v = properties( ).get_property_with_string( name.c_str( ) );
 					if ( p.valid( ) && v.valid( ) )
-						p.set_from_string( v.value<pl::wstring>() );
+						p.set_from_string( v.value<std::wstring>() );
 					else
 						std::cerr << "Unknown property " << name << std::endl;
 				}
@@ -91,7 +91,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 		ml::store_type_ptr store_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_store( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_store( ) );
 }

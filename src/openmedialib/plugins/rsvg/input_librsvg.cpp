@@ -41,7 +41,6 @@
 #include <opencorelib/cl/guard_define.hpp>
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/log_defines.hpp>
@@ -98,7 +97,7 @@ private:
 class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 {
 	public:
-		input_librsvg( const pl::wstring &resource ) 
+		input_librsvg( const std::wstring &resource ) 
 			: ml::input_type( )
 			, prop_resource_( pcos::key::from_string( "resource" ) )
 			, dirty_( true )
@@ -118,7 +117,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_out_ = 1 );
-			properties( ).append( prop_xml_ = pl::wstring( L"" ) );
+			properties( ).append( prop_xml_ = std::wstring( L"" ) );
 
 			//Set a custom width/height for the SVG rendering.
 			//When set to 0, the default size given in the SVG data will be used.
@@ -148,8 +147,8 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		virtual bool requires_image( ) const { return true; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return prop_resource_.value< pl::wstring >( ); }
-		virtual const pl::wstring get_mime_type( ) const { return L"image/svg"; }
+		virtual const std::wstring get_uri( ) const { return prop_resource_.value< std::wstring >( ); }
+		virtual const std::wstring get_mime_type( ) const { return L"image/svg"; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_out_.value< int >( ); }
@@ -243,10 +242,10 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				GError *error = NULL;
 				scoped_lock lock( librsvg_mutex_ );
 
-				if ( prop_resource_.value< pl::wstring >( ).empty() || prop_resource_.value< pl::wstring >( ) == L"svg:" )
+				if ( prop_resource_.value< std::wstring >( ).empty() || prop_resource_.value< std::wstring >( ) == L"svg:" )
 				{
 					//No SVG file given as input, load SVG XML from the "xml" property instead
-					std::string xml_str = pl::to_string( prop_xml_.value< pl::wstring >( ) );
+					std::string xml_str = olib::opencorelib::str_util::to_string( prop_xml_.value< std::wstring >( ) );
 
 					ARENFORCE_MSG( !xml_str.empty(), "SVG input: no file was given and the xml property is empty. Nothing to render." );
 					
@@ -259,7 +258,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				else
 				{
 					//Remove the svg: prefix, if any
-					std::string filename = pl::to_string( prop_resource_.value< pl::wstring >( ) );
+					std::string filename = olib::opencorelib::str_util::to_string( prop_resource_.value< std::wstring >( ) );
 					if( filename.find( "svg:" ) == 0 )
 					{
 						filename = filename.substr( 4 );
@@ -353,7 +352,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 		ml::frame_type_ptr frame_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_librsvg( const std::wstring &resource )
 {
 	return ml::input_type_ptr( new input_librsvg( resource ) );
 }

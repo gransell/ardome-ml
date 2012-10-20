@@ -61,7 +61,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 {
 	public:
 		// Constructor and destructor
-		input_raw( const pl::wstring &spec ) 
+		input_raw( const std::wstring &spec ) 
 			: input_type( ) 
 			, spec_( spec )
 			, prop_pf_( pl::pcos::key::from_string( "pf" ) )
@@ -81,7 +81,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, offset_( 0 )
 			, parsed_( false )
 		{
-			properties( ).append( prop_pf_ = pl::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv422" ) );
 			properties( ).append( prop_width_ = 1920 );
 			properties( ).append( prop_height_ = 1080 );
 			properties( ).append( prop_fps_num_ = 25 );
@@ -102,8 +102,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		virtual bool requires_image( ) const { return true; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return spec_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return spec_; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
@@ -113,11 +113,11 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 		bool initialize( )
 		{
-			pl::wstring spec = spec_;
+			std::wstring spec = spec_;
 			if ( spec.find( L"raw:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_READ );
+			int error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -136,7 +136,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( token.find( "pf=" ) == 0 ) prop_pf_ = pl::to_wstring( token.substr( 3 ) );
+					if ( token.find( "pf=" ) == 0 ) prop_pf_ = cl::str_util::to_wstring( token.substr( 3 ) );
 					else if ( token.find( "width=" ) == 0 ) prop_width_ = boost::lexical_cast< int >( token.substr( 6 ) );
 					else if ( token.find( "height=" ) == 0 ) prop_height_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else if ( token.find( "sar_num=" ) == 0 ) prop_sar_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
@@ -150,8 +150,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				offset_ = avio_tell( context_ );
 			}
 
-			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
-			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< pl::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
+			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
+			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< std::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 
@@ -199,7 +199,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			// Generate an image
 			int width = prop_width_.value< int >( );
 			int height = prop_height_.value< int >( );
-			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), width, height );
+			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), width, height );
 			image->set_field_order( static_cast< il::field_order_flags >( prop_field_order_.value < int >( ) ) );
 			bool error = false;
 
@@ -230,7 +230,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 	private:
 
-		pl::wstring spec_;
+		std::wstring spec_;
 		pl::pcos::property prop_pf_;
 		pl::pcos::property prop_width_;
 		pl::pcos::property prop_height_;
@@ -254,7 +254,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 {
 	public:
 		// Constructor and destructor
-		input_aud( const pl::wstring &spec ) 
+		input_aud( const std::wstring &spec ) 
 			: input_type( ) 
 			, spec_( spec )
 			, prop_af_( pl::pcos::key::from_string( "af" ) )
@@ -271,12 +271,12 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			, offset_( 0 )
 			, parsed_( false )
 		{
-			properties( ).append( prop_af_ = pl::wstring( L"pcm16" ) );
+			properties( ).append( prop_af_ = std::wstring( L"pcm16" ) );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
-			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"dv" ) );
 			properties( ).append( prop_header_ = 1 );
 			properties( ).append( prop_stream_ = 0 );
 		}
@@ -291,8 +291,8 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return spec_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return spec_; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
@@ -302,11 +302,11 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 
 		bool initialize( )
 		{
-			pl::wstring spec = spec_;
+			std::wstring spec = spec_;
 			if ( spec.find( L"aud:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_READ );
+			int error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -325,12 +325,12 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( token.find( "af=" ) == 0 ) prop_af_ = pl::to_wstring( token.substr( 3 ) );
+					if ( token.find( "af=" ) == 0 ) prop_af_ = cl::str_util::to_wstring( token.substr( 3 ) );
 					else if ( token.find( "frequency=" ) == 0 ) prop_frequency_ = boost::lexical_cast< int >( token.substr( 10 ) );
 					else if ( token.find( "channels=" ) == 0 ) prop_channels_ = boost::lexical_cast< int >( token.substr( 9 ) );
 					else if ( token.find( "fps_num=" ) == 0 ) prop_fps_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "fps_den=" ) == 0 ) prop_fps_den_ = boost::lexical_cast< int >( token.substr( 8 ) );
-					else if ( token.find( "profile=" ) == 0 ) prop_profile_ = pl::to_wstring( token.substr( 8 ) );
+					else if ( token.find( "profile=" ) == 0 ) prop_profile_ = cl::str_util::to_wstring( token.substr( 8 ) );
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else if ( token.find( "stream=" ) == 0 ) prop_stream_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else std::cerr << "unrecognised header entry " << token;
@@ -338,7 +338,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 				offset_ = avio_tell( context_ );
 			}
 
-			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), 1, false );
+			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), 1, false );
 			samples_size_ = audio->size( );
 
 			if ( is_seekable( ) )
@@ -369,7 +369,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			{
 				boost::int64_t samples = ml::audio::samples_to_frame( get_position( ), prop_frequency_.value< int >( ), 
 					prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), 
-					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
+					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< std::wstring >( ) ) ) );
 				avio_seek( context_, offset_ + samples * samples_size_, SEEK_SET );
 			}
 			else
@@ -393,11 +393,11 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( prop_stream_.value< int >( ) == 0 )
 				samples = ml::audio::samples_for_frame( get_position( ), prop_frequency_.value< int >( ), 
 					prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ), 
-					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
+					ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< std::wstring >( ) ) ) );
 			else
 				error = avio_read( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) != sizeof( samples );
 
-			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< pl::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples, false );
+			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples, false );
 
 			if ( audio )
 				error = avio_read( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) != audio->size( );
@@ -412,7 +412,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		}
 
 	private:
-		pl::wstring spec_;
+		std::wstring spec_;
 		pl::pcos::property prop_af_;
 		pl::pcos::property prop_frequency_;
 		pl::pcos::property prop_channels_;
@@ -434,7 +434,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 class ML_PLUGIN_DECLSPEC store_raw : public store_type
 {
 	public:
-		store_raw( const pl::wstring spec, const frame_type_ptr &frame ) 
+		store_raw( const std::wstring spec, const frame_type_ptr &frame ) 
 			: store_type( )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
 			, spec_( spec )
@@ -467,27 +467,27 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			int error = 0;
 			if ( valid_ )
 			{
-				pl::wstring spec = spec_;
+				std::wstring spec = spec_;
 				if ( spec.find( L"raw:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = avio_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
+				error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
 				if ( error == 0 )
 				{
 					AVIOContext *aml = 0;
-					if( context_->seekable && avio_open( &aml, pl::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
+					if( context_->seekable && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
-							str << pl::to_string( spec_ )
-								<< " pf=" << pl::to_string( pf_ )
+							str << cl::str_util::to_string( spec_ )
+								<< " pf=" << cl::str_util::to_string( pf_ )
 								<< " width=" << width_ << " height=" << height_ 
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 								<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
 								<< " field_order=" << field_order_
 								<< std::endl;
 						else
-							str << pl::to_string( spec_ )
+							str << cl::str_util::to_string( spec_ )
 								<< " header=1"
 								<< std::endl;
 
@@ -509,7 +509,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		void write_header( )
 		{
 			std::ostringstream str;
-			str << "pf=" << pl::to_string( pf_ )
+			str << "pf=" << cl::str_util::to_string( pf_ )
 				<< " width=" << width_ << " height=" << height_ 
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
@@ -550,9 +550,9 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 	private:
 		pl::pcos::property prop_header_;
-		pl::wstring spec_;
+		std::wstring spec_;
 		AVIOContext *context_;
-		pl::wstring pf_;
+		std::wstring pf_;
 		int valid_;
 		int width_;
 		int height_;
@@ -567,7 +567,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 class ML_PLUGIN_DECLSPEC store_aud : public store_type
 {
 	public:
-		store_aud( const pl::wstring spec, const frame_type_ptr &frame ) 
+		store_aud( const std::wstring spec, const frame_type_ptr &frame ) 
 			: store_type( )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
 			, prop_stream_( pl::pcos::key::from_string( "stream" ) )
@@ -599,26 +599,26 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			int error = 0;
 			if ( valid_ )
 			{
-				pl::wstring spec = spec_;
+				std::wstring spec = spec_;
 				if ( spec.find( L"aud:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = ffurl_open( &context_, pl::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
+				error = ffurl_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
 				if ( error == 0 )
 				{
 					AVIOContext *aml = 0;
-					if( !context_->is_streamed && avio_open( &aml, pl::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
+					if( !context_->is_streamed && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
-							str << pl::to_string( spec_ )
-								<< " af=" << pl::to_string( af_ )
+							str << cl::str_util::to_string( spec_ )
+								<< " af=" << cl::str_util::to_string( af_ )
 								<< " frequency=" << frequency_ << " channels=" << channels_
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 								<< " stream=" << prop_stream_.value< int >( )
 								<< std::endl;
 						else
-							str << pl::to_string( spec_ )
+							str << cl::str_util::to_string( spec_ )
 								<< " header=1"
 								<< std::endl;
 
@@ -640,7 +640,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		void write_header( )
 		{
 			std::ostringstream str;
-			str << "af=" << pl::to_string( af_ )
+			str << "af=" << cl::str_util::to_string( af_ )
 				<< " frequency=" << frequency_ << " channels=" << channels_
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< " stream=" << prop_stream_.value< int >( )
@@ -675,9 +675,9 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 	private:
 		pl::pcos::property prop_header_;
 		pl::pcos::property prop_stream_;
-		pl::wstring spec_;
+		std::wstring spec_;
 		URLContext *context_;
-		pl::wstring af_;
+		std::wstring af_;
 		int valid_;
 		int frequency_;
 		int channels_;
@@ -692,7 +692,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring &spec )
+	virtual input_type_ptr input( const std::wstring &spec )
 	{
 		if ( spec.find( L"raw:" ) == 0 || spec.find( L".raw" ) != spec.npos )
 			return input_type_ptr( new input_raw( spec ) );
@@ -700,7 +700,7 @@ public:
 			return input_type_ptr( new input_aud( spec ) );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &spec, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &spec, const frame_type_ptr &frame )
 	{
 		if ( spec.find( L"raw:" ) == 0 || spec.find( L".raw" ) != spec.npos )
 			return store_type_ptr( new store_raw( spec, frame ) );
@@ -708,7 +708,7 @@ public:
 			return store_type_ptr( new store_aud( spec, frame ) );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring & )
+	virtual filter_type_ptr filter( const std::wstring & )
 	{
 		return filter_type_ptr( );
 	}

@@ -30,14 +30,14 @@ class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 			: ml::filter_simple( )
 			, prop_af_( pcos::key::from_string( "af" ) )
 		{
-			properties( ).append( prop_af_ = pl::wstring( ml::audio::FORMAT_FLOAT ) );
+			properties( ).append( prop_af_ = std::wstring( ml::audio::FORMAT_FLOAT ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"audio_convert"; }
+		virtual const std::wstring get_uri( ) const { return L"audio_convert"; }
 
 	protected:
 		// The main access point to the filter
@@ -56,7 +56,7 @@ class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 		// Change the colour space to the requested
 		void change_audio( ml::frame_type_ptr &result )
 		{
-			ml::audio_type_ptr audio = ml::audio::coerce( prop_af_.value< pl::wstring >( ), result->get_audio( ) );
+			ml::audio_type_ptr audio = ml::audio::coerce( prop_af_.value< std::wstring >( ), result->get_audio( ) );
 			if ( audio )
 				result->set_audio( audio );
 		}
@@ -64,7 +64,7 @@ class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 		pcos::property prop_af_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_audio_convert( ) );
 }

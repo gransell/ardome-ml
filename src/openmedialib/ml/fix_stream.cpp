@@ -98,7 +98,7 @@ namespace fixers
 			virtual const int samples( ) const { return samples_; }
 
 			/// Returns the picture format
-			virtual const olib::openpluginlib::wstring pf( ) const { return pf_; }
+			virtual const std::wstring pf( ) const { return pf_; }
 
 			/// Returns the picture field order
 			virtual olib::openimagelib::il::field_order_flags field_order( ) const { return field_order_; }
@@ -118,7 +118,7 @@ namespace fixers
 			int frequency_;
 			int channels_;
 			int samples_;
-			olib::openpluginlib::wstring pf_;
+			std::wstring pf_;
 			olib::openimagelib::il::field_order_flags field_order_;
 			int estimated_gop_size_;
 	};

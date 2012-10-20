@@ -25,7 +25,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_charcoal( const pl::wstring & )
+		explicit filter_charcoal( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_scale_( pcos::key::from_string( "scale" ) )
@@ -40,7 +40,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"charcoal"; }
+		virtual const std::wstring get_uri( ) const { return L"charcoal"; }
 
 	protected:
 		// The main access point to the filter
@@ -140,7 +140,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		pcos::property prop_mix_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_charcoal( resource ) );
 }

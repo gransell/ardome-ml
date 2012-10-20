@@ -26,7 +26,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_step : public ml::filter_type
 {
 	public:
-		filter_step( const pl::wstring & )
+		filter_step( const std::wstring & )
 			: filter_type( )
 			, prop_speed_( pcos::key::from_string( "speed" ) )
 		{
@@ -43,7 +43,7 @@ class ML_PLUGIN_DECLSPEC filter_step : public ml::filter_type
 			return ml::filter_type::get_frames( );
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"step"; }
+		virtual const std::wstring get_uri( ) const { return L"step"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -67,7 +67,7 @@ class ML_PLUGIN_DECLSPEC filter_step : public ml::filter_type
 		pl::pcos::property prop_speed_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_step( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_step( resource ) );
 }

@@ -17,7 +17,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_loop : public ml::filter_simple
 {
 	public:
-		filter_loop( const pl::wstring & )
+		filter_loop( const std::wstring & )
 			: ml::filter_simple( )
 		{
 		}
@@ -25,7 +25,7 @@ class ML_PLUGIN_DECLSPEC filter_loop : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"loop"; }
+		virtual const std::wstring get_uri( ) const { return L"loop"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -44,7 +44,7 @@ class ML_PLUGIN_DECLSPEC filter_loop : public ml::filter_simple
 		}
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_loop( resource ) );
 }

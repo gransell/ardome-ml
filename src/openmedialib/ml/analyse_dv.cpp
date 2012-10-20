@@ -22,7 +22,7 @@ typedef struct dv_type
 	size_t size;
 	int width;
 	int height;
-	pl::wstring pf;
+	std::wstring pf;
 	il::field_order_flags field;
 }
 dv_type;

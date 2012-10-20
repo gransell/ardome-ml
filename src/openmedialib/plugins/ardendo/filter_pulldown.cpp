@@ -22,7 +22,7 @@ class filter_pulldown : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		explicit filter_pulldown( const pl::wstring & )
+		explicit filter_pulldown( const std::wstring & )
 			: ml::filter_type( )
 			, total_src_frames_( 0 )
 			, total_frames_( 0 )
@@ -31,7 +31,7 @@ class filter_pulldown : public ml::filter_type
 
 		virtual bool requires_image( ) const { return true; }
 
-		virtual const pl::wstring get_uri( ) const { return L"pulldown"; }
+		virtual const std::wstring get_uri( ) const { return L"pulldown"; }
 
 		virtual int get_frames( ) const { return total_frames_; }
 
@@ -138,7 +138,7 @@ class filter_pulldown : public ml::filter_type
 		int total_frames_;
 };
 
-ml::filter_type_ptr create_pulldown( const pl::wstring &spec )
+ml::filter_type_ptr create_pulldown( const std::wstring &spec )
 {
 	return ml::filter_type_ptr( new filter_pulldown( spec ) );
 }

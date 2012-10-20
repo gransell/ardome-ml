@@ -35,7 +35,7 @@ class ML_PLUGIN_DECLSPEC quicktime_plugin : public openmedialib_plugin
 {
 public:
 
-	virtual input_type_ptr input( const opl::wstring &resource )
+	virtual input_type_ptr input( const ostd::wstring &resource )
 	{
  		typedef boost::shared_ptr< quicktime_input > result_type_ptr;
 		result_type_ptr result = result_type_ptr( new quicktime_input( resource ) );
@@ -45,7 +45,7 @@ public:
 	}
 
 	
-	virtual store_type_ptr store( const opl::wstring &resource, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const ostd::wstring &resource, const frame_type_ptr &frame )
 	{
 		typedef boost::shared_ptr< quicktime_store > result_type_ptr;
 		return result_type_ptr( new quicktime_store( resource, frame ) );

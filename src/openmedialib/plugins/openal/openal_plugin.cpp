@@ -655,12 +655,12 @@ class ML_PLUGIN_DECLSPEC openal_store : public store_type
 class ML_PLUGIN_DECLSPEC openal_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring & )
+	virtual input_type_ptr input(  const std::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const std::wstring &, const frame_type_ptr & )
 	{
 		return store_type_ptr( new openal_store( ) );
 	}

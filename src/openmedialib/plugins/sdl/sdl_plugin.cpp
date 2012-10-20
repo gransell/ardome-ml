@@ -108,7 +108,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 	public:
         typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
-		sdl_video( const pl::wstring &, const frame_type_ptr & ) 
+		sdl_video( const std::wstring &, const frame_type_ptr & ) 
 			: store_type( )
 			, last_sar_num_( 1 )
 			, last_sar_den_( 1 )
@@ -135,15 +135,15 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			properties( ).append( prop_height_ = default_height_ );
 			properties( ).append( prop_keydown_ = 0 );
 			properties( ).append( prop_keymod_ = 0 );
-			properties( ).append( prop_box_ = pl::wstring( L"fill" ) );
+			properties( ).append( prop_box_ = std::wstring( L"fill" ) );
 			properties( ).append( prop_full_ = 0 );
 			properties( ).append( prop_native_ = 0.0 );
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = pl::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv422" ) );
 #else
-			properties( ).append( prop_pf_ = pl::wstring( L"yuv420p" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv420p" ) );
 #endif
 		}
 
@@ -242,7 +242,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			}
 
 			// Convert to requested colour space
-			img = il::convert( img, prop_pf_.value< pl::wstring >( ).c_str( ) );
+			img = il::convert( img, prop_pf_.value< std::wstring >( ).c_str( ) );
 			last_image_ = img;
 			frame->get_sar( last_sar_num_, last_sar_den_ );
 
@@ -382,7 +382,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			sn = sn == 0 ? 1 : sn;
 			sd = sd == 0 ? 1 : sd;
 
-			if ( prop_box_.value< pl::wstring >( ) == L"letter" )
+			if ( prop_box_.value< std::wstring >( ) == L"letter" )
 			{
 				ch = int( double( ( cw * sn ) / sd ) / this_aspect );
 
@@ -396,7 +396,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					cy = ( img->height( ) - ch ) / 2;
 				}
 			}
-			else if ( prop_box_.value< pl::wstring >( ) == L"pillar" )
+			else if ( prop_box_.value< std::wstring >( ) == L"pillar" )
 			{
 				cw = int( double( ( ch * sd ) / sn ) * this_aspect );
 				if ( cw > img->width( ) )
@@ -503,7 +503,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		Uint32 get_format( )
 		{
-			std::wstring pf = prop_pf_.value< pl::wstring >( ).c_str( );
+			std::wstring pf = prop_pf_.value< std::wstring >( ).c_str( );
 			if ( pf == L"yuv422" )
 				return SDL_YUY2_OVERLAY;
 			return SDL_YV12_OVERLAY;
@@ -564,7 +564,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
         typedef fn_observer< sdl_audio > observer;
         typedef boost::recursive_mutex::scoped_lock scoped_lock;
 
-		sdl_audio( const pl::wstring &, const frame_type_ptr & ) 
+		sdl_audio( const std::wstring &, const frame_type_ptr & ) 
 			: store_type( )
 			, prop_buffer_( pcos::key::from_string( "buffer" ) )
 			, prop_preroll_( pcos::key::from_string( "preroll" ) )
@@ -861,12 +861,12 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 class ML_PLUGIN_DECLSPEC sdl_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring & )
+	virtual input_type_ptr input( const std::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &args, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &args, const frame_type_ptr &frame )
 	{
 		if ( args == L"sdl_audio:" )
 			return store_type_ptr( new sdl_audio( args, frame ) );

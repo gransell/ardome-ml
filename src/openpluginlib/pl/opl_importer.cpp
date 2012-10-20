@@ -13,7 +13,6 @@
 #endif
 
 #include <openpluginlib/pl/opl_importer.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/log.hpp>
 
 #include <xercesc/util/PlatformUtils.hpp>

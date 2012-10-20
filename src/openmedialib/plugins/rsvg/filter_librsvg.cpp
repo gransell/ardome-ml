@@ -9,7 +9,6 @@
 
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -29,7 +28,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 {
 	public:
-		filter_librsvg( const pl::wstring &resource ) 
+		filter_librsvg( const std::wstring &resource ) 
 			: ml::filter_type( )
 			, prop_file_( pcos::key::from_string( "file" ) )
 			, prop_xml_( pcos::key::from_string( "xml" ) )
@@ -37,8 +36,8 @@ class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 			, prop_deferred_( pcos::key::from_string( "deferred" ) )
 			, prop_stretch_( pcos::key::from_string( "stretch" ) )
 		{
-			properties( ).append( prop_file_ = pl::wstring(L"") );
-			properties( ).append( prop_xml_ = pl::wstring(L"") );
+			properties( ).append( prop_file_ = std::wstring(L"") );
+			properties( ).append( prop_xml_ = std::wstring(L"") );
 			properties( ).append( prop_duration_ = -1 );
 			properties( ).append( prop_deferred_ = 0 );
 			properties( ).append( prop_stretch_ = 0 );
@@ -66,7 +65,7 @@ class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 		virtual bool requires_image( ) const { return true; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"svg"; }
+		virtual const std::wstring get_uri( ) const { return L"svg"; }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -101,8 +100,8 @@ class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 				svg_->properties( ).get_property_with_string( "render_sar_den" ) = sar_den;
 
 				// Pass the SVG XML string/filename to the SVG input
-				svg_->properties( ).get_property_with_string( "xml" ) = prop_xml_.value< pl::wstring >( );
-				svg_->properties( ).get_property_with_string( "resource" ) = prop_file_.value< pl::wstring >();
+				svg_->properties( ).get_property_with_string( "xml" ) = prop_xml_.value< std::wstring >( );
+				svg_->properties( ).get_property_with_string( "resource" ) = prop_file_.value< std::wstring >();
 
 
 				// Fetch image
@@ -140,7 +139,7 @@ class ML_PLUGIN_DECLSPEC filter_librsvg : public ml::filter_type
 		ml::filter_type_ptr compositor_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_librsvg( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_librsvg( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_librsvg( resource ) );
 }

@@ -20,7 +20,6 @@
 #include <openpluginlib/pl/config.hpp>
 #include <openpluginlib/pl/discovery_traits.hpp>
 #include <openpluginlib/pl/openplugin.hpp>
-#include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/log.hpp>
 
 namespace olib { namespace openpluginlib {
@@ -30,21 +29,21 @@ namespace olib { namespace openpluginlib {
 // Plugins found in custom lookup paths passed to init are guaranteed to be searched before 
 // plugins found in the 'standard' paths set at compile time. 
 // However the search order of custom plugins is undefined.
-OPENPLUGINLIB_DECLSPEC bool init( const string& lookup_path = "" );
-OPENPLUGINLIB_DECLSPEC bool init( const string_list& lookup_paths );
+OPENPLUGINLIB_DECLSPEC bool init( const std::string& lookup_path = "" );
+OPENPLUGINLIB_DECLSPEC bool init( const std::list< std::string >& lookup_paths );
 OPENPLUGINLIB_DECLSPEC bool uninit( );
 
 OPENPLUGINLIB_DECLSPEC void init_log( );
 
 // UI construction motivated
-OPENPLUGINLIB_DECLSPEC wstring registered_filters( bool in_filter );
+OPENPLUGINLIB_DECLSPEC std::wstring registered_filters( bool in_filter );
 
 #ifdef WIN32
-OPENPLUGINLIB_DECLSPEC bool init( const string& lookup_path, const string& kernels_path, const string& shaders_path );
-OPENPLUGINLIB_DECLSPEC bool init( const string_list& lookup_paths, const string& kernels_path, const string& shaders_path );
-OPENPLUGINLIB_DECLSPEC string plugins_path( );
-OPENPLUGINLIB_DECLSPEC string kernels_path( );
-OPENPLUGINLIB_DECLSPEC string shaders_path( );
+OPENPLUGINLIB_DECLSPEC bool init( const std::string& lookup_path, const std::string& kernels_path, const std::string& shaders_path );
+OPENPLUGINLIB_DECLSPEC bool init( const std::list< std::string >& lookup_paths, const std::string& kernels_path, const std::string& shaders_path );
+OPENPLUGINLIB_DECLSPEC std::string plugins_path( );
+OPENPLUGINLIB_DECLSPEC std::string kernels_path( );
+OPENPLUGINLIB_DECLSPEC std::string shaders_path( );
 #endif
 
 namespace detail
@@ -59,22 +58,22 @@ namespace detail
 				: item_( item )
 			{ }
 
-			opl_ptr create_plugin( const string& options ) const;
+			opl_ptr create_plugin( const std::string& options ) const;
 
 		public:
-			wstring name( ) const
+			std::wstring name( ) const
 			{ return item_.name; }
-			wstring type( ) const
+			std::wstring type( ) const
 			{ return item_.type; }
-			wstring mime( ) const
+			std::wstring mime( ) const
 			{ return item_.mime; }
-			wstring category( ) const
+			std::wstring category( ) const
 			{ return item_.category; }
-			wstring libname( ) const
+			std::wstring libname( ) const
 			{ return item_.libname; }
-			wstring in_filter( ) const
+			std::wstring in_filter( ) const
 			{ return item_.in_filter; }
-			wstring out_filter( ) const
+			std::wstring out_filter( ) const
 			{ return item_.out_filter; }
 			int merit( ) const
 			{ return item_.merit; }
@@ -82,7 +81,7 @@ namespace detail
 			{ return item_.context; }
 			std::vector<boost::wregex> extension( ) const
 			{ return item_.extension; }
-			std::vector<wstring> filenames( ) const
+			std::vector<std::wstring> filenames( ) const
 			{ return item_.filenames; }
 
 		private:
@@ -97,7 +96,7 @@ namespace detail
 		typedef	container::value_type		container_value_type;
 
 	public:
-		bool operator( )( const wstring& libname, const wstring& type, const wstring& to_match );
+		bool operator( )( const std::wstring& libname, const std::wstring& type, const std::wstring& to_match );
 
 		const_iterator begin( ) const
 		{ return plugins_.begin( ); }

@@ -10,7 +10,6 @@
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
 
-#include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
 #include <openpluginlib/pl/pcos/property.hpp>
 #include <openpluginlib/pl/pcos/subject.hpp>

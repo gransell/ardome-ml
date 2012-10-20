@@ -56,8 +56,8 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"nudger:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"nudger:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 		virtual bool is_seekable( ) const { return true; }
 
 		// Audio/Visual
@@ -104,7 +104,7 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"lock" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"lock" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -371,7 +371,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"distributor" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"distributor" ); }
 
 		// We can only connect 1 input to this filter
 		virtual const size_t slot_count( ) const { return 1; }
@@ -536,7 +536,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 		}
 
 		// Locate the first upstream filters with a given name and assign value to the property specified by the key
-		void set_property( input_type_ptr input, const pl::wstring &name, const pl::pcos::key &key, int value )
+		void set_property( input_type_ptr input, const std::wstring &name, const pl::pcos::key &key, int value )
 		{
 			if ( input && input->get_uri( ) == name )
 			{
@@ -693,12 +693,12 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring & )
+	virtual input_type_ptr input( const std::wstring & )
 	{
 		return input_type_ptr( new input_pusher( ) );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &spec )
+	virtual filter_type_ptr filter( const std::wstring &spec )
 	{
 		if ( spec == L"lock" )
 			return filter_type_ptr( new filter_lock( ) );

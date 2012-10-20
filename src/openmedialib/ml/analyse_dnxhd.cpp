@@ -135,7 +135,7 @@ bool analyse_dnxhd::collect( olib::openpluginlib::pcos::property_container &prop
 		properties.append( pl::pcos::property( key_packet_size_ ) = int( dnxhd->framesize ) );
 		properties.append( pl::pcos::property( key_width_ ) = dnxhd->width );
 		properties.append( pl::pcos::property( key_height_ ) = dnxhd->height );
-		properties.append( pl::pcos::property( key_pf_ ) = pl::wstring( L"yuv422" ) );
+		properties.append( pl::pcos::property( key_pf_ ) = std::wstring( L"yuv422" ) );
 		properties.append( pl::pcos::property( key_field_order_ ) = int( dnxhd->interlaced ? il::top_field_first : il::progressive ) );
 		properties.append( pl::pcos::property( key_sar_num_ ) = 1 );
 		properties.append( pl::pcos::property( key_sar_den_ ) = 1 );

@@ -8,7 +8,6 @@
 // Provides a plugin for textoverlay use.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -21,7 +20,7 @@ namespace pcos = olib::openpluginlib::pcos;
 namespace aml { namespace openmedialib { 
 
 // OML Input plugins
-extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_textoverlay( const pl::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_filter_textoverlay( const std::wstring & );
 
 //
 // Plugin object
@@ -31,7 +30,7 @@ class ML_PLUGIN_DECLSPEC textoverlay_plugin : public ml::openmedialib_plugin
 {
 public:
 
-	virtual ml::filter_type_ptr filter( const pl::wstring &resource )
+	virtual ml::filter_type_ptr filter( const std::wstring &resource )
 	{
 		if ( resource == L"textoverlay" )
 			return create_filter_textoverlay( resource );

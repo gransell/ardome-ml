@@ -9,7 +9,6 @@
 #include <cstdio>
 
 #include <openpluginlib/py/python.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openimagelib/il/utility.hpp>
 #include <openimagelib/plugins/tga/tga_plugin.hpp>

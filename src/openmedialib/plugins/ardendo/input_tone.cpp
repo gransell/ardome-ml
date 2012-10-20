@@ -44,7 +44,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			properties( ).append( prop_periods_ = 20 );
 			properties( ).append( prop_peak_ = 0.5 );
 			properties( ).append( prop_oscillate_ = 0 );
-			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"dv" ) );
 		}
 
 		virtual ~input_tone( ) { }
@@ -53,8 +53,8 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"tone:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"tone:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return prop_out_.value< int >( ); }
@@ -90,7 +90,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 			int frequency = prop_frequency_.value< int >( );
 			int channels = prop_channels_.value< int >( );
 			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, 
-				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< pl::wstring >( ) ) ) );
+				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< std::wstring >( ) ) ) );
 			int periods = prop_periods_.value< int >( );
 			int oscillate = prop_oscillate_.value< int >( );
 			double peak = prop_peak_.value< double >( );
@@ -133,7 +133,7 @@ class ML_PLUGIN_DECLSPEC input_tone : public ml::input_type
 		pcos::property prop_profile_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_tone( const std::wstring &resource )
 {
 	return ml::input_type_ptr( new input_tone( ) );
 }

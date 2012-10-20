@@ -9,9 +9,6 @@
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/utilities.hpp>
 
-// includes for openpluginlib string handling
-#include <openpluginlib/pl/utf8_utils.hpp>
-
 // includes for opencorelib worker
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
@@ -24,6 +21,7 @@ extern "C" {
 }
 
 namespace pl = olib::openpluginlib;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -46,7 +44,7 @@ class indexer_job : public indexer_item, public opencorelib::function_job
 typedef ML_DECLSPEC boost::shared_ptr< indexer_job > indexer_job_ptr;
 
 // Forward declaration to local factory method
-static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
+static indexer_job_ptr indexer_job_factory( const std::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
 
 template < class T >
 class aml_index_reader;
@@ -173,7 +171,7 @@ aml_index_reader_ptr create( const std::string& indexname, boost::uint16_t v4_in
 class indexed_job_type : public indexer_job 
 {
 	public:
-		indexed_job_type( const pl::wstring &url, aml_index_reader_ptr index )
+		indexed_job_type( const std::wstring &url, aml_index_reader_ptr index )
 			: url_( url )
 			, index_( index )
 		{
@@ -207,7 +205,7 @@ class indexed_job_type : public indexer_job
 		}
 
 	private:
-		pl::wstring url_;
+		std::wstring url_;
 		aml_index_reader_ptr index_;
 };
 
@@ -216,13 +214,13 @@ class indexed_job_type : public indexer_job
 class unindexed_job_type : public indexer_job 
 {
 	public:
-		unindexed_job_type( const pl::wstring &url )
+		unindexed_job_type( const std::wstring &url )
 			: url_( url )
 			, size_( 0 )
 			, finished_( false )
 			, retries_( RETRIES )
 		{
-			if ( url_.find( L":cache:" ) != pl::wstring::npos )
+			if ( url_.find( L":cache:" ) != std::wstring::npos )
 				url_ = url.substr( 0, url.find( L"cache:" ) ) + url.substr( url.find( L"cache:" ) + 6 );
 			check_size( );
 		}
@@ -261,7 +259,7 @@ class unindexed_job_type : public indexer_job
 			if ( finished( ) ) return;
 
 			URLContext *context = 0;
-			std::string temp = pl::to_string( url_ );
+			std::string temp = cl::str_util::to_string( url_ );
 
 			// Attempt to reopen the media
 			if ( ffurl_open( &context, temp.c_str( ), AVIO_FLAG_READ, 0, 0 ) >= 0 )
@@ -290,7 +288,7 @@ class unindexed_job_type : public indexer_job
 
 	private:
 		mutable boost::recursive_mutex mutex_;
-		pl::wstring url_;
+		std::wstring url_;
 		boost::int64_t size_;
 		bool finished_;
 		int retries_;
@@ -303,7 +301,7 @@ static const pl::pcos::key key_frame_size_ = pl::pcos::key::from_string( "frame_
 class generating_job_type : public indexer_job 
 {
 	public:
-		generating_job_type( const pl::wstring &url )
+		generating_job_type( const std::wstring &url )
 			: url_( url )
 			, index_( awi_generator_v3_ptr( new awi_generator_v3( ) ) )
 			, input_( create_input( url ) )
@@ -398,21 +396,21 @@ class generating_job_type : public indexer_job
 			}
 		}
 
-		pl::wstring url_;
+		std::wstring url_;
 		awi_generator_v3_ptr index_;
 		input_type_ptr input_;
 		int start_;
 		frame_type_ptr last_frame_;
 };
 
-static indexer_job_ptr indexer_job_factory( const pl::wstring &url, boost::uint16_t v4_index_entry_type )
+static indexer_job_ptr indexer_job_factory( const std::wstring &url, boost::uint16_t v4_index_entry_type )
 {
 	if ( url.find( L"index:" ) != 0 )
 	{
-		aml_index_reader_ptr index = create( pl::to_string( url ), v4_index_entry_type );
+		aml_index_reader_ptr index = create( cl::str_util::to_string( url ), v4_index_entry_type );
 		if ( index )
 			return indexer_job_ptr( new indexed_job_type( url, index ) );
-		else if ( url.find( L".awi" ) == pl::wstring::npos )
+		else if ( url.find( L".awi" ) == std::wstring::npos )
 			return indexer_job_ptr( new unindexed_job_type( url ) );
 		else
 			return indexer_job_ptr( );
@@ -462,7 +460,7 @@ class indexer
 		}
 
 		/// Request an index item for the specified url
-		indexer_item_ptr request( const pl::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
+		indexer_item_ptr request( const std::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ARLOG_DEBUG5( "Index request for url: %1%" )( url );
@@ -475,7 +473,7 @@ class indexer
 			{
 				map_key_str << L":" << v4_index_entry_type;
 			}
-			pl::wstring map_key = map_key_str.str();
+			std::wstring map_key = map_key_str.str();
 
 			map_type::iterator existing = map_.find( map_key );
 
@@ -555,7 +553,7 @@ class indexer
 		static boost::recursive_mutex mutex_;
 		static indexer_ptr instance_;
 
-		typedef std::map< pl::wstring, std::pair< indexer_job_ptr, boost::int32_t > > map_type;
+		typedef std::map< std::wstring, std::pair< indexer_job_ptr, boost::int32_t > > map_type;
 		map_type map_;
 		opencorelib::worker index_read_worker_;
 };
@@ -568,7 +566,7 @@ void ML_DECLSPEC indexer_init( )
 	indexer::instance( )->init( );
 }
 
-indexer_item_ptr ML_DECLSPEC indexer_request( const openpluginlib::wstring &url, boost::uint16_t v4_index_entry_type )
+indexer_item_ptr ML_DECLSPEC indexer_request( const std::wstring &url, boost::uint16_t v4_index_entry_type )
 {
 	return indexer::instance( )->request( url, v4_index_entry_type );
 }

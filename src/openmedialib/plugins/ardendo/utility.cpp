@@ -160,11 +160,11 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 	stream << "Frame Report" << endl << endl;
 	stream << "Position     : " << frame->get_position( ) << endl;
 	if ( frame->has_image( ) )
-		stream << "Image Info   : pf = " << pl::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
+		stream << "Image Info   : pf = " << olib::opencorelib::str_util::to_string( frame->pf( ) ) << ", codec = " << frame->video_codec( ) << ", size = " << frame->width( ) << "x" << frame->height( ) << ", sar = " << frame->get_sar_num( ) << ":" << frame->get_sar_den( ) << std::endl;
 	if ( frame->has_audio( ) )
 		stream << "Audio Info   : samples = " << frame->samples( ) << ", frequency = "  << frame->frequency( ) << ", channels = " << frame->channels( ) << std::endl;
 	if ( frame->get_stream( ) )
-		stream << "Video Stream : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << pl::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( )
+		stream << "Video Stream : Yes, codec = " << frame->get_stream( )->codec( ) << ", pf = " << olib::opencorelib::str_util::to_string( frame->get_stream( )->pf( ) ) << " key = " << frame->get_stream( )->key( ) << ", position = " << frame->get_stream( )->position( ) << ", bitrate = " << frame->get_stream( )->bitrate( )<< ", bytes = " << frame->get_stream( )->length( )
         << ", dimensions = " << frame->get_stream( )->size( ).width << "x" << frame->get_stream( )->size( ).height << " gop = " << frame->get_stream()->estimated_gop_size() << endl;
 	else
 		stream << "Video Stream : No" << endl;
@@ -215,7 +215,7 @@ void report_image( std::ostream &stream, const il::image_type_ptr &img, int num,
 		else if ( img->field_order( ) == il::bottom_field_first )
 			type = "Interlaced (bottom field first)";
 
-		stream << "Colour Space: " << pl::to_string( img->pf( ) ) << endl;
+		stream << "Colour Space: " << olib::opencorelib::str_util::to_string( img->pf( ) ) << endl;
 		stream << "Aspect Ratio: " << ar << " (" << num << ":" << den << ")" << endl;
 		stream << "Type        : " << type << endl;
 		stream << "Planes      : " << img->plane_count( ) << endl;
@@ -242,7 +242,7 @@ void report_alpha( std::ostream &stream, const il::image_type_ptr img )
 
 	if ( img )
 	{
-		stream << "Colour Space: " << pl::to_string( img->pf( ) ) << endl;
+		stream << "Colour Space: " << olib::opencorelib::str_util::to_string( img->pf( ) ) << endl;
 		stream << "Planes      : " << img->plane_count( ) << endl;
 
 		for ( int p = 0; p < img->plane_count( ); p ++ )
@@ -267,7 +267,7 @@ void report_audio( std::ostream &stream, const ml::audio_type_ptr &audio )
 
 	if ( audio )
 	{
-		stream << "Format      : " << pl::to_string( audio->af( ) ) << endl;
+		stream << "Format      : " << olib::opencorelib::str_util::to_string( audio->af( ) ) << endl;
 		stream << "Frequency   : " << audio->frequency( ) << endl;
 		stream << "Channels    : " << audio->channels( ) << endl;
 		stream << "Samples     : " << audio->samples( ) << endl;
@@ -316,8 +316,8 @@ void report_props( std::ostream &stream, const pl::pcos::property_container &pro
 				stream << name << "=" << p.value< int >( ) << endl;
 			else if ( p.is_a< boost::int64_t >( ) )
 				stream << name << "=" << p.value< boost::int64_t >( ) << endl;
-			else if ( p.is_a< pl::wstring >( ) )
-				stream << name << "=" << pl::to_string( p.value< pl::wstring >( ) ) << endl;
+			else if ( p.is_a< std::wstring >( ) )
+				stream << name << "=" << olib::opencorelib::str_util::to_string( p.value< std::wstring >( ) ) << endl;
 			else if ( p.is_a< vector< double > >( ) )
 				to_stream( stream, name, p.value< vector< double > >( ) );
 			else if ( p.is_a< vector< int > >( ) )

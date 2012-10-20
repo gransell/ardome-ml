@@ -33,7 +33,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 {
 	public:
 		// filter_type overloads
-		explicit avformat_resampler_filter(const pl::wstring &)
+		explicit avformat_resampler_filter(const std::wstring &)
 			: filter_simple()
 			, prop_output_channels_(pcos::key::from_string("channels"))
 			, prop_output_sample_freq_(pcos::key::from_string("frequency"))
@@ -68,7 +68,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			prop_output_sample_freq_.detach(property_observer_);
 		}
 	
-		virtual const pl::wstring get_uri( ) const { return L"resampler"; }
+		virtual const std::wstring get_uri( ) const { return L"resampler"; }
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
@@ -282,7 +282,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		int expected_;
 };
 
-filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring &resource )
+filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const std::wstring &resource )
 {
 	return filter_type_ptr( new avformat_resampler_filter( resource ) );
 }

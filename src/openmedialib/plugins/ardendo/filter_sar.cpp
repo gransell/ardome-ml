@@ -17,7 +17,7 @@ class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_sar( const pl::wstring & )
+		explicit filter_sar( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_sar_num_( pcos::key::from_string( "sar_num" ) )
@@ -32,7 +32,7 @@ class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_simple
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"sar"; }
+		virtual const std::wstring get_uri( ) const { return L"sar"; }
 
 	protected:
 		// The main access point to the filter
@@ -55,7 +55,7 @@ class ML_PLUGIN_DECLSPEC filter_sar : public ml::filter_simple
 		pcos::property prop_sar_den_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_sar( resource ) );
 }

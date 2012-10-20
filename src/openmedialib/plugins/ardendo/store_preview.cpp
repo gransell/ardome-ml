@@ -200,7 +200,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 	typedef boost::mutex::scoped_lock scoped_lock;
 
 	public:
-		store_preview( const pl::wstring &resource, const ml::frame_type_ptr &frame )
+		store_preview( const std::wstring &resource, const ml::frame_type_ptr &frame )
 			: ml::store_type( )
 			, prop_video_( pcos::key::from_string( "video" ) )
 			, prop_audio_( pcos::key::from_string( "audio" ) )
@@ -246,13 +246,13 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		{
 			timer_ = aml::openmedialib::create_timer( );
 
-			properties( ).append( prop_video_ = pl::wstring( L"sdl_video:" ) );
-			properties( ).append( prop_audio_ = pl::wstring( L"sdl_audio:" ) );
+			properties( ).append( prop_video_ = std::wstring( L"sdl_video:" ) );
+			properties( ).append( prop_audio_ = std::wstring( L"sdl_audio:" ) );
 			properties( ).append( prop_keydown_ = 0 );
 			properties( ).append( prop_audio_scrub_ = 1 );
 			properties( ).append( prop_callback_ = boost::uint64_t( 0 ) );
 			properties( ).append( prop_callback_arg_ = boost::uint64_t( 0 ) );
-			properties( ).append( prop_box_ = pl::wstring( L"" ) );
+			properties( ).append( prop_box_ = std::wstring( L"" ) );
 			properties( ).append( prop_threaded_ = 0 );
 			properties( ).append( prop_grab_audio_ = 0 );
             properties( ).append( prop_video_store_ = ml::store_type_ptr() );
@@ -293,7 +293,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 
 		void update_box( )
 		{
-			pl::wstring value = prop_box_.value< pl::wstring >( );
+			std::wstring value = prop_box_.value< std::wstring >( );
 			if ( video_ && value != L"" )
 			{
 				pl::pcos::property box = video_->properties( ).get_property_with_key( key_box_ );
@@ -313,7 +313,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 				if ( !stp )
 				{
                     audio_owner = boost::int64_t( this );
-					audio_ = ml::create_store( prop_audio_.value< pl::wstring >( ), ml::frame_type_ptr( ) );
+					audio_ = ml::create_store( prop_audio_.value< std::wstring >( ), ml::frame_type_ptr( ) );
                 	audio_store = audio_;
 					if ( audio_ )
 					{
@@ -357,12 +357,12 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 			
 			if ( !video_ )
 			{
-				pl::wstring store = prop_video_.value< pl::wstring >( );
+				std::wstring store = prop_video_.value< std::wstring >( );
 
 				video_ = ml::create_store( store, first_frame_ );
 
 				if ( !video_ )
-					throw std::runtime_error( ( boost::format( "Unable to create store %s" ) % pl::to_string( store ) ).str( ) );
+					throw std::runtime_error( ( boost::format( "Unable to create store %s" ) % olib::opencorelib::str_util::to_string( store ) ).str( ) );
 
 				if ( video_->properties( ).get_property_with_key( key_deferrable_ ).valid( ) )
                     prop_deferrable_ = video_->properties( ).get_property_with_key( key_deferrable_ ).value< int >( );
@@ -694,8 +694,8 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
                             p = v.value< boost::uint64_t >( );
                         else if ( p.is_a< boost::int64_t >( ) && v.is_a< boost::int64_t >( ) )
                             p = v.value< boost::int64_t >( ) ;
-						else if ( v.is_a< pl::wstring >( ) )
-							p.set_from_string( v.value< pl::wstring >( ) );
+						else if ( v.is_a< std::wstring >( ) )
+							p.set_from_string( v.value< std::wstring >( ) );
 						else
 							std::cerr << "Don't know how to match property " << name << std::endl;
 					}
@@ -751,7 +751,7 @@ class ML_PLUGIN_DECLSPEC store_preview : public ml::store_type
 		ml::frame_type_ptr first_frame_;
 };
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const pl::wstring &resource, const ml::frame_type_ptr &frame )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const std::wstring &resource, const ml::frame_type_ptr &frame )
 {
 	return ml::store_type_ptr( new store_preview( resource, frame ) );
 }

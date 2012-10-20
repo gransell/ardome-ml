@@ -19,13 +19,16 @@
 #include <opencorelib/cl/log_defines.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/minimal_string_defines.hpp>
-
-#include <openpluginlib/pl/string.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
+#include <opencorelib/cl/str_util.hpp>
 
 #include <openimagelib/il/basic_image.hpp>
 
 #include <boost/cstdint.hpp>
+
+typedef std::list< std::string > string_list;
+typedef std::list< std::wstring > wstring_list;
+typedef std::vector< std::string > string_vec;
+typedef std::vector< std::wstring > wstring_vec;
 
 namespace olib
 {
@@ -50,6 +53,7 @@ namespace olib
 
 namespace il = olib::openimagelib::il;
 namespace ml = olib::openmedialib::ml;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openpluginlib { namespace pcos {
 
@@ -207,7 +211,7 @@ template < typename T > void property::set( const T& v )
 	operator=( any( v ) );
 }
 
-void property::set_from_string( const wstring& str )
+void property::set_from_string( const std::wstring& str )
 {
 	operator=( impl_->value.from_string( str ) );
 }
@@ -276,7 +280,7 @@ template OPENPLUGINLIB_DECLSPEC int_list property::value< int_list >() const;
 template OPENPLUGINLIB_DECLSPEC uint_list property::value< uint_list >() const;
 template OPENPLUGINLIB_DECLSPEC double_list property::value< double_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::value< bool >() const;
-template OPENPLUGINLIB_DECLSPEC string property::value< string >() const;
+template OPENPLUGINLIB_DECLSPEC std::string property::value< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC void* property::value< void* >() const;
 template OPENPLUGINLIB_DECLSPEC int_vec property::value< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC double_vec property::value< double_vec >() const;
@@ -284,8 +288,8 @@ template OPENPLUGINLIB_DECLSPEC int64_vec property::value< int64_vec >() const;
 template OPENPLUGINLIB_DECLSPEC string_vec property::value< string_vec >() const;
 template OPENPLUGINLIB_DECLSPEC void_vec property::value< void_vec >() const;
 
-template OPENPLUGINLIB_DECLSPEC wstring* property::pointer< wstring >() const;
-template OPENPLUGINLIB_DECLSPEC string* property::pointer< string >() const;
+template OPENPLUGINLIB_DECLSPEC std::wstring* property::pointer< std::wstring >() const;
+template OPENPLUGINLIB_DECLSPEC std::string* property::pointer< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC wstring_vec* property::pointer< wstring_vec >() const;
 template OPENPLUGINLIB_DECLSPEC string_vec* property::pointer< string_vec >() const;
 
@@ -308,7 +312,7 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< uint_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< bool >() const;
-template OPENPLUGINLIB_DECLSPEC bool property::is_a< string >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void* >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_vec >() const;
@@ -316,16 +320,16 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int64_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void_vec >() const;
 
-template OPENPLUGINLIB_DECLSPEC wstring property::value< wstring >() const;
+template OPENPLUGINLIB_DECLSPEC std::wstring property::value< std::wstring >() const;
 template OPENPLUGINLIB_DECLSPEC wstring_list property::value< wstring_list >() const;
 template OPENPLUGINLIB_DECLSPEC string_list property::value< string_list >() const;
 
-template OPENPLUGINLIB_DECLSPEC void property::set< wstring >( const wstring& );
-template OPENPLUGINLIB_DECLSPEC void property::set< string >( const string& );
+template OPENPLUGINLIB_DECLSPEC void property::set< std::wstring >( const std::wstring& );
+template OPENPLUGINLIB_DECLSPEC void property::set< std::string >( const std::string& );
 template OPENPLUGINLIB_DECLSPEC void property::set< wstring_list >( const wstring_list& );
 template OPENPLUGINLIB_DECLSPEC void property::set< string_list >( const string_list& );
 
-template OPENPLUGINLIB_DECLSPEC bool property::is_a< wstring >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::wstring >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< wstring_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_list >() const;
 
@@ -356,7 +360,7 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::stream_type_ptr >() con
 
 // implementation of parsing code for pcos::any
 
-template < typename T > T parse_string( const wstring& str )
+template < typename T > T parse_string( const std::wstring& str )
 {
 	std::wistringstream istrm( str.c_str( ) );
 	T v;
@@ -364,9 +368,9 @@ template < typename T > T parse_string( const wstring& str )
 	return v;	
 }
 
-template <> OPENPLUGINLIB_DECLSPEC bool parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC bool parse_string( const std::wstring& str )
 {
-	if ( str.find( L"true" ) != wstring::npos )
+	if ( str.find( L"true" ) != std::wstring::npos )
 	{
 		return true;
 	}
@@ -374,130 +378,130 @@ template <> OPENPLUGINLIB_DECLSPEC bool parse_string( const wstring& str )
 	return false;
 }
 
-template <> OPENPLUGINLIB_DECLSPEC string parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC std::string parse_string( const std::wstring& str )
 {
 	/// the best that can be hoped for in this case is straight decimation yields something
-	return to_string( str );
+	return cl::str_util::to_string( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC wstring parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC std::wstring parse_string( const std::wstring& str )
 {
 	return str;
 }
 
-template OPENPLUGINLIB_DECLSPEC int parse_string( const wstring& str );
-template OPENPLUGINLIB_DECLSPEC float parse_string( const wstring& str );
-template OPENPLUGINLIB_DECLSPEC double parse_string( const wstring& str );
-template OPENPLUGINLIB_DECLSPEC unsigned int parse_string( const wstring& str );
-template OPENPLUGINLIB_DECLSPEC boost::int64_t parse_string( const wstring& str );
-template OPENPLUGINLIB_DECLSPEC boost::uint64_t parse_string( const wstring& str );
+template OPENPLUGINLIB_DECLSPEC int parse_string( const std::wstring& str );
+template OPENPLUGINLIB_DECLSPEC float parse_string( const std::wstring& str );
+template OPENPLUGINLIB_DECLSPEC double parse_string( const std::wstring& str );
+template OPENPLUGINLIB_DECLSPEC unsigned int parse_string( const std::wstring& str );
+template OPENPLUGINLIB_DECLSPEC boost::int64_t parse_string( const std::wstring& str );
+template OPENPLUGINLIB_DECLSPEC boost::uint64_t parse_string( const std::wstring& str );
 
 /// split lists on colons
-template < typename RESULT_T > RESULT_T split_list( const wstring& str )
+template < typename RESULT_T > RESULT_T split_list( const std::wstring& str )
 {
 	static const wchar_t SEPARATOR = L':';
 
 	RESULT_T result;
 	size_t last_pos = 0;
 	size_t current_pos = str.find( SEPARATOR );
-	while ( current_pos != wstring::npos )
+	while ( current_pos != std::wstring::npos )
 	{
-		result.push_back( parse_string< typename RESULT_T::value_type >( wstring( str, last_pos, current_pos - last_pos ) ) );
+		result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos - last_pos ) ) );
 
 		last_pos = ++current_pos;
 		current_pos = str.find( SEPARATOR, last_pos );
 	}
-	result.push_back( parse_string< typename RESULT_T::value_type >( wstring( str, last_pos, current_pos ) ) );
+	result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos ) ) );
 
 	return result;
 }
 
-template <> OPENPLUGINLIB_DECLSPEC wstring_list parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC wstring_list parse_string( const std::wstring& str )
 {
 	return split_list< wstring_list >( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC string_list parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC string_list parse_string( const std::wstring& str )
 {
 	return split_list< string_list >( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC int_list parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC int_list parse_string( const std::wstring& str )
 {
 	return split_list< int_list >( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC uint_list parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC uint_list parse_string( const std::wstring& str )
 {
 	return split_list< uint_list >( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC double_list parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC double_list parse_string( const std::wstring& str )
 {
 	return split_list< double_list >( str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC double_vec parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC double_vec parse_string( const std::wstring& )
 {
 	return double_vec( );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const std::wstring& )
 {
 	return int64_vec( );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const std::wstring& )
 {
 	return int_vec( );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC string_vec parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC string_vec parse_string( const std::wstring& str )
 {
-	return string_vec( 1, to_string( str ) );
+	return string_vec( 1, cl::str_util::to_string( str ) );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC wstring_vec parse_string( const wstring& str )
+template <> OPENPLUGINLIB_DECLSPEC wstring_vec parse_string( const std::wstring& str )
 {
 	return wstring_vec( 1, str );
 }
 
-template <> OPENPLUGINLIB_DECLSPEC void* parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC void* parse_string( const std::wstring& )
 {
 	return 0;
 }
 
-template <> OPENPLUGINLIB_DECLSPEC il::image_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC il::image_type_ptr parse_string( const std::wstring& )
 {
 	return il::image_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC ml::frame_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::frame_type_ptr parse_string( const std::wstring& )
 {
     return ml::frame_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC ml::store_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::store_type_ptr parse_string( const std::wstring& )
 {
     return ml::store_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC ml::input_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::input_type_ptr parse_string( const std::wstring& )
 {
     return ml::input_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC ml::audio_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::audio_type_ptr parse_string( const std::wstring& )
 {
     return ml::audio_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr parse_string( const std::wstring& )
 {
     return ml::stream_type_ptr();
 }
 
-template <> OPENPLUGINLIB_DECLSPEC void_vec parse_string( const wstring& )
+template <> OPENPLUGINLIB_DECLSPEC void_vec parse_string( const std::wstring& )
 {
 	return void_vec( );
 }
@@ -511,8 +515,8 @@ std::ostream& operator<<( std::ostream& os , const property& p )
 	else if ( p.is_a< boost::uint64_t >() ) os << p.value< boost::uint64_t >();
 	else if ( p.is_a< double >() ) os << p.value< double >();
 	else if ( p.is_a< bool >() ) os << p.value< bool >();
-	else if ( p.is_a< string >() ) os << p.value< string >();
-	else if ( p.is_a< wstring >() ) os << to_string( p.value< wstring >() );
+	else if ( p.is_a< std::string >() ) os << p.value< std::string >();
+	else if ( p.is_a< std::wstring >() ) os << cl::str_util::to_string( p.value< std::wstring >() );
 	else 
 		os << "*** write type output! ***";
 

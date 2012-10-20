@@ -5,7 +5,6 @@
 // For more information, see http://www.openlibraries.org.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
 #include <map>
@@ -42,11 +41,11 @@ namespace olib { namespace openmedialib { namespace ml {
 	
 extern const int AML_AES3_CODEC_ID;
 
-extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const pl::wstring & );
-extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & );
-extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & );
-extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const pl::wstring & );
-extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &, const frame_type_ptr & );
+extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const std::wstring & );
+extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const std::wstring & );
+extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const std::wstring & );
+extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const std::wstring & );
+extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &, const frame_type_ptr & );
 	
 extern void register_aml_aes3( );
 
@@ -280,17 +279,17 @@ class ML_PLUGIN_DECLSPEC avformat_plugin : public openmedialib_plugin
 {
 public:
 
-	virtual input_type_ptr input( const pl::wstring &resource )
+	virtual input_type_ptr input( const std::wstring &resource )
 	{
 		return create_input_avformat( resource );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &resource, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &resource, const frame_type_ptr &frame )
 	{
 		return create_store_avformat( resource, frame );
 	}
 	
-	virtual filter_type_ptr filter( const pl::wstring& resource )
+	virtual filter_type_ptr filter( const std::wstring& resource )
 	{
 		if ( resource == L"avdecode" )
 			return create_avdecode( resource );

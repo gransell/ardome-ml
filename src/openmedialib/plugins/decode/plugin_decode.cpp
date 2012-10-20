@@ -356,7 +356,7 @@ public:
     virtual bool requires_image( ) const { return false; }
     
     // This provides the name of the plugin (used in serialisation)
-    virtual const pl::wstring get_uri( ) const { return L"analyse"; }
+    virtual const std::wstring get_uri( ) const { return L"analyse"; }
     
 protected:
     void do_fetch( ml::frame_type_ptr &result )
@@ -470,10 +470,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, estimated_gop_size_( 0 )
 		{
 			properties( ).append( prop_inner_threads_ = 1 );
-			properties( ).append( prop_filter_ = pl::wstring( L"mcdecode" ) );
-			properties( ).append( prop_audio_filter_ = pl::wstring( L"" ) );
-			properties( ).append( prop_scope_ = pl::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
-			properties( ).append( prop_source_uri_ = pl::wstring( L"" ) );
+			properties( ).append( prop_filter_ = std::wstring( L"mcdecode" ) );
+			properties( ).append( prop_audio_filter_ = std::wstring( L"" ) );
+			properties( ).append( prop_scope_ = std::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
+			properties( ).append( prop_source_uri_ = std::wstring( L"" ) );
 			
 			// Load the profile that contains the mappings between codec string and codec filter name
 			codec_to_decoder_ = cl::profile_load( "codec_mappings" );
@@ -489,7 +489,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"decode" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"decode" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -515,7 +515,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 	protected:
 
-		ml::filter_type_ptr filter_create( const pl::wstring& codec_filter )
+		ml::filter_type_ptr filter_create( const std::wstring& codec_filter )
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			ml::input_type_ptr fg = ml::create_input( L"pusher:" );
@@ -526,9 +526,9 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			if ( decode->property( "threads" ).valid( ) ) 
 				decode->property( "threads" ) = prop_inner_threads_.value< int >( );
 			if ( decode->property( "scope" ).valid( ) ) 
-				decode->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+				decode->property( "scope" ) = prop_scope_.value< std::wstring >( );
 			if ( decode->property( "source_uri" ).valid( ) ) 
-				decode->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
+				decode->property( "source_uri" ) = prop_source_uri_.value< std::wstring >( );
 			if ( decode->property( "decode_video" ).valid( ) )
 				decode->property( "decode_video" ) = 1;
 			
@@ -545,7 +545,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			
 			if ( decoder_.size( ) == 0 )
 			{
-				result = filter_create( prop_filter_.value< pl::wstring >( ) );
+				result = filter_create( prop_filter_.value< std::wstring >( ) );
 				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
 				decoder_.push_back( result );
 				ARLOG_INFO( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
@@ -569,13 +569,13 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			{
 				ml::filter_type_ptr analyse = ml::filter_type_ptr( new filter_analyse( ) );
 				analyse->connect( fetch_slot( 0 ) );
-				gop_decoder_ = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
+				gop_decoder_ = ml::create_filter( prop_filter_.value< std::wstring >( ) );
 				if ( gop_decoder_->property( "threads" ).valid( ) ) 
 					gop_decoder_->property( "threads" ) = prop_inner_threads_.value< int >( );
 				if ( gop_decoder_->property( "scope" ).valid( ) ) 
-					gop_decoder_->property( "scope" ) = prop_scope_.value< pl::wstring >( );
+					gop_decoder_->property( "scope" ) = prop_scope_.value< std::wstring >( );
 				if ( gop_decoder_->property( "source_uri" ).valid( ) ) 
-					gop_decoder_->property( "source_uri" ) = prop_source_uri_.value< pl::wstring >( );
+					gop_decoder_->property( "source_uri" ) = prop_source_uri_.value< std::wstring >( );
 				if ( gop_decoder_->property( "decode_video" ).valid( ) )
 					gop_decoder_->property( "decode_video" ) = 1;
 				
@@ -678,14 +678,14 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			
 			ARLOG_DEBUG( "Stream identifier is %1%. Using decode filter %2%" )( first_frame->get_stream( )->codec( ) )( it->value );
 			
-			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+			prop_filter_ = std::wstring( cl::str_util::to_wstring( it->value ) );
 		}
 
 		void initialize_audio( ml::frame_type_ptr &first_frame )
 		{
 			// If the user has set the audio_filter property to something meaningfull
 			// then we honor that.
-			if( prop_audio_filter_.value< pl::wstring >() == L"" )
+			if( prop_audio_filter_.value< std::wstring >() == L"" )
 			{
 				ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 				ARENFORCE_MSG( first_frame && first_frame->audio_block( ), "No frame or no stream on frame" );
@@ -701,11 +701,11 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				
 				ARLOG_INFO( "Stream itentifier is %1%. Using decode filter %2%" )( codec )( it->value );
 				
-				prop_audio_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+				prop_audio_filter_ = std::wstring( cl::str_util::to_wstring( it->value ) );
 			}
 			
-			ARENFORCE_MSG( audio_decoder_ = filter_create( prop_audio_filter_.value< pl::wstring >( ) ),
-						   "Failed to create audio decoder filter." )( prop_audio_filter_.value< pl::wstring >( ) );
+			ARENFORCE_MSG( audio_decoder_ = filter_create( prop_audio_filter_.value< std::wstring >( ) ),
+						   "Failed to create audio decoder filter." )( prop_audio_filter_.value< std::wstring >( ) );
 			if( audio_decoder_->property( "decode_video" ).valid( ) )
 				audio_decoder_->property( "decode_video" ) = 0;
 		}
@@ -786,9 +786,9 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			, stream_validation_( false )
 		{
 			// Default to something. Will be overriden anyway as soon as we init
-			properties( ).append( prop_filter_ = pl::wstring( L"mcencode" ) );
+			properties( ).append( prop_filter_ = std::wstring( L"mcencode" ) );
 			// Default to something. Should be overriden anyway.
-			properties( ).append( prop_profile_ = pl::wstring( L"vcodecs/avcintra100" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"vcodecs/avcintra100" ) );
 			properties( ).append( prop_instances_ = 4 );
 
 			// Enabled by default
@@ -805,7 +805,7 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"encode" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"encode" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -815,13 +815,13 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 		{
 			boost::recursive_mutex::scoped_lock lck( mutex_ );
 			// Create the encoder that we have mapped from our profile
-			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< pl::wstring >( ) );
-			ARENFORCE_MSG( encode, "Failed to create encoder" )( prop_filter_.value< pl::wstring >( ) );
+			ml::filter_type_ptr encode = ml::create_filter( prop_filter_.value< std::wstring >( ) );
+			ARENFORCE_MSG( encode, "Failed to create encoder" )( prop_filter_.value< std::wstring >( ) );
 
 			// Set the profile property on the encoder
 			ARENFORCE_MSG( encode->properties( ).get_property_with_string( "profile" ).valid( ),
 				"Encode filter must have a profile property" );
-			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< pl::wstring >( );
+			encode->properties( ).get_property_with_string( "profile" ) = prop_profile_.value< std::wstring >( );
 
 			if ( encode->properties( ).get_property_with_key( key_instances_ ).valid( ) )
 				encode->properties( ).get_property_with_key( key_instances_ ) = prop_instances_.value< int >( );
@@ -955,13 +955,13 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			// First figure out what encoder to use based on our profile
 			ARENFORCE_MSG( profile_to_encoder_mappings_, "Need mappings from profile string to name of encoder" );
 			
-			std::string prof = cl::str_util::to_string( prop_profile_.value< pl::wstring >( ).c_str( ) );
+			std::string prof = cl::str_util::to_string( prop_profile_.value< std::wstring >( ).c_str( ) );
 			cl::profile::list::const_iterator it = profile_to_encoder_mappings_->find( prof );
 			ARENFORCE_MSG( it != profile_to_encoder_mappings_->end( ), "Failed to find a apropriate encoder" )( prof );
 
-			ARLOG_DEBUG3( "Will use encode filter \"%1%\" for profile \"%2%\"" )( it->value )( prop_profile_.value< pl::wstring >( ) );
+			ARLOG_DEBUG3( "Will use encode filter \"%1%\" for profile \"%2%\"" )( it->value )( prop_profile_.value< std::wstring >( ) );
 			
-			prop_filter_ = pl::wstring( cl::str_util::to_wstring( it->value ) );
+			prop_filter_ = std::wstring( cl::str_util::to_wstring( it->value ) );
 			
 			// Now load the actual profile to find out what video codec string we will produce
 			cl::profile_ptr encoder_profile = cl::profile_load( prof );
@@ -1017,7 +1017,7 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"rescale" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"rescale" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -1075,7 +1075,7 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return true; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"field_order" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"field_order" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -1168,7 +1168,7 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 {
 	public:
-		filter_lazy( const pl::wstring &spec )
+		filter_lazy( const std::wstring &spec )
 			: filter_type( )
 			, spec_( spec )
 		{
@@ -1186,7 +1186,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return spec_; }
+		virtual const std::wstring get_uri( ) const { return spec_; }
 
 		virtual const size_t slot_count( ) const { return filter_ ? filter_->slot_count( ) : 1; }
 
@@ -1268,7 +1268,7 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 
 	private:
 		boost::recursive_mutex mutex_;
-		pl::wstring spec_;
+		std::wstring spec_;
 		ml::filter_type_ptr filter_;
 		std::deque< ml::filter_type_ptr > filters_;
 		ml::frame_type_ptr last_frame_;
@@ -1317,7 +1317,7 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return pl::wstring( L"map_reduce" ); }
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"map_reduce" ); }
 
 		virtual const size_t slot_count( ) const { return 1; }
 
@@ -1443,17 +1443,17 @@ class ML_PLUGIN_DECLSPEC filter_map_reduce : public filter_simple
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring & )
+	virtual input_type_ptr input( const std::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &, const frame_type_ptr & )
+	virtual store_type_ptr store( const std::wstring &, const frame_type_ptr & )
 	{
 		return store_type_ptr( );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &spec )
+	virtual filter_type_ptr filter( const std::wstring &spec )
 	{
 		if ( spec == L"analyse" )
 			return filter_type_ptr( new filter_analyse( ) );

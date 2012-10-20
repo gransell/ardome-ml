@@ -403,7 +403,7 @@ class ML_PLUGIN_DECLSPEC filter_rubberband : public filter_simple
 		bool requires_image( ) const { return false; }
 
 		// Return the filter id
-		const pl::wstring get_uri( ) const { return L"rubberband"; }
+		const std::wstring get_uri( ) const { return L"rubberband"; }
 	
 		// Return the number of slots that can be connected to this filter
 		const size_t slot_count( ) const { return 1; }
@@ -447,7 +447,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"pitch"; }
+		virtual const std::wstring get_uri( ) const { return L"pitch"; }
 
 		// Number of frames provided by this filter
 		virtual int get_frames( ) const
@@ -491,17 +491,17 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_type
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring &spec )
+	virtual input_type_ptr input(  const std::wstring &spec )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &name, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &name, const frame_type_ptr &frame )
 	{
 		return store_type_ptr( );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &spec )
+	virtual filter_type_ptr filter( const std::wstring &spec )
 	{
 		if ( spec == L"pitch" )
 			return filter_type_ptr( new filter_pitch( ) );

@@ -49,7 +49,7 @@ class ML_PLUGIN_DECLSPEC filter_slots : public ml::filter_type
 
 		virtual const size_t slot_count( ) const { return size_t( slots( ) ); }
 
-		virtual const pl::wstring get_uri( ) const { return L"slots"; }
+		virtual const std::wstring get_uri( ) const { return L"slots"; }
 
 		virtual int get_frames( ) const { return frame_count( ); }
 
@@ -93,7 +93,7 @@ class ML_PLUGIN_DECLSPEC filter_slots : public ml::filter_type
 			if ( inner_ )
 			{
 				ml::filter_type_ptr aml = ml::create_filter( L"aml" );
-				aml->property( "filename" ) = pl::wstring( L"@" );
+				aml->property( "filename" ) = std::wstring( L"@" );
 				aml->connect( inner_, 0 );
 				*stream << aml->property( "stdout" ).value< std::string >( );
 			}
@@ -206,7 +206,7 @@ class ML_PLUGIN_DECLSPEC filter_slots : public ml::filter_type
 		boost::shared_ptr< pcos::observer > obs_serialise_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const pl::wstring & )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const std::wstring & )
 {
 	return ml::filter_type_ptr( new filter_slots( ) );
 }

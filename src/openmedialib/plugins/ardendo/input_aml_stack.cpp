@@ -73,7 +73,6 @@
 #include <cmath>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/stream.hpp>
@@ -87,6 +86,9 @@ namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 namespace fs = boost::filesystem;
+
+typedef std::list< std::string > string_list;
+typedef std::list< std::wstring > wstring_list;
 
 #ifdef AMF_ON_WINDOWS
 #define stack_popen _popen
@@ -161,7 +163,7 @@ static olib::t_regex prop_syntax( _CT("^.*=.*") );
 class input_value : public ml::input_type
 {
 	public:
-		input_value( const pl::wstring &value )
+		input_value( const std::wstring &value )
 			: input_type( )
 			, value_( value )
 		{
@@ -172,8 +174,8 @@ class input_value : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return value_; }
-		virtual const pl::wstring get_mime_type( ) const { return L"text/value"; }
+		virtual const std::wstring get_uri( ) const { return value_; }
+		virtual const std::wstring get_mime_type( ) const { return L"text/value"; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return 0; }
@@ -183,7 +185,7 @@ class input_value : public ml::input_type
 		void do_fetch( ml::frame_type_ptr &f ) { f = ml::frame_type_ptr( new ml::frame_type( ) ); }
 
 	private:
-		pl::wstring value_;
+		std::wstring value_;
 };
 
 static pl::pcos::key key_input_slots_ = pl::pcos::key::from_string( "@input_slots" );
@@ -309,8 +311,8 @@ class frame_value : public ml::input_type
 				{
 					ml::stream_type_ptr stream = value_->get_stream( );
 					properties( ).append( prop_stream_id_ = int( stream->id( ) ) );
-					properties( ).append( prop_stream_container_ = pl::to_wstring( stream->container( ) ) );
-					properties( ).append( prop_stream_codec_ = pl::to_wstring( stream->codec( ) ) );
+					properties( ).append( prop_stream_container_ = cl::str_util::to_wstring( stream->container( ) ) );
+					properties( ).append( prop_stream_codec_ = cl::str_util::to_wstring( stream->codec( ) ) );
 					properties( ).append( prop_stream_length_ = int( stream->length( ) ) );
 					properties( ).append( prop_stream_key_ = stream->key( ) );
 					properties( ).append( prop_stream_position_ = stream->position( ) );
@@ -358,8 +360,8 @@ class frame_value : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"frame:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L"frame/value"; }
+		virtual const std::wstring get_uri( ) const { return L"frame:"; }
+		virtual const std::wstring get_mime_type( ) const { return L"frame/value"; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return value_ ? 1 : 0; }
@@ -430,7 +432,7 @@ template < typename T > class stack_value : public ml::input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const 
+		virtual const std::wstring get_uri( ) const 
 		{ 
 			// Delay converting until requested
 			if ( !converted_ )
@@ -438,12 +440,12 @@ template < typename T > class stack_value : public ml::input_type
 				std::ostringstream stream;
 				stream.precision( 24 );
 				stream << prop_value_.value< T >( );
-				string_ = pl::to_wstring( stream.str( ) );
+				string_ = cl::str_util::to_wstring( stream.str( ) );
 				converted_ = true;
 			}
 			return string_; 
 		}
-		virtual const pl::wstring get_mime_type( ) const { return L"text/value"; }
+		virtual const std::wstring get_mime_type( ) const { return L"text/value"; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return 0; }
@@ -454,14 +456,14 @@ template < typename T > class stack_value : public ml::input_type
 
 	private:
 		pl::pcos::property prop_value_;
-		mutable pl::wstring string_;
+		mutable std::wstring string_;
 		mutable bool converted_;
 };
 
 struct sequence
 {
-	std::vector< pl::wstring > words_;
-	std::vector< pl::wstring >::iterator iter_;
+	std::vector< std::wstring > words_;
+	std::vector< std::wstring >::iterator iter_;
 	bool parseable_;
 
 	sequence( bool parseable = false )
@@ -470,16 +472,16 @@ struct sequence
 		, parseable_( parseable )
 	{ }
 
-	sequence( const std::vector< pl::wstring > &words, bool parseable = false )
+	sequence( const std::vector< std::wstring > &words, bool parseable = false )
 		: words_( words )
 		, iter_( words_.begin( ) )
 		, parseable_( parseable )
 	{ }
 
-	sequence( const pl::wstring_list &words, bool parseable = false )
+	sequence( const wstring_list &words, bool parseable = false )
 		: parseable_( parseable )
 	{ 
-		for ( pl::wstring_list::const_iterator i = words.begin( ); i != words.end( ); ++i )
+		for ( wstring_list::const_iterator i = words.begin( ); i != words.end( ); ++i )
 			words_.push_back( *i );
 		iter_ = words_.begin( );
 	}
@@ -496,7 +498,7 @@ struct sequence
 	bool is_parseable( ) const
 	{ return parseable_; }
 
-	void add( const pl::wstring &word )
+	void add( const std::wstring &word )
 	{ words_.push_back( word ); }
 
 	void start( )
@@ -508,7 +510,7 @@ struct sequence
 	bool done( ) const
 	{ return iter_ == words_.end( ); }
 
-	const pl::wstring &next( )
+	const std::wstring &next( )
 	{ return *( iter_ ++ ); }
 };
 
@@ -806,7 +808,7 @@ class aml_stack
 
 		void variables_push( )
 		{
-			variables_.push_back( std::map< pl::wstring, ml::input_type_ptr >( ) );
+			variables_.push_back( std::map< std::wstring, ml::input_type_ptr >( ) );
 		}
 
 		void variables_pop( )
@@ -814,7 +816,7 @@ class aml_stack
 			variables_.pop_back( );
 		}
 
-		void assign( pl::pcos::property_container &props, const std::string &name, const pl::wstring &value )
+		void assign( pl::pcos::property_container &props, const std::string &name, const std::wstring &value )
 		{
 			pl::pcos::key key = pl::pcos::key::from_string( name.c_str( ) );
 			pl::pcos::property property = props.get_property_with_key( key );
@@ -831,23 +833,23 @@ class aml_stack
 			}
 			else
 			{
-				throw( std::string( "Invalid property " ) + name + " on input " + pl::to_string( inputs_.back( )->get_uri( ) ) );
+				throw( std::string( "Invalid property " ) + name + " on input " + olib::opencorelib::str_util::to_string( inputs_.back( )->get_uri( ) ) );
 			}
 		}
 
-		void assign( pl::pcos::property_container &props, const pl::wstring &pair )
+		void assign( pl::pcos::property_container &props, const std::wstring &pair )
 		{
 			size_t pos = pair.find( L"=" );
-			std::string name = pl::to_string( pair.substr( 0, pos ) );
-			pl::wstring value = pair.substr( pos + 1 );
+			std::string name = olib::opencorelib::str_util::to_string( pair.substr( 0, pos ) );
+			std::wstring value = pair.substr( pos + 1 );
 		
 			if ( value[ 0 ] == L'"' && value[ value.size( ) - 1 ] == L'"' )
 				value = value.substr( 1, value.size( ) - 2 );
 
-			if ( value.find( L"%s" ) != pl::wstring::npos )
+			if ( value.find( L"%s" ) != std::wstring::npos )
 			{
 				std::deque < ml::input_type_ptr >::iterator iter = inputs_.end( ) - 2;
-				value = pl::to_wstring( ( boost::format( pl::to_string( value ) ) % pl::to_string( ( *iter )->get_uri( ) ) ).str( ) );
+				value = cl::str_util::to_wstring( ( boost::format( olib::opencorelib::str_util::to_string( value ) ) % olib::opencorelib::str_util::to_string( ( *iter )->get_uri( ) ) ).str( ) );
 				inputs_.erase( iter );
 			}
 
@@ -871,7 +873,7 @@ class aml_stack
 			next_exec_op_ = 0;
 		}
 
-		void push( const pl::wstring &token )
+		void push( const std::wstring &token )
 		{
 			if ( next_op_.empty( ) && token == L"" ) return;
 
@@ -879,7 +881,7 @@ class aml_stack
 			{
 				( *output_ ).fill( '#' );
 				( *output_ ).width( execution_stack_.size( ) + 2 );
-				*output_ << " " << pl::to_string( token ) << std::endl;
+				*output_ << " " << olib::opencorelib::str_util::to_string( token ) << std::endl;
 			}
 
 			if ( token == L"reset!" )
@@ -890,7 +892,7 @@ class aml_stack
 
 			pl::pcos::property_container properties;
 
-			pl::wstring arg = token;
+			std::wstring arg = token;
 
 			// Remove outer " and '
 			if ( arg[ 0 ] == L'"' && arg[ arg.size( ) - 1 ] == L'"' )
@@ -933,15 +935,15 @@ class aml_stack
 				//execute_word( arg );
 			else if ( operations_.find( arg ) != operations_.end( ) )
 				execute_operation( arg );
-			else if ( boost::regex_match( pl::to_string( arg ), int_syntax ) )
+			else if ( boost::regex_match( olib::opencorelib::str_util::to_string( arg ), int_syntax ) )
 				create_int( arg );
-			else if ( boost::regex_match( pl::to_string( arg ), double_syntax ) )
+			else if ( boost::regex_match( olib::opencorelib::str_util::to_string( arg ), double_syntax ) )
 				create_double( arg );
-			else if ( boost::regex_match( pl::to_string( arg ), numeric_syntax ) )
+			else if ( boost::regex_match( olib::opencorelib::str_util::to_string( arg ), numeric_syntax ) )
 				create_numeric( arg );
-			else if ( arg.find( L"=" ) != pl::wstring::npos && arg.find( L"http:" ) < arg.find( L"=" ) )
+			else if ( arg.find( L"=" ) != std::wstring::npos && arg.find( L"http:" ) < arg.find( L"=" ) )
 				create_input( cl::str_util::to_wstring( url ) );
-			else if ( arg.find( L"=" ) != pl::wstring::npos )
+			else if ( arg.find( L"=" ) != std::wstring::npos )
 				assign( properties, arg );
 			else if ( url.find( _CT("http://") ) == 0 && url.find( _CT(".aml") ) == arg.size( ) - 4 )
 				parse_http( url );
@@ -951,14 +953,14 @@ class aml_stack
 				parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"filter:" ) == 0 )
 				create_filter( arg );
-			else if ( arg != L"" && arg[ arg.size( ) - 1 ] != L':' && arg.find( L"http://" ) == pl::wstring::npos && is_http_source )
+			else if ( arg != L"" && arg[ arg.size( ) - 1 ] != L':' && arg.find( L"http://" ) == std::wstring::npos && is_http_source )
 				create_input( cl::str_util::to_wstring( url ) );
-			else if ( arg != L"" && is_an_aml_script( arg ) && arg.find( L"http://" ) == pl::wstring::npos )
+			else if ( arg != L"" && is_an_aml_script( arg ) && arg.find( L"http://" ) == std::wstring::npos )
 				parse_file( cl::str_util::to_wstring( url ) );
-			else if ( arg != L"" && ( arg[ arg.size( ) - 1 ] == L':' || arg.find( L"http://" ) != pl::wstring::npos ) )
+			else if ( arg != L"" && ( arg[ arg.size( ) - 1 ] == L':' || arg.find( L"http://" ) != std::wstring::npos ) )
 				create_input( arg );
 #ifdef WIN32
-			else if ( arg.find( L":/cygdrive/" ) != pl::wstring::npos )
+			else if ( arg.find( L":/cygdrive/" ) != std::wstring::npos )
 				create_input( translate_cygwin_path( arg ) );
 #endif
 			else if ( arg != L"" )
@@ -968,10 +970,10 @@ class aml_stack
 #ifdef WIN32
 		//Translates a path on the form input:/cygdrive/c/file.mxf to
 		//the normal Windows-style input:C:/file.mxf
-		pl::wstring translate_cygwin_path( const pl::wstring &path )
+		std::wstring translate_cygwin_path( const std::wstring &path )
 		{
-			pl::wstring::size_type pos = path.find( L":/cygdrive/" );
-			ARENFORCE_MSG( pos != pl::wstring::npos, "Invalid cygwin path: %1%" )( path );
+			std::wstring::size_type pos = path.find( L":/cygdrive/" );
+			ARENFORCE_MSG( pos != std::wstring::npos, "Invalid cygwin path: %1%" )( path );
 			ARENFORCE_MSG( path.size() >= pos + 11 + 2, "Invalid cygwin path: %1%" )( path );
 			ARENFORCE_MSG( path[pos + 11 + 1] == '/', "Invalid cygwin path: %1%" )( path );
 
@@ -982,7 +984,7 @@ class aml_stack
 		}
 #endif
 
-		bool is_word( const pl::wstring &arg )
+		bool is_word( const std::wstring &arg )
 		{
 			bool result = words_.find( arg ) != words_.end( );
 			if ( result )
@@ -990,54 +992,54 @@ class aml_stack
 			return result;
 		}
 
-		std::map< pl::wstring, ml::input_type_ptr > &get_locals( )
+		std::map< std::wstring, ml::input_type_ptr > &get_locals( )
 		{
 			return variables_[ variables_.size( ) - 1 ];
 		}
 
-		bool is_local( const pl::wstring &name )
+		bool is_local( const std::wstring &name )
 		{
 			int index = variables_.size( );
 			while ( index -- )
 			{
-				std::map< pl::wstring, ml::input_type_ptr > &current = variables_[ index ];
+				std::map< std::wstring, ml::input_type_ptr > &current = variables_[ index ];
 				if ( current.find( name ) != current.end( ) )
 					return true;
 			}
 			return false;
 		}
 
-		void assign_local( const pl::wstring &name, ml::input_type_ptr &value )
+		void assign_local( const std::wstring &name, ml::input_type_ptr &value )
 		{
 			int index = variables_.size( );
 			while ( index -- )
 			{
-				std::map< pl::wstring, ml::input_type_ptr > &current = variables_[ index ];
+				std::map< std::wstring, ml::input_type_ptr > &current = variables_[ index ];
 				if ( current.find( name ) != current.end( ) )
 				{
 					current[ name ] = value;
 					return;
 				}
 			}
-			throw std::string( "Attempt to assign to a non-existentent local var " + pl::to_string( name ) );
+			throw std::string( "Attempt to assign to a non-existentent local var " + olib::opencorelib::str_util::to_string( name ) );
 		}
 
-		void deref_local( const pl::wstring &name )
+		void deref_local( const std::wstring &name )
 		{
 			int index = variables_.size( );
 			while ( index -- )
 			{
-				std::map< pl::wstring, ml::input_type_ptr > &current = variables_[ index ];
+				std::map< std::wstring, ml::input_type_ptr > &current = variables_[ index ];
 				if ( current.find( name ) != current.end( ) )
 				{
 					push( current[ name ] );
 					return;
 				}
 			}
-			throw std::string( "Attempt to deref a non-existentent local var " + pl::to_string( name ) );
+			throw std::string( "Attempt to deref a non-existentent local var " + olib::opencorelib::str_util::to_string( name ) );
 		}
 
-		bool handled( const pl::wstring &arg )
+		bool handled( const std::wstring &arg )
 		{
 			execution_stack_.push_back( dummy_sequence_ );
 			parent_->properties( ).get_property_with_key( key_handled_ ).set( 0 );
@@ -1049,11 +1051,11 @@ class aml_stack
 			return status != 0;
 		}
 
-		void push_property( const pl::wstring &arg )
+		void push_property( const std::wstring &arg )
 		{
 			ml::input_type_ptr input = pop( );
 			push( input );
-			std::string name = pl::to_string( arg );
+			std::string name = olib::opencorelib::str_util::to_string( arg );
 			pcos::property prop = input->property( name.c_str( ) );
 			if ( prop.valid( ) )
 			{
@@ -1062,20 +1064,11 @@ class aml_stack
 				else if ( prop.is_a< int >( ) )
 					push( prop.value< int >( ) );
 				else if ( prop.is_a< std::string >( ) )
-					inputs_.push_back( ml::input_type_ptr( new input_value( pl::to_wstring( prop.value< std::string >( ) ) ) ) );
-				else if ( prop.is_a< pl::wstring >( ) )
-					inputs_.push_back( ml::input_type_ptr( new input_value( prop.value< pl::wstring >( ) ) ) );
+					inputs_.push_back( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( prop.value< std::string >( ) ) ) ) );
+				else if ( prop.is_a< std::wstring >( ) )
+					inputs_.push_back( ml::input_type_ptr( new input_value( prop.value< std::wstring >( ) ) ) );
 				else
 					throw std::string( "Can't serialise " + name + " to a string" );
-
-				//if ( prop.is_a< bool >( ) ) return str( prop.value_as_bool( ) )
-				//if ( prop.is_a< il::image_type_ptr >( ) ) return None
-				//if ( prop.is_a_< ml::media_type_ptr >( ) ) return None
-				//if ( prop.is_a< boost::int64 >( ) ) return str( prop.value_as_int64( ) )
-				//if ( prop.is_a< std::vector< int > >( ) ) return convert_list_to_string( prop.value_as_int_list( ) )
-				//if ( prop.is_a< std::vector< std::string > >( ) ) return convert_list_to_string( prop.value_as_string_list( ), True )
-				//if ( prop.is_a< boost::uint64_t >( ) ) return str( prop.value_as_uint64( ) )
-				//else if ( prop.is_a< std::vector< pl::wstring > >( ) ) return convert_list_to_string( prop.value_as_wstring_list( ), True )
 			}
 			else
 			{
@@ -1131,31 +1124,31 @@ class aml_stack
 			trace_ = level;
 		}
 
-		void print_word( const pl::wstring &name )
+		void print_word( const std::wstring &name )
 		{
 			if ( inline_.find( name ) != inline_.end( ) )
 			{
-				std::vector< pl::wstring > function = inline_[ name ];
-				*output_ << ": " << pl::to_string( name ) << std::endl << "inline ";
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
+				std::vector< std::wstring > function = inline_[ name ];
+				*output_ << ": " << olib::opencorelib::str_util::to_string( name ) << std::endl << "inline ";
+				for ( std::vector< std::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
-					if ( ( *i ).find( L" " ) == pl::wstring::npos )
-						*output_ << pl::to_string( *i ) << " ";
+					if ( ( *i ).find( L" " ) == std::wstring::npos )
+						*output_ << olib::opencorelib::str_util::to_string( *i ) << " ";
 					else
-						*output_ << "\"" << pl::to_string( *i ) << "\" ";
+						*output_ << "\"" << olib::opencorelib::str_util::to_string( *i ) << "\" ";
 				}
 				*output_ << std::endl << ";";
 			}
 			else if ( words_.find( name ) != words_.end( ) )
 			{
-				std::vector< pl::wstring > function = words_[ name ];
-				*output_ << ": " << pl::to_string( name ) << std::endl;
-				for ( std::vector< pl::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
+				std::vector< std::wstring > function = words_[ name ];
+				*output_ << ": " << olib::opencorelib::str_util::to_string( name ) << std::endl;
+				for ( std::vector< std::wstring >::iterator i = function.begin( ); i != function.end( ); ++i )
 				{
-					if ( ( *i ).find( L" " ) == pl::wstring::npos )
-						*output_ << pl::to_string( *i ) << " ";
+					if ( ( *i ).find( L" " ) == std::wstring::npos )
+						*output_ << olib::opencorelib::str_util::to_string( *i ) << " ";
 					else
-						*output_ << "\"" << pl::to_string( *i ) << "\" ";
+						*output_ << "\"" << olib::opencorelib::str_util::to_string( *i ) << "\" ";
 				}
 				*output_ << std::endl << ";";
 			}
@@ -1165,20 +1158,20 @@ class aml_stack
 		void print_words( )
 		{
 			*output_ << "# Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
+			for ( std::map < std::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
-					*output_ << "# " << pl::to_string( i->first ) << ": " << i->second.description( ) << std::endl;
+					*output_ << "# " << olib::opencorelib::str_util::to_string( i->first ) << ": " << i->second.description( ) << std::endl;
 			}
 
 			*output_ << std::endl << "# Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
+			for( std::map < std::wstring, std::vector< std::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
 			}
 			*output_ << std::endl << "# Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
+			for( std::map < std::wstring, std::vector< std::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				print_word( i->first );
 				*output_ << std::endl;
@@ -1188,30 +1181,30 @@ class aml_stack
 		void dict( )
 		{
 			*output_ << "Primitives:"  << std::endl << std::endl;
-			for ( std::map < pl::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
+			for ( std::map < std::wstring, aml_operation >::iterator i = operations_.begin( ); i != operations_.end( ); ++i )
 			{
 				if ( words_.find( i->first ) == words_.end( ) )
 				{
 					if ( i != operations_.begin( ) )
 						*output_ << ", ";
-					*output_ << pl::to_string( i->first );
+					*output_ << olib::opencorelib::str_util::to_string( i->first );
 				}
 			}
 
 			*output_ << std::endl << std::endl << "Defined Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
+			for( std::map < std::wstring, std::vector< std::wstring > >::iterator i = words_.begin( ); i != words_.end( ); ++i )
 			{
 				if ( i != words_.begin( ) )
 					*output_ << ", ";
-				*output_ << pl::to_string( i->first );
+				*output_ << olib::opencorelib::str_util::to_string( i->first );
 			}
 
 			*output_ << std::endl << std::endl << "Inline Words:" << std::endl << std::endl;
-			for( std::map < pl::wstring, std::vector< pl::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
+			for( std::map < std::wstring, std::vector< std::wstring > >::iterator i = inline_.begin( ); i != inline_.end( ); ++i )
 			{
 				if ( i != inline_.begin( ) )
 					*output_ << ", ";
-				*output_ << pl::to_string( i->first );
+				*output_ << olib::opencorelib::str_util::to_string( i->first );
 			}
 
 			*output_ << std::endl;
@@ -1221,7 +1214,7 @@ class aml_stack
 		{
 			if ( state_ == 1 && word_.size( ) >= 1 )
 			{
-				pl::wstring name = word_[ 0 ];
+				std::wstring name = word_[ 0 ];
 				word_.erase( word_.begin( ) );
 
 				if ( word_[ 0 ] == L"inline" )
@@ -1258,7 +1251,7 @@ class aml_stack
 			return result;
 		}
 
-		void forget_word( const pl::wstring &word )
+		void forget_word( const std::wstring &word )
 		{
 			if ( words_.find( word ) != words_.end( ) )
 				words_.erase( words_.find( word ) );
@@ -1288,19 +1281,19 @@ class aml_stack
 			execution_stack_.pop_back( );
 		}
 
-		void run( const std::vector< pl::wstring > &words, bool parseable = false )
+		void run( const std::vector< std::wstring > &words, bool parseable = false )
 		{
 			run( sequence_ptr( new sequence( words, parseable ) ) );
 		}
 
-		void run( const pl::wstring_list &words, bool parseable = false )
+		void run( const wstring_list &words, bool parseable = false )
 		{
 			run( sequence_ptr( new sequence( words, parseable ) ) );
 		}
 
-		void execute_word( pl::wstring name )
+		void execute_word( std::wstring name )
 		{
-			const std::vector< pl::wstring > &function = words_[ name ];
+			const std::vector< std::wstring > &function = words_[ name ];
 			if ( !function.empty( ) )
 			{
 				variables_push( );
@@ -1309,13 +1302,13 @@ class aml_stack
 			}
 		}
 
-		void execute_inline( const pl::wstring &name )
+		void execute_inline( const std::wstring &name )
 		{
-			const std::vector< pl::wstring > &function = inline_[ name ];
+			const std::vector< std::wstring > &function = inline_[ name ];
 			run( function );
 		}
 
-		void execute_operation( const pl::wstring &name )
+		void execute_operation( const std::wstring &name )
 		{
 			if ( state_ == 0 && !empty( ) ) push( pop( ) );
 			if ( next_op_.empty( ) )
@@ -1342,7 +1335,7 @@ class aml_stack
 			}
 			else
 			{
-				throw std::string( "failed to create " ) + pl::to_string( arg );
+				throw std::string( "failed to create " ) + olib::opencorelib::str_util::to_string( arg );
 			}
 		}
 
@@ -1357,25 +1350,25 @@ class aml_stack
 			}
 			else
 			{
-				throw std::string( "failed to create input " ) + pl::to_string( arg );
+				throw std::string( "failed to create input " ) + olib::opencorelib::str_util::to_string( arg );
 			}
 		}
 
-		void create_int( const pl::wstring &arg )
+		void create_int( const std::wstring &arg )
 		{
 			if ( !empty( ) ) push( pop( ) );
-			boost::int64_t result = atoll( pl::to_string( arg ).c_str( ) );
+			boost::int64_t result = atoll( olib::opencorelib::str_util::to_string( arg ).c_str( ) );
 			inputs_.push_back( ml::input_type_ptr( new stack_value< boost::int64_t >( result ) ) );
 		}
 
-		void create_double( const pl::wstring &arg )
+		void create_double( const std::wstring &arg )
 		{
 			if ( !empty( ) ) push( pop( ) );
-			double result = atof( pl::to_string( arg ).c_str( ) );
+			double result = atof( olib::opencorelib::str_util::to_string( arg ).c_str( ) );
 			inputs_.push_back( ml::input_type_ptr( new stack_value< double >( result ) ) );
 		}
 
-		void create_numeric( const pl::wstring &arg )
+		void create_numeric( const std::wstring &arg )
 		{
 			if ( !empty( ) ) push( pop( ) );
 			inputs_.push_back( ml::input_type_ptr( new input_value( arg ) ) );
@@ -1440,7 +1433,7 @@ class aml_stack
 				else if ( prop.valid( ) && prop.is_a< boost::int64_t >( ) )
 					result = double( prop.value< boost::int64_t >( ) );
 				else
-					result = atof( pl::to_string( value->get_uri( ) ).c_str( ) );
+					result = atof( olib::opencorelib::str_util::to_string( value->get_uri( ) ).c_str( ) );
 			}
 			else
 			{
@@ -1466,7 +1459,7 @@ class aml_stack
 				else if ( prop.valid( ) && prop.is_a< boost::int64_t >( ) )
 					result = T( prop.value< boost::int64_t >( ) );
 				else
-					result = T( atof( pl::to_string( value->get_uri( ) ).c_str( ) ) );
+					result = T( atof( olib::opencorelib::str_util::to_string( value->get_uri( ) ).c_str( ) ) );
 			}
 			else
 			{
@@ -1480,7 +1473,7 @@ class aml_stack
 		{
 			*output_ << msg << ": ";
 			for ( std::deque < ml::input_type_ptr >::iterator iter = inputs_.begin( ); iter != inputs_.end( ); ++iter )
-				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
+				*output_ << "\"" << olib::opencorelib::str_util::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
 		}
@@ -1489,12 +1482,12 @@ class aml_stack
 		{
 			*output_ << msg << ": ";
 			for ( std::deque < ml::input_type_ptr >::iterator iter = rstack_.begin( ); iter != rstack_.end( ); ++iter )
-				*output_ << "\"" << pl::to_string( ( *iter )->get_uri( ) ) << "\" ";
+				*output_ << "\"" << olib::opencorelib::str_util::to_string( ( *iter )->get_uri( ) ) << "\" ";
 			*output_ << std::endl;
 			flush( );
 		}
 
-		bool is_an_aml_script( const pl::wstring &filename )
+		bool is_an_aml_script( const std::wstring &filename )
 		{
            	olib::t_path apath( cl::str_util::to_t_string(filename));
            	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
@@ -1510,7 +1503,7 @@ class aml_stack
 			return sub1.find( "#!" ) == 0 && sub2.find( "amlbatch" ) != std::string::npos;
 		}
 
-		void parse_file( const pl::wstring &filename )
+		void parse_file( const std::wstring &filename )
 		{
 			if ( filename != L"stdin:" )
 			{
@@ -1521,7 +1514,7 @@ class aml_stack
 				paths_.push_back( fs::system_complete( apath ).parent_path( ) );
 
 				if ( !file.is_open( ) )
-					throw std::string( "Unable to find " ) + pl::to_string( filename );
+					throw std::string( "Unable to find " ) + olib::opencorelib::str_util::to_string( filename );
 
             	parse_stream( file );
 
@@ -1543,7 +1536,7 @@ class aml_stack
 		void parse_stream( std::istream &file )
 		{
 			std::string token;
-			std::vector< pl::wstring > tokens;
+			std::vector< std::wstring > tokens;
 			std::string line;
 
 			while ( std::getline( file, line ) ) 
@@ -1573,7 +1566,7 @@ class aml_stack
 
 					if ( token != "" )
 					{
-						tokens.push_back( pl::to_wstring( token ) );
+						tokens.push_back( cl::str_util::to_wstring( token ) );
 						token = "";
 					}
 				}
@@ -1610,12 +1603,12 @@ class aml_stack
 		std::deque < ml::input_type_ptr > inputs_;
 		std::deque < ml::input_type_ptr > rstack_;
 		std::deque < olib::t_path > paths_;
-		std::map < pl::wstring, aml_operation > operations_;
-		std::map < pl::wstring, std::vector< pl::wstring > > words_;
-		std::map < pl::wstring, std::vector< pl::wstring > > inline_;
-		std::vector< pl::wstring > loops_;
-		std::vector < pl::wstring > word_;
-		std::vector < std::map< pl::wstring, ml::input_type_ptr > > variables_;
+		std::map < std::wstring, aml_operation > operations_;
+		std::map < std::wstring, std::vector< std::wstring > > words_;
+		std::map < std::wstring, std::vector< std::wstring > > inline_;
+		std::vector< std::wstring > loops_;
+		std::vector < std::wstring > word_;
+		std::vector < std::map< std::wstring, ml::input_type_ptr > > variables_;
 		int word_count_;
 		std::deque < bool > conds_;
 		int state_;
@@ -1680,29 +1673,29 @@ static void op_str( aml_stack *stack )
 	if ( stack->next_op( op_str ) )
 	{
 		ml::input_type_ptr word = stack->pop( );
-		if ( word->get_uri( ).find( L"%s" ) != pl::wstring::npos )
+		if ( word->get_uri( ).find( L"%s" ) != std::wstring::npos )
 		{
-			pl::wstring fmt = word->get_uri( );
-			pl::wstring::size_type pos = 0;
-			std::vector < pl::wstring > tokens;
-			while( pos != pl::wstring::npos )
+			std::wstring fmt = word->get_uri( );
+			std::wstring::size_type pos = 0;
+			std::vector < std::wstring > tokens;
+			while( pos != std::wstring::npos )
 			{
 				pos = fmt.find( L"%s", pos );
-				if ( pos != pl::wstring::npos )
+				if ( pos != std::wstring::npos )
 				{
 					tokens.push_back( stack->pop( )->get_uri( ) );
 					pos += 2;
 				}
 			}
 
-			boost::format fmtr( pl::to_string( fmt ) );
+			boost::format fmtr( olib::opencorelib::str_util::to_string( fmt ) );
 			while( !tokens.empty( ) )
 			{
-				fmtr % pl::to_string( tokens.back( ) );
+				fmtr % olib::opencorelib::str_util::to_string( tokens.back( ) );
 				tokens.pop_back( );
 			}
 
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( fmtr.str( ) ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( fmtr.str( ) ) ) ) );
 		}
 		else
 		{
@@ -1734,7 +1727,7 @@ static void op_parse( aml_stack *stack )
 				{
 					if ( !( *iter )->done( ) )
 					{
-						pl::wstring token = ( *iter )->next( );
+						std::wstring token = ( *iter )->next( );
 						if ( token != L"parse" )
 							stack->push( token );
 						else
@@ -1748,8 +1741,8 @@ static void op_parse( aml_stack *stack )
 
 		if ( !found )
 		{
-			stack->parent_->property( "query" ) = pl::wstring( L"parse-token" );
-			stack->push( stack->parent_->property( "token" ).value< pl::wstring >( ) );
+			stack->parent_->property( "query" ) = std::wstring( L"parse-token" );
+			stack->push( stack->parent_->property( "token" ).value< std::wstring >( ) );
 		}
 	}
 }
@@ -1764,8 +1757,8 @@ static void op_throw( aml_stack *stack )
 {
 	if ( stack->next_op( op_throw ) )
 	{
-		pl::wstring word = stack->pop( )->get_uri( );
-		throw std::string( pl::to_string( word ) );
+		std::wstring word = stack->pop( )->get_uri( );
+		throw std::string( olib::opencorelib::str_util::to_string( word ) );
 	}
 }
 
@@ -1794,7 +1787,7 @@ static void op_execute( aml_stack *stack )
 	{
 		if ( stack->next_exec_op_ == 0 )
 		{
-			pl::wstring word = input->get_uri( );
+			std::wstring word = input->get_uri( );
 			stack->push( word );
 		}
 		else
@@ -1820,7 +1813,7 @@ static void op_forget( aml_stack *stack )
 {
 	if ( stack->next_op( op_forget ) )
 	{
-		pl::wstring word = stack->pop( )->get_uri( );
+		std::wstring word = stack->pop( )->get_uri( );
 		stack->forget_word( word );
 	}
 }
@@ -1919,7 +1912,7 @@ static void op_has_prop_parse( aml_stack *stack )
 		ml::input_type_ptr a = stack->pop( );
 		ml::input_type_ptr b = stack->pop( );
 		stack->push( b );
-		std::string name = pl::to_string( a->get_uri( ) );
+		std::string name = olib::opencorelib::str_util::to_string( a->get_uri( ) );
 		stack->push( b->property( name.c_str( ) ).valid( ) );
 	}
 }
@@ -1935,7 +1928,7 @@ static void op_prop_exists( aml_stack *stack )
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
 	stack->push( b );
-	std::string name = pl::to_string( a->get_uri( ) );
+	std::string name = olib::opencorelib::str_util::to_string( a->get_uri( ) );
 	stack->push( b->property( name.c_str( ) ).valid( ) );
 }
 
@@ -1944,7 +1937,7 @@ static void op_prop_matches( aml_stack *stack )
 	ml::input_type_ptr a = stack->pop( );
 	ml::input_type_ptr b = stack->pop( );
 	stack->push( b );
-	std::string name = pl::to_string( a->get_uri( ) );
+	std::string name = olib::opencorelib::str_util::to_string( a->get_uri( ) );
 	boost::regex match( name );
 	pl::pcos::key_vector keys = b->properties( ).get_keys( );
 	int count = 0;
@@ -1952,7 +1945,7 @@ static void op_prop_matches( aml_stack *stack )
 	{
 		if ( boost::regex_match( ( *it ).as_string( ), match ) )
 		{
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( ( *it ).as_string( ) ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( ( *it ).as_string( ) ) ) ) );
 			count ++;
 		}
 	}
@@ -2104,38 +2097,38 @@ static void op_rdepth( aml_stack *stack )
 
 struct ml_query_traits : public pl::default_query_traits
 {
-	ml_query_traits( const pl::wstring &type )
+	ml_query_traits( const std::wstring &type )
 		: type_( type )
 	{ }
 		
-	pl::wstring libname( ) const
-	{ return pl::wstring( L"openmedialib" ); }
+	std::wstring libname( ) const
+	{ return std::wstring( L"openmedialib" ); }
 
-	pl::wstring type( ) const
-	{ return pl::wstring( type_ ); }
+	std::wstring type( ) const
+	{ return std::wstring( type_ ); }
 
-	const pl::wstring type_;
+	const std::wstring type_;
 };
 
-static void query_type( aml_stack *stack, pl::wstring type )
+static void query_type( aml_stack *stack, std::wstring type )
 {
 	typedef pl::discovery< ml_query_traits > discovery;
 	ml_query_traits query( type );
 	discovery plugins( query );
 
-	( *stack->output_ ) << pl::to_string( type ) << ":" << std::endl << std::endl;
+	( *stack->output_ ) << olib::opencorelib::str_util::to_string( type ) << ":" << std::endl << std::endl;
 
 	for ( discovery::const_iterator i = plugins.begin( ); i != plugins.end( ); ++i )
 	{
-		std::vector< pl::wstring > files = ( *i ).filenames( );
+		std::vector< std::wstring > files = ( *i ).filenames( );
 		std::vector< boost::wregex > contents = ( *i ).extension( );
 		bool found = false;
 
-		for ( std::vector< pl::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
+		for ( std::vector< std::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
 		{
-			if ( fs::exists( pl::to_string( *f ) ) )
+			if ( fs::exists( olib::opencorelib::str_util::to_string( *f ) ) )
 			{
-				( *stack->output_ ) << pl::to_string( *f ) << " : ";
+				( *stack->output_ ) << olib::opencorelib::str_util::to_string( *f ) << " : ";
 				found = true;
 			}
 		}
@@ -2144,7 +2137,7 @@ static void query_type( aml_stack *stack, pl::wstring type )
 		{
 			for ( std::vector< boost::wregex >::iterator j = contents.begin( ); j != contents.end( ); ++j )
 			{
-				( *stack->output_ ) << pl::to_string( j->str() ) << " ";
+				( *stack->output_ ) << olib::opencorelib::str_util::to_string( j->str() ) << " ";
 			}
 			( *stack->output_ ) << std::endl;
 		}
@@ -2154,9 +2147,9 @@ static void query_type( aml_stack *stack, pl::wstring type )
 
 static void op_available( aml_stack *stack )
 {
-	query_type( stack, pl::wstring( L"input" ) );
-	query_type( stack, pl::wstring( L"filter" ) );
-	query_type( stack, pl::wstring( L"output" ) );
+	query_type( stack, std::wstring( L"input" ) );
+	query_type( stack, std::wstring( L"filter" ) );
+	query_type( stack, std::wstring( L"output" ) );
 }
 
 static void op_dump( aml_stack *stack )
@@ -2172,7 +2165,7 @@ static void op_rdump( aml_stack *stack )
 static void op_tos( aml_stack *stack )
 {
 	ml::input_type_ptr a = stack->pop( );
-	*( stack->output_ ) << pl::to_string( a->get_uri( ) ) << std::endl;
+	*( stack->output_ ) << olib::opencorelib::str_util::to_string( a->get_uri( ) ) << std::endl;
 	stack->push( a );
 }
 
@@ -2243,11 +2236,11 @@ static void op_equal( aml_stack *stack )
 				return;
 		}
 
-		if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
-			 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
+		if ( boost::regex_match( olib::opencorelib::str_util::to_string( a->get_uri( ) ), numeric_syntax ) && 
+			 boost::regex_match( olib::opencorelib::str_util::to_string( b->get_uri( ) ), numeric_syntax ) )
 		{
-			double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
-			double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
+			double va = atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) );
+			double vb = atof( olib::opencorelib::str_util::to_string( b->get_uri( ) ).c_str( ) );
 			stack->push( vb == va );
 		}
 		else
@@ -2290,11 +2283,11 @@ static void op_lt( aml_stack *stack )
 			return;
 	}
 
-	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
-		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
+	if ( boost::regex_match( olib::opencorelib::str_util::to_string( a->get_uri( ) ), numeric_syntax ) && 
+		 boost::regex_match( olib::opencorelib::str_util::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
-		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
-		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
+		double va = atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) );
+		double vb = atof( olib::opencorelib::str_util::to_string( b->get_uri( ) ).c_str( ) );
 		stack->push( vb < va );
 	}
 	else
@@ -2325,11 +2318,11 @@ static void op_gt( aml_stack *stack )
 			return;
 	}
 
-	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
-		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
+	if ( boost::regex_match( olib::opencorelib::str_util::to_string( a->get_uri( ) ), numeric_syntax ) && 
+		 boost::regex_match( olib::opencorelib::str_util::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
-		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
-		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
+		double va = atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) );
+		double vb = atof( olib::opencorelib::str_util::to_string( b->get_uri( ) ).c_str( ) );
 		stack->push( vb > va );
 	}
 	else
@@ -2360,11 +2353,11 @@ static void op_lt_equal( aml_stack *stack )
 			return;
 	}
 
-	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
-		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
+	if ( boost::regex_match( olib::opencorelib::str_util::to_string( a->get_uri( ) ), numeric_syntax ) && 
+		 boost::regex_match( olib::opencorelib::str_util::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
-		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
-		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
+		double va = atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) );
+		double vb = atof( olib::opencorelib::str_util::to_string( b->get_uri( ) ).c_str( ) );
 		stack->push( vb <= va );
 	}
 	else
@@ -2395,11 +2388,11 @@ static void op_gt_equal( aml_stack *stack )
 			return;
 	}
 
-	if ( boost::regex_match( pl::to_string( a->get_uri( ) ), numeric_syntax ) && 
-		 boost::regex_match( pl::to_string( b->get_uri( ) ), numeric_syntax ) )
+	if ( boost::regex_match( olib::opencorelib::str_util::to_string( a->get_uri( ) ), numeric_syntax ) && 
+		 boost::regex_match( olib::opencorelib::str_util::to_string( b->get_uri( ) ), numeric_syntax ) )
 	{
-		double va = atof( pl::to_string( a->get_uri( ) ).c_str( ) );
-		double vb = atof( pl::to_string( b->get_uri( ) ).c_str( ) );
+		double va = atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) );
+		double vb = atof( olib::opencorelib::str_util::to_string( b->get_uri( ) ).c_str( ) );
 		stack->push( vb >= va );
 	}
 	else
@@ -2641,7 +2634,7 @@ static void op_iter_range( aml_stack *stack )
 		else if ( prop.valid( ) && prop.is_a< double >( ) )
 			value = boost::int64_t( prop.value< double >( ) );
 		else
-			value = boost::int64_t( atof( pl::to_string( a->get_uri( ) ).c_str( ) ) );
+			value = boost::int64_t( atof( olib::opencorelib::str_util::to_string( a->get_uri( ) ).c_str( ) ) );
 
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
 		stack->loops_.erase( stack->loops_.begin( ), stack->loops_.end( ) );
@@ -2669,19 +2662,19 @@ static void op_iter_popen( aml_stack *stack )
 		stack->state_ = 0;
 
 		ml::input_type_ptr input = stack->pop( );
-		pl::wstring command;
+		std::wstring command;
 		for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
 		{
-			if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+			if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != std::wstring::npos )
 			{
-				std::string in = pl::to_string( input->fetch_slot( i )->get_uri( ) );
-				command += pl::to_wstring( boost::regex_replace( in, pattern, replace, boost::match_default | boost::format_all ) ) + L" ";
+				std::string in = olib::opencorelib::str_util::to_string( input->fetch_slot( i )->get_uri( ) );
+				command += cl::str_util::to_wstring( boost::regex_replace( in, pattern, replace, boost::match_default | boost::format_all ) ) + L" ";
 			}
 			else
 				command += input->fetch_slot( i )->get_uri( ) + L" ";
 		}
 
-		FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
+		FILE *pipe = stack_popen( olib::opencorelib::str_util::to_string( command ).c_str( ), "r" );
 		char temp[ 1024 ];
 	
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
@@ -2691,7 +2684,7 @@ static void op_iter_popen( aml_stack *stack )
 		{
 			seq->start( );
 			if ( temp[ strlen( temp ) - 1 ] == '\n' ) temp[ strlen( temp ) - 1 ] = '\0';
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( temp ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( temp ) ) ) );
 			stack->run( seq );
 		}
 	
@@ -2710,10 +2703,10 @@ static void op_iter_aml( aml_stack *stack )
 		stack->state_ = 0;
 
 		ml::input_type_ptr input = stack->pop( );
-		pl::wstring command;
+		std::wstring command;
 		for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
 		{
-			if ( command != L"" && input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+			if ( command != L"" && input->fetch_slot( i )->get_uri( ).find( L" " ) != std::wstring::npos )
 				command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
 			else
 				command += input->fetch_slot( i )->get_uri( ) + L" ";
@@ -2721,7 +2714,7 @@ static void op_iter_aml( aml_stack *stack )
 	
 
 		std::ostringstream stream;
-		FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
+		FILE *pipe = stack_popen( olib::opencorelib::str_util::to_string( command ).c_str( ), "r" );
 		char temp[ 1024 ];
 	
 		sequence_ptr seq = sequence_ptr( new sequence( stack->loops_ ) );
@@ -2756,7 +2749,7 @@ static std::string prop_type( const pl::pcos::property &p )
 		return "int64_t";
 	else if ( p.is_a< boost::uint64_t >( ) )
 		return "uint64_t";
-	else if ( p.is_a< pl::wstring >( ) )
+	else if ( p.is_a< std::wstring >( ) )
 		return "wstring";
 	else if ( p.is_a< std::vector< double > >( ) )
 		return "vector<double>";
@@ -2777,8 +2770,8 @@ static std::string prop_value( const pl::pcos::property &p )
 		stream << p.value< boost::int64_t >( );
 	else if ( p.is_a< boost::uint64_t >( ) )
 		stream << p.value< boost::uint64_t >( );
-	else if ( p.is_a< pl::wstring >( ) )
-		stream << "\"" << pl::to_string( p.value< pl::wstring >( ) ) << "\"";
+	else if ( p.is_a< std::wstring >( ) )
+		stream << "\"" << olib::opencorelib::str_util::to_string( p.value< std::wstring >( ) ) << "\"";
 	else if ( p.is_a< std::vector< double > >( ) )
 		stream << "<unsupported>";
 	else if ( p.is_a< std::vector< int > >( ) )
@@ -2811,9 +2804,9 @@ static void op_iter_props( aml_stack *stack )
 			if ( name == "debug" || name.find( ".aml_" ) == 0 ) continue;
 
 			seq->start( );
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( name ) ) ) );
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( prop_type( p ) ) ) ) );
-			stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( prop_value( p ) ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( name ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( prop_type( p ) ) ) ) );
+			stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( prop_value( p ) ) ) ) );
 			stack->run( seq );
 		}
 
@@ -2835,11 +2828,11 @@ static void op_variable( aml_stack *stack )
 	if ( stack->next_op( op_variable ) )
 	{
 		ml::input_type_ptr a = stack->pop( );
-		std::map< pl::wstring, ml::input_type_ptr > &locals = stack->get_locals( );
+		std::map< std::wstring, ml::input_type_ptr > &locals = stack->get_locals( );
 		if ( locals.find( a->get_uri( ) ) == locals.end( ) )
 			locals[ a->get_uri( ) ] = ml::input_type_ptr( );
 		else
-			throw std::string( "Attempt to create a duplicate local var " + pl::to_string( a->get_uri( ) ) );
+			throw std::string( "Attempt to create a duplicate local var " + olib::opencorelib::str_util::to_string( a->get_uri( ) ) );
 	}
 }
 
@@ -2849,11 +2842,11 @@ static void op_variable_assign( aml_stack *stack )
 	{
 		ml::input_type_ptr a = stack->pop( );
 		ml::input_type_ptr b = stack->pop( );
-		std::map< pl::wstring, ml::input_type_ptr > &locals = stack->get_locals( );
+		std::map< std::wstring, ml::input_type_ptr > &locals = stack->get_locals( );
 		if ( locals.find( a->get_uri( ) ) == locals.end( ) )
 			locals[ a->get_uri( ) ] = ml::input_type_ptr( );
 		else
-			throw std::string( "Attempt to create a duplicate local var " + pl::to_string( a->get_uri( ) ) );
+			throw std::string( "Attempt to create a duplicate local var " + olib::opencorelib::str_util::to_string( a->get_uri( ) ) );
 		stack->assign_local( a->get_uri( ), b );
 	}
 }
@@ -2970,7 +2963,7 @@ static void op_render( aml_stack *stack )
 	}
 	else
 	{
-		*( stack->output_ ) << pl::to_string( input->get_uri( ) ) << std::endl;
+		*( stack->output_ ) << olib::opencorelib::str_util::to_string( input->get_uri( ) ) << std::endl;
 	}
 }
 
@@ -3006,23 +2999,23 @@ static void op_transplant( aml_stack *stack )
 static void op_popen( aml_stack *stack )
 {
 	ml::input_type_ptr input = stack->pop( );
-	pl::wstring command;
+	std::wstring command;
 	for ( int i = input->slot_count( ) - 1; i >= 0; i -- )
 	{
-		if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != pl::wstring::npos )
+		if ( input->fetch_slot( i )->get_uri( ).find( L" " ) != std::wstring::npos )
 			command += L"\"" + input->fetch_slot( i )->get_uri( ) + L"\" ";
 		else
 			command += input->fetch_slot( i )->get_uri( ) + L" ";
 	}
 
-	FILE *pipe = stack_popen( pl::to_string( command ).c_str( ), "r" );
+	FILE *pipe = stack_popen( olib::opencorelib::str_util::to_string( command ).c_str( ), "r" );
 	char temp[ 1024 ];
 	int count = 0;
 
 	while( fgets( temp, 1024, pipe ) )
 	{
 		if ( temp[ strlen( temp ) - 1 ] == '\n' ) temp[ strlen( temp ) - 1 ] = '\0';
-		stack->push( ml::input_type_ptr( new input_value( pl::to_wstring( temp ) ) ) );
+		stack->push( ml::input_type_ptr( new input_value( cl::str_util::to_wstring( temp ) ) ) );
 		count ++;
 	}
 
@@ -3043,7 +3036,7 @@ class input_aml_stack : public ml::input_type
 	public:
 		typedef fn_observer< input_aml_stack > observer;
 		
-		input_aml_stack( const pl::wstring &resource )
+		input_aml_stack( const std::wstring &resource )
 			: input_type( )
 			, prop_stdout_( pcos::key::from_string( "stdout" ) )
 			, stack_( this, prop_stdout_ )
@@ -3065,22 +3058,22 @@ class input_aml_stack : public ml::input_type
 			, obs_commands_( new observer( const_aml_stack( this ), &input_aml_stack::push_commands ) )
 			, obs_deferred_( new observer( const_aml_stack( this ), &input_aml_stack::deferred ) )
 		{
-			properties( ).append( prop_command_ = pl::wstring( L"" ) );
-			properties( ).append( prop_parse_ = pl::wstring( L"" ) );
-			properties( ).append( prop_commands_ = pl::wstring_list( ) );
-			properties( ).append( prop_result_ = pl::wstring( L"OK" ) );
+			properties( ).append( prop_command_ = std::wstring( L"" ) );
+			properties( ).append( prop_parse_ = std::wstring( L"" ) );
+			properties( ).append( prop_commands_ = wstring_list( ) );
+			properties( ).append( prop_result_ = std::wstring( L"OK" ) );
 			properties( ).append( prop_redirect_ = 0 );
 			properties( ).append( prop_stdout_ = std::string( "" ) );
 			properties( ).append( prop_deferred_ = int( 0 ) );
 			properties( ).append( prop_threaded_ = int( 0 ) );
-			properties( ).append( prop_query_ = pl::wstring( L"" ) );
+			properties( ).append( prop_query_ = std::wstring( L"" ) );
 			prop_command_.set_always_notify( true );
 			prop_parse_.set_always_notify( true );
 			prop_commands_.set_always_notify( true );
 			prop_query_.set_always_notify( true );
 			prop_stdout_.set_always_notify( true );
 			properties( ).append( prop_handled_ = int( 0 ) );
-			properties( ).append( prop_token_ = pl::wstring( L"" ) );
+			properties( ).append( prop_token_ = std::wstring( L"" ) );
 			prop_command_.attach( obs_command_ );
 			prop_parse_.attach( obs_parse_ );
 			prop_commands_.attach( obs_commands_ );
@@ -3092,7 +3085,7 @@ class input_aml_stack : public ml::input_type
 				prop_command_ = resource;
 
 			if ( !stack_.empty( ) )
-				prop_command_ = pl::wstring( L"." );
+				prop_command_ = std::wstring( L"." );
 		}
 
 		~input_aml_stack( )
@@ -3122,13 +3115,13 @@ class input_aml_stack : public ml::input_type
 
 			try
 			{
-				stack_.push( prop_command_.value< pl::wstring >( ) );
-				prop_result_ = pl::to_wstring( "OK" );
+				stack_.push( prop_command_.value< std::wstring >( ) );
+				prop_result_ = cl::str_util::to_wstring( "OK" );
 			}
 			catch( const std::string &exc )
 			{
 				stack_.reset( );
-				prop_result_ = pl::to_wstring( exc );
+				prop_result_ = cl::str_util::to_wstring( exc );
 			}
 
 			if ( stream_.str( ) != "" )
@@ -3148,14 +3141,14 @@ class input_aml_stack : public ml::input_type
 
 			try
 			{
-				std::istringstream stream( pl::to_string( prop_parse_.value< pl::wstring >( ) ) );
+				std::istringstream stream( olib::opencorelib::str_util::to_string( prop_parse_.value< std::wstring >( ) ) );
 				stack_.parse_stream( stream );
-				prop_result_ = pl::to_wstring( "OK" );
+				prop_result_ = cl::str_util::to_wstring( "OK" );
 			}
 			catch( const std::string &exc )
 			{
 				stack_.reset( );
-				prop_result_ = pl::to_wstring( exc );
+				prop_result_ = cl::str_util::to_wstring( exc );
 			}
 
 			if ( stream_.str( ) != "" )
@@ -3171,19 +3164,19 @@ class input_aml_stack : public ml::input_type
 
 		void push_commands( )
 		{
-			if ( prop_commands_.value< pl::wstring_list >( ).size( ) != 0 )
+			if ( prop_commands_.value< wstring_list >( ).size( ) != 0 )
 			{
 				stack_.set_output( &stream_ );
 
 				try
 				{
-					stack_.run( prop_commands_.value< pl::wstring_list >( ), true );
-					prop_result_ = pl::to_wstring( "OK" );
+					stack_.run( prop_commands_.value< wstring_list >( ), true );
+					prop_result_ = cl::str_util::to_wstring( "OK" );
 				}
 				catch( const std::string &exc )
 				{
 					stack_.reset( );
-					prop_result_ = pl::to_wstring( exc );
+					prop_result_ = cl::str_util::to_wstring( exc );
 				}
 
 				if ( stream_.str( ) != "" )
@@ -3195,7 +3188,7 @@ class input_aml_stack : public ml::input_type
 	
 					stream_.str( "" );
 				}
-				prop_commands_.set( pl::wstring_list( ) );
+				prop_commands_.set( wstring_list( ) );
 			}
 		}
 
@@ -3230,8 +3223,8 @@ class input_aml_stack : public ml::input_type
 		{ return tos_; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return resource_; }
-		virtual const pl::wstring get_mime_type( ) const { return L"text/aml"; }
+		virtual const std::wstring get_uri( ) const { return resource_; }
+		virtual const std::wstring get_mime_type( ) const { return L"text/aml"; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return tos_ ? tos_->get_frames( ) : 0; }
@@ -3252,7 +3245,7 @@ class input_aml_stack : public ml::input_type
 		aml_stack stack_;
 		std::ostringstream stream_;
 		ml::input_type_ptr tos_;
-		pl::wstring resource_;
+		std::wstring resource_;
 		pl::pcos::property prop_command_;
 		pl::pcos::property prop_parse_;
 		pl::pcos::property prop_commands_;
@@ -3269,7 +3262,7 @@ class input_aml_stack : public ml::input_type
 		boost::shared_ptr< pcos::observer > obs_deferred_;
 };
 
-ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const pl::wstring &resource )
+ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_aml_stack( const std::wstring &resource )
 {
 	return ml::input_type_ptr( new input_aml_stack( resource ) );
 }

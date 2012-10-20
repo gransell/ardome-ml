@@ -10,7 +10,6 @@
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
 
-#include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pcos/property.hpp>
 #include <openpluginlib/pl/pcos/subject.hpp>
 #include <openpluginlib/pl/pcos/key.hpp>
@@ -26,12 +25,15 @@ namespace il	= olib::openimagelib::il;
 namespace ml	= olib::openmedialib::ml;
 namespace py	= boost::python;
 
+typedef std::list< std::string > string_list;
+typedef std::list< std::wstring > wstring_list;
+
 namespace olib { namespace openpluginlib { namespace detail {
 
-void ( pcos::property::*set_string )( const opl::string& ) = &pcos::property::set<opl::string>;
-void ( pcos::property::*set_wstring )( const opl::wstring& ) = &pcos::property::set<opl::wstring>;
-void ( pcos::property::*set_string_list )( const opl::string_list& ) = &pcos::property::set<opl::string_list>;
-void ( pcos::property::*set_wstring_list )( const opl::wstring_list& ) = &pcos::property::set<opl::wstring_list>;
+void ( pcos::property::*set_string )( const std::string& ) = &pcos::property::set<std::string>;
+void ( pcos::property::*set_wstring )( const std::wstring& ) = &pcos::property::set<std::wstring>;
+void ( pcos::property::*set_string_list )( const string_list& ) = &pcos::property::set<string_list>;
+void ( pcos::property::*set_wstring_list )( const wstring_list& ) = &pcos::property::set<wstring_list>;
 void ( pcos::property::*set_double )( const double& ) = &pcos::property::set<double>;
 void ( pcos::property::*set_int_list )( const pcos::int_list& ) = &pcos::property::set<pcos::int_list>;
 void ( pcos::property::*set_double_list )( const pcos::double_list& ) = &pcos::property::set<pcos::double_list>;
@@ -50,8 +52,8 @@ void back_reference_set( pcos::property* p, py::back_reference<int> x )
 }
 
 
-wstring			   ( pcos::property::*value_wstring )( ) const = &pcos::property::value<wstring>;
-string			   ( pcos::property::*value_string )( ) const = &pcos::property::value<string>;
+std::wstring			   ( pcos::property::*value_wstring )( ) const = &pcos::property::value<std::wstring>;
+std::string			   ( pcos::property::*value_string )( ) const = &pcos::property::value<std::string>;
 wstring_list	   ( pcos::property::*value_wstring_list )( ) const = &pcos::property::value<wstring_list>;
 string_list		   ( pcos::property::*value_string_list )( ) const = &pcos::property::value<string_list>;
 int				   ( pcos::property::*value_int )( ) const = &pcos::property::value<int>;
@@ -66,10 +68,10 @@ ml::store_type_ptr ( pcos::property::*value_store_type_ptr )( ) const = &pcos::p
 std::vector< double > ( pcos::property::*value_double_vector )( ) const = &pcos::property::value< std::vector< double > >;
 std::vector< boost::int64_t > ( pcos::property::*value_int64_vector )( ) const = &pcos::property::value< std::vector< boost::int64_t > >;
 
-bool			 ( pcos::property::*is_a_wstring )( ) const = &pcos::property::is_a<opl::wstring>;
-bool			 ( pcos::property::*is_a_string )( ) const = &pcos::property::is_a<opl::string>;
-bool			 ( pcos::property::*is_a_wstring_list )( ) const = &pcos::property::is_a<opl::wstring_list>;
-bool			 ( pcos::property::*is_a_string_list )( ) const = &pcos::property::is_a<opl::string_list>;
+bool			 ( pcos::property::*is_a_wstring )( ) const = &pcos::property::is_a<std::wstring>;
+bool			 ( pcos::property::*is_a_string )( ) const = &pcos::property::is_a<std::string>;
+bool			 ( pcos::property::*is_a_wstring_list )( ) const = &pcos::property::is_a<wstring_list>;
+bool			 ( pcos::property::*is_a_string_list )( ) const = &pcos::property::is_a<string_list>;
 bool			 ( pcos::property::*is_a_int )( ) const = &pcos::property::is_a<int>;
 bool			 ( pcos::property::*is_a_int64 )( ) const = &pcos::property::is_a<boost::int64_t>;
 bool			 ( pcos::property::*is_a_uint64 )( ) const = &pcos::property::is_a<boost::uint64_t>;

@@ -8,7 +8,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		filter_interlace( const pl::wstring & )
+		filter_interlace( const std::wstring & )
 			: ml::filter_type( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_bff_( pcos::key::from_string( "bff" ) )
@@ -21,7 +21,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"interlace"; }
+		virtual const std::wstring get_uri( ) const { return L"interlace"; }
 
 		// Has twice the number of frames as the source provides
 		virtual int get_frames( ) const
@@ -120,7 +120,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 		pcos::property prop_bff_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_interlace( resource ) );
 }

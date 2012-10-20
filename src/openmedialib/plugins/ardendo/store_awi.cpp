@@ -25,7 +25,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 {
 	public:
-		store_awi( const pl::wstring &resource ) 
+		store_awi( const std::wstring &resource ) 
 			: ml::store_type( )
 			, resource_( resource )
 			, context_( 0 )
@@ -55,7 +55,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			bool result = frame && frame->get_stream( );
 
 			if ( result && !context_ )
-				result = ffurl_open( &context_, pl::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
+				result = ffurl_open( &context_, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
 
 			if ( result )
 			{
@@ -105,14 +105,14 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 		{ }
 
 	protected:
-		pl::wstring resource_;
+		std::wstring resource_;
 		URLContext *context_;
 		ml::awi_generator_v3 index_;
 		int count_;
 		boost::int64_t size_;
 };
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_awi( const pl::wstring &resource )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_awi( const std::wstring &resource )
 {
 	return ml::store_type_ptr( new store_awi( resource ) );
 }

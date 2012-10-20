@@ -38,14 +38,14 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 {
 	public:
 		// Filter_type overloads
-		explicit filter_aml( const pl::wstring & )
+		explicit filter_aml( const std::wstring & )
 			: ml::filter_type( )
 			, prop_filename_( pl::pcos::key::from_string( "filename" ) )
 			, prop_write_( pl::pcos::key::from_string( "write" ) )
 			, prop_stdout_( pl::pcos::key::from_string( "stdout" ) )
 			, prop_limit_( pl::pcos::key::from_string( "limit" ) )
 		{
-			properties( ).append( prop_filename_ = pl::wstring( L"graph.aml" ) );
+			properties( ).append( prop_filename_ = std::wstring( L"graph.aml" ) );
 			properties( ).append( prop_write_ = 1 );
 			properties( ).append( prop_stdout_ = std::string( "" ) );
 			properties( ).append( prop_limit_ = 0 );
@@ -55,7 +55,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"aml"; }
+		virtual const std::wstring get_uri( ) const { return L"aml"; }
 
 		virtual void on_slot_change( ml::input_type_ptr input, int )
 		{
@@ -63,7 +63,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			{
 				if ( prop_write_.value< int >( ) )
 				{
-					create_aml( input, prop_filename_.value< pl::wstring >( ), prop_limit_.value< int >( ) );
+					create_aml( input, prop_filename_.value< std::wstring >( ), prop_limit_.value< int >( ) );
 					prop_write_ = 0;
 				}
 			}
@@ -75,14 +75,14 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		{
 			if ( prop_write_.value< int >( ) )
 			{
-				create_aml( fetch_slot( ), prop_filename_.value< pl::wstring >( ), prop_limit_.value< int >( ) );
+				create_aml( fetch_slot( ), prop_filename_.value< std::wstring >( ), prop_limit_.value< int >( ) );
 				prop_write_ = 0;
 			}
 			result = fetch_from_slot( );
 		}
 
 	private:
-		void create_aml( ml::input_type_ptr input, const pl::wstring filename, int limit )
+		void create_aml( ml::input_type_ptr input, const std::wstring filename, int limit )
 		{
 			if ( filename == L"@" )
 			{
@@ -92,7 +92,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			}
 			else if ( filename != L"-" )
 			{
-				std::fstream stream( pl::to_string( filename ).c_str( ), std::ios::out );
+				std::fstream stream( olib::opencorelib::str_util::to_string( filename ).c_str( ), std::ios::out );
 				create_aml( stream, input, limit );
 			}
 			else
@@ -129,7 +129,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			}
 		}
 
-		bool needs_quotes( const pl::wstring &value )
+		bool needs_quotes( const std::wstring &value )
 		{
 			bool result = true;
 			if ( value.size( ) > 1 )
@@ -163,7 +163,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 					}
 				}
 
-				std::string uri = pl::to_string( input->get_uri( ) );
+				std::string uri = olib::opencorelib::str_util::to_string( input->get_uri( ) );
 
 				if ( input->slot_count( ) == 0 && input->get_mime_type( ) == L"text/value" )
 					stream << uri;
@@ -201,10 +201,10 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 							stream << name << "=" << p.value< boost::int64_t >( ) << " ";
 						else if ( p.is_a< boost::uint64_t >( ) )
 							stream << name << "=" << p.value< boost::uint64_t >( ) << " ";
-						else if ( p.is_a< pl::wstring >( ) && needs_quotes( p.value< pl::wstring >( ) ) )
-							stream << name << "=\"" << pl::to_string( p.value< pl::wstring >( ) ) << "\" ";
-						else if ( p.is_a< pl::wstring >( ) )
-							stream << name << "=" << pl::to_string( p.value< pl::wstring >( ) ) << " ";
+						else if ( p.is_a< std::wstring >( ) && needs_quotes( p.value< std::wstring >( ) ) )
+							stream << name << "=\"" << olib::opencorelib::str_util::to_string( p.value< std::wstring >( ) ) << "\" ";
+						else if ( p.is_a< std::wstring >( ) )
+							stream << name << "=" << olib::opencorelib::str_util::to_string( p.value< std::wstring >( ) ) << " ";
 						else if ( p.is_a< std::vector< double > >( ) )
 							to_stream( stream, name, p.value< std::vector< double > >( ) );
 						else if ( p.is_a< std::vector< int > >( ) )
@@ -228,7 +228,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		pl::pcos::property prop_limit_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_aml( resource ) );
 }

@@ -943,8 +943,8 @@ class avformat_decode_filter : public filter_simple
 			, audio_queue_( )
 		{
 			properties( ).append( prop_gop_open_ = 1 );
-			properties( ).append( prop_scope_ = pl::wstring(L"default_scope") );
-			properties( ).append( prop_source_uri_ = pl::wstring(L"") );
+			properties( ).append( prop_scope_ = std::wstring(L"default_scope") );
+			properties( ).append( prop_source_uri_ = std::wstring(L"") );
 			properties( ).append( prop_threads_ = 1 );
 			properties( ).append( prop_decode_video_ = 1 );
 		}
@@ -957,7 +957,7 @@ class avformat_decode_filter : public filter_simple
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"avdecode"; }
+		virtual const std::wstring get_uri( ) const { return L"avdecode"; }
 
 	protected:
 		
@@ -973,13 +973,13 @@ class avformat_decode_filter : public filter_simple
 					if ( result && result->get_stream( ) && prop_decode_video_.value< int >( ) )
 					{
 						// If the source_uri has not been set for this decode filter then try to use the uri for the first input
-						pl::wstring uri = fetch_slot( 0 )->get_uri( );
-						if( !prop_source_uri_.value< pl::wstring >( ).empty( ) )
+						std::wstring uri = fetch_slot( 0 )->get_uri( );
+						if( !prop_source_uri_.value< std::wstring >( ).empty( ) )
 						{
-							uri = prop_source_uri_.value< pl::wstring >( );
+							uri = prop_source_uri_.value< std::wstring >( );
 						}
 						
-						queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< pl::wstring >( ), uri, prop_threads_.value< int >( ) ) );
+						queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< std::wstring >( ), uri, prop_threads_.value< int >( ) ) );
 					}
 				}
 				else
@@ -1190,9 +1190,9 @@ class avformat_video_streamer : public ml::stream_type
 			return stream_ ? stream_->samples( ) : 0;
 		}
 	
-		virtual const olib::openpluginlib::wstring pf( ) const 
+		virtual const std::wstring pf( ) const 
 		{ 
-			return stream_ ? stream_->pf( ) : pl::wstring( L"" );
+			return stream_ ? stream_->pf( ) : std::wstring( L"" );
 		}
 
 		virtual olib::openimagelib::il::field_order_flags field_order( ) const 
@@ -1228,7 +1228,7 @@ class avformat_encode_filter : public filter_simple
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
-			properties( ).append( prop_profile_ = pl::wstring( L"profiles/vcodec/dv25" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"profiles/vcodec/dv25" ) );
 			properties( ).append( prop_threads_ = 4 );
 		}
 
@@ -1240,7 +1240,7 @@ class avformat_encode_filter : public filter_simple
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"avencode"; }
+		virtual const std::wstring get_uri( ) const { return L"avencode"; }
 
 	protected:
 		// The main access point to the filter
@@ -1266,7 +1266,7 @@ class avformat_encode_filter : public filter_simple
 					video_wrapper_ = new avformat_video( result );
 					video_streamer_ = avformat_video_streamer_ptr( new avformat_video_streamer( video_wrapper_ ) );
 					manager_.enroll( video_wrapper_ );
-					manager_.load( pl::to_string( prop_profile_.value< pl::wstring >( ) ) );
+					manager_.load( olib::opencorelib::str_util::to_string( prop_profile_.value< std::wstring >( ) ) );
 
 					// State is initialised now
 					initialised_ = true;
@@ -1316,7 +1316,7 @@ class avformat_encode_filter : public filter_simple
 					else if ( !encoding_ && !stream_types_match )
 					{
 						ARLOG_DEBUG3( "case 3: pos=%1%: stream of different type: %2% vs %3%")( get_position( ) )
-							( source->get_stream( )->codec( ) )( prop_profile_.value< pl::wstring >( ) );
+							( source->get_stream( )->codec( ) )( prop_profile_.value< std::wstring >( ) );
 						encoding_ = true;
 					}
 					else if ( !encoding_ && !continuous( last_frame_, source ) )
@@ -1420,16 +1420,16 @@ class avformat_encode_filter : public filter_simple
 		bool encoding_;
 		cl::profile_manager manager_;
 		avformat_video *video_wrapper_;
-		pl::wstring pf_;
+		std::wstring pf_;
 		avformat_video_streamer_ptr video_streamer_;
 };
 
-filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const pl::wstring & )
+filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const std::wstring & )
 {
 	return filter_type_ptr( new avformat_decode_filter( ) );
 }
 
-filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const pl::wstring & )
+filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const std::wstring & )
 {
 	return filter_type_ptr( new avformat_encode_filter( ) );
 }

@@ -23,7 +23,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_invert( const pl::wstring & )
+		explicit filter_invert( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_planes_( pcos::key::from_string( "planes" ) )
@@ -44,7 +44,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"invert"; }
+		virtual const std::wstring get_uri( ) const { return L"invert"; }
 
 	protected:
 		// The main access point to the filter
@@ -122,7 +122,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		pcos::property prop_rh_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_invert( resource ) );
 }

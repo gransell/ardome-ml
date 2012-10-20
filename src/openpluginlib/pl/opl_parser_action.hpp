@@ -24,7 +24,6 @@ XERCES_CPP_NAMESPACE_USE
 #include <boost/filesystem/path.hpp>
 
 #include <openpluginlib/pl/openplugin.hpp>
-#include <openpluginlib/pl/string.hpp>
 
 namespace olib { namespace openpluginlib { namespace actions {
 
@@ -35,7 +34,7 @@ typedef bool ( *opl_dispatcher )( opl_parser_action& pa );
 class opl_parser_action
 {
 public:
-	typedef wstring 				key_type;
+	typedef std::wstring key_type;
 	typedef boost::filesystem::path	path;
 	
 #if _MSC_VER >= 1400
@@ -49,19 +48,19 @@ public:
 	explicit opl_parser_action( );
 	virtual ~opl_parser_action( );
 
-	bool dispatch( const wstring& tag );
+	bool dispatch( const std::wstring& tag );
 
 	void start( );
 	void finish( );
 
-	wstring get_libname( ) const
+	std::wstring get_libname( ) const
 	{ return libname_; }
-	void set_libname( const wstring& libname )
+	void set_libname( const std::wstring& libname )
 	{ libname_ = libname; }
 
-	wstring get_current_tag( ) const
+	std::wstring get_current_tag( ) const
 	{ return tag_; }
-	void set_current_tag( const wstring& tag )
+	void set_current_tag( const std::wstring& tag )
 	{ tag_ = tag; }
 
 	path get_opl_path( ) const;
@@ -88,7 +87,7 @@ private:
 	opl_dispatcher_container dispatch_;
 	
 	path opl_path_;
-	wstring libname_, tag_;
+	std::wstring libname_, tag_;
 	bool auto_load_;
 };
 

@@ -90,7 +90,7 @@ static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, in
 class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 {
 	public:
-		filter_montage( const pl::wstring & )
+		filter_montage( const std::wstring & )
 			: filter_type( )
 			, prop_width_( pcos::key::from_string( "width" ) )
 			, prop_height_( pcos::key::from_string( "height" ) )
@@ -109,7 +109,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			properties( ).append( prop_height_ = 100 );
 			properties( ).append( prop_orient_ = 0 );
 			properties( ).append( prop_lines_ = 4 );
-			properties( ).append( prop_mode_ = pl::wstring( L"smart" ) );
+			properties( ).append( prop_mode_ = std::wstring( L"smart" ) );
 			properties( ).append( prop_deferred_ = 0 );
 			properties( ).append( prop_frames_ = 0 );
 			properties( ).append( prop_step_ = 1 );
@@ -132,7 +132,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			return 1;
 		}
 
-		virtual const opl::wstring get_uri( ) const { return L"montage"; }
+		virtual const std::wstring get_uri( ) const { return L"montage"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -220,7 +220,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 				pl::pcos::property m = composite->properties( ).get_property_with_key( key_mode_ );
 				pl::pcos::property mix = composite->properties( ).get_property_with_key( key_mix_ );
 
-				m = prop_mode_.value< pl::wstring >( );
+				m = prop_mode_.value< std::wstring >( );
 
 				for ( int index = in, offset = 0; index < out; index += prop_step_.value< int >( ), offset ++ )
 				{
@@ -297,7 +297,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 						assign( fg, key_y_, y.value< double >( ) );
 						assign( fg, key_w_, w.value< double >( ) );
 						assign( fg, key_h_, h.value< double >( ) );
-						assign( fg, key_mode_, prop_mode_.value< pl::wstring >( ) );
+						assign( fg, key_mode_, prop_mode_.value< std::wstring >( ) );
 						assign( fg, key_mix_, mix.value< double >( ) );
 						result->push( fg );
 					}
@@ -331,7 +331,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 			}
 		}
 
-		void assign( ml::frame_type_ptr frame, pl::pcos::key name, pl::wstring value )
+		void assign( ml::frame_type_ptr frame, pl::pcos::key name, std::wstring value )
 		{
 			if ( frame->properties( ).get_property_with_key( name ).valid( ) )
 			{
@@ -360,7 +360,7 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 		std::map< int, ml::frame_type_ptr > frames_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_montage( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_montage( resource ) );
 }

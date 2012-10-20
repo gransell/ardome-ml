@@ -31,7 +31,7 @@ class stack
 			push( L"recover" );
 		}
 
-		void push( olib::openpluginlib::wstring command )
+		void push( std::wstring command )
 		{
 			stack_->property( "parse" ) = command;
 		}
@@ -40,9 +40,9 @@ class stack
 		{
 			filter_type_ptr aml = create_filter( L"aml" );
 			aml->property( "limit" ) = limit;
-			aml->property( "filename" ) = olib::openpluginlib::wstring( L"@" );
+			aml->property( "filename" ) = std::wstring( L"@" );
 			aml->connect( input );
-			olib::openpluginlib::wstring output = olib::openpluginlib::to_wstring( aml->property( "stdout" ).value< std::string >( ) );
+			std::wstring output = olib::opencorelib::str_util::to_wstring( aml->property( "stdout" ).value< std::string >( ) );
 			push( output );
 		}
 

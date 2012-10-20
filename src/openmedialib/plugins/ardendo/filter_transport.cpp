@@ -35,7 +35,7 @@ class ML_PLUGIN_DECLSPEC filter_transport : public ml::filter_type
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
-		virtual const pl::wstring get_uri( ) const { return L"transport"; }
+		virtual const std::wstring get_uri( ) const { return L"transport"; }
 
 		virtual int get_frames( ) const 
 		{ 
@@ -98,7 +98,7 @@ class ML_PLUGIN_DECLSPEC filter_transport : public ml::filter_type
 		int last_position_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_transport( ) );
 }

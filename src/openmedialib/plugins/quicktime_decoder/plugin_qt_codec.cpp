@@ -56,7 +56,7 @@ public:
 	bool requires_image( ) const { return false; }
 
 	// Return the filter id
-	const pl::wstring get_uri( ) const { return L"qt_decode"; }
+	const std::wstring get_uri( ) const { return L"qt_decode"; }
 
 	// Return the number of slots that can be connected to this filter
 	const size_t slot_count( ) const { return 1; }
@@ -322,17 +322,17 @@ private:
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring &spec )
+	virtual input_type_ptr input(  const std::wstring &spec )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &name, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &name, const frame_type_ptr &frame )
 	{
 		return store_type_ptr( );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring &spec )
+	virtual filter_type_ptr filter( const std::wstring &spec )
 	{
 		if ( spec == L"qt_decode" )
 			return filter_type_ptr( new filter_qt_decode( ) );

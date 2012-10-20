@@ -12,7 +12,6 @@ namespace opl = olib::openpluginlib;
 
 BOOST_PYTHON_MODULE( openpluginlib )
 {
-	opl::detail::py_string( );
 	opl::detail::py_openpluginlib( );
 	opl::detail::py_pcos_key();
 	opl::detail::py_pcos_observer(); 

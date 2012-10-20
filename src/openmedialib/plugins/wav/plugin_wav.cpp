@@ -34,7 +34,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 {
 	public:
 		// Constructor and destructor
-		input_wav( const pl::wstring &spec ) 
+		input_wav( const std::wstring &spec ) 
 			: input_type( ) 
 			, spec_( spec )
 			, prop_fps_num_( pl::pcos::key::from_string( "fps_num" ) )
@@ -68,8 +68,8 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		virtual bool requires_image( ) const { return false; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return spec_; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return spec_; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
@@ -79,12 +79,12 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 		bool initialize( )
 		{
-			pl::wstring resource = spec_;
+			std::wstring resource = spec_;
 
 			if ( resource.find( L"wav:" ) == 0 )
 				resource = resource.substr( 4 );
 
-			int error = ffurl_open( &context_, pl::to_string( resource ).c_str( ), AVIO_FLAG_READ, 0, 0 );
+			int error = ffurl_open( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), AVIO_FLAG_READ, 0, 0 );
 			bool found_fmt = false;
 
 			if ( error == 0 )
@@ -312,7 +312,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			}
 		}
 
-		pl::wstring spec_;
+		std::wstring spec_;
 		pl::pcos::property prop_fps_num_;
 		pl::pcos::property prop_fps_den_;
         pl::pcos::property prop_file_size_;
@@ -339,19 +339,19 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 class ML_PLUGIN_DECLSPEC plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input( const pl::wstring &spec )
+	virtual input_type_ptr input( const std::wstring &spec )
 	{
 		return input_type_ptr( new input_wav( spec ) );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &spec, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &spec, const frame_type_ptr &frame )
 	{
 		store_wav* s = new store_wav( spec );
 		s->initializeFirstFrame(frame);
 		return store_type_ptr( s );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring & )
+	virtual filter_type_ptr filter( const std::wstring & )
 	{
 		return filter_type_ptr( );
 	}

@@ -3,20 +3,22 @@
 #include "input.hpp"
 #include "frame.hpp"
 #include "filter.hpp"
+#include <opencorelib/cl/str_util.hpp>
 
 namespace opl  = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
 void filter_key::refresh( pcos::property input )
 {
-	if ( prev_value_ != input.value< opl::wstring >( ) )
+	if ( prev_value_ != input.value< std::wstring >( ) )
 	{
-		prev_value_ = input.value< opl::wstring >( );
+		prev_value_ = input.value< std::wstring >( );
 
 		// Obtain the value as a string
-		std::string value = opl::to_string( prev_value_ ).c_str( );
+		std::string value = cl::str_util::to_string( prev_value_ ).c_str( );
 
 		// Update the previous value
 		// Check if there's a default value specified (syntax being <property>:<default>)
@@ -90,7 +92,7 @@ void filter_key::assign( ml::frame_type_ptr &frame, filter_type *filter )
 		else if ( src.valid( ) )
 			dst.set_from_property( src );
 		else 
-			dst.set_from_string( opl::to_wstring( default_ ) );
+			dst.set_from_string( cl::str_util::to_wstring( default_ ) );
 	}
 }
 
@@ -111,7 +113,7 @@ const size_t filter_type::slot_count( ) const
 	return 1; 
 }
 
-const openpluginlib::wstring filter_type::get_mime_type( ) const
+const std::wstring filter_type::get_mime_type( ) const
 {
 	return slots_[ 0 ] ? slots_[ 0 ]->get_mime_type( ) : L""; 
 }
@@ -215,7 +217,7 @@ frame_type_ptr filter_type::fetch_from_slot( int index, bool assign )
 			assign_frame_props( result );
 		else if ( !result )
 			PL_LOG( opl::level::error, boost::format( "Unable to retrieve frame %d from %s connected to %s" ) % 
-					get_position( ) % opl::to_string( get_uri( ) ) % opl::to_string( input->get_uri( ) ) );
+					get_position( ) % cl::str_util::to_string( get_uri( ) ) % cl::str_util::to_string( input->get_uri( ) ) );
 		if ( result )
 		{
 			exception_list list = result->exceptions( );

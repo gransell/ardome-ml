@@ -24,7 +24,7 @@ public:
     virtual ~lru_cache_type( )
     {}
     
-    typedef std::pair< boost::int32_t, olib::openpluginlib::wstring > key_type;
+    typedef std::pair< boost::int32_t, std::wstring > key_type;
     
     frame_type_ptr frame_for_position( const key_type &pos );
     void insert_frame_for_position( const key_type &pos, const frame_type_ptr& f );

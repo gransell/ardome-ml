@@ -31,7 +31,7 @@ namespace olib { namespace openpluginlib { namespace detail {
 class registry
 {
 public:
-	typedef wstring key_type;
+	typedef std::wstring key_type;
 	
 #if _MSC_VER >= 1400
 	typedef stdext::hash_multimap<key_type, plugin_item> container;
@@ -91,11 +91,11 @@ public:
 
 public:
 	// Insert all plugins found under the lookup path into the registry's standard database
-	bool insert_std( const string& lookup_path );
+	bool insert_std( const std::string& lookup_path );
 
 	// Insert all plugins found under the lookup path into the registry's custom database
 	// Custom plugins are searched before standard plugins.
-	bool insert_custom( const string& lookup_path );
+	bool insert_custom( const std::string& lookup_path );
 
 	// TODO: Does nothing
 	bool remove( );
@@ -116,7 +116,7 @@ public:
 	{ auto_load_.erase( auto_load_.begin( ), auto_load_.end( ) ); }
 
 private:
-	explicit registry( const string& lookup_path = "" );
+	explicit registry( const std::string& lookup_path = "" );
 	~registry( );
 	registry( const registry& );
 	registry& operator=( const registry& );

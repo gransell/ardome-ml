@@ -47,8 +47,8 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		virtual bool requires_image( ) const { return true; }
 
 		// Basic information
-		virtual const pl::wstring get_uri( ) const { return L"test:"; }
-		virtual const pl::wstring get_mime_type( ) const { return L""; }
+		virtual const std::wstring get_uri( ) const { return L"test:"; }
+		virtual const std::wstring get_mime_type( ) const { return L""; }
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return 250; }
@@ -120,7 +120,7 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 class ML_PLUGIN_DECLSPEC packets_store : public store_type
 {
 	public:
-		packets_store( const pl::wstring &name, const frame_type_ptr &frame ) 
+		packets_store( const std::wstring &name, const frame_type_ptr &frame ) 
 			: store_type( )
 			, name_( name )
 			, output_( 0 )
@@ -132,9 +132,9 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 			{
 				if ( name_.find( L"packets:" ) == 0 )
 					name_ = name_.substr( 8 );
-				output_ = fopen( pl::to_string( name_ ).c_str( ), "wb" );
+				output_ = fopen( olib::opencorelib::str_util::to_string( name_ ).c_str( ), "wb" );
 				if ( frame->get_stream( ) )
-					index_ = fopen( pl::to_string( name_ + L".awi" ).c_str( ), "wb" );
+					index_ = fopen( olib::opencorelib::str_util::to_string( name_ + L".awi" ).c_str( ), "wb" );
 			}
 		}
 
@@ -183,7 +183,7 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 		}
 
 	private:
-		pl::wstring name_;
+		std::wstring name_;
 		FILE *output_;
 		FILE *index_;
 		awi_generator_v4 generator_;
@@ -205,7 +205,7 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return true; }
 
-		virtual const pl::wstring get_uri( ) const { return L"template:"; }
+		virtual const std::wstring get_uri( ) const { return L"template:"; }
 
 		inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 		{
@@ -260,19 +260,19 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 class ML_PLUGIN_DECLSPEC template_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const pl::wstring & )
+	virtual input_type_ptr input(  const std::wstring & )
 	{
 		return input_type_ptr( new template_input( ) );
 	}
 
-	virtual store_type_ptr store( const pl::wstring &name, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &name, const frame_type_ptr &frame )
 	{
 		if ( name.find( L"packets:" ) == 0 )
 			return store_type_ptr( new packets_store( name, frame ) );
 		return store_type_ptr( new template_store( ) );
 	}
 
-	virtual filter_type_ptr filter( const pl::wstring & )
+	virtual filter_type_ptr filter( const std::wstring & )
 	{
 		return filter_type_ptr( new template_filter( ) );
 	}

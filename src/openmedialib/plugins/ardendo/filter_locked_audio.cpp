@@ -22,7 +22,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_locked_audio( const pl::wstring & )
+		explicit filter_locked_audio( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
@@ -34,7 +34,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 			, channels_( -1 )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_profile_ = pl::wstring( L"dv" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"dv" ) );
 			properties( ).append( prop_offset_ = 0 );
 			
 			prop_offset_.attach( obs_offset_changed_ );
@@ -72,17 +72,17 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 			imx_p60_samples.push_back( 801 );
 			imx_p60_samples.push_back( 801 );
 
-			profiles_[ pl::wstring( L"dv" ) ] = dv_samples;
-			profiles_[ pl::wstring( L"imx" ) ] = imx_samples;
-			profiles_[ pl::wstring( L"dv_p60" ) ] = dv_p60_samples;
-			profiles_[ pl::wstring( L"imx_p60" ) ] = imx_p60_samples;
+			profiles_[ std::wstring( L"dv" ) ] = dv_samples;
+			profiles_[ std::wstring( L"imx" ) ] = imx_samples;
+			profiles_[ std::wstring( L"dv_p60" ) ] = dv_p60_samples;
+			profiles_[ std::wstring( L"imx_p60" ) ] = imx_p60_samples;
 		}
 
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"locked_audio"; }
+		virtual const std::wstring get_uri( ) const { return L"locked_audio"; }
 		
 		void offset_changed( )
 		{
@@ -96,7 +96,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
         {
             const int frames = get_frames( );
 			// Locked audio generation
-			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< pl::wstring >( ) ) != profiles_.end( ) && get_position( ) < frames )
+			if ( prop_enable_.value< int >( ) && profiles_.find( prop_profile_.value< std::wstring >( ) ) != profiles_.end( ) && get_position( ) < frames )
 			{
 				ml::input_type_ptr input = fetch_slot( 0 );
 
@@ -107,8 +107,8 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 				}
 
 				bool is_p60 = ( fps_num_ == 60000 && fps_den_ == 1001 );
-				const std::vector< int > &table = profiles_[ prop_profile_.value< pl::wstring >( ) + ( is_p60 ? L"_p60" : L"" ) ];
-				ARENFORCE_MSG( table.size(), "Invalid locked audio profile: \"%1%\"" )( prop_profile_.value< pl::wstring >( ) );
+				const std::vector< int > &table = profiles_[ prop_profile_.value< std::wstring >( ) + ( is_p60 ? L"_p60" : L"" ) ];
+				ARENFORCE_MSG( table.size(), "Invalid locked audio profile: \"%1%\"" )( prop_profile_.value< std::wstring >( ) );
 				const int start = ( get_position( ) + prop_offset_.value< int >( ) ) - ( get_position( ) % table.size( ) );
 				const int final = start + table.size( );
 
@@ -258,12 +258,12 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 		int fps_den_;
 		int frequency_;
 		int channels_;
-		std::map< pl::wstring, std::vector< int > > profiles_;
+		std::map< std::wstring, std::vector< int > > profiles_;
 		std::vector< ml::frame_type_ptr > frames_;
 		ml::audio_type_ptr audio_span_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_locked_audio( resource ) );
 }

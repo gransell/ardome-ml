@@ -25,8 +25,9 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <openpluginlib/pl/openplugin.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 #include <openpluginlib/pl/log.hpp>
+#include <opencorelib/cl/export_defines.hpp>
+#include <opencorelib/cl/str_util.hpp>
 #include <sstream>
 
 namespace fs = boost::filesystem;
@@ -44,7 +45,7 @@ namespace
 #endif
 	{
 #ifdef WIN32
-		return LoadLibrary( to_wstring( path.native_file_string( ).c_str( ) ).c_str( ) );
+		return LoadLibrary( olib::opencorelib::str_util::to_wstring( path.native_file_string( ).c_str( ) ).c_str( ) );
 #else
 		// CY: It is essential that RTLD_GLOBAL is used here for dynamic_cast to be
 		// functional. All g++ apps should also link with -Wl,-E.
@@ -107,11 +108,11 @@ plugin_resolver::~plugin_resolver( )
 {
 }
 
-bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>& shared_name )
+bool load_shared_library( plugin_resolver& resolver, const std::vector<std::wstring>& shared_name )
 {
-	typedef std::vector<wstring>::const_iterator const_iterator;
-	fs::path key = fs::path( to_string( *shared_name.begin( ) ).c_str( ), fs::native );
-	string error = "";
+	typedef std::vector<std::wstring>::const_iterator const_iterator;
+	fs::path key = fs::path( olib::opencorelib::str_util::to_string( *shared_name.begin( ) ).c_str( ), fs::native );
+	std::string error = "";
 	
 	if ( plugin_cache.find( key ) != plugin_cache.end( ) )
 	{
@@ -123,7 +124,7 @@ bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>&
 	for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
 	{
 		//Check if the file exists before trying to dlopen it
-		fs::path lib_path(to_string( *I ).c_str( ), fs::native);
+		fs::path lib_path(olib::opencorelib::str_util::to_string( *I ).c_str( ), fs::native);
 		if( !fs::exists(lib_path) )
 		{
 			continue;
@@ -146,7 +147,7 @@ bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>&
 #ifndef WIN32
 			error += std::string( dlerror( ) ) + "\n";
 #else
-			error += to_string( *I ) + "\n";
+			error += olib::opencorelib::str_util::to_string( *I ) + "\n";
 #endif
 		}
 	}
@@ -166,7 +167,7 @@ bool load_shared_library( plugin_resolver& resolver, const std::vector<wstring>&
 			std::stringstream paths_tried;
 			for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
 			{
-				paths_tried << to_string( *I ).c_str() << "\n";
+				paths_tried << olib::opencorelib::str_util::to_string( *I ).c_str() << "\n";
 			}
 
 			PL_LOG( 0, boost::format( "Could not find the requested plugin library. Tried the following %1% paths:\n%2%" ) % shared_name.size() % paths_tried.str() );

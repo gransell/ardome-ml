@@ -17,7 +17,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_chroma_key( const pl::wstring & )
+		explicit filter_chroma_key( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_u_( pcos::key::from_string( "u" ) )
@@ -35,7 +35,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const pl::wstring get_uri( ) const { return L"chroma_key"; }
+		virtual const std::wstring get_uri( ) const { return L"chroma_key"; }
 
 	protected:
 		// The main access point to the filter
@@ -123,7 +123,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 		pcos::property prop_var_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_chroma_key( resource ) );
 }

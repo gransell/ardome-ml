@@ -42,7 +42,9 @@
 
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/registry.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
+
+typedef std::list< std::string > string_list;
+typedef std::list< std::wstring > wstring_list;
 
 namespace fs = boost::filesystem;
 namespace cl = olib::opencorelib;
@@ -53,8 +55,8 @@ namespace olib { namespace openpluginlib {
 namespace
 {
 #ifdef _WIN32
-	string g_kernels_path("");
-	string g_shaders_path("");
+	std::string g_kernels_path("");
+	std::string g_shaders_path("");
 #endif
 
 	class pl_logtarget : public cl::logtarget
@@ -94,31 +96,31 @@ namespace
 	class add_to_filter_string : public std::unary_function<detail::registry::container::value_type, void>
 	{
 	public:
-		explicit add_to_filter_string( wstring& str, bool in_filter )
+		explicit add_to_filter_string( std::wstring& str, bool in_filter )
 			: str_( str )
 			, in_filter_( in_filter )
 		{ }
 		
 		void operator( )( const detail::registry::container::value_type& str )
 		{
-			wstring filter;
+			std::wstring filter;
 			if( in_filter_ )
 				filter = str.second.in_filter;
 			else
 				filter = str.second.out_filter;
 				
-			if( str_.find( filter ) == wstring::npos )
-				str_ += filter + wstring( L" " );
+			if( str_.find( filter ) == std::wstring::npos )
+				str_ += filter + std::wstring( L" " );
 		}
 		
-		wstring filter( ) const
+		std::wstring filter( ) const
 		{ return str_; }
 		
 	private:
 		add_to_filter_string& operator=( const add_to_filter_string& );
 	
 	private:
-		wstring& str_;
+		std::wstring& str_;
 		bool in_filter_;
 	};
 
@@ -154,7 +156,7 @@ namespace
 		TCHAR buffer[ MAX_PATH ];
 		SHGetFolderPath( NULL, CSIDL_PROGRAM_FILES_COMMON, NULL, SHGFP_TYPE_CURRENT, buffer );
 		
-		paths.push_back( to_string( wstring( buffer ) ) + "\\OFX\\Plugins" );
+		paths.push_back( cl::str_util::to_string( std::wstring( buffer ) ) + "\\OFX\\Plugins" );
 		
 		// Check non-localised path for backward compatibility reasons.
 		if( wcscmp( buffer, L"C:\\Program Files\\Common Files" ) )
@@ -168,10 +170,10 @@ namespace
 		return paths;
 	}
 
-	void reflib( int init, const string& lookup_path = "" )
+	void reflib( int init, const std::string& lookup_path = "" )
 	{
 		static long refs = 0;
-		string profile_base = lookup_path;
+		std::string profile_base = lookup_path;
 
 		assert( refs >= 0 && L"openpluginlib::refinit: refs is negative." );
 
@@ -236,7 +238,7 @@ namespace detail
 		class is_match : public std::unary_function<boost::wregex, bool>
 		{
 		public:
-			explicit is_match( const wstring& to_match )
+			explicit is_match( const std::wstring& to_match )
 				: to_match_( to_match )
 			{ }
 
@@ -252,10 +254,10 @@ namespace detail
 			is_match& operator=( const is_match& );
 
 		private:
-			const wstring& to_match_;
+			const std::wstring& to_match_;
 		};
 
-		bool if_matches_expression( const wstring& to_match, const std::vector<boost::wregex>& expression )
+		bool if_matches_expression( const std::wstring& to_match, const std::vector<boost::wregex>& expression )
 		{
 			typedef std::vector<boost::wregex>::const_iterator const_iterator;
 
@@ -268,7 +270,7 @@ namespace detail
 		{ }
 	}
 
-	opl_ptr discover_query_impl::plugin_proxy::create_plugin( const string& options ) const
+	opl_ptr discover_query_impl::plugin_proxy::create_plugin( const std::string& options ) const
 	{
 		if( !item_.resolver.dlopened )
 			load_shared_library( item_.resolver, item_.filenames );
@@ -287,9 +289,9 @@ namespace detail
 		return opl_ptr( static_cast<openplugin*>( 0 ), null_delete );
 	}
 
-	discover_query_impl::container find_plugins( const wstring& libname, 
-												 const wstring& type, 
-												 const wstring& to_match, 
+	discover_query_impl::container find_plugins( const std::wstring& libname, 
+												 const std::wstring& type, 
+												 const std::wstring& to_match, 
 												 const detail::registry::container& el_reg_db )
 	{
 		typedef detail::registry::container						db_container;
@@ -312,7 +314,7 @@ namespace detail
 
 		while( pair.first != pair.second )
 		{
-			const wstring& item_type							= ( *pair.first ).second.type;
+			const std::wstring& item_type							= ( *pair.first ).second.type;
 			const std::vector<boost::wregex>& item_extension	= ( *pair.first ).second.extension;
 
 			if( ( type.empty( ) || type == item_type ) && ( to_match.empty( ) || if_matches_expression( to_match, item_extension ) ) ) 
@@ -324,7 +326,7 @@ namespace detail
 		return plugins;
 	}
 	
-	bool discover_query_impl::operator( )( const wstring& libname, const wstring& type, const wstring& to_match )
+	bool discover_query_impl::operator( )( const std::wstring& libname, const std::wstring& type, const std::wstring& to_match )
 	{
 		// Custom db first
 		container plugins = find_plugins( libname, type, to_match, detail::registry::instance( ).get_custom_db( ) );
@@ -373,7 +375,7 @@ bool init( const string_list& lookup_paths )
 	return true;
 }
 
-bool init( const string& lookup_path )
+bool init( const std::string& lookup_path )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex );
 
@@ -401,7 +403,7 @@ OPENPLUGINLIB_DECLSPEC void init_log( )
 #ifdef WIN32
 // 2 alternative initialization functions required on windows so that when bundling the openlibraries with an app
 // the kernel & shader paths passed in here are used rather than the default openlibraries registry settings
-bool init( const string_list& lookup_paths, const string& kernels_path, const string& /*shaders_path*/ )
+bool init( const string_list& lookup_paths, const std::string& kernels_path, const std::string& /*shaders_path*/ )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex );
 
@@ -414,7 +416,7 @@ bool init( const string_list& lookup_paths, const string& kernels_path, const st
 	return true;
 }
 
-bool init( const string& lookup_path, const string& /*kernels_path*/, const string& shaders_path )
+bool init( const std::string& lookup_path, const std::string& /*kernels_path*/, const std::string& shaders_path )
 {
 	boost::recursive_mutex::scoped_lock lock( mutex );
 
@@ -424,12 +426,12 @@ bool init( const string& lookup_path, const string& /*kernels_path*/, const stri
 }
 #endif
 
-wstring registered_filters( bool in_filter )
+std::wstring registered_filters( bool in_filter )
 {
 	typedef detail::registry::container					db;
 	typedef detail::registry::container::const_iterator	const_iterator;
 	
-	wstring filter;
+	std::wstring filter;
 	add_to_filter_string f( filter, in_filter );
 
 	const db& custom_db = detail::registry::instance( ).get_custom_db( );	
@@ -444,20 +446,20 @@ wstring registered_filters( bool in_filter )
 #ifdef WIN32
 namespace
 {
-	string get_registry_key( const wstring& key_str )
+	std::string get_registry_key( const std::wstring& key_str )
 	{
 		const int allocsiz = 512;
 
 		TCHAR buf[ allocsiz ];
 		DWORD bufsiz = allocsiz;
 
-		string value;
+		std::string value;
 		
 		HKEY key;
 		if( RegOpenKeyEx( HKEY_LOCAL_MACHINE, L"Software\\OpenLibraries", 0, KEY_READ, &key ) == ERROR_SUCCESS )
 		{
 			if( RegQueryValueEx( key, key_str.c_str( ), 0, NULL, ( LPBYTE ) buf, &bufsiz ) == ERROR_SUCCESS )
-				value = to_string( buf );
+				value = cl::str_util::to_string( buf );
 
 			RegCloseKey( key );
 		}
@@ -466,7 +468,7 @@ namespace
 	}
 }
 
-string plugins_path( )
+std::string plugins_path( )
 {
 #ifndef NDEBUG
 	return get_registry_key( L"PluginsDirDebug" );
@@ -475,7 +477,7 @@ string plugins_path( )
 #endif	
 }
 
-string kernels_path( )
+std::string kernels_path( )
 {
 	if(g_kernels_path != "")
 		return g_kernels_path;
@@ -483,7 +485,7 @@ string kernels_path( )
 		return get_registry_key( L"KernelsDir" );
 }
 
-string shaders_path( )
+std::string shaders_path( )
 {
 	if(g_shaders_path != "")
 		return g_shaders_path;

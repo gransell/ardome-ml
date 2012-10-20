@@ -137,7 +137,7 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 			gluLookAt( 0.0f, 0.0f, -3.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
 		}
 
-		GLenum pixelformat_to_gl( opl::wstring pf )
+		GLenum pixelformat_to_gl( ostd::wstring pf )
 		{
 			if( pf == L"r8g8b8" )
 				return GL_RGB;
@@ -492,12 +492,12 @@ glew_store *glew_store::instance_ = 0;
 class ML_PLUGIN_DECLSPEC glew_plugin : public openmedialib_plugin
 {
 public:
-	virtual input_type_ptr input(  const opl::wstring & )
+	virtual input_type_ptr input(  const ostd::wstring & )
 	{
 		return input_type_ptr( );
 	}
 
-	virtual store_type_ptr store( const opl::wstring &, const frame_type_ptr &frame )
+	virtual store_type_ptr store( const ostd::wstring &, const frame_type_ptr &frame )
 	{
 		return store_type_ptr( glew_store::get_instance( frame ) );
 	}

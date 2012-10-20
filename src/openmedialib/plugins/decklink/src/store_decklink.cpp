@@ -36,7 +36,7 @@ private:
 	BMDTimeScale time_scale_;
 	
 public:
-	store_decklink( const opl::wstring & resource, const ml::frame_type_ptr &frame )
+	store_decklink( const ostd::wstring & resource, const ml::frame_type_ptr &frame )
 	: store_type()
 	, device_( )
 	, last_frame_( frame )
@@ -181,7 +181,7 @@ public:
 };
 
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_decklink( const opl::wstring& resource, const ml::frame_type_ptr& frame )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_decklink( const ostd::wstring& resource, const ml::frame_type_ptr& frame )
 {
 	ml::store_type_ptr result( new store_decklink( resource, frame ) );
 	return result;

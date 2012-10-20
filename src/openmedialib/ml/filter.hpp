@@ -14,7 +14,6 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
-#include <openpluginlib/pl/utf8_utils.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -35,7 +34,7 @@ class ML_DECLSPEC filter_key
 	private:
 		olib::openpluginlib::pcos::key dst_key_;
 		location dst_location_;
-		olib::openpluginlib::wstring prev_value_;
+		std::wstring prev_value_;
 		std::string default_;
 		olib::openpluginlib::pcos::key src_key_;
 		location src_location_;
@@ -70,7 +69,7 @@ class ML_DECLSPEC filter_type : public input_type
 		/// implementation of these methods should be sufficient for the majority of cases.
 
 		/// Basic information
-		virtual const openpluginlib::wstring get_uri( ) const = 0;
+		virtual const std::wstring get_uri( ) const = 0;
 
 		/// Default seek functionality
 		/// NB: This implementation allows position to overrun the length of the clip
@@ -100,7 +99,7 @@ class ML_DECLSPEC filter_type : public input_type
 
 		/// Get the mime type associated to the input
 		/// DEPRECATE?
-		virtual const openpluginlib::wstring get_mime_type( ) const;
+		virtual const std::wstring get_mime_type( ) const;
 
 		// Provides a hint to the input implementation - allows the user to say 
 		// 'I only want image or audio, or just fetch the nearest intra frame to here' in the next fetch

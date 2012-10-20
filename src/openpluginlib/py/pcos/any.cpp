@@ -10,7 +10,6 @@
 #include <openpluginlib/py/python.hpp>
 #include <openpluginlib/py/py.hpp>
 
-#include <openpluginlib/pl/string.hpp>
 #include <openpluginlib/pl/pcos/any.hpp>
 #include <openimagelib/il/basic_image.hpp>
 
@@ -19,13 +18,16 @@ namespace pcos	= olib::openpluginlib::pcos;
 namespace il	= olib::openimagelib::il;
 namespace py	= boost::python;
 
+typedef std::list< std::string > string_list;
+typedef std::list< std::wstring > wstring_list;
+
 namespace olib { namespace openpluginlib { namespace detail {
 
 double		       (*double_cast)( const pcos::any& )	   	  = &pcos::any_cast< double >;
 int			       (*int_cast)( const pcos::any& )		   	  = &pcos::any_cast< int >;
 unsigned int	   (*uint_cast)( const pcos::any& )		   	  = &pcos::any_cast< unsigned int >;
-string		  	   (*string_cast)( const pcos::any& )	   	  = &pcos::any_cast< string >;
-wstring		  	   (*wstring_cast)( const pcos::any& )	   	  = &pcos::any_cast< wstring >;
+std::string	  	   (*string_cast)( const pcos::any& )	   	  = &pcos::any_cast< std::string >;
+std::wstring  	   (*wstring_cast)( const pcos::any& )	   	  = &pcos::any_cast< std::wstring >;
 string_list		   (*string_list_cast)( const pcos::any& )    = &pcos::any_cast< string_list >;
 wstring_list	   (*wstring_list_cast)( const pcos::any& )   = &pcos::any_cast< wstring_list >;
 pcos::int_list	   (*int_list_cast)( const pcos::any& )	   	  = &pcos::any_cast< pcos::int_list >;
@@ -49,8 +51,8 @@ void py_pcos_any()
 {
 	py::class_< pcos::any >( "any", py::init< double >() )
 		.def( py::init< unsigned int >() )
-		.def( py::init< string >() )
-		.def( py::init< wstring >() )
+		.def( py::init< std::string >() )
+		.def( py::init< std::wstring >() )
 		.def( py::init< string_list >() )
 		.def( py::init< wstring_list >() )
 		.def( py::init< pcos::int_list >() )

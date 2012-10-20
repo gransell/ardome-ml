@@ -16,7 +16,7 @@ using boost::uint64_t;
 
 #define le olib::opencorelib::endian::little
 
-store_wav::store_wav(const pl::wstring &resource)
+store_wav::store_wav(const std::wstring &resource)
 	: ml::store_type()
 	, file_(NULL)
 	, writeonly(true)
@@ -33,7 +33,7 @@ store_wav::store_wav(const pl::wstring &resource)
 	, real_bytes_per_sample(0)
 
 {
-	std::string resource_name = pl::to_string(resource_);
+	std::string resource_name = olib::opencorelib::str_util::to_string(resource_);
 	ARLOG_DEBUG("store_wav::store_wav(\"%s\")")(resource_name.c_str());
 
 	properties( ).append( prop_enabled_ = 1 );
@@ -57,7 +57,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 {
 	ARLOG_DEBUG2("store_wav::initializeFirstFrame()");
 
-	std::string resource = pl::to_string(resource_);
+	std::string resource = olib::opencorelib::str_util::to_string(resource_);
 	if (resource.find("wav:") == 0) {
 		resource = resource.substr(4);
 		size_t ext = resource.rfind('.');

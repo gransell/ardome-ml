@@ -20,7 +20,7 @@ namespace aml { namespace openmedialib {
 class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_simple
 {
 	public:
-		filter_mvitc_write( const pl::wstring & )
+		filter_mvitc_write( const std::wstring & )
 			: ml::filter_simple( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 		{
@@ -30,7 +30,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_simple
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"mvitc_write"; }
+		virtual const std::wstring get_uri( ) const { return L"mvitc_write"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -81,7 +81,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_simple
 class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 {
 	public:
-		filter_mvitc_decode( const pl::wstring & )
+		filter_mvitc_decode( const std::wstring & )
 			: ml::filter_type( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_mask_( pcos::key::from_string( "mask" ) )
@@ -95,7 +95,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 		// Indicates if the input will enforce a packet decode
 		virtual bool requires_image( ) const { return prop_enable_.value< int >( ) == 1; }
 
-		virtual const pl::wstring get_uri( ) const { return L"mvitc_decode"; }
+		virtual const std::wstring get_uri( ) const { return L"mvitc_decode"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -177,12 +177,12 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 		int tries_;
 };
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_decode( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_mvitc_decode( resource ) );
 }
 
-ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const pl::wstring &resource )
+ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const std::wstring &resource )
 {
 	return ml::filter_type_ptr( new filter_mvitc_write( resource ) );
 }

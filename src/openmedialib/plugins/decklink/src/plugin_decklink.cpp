@@ -31,8 +31,8 @@ void intrusive_ptr_release( IUnknown *p )
 
 namespace amf { namespace openmedialib { 
 	
-extern ml::input_type_ptr create_input_decklink( const pl::wstring& resource );
-extern ml::store_type_ptr create_store_decklink( const pl::wstring& resource, const ml::frame_type_ptr& frame );
+extern ml::input_type_ptr create_input_decklink( const std::wstring& resource );
+extern ml::store_type_ptr create_store_decklink( const std::wstring& resource, const ml::frame_type_ptr& frame );
 	
 bool is_decklink_device_present( )
 {
@@ -53,12 +53,12 @@ bool is_decklink_device_present( )
 class ML_PLUGIN_DECLSPEC aml_decklink : public ml::openmedialib_plugin
 {
 public:
-	virtual ml::input_type_ptr input( const pl::wstring &resource )
+	virtual ml::input_type_ptr input( const std::wstring &resource )
 	{
 		return create_input_decklink( resource );
 	}
 	
-	virtual ml::store_type_ptr store( const pl::wstring &resource, const ml::frame_type_ptr &frame )
+	virtual ml::store_type_ptr store( const std::wstring &resource, const ml::frame_type_ptr &frame )
 	{
 		return create_store_decklink( resource, frame );
 	}
