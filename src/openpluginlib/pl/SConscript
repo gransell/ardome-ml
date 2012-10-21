@@ -48,7 +48,6 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'string.hpp', 
 		'timer.hpp', 
 		'geometry.hpp', 
-		'string.hpp', 
 	] )
 
 if local_env[ 'PLATFORM' ] != 'win32' :
