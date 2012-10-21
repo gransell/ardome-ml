@@ -43,7 +43,6 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 		'config.hpp', 
 		'log.hpp', 
 		'pool.hpp', 
-		'string.hpp', 
 		'timer.hpp', 
 		'geometry.hpp', 
 	] )
