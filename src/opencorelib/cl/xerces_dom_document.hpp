@@ -60,8 +60,6 @@ public:
 	                     bool asFragment = false) const;
 
 protected:
-	document(const document&) {}
-
 	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft,
 	               bool asFragment = false) const;
 
