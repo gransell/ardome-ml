@@ -42,13 +42,14 @@ namespace olib
                                 boost::bind(&worker::stop, _1, time_out ));
 		}
 
-        bool thread_pool::wait_for_all_jobs_completed( const boost::posix_time::time_duration& time_out )
+        bool thread_pool::wait_for_all_jobs_completed( const boost::posix_time::time_duration& time )
         {
             boost::recursive_mutex::scoped_lock lock(m_this_mtx);
+			boost::system_time timeout = boost::get_system_time( ) + time;
 
 			while( jobs_.size( ) || m_idle_workers < m_i_max_workers )
 			{
-				if( !idle_worker_cond_.timed_wait(lock, time_out) )
+				if( !idle_worker_cond_.timed_wait(lock, timeout) )
 					return false;
 			}
             return true;

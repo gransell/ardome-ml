@@ -134,7 +134,7 @@ namespace olib
             void set_should_terminate_job( bool term );
 
             // Should the job terminate or not
-            bool m_terminate_job;
+            volatile bool m_terminate_job;
 
             // Makes it possible to add some bookkeeping code around the real job function do_work.
             void do_work_bootstrapper();

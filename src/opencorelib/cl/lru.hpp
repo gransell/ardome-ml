@@ -117,8 +117,9 @@ class CORE_API lru
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			val_type result;
+			boost::system_time timeout = boost::get_system_time( ) + time;
 			while( !( result = fetch( index ) ) )
-				if ( !cond_.timed_wait( lock, time ) )
+				if ( !cond_.timed_wait( lock, timeout ) )
 					break;
 			return result;
 		}
