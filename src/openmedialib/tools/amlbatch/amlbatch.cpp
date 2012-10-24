@@ -488,145 +488,90 @@ void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_ty
 	}
 }
 
-int main( int argc, char *argv[ ] )
+int real_main( int argc, char **argv )
 {
-    #ifdef WIN32
-        HMODULE mod_hand = GetModuleHandle(L"amlbatch.exe");
-        char mod_name [255];
-        if( ::GetModuleFileNameA( mod_hand, mod_name, 255) == 0 )
-        {
-            std::cout << "Failed to get the path to amlbatch.exe\n";
-            return -1;
-        }
-
-        std::string a_path(mod_name);
-        std::string::size_type pos = a_path.find("amlbatch.exe");
-        if( pos == std::string::npos ) 
-        {
-            std::cout << "Expecting the program that started to be called amlbatch.exe.\n";
-            std::cout << "amlbatch.exe must be located in a directory which have a subdir called aml-plugins\n";
-            return -1;
-        }
-        
-        std::string a_path2 = a_path.substr(0, pos);
-        a_path2 += "aml-plugins";
-
-        try
-        {
-            if( ! pl::init( a_path2 ) )
-            {
-                std::cout << "aml-plugins location: " << a_path2 << std::endl; 
-                std::cout << "Failed to initialize ardome-ml\n";
-                return -1;
-            }
-        }
-        catch ( std::exception& e)
-        {
-            std::cout << "pl::init failed\n";
-            std::cout << e.what() << std::endl;    
-        }
-        catch( char* msg )
-        {
-            std::cout << "pl::init failed error:" << msg << std::endl; 
-            return -1;
-        }
-        catch( ... )
-        {
-            std::cout << "pl::init failed unknown error" << std::endl; 
-            return -1;
-        }
-        
-    #elif defined( __APPLE__ )
-        olib::t_path plugins_path = cl::special_folder::get( cl::special_folder::plugins );
-        pl::init( plugins_path.string( ) );
-    #else
-		setlocale(LC_CTYPE, "");
-       	pl::init( );
-    #endif
-
 	pl::init_log( );
+
 	//Allow us to get diagnostic messages if the aml_stack input fails to load, since
 	//any log_level AML word on the command line has not taken effect yet at this point.
 	pl::set_log_level( 4 );
 
-	if ( argc > 1 )
+	bool interactive = false;
+	ml::input_type_ptr input = ml::create_input( std::wstring( L"aml_stack:" ) );
+	pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
+	pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
+	pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
+
+	//Set the log_level back to -1 (disabled), and let any log_level AML words control
+	//the level from this point on.
+	pl::set_log_level( -1 );
+
+	bool should_seek = false;
+	int seek_to = 0;
+	bool stats = true;
+	bool show_source_tc = false;
+
+	int index = 1;
+
+	std::list< std::wstring > tokens;
+
+	while( index < argc )
 	{
-		bool interactive = false;
-		ml::input_type_ptr input = ml::create_input( std::wstring( L"aml_stack:" ) );
-		pl::pcos::property push = input->properties( ).get_property_with_string( "command" );
-		pl::pcos::property execute = input->properties( ).get_property_with_string( "commands" );
-		pl::pcos::property result = input->properties( ).get_property_with_string( "result" );
+		std::wstring arg = cl::str_util::to_wstring( argv[ index ] );
 
-		//Set the log_level back to -1 (disabled), and let any log_level AML words control
-		//the level from this point on.
-		pl::set_log_level( -1 );
-
-		bool should_seek = false;
-		int seek_to = 0;
-		bool stats = true;
-		bool show_source_tc = false;
-
-		int index = 1;
-
-		std::list< std::wstring > tokens;
-
-		while( index < argc )
+		if ( arg == L"--seek" )
 		{
-			std::wstring arg = cl::str_util::to_wstring( argv[ index ] );
-
-			if ( arg == L"--seek" )
-			{
-				seek_to = atoi( argv[ ++ index ] );
-				should_seek = true;
-			}
-			else if ( arg == L"--show-source-tc" )
-			{
-				show_source_tc = true;
-			}
-			else if ( arg == L"--no-stats" )
-				stats = false;
-			else if ( arg == L"--interactive" )
-				interactive = true;
-			else if ( arg == L"--" || arg == L"@@" ) {
-				// Ensure "--" and not "@@"
-				argv[ index ] = (char*)"--";
-				break;
-			} else
-				tokens.push_back( arg );
-
-			index ++;
+			seek_to = atoi( argv[ ++ index ] );
+			should_seek = true;
 		}
-
-		// Execute the tokens
-		execute = tokens;
-
-		if ( result.value< std::wstring >( ) != L"OK" )
+		else if ( arg == L"--show-source-tc" )
 		{
-			std::cerr << cl::str_util::to_string( result.value< std::wstring >( ) ) << std::endl;
-			return 1;
+			show_source_tc = true;
 		}
+		else if ( arg == L"--no-stats" )
+			stats = false;
+		else if ( arg == L"--interactive" )
+			interactive = true;
+		else if ( arg == L"--" || arg == L"@@" ) {
+			// Ensure "--" and not "@@"
+			argv[ index ] = (char*)"--";
+			break;
+		} else
+			tokens.push_back( arg );
 
-		// Dot the stack - by default this connects the input on the top of the stack
-		// to the first slot of the stack input - if the input is <= 0 frames, then print
-		// the inputs title (if it exists), otherwise just exit here (supports commands which
-		// have no stack output [such as available] or are just a computation). Additionally
-		// . itself can be overriden.
-		push = std::wstring( L"." );
+		index ++;
+	}
 
-		if ( input->get_frames( ) <= 0 )
-		{
-			if ( input->fetch_slot( 0 ) )
-				std::cerr << cl::str_util::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
-			return 1;
-		}
+	// Execute the tokens
+	execute = tokens;
 
-		// Allow us to just iterate through the graph if the last filter says so
-		if ( input->fetch_slot( ) && input->fetch_slot( )->property( "@loop" ).valid( ) )
-		{
-			run( input );
-			return 0;
-		}
+	if ( result.value< std::wstring >( ) != L"OK" )
+	{
+		std::cerr << cl::str_util::to_string( result.value< std::wstring >( ) ) << std::endl;
+		return 1;
+	}
 
+	// Dot the stack - by default this connects the input on the top of the stack
+	// to the first slot of the stack input - if the input is <= 0 frames, then print
+	// the inputs title (if it exists), otherwise just exit here (supports commands which
+	// have no stack output [such as available] or are just a computation). Additionally
+	// . itself can be overriden.
+	push = std::wstring( L"." );
+
+	if ( input->get_frames( ) <= 0 )
+	{
+		if ( input->fetch_slot( 0 ) )
+			std::cerr << cl::str_util::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
+		return 1;
+	}
+
+	// Allow us to just iterate through the graph if the last filter says so
+	if ( input->fetch_slot( ) && input->fetch_slot( )->property( "@loop" ).valid( ) )
+	{
+		run( input );
+	}
+	else
+	{
 		// If a store is specified we use the input as is, otherwise we apply more filters
 		if ( index == argc )
 		{
@@ -677,22 +622,112 @@ int main( int argc, char *argv[ ] )
 			std::vector< ml::store_type_ptr > store = fetch_store( index, argc, argv, frame );
 			if ( store.empty( ) )
 				return 3;
-
-			play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );
+				play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );
 		}
 		else
 		{
 			env_report( argc, argv, pitch, frame );
 		}
 	}
-	else
+	return 0;
+}
+
+int main( int argc, char *argv[ ] )
+{
+	if ( argc <= 1 )
 	{
 		std::cerr << "Usage: amlbatch <graph> [ -- ( <store> )* ]" << std::endl;
+		return 0;
+	}
+
+    #ifdef WIN32
+        HMODULE mod_hand = GetModuleHandle(L"amlbatch.exe");
+        char mod_name [255];
+        if( ::GetModuleFileNameA( mod_hand, mod_name, 255) == 0 )
+        {
+            std::cout << "Failed to get the path to amlbatch.exe\n";
+            return -1;
+        }
+
+        std::string a_path(mod_name);
+        std::string::size_type pos = a_path.find("amlbatch.exe");
+        if( pos == std::string::npos ) 
+        {
+            std::cout << "Expecting the program that started to be called amlbatch.exe.\n";
+            std::cout << "amlbatch.exe must be located in a directory which has a subdir called aml-plugins\n";
+            return -1;
+        }
+        
+        std::string a_path2 = a_path.substr(0, pos);
+        a_path2 += "aml-plugins";
+
+        try
+        {
+            if( ! pl::init( a_path2 ) )
+            {
+                std::cout << "aml-plugins location: " << a_path2 << std::endl; 
+                std::cout << "Failed to initialize ardome-ml\n";
+                return -1;
+            }
+        }
+        catch ( std::exception& e)
+        {
+            std::cout << "pl::init failed\n";
+            std::cout << e.what() << std::endl;    
+        }
+        catch( char* msg )
+        {
+            std::cout << "pl::init failed error:" << msg << std::endl; 
+            return -1;
+        }
+        catch( ... )
+        {
+            std::cout << "pl::init failed unknown error" << std::endl; 
+            return -1;
+        }
+        
+    #elif defined( __APPLE__ )
+        olib::t_path plugins_path = cl::special_folder::get( cl::special_folder::plugins );
+        pl::init( plugins_path.string( ) );
+    #else
+		setlocale(LC_CTYPE, "");
+       	pl::init( );
+    #endif
+
+	std::string *exception_msg = 0;
+	int return_code = 0;
+	try {
+		return_code = real_main (argc, argv);
+	}
+	catch ( std::exception& e)
+	{
+		exception_msg = new std::string(e.what());
+	}
+	catch ( char* msg )
+	{
+		exception_msg = new std::string(msg);
+	}
+	catch ( ... )
+	{
+		exception_msg = new std::string("Unknown");
 	}
 
 	ml::uninit( );
 
-	return 0;
+	if ( exception_msg )
+	{
+		std::cerr.flush();
+		std::cerr << "\nLast exception:\n";
+		std::cerr << "--------------------------------------------------------------\n";
+		std::cerr << *exception_msg << std::endl;
+		std::cerr << "--------------------------------------------------------------\n";
+		std::cerr << "Terminated because of exception\n";
+
+		delete exception_msg;
+		return_code = 4;
+	}
+
+	return return_code;
 }
 
 #ifdef WIN32
