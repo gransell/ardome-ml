@@ -166,8 +166,11 @@ namespace olib
 
         void worker::stop( boost::posix_time::time_duration time_out )
         {
+            boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
             if (m_thread_running) 
             {
+				mtx.unlock( );
+
                 cancel_and_clear_jobs();
 
                 {
@@ -176,22 +179,13 @@ namespace olib
                     m_wake_thread.notify_one();
                 }
 
-                utilities::timer a_timer;                  
-                for(;;)
-                {
-                    boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
+				mtx.lock( );
 
-                    if(!m_thread_running) break;
+                boost::system_time wt = boost::get_system_time() + time_out;
 
-                    boost::system_time wt = boost::get_system_time() + time_out - a_timer.elapsed();
-                  
-                    if( m_thread_exit_success.timed_wait(mtx, wt))
-                    {
-                        if( !m_thread_running ) break;
-                    }
-
-                    if( a_timer.elapsed() > time_out ) break; 
-                }
+				while( m_thread_running )
+					if ( !m_thread_exit_success.timed_wait( mtx, wt ) )
+						break;
             }
 
             if (m_thread_running)
@@ -222,8 +216,6 @@ namespace olib
                 if( m_stop_thread ) return false;
                 if( !m_heap.empty()) return true;
                 boost::system_time tv = next_timed_job_start_time();
-                //std::cout << "worker::on_idle current time:" << boost::posix_time::to_simple_string(boost::get_system_time()) 
-                //    << " next time to run job = " << boost::posix_time::to_simple_string(tv) << std::endl;
                 wake_thread.timed_wait(lock, tv );
                 move_timed_jobs_to_heap();
             }
@@ -247,19 +239,6 @@ namespace olib
 
             m_worker_thread = boost::shared_ptr< boost::thread>( 
                 new boost::thread(boost::bind( &worker::worker_thread_procedure, this)));
-
-/*
-            // Give the worker a chance to start.
-            boost::thread::yield();
-
-			{
-            	boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
-            	if( m_thread_running ) return;
-            	boost::system_time wt = boost::get_system_time() + boost::posix_time::seconds(5); 
-            	ARENFORCE( m_thread_started.timed_wait(mtx, wt) );
-            	ARASSERT( m_thread_running );
-			}
-*/
         }
 
         void worker::worker_thread_procedure()
@@ -272,7 +251,7 @@ namespace olib
                 on_thread_started();
 
                 {
-                    boost::recursive_mutex::scoped_lock mtx(m_thread_started_mtx);
+                    boost::recursive_mutex::scoped_lock mtx(m_thread_exit_mtx);
                     m_thread_running = true;
                     m_thread_started.notify_all();
                 }
@@ -369,10 +348,6 @@ namespace olib
                     // while we're adding it to the wait list.
                     curr_lck = m_current_job->prevent_job_from_terminating();
                     if(curr_lck) done_counter.add_job(m_current_job);
-                    else 
-                    {
-                        // T_CERR << "Not adding job because it is done...";
-                    }
                 }
 
                 // These locks will prevent the jobs from reporting termination
@@ -381,7 +356,6 @@ namespace olib
                 std::vector< boost::shared_ptr< boost::recursive_mutex::scoped_lock > > locks;
 
                 jobcollection q = m_heap;
-                // T_CERR << "Size of job heap: " << m_heap.size() << std::endl;
                 for( jobcollection::iterator i = q.begin(); i != q.end(); ++i )
                 {
                     boost::shared_ptr< boost::recursive_mutex::scoped_lock > lck;
@@ -390,11 +364,8 @@ namespace olib
                     done_counter.add_job( *i );
                     locks.push_back(lck); // Make sure the job doesn't terminate until we are done.
                 }
-
-                // T_CERR << "Nr of jobs in worker: " << done_counter.m_nr_of_jobs_to_wait_for << std::endl;
             }
 
-			std::cout << "done_counter waits for: " << done_counter.m_nr_of_jobs_to_wait_for << std::endl;
             return done_counter.wait_for_all_jobs_completed(time_out);
         }
 

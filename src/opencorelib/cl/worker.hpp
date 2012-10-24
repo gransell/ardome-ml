@@ -166,7 +166,6 @@ namespace olib
 
             boost::condition_variable_any m_thread_exit_success, m_thread_started, m_wake_thread;
             mutable boost::recursive_mutex m_wake_thread_mtx;
-			mutable boost::recursive_mutex m_thread_started_mtx;
             mutable boost::recursive_mutex m_thread_exit_mtx;
 
 			/// Flag to keep track of if the worker is running a job_base or not.

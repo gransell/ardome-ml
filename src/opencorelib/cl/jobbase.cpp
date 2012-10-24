@@ -82,7 +82,10 @@ namespace olib
             if( activity == thread_sleep_activity::block )
             {
                 boost::system_time xt = boost::get_system_time() +  time_out;
-				return m_job_done_condition.timed_wait(lock, xt);
+				while( !m_job_done )
+					if ( !m_job_done_condition.timed_wait(lock, xt) )
+						break;
+				return m_job_done;
             }
             else // thread_sleep_activity::handle_incomming_messages
             {
@@ -91,8 +94,10 @@ namespace olib
 				lock.unlock();
 
                 thread_sleep::result res = m_sleeper->current_thread_sleep( time_out, activity );
-                if( res == thread_sleep::slept_full_time ) return false;
-                return true;
+
+				//Need to reacquire the lock before accessing m_job_done
+				lock.lock();
+				return m_job_done;
             }
         }
 
