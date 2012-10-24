@@ -8,6 +8,8 @@
 #ifndef DISCOVERY_TRAITS_INC_
 #define DISCOVERY_TRAITS_INC_
 
+#include <string>
+
 namespace olib { namespace openpluginlib {
 
 // default_query_traits assumes the merit functional to be greater<int>.
