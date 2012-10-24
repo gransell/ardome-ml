@@ -1326,25 +1326,34 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		int write_packet( AVFormatContext *s, AVPacket *pkt, AVCodecContext *avctx, AVBitStreamFilterContext *bsfc )
 		{
+			// Apply any bitstream filters which are required
+			// TODO: Provide external control over video and audio bitstream filters
 			while( bsfc )
 			{
 				AVPacket new_pkt = *pkt;
-				int a = av_bitstream_filter_filter(bsfc, avctx, NULL, &new_pkt.data, &new_pkt.size, pkt->data, pkt->size, pkt->flags & AV_PKT_FLAG_KEY);
+				int a = av_bitstream_filter_filter( bsfc, avctx, NULL, &new_pkt.data, &new_pkt.size, pkt->data, pkt->size, pkt->flags & AV_PKT_FLAG_KEY );
 				if ( a > 0 )
 				{
-					av_free_packet(pkt);
-					new_pkt.destruct= av_destruct_packet;
+					av_free_packet( pkt );
+					new_pkt.destruct = av_destruct_packet;
 				} 
 				else if ( a < 0 )
 				{
 					return -1;
 				}
-				*pkt= new_pkt;
+				*pkt = new_pkt;
 
-				bsfc= bsfc->next;
+				bsfc = bsfc->next;
 			}
 
-			return av_interleaved_write_frame(s, pkt);
+			// Write the frame
+			int result = av_interleaved_write_frame(s, pkt);
+
+			// Free memory associated to the packet
+			av_free_packet( pkt );
+
+			// Return result of the write
+			return result;
 		}
 
 		// Process and output an image
