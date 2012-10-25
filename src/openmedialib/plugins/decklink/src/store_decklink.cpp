@@ -1,6 +1,7 @@
 
 #include <deque>
 
+#include <opencorelib/cl/lru.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
 #include <openimagelib/il/basic_image.hpp>
@@ -34,9 +35,10 @@ private:
 	BMDPixelFormat decklink_pf_;
 	BMDTimeValue frame_duration_;
 	BMDTimeScale time_scale_;
+	bool started_;
 	
 public:
-	store_decklink( const ostd::wstring & resource, const ml::frame_type_ptr &frame )
+	store_decklink( const std::wstring & resource, const ml::frame_type_ptr &frame )
 	: store_type()
 	, device_( )
 	, last_frame_( frame )
@@ -45,6 +47,7 @@ public:
 	, frame_buffer_cond_( )
 	, prop_preroll_( pl::pcos::key::from_string( "preroll" ) )
 	, decklink_pf_( bmdFormat8BitYUV )
+	, started_( false )
 	{
 		properties().append( prop_preroll_ = 5 );
 	}
@@ -84,8 +87,8 @@ public:
 		ARENFORCE_MSG( disp_mode->GetFrameRate( &frame_duration_, &time_scale_ ) == S_OK,
 					   "Failed to get frame duration and time scale from output device" );
 		
-		ARENFORCE_MSG( device_->EnableVideoOutput( d_mode, output_flags ) == S_OK, "Failed to enable video output" )( d_mode )( output_flags );
 		ARENFORCE_MSG( device_->SetScheduledFrameCompletionCallback( this ) == S_OK, "Failed to set frame completion callback" );
+		ARENFORCE_MSG( device_->EnableVideoOutput( d_mode, output_flags ) == S_OK, "Failed to enable video output" )( d_mode )( output_flags );
 		
 		if( last_frame_->get_audio() )
 		{
@@ -102,23 +105,44 @@ public:
 		return true;
 	}
 	
+/*
+		bool result = frame && frame->get_image( ) && frame->get_audio( );
+
+		if ( result && video_.wait_for_space( boost::posix_time::milliseconds( 500 ) )
+			video_.append( frame->get_position( ), frame->get_image( ) );
+		else
+			result = false;
+		
+		if ( result && audio_.wait_for_space( boost::posix_time::milliseconds( 500 ) )
+			audio_.append( frame->get_position( ), frame->get_audio( ) );
+		else
+			result = false;
+
+		return result;
+*/
+
 	virtual bool push( ml::frame_type_ptr frame )
 	{
-		
 		// Make sure that we decode on this thread so that its not done on the display thread
 		il::image_type_ptr img = frame->get_image();
 		
 		{
 			// Now block until we need to push more frame into the queue
 			boost::mutex::scoped_lock lck( frame_buffer_mtx_ );
+
+
+			if ( downloaded_frames_.size() >= prop_preroll_.value< int >( ) && !started_ )
+			{
+				device_->StartScheduledPlayback(0, 100, 1.0);
+				started_ = true;
+			}
 			
 			while( downloaded_frames_.size() >= prop_preroll_.value< int >( ) )
 				frame_buffer_cond_.wait( lck );
 			
-			
 			IDeckLinkMutableVideoFrame *new_frame = NULL;
 			boost::int32_t bytes_per_row = img->pitch();
-			ARENFORCE_MSG( device_->CreateVideoFrame( img->width(), img->height(), bytes_per_row, decklink_pf_, bmdFrameFlagDefault, &new_frame) != S_OK,
+			ARENFORCE_MSG( device_->CreateVideoFrame( img->width(), img->height(), bytes_per_row, decklink_pf_, bmdFrameFlagDefault, &new_frame) == S_OK,
 						   "Failed to allocate video frame on device" );
 			
 			du::decklink_mutable_video_frame_ptr temp( new_frame, false );
@@ -128,6 +152,8 @@ public:
 			memcpy( data, img->data(), img->size() );
 			
 			downloaded_frames_.push_back( std::make_pair( frame->get_position(), temp ) );
+
+			device_->ScheduleVideoFrame( new_frame, frame->get_position( ) * frame_duration_, frame_duration_, time_scale_ );
 		}
 		
 		return true;
@@ -149,8 +175,8 @@ public:
 		std::pair< int, du::decklink_mutable_video_frame_ptr > next_frame = downloaded_frames_.front();
 		downloaded_frames_.pop_front();
 		
-		//ARENFORCE_MSG( device_->ScheduleVideoFrame( next_frame.second.get(), next_frame.second * frame_duration_, frame_duration_, time_scale_ ) == S_OK, "Failed to schedule frame" );
-		
+		frame_buffer_cond_.notify_all( );
+
 		return S_OK;
 	}
 	
@@ -171,17 +197,17 @@ public:
 	
     virtual ULONG STDMETHODCALLTYPE AddRef(void)
 	{
-		return S_OK;
+		return 1;
 	}
 	
     virtual ULONG STDMETHODCALLTYPE Release(void)
 	{
-		return S_OK;
+		return 0;
 	}
 };
 
 
-ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_decklink( const ostd::wstring& resource, const ml::frame_type_ptr& frame )
+ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_decklink( const std::wstring& resource, const ml::frame_type_ptr& frame )
 {
 	ml::store_type_ptr result( new store_decklink( resource, frame ) );
 	return result;

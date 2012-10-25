@@ -80,7 +80,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 		{
 			return bmdModeHD720p5994;
 		}
-		else if( fps_num == 60000 && fps_den == 1001 )
+		else if( fps_num == 60 && fps_den == 1 )
 		{
 			return bmdModeHD720p60;
 		}
@@ -123,7 +123,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 BMDPixelFormat frame_to_pixel_format( const ml::frame_type_ptr& frame )
 {
 	il::image_type_ptr img = frame->get_image();
-	if( img->pf() == L"yuv422" )
+	if( img->pf() == L"uyv422" )
 	{
 		return bmdFormat8BitYUV;
 	}
@@ -137,7 +137,7 @@ BMDPixelFormat frame_to_pixel_format( const ml::frame_type_ptr& frame )
 	}
     // bmdFormat10BitYUV                                            = 'v210',
     // bmdFormat10BitRGB                                            = 'r210'	// Big-endian RGB 10-bit per component with SMPTE video levels (64-960). Packed as 2:10:10:10
-	ARENFORCE_MSG( false, "Unsupported pf. Currently support yuv422, a8r8g8b8, b8g8r8a8" )( img->pf() );
+	ARENFORCE_MSG( false, "Unsupported pf. Currently support uyv422, a8r8g8b8, b8g8r8a8" )( img->pf() );
 }
 	
 	
