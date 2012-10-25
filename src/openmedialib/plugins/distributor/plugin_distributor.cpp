@@ -46,10 +46,11 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 		input_pusher( ) 
 		: prop_length_( pl::pcos::key::from_string( "length" ) )
 		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
-		, lru_key_( lru_frame_cache::allocate( ) )
+		, prop_timeout_( pl::pcos::key::from_string( "timeout" ) )
 		{ 
 			properties( ).append( prop_length_ = INT_MAX );
-			properties( ).append( prop_queue_ = 25 );
+			properties( ).append( prop_queue_ = 50 );
+			properties( ).append( prop_timeout_ = 5000 );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -66,12 +67,11 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 		// Push method
 		virtual bool push( frame_type_ptr frame )
 		{
-			lru_frame_ptr lru = lru_frame_cache::fetch( lru_key_ );
-			lru->resize( prop_queue_.value< int >( ) );
+			lru_.resize( prop_queue_.value< int >( ) );
 			if ( frame )
-				lru->append( frame->get_position( ), frame );
+				lru_.append( frame->get_position( ), frame );
 			else
-				lru->clear( );
+				lru_.clear( );
 			return true;
 		}
 
@@ -79,9 +79,7 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 		// Fetch method
 		void do_fetch( frame_type_ptr &result )
 		{
-			lru_frame_ptr lru = lru_frame_cache::fetch( lru_key_ );
-			boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
-			result = lru->wait( get_position( ), timeout );
+			result = lru_.wait( get_position( ), boost::posix_time::milliseconds( prop_timeout_.value< int >( ) ));
 			if ( result )
 				result = result->shallow( );
 		}
@@ -89,7 +87,8 @@ class ML_PLUGIN_DECLSPEC input_pusher : public input_type
 	private:
 		pl::pcos::property prop_length_;
 		pl::pcos::property prop_queue_;
-		cl::lru_key lru_key_;
+		pl::pcos::property prop_timeout_;
+		ml::lru_frame_type lru_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
@@ -348,6 +347,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 		, prop_active_( pl::pcos::key::from_string( "active" ) )
 		, prop_audio_direction_( pl::pcos::key::from_string( "audio_direction" ) )
 		, prop_trigger_( pl::pcos::key::from_string( "trigger" ) )
+		, prop_timeout_( pl::pcos::key::from_string( "timeout" ) )
 		, monitor_( cl::function_job_ptr( new cl::function_job( boost::bind( &filter_threader::monitor, this, 5 ) ) ) )
 		, lru_key_( lru_frame_cache::allocate( ) )
 		, initialised_( false )
@@ -361,6 +361,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 			properties( ).append( prop_active_ = 1 );
 			properties( ).append( prop_audio_direction_ = 1 );
 			properties( ).append( prop_trigger_ = 1 );
+			properties( ).append( prop_timeout_ = 5000 );
 			prop_active_.attach( obs_active_ );
 		}
 
@@ -480,7 +481,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 		// Fetch and schedule predicted frame requests
 		void do_threaded_fetch( frame_type_ptr &frame )
 		{
-			boost::posix_time::time_duration timeout = boost::posix_time::seconds( 5 );
+			boost::posix_time::time_duration timeout = boost::posix_time::milliseconds( prop_timeout_.value< int >( ) );
 			int position = get_position( );
 			int queue = prop_queue_.value< int >( );
 
@@ -675,6 +676,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public filter_simple
 		pl::pcos::property prop_active_;
 		pl::pcos::property prop_audio_direction_;
 		pl::pcos::property prop_trigger_;
+		pl::pcos::property prop_timeout_;
 		cl::function_job_ptr monitor_;
 		cl::lru_key lru_key_;
 		cl::thread_pool_ptr pool_;
