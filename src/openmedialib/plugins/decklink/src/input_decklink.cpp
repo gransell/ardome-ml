@@ -1,6 +1,21 @@
 // VML Decklink Media Plugin
 //
 // Copyright (C) 2012 VizRT
+//
+// #input:decklink:
+//
+// Provides an input for the decklink blackmagic cards.
+//
+// Accepts the following properties:
+//
+// pf        Picture format               "uyv422"
+// af        Audio format                 "pcm16" or "pcm32"
+// mode      Display mode                 -1 (auto), or 0 to N for blackmagic index
+// frequency Audio frequency              48000
+// channels  Number of channels           2, 8 or 16
+// timeout   Time to wait on fetch in ms  100
+// queue     Number of frames to cache    200
+// card      The card number required     0
 
 #include <opencorelib/cl/lru.hpp>
 #include <opencorelib/cl/core.hpp>
@@ -10,6 +25,7 @@
 
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/keys.hpp>
+#include <openmedialib/ml/audio_utilities.hpp>
 
 #include <DeckLinkAPI.h>
 
@@ -32,14 +48,17 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		, height_( 0 )
 		, frequency_( 0 )
 		, channels_( 0 )
+		, samples_( 0 )
 		{
 		}
 
-		void reset( )
+		void reset( int queue )
 		{
+			lru_.resize( queue );
 			frame_count_ = 0;
 			lru_.clear( );
 			last_image_ = il::image_type_ptr( );
+			samples_ = 0;
 		}
 
 		void set_fps( int fps_num, int fps_den )
@@ -93,14 +112,21 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			frame->set_sar( 1, 1 );
 			pl::pcos::assign< int >( frame->properties( ), ml::keys::source_timecode, frame_count_ );
 
+			// We need to keep a running total of audio samples to allow us to generate silence for missing ones
+			int samples = 0;
+
 			// Handle Video Frame
 			if( picture )
 			{
 				il::image_type_ptr image;
 				if ( picture->GetFlags() & bmdFrameHasNoInputSource )
 				{
-					ARLOG( "No video frame received for %d with %dx%d @ %d:%d fps" )( frame_count_ )( width_ )( height_ )( fps_num_ )( fps_den_ ).level( cl::log_level::error );
-					image = last_image_;
+					// Log failure for all frames except 0 to avoid errors during auto detect
+					if ( frame_count_ != 0 )
+					{
+						ARLOG( "No video frame received for %d with %dx%d @ %d:%d fps" )( frame_count_ )( width_ )( height_ )( fps_num_ )( fps_den_ ).level( cl::log_level::error );
+						image = last_image_;
+					}
 				}
 				else
 				{
@@ -119,32 +145,44 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			// Handle Audio Frame
 			if ( sound )
 			{
-				ml::audio_type_ptr audio;
 				void *bytes;
+				samples = sound->GetSampleFrameCount( );
 				sound->GetBytes( &bytes );
-				audio = ml::audio::allocate( std::wstring( af_ ), frequency_, channels_, sound->GetSampleFrameCount( ), false );
+				ml::audio_type_ptr audio = ml::audio::allocate( std::wstring( af_ ), frequency_, channels_, samples, false );
 				memcpy( audio->pointer( ), bytes, audio->size( ) );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
 			}
 			else
 			{
-				// TODO: Generate missing audio samples if they ever occur?
-				ARLOG( "No audio frame received for %d with %d hz %d channels @ %d:%d fps" )( frame_count_ )( frequency_ )( channels_ )( fps_num_ )( fps_den_ ).level( cl::log_level::error );
+				samples = ml::audio::samples_to_frame( frame_count_ + 1, frequency_, fps_num_, fps_den_ ) - samples_;
+				ARLOG( "No audio frame received for %d with %d hz %d channels @ %d:%d fps generating %d" )( frame_count_ )( frequency_ )( channels_ )( fps_num_ )( fps_den_ )( samples ).level( cl::log_level::error );
+				ml::audio_type_ptr audio = ml::audio::allocate( std::wstring( af_ ), frequency_, channels_, samples, true );
+				audio->set_position( frame_count_ );
+				frame->set_audio( audio );
 			}
 
 			// Append to lru
-			lru_.append( frame_count_, frame );
-
-			// Increment the frame count
-			frame_count_ ++;
+			if( lru_.append_if_not_full( frame_count_, frame, boost::posix_time::milliseconds( 0 ) ) )
+			{
+				// Increment the frame count on success - failure will result in the following frame created having the same position
+				frame_count_ ++;
+				samples_ += samples;
+			}
+			else
+			{
+				ARLOG( "No room in queue - discarding frame %d" )( frame_count_ ).level( cl::log_level::error );
+			}
 
 			return S_OK;
 		}
 
 		ml::frame_type_ptr wait( int index, boost::posix_time::time_duration time )
 		{
-			return lru_.wait( index, time );
+			ml::frame_type_ptr frame = lru_.wait( index, time );
+			if ( frame )
+				lru_.remove( index );
+			return frame;
 		}
 
 	private:
@@ -160,6 +198,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		std::wstring af_;
 		int frequency_;
 		int channels_;
+		boost::int64_t samples_;
 };
 
 class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
@@ -173,6 +212,9 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, prop_af_( pl::pcos::key::from_string( "af" ) )
 		, prop_frequency_( pl::pcos::key::from_string( "frequency" ) )
 		, prop_channels_( pl::pcos::key::from_string( "channels" ) )
+		, prop_timeout_( pl::pcos::key::from_string( "timeout" ) )
+		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
+		, prop_card_( pl::pcos::key::from_string( "card" ) )
 		, decklink_( 0 )
 		, decklink_input_( 0 )
 		, decklink_display_mode_iter_( 0 )
@@ -184,6 +226,9 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
+			properties( ).append( prop_timeout_ = 100 );
+			properties( ).append( prop_queue_ = 200 );
+			properties( ).append( prop_card_ = 0 );
 		}
 		
 		virtual ~input_decklink( ) 
@@ -244,18 +289,23 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			HRESULT error = decklink_iter_ == 0 ? S_FALSE : S_OK;
 			ARLOG_IF( error != S_OK, "This input requires the DeckLink drivers installed." ).level( cl::log_level::error );
 
-			// Connect to the first deck instance
+			// Connect to the card required if it exists
 			if ( error == S_OK )
 			{
-				error = decklink_iter_->Next( &decklink_ );
-				ARLOG_IF( error != S_OK, "No DeckLink PCI cards found." ).level( cl::log_level::error );
-			}
+				// Iterate through each input until we find the card requested by the card property
+				for ( int card = 0; ( error = decklink_iter_->Next( &decklink_ ) ) == S_OK; )
+				{
+					// Check that this one is an input
+					if ( decklink_->QueryInterface( IID_IDeckLinkInput, ( void ** )&decklink_input_ ) == S_OK )
+					{
+						// If the current card matches the request, then break
+						if ( card ++ == prop_card_.value< int >( ) )
+							break;
+					}
+				}
 
-			// Check that we have have the correct interface
-			if ( error == S_OK )
-			{
-				error = decklink_->QueryInterface( IID_IDeckLinkInput, ( void ** )&decklink_input_ );
-				ARLOG_IF( error != S_OK, "Query interface of input failed - wrong version of drivers?" ).level( cl::log_level::error );
+				// Log failure if necessary
+				ARLOG_IF( error != S_OK, "No DeckLink PCI card found for %d." )( prop_card_.value< int >( ) ).level( cl::log_level::error );
 			}
 
 			// Obtain an IDeckLinkDisplayModeIterator to enumerate the display modes supported on output
@@ -321,7 +371,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			// Sync up this display mode with the delegate
 			if ( error == S_OK )
 			{
-				decklink_delegate_->reset( );
+				decklink_delegate_->reset( prop_queue_.value< int >( ) );
 				decklink_delegate_->set_fps( fps_num, fps_den );
 				decklink_delegate_->set_image( prop_pf_.value< std::wstring >( ), width, height );
 				decklink_delegate_->set_audio( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
@@ -352,6 +402,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			if ( error == S_OK )
 			{
 				ml::frame_type_ptr frame = decklink_delegate_->wait( 0, boost::posix_time::milliseconds( 500 ) );
+				last_frame_ = frame;
 				error = frame && frame->get_image( ) ? S_OK : S_FALSE;
 				if ( error != S_OK )
 					decklink_input_->StopStreams( );
@@ -363,14 +414,29 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		// Fetch method
 		void do_fetch( ml::frame_type_ptr &result )
 		{
+			// Ensure that we have a delegate
 			ARENFORCE_MSG( decklink_delegate_, "Delegate has not been constructed" );
-			result = decklink_delegate_->wait( get_position( ), boost::posix_time::seconds( 1 ) );
-			if ( result ) result = result->shallow( );
+
+			// Check if we're repeating the last frame or a new open is requested
+			if ( !last_frame_ || last_frame_->get_position( ) != get_position( ) )
+				result = decklink_delegate_->wait( get_position( ), boost::posix_time::milliseconds( prop_timeout_.value< int >( ) ) );
+			else
+				result = last_frame_;
+
+			// Check that we have a frame
+			ARENFORCE_MSG( result, "No frame obtained for %d" )( get_position( ) );
+
+			// Save as last frame in case of a repeat request and shallow copy
+			last_frame_ = result;
+			result = result->shallow( );
 		}
 
 		// Shut everything down
 		void stop( )
 		{
+			if ( decklink_input_ )
+				decklink_input_->StopStreams( );
+
 			if ( decklink_display_mode_iter_ != 0 )
 				decklink_display_mode_iter_->Release( );
 
@@ -394,6 +460,9 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		pl::pcos::property prop_af_;
 		pl::pcos::property prop_frequency_;
 		pl::pcos::property prop_channels_;
+		pl::pcos::property prop_timeout_;
+		pl::pcos::property prop_queue_;
+		pl::pcos::property prop_card_;
 
 		IDeckLink *decklink_;
 		IDeckLinkInput *decklink_input_;
@@ -401,6 +470,8 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 
 		IDeckLinkIterator *decklink_iter_;
 		DeckLinkCaptureDelegate *decklink_delegate_;
+
+		ml::frame_type_ptr last_frame_;
 };
 
 ml::input_type_ptr ML_PLUGIN_DECLSPEC create_input_decklink( const std::wstring &filename )
