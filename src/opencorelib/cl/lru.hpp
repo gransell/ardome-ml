@@ -133,7 +133,45 @@ class CORE_API lru
 			{
 				queue_.erase( iter );
 				lru_.remove( index );
+				space_.notify_all( );
 			}
+		}
+
+		/// Wait for an item to be removed if the queue is full before appending
+		bool append_if_not_full( key_type index, val_type value, boost::posix_time::time_duration time )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			boost::system_time timeout = boost::get_system_time( ) + time;
+			while ( queue_.size( ) >= size_ )
+				if ( !space_.timed_wait( lock, timeout ) )
+					break;
+			bool result = queue_.size( ) < size_;
+			if ( result )
+				append( index, value );
+			return result;
+		}
+
+		/// Wait for space to become available
+		bool wait_for_space( boost::posix_time::time_duration time )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			boost::system_time timeout = boost::get_system_time( ) + time;
+			while ( queue_.size( ) >= size_ )
+				if ( !space_.timed_wait( lock, timeout ) )
+					break;
+			return queue_.size( ) < size_;
+		}
+
+		/// Wait for an item to be removed
+		bool wait_for_remove( boost::posix_time::time_duration time )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			boost::system_time timeout = boost::get_system_time( ) + time;
+			size_t size = queue_.size( );
+			while ( size != 0 && size == queue_.size( ) )
+				if ( !space_.timed_wait( lock, timeout ) )
+					break;
+			return queue_.size( ) < size;
 		}
 
 		/// Remove all items stored
@@ -142,11 +180,13 @@ class CORE_API lru
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			queue_.clear( );
 			lru_.clear( );
+			space_.notify_all( );
 		}
 
 	private:
 		mutable boost::recursive_mutex mutex_;
 		boost::condition_variable_any cond_;
+		boost::condition_variable_any space_;
 		map queue_;
 		list lru_;
 		size_t size_;
