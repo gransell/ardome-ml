@@ -29,11 +29,13 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_slots_( pcos::key::from_string( "slots" ) )
 			, prop_enforce_fps_( pcos::key::from_string( "enforce_fps" ) )
+			, prop_preroll_( pcos::key::from_string( "preroll" ) )
 			, position_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_slots_ = 2 );
 			properties( ).append( prop_enforce_fps_ = 0 );
+			properties( ).append( prop_preroll_ = 25 );
 		}
 
 		virtual const size_t slot_count( ) const { return size_t( prop_slots_.value< int >( ) ); }
@@ -48,8 +50,8 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		{
 			if ( prop_enable_.value< int >( ) )
 			{
-				// Keep a queue of 12 frames here and ensure the pushers have some material to work with
-				while ( queue_.size( ) < 12 && position_ < get_frames( ) )
+				// Keep a queue of preroll frames here and ensure the pushers have some material to work with
+				while ( queue_.size( ) < prop_preroll_.value< int >( ) && position_ < get_frames( ) )
 				{
 					fetch_slot( 0 )->seek( position_ ++ );
 					ml::frame_type_ptr frame = fetch_slot( 0 )->fetch( )->shallow( );
@@ -161,6 +163,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 		pcos::property prop_enable_;
 		pcos::property prop_slots_;
 		pcos::property prop_enforce_fps_;
+		pcos::property prop_preroll_;
 		int position_;
 		std::deque< ml::frame_type_ptr > queue_;
 };
