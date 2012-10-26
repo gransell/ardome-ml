@@ -6,6 +6,6 @@
 		<plugin name="OpenLibraries avformat plugin" type="input" extension='"avformat:.*"' merit="100" filename='"libopenmedialib_avformat.so", "libopenmedialib_avformat.dylib", "openmedialib_avformat.dll"'/>
 		<plugin name="OpenLibraries avformat plugin" type="output" extension='"pipe:", ".*\.mpg", ".*\.avi", ".*\.dv", ".*\.jpg", ".*\.jpeg", ".*\.mov", ".*\.ogg", ".*\.m1v", ".*\.m2v", ".*\.mp2", ".*\.mp3", ".*\.mp4", ".*\.png", ".*\.vob", ".*\.wav", ".*\.flv", ".*\.swf", ".*\.wmv", ".*\.y4m", ".*\.webm"' merit="5" filename='"libopenmedialib_avformat.so", "libopenmedialib_avformat.dylib", "openmedialib_avformat.dll"'/>
 		<plugin name="OpenLibraries avformat plugin" type="output" extension='"avformat:.*"' merit="100" filename='"libopenmedialib_avformat.so", "libopenmedialib_avformat.dylib", "openmedialib_avformat.dll"'/>
-		<plugin name="OpenLibraries avformat plugin" type="filter" extension='"resampler", "avdecode", "avencode"' merit="0" filename='"libopenmedialib_avformat.so", "libopenmedialib_avformat.dylib", "openmedialib_avformat.dll"'/>
+		<plugin name="OpenLibraries avformat plugin" type="filter" extension='"resampler", "avdecode", "avencode", "swscale"' merit="0" filename='"libopenmedialib_avformat.so", "libopenmedialib_avformat.dylib", "openmedialib_avformat.dll"'/>
 	</openmedialib>
 </openlibraries>

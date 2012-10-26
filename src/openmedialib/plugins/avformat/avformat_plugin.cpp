@@ -45,6 +45,7 @@ extern input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const std::wstri
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avdecode( const std::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const std::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const std::wstring & );
+extern filter_type_ptr ML_PLUGIN_DECLSPEC create_swscale( const std::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &, const frame_type_ptr & );
 	
 extern void register_aml_aes3( );
@@ -187,12 +188,16 @@ const PixelFormat oil_to_avformat( const std::wstring &fmt )
 		return PIX_FMT_YUV411P;
 	else if ( fmt == L"yuv422" )
 		return PIX_FMT_YUYV422;
+	else if ( fmt == L"uyv422" )
+		return PIX_FMT_UYVY422;
 	else if ( fmt == L"yuv422p" )
 		return PIX_FMT_YUV422P;
 	else if ( fmt == L"r8g8b8" )
 		return PIX_FMT_RGB24;
 	else if ( fmt == L"b8g8r8" )
 		return PIX_FMT_BGR24;
+	else if ( fmt == L"b8g8r8a8" )
+		return PIX_FMT_BGR32;
 	else if ( fmt == L"r8g8b8a8" )
 		return PIX_FMT_RGB32;
 	return PIX_FMT_NONE;
@@ -295,6 +300,8 @@ public:
 			return create_avdecode( resource );
 		else if ( resource == L"avencode" )
 			return create_avencode( resource );
+		else if ( resource == L"swscale" )
+			return create_swscale( resource );
 		return create_resampler( resource );
 	}
 };
