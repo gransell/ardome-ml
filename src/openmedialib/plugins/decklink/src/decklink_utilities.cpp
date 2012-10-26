@@ -87,6 +87,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 	}
 	else // Assume SD material
 	{
+#if 0
 		if( img->field_order() == il::progressive )
 		{
 			if( fps_num == 30000 && fps_den == 1001 )
@@ -99,6 +100,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 			}
 		}
 		else
+#endif
 		{
 			if( fps_num == 30000 && fps_den == 1001 )
 			{

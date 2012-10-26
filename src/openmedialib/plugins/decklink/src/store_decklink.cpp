@@ -26,9 +26,12 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 private:
 	du::decklink_output_ptr device_;
 	ml::frame_type_ptr last_frame_;
-	std::deque< std::pair< int, du::decklink_mutable_video_frame_ptr > > downloaded_frames_;
-	boost::mutex frame_buffer_mtx_;
-	boost::condition_variable frame_buffer_cond_;
+	std::deque< std::pair< int, il::image_type_ptr > > downloaded_image_;
+	std::deque< std::pair< int, ml::audio_type_ptr > > downloaded_audio_;
+	boost::mutex mutex_image_;
+	boost::mutex mutex_audio_;
+	boost::condition_variable cond_image_;
+	boost::condition_variable cond_audio_;
 	// The amount of frames that should be prerolled to the decklink hardware
 	pl::pcos::property prop_preroll_;
 	
@@ -36,24 +39,28 @@ private:
 	BMDTimeValue frame_duration_;
 	BMDTimeScale time_scale_;
 	bool started_;
+	int frames_;
 	
 public:
 	store_decklink( const std::wstring & resource, const ml::frame_type_ptr &frame )
 	: store_type()
 	, device_( )
 	, last_frame_( frame )
-	, downloaded_frames_( )
-	, frame_buffer_mtx_( )
-	, frame_buffer_cond_( )
 	, prop_preroll_( pl::pcos::key::from_string( "preroll" ) )
 	, decklink_pf_( bmdFormat8BitYUV )
 	, started_( false )
+	, frames_( 0 )
 	{
 		properties().append( prop_preroll_ = 5 );
 	}
 	
 	virtual ~store_decklink( )
 	{
+		// Stop the audio and video output streams immediately
+		device_->StopScheduledPlayback(0, NULL, 0);
+
+		device_->DisableAudioOutput();
+		device_->DisableVideoOutput();
 	}
 	
 	virtual bool init( )
@@ -124,21 +131,22 @@ public:
 	virtual bool push( ml::frame_type_ptr frame )
 	{
 		// Make sure that we decode on this thread so that its not done on the display thread
-		il::image_type_ptr img = frame->get_image();
-		
+		il::image_type_ptr img = frame->get_image( );
+		ml::audio_type_ptr aud = frame->get_audio( );
+
+		if ( img )
 		{
 			// Now block until we need to push more frame into the queue
-			boost::mutex::scoped_lock lck( frame_buffer_mtx_ );
+			boost::mutex::scoped_lock lck( mutex_image_ );
 
-
-			if ( downloaded_frames_.size() >= prop_preroll_.value< int >( ) && !started_ )
+			if ( !aud && downloaded_image_.size() >= prop_preroll_.value< int >( ) && !started_ )
 			{
-				device_->StartScheduledPlayback(0, 100, 1.0);
+				device_->StartScheduledPlayback( 0, 100, 1.0 );
 				started_ = true;
 			}
 			
-			while( downloaded_frames_.size() >= prop_preroll_.value< int >( ) )
-				frame_buffer_cond_.wait( lck );
+			while( downloaded_image_.size() >= prop_preroll_.value< int >( ) )
+				cond_image_.wait( lck );
 			
 			IDeckLinkMutableVideoFrame *new_frame = NULL;
 			boost::int32_t bytes_per_row = img->pitch();
@@ -151,11 +159,30 @@ public:
 			ARENFORCE_MSG( temp->GetBytes( (void **)&data ) == S_OK, "Failed to get data pointer to downloaded frame" );
 			memcpy( data, img->data(), img->size() );
 			
-			downloaded_frames_.push_back( std::make_pair( frame->get_position(), temp ) );
+			downloaded_image_.push_back( std::make_pair( frames_, img ) );
 
-			device_->ScheduleVideoFrame( new_frame, frame->get_position( ) * frame_duration_, frame_duration_, time_scale_ );
+			device_->ScheduleVideoFrame( new_frame, frames_ * frame_duration_, frame_duration_, time_scale_ );
 		}
-		
+
+		if ( aud )
+		{
+			// Now block until we need to push more frame into the queue
+			boost::mutex::scoped_lock lck( mutex_audio_ );
+
+			if ( !started_ )
+			{
+				device_->BeginAudioPreroll( );
+				started_ = true;
+			}
+
+			while( downloaded_audio_.size() >= prop_preroll_.value< int >( ) )
+				cond_audio_.wait( lck );
+			
+			downloaded_audio_.push_back( std::make_pair( frames_, aud ) );
+		}
+
+		frames_ ++;
+
 		return true;
 	}
 	
@@ -170,13 +197,9 @@ public:
 	
 	virtual HRESULT ScheduledFrameCompleted( IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result )
 	{
-		boost::mutex::scoped_lock lck( frame_buffer_mtx_ );
-		
-		std::pair< int, du::decklink_mutable_video_frame_ptr > next_frame = downloaded_frames_.front();
-		downloaded_frames_.pop_front();
-		
-		frame_buffer_cond_.notify_all( );
-
+		boost::mutex::scoped_lock lck( mutex_image_ );
+		downloaded_image_.pop_front();
+		cond_image_.notify_all( );
 		return S_OK;
 	}
 	
@@ -187,6 +210,26 @@ public:
 	
 	virtual HRESULT RenderAudioSamples( bool preroll )
 	{
+		boost::mutex::scoped_lock lck( mutex_audio_ );
+
+		// Try to maintain the number of audio samples buffered in the API at a specified waterlevel
+		boost::uint32_t buffered;
+		if ( device_->GetBufferedAudioSampleFrameCount( &buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
+		{
+			ml::audio_type_ptr audio = downloaded_audio_.front( ).second;
+			boost::uint32_t samples;
+			device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, &samples );
+			if ( samples != audio->samples( ) )
+				std::cerr << "offered " << audio->samples( ) << " took " << samples << std::endl;
+			downloaded_audio_.pop_front( );
+			cond_audio_.notify_all( );
+		}
+
+		if ( preroll )
+		{
+			device_->StartScheduledPlayback( 0, 100, 1.0 );
+		}
+
 		return S_OK;
 	}
 	
@@ -195,12 +238,12 @@ public:
 		return S_FALSE;
 	}
 	
-    virtual ULONG STDMETHODCALLTYPE AddRef(void)
+	virtual ULONG STDMETHODCALLTYPE AddRef(void)
 	{
 		return 1;
 	}
 	
-    virtual ULONG STDMETHODCALLTYPE Release(void)
+	virtual ULONG STDMETHODCALLTYPE Release(void)
 	{
 		return 0;
 	}
