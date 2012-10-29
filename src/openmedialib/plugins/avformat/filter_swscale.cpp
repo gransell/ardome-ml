@@ -41,7 +41,7 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_pf_ = std::wstring( L"" ) );
-			properties( ).append( prop_progressive_ = 1 );
+			properties( ).append( prop_progressive_ = 0 );
 			properties( ).append( prop_interp_ = 4 );
 			properties( ).append( prop_width_ = -1 );
 			properties( ).append( prop_height_ = -1 );
@@ -76,10 +76,15 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 				{
 					il::image_type_ptr image = frame->get_image( );
+
+					// Force progressive or lie :-/
 					if ( prop_progressive_.value< int >( ) == 1 )
 						image = il::deinterlace( image );
 					else if ( prop_progressive_.value< int >( ) == -1 )
 						image->set_field_order( il::progressive );
+
+					// Determine the current field order
+					il::field_order_flags field_order = image->field_order( );
 
 					// Deal with the properties now
 					int width = prop_width_.value< int >( );
@@ -123,6 +128,9 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 					// Rescale the image
 					image = rescale( image, pf, width, height, interp );
 
+					// Set the original field order
+					image->set_field_order( field_order );
+
 					// Set the image on the frame
 					frame->set_image( image );
 
@@ -162,7 +170,7 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 			ARENFORCE_MSG( scaler_, "Unable to convert from %s to %s" )( input->pf( ) )( pf );
 
 			// Scale the image
-			sws_scale( scaler_, in.data, in.linesize, 0, output->width( ), out.data, out.linesize );
+			sws_scale( scaler_, in.data, in.linesize, 0, input->height( ), out.data, out.linesize );
 
 			return output;
 		}
