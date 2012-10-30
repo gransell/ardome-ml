@@ -37,10 +37,15 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			if ( prop_enable_.value< int >( ) )
+			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
+				result = last_frame_;
+			else if ( prop_enable_.value< int >( ) )
 				result = merge( fetch_slot( ) );
 			else
 				result = fetch_from_slot( );
+
+			last_frame_ = result;
+			result = result->shallow( );
 		}
 
 		ml::frame_type_ptr merge( ml::input_type_ptr source )
@@ -118,6 +123,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 
 		pcos::property prop_enable_;
 		pcos::property prop_bff_;
+		ml::frame_type_ptr last_frame_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const std::wstring &resource )
