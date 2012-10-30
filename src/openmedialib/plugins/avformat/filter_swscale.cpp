@@ -92,7 +92,7 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 					std::wstring pf = prop_pf_.value< std::wstring >( );
 					int interp = prop_interp_.value< int >( );
 					int sar_num = prop_sar_num_.value< int >( );
-					int sar_den = prop_sar_num_.value< int >( );
+					int sar_den = prop_sar_den_.value< int >( );
 
 					// Deal with the properties specified
 					// TODO: Sanitise requested values
