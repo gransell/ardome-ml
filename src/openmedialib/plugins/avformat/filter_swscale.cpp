@@ -8,6 +8,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -23,6 +24,49 @@ namespace ml = olib::openmedialib::ml;
 namespace olib { namespace openmedialib { namespace ml {
 
 extern const PixelFormat oil_to_avformat( const std::wstring & );
+
+namespace 
+{
+	static void correct( int mw, int mh, int &w, int &h )
+	{
+		int wd = w % mw;
+		int hd = h % mh;
+		if ( wd != 0 )
+			w += mw - wd;
+		if ( hd != 0 )
+			h += mh - hd;
+	}
+
+	typedef boost::function< void ( int &, int & ) > correct_function;
+
+	typedef std::map< std::wstring, correct_function > corrections_map;
+
+	static corrections_map create_corrections( )
+	{
+		corrections_map result;
+
+		result[ std::wstring( L"b8g8r8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ std::wstring( L"b8g8r8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ std::wstring( L"r8g8b8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ std::wstring( L"r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ std::wstring( L"yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ std::wstring( L"yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
+		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 2, 1, _1, _2 );
+		result[ std::wstring( L"yuv422" ) ] = boost::bind( correct, 2, 1, _1, _2 );
+		result[ std::wstring( L"uyv422" ) ] = boost::bind( correct, 2, 1, _1, _2 );
+
+		return result;
+	}
+
+	static const corrections_map corrections = create_corrections( );
+
+	static void correct( const std::wstring &pf, int &w, int &h )
+	{
+		corrections_map::const_iterator iter = corrections.find( pf );
+		if ( iter != corrections.end( ) )
+			iter->second( w, h );
+	}
+}
 
 class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 {
@@ -102,15 +146,23 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 						width = image->width( );
 						height = image->height( );
 					}
-					else if ( width == -1 )
+					else if ( width == -1 && std::abs( sar_num ) == 1 && std::abs( sar_den ) == 1 )
 					{
 						// Maintain the aspect ratio of the input, and calculate width from height
 						width = int( height * frame->aspect_ratio( ) );
+						sar_num = 1;
+						sar_den = 1;
 					}
-					else if ( height == -1 )
+					else if ( height == -1 && std::abs( sar_num ) == 1 && std::abs( sar_den ) == 1 )
 					{
 						// Maintain the aspect ratio of the input, and calculate height from width
 						height = int( width / frame->aspect_ratio( ) );
+						sar_num = 1;
+						sar_den = 1;
+					}
+					else
+					{
+						// TODO: Other combinations
 					}
 
 					// If no conversion is specified, retain that of the input
@@ -118,6 +170,9 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 					{
 						pf = image->pf( );
 					}
+
+					// Ensure that the requested/computed dimensions are valid for the pf requested
+					correct( pf, width, height );
 
 					// If no sar is specified, retain it from the source
 					if ( sar_num == -1 || sar_den == -1 )
