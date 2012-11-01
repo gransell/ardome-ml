@@ -316,6 +316,7 @@ class ML_PLUGIN_DECLSPEC filter_voodoo : public filter_type
 
 				// Construct the muxer
 				muxer_ = ml::create_filter( L"muxer" );
+				muxer_->property( "use_longest" ) = 0;
 				muxer_->connect( video, 0 );
 				muxer_->connect( audio_fps, 1 );
 
@@ -454,6 +455,7 @@ class graphs
 				 graph->get_uri( ) == L"decode" || 
 				 graph->get_uri( ) == L"distributor" || 
 				 graph->get_uri( ) == L"threader" || 
+				 graph->get_uri( ) == L"voodoo" || 
 				 ( graph->get_uri( ) == L"store" && graphs != 1 ) || 
 				 graph->get_uri( ) == L"tee" )
 			{
