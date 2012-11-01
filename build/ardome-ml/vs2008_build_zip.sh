@@ -31,6 +31,8 @@ echo "Adding debug files..."
 cp -r build/debug/vs2008/bin/* TMPZIP/aml/bin/debug/
 cp -r build/debug/vs2008/lib/* TMPZIP/aml/lib/debug/
 
+cp bcomp/vs2008/ffmpeg/lib/*.lib TMPZIP/aml/lib/
+
 if [ ! $? == 0 ]; then
 	echo "Failed to copy debug files"
 	exit 1
@@ -46,8 +48,11 @@ cp -r src/openimagelib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openmedialib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openpluginlib  TMPZIP/aml/include/ardome-ml/
 
-echo "Adding winconfig file"
+cp -r bcomp/vs2008/ffmpeg/include/* TMPZIP/aml/include/
+
+echo "Adding winconfig files"
 cp  config/windows/ardome_ml.wc TMPZIP/aml/lib/winconfig/ 
+cp -r bcomp/vs2008/ffmpeg/lib/winconfig/*.wc TMPZIP/aml/lib/winconfig/
 
 echo "Adding openbuild"
 cp -r openbuild TMPZIP/
