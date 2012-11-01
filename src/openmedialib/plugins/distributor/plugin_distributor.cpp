@@ -96,9 +96,11 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 	public:
 		filter_lock( )
 		: prop_sync_( pl::pcos::key::from_string( "sync" ) )
+		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 		, frames_( 0 )
 		{
 			properties( ).append( prop_sync_ = 1 );
+			properties( ).append( prop_queue_ = 50 );
 		}
 
 		virtual bool requires_image( ) const { return false; }
@@ -192,13 +194,175 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 		// Invoked by fetch to obtain the frame requested
 		void do_fetch( frame_type_ptr &frame )
 		{
-			frame = fetch_from_slot( );
+			// Make sure the lru size matches the requested queue
+			lru_.resize( prop_queue_.value< int >( ) );
+
+			// Check if it's in the lru cache first
+			frame = lru_.fetch( get_position( ) );
+
+			// If we don't have a frame, attempt to fetch it now
+			if ( !frame )
+				frame = fetch_from_slot( );
+
+			// If we don't have a frame now, things have got messed up
+			ARENFORCE_MSG( frame, "Unable to obtain frame %d from locked input" )( get_position( ) );
+
+			// Finally save the frame in the lru (regardless of whether it's there or not) and shallow copy
+			lru_.append( get_position( ), frame );
+			frame = frame->shallow( );
 		}
 
 	private:
 		boost::thread_specific_ptr< int > position_;
 		mutable boost::recursive_mutex mutex_;
 		pl::pcos::property prop_sync_;
+		pl::pcos::property prop_queue_;
+		int frames_;
+		ml::lru_frame_type lru_;
+};
+
+class ML_PLUGIN_DECLSPEC filter_voodoo : public filter_type
+{
+	public:
+		filter_voodoo( )
+		: prop_queue_( pl::pcos::key::from_string( "queue" ) )
+		, changed_( false )
+		, frames_( 0 )
+		{
+			properties( ).append( prop_queue_ = 50 );
+		}
+
+		virtual bool requires_image( ) const { return false; }
+
+		virtual const std::wstring get_uri( ) const { return std::wstring( L"voodoo" ); }
+
+		virtual const size_t slot_count( ) const { return 3; }
+
+		void on_slot_change( input_type_ptr input, int slot = 0 ) { changed_ = true; }
+
+		int get_frames( ) const { return frames_; }
+
+		void sync( )
+		{
+			refresh_graphs( );
+
+			if ( muxer_ && lock_ )
+			{
+				muxer_->sync( );
+				frames_ = muxer_->get_frames( ); 
+			}
+			else
+			{
+				frames_ = 0;
+			}
+		}
+
+	protected:
+		// Invoked by fetch to obtain the frame requested
+		void do_fetch( frame_type_ptr &frame )
+		{
+			// Refresh the graphs if necessary
+			refresh_graphs( );
+
+			// Check that we have a muxer to communicate with
+			ARENFORCE_MSG( muxer_, "Was unable to derive the muxer" );
+
+			// Seek on the muxer
+			muxer_->seek( get_position( ) );
+
+			// Fetch from the muxer
+			frame = muxer_->fetch( );
+		}
+
+		void refresh_graphs( )
+		{
+			if ( changed_ )
+			{
+				// Wipe the old lock and muxer now
+				muxer_ = ml::filter_type_ptr( );
+				lock_ = ml::filter_type_ptr( );
+
+				// Fetch the 3 inputs
+				ml::input_type_ptr input = fetch_slot( 0 );
+				ml::input_type_ptr video = fetch_slot( 1 );
+				ml::input_type_ptr audio = fetch_slot( 2 );
+
+				// Sanitise the inputs now
+				ARENFORCE_MSG( input, "Nothing connected on the input" );
+				ARENFORCE_MSG( video, "Nothing connected on the video slot" );
+				ARENFORCE_MSG( audio, "Nothing connected on the audio slot" );
+
+				// Create the lock
+				lock_ = ml::create_filter( L"lock" );
+				lock_->property( "queue" ) = prop_queue_.value< int >( );
+				lock_->connect( input );
+
+				// Replace the nudgers with the the locked input
+				video = replace_with_lock( video, 1 );
+				audio = replace_with_lock( audio, 2 );
+
+				// Everything should be connected now, so we'll grab a frame from the video and conform audio to that frame rate
+				ml::frame_type_ptr frame = video->fetch( );
+
+				// Ensure that the frame is accesible
+				ARENFORCE_MSG( frame, "No frame from video slot" );
+
+				// Create the frame_rate filter for the audio
+				ml::filter_type_ptr audio_fps = ml::create_filter( L"frame_rate" );
+				audio_fps->property( "fps_num" ) = frame->get_fps_num( );
+				audio_fps->property( "fps_den" ) = frame->get_fps_den( );
+				audio_fps->connect( audio );
+				audio_fps->sync( );
+
+				// Construct the muxer
+				muxer_ = ml::create_filter( L"muxer" );
+				muxer_->connect( video, 0 );
+				muxer_->connect( audio_fps, 1 );
+
+				// Sync the muxer
+				muxer_->sync( );
+
+				// Everything should be done now
+				changed_ = false;
+			}
+		}
+
+		// Walk the graph, replacing nudgers with lock conform sub graphs
+		ml::input_type_ptr replace_with_lock( ml::input_type_ptr &input, int voodoo )
+		{
+			ml::input_type_ptr result = input;
+
+			if ( input->get_uri( ) == L"nudger:" )
+			{
+				// TODO: Mark conform filter so that it gets reported as nudger: in an aml dump
+				ml::filter_type_ptr conform = ml::create_filter( L"conform" );
+				conform->property( "image" ) = voodoo == 1 ? 1 : 0;
+				conform->property( "audio" ) = voodoo == 1 ? 0 : 1;
+				conform->connect( lock_ );
+				result = conform;
+			}
+			else
+			{
+				for ( size_t i = 0; i < input->slot_count( ); i ++ )
+				{
+					ml::input_type_ptr slot = input->fetch_slot( i );
+					if ( slot )
+					{
+						ml::input_type_ptr upstream = replace_with_lock( slot, voodoo );
+						if ( upstream != slot )
+							input->connect( upstream, i );
+					}
+				}
+			}
+
+			return result;
+		}
+
+	private:
+		pl::pcos::property prop_queue_;
+		ml::filter_type_ptr lock_;
+		ml::filter_type_ptr muxer_;
+		bool changed_;
 		int frames_;
 };
 
@@ -706,6 +870,8 @@ public:
 			return filter_type_ptr( new filter_lock( ) );
 		if ( spec == L"distributor" )
 			return filter_type_ptr( new filter_threader( ) );
+		if ( spec == L"voodoo" )
+			return filter_type_ptr( new filter_voodoo( ) );
 		return filter_type_ptr( );
 	}
 };
