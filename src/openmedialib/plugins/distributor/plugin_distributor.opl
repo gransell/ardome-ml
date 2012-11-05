@@ -2,6 +2,6 @@
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
 		<plugin name="Distributor plugin" type="input" extension='"nudger:"' merit="60" filename='"libopenmedialib_distributor.so", "libopenmedialib_distributor.dylib", "openmedialib_distributor.dll"'/>
-		<plugin name="Distributor plugin" type="filter" extension='"lock", "distributor", "voodoo"' merit="60" filename='"libopenmedialib_distributor.so", "libopenmedialib_distributor.dylib", "openmedialib_distributor.dll"'/>
+		<plugin name="Distributor plugin" type="filter" extension='"fork", "lock", "distributor", "voodoo"' merit="60" filename='"libopenmedialib_distributor.so", "libopenmedialib_distributor.dylib", "openmedialib_distributor.dll"'/>
 	</openmedialib>
 </openlibraries>
