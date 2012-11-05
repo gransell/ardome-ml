@@ -1583,36 +1583,39 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			return position_;
 		}
 
+		bool incomplete_input( input_type_ptr input )
+		{
+			bool result = !input || input->get_uri( ) == L"nudger:";
+			if ( !result )
+				for( size_t i = 0; !result && i < input->slot_count( ); i ++ )
+					result = incomplete_input( input->fetch_slot( i ) );
+			return result;
+		}
+
 		virtual void on_slot_change( input_type_ptr input, int )
 		{
-			if ( prop_check_on_connect_.value< int >( ) && input )
+			valid_on_connect_ = !incomplete_input( input );
+			if ( valid_on_connect_ )
 				check_input( input );
 		}
 
 		void check_input( input_type_ptr input )
 		{
-			if ( input )
+			frame_type_ptr frame = input->fetch( );
+
+			src_frames_ = input->get_frames( );
+			src_fps_num_ = -1;
+			src_fps_den_ = -1;
+			src_frequency_ = 0;
+			valid_on_connect_ = frame != ml::frame_type_ptr( );
+
+			if ( valid_on_connect_ )
 			{
-				frame_type_ptr frame = input->fetch( );
-
-				src_frames_ = input->get_frames( );
-				src_fps_num_ = -1;
-				src_fps_den_ = -1;
-				src_frequency_ = 0;
-
-				if ( frame )
-				{
-					valid_on_connect_ = true;
-					src_fps_num_ = frame->get_fps_num( );
-					src_fps_den_ = frame->get_fps_den( );
-					src_has_image_ = frame->has_image( );
-					if ( frame->get_audio( ) )
-						src_frequency_ = frame->get_audio( )->frequency( );
-				}
-				else
-				{
-					valid_on_connect_ = false;
-				}
+				src_fps_num_ = frame->get_fps_num( );
+				src_fps_den_ = frame->get_fps_den( );
+				src_has_image_ = frame->has_image( );
+				if ( frame->get_audio( ) )
+					src_frequency_ = frame->get_audio( )->frequency( );
 			}
 		}
 
