@@ -20,6 +20,8 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+#include <openmedialib/ml/keys.hpp>
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -44,11 +46,13 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 			, prop_write_( pl::pcos::key::from_string( "write" ) )
 			, prop_stdout_( pl::pcos::key::from_string( "stdout" ) )
 			, prop_limit_( pl::pcos::key::from_string( "limit" ) )
+			, prop_full_( pl::pcos::key::from_string( "full" ) )
 		{
 			properties( ).append( prop_filename_ = std::wstring( L"graph.aml" ) );
 			properties( ).append( prop_write_ = 1 );
 			properties( ).append( prop_stdout_ = std::string( "" ) );
 			properties( ).append( prop_limit_ = 0 );
+			properties( ).append( prop_full_ = 0 );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -149,9 +153,28 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 
 				if ( !props.get_property_with_string( "serialise_terminator" ).valid( ) )
 				{
-					if ( -- limit != 0 )
+					// Obtain the serialise_as property
+					pl::pcos::property serialise_as = props.get_property_with_key( ml::keys::serialise_as );
+
+					// If we don't want full reporting and serialise_as exists, we will want to skip this filter
+					// and/or it's upstream components
+					bool skip = prop_full_.value< int >( ) == 0 && serialise_as.valid( );
+
+					// If we are going to skip, grab the replacement value now 
+					std::wstring replacement = skip ? serialise_as.value< std::wstring >( ) : L"";
+
+					// If the replacement is specified, don't walk upstream
+					if ( replacement == L"" && -- limit != 0 )
 						for( size_t i = 0; i < input->slot_count( ); i ++ )
 							create_aml( stream, input->fetch_slot( i ), limit );
+
+					// If the skip is required, do it now, using the replacement value if specified
+					if ( skip )
+					{
+						if ( replacement != L"" )
+							stream << olib::opencorelib::str_util::to_string( replacement ) << std::endl;
+						return;
+					}
 				}
 				else
 				{
@@ -226,6 +249,7 @@ class ML_PLUGIN_DECLSPEC filter_aml : public ml::filter_type
 		pl::pcos::property prop_write_;
 		pl::pcos::property prop_stdout_;
 		pl::pcos::property prop_limit_;
+		pl::pcos::property prop_full_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const std::wstring &resource )
