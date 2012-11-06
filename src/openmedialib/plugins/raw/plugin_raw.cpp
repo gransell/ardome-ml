@@ -205,17 +205,24 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			if ( image )
 			{
-				for ( int p = 0; p < image->plane_count( ); p ++ )
+				if ( image->pitch( ) != image->linesize( ) )
 				{
-					boost::uint8_t *dst = image->data( p );
-					int pitch = image->pitch( p );
-					int width = image->linesize( p );
-					int height = image->height( p );
-					while( height -- )
+					for ( int p = 0; p < image->plane_count( ); p ++ )
 					{
-						error |= avio_read( context_, dst, width ) != width;
-						dst += pitch;
+						boost::uint8_t *dst = image->data( p );
+						int pitch = image->pitch( p );
+						int width = image->linesize( p );
+						int height = image->height( p );
+						while( height -- )
+						{
+							error |= avio_read( context_, dst, width ) != width;
+							dst += pitch;
+						}
 					}
+				}
+				else
+				{
+					error |= avio_read( context_, image->data( ), image->size( ) ) != image->size( );
 				}
 			}
 
@@ -440,6 +447,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			, spec_( spec )
 			, context_( 0 )
 			, valid_( false )
+			, started_( false )
 		{
 			properties( ).append( prop_header_ = 1 );
 			if ( frame->has_image( ) )
@@ -499,11 +507,19 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 						avio_close( aml );
 					}
 
-					if ( prop_header_.value< int >( ) )
-						write_header( );
 				}
 			}
 			return valid_ && error == 0;
+		}
+
+		void start( )
+		{
+			if ( !started_ )
+			{
+				if ( prop_header_.value< int >( ) )
+					write_header( );
+				started_ = true;
+			}
 		}
 
 		void write_header( )
@@ -525,17 +541,25 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			bool success = true;
 			if ( image != 0 )
 			{
-				for ( int p = 0; success && p < image->plane_count( ); p ++ )
+				start( );
+				if ( image->pitch( ) != image->linesize( ) )
 				{
-					const boost::uint8_t *dst = image->data( p );
-					int pitch = image->pitch( p );
-					int width = image->linesize( p );
-					int height = image->height( p );
-					while( success && height -- )
+					for ( int p = 0; success && p < image->plane_count( ); p ++ )
 					{
-						avio_write( context_, dst, width );
-						dst += pitch;
+						const boost::uint8_t *dst = image->data( p );
+						int pitch = image->pitch( p );
+						int width = image->linesize( p );
+						int height = image->height( p );
+						while( success && height -- )
+						{
+							avio_write( context_, dst, width );
+							dst += pitch;
+						}
 					}
+				}
+				else
+				{
+					avio_write( context_, image->data( ), image->size( ) );
 				}
 				avio_flush( context_ );
 			}
@@ -562,6 +586,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		int sar_den_;
 		int bytes_;
 		il::field_order_flags field_order_;
+		bool started_;
 };
 
 class ML_PLUGIN_DECLSPEC store_aud : public store_type
@@ -574,6 +599,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			, spec_( spec )
 			, context_( 0 )
 			, valid_( false )
+			, started_( false )
 		{
 			properties( ).append( prop_header_ = 1 );
 			properties( ).append( prop_stream_ = 0 );
@@ -630,11 +656,19 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 						avio_close( aml );
 					}
 
-					if ( prop_header_.value< int >( ) )
-						write_header( );
 				}
 			}
 			return valid_ && error == 0;
+		}
+
+		void start( )
+		{
+			if ( !started_ )
+			{
+				if ( prop_header_.value< int >( ) )
+					write_header( );
+				started_ = true;
+			}
 		}
 
 		void write_header( )
@@ -655,6 +689,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 			bool success = true;
 			if ( audio != 0 )
 			{
+				start( );
 				if ( prop_stream_.value< int >( ) )
 				{
 					int samples = audio->samples( );
@@ -683,6 +718,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		int channels_;
 		int fps_num_;
 		int fps_den_;
+		bool started_;
 };
 
 //
