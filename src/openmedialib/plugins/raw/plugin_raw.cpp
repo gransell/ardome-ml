@@ -21,7 +21,6 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
-#include <libavformat/url.h>
 }
 
 namespace pl = olib::openpluginlib;
@@ -107,7 +106,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 		// Audio/Visual
 		virtual int get_frames( ) const { return frames_; }
-		virtual bool is_seekable( ) const { return context_ ? context_->seekable : 0; }
+		virtual bool is_seekable( ) const { return (context_ && context_->seekable ); }
 
 	protected:
 
@@ -617,7 +616,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		virtual ~store_aud( )
 		{
 			if ( context_ )
-				ffurl_close( context_ );
+				avio_close( context_ );
 		}
 
 		bool init( )
@@ -629,11 +628,11 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				if ( spec.find( L"aud:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = ffurl_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
+				error = avio_open2( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
 				if ( error == 0 )
 				{
 					AVIOContext *aml = 0;
-					if( !context_->is_streamed && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
+					if( context_->seekable && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
@@ -652,7 +651,6 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 
 						//url_setbufsize( aml, string.size( ) );
 						avio_write( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-						avio_flush( aml );
 						avio_close( aml );
 					}
 
@@ -680,7 +678,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				<< " stream=" << prop_stream_.value< int >( )
 				<< std::endl;
 			std::string string = str.str( );
-			ffurl_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
+			avio_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 		}
 
 		bool push( frame_type_ptr frame )
@@ -693,10 +691,12 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				if ( prop_stream_.value< int >( ) )
 				{
 					int samples = audio->samples( );
-					success = ffurl_write( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) == sizeof( samples );
+					avio_write( context_, ( unsigned char * )( &samples ), sizeof( samples ) );
 				}
-				if ( success )
-					success = ffurl_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) == audio->size( );
+				avio_write( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) );
+				avio_flush( context_ );
+
+				success = (context_->error >= 0); // error code is valid only after avio_flush()
 			}
 			return success;
 		}
@@ -711,7 +711,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		pl::pcos::property prop_header_;
 		pl::pcos::property prop_stream_;
 		std::wstring spec_;
-		URLContext *context_;
+		AVIOContext *context_;
 		std::wstring af_;
 		int valid_;
 		int frequency_;

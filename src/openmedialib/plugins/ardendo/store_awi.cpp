@@ -14,7 +14,7 @@
 #include <openmedialib/ml/keys.hpp>
 
 extern "C" {
-#include <libavformat/url.h>
+#include <libavformat/avio.h>
 }
 
 namespace ml = olib::openmedialib::ml;
@@ -41,7 +41,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			{
 				index_.close( count_, size_ );
 				write_index( );
-				ffurl_close( context_ );
+				avio_close( context_ );
 			}
 		}
 
@@ -55,7 +55,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			bool result = frame && frame->get_stream( );
 
 			if ( result && !context_ )
-				result = ffurl_open( &context_, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
+				result = avio_open2( &context_, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE | AVIO_FLAG_DIRECT, 0, 0 ) >= 0;
 
 			if ( result )
 			{
@@ -94,7 +94,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			{
 				std::vector< boost::uint8_t > buffer;
 				index_.flush( buffer );
-				ffurl_write( context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				avio_write( context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 			}
 		}
 
@@ -106,7 +106,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 
 	protected:
 		std::wstring resource_;
-		URLContext *context_;
+		AVIOContext *context_;
 		ml::awi_generator_v3 index_;
 		int count_;
 		boost::int64_t size_;

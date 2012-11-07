@@ -15,9 +15,9 @@
 #include <opencorelib/cl/function_job.hpp>
 #include <opencorelib/cl/worker.hpp>
 
-// includes for access to the avformat url access interface
+// includes for access to the avformat i/o access interface
 extern "C" {
-#include <libavformat/url.h>
+#include <libavformat/avio.h>
 }
 
 namespace pl = olib::openpluginlib;
@@ -111,26 +111,26 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 {
 	if ( target->T::finished( ) ) return;
 
-	URLContext *ts_context;
+	AVIOContext *ts_context;
 	boost::uint8_t temp[ 16384 ];
 
-	if ( ffurl_open( &ts_context, target->file_.c_str( ), AVIO_FLAG_READ, 0, 0 ) < 0 )
+	if ( avio_open2( &ts_context, target->file_.c_str( ), AVIO_FLAG_READ, 0, 0 ) < 0 )
 	{
-		ARLOG_ERR( "ffurl_open failed on index file %1%" )( target->file_ );
+		ARLOG_ERR( "avio_open failed on index file %1%" )( target->file_ );
 		return;
 	}
 
-	ffurl_seek( ts_context, target->position_, SEEK_SET );
+	avio_seek( ts_context, target->position_, SEEK_SET );
 
 	while ( target->T::valid( ) )
 	{
-		int actual = ffurl_read( ts_context, ( unsigned char * )temp, int( sizeof( temp ) ) );
+		int actual = avio_read( ts_context, ( unsigned char * )temp, int( sizeof( temp ) ) );
 		if ( actual <= 0 ) break;
 		target->position_ += actual;
 		target->T::parse( temp, actual );
 	}
 
-	ffurl_close( ts_context );
+	avio_close( ts_context );
 }
 
 // Shared pointer wrapper for index reader
@@ -258,17 +258,17 @@ class unindexed_job_type : public indexer_job
 		{
 			if ( finished( ) ) return;
 
-			URLContext *context = 0;
+			AVIOContext *context = 0;
 			std::string temp = cl::str_util::to_string( url_ );
 
 			// Attempt to reopen the media
-			if ( ffurl_open( &context, temp.c_str( ), AVIO_FLAG_READ, 0, 0 ) >= 0 )
+			if ( avio_open2( &context, temp.c_str( ), AVIO_FLAG_READ, 0, 0 ) >= 0 )
 			{
 				// Check the current file size
-				boost::int64_t bytes = ffurl_seek( context, 0, SEEK_END );
+				boost::int64_t bytes = avio_seek( context, 0, SEEK_END );
 
 				// Clean up the temporary sizing context
-				ffurl_close( context );
+				avio_close( context );
 
 				// If it's larger than before, then reopen, otherwise reduce resize count
 				{

@@ -113,11 +113,11 @@ void custom_release_buffer( struct AVCodecContext *c, AVFrame *pic )
 }
 
 	
-void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads )
+void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context, AVCodec **codec, bool i_frame_only, int threads, int compliance )
 {
 	ARLOG_DEBUG5( "Creating decoder context" );
 	*codec = avcodec_find_decoder( stream_to_avformat_codec_id( stream ) );
-	ARENFORCE_MSG( *codec, "Could not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
+	ARENFORCE_MSG( *codec, "Couuld not find decoder for format %1% (used %2% as a key for lookup")( stream_to_avformat_codec_id( stream ) )( stream->codec( ) );
 	
 	*context = avcodec_alloc_context3( *codec );
 	ARENFORCE_MSG( *context, "Failed to allocate codec context" );
@@ -127,6 +127,9 @@ void create_video_codec( const stream_type_ptr &stream, AVCodecContext **context
 		(*context)->flags |= CODEC_FLAG_LOW_DELAY;
 	if ( threads )
 		(*context)->thread_count = threads;
+
+	// Set "strict" parameter
+	(*context)->strict_std_compliance = compliance;
 	
 	avcodec_open2( *context, *codec, 0 );
 	ARLOG_DEBUG5( "Creating new avcodec decoder context" );
@@ -161,7 +164,7 @@ void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context
 class stream_queue
 {
 	public:
-		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope, const std::wstring& source_uri, int threads )
+		stream_queue( ml::input_type_ptr input, int gop_open, const std::wstring& scope, const std::wstring& source_uri, int threads, int compliance )
 			: input_( input )
 			, gop_open_( gop_open )
 			, scope_( scope )
@@ -174,6 +177,7 @@ class stream_queue
 			, frame_( avcodec_alloc_frame( ) )
 			, offset_( 0 )
 			, lru_cache_( )
+			, compliance_(compliance)
 		{
 			lru_cache_ = ml::the_scope_handler::Instance().lru_cache( scope_ );
 		}
@@ -452,7 +456,7 @@ class stream_queue
 
 			if ( context_ == 0 )
 			{
-				create_video_codec( result->get_stream(), &context_, &codec_, result->get_stream()->estimated_gop_size() == 1, threads_ );
+				create_video_codec( result->get_stream(), &context_, &codec_, result->get_stream()->estimated_gop_size() == 1, threads_ , compliance_ );
 				avcodec_flush_buffers( context_);
 			}
 
@@ -588,6 +592,7 @@ class stream_queue
 		std::wstring scope_;
 		std::wstring scope_uri_key_;
 		int threads_;
+		int compliance_;
 
 		int keys_;
 		AVCodecContext *context_;
@@ -938,6 +943,7 @@ class avformat_decode_filter : public filter_simple
 			, prop_source_uri_( pl::pcos::key::from_string( "source_uri" ) )
 			, prop_threads_( pl::pcos::key::from_string( "threads" ) )
 			, prop_decode_video_( pl::pcos::key::from_string( "decode_video" ) )
+			, prop_strict_( pl::pcos::key::from_string( "strict" ) )
 			, initialised_( false )
 			, queue_( )
 			, audio_queue_( )
@@ -947,6 +953,7 @@ class avformat_decode_filter : public filter_simple
 			properties( ).append( prop_source_uri_ = std::wstring(L"") );
 			properties( ).append( prop_threads_ = 1 );
 			properties( ).append( prop_decode_video_ = 1 );
+			properties( ).append( prop_strict_ = FF_COMPLIANCE_NORMAL );
 		}
 
 		virtual ~avformat_decode_filter( )
@@ -979,7 +986,7 @@ class avformat_decode_filter : public filter_simple
 							uri = prop_source_uri_.value< std::wstring >( );
 						}
 						
-						queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< std::wstring >( ), uri, prop_threads_.value< int >( ) ) );
+						queue_ = stream_queue_ptr( new stream_queue( fetch_slot( 0 ), prop_gop_open_.value< int >( ), prop_scope_.value< std::wstring >( ), uri, prop_threads_.value< int >( ), prop_strict_.value< int >( ) ) );
 					}
 				}
 				else
@@ -1026,6 +1033,7 @@ class avformat_decode_filter : public filter_simple
 		pl::pcos::property prop_source_uri_;
 		pl::pcos::property prop_threads_;
 		pl::pcos::property prop_decode_video_;
+		pl::pcos::property prop_strict_;
 		bool initialised_;
 		stream_queue_ptr queue_;
 		avformat_audio_decoder_ptr audio_queue_;

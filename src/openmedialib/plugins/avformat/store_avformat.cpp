@@ -33,7 +33,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavformat/url.h>
+#include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavutil/pixdesc.h>
@@ -495,9 +495,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				avformat_write_header( oc_, 0 );
 
 				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< std::wstring >( ) == L"" )
-					ret = ffurl_open( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
+					ret = avio_open2( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
 				else if ( prop_ts_index_.value< std::wstring >( ) != L"" )
-					ret = ffurl_open( &ts_context_, olib::opencorelib::str_util::to_string( prop_ts_index_.value< std::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
+					ret = avio_open2( &ts_context_, olib::opencorelib::str_util::to_string( prop_ts_index_.value< std::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
 			}
 
 			return ret;
@@ -527,7 +527,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				ts_generator_audio_.close(audio_packet_num_, final);
 				ts_generator_video_.close(push_count_, final);
 				write_ts_index( );
-				ffurl_close( ts_context_ );
+				avio_close( ts_context_ );
 			}
 
 			// Close the output file
@@ -546,11 +546,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				std::vector< boost::uint8_t > buffer;
 				ts_generator_audio_.flush( buffer );
-				ffurl_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 
 
 				ts_generator_video_.flush( buffer );
-				ffurl_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 			}
 		}
 
@@ -1666,7 +1666,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		awi_generator_v4 ts_generator_video_;
 		awi_generator_v4 ts_generator_audio_;
-		URLContext *ts_context_;
+		AVIOContext *ts_context_;
 		int ts_last_position_;
 		boost::int64_t ts_last_offset_;
 

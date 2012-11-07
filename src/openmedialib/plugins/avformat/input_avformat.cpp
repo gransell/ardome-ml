@@ -43,7 +43,7 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavformat/url.h>
+#include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 }
@@ -919,6 +919,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, prop_fake_fps_( pcos::key::from_string( "fake_fps" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_inner_threads_( pcos::key::from_string( "inner_threads" ) )
+			, prop_strict_( pcos::key::from_string( "strict" ) )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
 			, audio_codec_( 0 )
@@ -971,6 +972,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_fake_fps_ = 0 );
 			properties( ).append( prop_frequency_ = -1 );
 			properties( ).append( prop_inner_threads_ = 1 );
+			properties( ).append( prop_strict_ = FF_COMPLIANCE_NORMAL );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -2003,6 +2005,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				codec_context->thread_count = boost::thread::hardware_concurrency( );
 			else
 				codec_context->thread_count = prop_inner_threads_.value< int >( );
+			codec_context->strict_std_compliance = prop_strict_.value< int >( );
 			if ( video_codec_ == NULL || avcodec_open2( codec_context, video_codec_, 0 ) < 0 )
 				prop_video_index_ = -1;
 		}
@@ -2020,6 +2023,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			AVStream *stream = get_audio_stream( );
 			AVCodecContext *codec_context = stream->codec;
 			audio_codec_ = avcodec_find_decoder( codec_context->codec_id );
+			codec_context->strict_std_compliance = prop_strict_.value< int >( );
 			if ( audio_codec_ == NULL || avcodec_open2( codec_context, audio_codec_, 0 ) < 0 )
 				prop_audio_index_ = -1;
 		}
@@ -2634,10 +2638,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		{	  
 			// With a cached item, we want to avoid it going out of scope/expiring so obtain
 			// a reference to the existing item now
-			URLContext *keepalive = 0;
+			AVIOContext *keepalive = 0;
 			if ( resource_.find( L"aml:cache:" ) == 0 )
 			{
-				ffurl_open( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
+				avio_open2( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
 
 				// AML specific reopen hack - enforces a reopen from a non-cached source
 				av_read_pause( context_ );
@@ -2671,7 +2675,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			// Close the keep alive
 			if ( keepalive )
-				ffurl_close( keepalive );
+				avio_close( keepalive );
 
 			// Restore the position request
 			seek( position );
@@ -2710,6 +2714,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		pcos::property prop_fake_fps_;
 		pcos::property prop_frequency_;
 		pcos::property prop_inner_threads_;
+		pcos::property prop_strict_;
 		AVFrame *av_frame_;
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;

@@ -130,13 +130,14 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	if (!file_) {
 		//Try to open with read-write access first
-		int error = ffurl_open( &file_, resource.c_str( ), AVIO_FLAG_READ_WRITE, 0, 0 );
+		//Know that READ_WRITE is a lie! The file will be write-only.
+		int error = avio_open2( &file_, resource.c_str( ), AVIO_FLAG_READ_WRITE, 0, 0 );
 		if( !file_ || error )
 		{
 			//If that failed, open with just write access.
 			ARLOG_WARN( "Could not open %1% with read/write access. Attempting to open with just write. Will not be able to rewrite WAV header" )( resource );
 			writeonly = true;
-			error = ffurl_open( &file_, resource.c_str( ), AVIO_FLAG_WRITE, 0, 0 );
+			error = avio_open2( &file_, resource.c_str( ), AVIO_FLAG_WRITE, 0, 0 );
 			ARENFORCE_MSG( file_ && !error, "Failed to open %1% for writing. error = %3%" )( resource )( error );
 		}
 	}
@@ -158,30 +159,33 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 		samples);
 
 #	define Write(block) \
-		ffurl_write( file_, ( unsigned char * )&block, sizeof(block) )
+		avio_write( file_, ( unsigned char * )&block, sizeof(block) )
 
-	ARENFORCE( Write(w) >= 0 );
-	ARENFORCE( Write(fmt) >= 0 );
-	ARENFORCE( Write(ds64) >= 0 );
-	ARENFORCE( Write(data) >= 0 );
+	Write(w);
+	Write(fmt);
+	Write(ds64);
+	Write(data);
+
+	avio_flush( file_ );
+	ARENFORCE( file_->error >= 0 );
 }
 
 // Creates one large array of endian::little<T>'s which are filled with the
 // values from p and then stored as is down to file in one chunk.
 template<typename T>
-inline void saveRangeFast(URLContext* file, T* p, size_t nblocks) {
+inline void saveRangeFast(AVIOContext* file, T* p, size_t nblocks) {
 	boost::scoped_array< le<T> > blocks( new le<T>[nblocks] );
 	size_t i = 0;
 	while (i < nblocks)
 		blocks[i++] = *p++;
 
-	ffurl_write(file, ( unsigned char * ) blocks.get(), sizeof(T) * nblocks);
+	avio_write(file, ( unsigned char * ) blocks.get(), sizeof(T) * nblocks);
 }
 
 // Goes through p sample by sample and saves them. This is necessary when the
 // sample is isn't a power of 2.
 template<typename T, size_t realsizeofT>
-inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks, std::vector<unsigned char> &conversion_buffer) {
+inline void saveRangeNormal(AVIOContext* file, T* p, size_t nblocks, std::vector<unsigned char> &conversion_buffer) {
 	const size_t conversion_buffer_size = nblocks * realsizeofT;
 	if (conversion_buffer.size() < conversion_buffer_size)
 		conversion_buffer.resize(conversion_buffer_size);
@@ -193,11 +197,11 @@ inline void saveRangeNormal(URLContext* file, T* p, size_t nblocks, std::vector<
 		memcpy(dst, &sample, realsizeofT);
 		dst += realsizeofT;
 	}
-	ffurl_write(file, &conversion_buffer[0], nblocks * realsizeofT);
+	avio_write(file, &conversion_buffer[0], nblocks * realsizeofT);
 }
 
 template<typename T, size_t realsizeofT>
-inline void saveRange(URLContext* file, void* array, size_t nbytes, std::vector<unsigned char> &conversion_buffer) {
+inline void saveRange(AVIOContext* file, void* array, size_t nbytes, std::vector<unsigned char> &conversion_buffer) {
 	size_t nblocks = nbytes / sizeof(T);
 	T* p = (T*)array;
 
@@ -229,7 +233,7 @@ bool store_wav::push(ml::frame_type_ptr frame)
 	{
 		// This is no doubt the fastest, just write the memory
 		// chunk down to file in one go.
-		ffurl_write( file_, ( unsigned char * )audio->pointer(), size );
+		avio_write( file_, ( unsigned char * )audio->pointer(), size );
 
 	}
 	else
@@ -250,6 +254,9 @@ bool store_wav::push(ml::frame_type_ptr frame)
 	{
 		saveRange<uint32_t, 4>(file_, audio->pointer(), size, conversion_buffer_);
 	}
+
+	avio_flush( file_ );
+	ARENFORCE( file_->error >= 0 );
 
 	return true;
 }
@@ -279,17 +286,23 @@ void store_wav::vitalizeHeader() {
 		return;
 	}
 
-	int64_t s_filelen = ffurl_size(file_);
+	// avio_flush( file_ );
+
+	int64_t s_filelen = avio_size( file_ );
 	ARENFORCE_MSG( s_filelen != -1 , "Could not get file size" );
 
 	uint64_t filelen = (uint64_t)s_filelen;
-	ffurl_seek(file_, 0, SEEK_SET);
+	avio_seek( file_, 0, SEEK_SET );
 
 	size_t offset = 0;
 	std::vector<uint8_t> buf(4096);
 
-	ARENFORCE_MSG( ffurl_read_complete( file_, &buf[0], buf.size( ) ) > 0 , "Could not read file" );
-
+	AVIOContext *tmp_file;
+	ARENFORCE_MSG( avio_open2( &tmp_file, olib::opencorelib::str_util::to_string(resource_).c_str( ), AVIO_FLAG_READ, 0, 0 ) == 0, "Could not reopen file for reading");
+	ARENFORCE_MSG( avio_read( tmp_file, &buf[0], buf.size( ) ) == buf.size( ) , "Could not read file" );
+	ARENFORCE_MSG( tmp_file->error == 0, "Error when reading file" );
+	avio_close( tmp_file );
+	
 	riff::wav::block* blk = NULL;
 	riff::wav::wave* wave = NULL;
 	riff::wav::fmt_base* fmt = NULL;
@@ -350,14 +363,17 @@ void store_wav::vitalizeHeader() {
 
 #define Save(block) \
 	do { \
-		ffurl_seek(file_, (uint8_t*)block - &buf[0], SEEK_SET); \
-		ffurl_write(file_, (uint8_t *)block, sizeof(*block)); \
+		avio_seek( file_, (uint8_t*)block - &buf[0], SEEK_SET ); \
+		avio_write( file_, (uint8_t *)block, sizeof(*block) ); \
 	} while(0)
 
 	Save(wave);
 	Save(fmt);
 	Save(ds64);
 	Save(data);
+
+	avio_flush( file_ );
+	ARENFORCE( file_->error >= 0 );
 }
 
 static uint32_t getLo(uint64_t val) {
@@ -413,7 +429,7 @@ void store_wav::closeFile() {
 			vitalizeHeader();
 		}
 
-		ffurl_close(file_);
+		avio_close(file_);
 		file_ = NULL;
 	}
 }

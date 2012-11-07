@@ -15,7 +15,7 @@
 #include "wav.h"
 
 extern "C" {
-#include <libavformat/url.h>
+#include <libavformat/avio.h>
 }
 
 namespace ml = olib::openmedialib::ml;
@@ -55,7 +55,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 		void vitalizeHeader();
 		void closeFile();
 
-		URLContext *file_;
+		AVIOContext *file_;
 		bool writeonly;
 		std::wstring resource_;
 		std::vector<unsigned char> conversion_buffer_;
