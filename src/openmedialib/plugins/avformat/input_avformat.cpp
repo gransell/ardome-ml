@@ -1834,6 +1834,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					result = false;
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" )
 					result = true;
+				else if ( format == "rtsp" )
+				        result = false;
 			}
 			else if ( result && has_audio( ) )
 			{
@@ -1855,6 +1857,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				else if ( format == "divx" )
 					result = false;
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" )
+					result = false;
+				else if ( format == "rtsp" )
 					result = false;
 				else
 					result = format != "wav";
