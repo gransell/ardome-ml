@@ -43,6 +43,7 @@ extern "C" {
 
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
 
+namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
@@ -426,8 +427,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				oc_->oformat = fmt_;
 
 				// Determine requested codecs
-				CodecID audio_codec = obtain_audio_codec_id( );
-				CodecID video_codec = obtain_video_codec_id( );
+				AVCodec *audio = obtain_audio_codec( );
+				AVCodec *video = obtain_video_codec( );
+
+				CodecID audio_codec = audio ? audio->id : CODEC_ID_NONE;
+				CodecID video_codec = video ? video->id : CODEC_ID_NONE;
 
 				// Open video and audio codec streams
 				if ( prop_enable_video_.value< int >( ) == 1 && video_codec != CODEC_ID_NONE )
@@ -456,7 +460,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}
 
-				if ( prop_acodec_.value< std::wstring >( ) == L"aac" && std::string( fmt_->name ) == "mp4" )
+				if ( audio_codec == CODEC_ID_AAC && ( std::string( fmt_->name ) == "mp4" || std::string( fmt_->name ) == "flv" ) )
 				{
 					for ( size_t i = 0; i < bitstream_filters_.size( ); i ++ )
 					{
@@ -681,9 +685,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		}
 
 		// Obtain the requested video codec id
-		CodecID obtain_video_codec_id( )
+		AVCodec *obtain_video_codec( )
 		{
+			AVCodec *codec = 0;
 			CodecID codec_id = fmt_->video_codec;
+
 			if ( prop_vcodec_.value< std::wstring >( ) == L"copy" )
 			{
 				ARENFORCE( first_frame_ && first_frame_->get_stream( ) );
@@ -691,50 +697,52 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				
 				codec_id = stream_to_avformat_codec_id( stream );
 				ARENFORCE( codec_id != CODEC_ID_NONE );
-				return codec_id;
 			}
 			else if ( prop_vcodec_.value< std::wstring >( ) != L"" )
 			{
-				AVCodec *codec = avcodec_find_encoder_by_name( olib::opencorelib::str_util::to_string( prop_vcodec_.value< std::wstring >( ) ).c_str( ) );
-				if ( codec != NULL )
-					codec_id = codec->id;
+				codec = avcodec_find_encoder_by_name( cl::str_util::to_string( prop_vcodec_.value< std::wstring >( ) ).c_str( ) );
+				ARENFORCE_MSG( codec, "Unable to find video codec for %s" )( prop_vcodec_.value< std::wstring >( ) );
+				codec_id = codec->id;
 			}
 			else
 			{
 				codec_id = av_guess_codec( oc_->oformat, NULL, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_VIDEO );
 			}
-			if ( prop_debug_.value< int >( ) )
- 				std::cerr << "obtain_video_codec_id: found: " << codec_id << " for "
-						  << olib::opencorelib::str_util::to_string( prop_vcodec_.value< std::wstring >( ) ) << std::endl;
-			return codec_id;
+
+			if ( codec_id != CODEC_ID_NONE && codec == 0 )
+			{
+				codec = avcodec_find_encoder( codec_id );
+				ARENFORCE_MSG( codec, "Unable to find video codec for %d" )( codec_id );
+			}
+
+			return codec;
 		}
 
 		// Obtain the requested audio codec id
-		CodecID obtain_audio_codec_id( )
+		AVCodec *obtain_audio_codec( )
 		{
+			AVCodec *codec = 0;
 			CodecID codec_id = fmt_->audio_codec;
+
 			if ( prop_acodec_.value< std::wstring >( ) != L"" )
 			{
-				AVCodec *codec = avcodec_find_encoder_by_name( olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) ).c_str( ) );
-				if ( codec != NULL )
-					codec_id = codec->id;
-				else if ( prop_debug_.value< int >( ) )
-					std::cerr << "obtain_audio_codec_id: failed to find codec for value: "
-							   << olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) )
-							   << std::endl;
+				codec = avcodec_find_encoder_by_name( cl::str_util::to_string( prop_acodec_.value< std::wstring >( ) ).c_str( ) );
+				ARENFORCE_MSG( codec, "Unable to find audio codec for %s" )( prop_acodec_.value< std::wstring >( ) );
+				codec_id = codec->id;
 			}
 			else
 			{
 				codec_id = av_guess_codec( oc_->oformat, NULL, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), NULL, AVMEDIA_TYPE_AUDIO );
 			}
 
-			if ( prop_debug_.value< int >( ) )
- 				std::cerr << "obtain_audio_codec_id: found: " << codec_id << " for "
- 						  << olib::opencorelib::str_util::to_string( prop_acodec_.value< std::wstring >( ) ) << std::endl;
+			if ( codec_id != CODEC_ID_NONE && codec == 0 )
+			{
+				codec = avcodec_find_encoder( codec_id );
+				ARENFORCE_MSG( codec, "Unable to find audio codec for %d" )( codec_id );
+			}
 
-			return codec_id;
+			return codec;
 		}
-
 
 		// Generate a video stream
 		AVStream *add_video_stream( CodecID codec_id )
@@ -897,55 +905,51 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Create a new stream
 				AVStream *st = avformat_new_stream( oc_, 0 );
 
-				if ( !st )
-					std::cerr << "add_audio_stream: failed to create stream for: " << codec_id << std::endl;
+				ARENFORCE_MSG( st, "Failed to create stream for audio track %d as %s" )( i )( prop_acodec_.value< std::wstring >( ) );
 
 				// If created, then initialise from properties
-				if ( st != NULL ) 
-				{
-					AVCodecContext *c = st->codec;
+				AVCodecContext *c = st->codec;
 
-					c->strict_std_compliance = prop_strict_.value< int >( );
-					c->codec_type = avcodec_get_type( codec_id );
-					c->codec_id = codec_id;
+				c->strict_std_compliance = prop_strict_.value< int >( );
+				c->codec_type = avcodec_get_type( codec_id );
+				c->codec_id = codec_id;
 
-					//c->codec_id = codec_id;
-					//c->codec_type = AVMEDIA_TYPE_AUDIO;
-					c->reordered_opaque = AV_NOPTS_VALUE;
+				//c->codec_id = codec_id;
+				//c->codec_type = AVMEDIA_TYPE_AUDIO;
+				c->reordered_opaque = AV_NOPTS_VALUE;
 
-					// Specify sample parameters
-					c->sample_rate = prop_frequency_.value< int >( );
-					//The codec uses some strange default values that will 
-					//not work for atleast the vorbis case. 
-					// 1/sample_rate is a better guess 
-					if (c->time_base.num == 0 && c->time_base.den == 1) {
-						c->time_base.num = 1;
-						c->time_base.den = c->sample_rate;
-					}
-					c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
-
-					// The bitrate property sets the bitrate for one stream. If we have fewer channels than
-					// channels_per_stream in the stream, we'll have to lower the bitrate accordingly.
-					int stream_bitrate = prop_audio_bit_rate_.value< int >( ) * c->channels / channels_per_stream;
-					c->bit_rate = stream_bitrate;
-	
-					if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
-						c->flags |= CODEC_FLAG_GLOBAL_HEADER;
-	
-					// Allow the user to override the audio fourcc
-					std::string afourcc = olib::opencorelib::str_util::to_string( prop_afourcc_.value< std::wstring >( ) );
-					if ( afourcc != "" )
-					{
-						char *tail = NULL;
-						const char *arg = afourcc.c_str( );
-						int tag = strtol( arg, &tail, 0);
-						if( !tail || *tail )
-							tag = arg[ 0 ] + ( arg[ 1 ] << 8 ) + ( arg[ 2 ] << 16 ) + ( arg[ 3 ] << 24 );
-						c->codec_tag = tag;
-					}
-
-					audio_stream_.push_back( st );
+				// Specify sample parameters
+				c->sample_rate = prop_frequency_.value< int >( );
+				//The codec uses some strange default values that will 
+				//not work for atleast the vorbis case. 
+				// 1/sample_rate is a better guess 
+				if (c->time_base.num == 0 && c->time_base.den == 1) {
+					c->time_base.num = 1;
+					c->time_base.den = c->sample_rate;
 				}
+				c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
+
+				// The bitrate property sets the bitrate for one stream. If we have fewer channels than
+				// channels_per_stream in the stream, we'll have to lower the bitrate accordingly.
+				int stream_bitrate = prop_audio_bit_rate_.value< int >( ) * c->channels / channels_per_stream;
+				c->bit_rate = stream_bitrate;
+
+				if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
+					c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+
+				// Allow the user to override the audio fourcc
+				std::string afourcc = cl::str_util::to_string( prop_afourcc_.value< std::wstring >( ) );
+				if ( afourcc != "" )
+				{
+					char *tail = NULL;
+					const char *arg = afourcc.c_str( );
+					int tag = strtol( arg, &tail, 0);
+					if( !tail || *tail )
+						tag = arg[ 0 ] + ( arg[ 1 ] << 8 ) + ( arg[ 2 ] << 16 ) + ( arg[ 3 ] << 24 );
+					c->codec_tag = tag;
+				}
+
+				audio_stream_.push_back( st );
 			}
 		}
 
@@ -1054,9 +1058,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 				else
 				{
-
 					// find the video encoder
-					AVCodec *codec = avcodec_find_encoder( video_enc->codec_id );
+					AVCodec *codec = obtain_video_codec( );
 
 					if( codec && codec->pix_fmts )
 					{
@@ -1111,7 +1114,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodecContext *c = ( *iter )->codec;
 
 				// Find the encoder
-				AVCodec *codec = avcodec_find_encoder( c->codec_id );
+				AVCodec *codec = obtain_audio_codec( );
 
 				// Continue if codec found
 				ARENFORCE( codec != NULL );
@@ -1235,11 +1238,21 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				av_init_packet( &pkt );
 
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
-					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
+				{
+					pkt.pts = av_rescale_q( c->coded_frame->pts + 1, c->time_base, video_stream_->time_base );
+					pkt.dts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
+				}
+				else
+				{
+					pkt.pts = av_rescale_q( encoded_images_ + 1, c->time_base, video_stream_->time_base );
+					pkt.dts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
+				}
 
 				if( oc_->pb && c->coded_frame && ( c->coded_frame->key_frame || c->coded_frame->pict_type == AV_PICTURE_TYPE_I ) && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) )
 				{
-					ts_generator_video_.enroll( encoded_images_, oc_->pb->pos );
+					if ( ts_context_ )
+						ts_generator_video_.enroll( encoded_images_, oc_->pb->pos );
+
 					write_ts_index( );
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = encoded_images_;
@@ -1301,8 +1314,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//std::cerr << "ts: " << pkt.pts << " " << pkt.dts << std::endl;
 
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
-				{
-					ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+				{       
+					if ( ts_context_ )
+						ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+
 					write_ts_index( );
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
@@ -1365,6 +1380,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Obtain the next image
 			frame_type_ptr frame = *( video_queue_.begin( ) );
 			video_queue_.pop_front( );
+
+			ARENFORCE_MSG( frame, "Empty frame found in video queue" );
 
 			if ( video_copy_ )
 				return do_stream_write( frame );
@@ -1507,7 +1524,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 							{
 								if( audio_packet_num_ % 8 == 0 )
 								{
-									ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
+									if( ts_context_ )
+										ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
+
 									write_ts_index( );
 								}
 								audio_packet_num_++;
