@@ -1314,7 +1314,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{       
-					ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+					if ( ts_context_ )
+						ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+
 					write_ts_index( );
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
@@ -1521,7 +1523,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 							{
 								if( audio_packet_num_ % 8 == 0 )
 								{
-									ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
+									if( ts_context_ )
+										ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
+
 									write_ts_index( );
 								}
 								audio_packet_num_++;
