@@ -84,12 +84,12 @@ ML_DECLSPEC int samples_for_frame(int frameoffset, int samplefreq, int framerate
 		return cycle[ frameoffset % cycle.size() ];
 	}
 
-	boost::rational< int > framerate = boost::rational< int >( framerate_numerator, framerate_denominator );
-	boost::rational< int > frequency = boost::rational< int >( samplefreq );
-	boost::rational< int > sequence = frequency / framerate;
+	boost::rational< boost::int64_t > framerate = boost::rational< boost::int64_t >( framerate_numerator, framerate_denominator );
+	boost::rational< boost::int64_t > frequency = boost::rational< boost::int64_t >( samplefreq );
+	boost::rational< boost::int64_t > sequence = frequency / framerate;
 	int offset = frameoffset % sequence.denominator( );
 
-	return boost::rational_cast< int >( sequence * ( offset + 1 ) ) - boost::rational_cast< int >( sequence * offset );
+	return int( boost::rational_cast< boost::int64_t >( sequence * ( offset + 1 ) ) - boost::rational_cast< boost::int64_t >( sequence * offset ) );
 }
 
 ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int framerate_numerator, int framerate_denominator, locked_profile::type profile )
@@ -121,13 +121,13 @@ ML_DECLSPEC boost::int64_t samples_to_frame(int frameoffset, int samplefreq, int
 		return count * cycles + total;
 	}
 
-	boost::rational< int > fps = boost::rational< int >( framerate_numerator, framerate_denominator );
-	boost::rational< int > frequency = boost::rational< int >( samplefreq );
-	boost::rational< int > sequence = frequency / fps;
-	int offset = frameoffset % sequence.denominator( );
-	int cycles = ( frameoffset - offset ) / sequence.denominator( );
+	boost::rational< boost::int64_t > fps = boost::rational< boost::int64_t >( framerate_numerator, framerate_denominator );
+	boost::rational< boost::int64_t > frequency = boost::rational< boost::int64_t >( samplefreq );
+	boost::rational< boost::int64_t > sequence = frequency / fps;
+	boost::int64_t offset = frameoffset % sequence.denominator( );
+	boost::int64_t cycles = ( frameoffset - offset ) / sequence.denominator( );
 
-	return boost::int64_t( cycles ) * sequence.numerator( ) + boost::rational_cast< int >( sequence * offset );
+	return boost::int64_t( cycles ) * sequence.numerator( ) + boost::rational_cast< boost::int64_t >( sequence * offset );
 }
 
 } } } }
