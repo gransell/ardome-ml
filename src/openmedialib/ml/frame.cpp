@@ -3,6 +3,7 @@
 #include "frame.hpp"
 #include "stream.hpp"
 #include <deque>
+#include <boost/rational.hpp>
 
 namespace pcos = olib::openpluginlib::pcos;
 namespace il = olib::openimagelib::il;
@@ -152,7 +153,13 @@ void frame_type::get_sar( int &num, int &den ) const
 	num = sar_num_; den = sar_den_; 
 }
 
-void frame_type::set_fps( int num, int den ) { fps_num_ = num; fps_den_ = den; }
+void frame_type::set_fps( int num, int den ) 
+{
+	boost::rational< int > fps = boost::rational< int >( num, den );
+	fps_num_ = fps.numerator( ); 
+	fps_den_ = fps.denominator( ); 
+}
+
 void frame_type::get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
 
 int frame_type::get_fps_num( ) { int num, den; get_fps( num, den ); return num; }
