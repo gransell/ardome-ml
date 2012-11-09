@@ -542,15 +542,23 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		void write_ts_index( )
 		{
+			std::vector< boost::uint8_t > buffer;
+
 			if ( ts_context_ )
 			{
-				std::vector< boost::uint8_t > buffer;
 				ts_generator_audio_.flush( buffer );
 				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 
-
 				ts_generator_video_.flush( buffer );
 				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+
+				avio_flush( ts_context_ );
+			}
+			else
+			{
+				// Flush the generators just in case data is being written to them
+				ts_generator_audio_.flush( buffer );
+				ts_generator_video_.flush( buffer );
 			}
 		}
 
