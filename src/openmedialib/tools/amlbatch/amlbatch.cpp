@@ -8,7 +8,13 @@
 #include <sstream>
 #include <deque>
 
-#ifdef WIN32
+#ifndef WIN32
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <termios.h>
+#else
+#include <conio.h>
 #include <io.h>
 #endif
 
@@ -36,7 +42,108 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
+#ifndef WIN32
 #define clear_to_eol	char( 27 ) << "[K\r" 
+#else
+#define clear_to_eol	"                \r" 
+#endif
+
+#ifndef WIN32
+static struct termios oldtty;
+static int restore_tty = 0;
+#endif
+
+static void term_exit(void)
+{
+#ifndef WIN32
+	if( restore_tty )
+	{
+		tcsetattr( 0, TCSANOW, &oldtty );
+		restore_tty = 0;
+	}
+#endif
+}
+
+static volatile int sigterm_count = 0;
+
+static void sigterm_handler( int sig )
+{
+	if ( sigterm_count ++ == 1 )
+	{
+		term_exit( );
+		exit( 1 );
+	}
+}
+
+static void term_init(void)
+{
+#ifndef WIN32
+	struct termios tty;
+
+	if ( tcgetattr( 0, &tty ) == 0) 
+	{
+		oldtty = tty;
+		restore_tty = 1;
+		atexit(term_exit);
+		tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+		tty.c_oflag |= OPOST;
+		tty.c_lflag &= ~(ECHO|ECHONL|ICANON|IEXTEN);
+		tty.c_cflag &= ~(CSIZE|PARENB);
+		tty.c_cflag |= CS8;
+		tty.c_cc[VMIN] = 1;
+		tty.c_cc[VTIME] = 0;
+
+		tcsetattr (0, TCSANOW, &tty);
+	}
+	signal( SIGQUIT, sigterm_handler ); /* Quit (POSIX).  */
+#endif
+	signal( SIGINT, sigterm_handler ); /* Interrupt (ANSI).	*/
+	signal( SIGTERM, sigterm_handler ); /* Termination (ANSI).  */
+}
+
+/* read a key without blocking */
+static int read_key( )
+{
+	unsigned char ch = 0;
+
+#ifndef WIN32
+
+	if ( restore_tty )
+	{
+		fd_set rfds;
+		FD_ZERO( &rfds );
+		FD_SET( 0, &rfds );
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		int n = select( 1, &rfds, NULL, NULL, &tv );
+		if ( n > 0 ) 
+		{
+			n = read( 0, &ch, 1 );
+			ch = n == 1 ? ch : 0;
+		}
+	}
+
+#elif HAVE_KBHIT
+
+	static int is_pipe;
+	static HANDLE input_handle;
+	DWORD dw, nchars;
+
+	if(!input_handle)
+	{
+		input_handle = GetStdHandle( STD_INPUT_HANDLE );
+		is_pipe = !GetConsoleMode( input_handle, &dw );
+	}
+
+	if ( stdin->_cnt > 0 ) 
+		read(0, &ch, 1);
+	else if( kbhit( ) )
+		ch = getch( );
+
+#endif
+	return ch != 0 ? ch : -1;
+}
 
 void assign( pl::pcos::property_container &props, const std::string &name, const std::wstring &value )
 {
@@ -215,7 +322,7 @@ void prepare_graph( ml::filter_type_ptr input, std::vector< ml::store_type_ptr >
 		walk_and_assign( input, "active", 1 );
 }
 
-void run( ml::input_type_ptr input )
+void run( ml::input_type_ptr input, bool interactive, bool stats )
 {
 	boost::system_time last_time = boost::get_system_time( );
 	int frame_count = 0;
@@ -225,9 +332,15 @@ void run( ml::input_type_ptr input )
 		walk_and_assign( input, "active", 1 );
 
 	input->sync( );
-	int total_frames = input->get_frames( );
 
-	for ( int i = 0; i < total_frames; i ++ )
+	int total_frames = input->get_frames( );
+	bool running = true;
+	bool trickplay = input->is_seekable( ) ? interactive || input->fetch_slot( )->property( "@loop" ).value< std::wstring >( ) == std::wstring( L"2" ) : false;
+	int speed = 1;
+
+	term_init( );
+
+	for ( int i = 0; running && sigterm_count == 0 && i < total_frames; )
 	{
 		boost::system_time curr_time = boost::get_system_time( );
 		boost::posix_time::time_duration diff = curr_time - last_time;
@@ -246,7 +359,8 @@ void run( ml::input_type_ptr input )
 			last_time = curr_time;
 		}
 
-		std::cerr << i << "/" << total_frames << " fps: " << last_fps << clear_to_eol;
+		if ( stats )
+			std::cerr << i << "/" << total_frames << " fps: " << last_fps << clear_to_eol;
 
 		input->seek( i );
 		ml::frame_type_ptr frame = input->fetch( );
@@ -255,9 +369,65 @@ void run( ml::input_type_ptr input )
 			break;
 
 		frame_count ++;
+
+		if ( trickplay )
+		{
+			int last_frame = i;
+
+			switch( read_key( ) )
+			{
+				case 27:
+				case 'q':
+					running = false;
+					break;
+
+				case 'j':
+					speed = speed >= 0 ? -1 : speed * 2;
+					break;
+
+				case 'k':
+				case ' ':
+					speed = speed == 0 ? 1 : 0;
+					break;
+
+				case 'l':
+					speed = speed <= 0 ? 1 : speed * 2;
+					break;
+
+				case 'J':
+					speed = -25;
+					break;
+
+				case 'L':
+					speed = 25;
+					break;
+
+				case '0':
+					i = 0 - speed;
+					break;
+
+				case 'e':
+					i = total_frames - 1 - speed;
+					break;
+			}
+
+			i = cl::utilities::clamp( i + speed, 0, total_frames - 1 );
+
+			if ( i == last_frame )
+				boost::this_thread::sleep( boost::posix_time::milliseconds( int( 1000 / frame->fps( ) ) ) );
+		}
+		else
+		{
+			i ++;
+		}
 	}
 
-	std::cerr << std::endl;
+	walk_and_assign( input, "active", 0 );
+
+	if ( stats )
+		std::cerr << std::endl;
+
+	term_exit( );
 }
 
 void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, bool interactive, int speed, bool stats, bool show_source_tc )
@@ -570,7 +740,7 @@ int real_main( int argc, char **argv )
 	// Allow us to just iterate through the graph if the last filter says so
 	if ( input->fetch_slot( ) && input->fetch_slot( )->property( "@loop" ).valid( ) )
 	{
-		run( input );
+		run( input, interactive, stats );
 	}
 	else
 	{
