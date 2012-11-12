@@ -121,6 +121,7 @@
 #include <openmedialib/ml/filter_simple.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <opencorelib/cl/lru.hpp>
+#include <opencorelib/cl/utilities.hpp>
 
 #include <iostream>
 #include <cstdlib>
@@ -128,6 +129,7 @@
 #include <map>
 #include <string>
 #include <cmath>
+#include <limits>
 
 #ifndef BOOST_THREAD_DYN_DLL
     #define BOOST_THREAD_DYN_DLL
@@ -1557,7 +1559,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
 			if ( fps_num > 0 && fps_den > 0 )
-				return ceil( map_source_to_dest( src_frames_ ) );
+				return int( cl::utilities::clamp< boost::int64_t >( boost::int64_t( ceil( map_source_to_dest( src_frames_ ) ) ), 0, std::numeric_limits< int >::max( ) ) );
 			else
 				return src_frames_;
 		}
