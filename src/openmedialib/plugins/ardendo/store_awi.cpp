@@ -95,6 +95,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 				std::vector< boost::uint8_t > buffer;
 				index_.flush( buffer );
 				avio_write( context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+				avio_flush( context_ );
 			}
 		}
 
