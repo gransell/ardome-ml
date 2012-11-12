@@ -19,7 +19,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 	
 	if( frame->height() == 1080 )
 	{
-		if( img->field_order() == il::progressive )
+		if( img->field_order() != il::progressive )
 		{
 			if( fps_num == 25 && fps_den == 1 )
 			{
@@ -29,10 +29,10 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 			{
 				return bmdModeHD1080i5994;
 			}
-			else if( fps_num == 30 && fps_den == 1 )
-			{
-				return bmdModeHD1080i6000;
-			}
+			//else if( fps_num == 30 && fps_den == 1 )
+			//{
+				//return bmdModeHD1080i60;
+			//}
 		}
 		else
 		{
@@ -122,24 +122,24 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 }
 	
 	
-BMDPixelFormat frame_to_pixel_format( const ml::frame_type_ptr& frame )
+BMDPixelFormat frame_to_pixel_format( const std::wstring pf )
 {
-	il::image_type_ptr img = frame->get_image();
-	if( img->pf() == L"uyv422" )
+	if( pf == L"uyv422" )
 	{
 		return bmdFormat8BitYUV;
 	}
-	else if( img->pf() == L"a8r8g8b8" )
+	else if( pf == L"a8r8g8b8" )
 	{
 		return bmdFormat8BitARGB;
 	}
-	else if( img->pf() == L"b8g8r8a8" )
+	else if( pf == L"b8g8r8a8" )
 	{
 		return bmdFormat8BitBGRA;
 	}
     // bmdFormat10BitYUV                                            = 'v210',
     // bmdFormat10BitRGB                                            = 'r210'	// Big-endian RGB 10-bit per component with SMPTE video levels (64-960). Packed as 2:10:10:10
-	ARENFORCE_MSG( false, "Unsupported pf. Currently support uyv422, a8r8g8b8, b8g8r8a8" )( img->pf() );
+	ARENFORCE_MSG( false, "Unsupported pf %s. Currently support uyv422, a8r8g8b8, b8g8r8a8" )( pf );
+	return bmdFormat8BitYUV;
 }
 	
 	

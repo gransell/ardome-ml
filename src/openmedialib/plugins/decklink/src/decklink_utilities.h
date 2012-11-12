@@ -26,7 +26,7 @@ typedef boost::intrusive_ptr< IDeckLinkInput > decklink_input_ptr;
 typedef boost::intrusive_ptr< IDeckLinkMutableVideoFrame > decklink_mutable_video_frame_ptr;
 
 BMDDisplayMode frame_to_display_mode( const olib::openmedialib::ml::frame_type_ptr& frame );
-BMDPixelFormat frame_to_pixel_format( const olib::openmedialib::ml::frame_type_ptr& frame );
+BMDPixelFormat frame_to_pixel_format( const std::wstring pf );
 BMDVideoOutputFlags frame_to_output_flags( const olib::openmedialib::ml::frame_type_ptr& frame );
 	
 BMDAudioSampleType frame_to_audio_sample_type( const olib::openmedialib::ml::frame_type_ptr& frame );

@@ -148,7 +148,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 				void *bytes;
 				samples = sound->GetSampleFrameCount( );
 				sound->GetBytes( &bytes );
-				ml::audio_type_ptr audio = ml::audio::allocate( std::wstring( af_ ), frequency_, channels_, samples, false );
+				ml::audio_type_ptr audio = ml::audio::allocate( af_, frequency_, channels_, samples, false );
 				memcpy( audio->pointer( ), bytes, audio->size( ) );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
@@ -157,7 +157,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			{
 				samples = ml::audio::samples_to_frame( frame_count_ + 1, frequency_, fps_num_, fps_den_ ) - samples_;
 				ARLOG( "No audio frame received for %d with %d hz %d channels @ %d:%d fps generating %d" )( frame_count_ )( frequency_ )( channels_ )( fps_num_ )( fps_den_ )( samples ).level( cl::log_level::error );
-				ml::audio_type_ptr audio = ml::audio::allocate( std::wstring( af_ ), frequency_, channels_, samples, true );
+				ml::audio_type_ptr audio = ml::audio::allocate( af_, frequency_, channels_, samples, true );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
 			}
