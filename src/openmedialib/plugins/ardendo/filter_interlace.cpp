@@ -4,6 +4,14 @@
 
 namespace aml { namespace openmedialib {
 
+typedef enum
+{
+	unknown,
+	active,
+	inactive
+}
+state;
+
 class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 {
 	public:
@@ -12,6 +20,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			: ml::filter_type( )
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, prop_bff_( pcos::key::from_string( "bff" ) )
+			, state_( unknown )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_bff_ = 1 );
@@ -29,7 +38,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			int result = 0;
 			ml::input_type_ptr input = fetch_slot( 0 );
 			if ( input )
-				result = prop_enable_.value< int >( ) ? int( input->get_frames( ) / 2 ) : input->get_frames( );
+				result = state_ == active ? int( input->get_frames( ) / 2 ) : input->get_frames( );
 			return result;
 		}
 
@@ -37,15 +46,30 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 		// The main access point to the filter
 		void do_fetch( ml::frame_type_ptr &result )
 		{
+			if ( state_ == unknown )
+				sync_frames( );
+
 			if ( last_frame_ && get_position( ) == last_frame_->get_position( ) )
 				result = last_frame_;
-			else if ( prop_enable_.value< int >( ) )
+			else if ( state_ == active )
 				result = merge( fetch_slot( ) );
 			else
 				result = fetch_from_slot( );
 
 			last_frame_ = result;
 			result = result->shallow( );
+		}
+
+		void sync_frames( )
+		{
+			if ( state_ == unknown )
+			{
+				ml::frame_type_ptr frame = fetch_from_slot( );
+				state_ = inactive;
+				if ( frame && frame->has_image( ) )
+					if ( int( frame->fps( ) + 0.5 ) >= 48 )
+						state_ = active;
+			}
 		}
 
 		ml::frame_type_ptr merge( ml::input_type_ptr source )
@@ -124,6 +148,7 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 		pcos::property prop_enable_;
 		pcos::property prop_bff_;
 		ml::frame_type_ptr last_frame_;
+		volatile state state_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const std::wstring &resource )
