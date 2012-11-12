@@ -36,6 +36,8 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
+#define clear_to_eol	char( 27 ) << "[K\r" 
+
 void assign( pl::pcos::property_container &props, const std::string &name, const std::wstring &value )
 {
 	pl::pcos::property property = props.get_property_with_string( name.c_str( ) );
@@ -244,7 +246,7 @@ void run( ml::input_type_ptr input )
 			last_time = curr_time;
 		}
 
-		std::cerr << i << "/" << total_frames << " fps: " << last_fps << "      \r";
+		std::cerr << i << "/" << total_frames << " fps: " << last_fps << clear_to_eol;
 
 		input->seek( i );
 		ml::frame_type_ptr frame = input->fetch( );
@@ -337,7 +339,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 					}
 				}
 			}
-			std::cerr << "                      \r";
+			std::cerr << clear_to_eol;
 		}
 
 		frame_count += 1;
