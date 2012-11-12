@@ -8,6 +8,8 @@
 #include <sstream>
 #include <deque>
 
+#include <signal.h>
+
 #ifndef WIN32
 #include <fcntl.h>
 #include <sys/ioctl.h>
