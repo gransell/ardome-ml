@@ -231,9 +231,9 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 				if ( pad )
 				{
-					int needed = pad - ( avio_seek( context_, 0, SEEK_CUR ) % pad );
+					int needed = pad - ( bytes_ % pad );
 					padding_.resize( pad );
-					if ( needed != 0 )
+					if ( needed != pad )
 						error |= avio_read( context_, &padding_[ 0 ], needed ) != needed;
 				}
 			}
@@ -568,15 +568,16 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 						dst += pitch;
 					}
 				}
-				avio_flush( context_ );
 
 				if ( pad )
 				{
-					int needed = pad - ( avio_seek( context_, 0, SEEK_CUR ) % pad );
+					int needed = pad - ( bytes_ % pad );
 					padding_.resize( pad );
 					if ( needed != pad )
 						avio_write( context_, &padding_[ 0 ], needed );
 				}
+
+				avio_flush( context_ );
 			}
 			return success;
 		}
