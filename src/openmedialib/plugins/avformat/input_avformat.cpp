@@ -1125,7 +1125,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			resource_ = resource;
 
 			// Attempt to open the resource
-			int error = avformat_open_input( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), format_, 0 ) < 0;
+			int error_code = avformat_open_input( &context_, cl::str_util::to_string( resource ).c_str( ), format_, 0 );
+			int error = ( error_code < 0 );
+			if( error )
+			{
+				ARLOG_ERR( "Got error %1% from avformat_open_input when opening file %2%" )
+					( error_code )( uri_ );
+			}
 
             if (error == 0 && context_->pb && context_->pb->seekable) 
 			{
@@ -1138,7 +1144,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
 				else if ( prop_ts_index_.value< std::wstring >( ) != L"" && prop_ts_auto_.value< int >( ) != -1 )
+				{
+					ARLOG_ERR( "Indexing of file through awi index failed.\nFile: %1%\nIndex: %2%" )
+						( uri_ )( prop_ts_index_.value< std::wstring >( ) );
 					return false;
+				}
 			}
 
 			// Check for streaming
@@ -1151,9 +1161,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			// Get the stream info
 			if ( error == 0 )
 			{
-				error = avformat_find_stream_info( context_, 0 ) < 0;
-				if ( !error && prop_format_.value< std::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+				error_code = avformat_find_stream_info( context_, 0 );
+				error = ( error_code < 0 );
+				if ( error )
+				{
+					ARLOG_ERR( "avformat_find_stream_info returned code %1% for file %2%" )
+						( error_code )( uri_ );
+				}
+				else if ( prop_format_.value< std::wstring >( ) != L"" && uint64_t( context_->duration ) == AV_NOPTS_VALUE )
+				{
+					ARLOG_WARN( "Tried opening %1% with supplied format %2%, but it failed. Will retry with format auto-detect." )
+						( uri_ )( prop_format_.value< std::wstring >( ) );
 					error = true;
+				}
 			}
 			
 			// Just in case the requested/derived file format is incorrect, on a failure, try again with no format
@@ -1162,9 +1182,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				format_ = 0;
 				if ( context_ )
 					avformat_close_input( &context_ );
-				error = avformat_open_input( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), format_, 0  ) < 0;
-				if ( !error )
-					error = avformat_find_stream_info( context_, 0 ) < 0;
+				error_code = avformat_open_input( &context_, cl::str_util::to_string( resource ).c_str( ), format_, 0  );
+				error = ( error_code < 0 );
+				if ( error )
+				{
+					ARLOG_ERR( "avformat_open_input return code %1% for file %2%" )( uri_ );
+				}
+				else
+				{
+					error_code = avformat_find_stream_info( context_, 0 );
+					error = ( error_code < 0 );
+					if ( error )
+					{
+						ARLOG_ERR( "avformat_find_stream_info returned code %1% for file %2%" )
+							( error_code )( uri_ );
+					}
+				}
 			}
 
 			// Populate the input properties
@@ -1922,12 +1955,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 						if ( samples_per_packet_ == 0 )
 						{
 							AVCodecContext *codec_context = get_audio_stream( )->codec;
-							
+
 							int got_frame = 0;
 							int length = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
-							ARENFORCE_MSG( length >= 0, "Failed to decode audio while sizing" );
-
-		   					if ( got_frame )
+							if ( length <= 0 )
+							{
+								ARLOG_WARN( "Failed to decode audio while sizing. Will use fallback sizing mechanism." );
+							}
+							else if ( got_frame )
 							{
 								samples_per_frame_ = double( int64_t( codec_context->sample_rate ) * fps_den_ ) / fps_num_;
 								samples_per_packet_ = av_frame_->nb_samples;
@@ -1940,7 +1975,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 							int64_t packet_idx = ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) / pkt_.duration;
 							int64_t total = ( packet_idx + 1 ) * samples_per_packet_;
 							int result = int( total / samples_per_frame_ );
-							if ( result > max )
+							if ( result > max || max == 1 << 30 )
 								max = result;
 							fallback = false;
 						}
@@ -1961,7 +1996,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					{
 						double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
 						int result = int( dts * fps( ) + 0.5 ) + 1;
-						if ( result > max )
+						if ( result > max || max == 1 << 30 )
 							max = result;
 					}
 				}
