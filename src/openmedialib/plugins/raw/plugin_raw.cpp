@@ -4,6 +4,7 @@
 // Released under the LGPL.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -67,9 +68,11 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, prop_sar_den_( pl::pcos::key::from_string( "sar_den" ) )
 			, prop_field_order_( pl::pcos::key::from_string( "field_order" ) )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
+			, prop_pad_( pl::pcos::key::from_string( "pad" ) )
 			, context_( 0 )
 			, size_( 0 )
 			, bytes_( 0 )
+			, extra_( 0 )
 			, frames_( ( std::numeric_limits< int >::max )( ) )
 			, expected_( 0 )
 			, offset_( 0 )
@@ -84,6 +87,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_field_order_ = 0 );
 			properties( ).append( prop_header_ = 1 );
+			properties( ).append( prop_pad_ = 0 );
 		}
 
 		virtual ~input_raw( ) 
@@ -146,19 +150,24 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 					else if ( token.find( "fps_den=" ) == 0 ) prop_fps_den_ = boost::lexical_cast< int >( token.substr( 8 ) );
 					else if ( token.find( "field_order=" ) == 0 ) prop_field_order_ = boost::lexical_cast< int >( token.substr( 12 ) );
 					else if ( token.find( "frames=" ) == 0 ) frames_ = boost::lexical_cast< int >( token.substr( 7 ) );
+					else if ( token.find( "pad=" ) == 0 ) prop_pad_ = boost::lexical_cast< int >( token.substr( 4 ) );
 					else std::cerr << "unrecognised header entry " << token;
 				}
 				offset_ = url_ftell( context_ );
 			}
 
+			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
+
 			il::image_type_ptr image = il::allocate( prop_pf_.value< pl::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
 			size_ = url_fsize( context_ );
 			bytes_ = bytes_per_image( image );
+			int pad = prop_pad_.value< int >( );
+			extra_ = pad ? pad - ( bytes_ % pad ) : 0;
 
 			if ( is_seekable( ) )
 			{
-				if ( bytes_ != 0 && size_ != 0 && size_ % bytes_ == offset_ )
-					frames_ = size_ / bytes_;
+				if ( bytes_ != 0 && size_ != 0 && size_ % ( bytes_ + extra_ ) == offset_ )
+					frames_ = size_ / ( bytes_ + extra_ );
 				else
 					error = 1;
 			}
@@ -182,7 +191,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			// Seek to requested position when required
 			if ( get_position( ) != expected_ && is_seekable( ) )
-				url_fseek( context_, offset_ + boost::int64_t( get_position( ) ) * bytes_, SEEK_SET );
+				url_fseek( context_, offset_ + boost::int64_t( get_position( ) ) * ( bytes_ + extra_ ), SEEK_SET );
 			else
 				seek( expected_ );
 			expected_ = get_position( ) + 1;
@@ -205,6 +214,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			if ( image )
 			{
+				int pad = prop_pad_.value< int >( );
+
 				for ( int p = 0; p < image->plane_count( ); p ++ )
 				{
 					boost::uint8_t *dst = image->data( p );
@@ -216,6 +227,14 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 						error |= get_buffer( context_, dst, width ) != width;
 						dst += pitch;
 					}
+				}
+
+				if ( pad )
+				{
+					int needed = pad - ( url_ftell( context_ ) % pad );
+					padding_.resize( pad );
+					if ( needed != 0 )
+						error |= get_buffer( context_, &padding_[ 0 ], needed ) != needed;
 				}
 			}
 
@@ -240,14 +259,17 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		pl::pcos::property prop_sar_den_;
 		pl::pcos::property prop_field_order_;
 		pl::pcos::property prop_header_;
+		pl::pcos::property prop_pad_;
 		ByteIOContext *context_;
 		boost::int64_t size_;
 		int bytes_;
+		int extra_;
 		int frames_;
 		int expected_;
 		boost::int64_t offset_;
 		ml::frame_type_ptr last_frame_;
 		bool parsed_;
+		std::vector< boost::uint8_t > padding_;
 };
 
 class ML_PLUGIN_DECLSPEC input_aud : public input_type
@@ -444,11 +466,13 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		store_raw( const pl::wstring spec, const frame_type_ptr &frame ) 
 			: store_type( )
 			, prop_header_( pl::pcos::key::from_string( "header" ) )
+			, prop_pad_( pl::pcos::key::from_string( "pad" ) )
 			, spec_( spec )
 			, context_( 0 )
 			, valid_( false )
 		{
 			properties( ).append( prop_header_ = 1 );
+			properties( ).append( prop_pad_ = 0 );
 			if ( frame->has_image( ) )
 			{
 				valid_ = true;
@@ -492,6 +516,8 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 								<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
 								<< " field_order=" << field_order_
+								<< " pad=" << prop_pad_.value< int >( )
+								<< " header=" << prop_header_.value< int >( )
 								<< std::endl;
 						else
 							str << pl::to_string( spec_ )
@@ -521,6 +547,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 				<< " sar_num=" << sar_num_ << " sar_den=" << sar_den_
 				<< " field_order=" << field_order_
+				<< " pad=" << prop_pad_.value< int >( )
 				<< std::endl;
 			std::string string = str.str( );
 			url_write( context_, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
@@ -528,10 +555,14 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 		bool push( frame_type_ptr frame )
 		{
+			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
+
 			il::image_type_ptr image = frame->get_image( );
 			bool success = true;
 			if ( image != 0 )
 			{
+				int pad = prop_pad_.value< int >( );
+
 				for ( int p = 0; success && p < image->plane_count( ); p ++ )
 				{
 					const boost::uint8_t *dst = image->data( p );
@@ -543,6 +574,14 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 						success = url_write( context_, dst, width ) == width;
 						dst += pitch;
 					}
+				}
+
+				if ( pad )
+				{
+					int needed = pad - ( url_seek( context_, 0, SEEK_CUR ) % pad );
+					padding_.resize( pad );
+					if ( needed != 0 )
+						url_write( context_, &padding_[ 0 ], needed );
 				}
 			}
 			return success;
@@ -556,6 +595,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 	private:
 		pl::pcos::property prop_header_;
+		pl::pcos::property prop_pad_;
 		pl::wstring spec_;
 		URLContext *context_;
 		pl::wstring pf_;
@@ -568,6 +608,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		int sar_den_;
 		int bytes_;
 		il::field_order_flags field_order_;
+		std::vector< boost::uint8_t > padding_;
 };
 
 class ML_PLUGIN_DECLSPEC store_aud : public store_type
@@ -622,6 +663,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 								<< " frequency=" << frequency_ << " channels=" << channels_
 								<< " fps_num=" << fps_num_ << " fps_den=" << fps_den_
 								<< " stream=" << prop_stream_.value< int >( )
+								<< " header=" << prop_header_.value< int >( )
 								<< std::endl;
 						else
 							str << pl::to_string( spec_ )
