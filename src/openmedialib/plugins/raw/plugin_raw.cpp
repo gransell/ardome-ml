@@ -162,7 +162,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			size_ = url_fsize( context_ );
 			bytes_ = bytes_per_image( image );
 			int pad = prop_pad_.value< int >( );
-			extra_ = pad ? pad - ( bytes_ % pad ) : 0;
+			extra_ = pad && bytes_ % pad ? pad - ( bytes_ % pad ) : 0;
 
 			if ( is_seekable( ) )
 			{
@@ -580,7 +580,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				{
 					int needed = pad - ( url_seek( context_, 0, SEEK_CUR ) % pad );
 					padding_.resize( pad );
-					if ( needed != 0 )
+					if ( needed != pad )
 						url_write( context_, &padding_[ 0 ], needed );
 				}
 			}
