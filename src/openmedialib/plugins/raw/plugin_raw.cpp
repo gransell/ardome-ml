@@ -233,7 +233,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				{
 					int needed = pad - ( url_ftell( context_ ) % pad );
 					padding_.resize( pad );
-					if ( needed != 0 )
+					if ( needed != pad )
 						error |= get_buffer( context_, &padding_[ 0 ], needed ) != needed;
 				}
 			}
