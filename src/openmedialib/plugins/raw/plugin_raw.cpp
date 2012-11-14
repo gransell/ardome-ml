@@ -161,7 +161,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 			int pad = prop_pad_.value< int >( );
-			extra_ = pad ? pad - ( bytes_ % pad ) : 0;
+			extra_ = pad && bytes_ % pad ? pad - ( bytes_ % pad ) : 0;
 
 			if ( is_seekable( ) )
 			{
@@ -237,9 +237,9 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 				if ( pad )
 				{
-					int needed = pad - ( avio_seek( context_, 0, SEEK_CUR ) % pad );
+					int needed = pad - ( bytes_ % pad );
 					padding_.resize( pad );
-					if ( needed != 0 )
+					if ( needed != pad )
 						error |= avio_read( context_, &padding_[ 0 ], needed ) != needed;
 				}
 			}
@@ -593,15 +593,15 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 					avio_write( context_, image->data( ), image->size( ) );
 				}
 
-				avio_flush( context_ );
-
 				if ( pad )
 				{
-					int needed = pad - ( avio_seek( context_, 0, SEEK_CUR ) % pad );
+					int needed = pad - ( bytes_ % pad );
 					padding_.resize( pad );
-					if ( needed != 0 )
+					if ( needed != pad )
 						avio_write( context_, &padding_[ 0 ], needed );
 				}
+
+				avio_flush( context_ );
 			}
 			return success;
 		}
