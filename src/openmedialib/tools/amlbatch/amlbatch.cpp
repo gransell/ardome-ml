@@ -126,21 +126,9 @@ static int read_key( )
 		}
 	}
 
-#elif HAVE_KBHIT
+#else
 
-	static int is_pipe;
-	static HANDLE input_handle;
-	DWORD dw, nchars;
-
-	if(!input_handle)
-	{
-		input_handle = GetStdHandle( STD_INPUT_HANDLE );
-		is_pipe = !GetConsoleMode( input_handle, &dw );
-	}
-
-	if ( stdin->_cnt > 0 ) 
-		read(0, &ch, 1);
-	else if( kbhit( ) )
+	if ( kbhit( ) )
 		ch = getch( );
 
 #endif
