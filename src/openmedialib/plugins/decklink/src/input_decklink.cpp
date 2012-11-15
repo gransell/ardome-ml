@@ -325,30 +325,122 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			// Attempt to find a valid mode
 			if ( error == S_OK )
 			{
-				IDeckLinkDisplayMode *display;
-				int mode = 0;
 				int requested = prop_mode_.value< int >( );
 
+				// Construct delegate now
 				decklink_delegate_ = new DeckLinkCaptureDelegate( );
 				decklink_input_->SetCallback( decklink_delegate_ );
 
-				while ( error == S_OK && !found && decklink_display_mode_iter_->Next( &display ) == S_OK )
+				// Holds all the valid modes
+				std::vector< IDeckLinkDisplayMode * > modes;
+
+				// Collect all the modes
+				IDeckLinkDisplayMode *display;
+				while ( decklink_display_mode_iter_->Next( &display ) == S_OK )
+					modes.push_back( display );
+
+				// Load the mode order file for this card
+				std::vector< size_t > preferences = load_preferences( prop_card_.value< int >( ), modes );
+
+				// Find the requested mode or check each in turn
+				for ( size_t index = 0; !found && index < preferences.size( ); index ++ )
 				{
-					// If this is the requested one or we're in auto mode, attempt to start the input
-					if ( mode == requested || requested < 0 )
-						found = select( display, mode );
-
-					// Release the IDeckLinkDisplayMode object to prevent a leak
-					display->Release( );
-
-					// Increment the mode
-					mode ++;
+					size_t mode = preferences[ index ];
+					if ( int( mode ) == requested || requested < 0 )
+						if ( select( modes[ mode ], mode ) )
+							found = move_preferences( preferences, mode );
 				}
+
+				// If we have a found item, then save the file now
+				if ( found )
+					save_preferences( prop_card_.value< int >( ), preferences );
+
+				// Clean up the modes
+				for ( std::vector< IDeckLinkDisplayMode * >::iterator iter = modes.begin( ); iter != modes.end( ); iter ++ )
+					( *iter )->Release( );
 			}
 
 			return found;
 		}
 
+		// Provides the location of the mode order preferences file
+		std::string file_preferences( int card )
+		{
+			return std::string( getenv( "HOME" ) ) + "/.aml.decklink." + boost::lexical_cast< std::string >( card );
+		}
+
+		// Load the mode order for this card, or generate the default order
+		std::vector< size_t > load_preferences( int card, std::vector< IDeckLinkDisplayMode * > &modes )
+		{
+			// Will hold the result
+			std::vector< size_t > result;
+
+			// Get the file name for this card
+			std::string filename = file_preferences( card );
+
+			// Open the file
+			std::fstream file( filename.c_str( ), std::fstream::in );
+
+			// Parse the file - just contains a list of numbers separated by spaces
+			if ( file.is_open( ) )
+			{
+				size_t temp = 0;
+				file >> temp;
+
+				while( file.good( ) )
+				{
+					result.push_back( temp );
+					file >> temp;
+				}
+
+				file.close( );
+			}
+
+			// If the file doesn't exist or has the wrong number of entries, create the default lookup order
+			if ( result.size( ) != modes.size( ) )
+			{
+				ARLOG_INFO( "Loaded preferences had %1% entries which doesn't match the mode count of %2% - defaulting to searching all" )( result.size( ) )( modes.size( ) );
+				result.clear( );
+				for ( size_t index = 0; index < modes.size( ); index ++ )
+					result.push_back( index );
+			}
+
+			return result;
+		}
+
+		// Move the mode specified to the start of the vector
+		bool move_preferences( std::vector< size_t > &preferences, size_t mode )
+		{
+			if ( preferences[ 0 ] != mode )
+			{
+				preferences.insert( preferences.begin( ), mode );
+				for ( std::vector< size_t >::iterator iter = ++ preferences.begin( ); iter != preferences.end( ); iter ++ )
+					if ( *iter == mode )
+						iter = preferences.erase( iter );
+			}
+
+			return true;
+		}
+
+		// Save the file
+		void save_preferences( int card, std::vector< size_t > &preferences )
+		{
+			std::string filename = file_preferences( card );
+			std::fstream file( filename.c_str( ), std::fstream::out );
+			if ( file.is_open( ) )
+			{
+				for ( std::vector< size_t >::iterator iter = preferences.begin( ); iter != preferences.end( ); iter ++ )
+					file << *iter << " ";
+				file << std::endl;
+				file.close( );
+			}
+			else
+			{
+				ARLOG_ERR( "Unable to open %1% for writing - decklink selection not saved" )( filename );
+			}
+		}
+
+		// Attempt to use the selected mode
 		bool select( IDeckLinkDisplayMode *display, int mode )
 		{
 			// Extract information for the delegate
