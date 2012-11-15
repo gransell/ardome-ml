@@ -120,7 +120,11 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 		return;
 	}
 
-	avio_seek( ts_context, target->position_, SEEK_SET );
+	if ( avio_seek( ts_context, target->position_, SEEK_SET ) != target->position_ )
+	{
+		ARLOG_ERR( "avio_seek failed on index file %1% to position" )( target->file_ )( target->position_ );
+		return;
+	}
 
 	while ( target->T::valid( ) )
 	{
