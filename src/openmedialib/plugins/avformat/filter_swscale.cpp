@@ -314,7 +314,7 @@ namespace
 		scaler_ = sws_getCachedContext( scaler_, input->width( ), input->height( ), in_format, output->width( ), output->height( ), out_format, filter, NULL, NULL, NULL );
 
 		// Ensure that the conversion is valid
-		ARENFORCE_MSG( scaler_, "Unable to convert from %s to %s" )( input->pf( ) )( shape.pf );
+		ARENFORCE_MSG( scaler_, "Unable to convert from %s %dx%d to %s %dx%d" )( input->pf( ) )( input->width( ) )( input->height( ) )( shape.pf )( output->width( ) )( output->height( ) );
 
 		// Scale the image
 		sws_scale( scaler_, in.data, in.linesize, 0, input->height( ), out.data, out.linesize );
@@ -383,6 +383,10 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 				frame = fetch_from_slot( );
 				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 				{
+					// Immediately shallow copy the frame
+					frame = frame->shallow( );
+
+					// Obtain the image
 					il::image_type_ptr image = frame->get_image( );
 
 					// Force progressive or lie :-/
