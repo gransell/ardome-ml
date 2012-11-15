@@ -1,0 +1,22 @@
+#!/usr/bin/env amlbatch
+
+: .
+	depth?
+	if
+		depth?
+		filter:playlist slots=%s
+		filter:swscale width=1280 height=720 sar_num=1 sar_den=1 
+		filter:visualise type=1 width=1280 height=720 sar_num=1 sar_den=1
+		filter:frame_rate fps_num=50 fps_den=1 
+		filter:resampler
+		filter:distributor
+		nudger: 
+		filter:pitch
+		filter:store 
+		store=decklink: 
+		filter:fork @loop=2
+		filter:aml filename=- decap
+		dot
+	then
+;
+

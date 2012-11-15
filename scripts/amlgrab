@@ -1,0 +1,48 @@
+#!/usr/bin/env amlbatch
+
+: .
+	depth?
+	if
+		depth?
+		filter:fork slots=%s @loop=1
+		dot
+	then
+;
+
+: avci100
+	nudger:
+	filter:encode profile=vcodecs/avcintra100 
+	filter:distributor threads=4 
+	parse
+	filter:store store=cppmedia:%s
+	filter:distributor queue=6
+;
+
+: xdcam_720p
+	nudger:
+	filter:encode profile=vcodecs/mcxdcam_720p
+	parse
+	filter:store store=cppmedia:%s
+	filter:distributor queue=6
+;
+
+: dnx_145_720p
+	nudger:
+	filter:encode profile=vcodecs/dnx_145_720p 
+	filter:distributor threads=4 
+	parse
+	filter:store store=cppmedia:%s
+	filter:distributor queue=6
+;
+
+: lowres
+	nudger: 
+	filter:swscale width=640 interp=512
+	filter:interlace
+	filter:deinterlace
+	filter:colour_space pf=yuv420p 
+	parse
+	filter:store store=mc:%s @store.acodec=mc_aac @store.ts_auto=1 
+	filter:distributor queue=6
+;
+
