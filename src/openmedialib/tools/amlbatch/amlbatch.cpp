@@ -450,7 +450,9 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 
 	ml::frame_type_ptr frame;
 
-	while( !error )
+	term_init( );
+
+	while( !error && sigterm_count == 0 )
 	{
 
         boost::system_time curr_time = boost::get_system_time();
@@ -634,6 +636,8 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 
 	if ( stats )
 		std::cerr << std::endl;
+
+	term_exit( );
 }
 
 void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_type_ptr frame )
