@@ -27,6 +27,7 @@ extern const PixelFormat oil_to_avformat( const std::wstring & );
 
 namespace 
 {
+	// Ensure the width/height conform to the rules of the colourspace
 	static void correct( int mw, int mh, int &w, int &h )
 	{
 		int wd = w % mw;
@@ -37,10 +38,13 @@ namespace
 			h += mh - hd;
 	}
 
-	typedef boost::function< void ( int &, int & ) > correct_function;
+	// Typedef for correction function
+	typedef boost::function< void ( int &w, int &h ) > correct_function;
 
+	// Typedef to hold the pf -> corrections function
 	typedef std::map< std::wstring, correct_function > corrections_map;
 
+	// Create the corrections map
 	static corrections_map create_corrections( )
 	{
 		corrections_map result;
@@ -51,15 +55,18 @@ namespace
 		result[ std::wstring( L"r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
 		result[ std::wstring( L"yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
 		result[ std::wstring( L"yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
-		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 2, 1, _1, _2 );
+		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 1, 2, _1, _2 );
+		result[ std::wstring( L"yuv444p" ) ] = boost::bind( correct, 1, 1, _1, _2 );
 		result[ std::wstring( L"yuv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
 		result[ std::wstring( L"uyv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
 
 		return result;
 	}
 
+	// Creates the instance of the corrections map
 	static const corrections_map corrections = create_corrections( );
 
+	// Corrects the width/height to match the colourspace rules
 	static void correct( const std::wstring &pf, int &w, int &h )
 	{
 		corrections_map::const_iterator iter = corrections.find( pf );
@@ -70,12 +77,19 @@ namespace
 	struct geometry 
 	{
 		geometry( )
-		: cropped( false )
+		: interp( SWS_FAST_BILINEAR )
+		, mode( L"fill" )
 		, pf( L"" )
+		, field_order( il::progressive )
 		, width( 0 )
 		, height( 0 )
 		, sar_num( 0 )
 		, sar_den( 0 )
+		, r( 0 )
+		, g( 0 )
+		, b( 0 )
+		, a( 0 )
+		, cropped( false )
 		, x( 0 )
 		, y( 0 )
 		, w( 0 )
@@ -86,14 +100,28 @@ namespace
 		, ch( 0 )
 		{ }
 
-		// Indicates if the input image should be cropped
-		bool cropped; 
+		// Specifies the interpolation filter
+		int interp;
+
+		// Specifies the mode
+		std::wstring mode;
 
 		// Specifies the picture format of the full image
 		std::wstring pf;
 
+		// Specifies the field order of the output
+		il::field_order_flags field_order;
+
 		// Specifies the dimensions of the full image
 		int width, height, sar_num, sar_den;
+
+		// Specifies the colour of the border as an 8 bit rgba
+		int r, g, b, a;
+
+		// Everything below is calculated by the 'calculate' function
+
+		// Indicates if the input image should be cropped
+		bool cropped; 
 
 		// Specifies the geometry of the scaled image
 		int x, y, w, h;
@@ -125,7 +153,7 @@ namespace
 	}
 
 	// Calculate the geometry for the aspect ratio mode selected
-	void calculate( struct geometry &shape, frame_type_ptr src, const std::wstring &mode )
+	void calculate( struct geometry &shape, frame_type_ptr src )
 	{
 		shape.cropped = true;
 
@@ -161,13 +189,13 @@ namespace
 		dst_h = shape.h;
 
 		// Letter and pillar box calculations
-		int letter_h = int( 0.5 + ( shape.w * src_h * src_sar_den * dst_sar_num ) / ( src_w * src_sar_num * dst_sar_den ) );
-		int pillar_w = int( 0.5 + ( shape.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
+		int letter_h = int( ( shape.w * src_h * src_sar_den * dst_sar_num ) / ( src_w * src_sar_num * dst_sar_den ) );
+		int pillar_w = int( ( shape.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
 
 		correct( shape.pf, pillar_w, letter_h );
 
 		// Handle the requested mode
-		if ( mode == L"fill" )
+		if ( shape.mode == L"fill" )
 		{
 			shape.h = dst_h;
 			shape.w = pillar_w;
@@ -178,7 +206,7 @@ namespace
 				shape.h = letter_h;
 			}
 		}
-		else if ( mode == L"smart" )
+		else if ( shape.mode == L"smart" )
 		{
 			shape.h = dst_h;
 			shape.w = pillar_w;
@@ -189,17 +217,17 @@ namespace
 				shape.h = letter_h;
 			}
 		}
-		else if ( mode.find( L"letter" ) == 0 )
+		else if ( shape.mode.find( L"letter" ) == 0 )
 		{
 			shape.w = dst_w;
 			shape.h = letter_h;
 		}
-		else if ( mode.find( L"pillar" ) == 0 )
+		else if ( shape.mode.find( L"pillar" ) == 0 )
 		{
 			shape.h = dst_h;
 			shape.w = pillar_w;
 		}
-		else if ( mode.find( L"native" ) == 0 )
+		else if ( shape.mode.find( L"native" ) == 0 )
 		{
 			shape.w = src_w;
 			shape.h = src_h;
@@ -246,33 +274,33 @@ namespace
 	}
 
 	// Draw the necessary border around the cropped image
-	// TODO: Support picture formats other than yuv420p
-	void border( il::image_type_ptr image, const geometry &shape, int r = 0, int g = 0, int b = 0 )
+	// TODO: Correctly support border colour in all colour spaces
+	void border( il::image_type_ptr image, const geometry &shape )
 	{
 		int yuv[ 3 ];
-		il::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], r, g, b );
+		il::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], shape.r, shape.g, shape.b );
+
+		const int iwidth = image->width( );
+		const int iheight = image->height( );
 
 		for ( int i = 0; i < image->plane_count( ); i ++ )
 		{
-			const float wps = float( image->linesize( i ) ) / image->width( 0 );
-			const float hps = float( image->height( i ) ) / image->height( 0 );
+			const float wps = float( image->linesize( i ) ) / iwidth;
+			const float hps = float( image->height( i ) ) / iheight;
 
 			boost::uint8_t *ptr = image->data( i );
-			const boost::uint8_t value = yuv[ i ];
+			const boost::uint8_t value = il::is_yuv_planar( image ) ?  yuv[ i ] : 0;
 
-			const int width = image->width( i );
-			const int height = image->height( i );
+			const int width = int( iwidth * wps );
 			const int pitch = image->pitch( i );
 			const int top_lines = int( shape.y * hps );
-			const int bottom_lines = height - int( ( shape.y + shape.h ) * hps );
+			const int bottom_lines = int( ( iheight - shape.y - shape.h ) * hps );
 			const int bottom_offset = int( pitch * ( shape.y + shape.h ) * hps );
 			const int side_lines = int( shape.h * hps );
 			const int left_offset = int( pitch * shape.y * hps );
 			const int right_offset = left_offset + int( ( shape.x + shape.w ) * wps );
 			const int left_width = int( shape.x * wps );
-			const int right_width = int( width - ( shape.x + shape.w ) * wps );
-
-			//std::cerr << left_offset << " + " << left_width << " to " << right_offset << " + " << right_width << " " << shape.w << std::endl;
+			const int right_width = int( ( iwidth - shape.x - shape.w ) * wps );
 
 			colour_rectangle( ptr, value, width, pitch, top_lines );
 			colour_rectangle( ptr + left_offset, value, left_width, pitch, side_lines );
@@ -281,17 +309,17 @@ namespace
 		}
 	}
 
-	il::image_type_ptr rescale( struct SwsContext *&scaler_, const il::image_type_ptr &input, int filter, const struct geometry &shape )
+	il::image_type_ptr rescale( struct SwsContext *&scaler_, const il::image_type_ptr &input, const struct geometry &shape )
 	{
 		// Allocate the output image
 		il::image_type_ptr output = il::allocate( shape.pf, shape.width, shape.height );
 
 		// Determine the libswscale pix format values
 		PixelFormat in_format = oil_to_avformat( input->pf( ) );
-		ARENFORCE_MSG( in_format != PIX_FMT_NONE, "Don't know how to map pf %s to pixfmt" )( input->pf( ) );
+		ARENFORCE_MSG( in_format != PIX_FMT_NONE, "Don't know how to map input pf %s to pixfmt" )( input->pf( ) );
 
 		PixelFormat out_format = oil_to_avformat( shape.pf );
-		ARENFORCE_MSG( out_format != PIX_FMT_NONE, "Don't know how to map pf %s to pixfmt" )( shape.pf );
+		ARENFORCE_MSG( out_format != PIX_FMT_NONE, "Don't know how to map output pf %s to pixfmt" )( shape.pf );
 
 		// Crop the input if the shape is cropped
 		if ( shape.cropped )
@@ -303,7 +331,7 @@ namespace
 		// Crop the output if the shape is cropped
 		if ( shape.cropped )
 		{
-			border( output, shape, 0, 0, 0 );
+			border( output, shape );
 			output->crop( shape.x, shape.y, shape.w, shape.h );
 		}
 
@@ -311,7 +339,11 @@ namespace
 		AVPicture out = fill_picture( output );
 
 		// Obtain the context for the scaling (probably as close to a no op as you get unless input changes)
-		scaler_ = sws_getCachedContext( scaler_, input->width( ), input->height( ), in_format, output->width( ), output->height( ), out_format, filter, NULL, NULL, NULL );
+		scaler_ = sws_getCachedContext( scaler_, input->width( ), input->height( ), in_format, output->width( ), output->height( ), out_format, shape.interp, NULL, NULL, NULL );
+
+		// Fallback in case image dimensions are rejected by the requested interpolation method
+		if ( !scaler_ )
+			scaler_ = sws_getCachedContext( scaler_, input->width( ), input->height( ), in_format, output->width( ), output->height( ), out_format, SWS_FAST_BILINEAR, NULL, NULL, NULL );
 
 		// Ensure that the conversion is valid
 		ARENFORCE_MSG( scaler_, "Unable to convert from %s %dx%d to %s %dx%d" )( input->pf( ) )( input->width( ) )( input->height( ) )( shape.pf )( output->width( ) )( output->height( ) );
@@ -327,6 +359,88 @@ namespace
 		}
 
 		return output;
+	}
+
+	// Rescale the frame according to the geometry specification
+	// TODO: Fix yuv422p
+	// TODO: Handle alpha mask
+	void rescale( struct SwsContext *&scaler_, const ml::frame_type_ptr &frame, struct geometry &shape )
+	{
+		// Obtain the image
+		il::image_type_ptr image = frame->get_image( );
+
+		// Convert to progressive if required
+		if ( shape.field_order == il::progressive && image->field_order( ) != il::progressive )
+			image = il::deinterlace( image );
+
+		// If no conversion is specified, retain that of the input
+		if ( shape.pf == L"" )
+			shape.pf = image->pf( );
+
+		// Deal with the properties specified
+		if ( shape.width == -1 && shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+		{
+			// If width and height are -1, then retain the dimensions of the source
+			shape.width = image->width( );
+			shape.height = image->height( );
+			shape.sar_num = 1;
+			shape.sar_den = 1;
+		}
+		else if ( shape.width == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+		{
+			// Maintain the aspect ratio of the input, and calculate width from height
+			shape.width = int( shape.height * frame->aspect_ratio( ) );
+			shape.sar_num = 1;
+			shape.sar_den = 1;
+		}
+		else if ( shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+		{
+			// Maintain the aspect ratio of the input, and calculate height from width
+			shape.height = int( shape.width / frame->aspect_ratio( ) );
+			shape.sar_num = 1;
+			shape.sar_den = 1;
+		}
+		else if ( shape.width != -1 && shape.height != -1 && shape.sar_num == -1 && shape.sar_den == -1 )
+		{
+			shape.sar_num = 1;
+			shape.sar_den = 1;
+		}
+		else if ( shape.width != -1 && shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+		{
+			calculate( shape, frame );
+		}
+		else if ( shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+		{
+			shape.width = int( shape.height * frame->aspect_ratio( ) * shape.sar_den / shape.sar_num );
+		}
+		else if ( shape.width != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+		{
+			shape.height = int( shape.width / frame->aspect_ratio( ) * shape.sar_num / shape.sar_den );
+		}
+		else if ( shape.width == -1 && shape.height == -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+		{
+			shape.width = image->width( );
+			shape.height = image->height( );
+		}
+		else
+		{
+			ARENFORCE_MSG( false, "Unsupported options" );
+		}
+
+		// Ensure that the requested/computed dimensions are valid for the pf requested
+		correct( shape.pf, shape.width, shape.height );
+
+		// Rescale the image
+		image = rescale( scaler_, image, shape );
+
+		// Set the field order
+		image->set_field_order( shape.field_order );
+
+		// Set the image on the frame
+		frame->set_image( image );
+
+		// Set the sar on the frame
+		frame->set_sar( shape.sar_num, shape.sar_den );
 	}
 }
 
@@ -374,100 +488,43 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame )
 		{
+			// Handle the last frame logic
 			if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
 			{
-				frame = last_frame_->shallow( );
+				frame = last_frame_;
 			}
 			else
 			{
+				// Fetch the image
 				frame = fetch_from_slot( );
+
+				// Check if we're enabled and the frame has an image
 				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 				{
 					// Immediately shallow copy the frame
 					frame = frame->shallow( );
 
-					// Obtain the image
-					il::image_type_ptr image = frame->get_image( );
-
-					// Force progressive or lie :-/
-					if ( prop_progressive_.value< int >( ) == 1 )
-						image = il::deinterlace( image );
-					else if ( prop_progressive_.value< int >( ) == -1 )
-						image->set_field_order( il::progressive );
-
-					// Determine the current field order
-					il::field_order_flags field_order = image->field_order( );
-
 					// For aspect ratio conversions
 					struct geometry shape;
 
 					// Deal with the properties now
-					std::wstring mode = prop_mode_.value< std::wstring >( );
-					int interp = prop_interp_.value< int >( );
-
-					// Default the values of the shape
+					shape.field_order = prop_progressive_.value< int >( ) ? il::progressive : frame->get_image( )->field_order( );
+					shape.mode = prop_mode_.value< std::wstring >( );
+					shape.interp = prop_interp_.value< int >( );
 					shape.pf = prop_pf_.value< std::wstring >( );
 					shape.width = prop_width_.value< int >( );
 					shape.height = prop_height_.value< int >( );
 					shape.sar_num = prop_sar_num_.value< int >( );
 					shape.sar_den = prop_sar_den_.value< int >( );
 
-					// If no conversion is specified, retain that of the input
-					if ( shape.pf == L"" )
-						shape.pf = image->pf( );
-
-					// Deal with the properties specified
-					if ( shape.width == -1 && shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
-					{
-						// If width and height are -1, then retain the dimensions of the source
-						shape.width = image->width( );
-						shape.height = image->height( );
-						shape.sar_num = 1;
-						shape.sar_den = 1;
-					}
-					else if ( shape.width == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
-					{
-						// Maintain the aspect ratio of the input, and calculate width from height
-						shape.width = int( shape.height * frame->aspect_ratio( ) );
-						shape.sar_num = 1;
-						shape.sar_den = 1;
-					}
-					else if ( shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
-					{
-						// Maintain the aspect ratio of the input, and calculate height from width
-						shape.height = int( shape.width / frame->aspect_ratio( ) );
-						shape.sar_num = 1;
-						shape.sar_den = 1;
-					}
-					else if ( shape.sar_num != -1 && shape.sar_num != -1 )
-					{
-						calculate( shape, frame, mode );
-					}
-
-					// Ensure that the requested/computed dimensions are valid for the pf requested
-					correct( shape.pf, shape.width, shape.height );
-
-					// If no sar is specified, retain it from the source
-					if ( shape.sar_num == -1 || shape.sar_den == -1 )
-					{
-						frame->get_sar( shape.sar_num, shape.sar_den );
-					}
-
-					// Rescale the image
-					image = rescale( scaler_, image, interp, shape );
-
-					// Set the original field order
-					image->set_field_order( field_order );
-
-					// Set the image on the frame
-					frame->set_image( image );
-
-					// Set the sar on the frame
-					frame->set_sar( shape.sar_num, shape.sar_den );
+					// Rescale the frame
+					rescale( scaler_, frame, shape );
 				}
-
-				last_frame_ = frame->shallow( );
 			}
+
+			// Hold on to a shallow copy in case the same frame is requested again
+			if ( frame )
+				last_frame_ = frame->shallow( );
 		}
 
 	private:
