@@ -254,7 +254,7 @@ class unindexed_job_type : public indexer_job
 
 		const boost::posix_time::milliseconds job_delay( ) const
 		{
-			return boost::posix_time::milliseconds( 2000 );
+			return boost::posix_time::milliseconds( 500 );
 		}
 
 	private:
