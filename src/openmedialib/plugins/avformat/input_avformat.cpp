@@ -1113,9 +1113,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				key_search_ = true;
 			}
 			else if ( resource.find( L".dv" ) == resource.length( ) - 3 )
+			{
 				prop_format_ = std::wstring( L"dv" );
+			}
 			else if ( resource.find( L".mp2" ) == resource.length( ) - 4 )
+			{
 				prop_format_ = std::wstring( L"mpeg" );
+			}
+			else if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
+			{
+				prop_video_index_ = -1;
+				if ( prop_fps_num_.value< int >( ) == -1 || prop_fps_den_.value< int >( ) == -1 )
+				{
+					prop_fps_num_ = 25;
+					prop_fps_den_ = 1;
+				}
+			}
 
 			// Obtain format
 			if ( prop_format_.value< std::wstring >( ) != L"" )
