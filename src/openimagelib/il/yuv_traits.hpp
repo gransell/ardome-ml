@@ -335,9 +335,9 @@ public:
 				p.offset = ( ( height_ - y - h ) * p.pitch );
 
 			if ( !is_flopped )
-				p.offset += x;
+				p.offset += x / factor;
 			else
-				p.offset += ( width_ - w - x );
+				p.offset += ( width_ - w - x ) / factor;
 
 			p.offset = original + p.offset;
 		}
@@ -664,10 +664,10 @@ public:
 			if ( !is_flipped )
 				p.offset = p.pitch * y;
 			else
-				p.offset = ( ( height_ - y - h ) * p.pitch ) / factor;
+				p.offset = ( ( height_ - y - h ) * p.pitch );
 
 			if ( !is_flopped )
-				p.offset += x;
+				p.offset += x / factor;
 			else
 				p.offset += ( width_ - w - x ) / factor;
 
