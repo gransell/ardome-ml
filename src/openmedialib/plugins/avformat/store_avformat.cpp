@@ -51,10 +51,6 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const std::wstring avformat_to_oil( int );
-extern const PixelFormat oil_to_avformat( const std::wstring & );
-extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
-
 static const pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
 static const pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
 static const pl::pcos::key key_has_b_frames_ = pl::pcos::key::from_string( "has_b_frames" );

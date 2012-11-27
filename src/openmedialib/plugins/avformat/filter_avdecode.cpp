@@ -50,10 +50,6 @@ namespace olib { namespace openmedialib { namespace ml {
 	
 extern const int AML_AES3_CODEC_ID;
 	
-extern const std::wstring avformat_to_oil( int );
-extern const PixelFormat oil_to_avformat( const std::wstring & );
-extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
-
 static const pl::pcos::key key_gop_closed_ = pl::pcos::key::from_string( "gop_closed" );
 static const pl::pcos::key key_fixed_sar_ = pl::pcos::key::from_string( "fixed_sar" );
 
@@ -178,6 +174,7 @@ class stream_queue
 			, offset_( 0 )
 			, lru_cache_( )
 			, compliance_(compliance)
+			, scaler_( 0 )
 		{
 			lru_cache_ = ml::the_scope_handler::Instance().lru_cache( scope_ );
 		}
@@ -191,6 +188,9 @@ class stream_queue
 				av_free( context_ );
 			}
 			av_free( frame_ );
+
+			if ( scaler_ )
+				sws_freeContext( scaler_ );
 		}
 
 		ml::frame_type_ptr fetch( int position )
@@ -293,7 +293,7 @@ class stream_queue
 							const PixelFormat fmt = context_->pix_fmt;
 							const int width = context_->width;
 							const int height = context_->height;
-							image = convert_to_oil( frame_, fmt, width, height );
+							image = convert_to_oil( scaler_, frame_, fmt, width, height );
 							image->set_position( input_->get_frames( ) - 1 );
 
 							lru_cache_->insert_image_for_position( lru_key_for_position( image->position( ) ), image );
@@ -486,7 +486,7 @@ class stream_queue
 							const PixelFormat fmt = context_->pix_fmt;
 							const int width = context_->width;
 							const int height = context_->height;
-							image = convert_to_oil( frame_, fmt, width, height );
+							image = convert_to_oil( scaler_, frame_, fmt, width, height );
 							image->set_position( pkt->position( ) );
 
 							pl::pcos::property fixed_sar_prop = pkt->properties().get_property_with_key( key_fixed_sar_ );
@@ -601,6 +601,7 @@ class stream_queue
 		AVFrame *frame_;
 		int offset_;
 		lru_cache_type_ptr lru_cache_;
+		struct SwsContext *scaler_;
 };
 
 typedef boost::shared_ptr< stream_queue > stream_queue_ptr;
@@ -1236,7 +1237,7 @@ class avformat_encode_filter : public filter_simple
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
-			properties( ).append( prop_profile_ = std::wstring( L"profiles/vcodec/dv25" ) );
+			properties( ).append( prop_profile_ = std::wstring( L"vcodec/dv25" ) );
 			properties( ).append( prop_threads_ = 4 );
 		}
 

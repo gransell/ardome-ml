@@ -21,10 +21,7 @@ namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
-extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
-
 
 class avformat_video : public cl::profile_wrapper, public cl::profile_property
 {

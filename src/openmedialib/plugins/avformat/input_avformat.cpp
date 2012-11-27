@@ -29,6 +29,7 @@
 
 #include "avformat_stream.hpp"
 #include "avformat_wrappers.hpp"
+#include "utils.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -56,14 +57,9 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const std::wstring avformat_to_oil( int );
-extern const PixelFormat oil_to_avformat( const std::wstring & );
-extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
-
 // Alternative to Julian's patch?
 static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
-	
-	
+
 namespace {
 	int context_to_sample_width( const AVCodecContext *ctx )
 	{
@@ -930,7 +926,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, key_search_( false )
 			, audio_buf_used_( 0 )
 			, audio_buf_offset_( 0 )
-			, img_convert_( 0 )
+			, scaler_( 0 )
 			, samples_per_frame_( 0.0 )
 			, samples_per_packet_( 0 )
 			, samples_duration_( 0 )
@@ -990,9 +986,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			av_free( audio_buf_ );
 
 			if( indexer_item_ )
-			{
 				ml::indexer_cancel_request( indexer_item_ );
-			}
+
+			if ( scaler_ )
+				sws_freeContext( scaler_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -2289,7 +2286,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			int width = get_width( );
 			int height = get_height( );
 
-			return convert_to_oil( av_frame_, codec_context->pix_fmt, width, height );
+			return convert_to_oil( scaler_, av_frame_, codec_context->pix_fmt, width, height );
 		}
 
 		void store_image( il::image_type_ptr image, int position )
@@ -2779,7 +2776,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		int audio_buf_used_;
 		int audio_buf_offset_;
 
-		struct SwsContext *img_convert_;
+		struct SwsContext *scaler_;
 		ml::frame_type_ptr last_frame_;
 
 		double samples_per_frame_;

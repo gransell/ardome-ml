@@ -85,12 +85,6 @@ const std::wstring avformat_to_oil( int fmt )
 	else if ( fmt == PIX_FMT_BGR32_1 )
 		return L"b8g8r8a8";
 
-	// Lies, damned lies but statistically won't matter
-	else if ( fmt == PIX_FMT_YUVJ420P )
-		return L"yuv420p";
-	else if ( fmt == PIX_FMT_YUVJ422P )
-		return L"yuv422p";
-
 	return L"";
 }
 
@@ -210,7 +204,7 @@ const PixelFormat oil_to_avformat( const std::wstring &fmt )
 	return PIX_FMT_NONE;
 }
 
-il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int width, int height )
+il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
 {
 	il::image_type_ptr image;
 	PixelFormat dst_fmt = pix_fmt;
@@ -218,7 +212,17 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
 	int even = width % 4 != 0 ? 4 - ( width % 4 ) : 0;
 	int even_h = height % 2;
 
-	if ( format == L"" )
+	if ( pix_fmt == PIX_FMT_YUVJ420P )
+	{
+		format = L"yuv420p";
+		dst_fmt = PIX_FMT_YUV420P;
+	}
+	else if ( pix_fmt == PIX_FMT_YUVJ422P )
+	{
+		format = L"yuv422p";
+		dst_fmt = PIX_FMT_YUV422P;
+	}
+	else if ( format == L"" )
 	{
 		format = L"b8g8r8a8";
 		dst_fmt = PIX_FMT_BGRA;
@@ -227,13 +231,9 @@ il::image_type_ptr convert_to_oil( AVFrame *frame, PixelFormat pix_fmt, int widt
 	AVPicture output;
 	image = il::allocate( format, width + even, height + even_h );
 	avpicture_fill( &output, image->data( ), dst_fmt, width + even, height + even_h );
-	struct SwsContext *img_convert_ = 0;
 	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
 	if ( img_convert_ != NULL )
-	{
 		sws_scale( img_convert_, frame->data, frame->linesize, 0, height + even_h, output.data, output.linesize );
-		sws_freeContext( img_convert_ );
-	}
 
 	if ( frame->interlaced_frame )
     {
