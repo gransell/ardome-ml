@@ -18,6 +18,7 @@ void py_audio_reseat( );
 void py_filter( );
 void py_plugin( );
 void py_stream( );
+void py_stack( );
 
 } } } }
 

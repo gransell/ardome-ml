@@ -8,6 +8,7 @@
 
 #include "types.hpp"
 #include "utilities.hpp"
+#include <opencorelib/cl/str_util.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -34,6 +35,11 @@ class stack
 		void push( std::wstring command )
 		{
 			stack_->property( "parse" ) = command;
+		}
+
+		void push( std::string command )
+		{
+			stack_->property( "parse" ) = olib::opencorelib::str_util::to_wstring( command );
 		}
 
 		void copy( input_type_ptr &input, int limit = 1 )

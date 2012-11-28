@@ -20,4 +20,5 @@ BOOST_PYTHON_MODULE( openmedialib )
 	ml::detail::py_filter( );
 	ml::detail::py_plugin( );
 	ml::detail::py_stream( );
+	ml::detail::py_stack( );
 }

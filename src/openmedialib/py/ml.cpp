@@ -7,6 +7,7 @@
 #include <openpluginlib/py/python.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/frame.hpp>
+#include <openmedialib/ml/stack.hpp>
 #include <openmedialib/py/py.hpp>
 #include <boost/python/ptr.hpp>
 #include <boost/filesystem/path.hpp>
@@ -357,6 +358,20 @@ void py_stream( )
 	py::def( "stream_handler_register", &detail::stream_handler_register );
 
 	ml::stream_handler_register( stream_handler_callback );
+}
+
+void py_stack( )
+{
+	void ( ml::stack::*push0 )( ml::input_type_ptr & )  = &ml::stack::push;
+	void ( ml::stack::*push1 )( ml::filter_type_ptr & ) = &ml::stack::push;
+	void ( ml::stack::*push2 )( std::string )           = &ml::stack::push;
+
+	py::class_< ml::stack >( "stack" )
+        .def( "push", push0 )
+        .def( "push", push1 )
+        .def( "push", push2 )
+        .def( "pop", &ml::stack::pop )
+    ;
 }
 
 } } } }
