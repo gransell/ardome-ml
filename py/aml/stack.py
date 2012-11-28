@@ -27,7 +27,7 @@ class io( pl.observer ):
 class stack:
 	"""Wrapper for the aml_stack c++ implementation."""
 
-	def __init__( self, command = None, printer = None ):
+	def __init__( self, command = None, printer = None, with_io = True ):
 		"""Constructor creates the stack instance and sets up io redirection."""
 
 		self.stack = ml.create_input( 'aml_stack:' )
@@ -42,9 +42,10 @@ class stack:
 		self.aml_stdout = self.aml.property( 'stdout' )
 		self.aml_write = self.aml.property( 'write' )
 
-		self.io = io( self )
-		self.aml_stdout.set_always_notify( True )
-		self.aml_stdout.attach( self.io )
+		if with_io:
+			self.io = io( self )
+			self.aml_stdout.set_always_notify( True )
+			self.aml_stdout.attach( self.io )
 
 		self.printer = printer
 		if printer is not None:
@@ -53,6 +54,15 @@ class stack:
 			self.push( command )
 
 		self.tokens = [ ]
+
+	def __del__( self ):
+		self.io = None
+		self.aml_stdout = None
+		self.result = None
+		self.command = None
+		self.stdout = None
+		self.result = None
+		self.stack = None
 
 	def output( self, string ):
 		if string.endswith( '\n' ):
