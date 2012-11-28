@@ -44,3 +44,4 @@ vcodecs/mpeg2_iframe50 = avencode
 vcodecs/mpeg2_iframe100 = avencode
 vcodecs/mpeg2_iframe150 = avencode
 vcodecs/jpeg = avencode
+vcodecs/jpeg_lo = avencode
