@@ -168,6 +168,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_ts_auto_( pcos::key::from_string( "ts_auto" ) )
 			, prop_audio_split_( pcos::key::from_string( "audio_split" ) )
 			, prop_frag_key_frame_( pcos::key::from_string( "frag_key_frame" ) )
+			, prop_flush_( pcos::key::from_string( "flush" ) )
 			, ts_generator_video_( 1 )
 			, ts_generator_audio_( 2, false ) //Will not write index header/footer
 			, ts_context_( 0 )
@@ -312,11 +313,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_ts_auto_ = 0 );
 			properties( ).append( prop_audio_split_ = 0 );
 			properties( ).append( prop_frag_key_frame_ = 0 );
+			properties( ).append( prop_flush_ = 1 );
 		}
 
 		virtual ~avformat_store( )
 		{
-			if ( oc_ )
+			if ( oc_ && prop_flush_.value< int >( ) )
 			{
 				if ( video_stream_ && !video_copy_ )
 				{
@@ -339,7 +341,21 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				// Close the container
 				close_container( );
+			}
+			else if ( oc_ && prop_flush_.value< int >( ) == 0 )
+			{
+				// Close the output file
+				if ( !( fmt_->flags & AVFMT_NOFILE ) )
+					avio_close( oc_->pb );
 
+				// Clean up the log
+				if ( log_file_ )
+					fclose( log_file_ );
+				av_free( log_ );
+			}
+ 
+			if ( oc_ )
+			{
 				// Clean up the codecs
 				if ( !video_copy_ )
 					close_video_codec( );
@@ -1667,6 +1683,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_audio_split_;
 
 		pcos::property prop_frag_key_frame_;
+		pcos::property prop_flush_;
 
 		awi_generator_v4 ts_generator_video_;
 		awi_generator_v4 ts_generator_audio_;
