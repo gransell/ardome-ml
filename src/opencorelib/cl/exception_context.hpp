@@ -82,26 +82,7 @@ namespace olib
              {
                  m_message % t;
              }
-            
-             template <>
-             void add_value_to_message(const char* const& t )
-             {
-                if (t == 0) {
-	                m_message % "( NULL )";
-                } else {
-	                m_message % t;
-                }
-             }
-
-             template <>
-             void add_value_to_message(char* const& t )
-             {
-                if (t == 0) {
-	                m_message % "( NULL )";
-                } else {
-	                m_message % t;
-                }
-             }
+			
 
 			/// If the origin of the error was a COM-operation, the HRESULT is retrieved by this function.
 			long h_result() const;
