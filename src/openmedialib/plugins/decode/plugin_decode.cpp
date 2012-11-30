@@ -636,6 +636,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 				frame->set_audio( audio_frame->get_audio( ), true );
 			}
 
+			frame->set_position( get_position() );
+
 			last_frame_ = frame->shallow();
 		}
 
