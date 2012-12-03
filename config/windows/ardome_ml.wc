@@ -62,14 +62,20 @@ def install( env, prefix ):
 	for dll in dlls :
 		env.release( [ os.path.join( prefix, 'bin', folder_name, dll ) ] )
 
-	if env['target'] == 'vs2008' :
+	should_build_wrappers = False
+	try:
+		should_build_wrappers = env['target'] == 'vs2008' and ( env['wrappers'] == 'yes' )
+	except KeyError:
+		pass
+
+	if should_build_wrappers :
 		#.NET wrappers
 		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'OWL.dll') ] )
 		env.release(  [ os.path.join( prefix, 'bin', folder_name, 'AML.dll') ] )
 
-		#OpenAL + OpenAL Soft
-		env.release( [os.path.join( prefix, 'bin', folder_name, 'OpenAL32.dll') ] ) 
-		env.release( [os.path.join( prefix, 'bin', folder_name, 'soft_oal.dll') ] ) 
+	#OpenAL + OpenAL Soft
+	env.release( [os.path.join( prefix, 'bin', folder_name, 'OpenAL32.dll') ] ) 
+	env.release( [os.path.join( prefix, 'bin', folder_name, 'soft_oal.dll') ] ) 
 
 	#env.install_dir( os.path.join( env[ 'stage_libdir' ], 'site-packages' ), [ os.path.join( prefix, 'lib', folder_name, 'site-packages') ] )
 	env.release( [ os.path.join( prefix, 'bin', folder_name, 'amlbatch.exe' ) ] )
