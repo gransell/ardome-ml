@@ -362,14 +362,12 @@ void py_stream( )
 
 void py_stack( )
 {
-	void ( ml::stack::*push0 )( ml::input_type_ptr & )  = &ml::stack::push;
-	void ( ml::stack::*push1 )( ml::filter_type_ptr & ) = &ml::stack::push;
-	void ( ml::stack::*push2 )( std::string )           = &ml::stack::push;
+	ml::stack &( ml::stack::*push0 )( ml::input_type_ptr ) = &ml::stack::push;
+	ml::stack &( ml::stack::*push1 )( std::string )        = &ml::stack::push;
 
 	py::class_< ml::stack >( "stack" )
-        .def( "push", push0 )
-        .def( "push", push1 )
-        .def( "push", push2 )
+        .def( "push", push0, py::return_value_policy< py::reference_existing_object >( )  )
+        .def( "push", push1, py::return_value_policy< py::reference_existing_object >( )  )
         .def( "pop", &ml::stack::pop )
     ;
 }

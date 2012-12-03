@@ -9,6 +9,7 @@
 #include "types.hpp"
 #include "utilities.hpp"
 #include <opencorelib/cl/str_util.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -20,45 +21,66 @@ class stack
 		{
 		}
 
-		void push( input_type_ptr &input )
-		{
-			stack_->connect( input );
-			push( L"recover" );
-		}
-
-		void push( filter_type_ptr &input )
-		{
-			stack_->connect( input );
-			push( L"recover" );
-		}
-
-		void push( std::wstring command )
+		stack &push( const std::wstring command )
 		{
 			stack_->property( "parse" ) = command;
+			ARENFORCE_MSG( result( ) == "OK", "Stack push failed: %s" )( result( ) );
+			return *this;
 		}
 
-		void push( std::string command )
+		input_type_ptr pop( )
 		{
-			stack_->property( "parse" ) = olib::opencorelib::str_util::to_wstring( command );
+			return push( L"." ).fetch_slot( );
 		}
 
-		void copy( input_type_ptr &input, int limit = 1 )
+		stack &push( const char **argv, int argc, int start = 0 )
+		{
+			for( int index = start; index < argc; index ++ )
+				push( argv[ index ] );
+			return *this;
+		}
+
+		stack &push( const std::string command )
+		{
+			return push( olib::opencorelib::str_util::to_wstring( command ) );
+		}
+
+		stack &push( const char *command )
+		{
+			return push( olib::opencorelib::str_util::to_wstring( command ) );
+		}
+
+		stack &push( input_type_ptr input )
+		{
+			return connect( input ).push( L"recover" );
+		}
+
+		stack &copy( input_type_ptr &input, int limit = 1 )
 		{
 			filter_type_ptr aml = create_filter( L"aml" );
 			aml->property( "limit" ) = limit;
 			aml->property( "filename" ) = std::wstring( L"@" );
 			aml->connect( input );
-			std::wstring output = olib::opencorelib::str_util::to_wstring( aml->property( "stdout" ).value< std::string >( ) );
-			push( output );
-		}
-
-		input_type_ptr pop( )
-		{
-			push( L"." );
-			return stack_->fetch_slot( 0 );
+			return push( olib::opencorelib::str_util::to_wstring( aml->property( "stdout" ).value< std::string >( ) ) );
 		}
 
 	private:
+		std::string result( )
+		{
+			return olib::opencorelib::str_util::to_string( stack_->property( "result" ).value< std::wstring >( ) );
+		}
+
+		input_type_ptr fetch_slot( )
+		{
+			return stack_->fetch_slot( );
+		}
+
+		stack &connect( input_type_ptr input )
+		{
+			stack_->connect( input );
+			return *this;
+		}
+
 		input_type_ptr stack_;
 };
 
