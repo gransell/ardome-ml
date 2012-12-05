@@ -136,6 +136,7 @@ void py_stream_type( )
 {
 	py::class_<ml::stream_type, boost::noncopyable, ml::stream_type_ptr>( "stream", py::no_init )
 		.def( "length", &ml::stream_type::length )
+		.def( "position", &ml::stream_type::position )
 		.def( "bytes", &ml::stream_type::bytes, py::return_value_policy< py::return_by_value >( ) )
 	;
 	py::def( "to_string", &stream_to_string );
