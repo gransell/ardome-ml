@@ -394,12 +394,14 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 		: prop_slots_( pl::pcos::key::from_string( "slots" ) )
 		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 		, prop_preroll_( pl::pcos::key::from_string( "preroll" ) )
+		, prop_solo_( pl::pcos::key::from_string( "solo" ) )
 		, changed_( false )
 		, frames_( 0 )
 		{
 			properties( ).append( prop_slots_ = 2 );
 			properties( ).append( prop_queue_ = 50 );
 			properties( ).append( prop_preroll_ = 25 );
+			properties( ).append( prop_solo_ = 0 );
 		}
 
 		virtual bool requires_image( ) const { return false; }
@@ -439,13 +441,23 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 			// Check that we have a muxer to communicate with
 			ARENFORCE_MSG( lock_, "Was unable to derive the lock" );
 
-			lock_->seek( get_position( ) );
-			frame = lock_->fetch( );
+			int solo = prop_solo_.value< int >( );
 
-			for( size_t i = 1; i < slot_count( ); i ++ )
+			if ( solo <= 0 || solo >= slot_count( ) )
 			{
-				fetch_slot( i )->seek( get_position( ) );
-				fetch_slot( i )->fetch( );
+				lock_->seek( get_position( ) );
+				frame = lock_->fetch( );
+
+				for( size_t i = 1; i < slot_count( ); i ++ )
+				{
+					fetch_slot( i )->seek( get_position( ) );
+					fetch_slot( i )->fetch( );
+				}
+			}
+			else
+			{
+				fetch_slot( solo )->seek( get_position( ) );
+				frame = fetch_slot( solo )->fetch( );
 			}
 		}
 
@@ -540,6 +552,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 		pl::pcos::property prop_slots_;
 		pl::pcos::property prop_queue_;
 		pl::pcos::property prop_preroll_;
+		pl::pcos::property prop_solo_;
 		ml::lru_frame_type lru_;
 		ml::input_type_ptr lock_;
 		bool changed_;
