@@ -220,6 +220,8 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 				{
 					image_ = other->get_image( );
 					alpha_ = other->get_alpha( );
+					image_->set_writable( false );
+					alpha_->set_writable( false );
 				}
 
 				audio_ = other->get_audio( );

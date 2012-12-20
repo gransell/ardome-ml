@@ -64,6 +64,8 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		// Invert the region and planes requested
 		void invert( ml::frame_type_ptr &result )
 		{
+			result = result->shallow( );
+
 			if ( !ml::is_yuv_planar( result ) )
 				result = frame_convert( result, L"yuv420p" );
 
@@ -84,12 +86,13 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 				if ( planes & 1 )
 					invert_plane( image, 0, 256 );
 				if ( planes & 2 )
-					invert_plane( image, 1, 251 );
+					invert_plane( image, 1, 256 );
 				if ( planes & 4 )
-					invert_plane( image, 2, 251 );
+					invert_plane( image, 2, 256 );
 
 				// Restore to full image
 				image->crop_clear( );
+				image->set_writable( false );
 			}
 		}
 
