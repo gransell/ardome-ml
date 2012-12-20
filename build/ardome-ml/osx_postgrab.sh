@@ -73,3 +73,9 @@ if [ -e "rubberband.tbz2" ]
 	tar xjf rubberband.tbz2 || exit 1
 fi
 
+if [ -e "black_magic_decklink_sdk.tbz2" ]
+then
+	echo 'Extracting decklink'
+	tar xjf black_magic_decklink_sdk.tbz2 || exit 1
+	mv 'Blackmagic DeckLink SDK 8.6' decklink_sdk
+fi

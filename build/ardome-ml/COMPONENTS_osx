@@ -7,4 +7,4 @@
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/doxygen-1.5.7.1.tbz2 -> doxygen.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/rubberband-1.7.0-osx_i386_x86_64.tbz2 -> rubberband.tbz2
  owl : bzr://bzr.ardendo.se/data/bzr/owl/trunk
-
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/black_magic_decklink_sdk_8.6.tbz2 -> black_magic_decklink_sdk.tbz2

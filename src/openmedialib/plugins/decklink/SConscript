@@ -1,15 +1,23 @@
 Import(['local_env'])
 
+import os
+
 local_env.packages( 'boost', 'boost_filesystem', 'boost_system', 'boost_date_time', 'boost_thread', 'loki' )
 
-local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Mac/include', ] )
+if os.path.isdir( str( Dir( '#bcomp/decklink_sdk' ) ) ):
+	if local_env['PLATFORM'] == 'posix':
+		local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Linux/include', ] )
+	elif local_env[ 'PLATFORM' ] == 'darwin':
+		local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Mac/include', ] )
+	else:
+		local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Win/include', ] )
 
-srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp', 'src/decklink_utilities.cpp' ]
+	srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp', 'src/decklink_utilities.cpp' ]
 
-if local_env[ 'PLATFORM' ] == 'win32' :
-	srcs.append( 'src/msw/decklink.rc' )
+	if local_env[ 'PLATFORM' ] == 'win32' :
+		srcs.append( 'src/msw/decklink.rc' )
 
-bin = local_env.plugin( 'openmedialib_aml_decklink', srcs )
-local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'src/plugin_decklink.opl' ])
-Return( 'bin' )
+	bin = local_env.plugin( 'openmedialib_aml_decklink', srcs )
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'src/plugin_decklink.opl' ])
+	Return( 'bin' )
 

@@ -2,7 +2,7 @@
 
 cd bcomp
 
-for pkg in 'loki.tbz2' 'boost.tbz2' 'ffmpeg.tbz2' 'xercesc.tbz2' 'sdl.tbz2' 'rubberband.tbz2' 'cairo.tbz2' 'librsvg.tbz2' ; do
+for pkg in 'loki.tbz2' 'boost.tbz2' 'ffmpeg.tbz2' 'xercesc.tbz2' 'sdl.tbz2' 'rubberband.tbz2' 'cairo.tbz2' 'librsvg.tbz2' 'black_magic_decklink_sdk.tbz2' ; do
     if [ -f $pkg ]; then
         name=${pkg/\.tbz2/};
         echo "Extracting ${name}..."
@@ -25,3 +25,6 @@ for pkg in 'cairo.tar.gz'; do
         fi
     fi
 done
+
+# Remove whitespace from directory name and normalise to avoid having to maintain version info in multiple places
+mv 'Blackmagic DeckLink SDK 8.6' decklink_sdk
