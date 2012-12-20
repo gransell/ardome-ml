@@ -1,7 +1,7 @@
 video_codec = mjpeg
 #video_bit_rate = 25000000
 video_gop_size = 1
-video_qmin = 8
-video_qmax = 8
+video_qmin = 4
+video_qmax = 4
 
 stream_codec_id = http://www.ardendo.com/apf/codec/jpeg/jpeg
