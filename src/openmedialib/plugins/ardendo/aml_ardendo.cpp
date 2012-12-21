@@ -38,6 +38,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const std::ws
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_compositor( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_extract( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_interlace( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_hold( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_invert( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_locked_audio( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_loop( const std::wstring & );
@@ -109,6 +110,8 @@ public:
 			return create_compositor( resource );
 		if ( resource == L"extract" )
 			return create_extract( resource );
+		if ( resource == L"hold" )
+			return create_hold( resource );
 		if ( resource == L"interlace" )
 			return create_interlace( resource );
 		if ( resource == L"invert" )
