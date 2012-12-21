@@ -5,8 +5,7 @@
 //
 // #filter:repeat
 //
-// Repeats the input multiple times using the requested type (repeat or
-// pingpong).
+// Repeats the input multiple times using the requested method.
 //
 // To repeat the connected input 3 times, the following could be used:
 //
@@ -81,14 +80,9 @@ class ML_PLUGIN_DECLSPEC filter_repeat : public ml::filter_type
 			const bool active = src_frames_ != std::numeric_limits< int >::max( ) && prop_count_.value< int >( ) >= 1;
 
 			if ( active )
-			{
 				result = obtain_frame( input, position, reversed );
-			}
 			else
-			{
-				input->seek( position );
-				result = input->fetch( );
-			}
+				result = input->fetch( position );
 		}
 
 		void sync_frames( )
@@ -102,17 +96,11 @@ class ML_PLUGIN_DECLSPEC filter_repeat : public ml::filter_type
 			ml::frame_type_ptr result;
 			int src_frame = position % src_frames_;
 			int section = position / src_frames_;
+			if ( !reverse_ ) reverse_ = reverse( input );
 			if ( section % 2 == reversed )
-			{
-				if ( !reverse_ ) reverse_ = reverse( input );
-				reverse_->seek( src_frame );
-				result = reverse_->fetch( );
-			}
+				result = reverse_->fetch( src_frame );
 			else
-			{
-				input->seek( src_frame );
-				result = input->fetch( );
-			}
+				result = input->fetch( src_frame );
 			ARENFORCE_MSG( result, "Unable to obtain a frame %d from the connected input" )( src_frame );
 			result = result->shallow( );
 			result->set_position( position );

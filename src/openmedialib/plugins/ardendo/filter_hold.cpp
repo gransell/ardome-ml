@@ -17,14 +17,12 @@
 // (more or less) correct duration will be provided during the duration.
 //
 // Frame numbers should be positive if the input is a growing source, but a 
-// negative is used to specify a position relative to end of the input. So
-// to hold the first and last frame, the following will suffice:
+// negative is used to specify a position relative to end of a non-growing 
+// source. So to hold the first and last frame, the following will suffice:
 //
 // file.mpg
 // filter:hold frame=0 count=10
 // filter:hold frame=-1 count=10
-//
-// It can be disabled by specifying a count <= 0.
 //
 // Notes:
 //
@@ -46,12 +44,12 @@
 // a warning, but willing to accept an enforce if considered necessary).
 //
 // If the source is interlaced, the resultant held frames will be progressive.
+//
+// The filter can be disabled by specifying a count <= 0.
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
-
-#include <iostream>
 
 namespace aml { namespace openmedialib {
 
@@ -68,15 +66,15 @@ class ML_PLUGIN_DECLSPEC filter_hold : public ml::filter_type
 		}
 
 		// Indicates if the input will enforce a packet decode
-		virtual bool requires_image( ) const { return false; }
+		bool requires_image( ) const { return false; }
 
-		virtual int get_frames( ) const
+		int get_frames( ) const
 		{
 			const int count = prop_count_.value< int >( );
 			return count > 0 && src_frames_ != std::numeric_limits< int >::max( ) ? src_frames_ + count : src_frames_;
 		}
 
-		virtual const std::wstring get_uri( ) const { return L"hold"; }
+		const std::wstring get_uri( ) const { return L"hold"; }
 
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
@@ -88,14 +86,12 @@ class ML_PLUGIN_DECLSPEC filter_hold : public ml::filter_type
 			ml::input_type_ptr input = fetch_slot( );
 			ARENFORCE_MSG( input, "No input connected to hold filter" );
 
-			const int src_frames = input->get_frames( );
-			const int hold_frame = frame < 0 ? src_frames + frame : frame;
-			const bool active = hold_frame >= 0 && hold_frame < input->get_frames( ) && count > 0;
+			const int hold_frame = frame < 0 ? src_frames_ + frame : frame;
+			const bool active = hold_frame >= 0 && hold_frame < src_frames_ && count > 0;
 
 			if ( active && position >= hold_frame && position < hold_frame + count )
 			{
-				input->seek( hold_frame );
-				result = input->fetch( );
+				result = input->fetch( hold_frame );
 				ARENFORCE_MSG( result, "Unable to obtain the hold frame %d for %d" )( hold_frame )( position );
 				result = result->shallow( );
 				result->set_position( position );
@@ -106,16 +102,14 @@ class ML_PLUGIN_DECLSPEC filter_hold : public ml::filter_type
 			}
 			else if ( active && position >= hold_frame + count )
 			{
-				input->seek( position - count );
-				result = input->fetch( );
+				result = input->fetch( position - count );
 				ARENFORCE_MSG( result, "Unable to obtain a frame for %d" )( position );
 				result = result->shallow( );
 				result->set_position( position );
 			}
 			else
 			{
-				input->seek( position );
-				result = input->fetch( );
+				result = input->fetch( position );
 			}
 		}
 
