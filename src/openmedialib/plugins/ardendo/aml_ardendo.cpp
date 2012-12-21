@@ -51,6 +51,7 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_mvitc_write( const std::wst
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_offset( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pulldown( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_repeat( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sar( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_slots( const std::wstring & );
@@ -138,6 +139,8 @@ public:
 			return create_pitch( resource );
 		if ( resource == L"pulldown" )
 			return create_pulldown( resource );
+		if ( resource == L"repeat" )
+			return create_repeat( resource );
 		if ( resource == L"sar" )
 			return create_sar( resource );
 		if ( resource == L"sleep" )
