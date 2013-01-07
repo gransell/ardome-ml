@@ -10,17 +10,17 @@
 // To repeat the connected input 3 times, the following could be used:
 //
 // file.mpeg
-// filter:repeat type="repeat" count=3
+// filter:repeat type=repeat count=3
 //
 // To have the input alternate between forward and reverse play:
 //
 // file.mpeg
-// filter:repeat type="pingpong" count=2
+// filter:repeat type=pingpong count=2
 //
 // To have the input alternate between reverse and forward play:
 //
 // file.mpeg
-// filter:repeat type="pongping" count=2
+// filter:repeat type=pongping count=2
 //
 // Notes:
 //
@@ -74,6 +74,8 @@ class ML_PLUGIN_DECLSPEC filter_repeat : public ml::filter_type
 
 			ml::input_type_ptr input = fetch_slot( );
 			ARENFORCE_MSG( input, "No input connected to repeat filter" );
+
+			if ( src_frames_ == 0 ) sync( );
 
 			const int reversed = types_[ type ];
 			const int position = get_position( );
