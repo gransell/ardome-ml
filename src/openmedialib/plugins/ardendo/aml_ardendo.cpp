@@ -99,6 +99,8 @@ public:
 	{
 		if ( resource == L"aml" )
 			return create_aml( resource );
+		if ( resource == L"aml_pitch" )
+			return create_pitch( resource );
 		if ( resource == L"audio_convert" )
 			return create_audio_convert( resource );
 		if ( resource == L"charcoal" )

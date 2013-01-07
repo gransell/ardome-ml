@@ -47,7 +47,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 {
 	public:
 		// Filter_type overloads
-		explicit filter_pitch( const std::wstring & )
+		explicit filter_pitch( const std::wstring &name )
 			: ml::filter_simple( )
 			, prop_fps_num_( pcos::key::from_string( "fps_num" ) )
 			, prop_fps_den_( pcos::key::from_string( "fps_den" ) )
@@ -55,6 +55,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 			, prop_samples_( pcos::key::from_string( "samples" ) )
 			, expected_( -1 )
 			, direction_( 1 )
+			, name_( name )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -66,7 +67,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 		virtual bool requires_image( ) const { return false; }
 
 		// This provides the name of the plugin (used in serialisation)
-		virtual const std::wstring get_uri( ) const { return L"pitch"; }
+		virtual const std::wstring get_uri( ) const { return name_; }
 
 	protected:
 		// The main access point to the filter
@@ -166,6 +167,7 @@ class ML_PLUGIN_DECLSPEC filter_pitch : public ml::filter_simple
 		pcos::property prop_samples_;
 		int expected_;
 		int direction_;
+		std::wstring name_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pitch( const std::wstring &resource )
