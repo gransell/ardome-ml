@@ -13,10 +13,14 @@
 #include <openimagelib/il/utility.hpp>
 #include <openimagelib/plugins/tga/tga_plugin.hpp>
 #include <openimagelib/py/py.hpp>
+#include <boost/python/enum.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python/module.hpp>
 
-namespace il  = olib::openimagelib;
-namespace opl = olib::openpluginlib;
-namespace py  = boost::python;
+namespace il = olib::openimagelib;
+namespace py = boost::python;
+
+using namespace boost::python;
 
 namespace olib { namespace openimagelib { namespace il { namespace detail {
 
@@ -69,6 +73,16 @@ static std::string to_string( il::image_type_ptr image )
 	return result;
 }
 
+int field_order( il::image_type_ptr image )
+{
+	return int( image->field_order( ) );
+}
+
+void set_field_order( il::image_type_ptr image, int order )
+{
+	image->set_field_order( field_order_flags( order ) );
+}
+
 void py_basic_image( )
 {
 	py::class_<il::image_type, boost::noncopyable, il::image_type_ptr>( "image", py::no_init )
@@ -96,8 +110,8 @@ void py_basic_image( )
 		.def( "set_pts", &il::image_type::set_pts )
 		.def( "position", &il::image_type::position )
 		.def( "set_position", &il::image_type::set_position )
-		.def( "field_order", &il::image_type::field_order )
-		.def( "set_field_order", &il::image_type::set_field_order )
+		.def( "field_order", &field_order )
+		.def( "set_field_order", &set_field_order )
 		.def( "is_cubemap", &il::image_type::is_cubemap )
 		.def( "is_volume", &il::image_type::is_volume )
 		.def( "pf", &il::image_type::pf )
