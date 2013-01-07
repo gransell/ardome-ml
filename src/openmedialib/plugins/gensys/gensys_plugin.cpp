@@ -1605,6 +1605,8 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 		void check_input( input_type_ptr input )
 		{
+			input->sync( );
+
 			frame_type_ptr frame = input->fetch( );
 
 			src_frames_ = input->get_frames( );
