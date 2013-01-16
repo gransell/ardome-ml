@@ -1259,12 +1259,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 				{
-					pkt.pts = av_rescale_q( c->coded_frame->pts + 1, c->time_base, video_stream_->time_base );
-					pkt.dts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
+					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
+					pkt.dts = av_rescale_q( encoded_images_ - 1, c->time_base, video_stream_->time_base );
 				}
 				else
 				{
-					pkt.pts = av_rescale_q( encoded_images_ + 1, c->time_base, video_stream_->time_base );
+					pkt.pts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
 					pkt.dts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
 				}
 

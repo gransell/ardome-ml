@@ -1147,9 +1147,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
 				if ( prop_ts_index_.value< std::wstring >( ) != L"" )
-					indexer_item_ = ml::indexer_request( prop_ts_index_.value< std::wstring >( ), index_entry_type );
+					indexer_item_ = ml::indexer_request( prop_ts_index_.value< pl::wstring >( ), ml::index_type::awi, index_entry_type );
 				else
-					indexer_item_ = ml::indexer_request( resource, index_entry_type );
+					indexer_item_ = ml::indexer_request( resource, ml::index_type::media, index_entry_type );
 
 				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );
@@ -1781,7 +1781,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			// Set the duration
 			if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
-				frames_ = int( ( avformat_input::fps( ) * ( context_->duration - start_time_ ) ) / ( double )AV_TIME_BASE );
+				frames_ = int( ceil( ( avformat_input::fps( ) * context_->duration ) / ( double )AV_TIME_BASE ) );
 			else if ( std::string( context_->iformat->name ) == "yuv4mpegpipe" )
 				frames_ = 1;
 			else
@@ -1916,23 +1916,22 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		{
 			int last = 0;
 			seek( frames_ - 1 );
-			fetch( );
+			ml::frame_type_ptr frame = fetch( );
 
 			do
 			{
-				if ( images_.size( ) )
+				if ( images_.size( ) && frame->get_image( ) && frame->get_image( )->position( ) == get_position( ) )
 				{
 					last = images_[ images_.size( ) - 1 ]->position( );
-					frames_ = last + 3;
-					seek( last + 2 );
+					frames_ = last + 1;
 				}
 				else
 				{
-					frames_ -= 25;
-					seek( frames_ - 1 );
+					frames_ = frames_ > 12 ? frames_ - 12 : frames_ - 1;
 				}
 
-				fetch( );
+				seek( frames_ - 1 );
+				frame = fetch( );
 			}
 			while( frames_ > 0 && ( images_.size( ) == 0 || last != images_[ images_.size( ) - 1 ]->position( ) ) );
 

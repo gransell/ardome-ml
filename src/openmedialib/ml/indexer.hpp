@@ -11,6 +11,15 @@
 
 namespace olib { namespace openmedialib { namespace ml {
 
+namespace index_type
+{
+	enum type
+	{
+		awi,
+		media
+	};
+}
+
 class ML_DECLSPEC indexer_item
 {
 	public:
@@ -34,7 +43,9 @@ class ML_DECLSPEC indexer_item
 extern void ML_DECLSPEC indexer_init( );
 
 /// Factory method for index_item_ptr objects
-extern indexer_item_ptr ML_DECLSPEC indexer_request( const std::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
+extern indexer_item_ptr ML_DECLSPEC indexer_request( const std::wstring &url, 
+													index_type::type file_type,
+													boost::uint16_t v4_index_entry_type = 0 );
 
 /// Cancels an indexer request previously returned by indexer_request
 extern void ML_DECLSPEC indexer_cancel_request( const indexer_item_ptr &item );
