@@ -1147,9 +1147,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
 				if ( prop_ts_index_.value< std::wstring >( ) != L"" )
-					indexer_item_ = ml::indexer_request( prop_ts_index_.value< std::wstring >( ), ml::index_file_type::awi, index_entry_type );
+					indexer_item_ = ml::indexer_request( prop_ts_index_.value< std::wstring >( ), index_entry_type );
 				else
-					indexer_item_ = ml::indexer_request( resource, ml::index_file_type::media, index_entry_type );
+					indexer_item_ = ml::indexer_request( resource, index_entry_type );
 
 				if ( indexer_item_ && indexer_item_->index( ) )
 					aml_index_ = indexer_item_->index( );

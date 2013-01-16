@@ -44,7 +44,7 @@ class indexer_job : public indexer_item, public opencorelib::function_job
 typedef ML_DECLSPEC boost::shared_ptr< indexer_job > indexer_job_ptr;
 
 // Forward declaration to local factory method
-static indexer_job_ptr indexer_job_factory( const std::wstring &url, index_file_type::type file_type, boost::uint16_t v4_index_entry_type = 0 );
+static indexer_job_ptr indexer_job_factory( const std::wstring &url, boost::uint16_t v4_index_entry_type = 0 );
 
 template < class T >
 class aml_index_reader;
@@ -407,29 +407,20 @@ class generating_job_type : public indexer_job
 		frame_type_ptr last_frame_;
 };
 
-static indexer_job_ptr indexer_job_factory( const std::wstring &url, index_file_type::type file_type, boost::uint16_t v4_index_entry_type )
+static indexer_job_ptr indexer_job_factory( const std::wstring &url, boost::uint16_t v4_index_entry_type )
 {
 	if ( url.find( L"index:" ) != 0 )
 	{
-		if( file_type == index_file_type::awi )
-		{
-			aml_index_reader_ptr index = create( cl::str_util::to_string( url ), v4_index_entry_type );
-			if( !index )
-			{
-				ARLOG_ERR( "Failed to parse AWI file \"%1%\"" )( url );
-				return indexer_job_ptr( );
-			}
-			
+		aml_index_reader_ptr index = create( cl::str_util::to_string( url ), v4_index_entry_type );
+		if ( index )
 			return indexer_job_ptr( new indexed_job_type( url, index ) );
-		}
-		else
-		{
+		else if ( url.find( L".awi" ) == std::wstring::npos )
 			return indexer_job_ptr( new unindexed_job_type( url ) );
-		}
+		else
+			return indexer_job_ptr( );
 	}
 	else
 	{
-		ARENFORCE_MSG( file_type == index_file_type::media, "Got index generation request for non-media file \"%1%\"" )( url );
 		return indexer_job_ptr( new generating_job_type( url ) );
 	}
 }
@@ -473,7 +464,7 @@ class indexer
 		}
 
 		/// Request an index item for the specified url
-		indexer_item_ptr request( const std::wstring &url, index_file_type::type file_type, boost::uint16_t v4_index_entry_type = 0 )
+		indexer_item_ptr request( const std::wstring &url, boost::uint16_t v4_index_entry_type = 0 )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			ARLOG_DEBUG5( "Index request for url: %1%" )( url );
@@ -492,7 +483,7 @@ class indexer
 
 			if ( existing == map_.end( ) )
 			{
-				indexer_job_ptr job = indexer_job_factory( url, file_type, v4_index_entry_type );
+				indexer_job_ptr job = indexer_job_factory( url, v4_index_entry_type );
 				if ( !job ) return indexer_item_ptr( );
 
 				bool has_frames_or_size = ( ( job->index( ) && job->index( )->total_frames( ) > 0 ) || ( !job->index( ) && job->size( ) > 0 ) );
@@ -579,9 +570,9 @@ void ML_DECLSPEC indexer_init( )
 	indexer::instance( )->init( );
 }
 
-indexer_item_ptr ML_DECLSPEC indexer_request( const std::wstring &url, index_file_type::type file_type, boost::uint16_t v4_index_entry_type )
+indexer_item_ptr ML_DECLSPEC indexer_request( const std::wstring &url, boost::uint16_t v4_index_entry_type )
 {
-	return indexer::instance( )->request( url, file_type, v4_index_entry_type );
+	return indexer::instance( )->request( url, v4_index_entry_type );
 }
 
 void ML_DECLSPEC indexer_cancel_request( const indexer_item_ptr &item )
