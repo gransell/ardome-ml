@@ -893,6 +893,8 @@ class ML_PLUGIN_DECLSPEC filter_encode : public filter_encode_type, public filte
 			{
 				ARLOG_DEBUG3( "Creating gop_encoder in encode filter" );
 				gop_encoder_ = filter_create( );
+				if( gop_encoder_->properties( ).get_property_with_key( key_force_ ).valid( ) ) 
+					pl::pcos::assign< int >( gop_encoder_->properties( ), key_force_, prop_force_.value< int >( ) );
 				gop_encoder_->connect( fetch_slot( 0 ) );
 				
 				return gop_encoder_.get( ) != 0;
