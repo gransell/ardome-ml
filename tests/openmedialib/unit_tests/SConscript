@@ -3,7 +3,7 @@ Import(['local_env'])
 local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces' )
 local_env.optional( 'ffmpeg' )
 
-test_sources = [ 'src/main.cpp', 'src/test_awi.cpp' ]
+test_sources = [ 'src/main.cpp', 'src/test_awi.cpp', 'src/test_avformat_plugin.cpp' ]
 
 object = local_env.console_program( 'openmedialib_unit_tests', test_sources )
 local_env.release( object )
