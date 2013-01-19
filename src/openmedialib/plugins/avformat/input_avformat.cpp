@@ -1902,31 +1902,37 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 		int size_media_by_images( )
 		{
-			int last = 0;
-			seek( frames_ - 1 );
-			ml::frame_type_ptr frame = fetch( );
+			ARENFORCE_MSG( frames_ > 0, "Invalid initial evaluation of frame count %d - cannot be <= 0" )( frames_ );
 
+			int attempts = 50;
+
+			// Seek backwards in gop sized blocks until an image with the requested position is found
 			do
 			{
-				if ( images_.size( ) && frame->get_image( ) && frame->get_image( )->position( ) == get_position( ) )
-				{
-					last = images_[ images_.size( ) - 1 ]->position( );
-					frames_ = last + 1;
-				}
+				ml::frame_type_ptr frame = fetch( frames_ - 1 );
+
+				if ( frame && frame->get_image( ) && frame->get_image( )->position( ) == get_position( ) )
+					break;
 				else
-				{
 					frames_ = frames_ > 12 ? frames_ - 12 : frames_ - 1;
-				}
-
-				seek( frames_ - 1 );
-				frame = fetch( );
 			}
-			while( frames_ > 0 && ( images_.size( ) == 0 || last != images_[ images_.size( ) - 1 ]->position( ) ) );
+			while( frames_ > 0 && attempts -- );
 
-			if ( frames_ <= 0 )
-				last = -1;
+			ARENFORCE_MSG( attempts > 0, "Unable to determine the duration" );
 
-			return last + 1;
+			// Step forward until we no longer get an image at the requested position
+			while( frames_ > 0 && attempts -- )
+			{
+				frames_ += 1;
+				ml::frame_type_ptr frame = fetch( frames_ - 1 );
+				if ( !( frame && frame->get_image( ) && frame->get_image( )->position( ) == get_position( ) ) )
+				{
+					frames_ -= 1;
+					break;
+				}
+			}
+
+			return frames_;
 		}
 
 		int size_media_by_packets( )
