@@ -13,6 +13,7 @@ vcodecs/avcintra100 = mcencode
 vcodecs/avcintra50 = mcencode
 vcodecs/mcdvb = mcencode
 vcodecs/mcxdcam = mcencode
+vcodecs/mcxdcam_cgop = mcencode
 vcodecs/mcxdcam_720p = mcencode
 vcodecs/mcxdcam_1080_CBR_25 = mcencode
 vcodecs/mcxdcam_1080_VBR_17_5 = mcencode
