@@ -1277,10 +1277,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					std::string codec = has_video( ) ? get_video_stream( )->codec->codec->name : "";
 
 					result |= format == "mpegts" && aml_index_;
-					result |= format == "mpegts" && codec == "mpeg2video";
 					result |= format == "mpeg" && codec == "mpeg2video";
 					result |= format == "mxf";
 					result |= format.find( "mov" ) == 0 && codec == "mpeg2video";
+					result |= format.find( "mov" ) == 0 && codec == "dnxhd";
 
 					ARLOG_DEBUG3( "Packet stream is %s with %s/%s and indexing %s" )( result ? "on" : "off" )( format )( codec )( aml_index_ ? "on" : "off" );
 				}
