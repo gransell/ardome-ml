@@ -2,6 +2,31 @@
 //
 // Copyright (C) 2010 Vizrt
 // Released under the LGPL.
+//
+// #input:nudger:
+//
+// This provides an upgrade to the original input:pusher: - it provides a 
+// threadsafe implementation which allows pushes and fetches to be carried out
+// on two different threads.
+//
+// #filter:lock
+//
+// This filter is used to protect non-threadsafe inputs so that they can be 
+// safely accessed by multiple concurrent threads. See filter:distributor for
+// more details.
+//
+// #filter:voodoo
+//
+// This is a variant on the fork filter which allows video and audio filters to
+// be carried out on their own sub graphs.
+//
+// #filter:fork
+//
+// This provides a threadsafe variant of the filter:tee.
+//
+// #filter:distributor
+//
+// A replacement for the filter:threader.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/stack.hpp>
@@ -98,10 +123,12 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 		filter_lock( )
 		: prop_sync_( pl::pcos::key::from_string( "sync" ) )
 		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
+		, prop_image_( pl::pcos::key::from_string( "image" ) )
 		, frames_( 0 )
 		{
 			properties( ).append( prop_sync_ = 1 );
 			properties( ).append( prop_queue_ = 50 );
+			properties( ).append( prop_image_ = 0 );
 		}
 
 		virtual bool requires_image( ) const { return false; }
@@ -187,8 +214,22 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 		// Threadsafe fetch of a frame for the position associated to the thread
 		virtual frame_type_ptr fetch( )
 		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			return filter_type::fetch( );
+			ml::frame_type_ptr frame;
+
+			// Fetch the image with the lock in place
+			{
+				boost::recursive_mutex::scoped_lock lock( mutex_ );
+				frame = filter_type::fetch( );
+			}
+
+			// Clone image if required
+			if ( prop_image_.value< int >( ) == 1 )
+			{
+				il::image_type_ptr image = frame->get_image( );
+				frame->set_image( image ? il::image_type_ptr( static_cast< il::image_type * >( image->clone( il::writable ) ) ) : image );
+			}
+
+			return frame;
 		}
 
 	protected:
@@ -208,8 +249,10 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 			// If we don't have a frame now, things have got messed up
 			ARENFORCE_MSG( frame, "Unable to obtain frame %d from locked input" )( get_position( ) );
 
-			// Finally save the frame in the lru (regardless of whether it's there or not) and shallow copy
+			// Finally save the frame in the lru (regardless of whether it's there or not)
 			lru_.append( get_position( ), frame );
+
+			// Create a shallow copy
 			frame = frame->shallow( );
 		}
 
@@ -218,6 +261,7 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 		mutable boost::recursive_mutex mutex_;
 		pl::pcos::property prop_sync_;
 		pl::pcos::property prop_queue_;
+		pl::pcos::property prop_image_;
 		int frames_;
 		ml::lru_frame_type lru_;
 };
@@ -395,6 +439,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 		, prop_queue_( pl::pcos::key::from_string( "queue" ) )
 		, prop_preroll_( pl::pcos::key::from_string( "preroll" ) )
 		, prop_solo_( pl::pcos::key::from_string( "solo" ) )
+		, prop_image_( pl::pcos::key::from_string( "image" ) )
 		, changed_( false )
 		, frames_( 0 )
 		{
@@ -402,6 +447,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 			properties( ).append( prop_queue_ = 50 );
 			properties( ).append( prop_preroll_ = 25 );
 			properties( ).append( prop_solo_ = 0 );
+			properties( ).append( prop_image_ = 0 );
 		}
 
 		virtual bool requires_image( ) const { return false; }
@@ -410,7 +456,14 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 
 		virtual const size_t slot_count( ) const { return prop_slots_.value< int >( ); }
 
-		void on_slot_change( input_type_ptr input, int slot = 0 ) { changed_ = true; }
+		void on_slot_change( input_type_ptr input, int slot = 0 ) 
+		{
+			if ( slot == 0 && input )
+			{
+				seek( input->get_position( ) );
+			}
+			changed_ = true; 
+		}
 
 		int get_frames( ) const { return frames_; }
 
@@ -480,7 +533,9 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 					lock_ = ml::create_filter( L"lock" );
 					pl::pcos::assign< std::wstring >( lock_->properties( ), ml::keys::serialise_as, L"nudger:" );
 					lock_->property( "queue" ) = prop_queue_.value< int >( );
+					lock_->property( "image" ) = prop_image_.value< int >( );
 					lock_->connect( input );
+					lock_->seek( get_position( ) );
 				}
 				else
 				{
@@ -488,7 +543,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 				}
 
 				// Grab a frame from the lock so that we know the frame 
-				ml::frame_type_ptr frame = lock_->fetch( );
+				ml::frame_type_ptr frame = lock_->fetch( get_position( ) );
 
 				// Replace the nudgers with the the locked input
 				for( size_t i = 1; i < slot_count( ); i ++ )
@@ -498,7 +553,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 					ml::input_type_ptr graph = replace_with_lock( slot );
 					graph->sync( );
 
-					ml::frame_type_ptr temp = graph->fetch( );
+					ml::frame_type_ptr temp = graph->fetch( get_position( ) );
 					if ( temp->get_fps_num( ) != frame->get_fps_num( ) || temp->get_fps_den( ) != frame->get_fps_den( ) )
 					{
 						ml::filter_type_ptr fps = ml::create_filter( L"frame_rate" );
@@ -506,6 +561,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 						fps->property( "fps_num" ) = frame->get_fps_num( );
 						fps->property( "fps_den" ) = frame->get_fps_den( );
 						fps->connect( graph );
+						fps->seek( get_position( ) );
 						graph->sync( );
 						graph = fps;
 					}
@@ -553,7 +609,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 		pl::pcos::property prop_queue_;
 		pl::pcos::property prop_preroll_;
 		pl::pcos::property prop_solo_;
-		ml::lru_frame_type lru_;
+		pl::pcos::property prop_image_;
 		ml::input_type_ptr lock_;
 		bool changed_;
 		int frames_;
