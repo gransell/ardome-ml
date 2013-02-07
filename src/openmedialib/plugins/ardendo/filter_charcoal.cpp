@@ -59,12 +59,8 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		// Invert the region and planes requested
 		void charcoal( ml::frame_type_ptr &result )
 		{
-			result = result->shallow( );
-
 			if ( !ml::is_yuv_planar( result ) )
 				result = frame_convert( result, L"yuv420p" );
-
-			result->set_image( il::conform( result->get_image( ), il::writable ) );
 
 			if ( result && result->get_image( ) )
 			{
@@ -73,7 +69,6 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 				charcoal_plane( output, input, 0 );
 				copy_plane( output, input, 1 );
 				copy_plane( output, input, 2 );
-				output->set_writable( false );
 				result->set_image( output );
 			}
 		}

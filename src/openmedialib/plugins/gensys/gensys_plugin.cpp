@@ -547,7 +547,6 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
-				result = result->shallow( );
 				if ( !is_yuv_planar( result ) )
 					result = frame_convert( result, L"yuv420p" );
 				il::image_type_ptr img = result->get_image( );
@@ -558,7 +557,6 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 					fill( img, 2, ( unsigned char )prop_v_.value< int >( ) );
 				}
 				result->set_image( img );
-				img->set_writable( false );
 			}
 		}
 
