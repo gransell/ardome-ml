@@ -29,6 +29,7 @@
 
 #include "avformat_stream.hpp"
 #include "avformat_wrappers.hpp"
+#include "avformat_streamable.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -919,6 +920,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, prop_fake_fps_( pcos::key::from_string( "fake_fps" ) )
 			, prop_frequency_( pcos::key::from_string( "frequency" ) )
 			, prop_inner_threads_( pcos::key::from_string( "inner_threads" ) )
+			, prop_whitelist_( pcos::key::from_string( "whitelist" ) )
 			, av_frame_( 0 )
 			, video_codec_( 0 )
 			, audio_codec_( 0 )
@@ -971,6 +973,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_fake_fps_ = 0 );
 			properties( ).append( prop_frequency_ = -1 );
 			properties( ).append( prop_inner_threads_ = 1 );
+			properties( ).append( prop_whitelist_ = pl::wstring( L"" ) );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -1263,12 +1266,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					// If packet_stream < 0, then we will only accept it with specific combinations of container, indexing and codecs
 					std::string format = context_->iformat->name;
 					std::string codec = has_video( ) ? get_video_stream( )->codec->codec->name : "";
+					std::string whitelist = pl::to_string( prop_whitelist_.value< pl::wstring >( ) );
 
-					result |= format == "mpegts" && aml_index_;
-					result |= format == "mpegts" && codec == "mpeg2video";
-					result |= format == "mpeg" && codec == "mpeg2video";
-					result |= format == "mxf";
-					result |= format.find( "mov" ) == 0 && codec == "mpeg2video";
+					result = avformat::is_streamable( whitelist, format, codec, aml_index_ != awi_index_ptr( ) );
 
 					ARLOG_DEBUG3( "Packet stream is %s with %s/%s and indexing %s" )( result ? "on" : "off" )( format )( codec )( aml_index_ ? "on" : "off" );
 				}
@@ -2750,6 +2750,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		pcos::property prop_fake_fps_;
 		pcos::property prop_frequency_;
 		pcos::property prop_inner_threads_;
+		pcos::property prop_whitelist_;
 		AVFrame *av_frame_;
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;
