@@ -1196,7 +1196,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				error = ( error_code < 0 );
 				if ( error )
 				{
-					ARLOG_ERR( "avformat_open_input return code %1% for file %2%" )( uri_ );
+					ARLOG_ERR( "avformat_open_input return code %1% for file %2%" )( error_code )( uri_ );
 				}
 				else
 				{
