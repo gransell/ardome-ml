@@ -283,6 +283,11 @@ static int lockmgr(void **mtx, enum AVLockOp op)
 	return 1;
 }
 
+void unregister_lockmgr( )
+{
+	av_lockmgr_register( NULL );
+}
+
 //
 // Plugin object
 //
@@ -341,6 +346,7 @@ namespace
 				av_log_set_level( atoi(  getenv( "AML_AVFORMAT_DEBUG" ) ) );
 
 			av_lockmgr_register( ml::lockmgr );
+			atexit( &ml::unregister_lockmgr );
 			
 			olib::openmedialib::ml::register_aml_aes3( );
 		}
