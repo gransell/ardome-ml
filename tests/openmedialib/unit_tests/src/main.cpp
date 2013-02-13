@@ -7,8 +7,11 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openmedialib/ml/indexer.hpp>
 
+#include "io_tester.hpp"
+
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
+namespace io = olib::openmedialib::ml::io;
 
 void init_pl()
 {
@@ -59,6 +62,8 @@ public:
 		unit_test_log.set_stream( log_file_ );
 
 		init_pl( );
+
+		register_io_tester_protocol();
 	}
 
 	~init_fixture( )

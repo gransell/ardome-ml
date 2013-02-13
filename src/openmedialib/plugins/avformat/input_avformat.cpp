@@ -15,6 +15,7 @@
 #include <openmedialib/ml/indexer.hpp>
 #include <openmedialib/ml/audio_block.hpp>
 #include <openmedialib/ml/keys.hpp>
+#include <openmedialib/ml/io.hpp>
 
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
@@ -22,6 +23,8 @@
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/worker.hpp>
 #include <opencorelib/cl/log_defines.hpp>
+
+#include <boost/foreach.hpp>
 
 #include <vector>
 #include <map>
@@ -1135,10 +1138,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			resource_ = resource;
 
 			// Attempt to open the resource
+			context_ = avformat_alloc_context();
+
+			AVIOContext *io_context = NULL;
+			int custom_open_ret = io::open_file( &io_context, cl::str_util::to_string( resource ).c_str(), AVIO_FLAG_READ );
+			context_->pb = io_context;
 			int error_code = avformat_open_input( &context_, cl::str_util::to_string( resource ).c_str( ), format_, 0 );
 			int error = ( error_code < 0 );
 			if( error )
 			{
+				io::close_file( io_context );
 				ARLOG_ERR( "Got error %1% from avformat_open_input when opening file %2%" )
 					( error_code )( uri_ );
 			}
@@ -2691,7 +2700,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			AVIOContext *keepalive = 0;
 			if ( resource_.find( L"aml:cache:" ) == 0 )
 			{
-				avio_open2( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ, 0, 0 );
+				io::open_file( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ );
 
 				// AML specific reopen hack - enforces a reopen from a non-cached source
 				av_read_pause( context_ );
@@ -2725,7 +2734,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			// Close the keep alive
 			if ( keepalive )
-				avio_close( keepalive );
+				io::close_file( keepalive );
 
 			// Restore the position request
 			seek( position );

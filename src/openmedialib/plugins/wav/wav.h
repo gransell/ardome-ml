@@ -98,8 +98,6 @@ struct wave : block { // 'RIFF' or 'RF64'
 
 struct junk : block {
 	junk(uint32_t size) : block("JUNK", size) {}
-
-	char dummy[0];
 };
 
 template<class T>
@@ -157,7 +155,6 @@ struct ds64 : block {
 	opencorelib::endian::little<uint32_t> sample_count_low;
 	opencorelib::endian::little<uint32_t> sample_count_high;
 	opencorelib::endian::little<uint32_t> table_length;
-	chunksize64 table[0];
 };
 
 struct cue_point {
@@ -174,7 +171,6 @@ struct cue_chunk : block { // 'cue '
 	: block("cue ", 4 + num_cues * sizeof(cue_point)) {}
 
 	opencorelib::endian::little<uint32_t> cue_point_count;
-	cue_point cue_points[0];
 };
 
 struct list_chunk : block { // 'list'
@@ -191,7 +187,6 @@ struct label_chunk : block { // 'labl'
 	}
 
 	opencorelib::endian::little<uint32_t> identifier; // 'adtl' associated data list
-	char text[0]; // null terminated string
 };
 
 struct marker_entry {
@@ -213,15 +208,12 @@ struct marker_entry {
 
 struct marker_chunk : block { // 'r64m'
 	marker_chunk(size_t num_markers = 0)
-	: block("r64m", num_markers * sizeof(marker_entry)) {}
-
-	marker_entry markers[0];
+	: block("r64m", num_markers * sizeof(marker_entry))
+	{}
 };
 
 struct data : block {
 	data(uint32_t size = 0xffffffff) : block("data", size) {}
-
-	char pdata[0];
 };
 
 /*

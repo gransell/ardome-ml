@@ -14,6 +14,7 @@
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
+#include <openmedialib/ml/io.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -33,7 +34,6 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavutil/pixdesc.h>
@@ -45,6 +45,7 @@ extern "C" {
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
+namespace io = ml::io;
 namespace pl = olib::openpluginlib;
 namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
@@ -346,7 +347,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				// Close the output file
 				if ( !( fmt_->flags & AVFMT_NOFILE ) )
-					avio_close( oc_->pb );
+					io::close_file( oc_->pb );
 
 				// Clean up the log
 				if ( log_file_ )
@@ -497,7 +498,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// We'll allow encoding to stdout
 			if ( !( fmt_->flags & AVFMT_NOFILE ) ) 
-				ret = avio_open( &oc_->pb, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
+				ret = io::open_file( &oc_->pb, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
 			else
 				ret = true;
 
@@ -507,9 +508,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				avformat_write_header( oc_, 0 );
 
 				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< std::wstring >( ) == L"" )
-					ret = avio_open2( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE, 0, 0 ) >= 0;
+					ret = io::open_file( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
 				else if ( prop_ts_index_.value< std::wstring >( ) != L"" )
-					ret = avio_open2( &ts_context_, olib::opencorelib::str_util::to_string( prop_ts_index_.value< std::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE, 0 ,0 ) >= 0;
+					ret = io::open_file( &ts_context_, olib::opencorelib::str_util::to_string( prop_ts_index_.value< std::wstring >( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
 			}
 
 			return ret;
@@ -539,12 +540,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				ts_generator_audio_.close(audio_packet_num_, final);
 				ts_generator_video_.close(push_count_, final);
 				write_ts_index( );
-				avio_close( ts_context_ );
+				io::close_file( ts_context_ );
 			}
 
 			// Close the output file
 			if ( !( fmt_->flags & AVFMT_NOFILE ) )
-				avio_close( oc_->pb );
+				io::close_file( oc_->pb );
 
 			// Clean up the log
 			if ( log_file_ )
