@@ -123,6 +123,9 @@ class avformat_source : public input_type
 		// This holds the avformat context for demuxing the input
 		AVFormatContext *context_;
 
+		// The avformat I/O context, which is also a part of context_ above
+		AVIOContext *io_context_;
+
 		// This holds the 'start time' of the first packet in the container
 		int64_t start_time_;
 
@@ -145,6 +148,7 @@ class avformat_source : public input_type
 			, height_( 576 )
 			, pkt_( )
 			, context_( 0 )
+			, io_context_( 0 )
 			, start_time_( 0 )
 		{
 		}
@@ -984,7 +988,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( prop_audio_index_.value< int >( ) >= 0 )
 				close_audio_codec( );
 			if ( context_ )
+			{
 				avformat_close_input( &context_ );
+			}
+			if ( io_context_ )
+			{
+				io::close_file( io_context_ );
+				io_context_ = 0;
+			}
 			av_free( av_frame_ );
 			av_free( audio_buf_ );
 
@@ -1138,18 +1149,21 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			resource_ = resource;
 
 			// Attempt to open the resource
-			context_ = avformat_alloc_context();
+			int error_code = io::open_file( &io_context_, cl::str_util::to_string( resource ).c_str(), AVIO_FLAG_READ );
+			if( error_code != 0 )
+			{
+				ARLOG_ERR( "Got error code %1% when attempting to open file: %2%" )( error_code )( resource );
+				return false;
+			}
 
-			AVIOContext *io_context = NULL;
-			int custom_open_ret = io::open_file( &io_context, cl::str_util::to_string( resource ).c_str(), AVIO_FLAG_READ );
-			context_->pb = io_context;
-			int error_code = avformat_open_input( &context_, cl::str_util::to_string( resource ).c_str( ), format_, 0 );
+			context_ = avformat_alloc_context();
+			context_->pb = io_context_;
+			error_code = avformat_open_input( &context_, cl::str_util::to_string( resource ).c_str( ), format_, 0 );
 			int error = ( error_code < 0 );
 			if( error )
 			{
-				io::close_file( io_context );
 				ARLOG_ERR( "Got error %1% from avformat_open_input when opening file %2%" )
-					( error_code )( uri_ );
+					( error_code )( resource );
 			}
 
             if (error == 0 && context_->pb && context_->pb->seekable) 
