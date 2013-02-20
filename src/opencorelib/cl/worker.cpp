@@ -508,6 +508,13 @@ namespace olib
         {
             boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
             cancel_current_job();
+
+            clear_jobs_in_queue();
+        }
+
+        void worker::clear_jobs_in_queue()
+        {
+            boost::recursive_mutex::scoped_lock lock(m_wake_thread_mtx);
             while(!m_heap.empty())
             {
                 m_heap.back()->set_should_terminate_job(true);

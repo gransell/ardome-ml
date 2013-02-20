@@ -91,7 +91,10 @@ namespace olib
             /// Remove all added jobs and cancel the currently executing job.
             /** Will block until the currently executing job is cancelled.
                 This function is called automatically by the stop function. */
-            void cancel_and_clear_jobs() ;
+            void cancel_and_clear_jobs( );
+
+            /// Remove all queued up jobs, but do not cancel the currently executing job.
+            void clear_jobs_in_queue( );
 
 			/// Returns true if a job is currently running, false otherwise.
 			bool get_is_running_job() const ;
