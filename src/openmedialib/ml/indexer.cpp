@@ -8,17 +8,13 @@
 #include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/utilities.hpp>
+#include <openmedialib/ml/io.hpp>
 
 // includes for opencorelib worker
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/function_job.hpp>
 #include <opencorelib/cl/worker.hpp>
-
-// includes for access to the avformat i/o access interface
-extern "C" {
-#include <libavformat/avio.h>
-}
 
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
@@ -114,9 +110,9 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 	AVIOContext *ts_context;
 	boost::uint8_t temp[ 16384 ];
 
-	if ( avio_open2( &ts_context, target->file_.c_str( ), AVIO_FLAG_READ, 0, 0 ) < 0 )
+	if ( io::open_file( &ts_context, target->file_.c_str( ), AVIO_FLAG_READ ) < 0 )
 	{
-		ARLOG_ERR( "avio_open failed on index file %1%" )( target->file_ );
+		ARLOG_ERR( "io::open_file failed on index file %1%" )( target->file_ );
 		return;
 	}
 
@@ -134,7 +130,7 @@ void aml_index_read_impl( aml_index_reader<T> *target )
 		target->T::parse( temp, actual );
 	}
 
-	avio_close( ts_context );
+	io::close_file( ts_context );
 }
 
 // Shared pointer wrapper for index reader
@@ -266,13 +262,13 @@ class unindexed_job_type : public indexer_job
 			std::string temp = cl::str_util::to_string( url_ );
 
 			// Attempt to reopen the media
-			if ( avio_open2( &context, temp.c_str( ), AVIO_FLAG_READ, 0, 0 ) >= 0 )
+			if ( io::open_file( &context, temp.c_str( ), AVIO_FLAG_READ ) >= 0 )
 			{
 				// Check the current file size
-				boost::int64_t bytes = avio_seek( context, 0, SEEK_END );
+				boost::int64_t bytes = avio_size( context );
 
 				// Clean up the temporary sizing context
-				avio_close( context );
+				io::close_file( context );
 
 				// If it's larger than before, then reopen, otherwise reduce resize count
 				{

@@ -12,12 +12,10 @@
 #include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/keys.hpp>
-
-extern "C" {
-#include <libavformat/avio.h>
-}
+#include <openmedialib/ml/io.hpp>
 
 namespace ml = olib::openmedialib::ml;
+namespace io = ml::io;
 namespace pl = olib::openpluginlib;
 
 namespace aml { namespace openmedialib {
@@ -41,7 +39,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			{
 				index_.close( count_, size_ );
 				write_index( );
-				avio_close( context_ );
+				ml::io::close_file( context_ );
 			}
 		}
 
@@ -55,7 +53,7 @@ class ML_PLUGIN_DECLSPEC store_awi : public ml::store_type
 			bool result = frame && frame->get_stream( );
 
 			if ( result && !context_ )
-				result = avio_open2( &context_, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE | AVIO_FLAG_DIRECT, 0, 0 ) >= 0;
+				result = ml::io::open_file( &context_, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_WRITE | AVIO_FLAG_DIRECT ) >= 0;
 
 			if ( result )
 			{

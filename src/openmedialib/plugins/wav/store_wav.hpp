@@ -43,35 +43,37 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 		/*virtual*/ void complete();
 
 	protected:
-		void setupHeaders(
-			riff::wav::wave&     wave,
+		static void setupHeaders(
+			riff::wav::wave& wave,
 			riff::wav::fmt_base& fmt,
-			riff::wav::ds64&     ds64,
-			riff::wav::data&     data,
-			boost::uint64_t      nbytes_of_samples,
-			boost::uint64_t      headerlen,
-			boost::uint64_t      nsamples);
+			riff::wav::ds64& ds64,
+			riff::wav::data& data,
+			boost::uint64_t num_samples,
+			int real_bytes_per_sample,
+			int channels);
 
 		void vitalizeHeader();
+		int openFile(AVIOContext **out_context, int avio_flags);
 		void closeFile();
 
 		AVIOContext *file_;
-		bool writeonly;
 		std::wstring resource_;
 		std::vector<unsigned char> conversion_buffer_;
 
 		pcos::property prop_enabled_;
-		pcos::property prop_count_;
 		pcos::property prop_deferrable_;
 
-		bool rf64; // size > 4gb
+		riff::wav::wave wave_block_;
+		riff::wav::fmt_base fmt_block_;
+		riff::wav::ds64 ds64_block_; // Will be transformed into JUNK if necessary
+		riff::wav::data data_block_;
 
-		int bytes_per_sample;
-		int frequency;
-		int channels;
-		int accumulated_samples;
-		int real_bytes_per_sample;
+		int bytes_per_sample_; //4 for 24-bit audio
+		int real_bytes_per_sample_; //3 for 24-bit audio
+		int frequency_;
+		int channels_;
 
+		boost::uint64_t accumulated_samples_;
 };
 
 } } } }

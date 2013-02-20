@@ -4,6 +4,7 @@
 // Released under the LGPL.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/io.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
@@ -15,14 +16,11 @@
 #include <string>
 #include <sstream>
 
-extern "C" {
-#include <libavformat/avio.h>
-}
-
 #include "store_wav.hpp"
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
+namespace io = ml::io;
 namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 
@@ -78,7 +76,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		virtual ~input_wav( ) 
 		{ 
 			if ( context_ )
-				avio_close( context_ );
+				io::close_file( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -101,7 +99,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			if ( resource.find( L"wav:" ) == 0 )
 				resource = resource.substr( 4 );
 
-			int error = avio_open2( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), AVIO_FLAG_READ, 0, 0 );
+			int error = io::open_file( &context_, olib::opencorelib::str_util::to_string( resource ).c_str( ), AVIO_FLAG_READ );
 			bool found_fmt = false;
 
 			if ( error == 0 )
@@ -232,6 +230,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		void size_media( )
 		{
 			boost::int64_t file_size = avio_size( context_ ); // could involve seek, so don't do too often
+			ARENFORCE_MSG( file_size > 0, "Could not size the file. Non-seekable I/O source?" )( file_size )( spec_ );
 			if ( bytes_ == 0 )
 				bytes_ = file_size - offset_;
 			else

@@ -4,6 +4,7 @@
 // Released under the LGPL.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <openmedialib/ml/io.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 #include <boost/lexical_cast.hpp>
@@ -21,11 +22,11 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-#include <libavformat/avio.h>
 }
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
+namespace io = ml::io;
 namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
@@ -98,7 +99,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 		virtual ~input_raw( ) 
 		{ 
 			if ( context_ )
-				avio_close( context_ );
+				io::close_file( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -120,7 +121,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			if ( spec.find( L"raw:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
+			int error = io::open_file( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -312,7 +313,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 		virtual ~input_aud( ) 
 		{ 
 			if ( context_ )
-				avio_close( context_ );
+				io::close_file( context_ );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -334,7 +335,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			if ( spec.find( L"aud:" ) == 0 )
 				spec = spec.substr( 4 );
 
-			int error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
+			int error = io::open_file( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_READ );
 			if ( error == 0 && is_seekable( ) )
 				error = parse_header( );
 
@@ -490,7 +491,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		virtual ~store_raw( )
 		{
 			if ( context_ )
-				avio_close( context_ );
+				io::close_file( context_ );
 		}
 
 		bool init( )
@@ -502,11 +503,11 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				if ( spec.find( L"raw:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = avio_open( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
+				error = io::open_file( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
 				if ( error == 0 )
 				{
 					AVIOContext *aml = 0;
-					if( context_->seekable && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
+					if( context_->seekable && io::open_file( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
@@ -529,7 +530,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 						//url_setbufsize( aml, string.size( ) );
 						avio_write( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
 						avio_flush( aml );
-						avio_close( aml );
+						io::close_file( aml );
 					}
 
 				}
@@ -659,7 +660,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		virtual ~store_aud( )
 		{
 			if ( context_ )
-				avio_close( context_ );
+				io::close_file( context_ );
 		}
 
 		bool init( )
@@ -671,11 +672,11 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 				if ( spec.find( L"aud:" ) == 0 )
 					spec = spec.substr( 4 );
 
-				error = avio_open2( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE, 0, 0 );
+				error = io::open_file( &context_, cl::str_util::to_string( spec ).c_str( ), AVIO_FLAG_WRITE );
 				if ( error == 0 )
 				{
 					AVIOContext *aml = 0;
-					if( context_->seekable && avio_open( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
+					if( context_->seekable && io::open_file( &aml, cl::str_util::to_string( spec + L".aml" ).c_str( ), AVIO_FLAG_WRITE ) == 0 )
 					{
 						std::ostringstream str;
 						if ( prop_header_.value< int >( ) == 0 )
@@ -695,7 +696,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 
 						//url_setbufsize( aml, string.size( ) );
 						avio_write( aml, reinterpret_cast< const unsigned char * >( string.c_str( ) ), string.size( ) );
-						avio_close( aml );
+						io::close_file( aml );
 					}
 
 				}

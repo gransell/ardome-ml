@@ -20,6 +20,7 @@ src = [
         'fix_stream.cpp',
         'frame.cpp',
         'indexer.cpp',
+        'io.cpp',
         'keys.cpp',
         'ml.cpp',
         'openmedialib_plugin.cpp',
