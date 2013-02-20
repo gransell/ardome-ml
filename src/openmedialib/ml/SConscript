@@ -66,6 +66,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'frame.hpp', 
 			'input_creator_handler.hpp', 
 			'input.hpp', 
+			'io.hpp', 
 			'indexer.hpp', 
 			'keys.hpp', 
 			'ml.hpp', 
