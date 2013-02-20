@@ -978,7 +978,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			properties( ).append( prop_frequency_ = -1 );
 			properties( ).append( prop_inner_threads_ = 1 );
 			properties( ).append( prop_strict_ = FF_COMPLIANCE_NORMAL );
-			properties( ).append( prop_whitelist_ = pl::wstring( L"" ) );
+			properties( ).append( prop_whitelist_ = std::wstring( L"" ) );
 
 			// Allocate an av frame
 			av_frame_ = avcodec_alloc_frame( );
@@ -1301,7 +1301,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					// If packet_stream < 0, then we will only accept it with specific combinations of container, indexing and codecs
 					std::string format = context_->iformat->name;
 					std::string codec = has_video( ) ? get_video_stream( )->codec->codec->name : "";
-					std::string whitelist = pl::to_string( prop_whitelist_.value< pl::wstring >( ) );
+					std::string whitelist = cl::str_util::to_string( prop_whitelist_.value< std::wstring >( ) );
 
 					result = avformat::is_streamable( whitelist, format, codec, aml_index_ != awi_index_ptr( ) );
 
