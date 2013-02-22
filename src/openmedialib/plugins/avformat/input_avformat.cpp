@@ -1716,6 +1716,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
 
 				get_fps_from_stream( stream );
+		                frames_ = stream->nb_frames;
 			}
 			else if ( has_audio( ) )
 			{
@@ -1768,7 +1769,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				start_time_ = context_->start_time;
 
 			// Set the duration
-			if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
+			if (frames_ > 0)
+		                ;
+			else if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
 				frames_ = int( ceil( ( avformat_input::fps( ) * context_->duration ) / ( double )AV_TIME_BASE ) );
 			else if ( std::string( context_->iformat->name ) == "yuv4mpegpipe" )
 				frames_ = 1;
