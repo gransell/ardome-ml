@@ -232,7 +232,7 @@ void store_wav::vitalizeHeader() {
 	const int seek_result = avio_seek(file_, 0, SEEK_SET);
 	if(seek_result != 0)
 	{
-		ARLOG_WARN("Could not seek to the beginning of file Cannot rewrite WAV header")(seek_result)(resource_);
+		ARLOG_WARN("Could not seek to the beginning of the file. Cannot rewrite WAV header")(seek_result)(resource_);
 		return;
 	}
 
