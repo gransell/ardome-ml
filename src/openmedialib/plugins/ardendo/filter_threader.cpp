@@ -114,6 +114,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			, state_( thread_dead )
 			, new_state_( thread_dead )
 			, prop_audio_direction_( pl::pcos::key::from_string( "audio_direction" ) )
+			, prop_clear_cache_on_speed_change_( pl::pcos::key::from_string( "clear_cache_on_speed_change" ) )
 			, last_position_( -1 )
 			, frames_( 0 )
 			, reader_( )
@@ -128,6 +129,7 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			properties( ).append( prop_active_ = 0 );
 			properties( ).append( prop_queue_ = 25 );
 			properties( ).append( prop_audio_direction_ = 1 );
+			properties( ).append( prop_clear_cache_on_speed_change_ = 0 );
 			prop_active_.attach( obs_active_ );
 			prop_queue_.attach( obs_queue_ );
 			max_cache_size_ = prop_queue_.value<int>();
@@ -559,7 +561,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 			}
 		}
 
-		//Removes all frames 
+		//Removes all frames that don't align with the current step length.
+		//For example, if the step length is 2 and the current position is 3 then
+		//all even-numbered frames will be removed.
 		void scrub_cache( scoped_lock &lck, int position, int speed )
 		{
 			const int abs_speed = abs( speed );
@@ -730,10 +734,23 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 									//as it is, since we're guaranteed to have fetched or soon be going
 									//to fetch that frame anyway.
 									prefetch_position = position_;
-									scrub_cache( lck, position_, speed_ );
+									
+									if ( prop_clear_cache_on_speed_change_.value<int>() != 0 )
+									{
+										ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
+												"Clearing cache" );
+										cache_.clear();
+									}
+									else
+									{
+										scrub_cache( lck, position_, speed_ );
+									}
+
 									ARLOG_IF_ENV( "AMF_PERFORMANCE_LOGGING",
 										"Non-linear seek. New position: %1%, new speed: %2%" )
 										( position_ )( speed_ );
+
+									
 								}
 
 								current_filter_position = position_;
@@ -860,6 +877,9 @@ class ML_PLUGIN_DECLSPEC filter_threader : public ml::filter_type
 		pl::pcos::property prop_queue_;
 		boost::shared_ptr< pl::pcos::observer > obs_queue_;
 		int max_cache_size_;
+
+		//Property used to avoid audio crackling due to mp2 sample inaccuracy
+		pl::pcos::property prop_clear_cache_on_speed_change_;
 
 		//Thread control related
 		mutable boost::recursive_mutex mutex_;
