@@ -74,7 +74,7 @@ class avaudio_filter
 				frequency_in_ = codec->sample_rate;
 				channels_in_ = codec->channels;
 				format_in_ = codec->sample_fmt;
-				layout_in_ = point_0 ? channels_to_layout( channels_in_, point_0 ) : codec->channel_layout;
+				layout_in_ = point_0 || codec->channel_layout == 0 ? channels_to_layout( channels_in_, point_0 ) : codec->channel_layout;
 				set_passthrough( );
 			}
 		}
@@ -345,7 +345,7 @@ class avaudio_filter
 
 		boost::uint64_t channels_to_layout( int channels, bool point_0 = false )
 		{
-			boost::uint64_t layout = 0;
+			boost::uint64_t layout = AV_CH_LAYOUT_NATIVE;
 
 			switch( channels )
 			{
