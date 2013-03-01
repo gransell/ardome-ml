@@ -34,6 +34,7 @@
 #include "avformat_wrappers.hpp"
 #include "utils.hpp"
 #include "avformat_streamable.hpp"
+#include "avaudio_base.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -51,6 +52,8 @@ extern "C" {
 #include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+#include <libavutil/opt.h>
 }
 
 namespace cl = olib::opencorelib;
@@ -69,11 +72,28 @@ namespace {
 	{
 		switch( ctx->sample_fmt )
 		{
+			case AV_SAMPLE_FMT_U8:
+			case AV_SAMPLE_FMT_U8P:
+				return sizeof( boost::int8_t );
+
 			case AV_SAMPLE_FMT_S16:
-				return 2;
+			case AV_SAMPLE_FMT_S16P:
+				return sizeof( boost::int16_t );
+
 			case AV_SAMPLE_FMT_S32:
-				return 3;
-			default:
+			case AV_SAMPLE_FMT_S32P:
+				return sizeof( boost::int32_t );
+
+			case AV_SAMPLE_FMT_FLT:
+			case AV_SAMPLE_FMT_FLTP:
+				return sizeof( float );
+
+			case AV_SAMPLE_FMT_DBL:
+			case AV_SAMPLE_FMT_DBLP:
+				return sizeof( double );
+
+			case AV_SAMPLE_FMT_NONE:
+			case AV_SAMPLE_FMT_NB:
 				ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( ctx->sample_fmt ) );
 		}
 		return 0;
@@ -951,6 +971,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, discard_audio_after_seek_( false )
 			, demuxer_( this )
 			, is_streaming_( false )
+			, audio_filter_( 0 )
 		{
 			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
@@ -1007,6 +1028,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			if ( scaler_ )
 				sws_freeContext( scaler_ );
+
+			delete audio_filter_;
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -2419,10 +2442,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			//if ( found < 0 )
 				//return 0;
 
+			if ( audio_filter_ == 0 )
+			{
+				audio_filter_ = new avaudio_filter( codec_context );
+				audio_filter_->set_aml_format( );
+			}
+
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;
 			int frequency = codec_context->sample_rate;
-			int bps = 2;
+			int bps = audio_filter_->bps( );
 			int skip = 0;
 			bool ignore = false;
 
@@ -2511,10 +2540,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					break;
 				}
 
-				int audio_size = av_samples_get_buffer_size( NULL, codec_context->channels,
-														     av_frame_->nb_samples, codec_context->sample_fmt, 1);
+				int audio_size = 0;
+				AVFrame *temp_frame = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples, audio_size );
+
 				// Copy the new samples to the main buffer
-				memcpy( audio_buf_ + audio_buf_used_, av_frame_->data[ 0 ], audio_size );
+				memcpy( audio_buf_ + audio_buf_used_, temp_frame->data[ 0 ], audio_size );
+
+				avcodec_free_frame( &temp_frame );
 
 				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
@@ -2589,7 +2621,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				first_audio_frame_ = false;
 			}
 
-			audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, false ) );
+			audio_type_ptr aud = ml::audio::allocate( audio_filter_->af( ), frequency, channels, samples, false );
 			aud->set_position( position );
 			memcpy( aud->pointer( ), buf, aud->size( ) );
 
@@ -2697,7 +2729,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if( channels != 0 && frequency != 0 )
 				{
 					int samples = samples_for_frame( frequency, current );
-					audio::pcm16_ptr aud = audio::pcm16_ptr( new audio::pcm16( frequency, channels, samples, true ) );
+					audio_type_ptr aud = audio::allocate( audio_filter_->af( ), frequency, channels, samples, true );
 					aud->set_position( current );
 					frame->set_audio( aud );
 					frame->set_duration( double( samples ) / double( frequency ) );
@@ -2830,6 +2862,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 		avformat_demux demuxer_;
 		bool is_streaming_;
+
+		avaudio_filter *audio_filter_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const std::wstring &resource )

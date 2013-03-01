@@ -40,6 +40,7 @@ extern "C" {
 }
 
 #include "utils.hpp"
+#include "avaudio_base.hpp"
 
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
 
@@ -931,9 +932,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// If created, then initialise from properties
 				AVCodecContext *c = st->codec;
 
+				c->codec = obtain_audio_codec( );
+				c->sample_fmt = c->codec->sample_fmts[0];
 				c->strict_std_compliance = prop_strict_.value< int >( );
 				c->codec_type = avcodec_get_type( codec_id );
 				c->codec_id = codec_id;
+				c->channel_layout = AV_CH_LAYOUT_STEREO;
+				c->channels = 2;
 
 				//c->codec_id = codec_id;
 				//c->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -1166,8 +1171,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				   audio_input_frame_size_ = c->frame_size;
 				}
 
-				c->sample_fmt = AV_SAMPLE_FMT_S16;
-
 				// Some formats want stream headers to be seperate
 				if( oc_->oformat->flags & AVFMT_GLOBALHEADER )
 				   c->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -1200,13 +1203,17 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Queue audio - audio is carved up here to match the number of bytes required by the audio codec
 			if ( audio_stream_.size( ) && frame->get_audio( ) )
 			{
-				audio_type_ptr current = audio::coerce( audio::FORMAT_PCM16, frame->get_audio( ) );
+				audio_type_ptr current = frame->get_audio( );
+				if ( first_audio_object_ )
+					current = audio::coerce( first_audio_object_->af( ), frame->get_audio( ) );
+				else
+					first_audio_object_ = current;
 
 				// Create an audio block if we haven't done so already
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
-					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_, true ) );
+					audio_block_ = audio::allocate( first_audio_object_->af( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -1215,7 +1222,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( push_count_ % prop_gop_size_.value< int >( ) == 0 )
 					audio_block_->set_position( push_count_ );
 		
-				int bytes = audio_input_frame_size_ * current->channels( ) * 2;
+				int bytes = audio_input_frame_size_ * current->channels( ) * current->sample_size( );
 				int available = current->size( );
 				int offset = 0;
 
@@ -1226,7 +1233,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					available -= bytes - audio_block_used_;
 					offset += bytes - audio_block_used_;
 					audio_block_used_ = 0;
-					audio_block_ = audio::pcm16_ptr( new audio::pcm16( current->frequency( ), current->channels( ), audio_input_frame_size_, true ) );
+					audio_block_ = audio::allocate( first_audio_object_->af( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -1386,7 +1393,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			int result = av_interleaved_write_frame(s, pkt);
 
 			// Free memory associated to the packet
-			av_free_packet( pkt );
+			//av_free_packet( pkt );
 
 			// Return result of the write
 			return result;
@@ -1502,10 +1509,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				for( int ec=0; ec<encode_tries; ec++ )
 				{
+					int got_packet = 0;
 					AVCodecContext *c = ( *iter )->codec;
 
 					AVPacket pkt;
+					pkt.size = 0;
+					pkt.data = 0;
 					av_init_packet( &pkt );
+
+					AVFrame *temp = 0;
 
 					if ( prop_audio_split_.value< int >( ) && !do_flush )
 					{
@@ -1522,11 +1534,30 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 							dst += channels_to_write;
 							src += channels;
 						}
-						pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, ( short * )audio_tmpbuf_ );
+
+						if ( audio_filters_[ stream ] == 0 )
+						{
+							audio_filters_[ stream ] = new avaudio_filter( );
+							audio_filters_[ stream ]->set_passthrough( audio->frequency( ), channels_to_write, audio->id( ) );
+							audio_filters_[ stream ]->set_output( c );
+						}
+
+						int size = 0;
+						temp = audio_filters_[ stream ]->convert( ( const boost::uint8_t ** )&audio_tmpbuf_, audio->samples( ), size );
+						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
 					}
 					else
 					{
-						pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, data );
+						if ( audio_filters_[ stream ] == 0 )
+						{
+							audio_filters_[ stream ] = new avaudio_filter( );
+							audio_filters_[ stream ]->set_passthrough( audio );
+							audio_filters_[ stream ]->set_output( c );
+						}
+
+						int size = 0;
+						temp = audio_filters_[ stream ]->convert( audio, size );
+						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
 					}
 
 					// Write the compressed frame in the media file
@@ -1535,7 +1566,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					pkt.stream_index = ( *iter )->index;
-					pkt.data = audio_outbuf_;
 
 					if ( pkt.size > 0 )
 					{
@@ -1556,12 +1586,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 						ret = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] ) == 0;
 						if( !first_audio_ )
+						{
+							avcodec_free_frame( &temp );
 							break;
+						}
 					}
 					else if ( data == 0 )
 					{
 						ret = false;
 					}
+					avcodec_free_frame( &temp );
 				}	
 			}
 			first_audio_ = false;
@@ -1579,6 +1613,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVOutputFormat *fmt_;
 		std::vector< AVStream * > audio_stream_;
 		std::vector< AVBitStreamFilterContext * > bitstream_filters_;
+		std::map< size_t, avaudio_filter * > audio_filters_;
 		AVStream *video_stream_;
 		struct SwsContext *img_convert_;
 		int audio_input_frame_size_;
@@ -1705,6 +1740,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		bool video_copy_;
 		bool first_audio_;
 		int encoded_images_;
+
+		ml::audio_type_ptr first_audio_object_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &resource, const frame_type_ptr &frame )
