@@ -99,7 +99,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			{
 				// Decklink only supports 48 kHz atm.
 				BMDAudioSampleRate sample_rate = bmdAudioSampleRate48kHz;
-				BMDAudioSampleType sample_type = du::frame_to_audio_sample_type( last_frame_ );
+				BMDAudioSampleType sample_type = bmdAudioSampleType32bitInteger;
 				
 				ARENFORCE_MSG( device_->EnableAudioOutput( sample_rate,  sample_type, last_frame_->get_audio()->channels(), bmdAudioOutputStreamContinuous ) == S_OK,
 							  "Failed to enable audio output" );
@@ -115,6 +115,8 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			// Make sure that we decode on this thread so that its not done on the display thread
 			il::image_type_ptr img = frame->get_image( );
 			ml::audio_type_ptr aud = frame->get_audio( );
+
+			aud = ml::audio::coerce( ml::audio::FORMAT_PCM32, aud );
 
 			if ( img )
 				img = il::convert( img, prop_pf_.value< std::wstring >( ) );
