@@ -37,6 +37,36 @@ namespace cl = olib::opencorelib;
 #define MICRO_SECS 1000000
 #define MILLI_SECS 1000
 
+#ifdef WIN32
+#define AMLBATCH_MAIN utf8_main
+#else
+#define AMLBATCH_MAIN main
+#endif
+
+//For Unicode support on Windows, wmain needs to be used (which takes
+//UTF-16 command line args). We convert the command-line args to UTF-8,
+//then call the Unix-style UTF-8 main.
+#ifdef WIN32
+
+int AMLBATCH_MAIN( int argc, const char *argv[ ] );
+
+int wmain( int argc, const wchar_t *argv[ ] )
+{
+	std::vector< std::string > converted_args;
+	converted_args.reserve( argc );
+	std::vector< const char * > converted_args_raw;
+	converted_args_raw.reserve( argc );
+	for( int i = 0; i < argc; ++i )
+	{
+		converted_args.push_back( cl::str_util::to_string( argv[ i ] ) );
+		converted_args_raw.push_back( converted_args[ i ].c_str() );
+	}
+
+	AMLBATCH_MAIN( argc, &converted_args_raw[ 0 ] );
+}
+
+#endif
+
 void assign( pl::pcos::property_container &props, const std::string &name, const pl::wstring &value )
 {
 	pl::pcos::property property = props.get_property_with_string( name.c_str( ) );
@@ -92,7 +122,7 @@ void handle_token( std::vector<ml::store_type_ptr> &result, pl::pcos::property_c
 		properties = result.back( )->properties( );
 }
  
-std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, char **argv, ml::frame_type_ptr frame )
+std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, const char *argv[], ml::frame_type_ptr frame )
 {
 	std::vector< ml::store_type_ptr > result;
 	pl::pcos::property_container properties;
@@ -475,7 +505,7 @@ void play( ml::filter_type_ptr input, std::vector< ml::store_type_ptr > &store, 
 		std::cerr << std::endl;
 }
 
-void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_type_ptr frame )
+void env_report( int argc, const char *argv[ ], ml::input_type_ptr input, ml::frame_type_ptr frame )
 {
 	std::cout << "AML_FRAME_RATE=" << frame->get_fps_num( ) << ":" << frame->get_fps_den( ) << std::endl;
 	std::cout << "AML_FRAMES=" << input->get_frames( ) << std::endl;
@@ -489,7 +519,7 @@ void env_report( int argc, char *argv[ ], ml::input_type_ptr input, ml::frame_ty
 	}
 }
 
-int main( int argc, char *argv[ ] )
+int AMLBATCH_MAIN( int argc, const char *argv[ ] )
 {
     #ifdef WIN32
         HMODULE mod_hand = GetModuleHandle(L"amlbatch.exe");
@@ -696,30 +726,3 @@ int main( int argc, char *argv[ ] )
 
 	return 0;
 }
-
-#ifdef WIN32
-#include <tchar.h>
-int _tmain(int argc, wchar_t* argv[])
-{
-    std::vector< char* > converted;
-    for(int i = 0; i < argc ; ++i )
-    {
-        int arg_i_size = static_cast<int>(wcslen(argv[i]));
-        char* buf = new char[arg_i_size+1];
-        for( int j = 0; j < arg_i_size; ++j )
-            buf[j] = (char)(argv[i][j]);
-
-        buf[arg_i_size] = 0;
-
-        converted.push_back(buf);
-    }
-
-    main( static_cast<int>(converted.size()), &converted[0] );
-
-    for(int i = 0; i < argc ; ++i )
-    {
-        delete [] converted[i];
-    }
-}
-
-#endif
