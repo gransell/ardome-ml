@@ -21,6 +21,7 @@ class ML_PLUGIN_DECLSPEC filter_sleep : public ml::filter_simple
 			: ml::filter_simple( )
 			, prop_ms_( pcos::key::from_string( "ms" ) )
 			, sleeper_( )
+			, start_( boost::get_system_time( ) )
 		{
 			properties( ).append( prop_ms_ = 0 );
 		}
@@ -33,17 +34,27 @@ class ML_PLUGIN_DECLSPEC filter_sleep : public ml::filter_simple
 	protected:
 		void do_fetch( ml::frame_type_ptr &result )
 		{
-			result = fetch_from_slot( );
-			
+			boost::system_time now = boost::get_system_time( );
 			int milliseconds = prop_ms_.value< int >( );
+
+			if ( milliseconds == 0 && now < start_ )
+				sleeper_.current_thread_sleep( start_ - now );
+			else
+				start_ = now;
+	
+			result = fetch_from_slot( );
+			ARENFORCE_MSG( result, "No frame obtained from input" );
+			ARENFORCE_MSG( result->fps( ) > 0.0, "Invalid frame rate of %f" )( result->fps( ) );
+
+			start_ = start_ + boost::posix_time::milliseconds( 1000.0 / result->fps( ) );
+			
 			if ( milliseconds )
-			{
 				sleeper_.current_thread_sleep( boost::posix_time::milliseconds( milliseconds ) );
-			}
 		}
 
 		pcos::property prop_ms_;
 		olib::opencorelib::thread_sleeper sleeper_;
+		boost::system_time start_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_sleep( const pl::wstring &resource )
