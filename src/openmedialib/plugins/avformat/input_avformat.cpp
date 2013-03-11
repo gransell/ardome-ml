@@ -652,7 +652,11 @@ class avformat_demux
 
 					// Input related properties
 					pl::pcos::assign< pl::wstring >( properties,  ml::keys::uri, source->get_uri( ) );
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, source->context_->pb->pos );
+
+					if( source->context_->pb )
+						pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, source->context_->pb->pos );
+					else
+						pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, 0 );
 
 					// Packet related properties
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts, pkt_.pts );
@@ -1434,7 +1438,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					} 
 				}
 
-				if ( frames_ == 1 << 30 && images_.size( ) )
+				if ( frames_ == INT_MAX && images_.size( ) )
 				{
 					frames_ = ( *( -- images_.end( ) ) )->position( ) + 1;
 				}
@@ -1776,7 +1780,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			else if ( std::string( context_->iformat->name ) == "yuv4mpegpipe" )
 				frames_ = 1;
 			else
-				frames_ = 1 << 30;
+				frames_ = INT_MAX;
 
 			std::string format = context_->iformat->name;
 
@@ -1872,6 +1876,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					result = true;
 				else if ( format == "rtsp" )
 				        result = false;
+				else if ( format == "rtp" )
+					result = false;
+				else if ( format == "sdp" )
+					result = false;
 			}
 			else if ( result && has_audio( ) )
 			{
@@ -1895,6 +1903,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				else if ( format == "mov,mp4,m4a,3gp,3g2,mj2" )
 					result = false;
 				else if ( format == "rtsp" )
+					result = false;
+				else if ( format == "rtp" )
+					result = false;
+				else if ( format == "sdp" )
 					result = false;
 				else
 					result = format != "wav";
@@ -1981,7 +1993,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 							int64_t packet_idx = ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) ) / pkt_.duration;
 							int64_t total = ( packet_idx + 1 ) * samples_per_packet_;
 							int result = int( total / samples_per_frame_ );
-							if ( result > max || max == 1 << 30 )
+							if ( result > max || max == INT_MAX )
 								max = result;
 							fallback = false;
 						}
@@ -2002,7 +2014,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					{
 						double dts = av_q2d( stream->time_base ) * ( pkt_.dts - av_rescale_q( start_time_, ml_av_time_base_q, stream->time_base ) );
 						int result = int( dts * fps( ) + 0.5 ) + 1;
-						if ( result > max || max == 1 << 30 )
+						if ( result > max || max == INT_MAX )
 							max = result;
 					}
 				}
@@ -2299,7 +2311,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				int last = images_[ images_.size( ) - 1 ]->position( );
 				if ( position < first && position < last )
 					images_.clear( );
-				else if ( first < get_position( ) - prop_gop_cache_.value< int >( ) )
+				else if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || images_.size( ) > prop_gop_cache_.value< int >( ) )
 					images_.erase( images_.begin( ) );
 			}
 
@@ -2562,7 +2574,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( audio_.size( ) > 0 )
 			{
 				int first = audio_[ 0 ]->position( );
-				if ( first < get_position( ) - prop_gop_cache_.value< int >( ) )
+				if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || audio_.size( ) > prop_gop_cache_.value< int >( ) )
 					audio_.erase( audio_.begin( ) );
 			}
 
