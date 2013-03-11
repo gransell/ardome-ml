@@ -93,6 +93,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_format_( pcos::key::from_string( "format" ) )
 			, prop_vcodec_( pcos::key::from_string( "vcodec" ) )
 			, prop_acodec_( pcos::key::from_string( "acodec" ) )
+			, prop_video_stream_id_( pcos::key::from_string( "video_stream_id" ) )
+			, prop_audio_stream_id_( pcos::key::from_string( "audio_stream_id" ) )
 			, prop_pix_fmt_( pcos::key::from_string( "pix_fmt" ) )
 			, prop_vfourcc_( pcos::key::from_string( "vfourcc" ) )
 			, prop_afourcc_( pcos::key::from_string( "afourcc" ) )
@@ -243,6 +245,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_format_ = pl::wstring( L"" ) );
 			properties( ).append( prop_acodec_ = pl::wstring( L"" ) );
 			properties( ).append( prop_vcodec_ = pl::wstring( L"" ) );
+			properties( ).append( prop_video_stream_id_ = 0 );
+			properties( ).append( prop_audio_stream_id_ = 0 );
 			properties( ).append( prop_vfourcc_ = pl::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = pl::wstring( L"" ) );
 			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : pl::wstring( L"" ) );
@@ -756,6 +760,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->codec_type = avcodec_get_type( codec_id );
 				c->codec_id = codec_id;
 
+				if( prop_video_stream_id_.value< int >( ) != 0 )
+					st->id = prop_video_stream_id_.value< int >( );
+
 				// ? unsure
 				c->reordered_opaque = AV_NOPTS_VALUE;
 
@@ -921,6 +928,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->strict_std_compliance = prop_strict_.value< int >( );
 				c->codec_type = avcodec_get_type( codec_id );
 				c->codec_id = codec_id;
+
+				if( prop_audio_stream_id_.value< int >( ) != 0 )
+					st->id = prop_audio_stream_id_.value< int >( ) + i;
 
 				//c->codec_id = codec_id;
 				//c->codec_type = AVMEDIA_TYPE_AUDIO;
