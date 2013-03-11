@@ -558,7 +558,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						 matching_modes( frame, result ) &&
 						 !frame->get_alpha( ) )
 					{
-						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->get_image()->pf() );
+						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->pf() );
 						if ( frame->pf() == result->pf() || prop_ignore_pf_.value< int >( ) )
 							result = frame;
 						else

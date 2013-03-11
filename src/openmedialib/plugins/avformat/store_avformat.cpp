@@ -92,6 +92,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_format_( pcos::key::from_string( "format" ) )
 			, prop_vcodec_( pcos::key::from_string( "vcodec" ) )
 			, prop_acodec_( pcos::key::from_string( "acodec" ) )
+			, prop_video_stream_id_( pcos::key::from_string( "video_stream_id" ) )
+			, prop_audio_stream_id_( pcos::key::from_string( "audio_stream_id" ) )
 			, prop_pix_fmt_( pcos::key::from_string( "pix_fmt" ) )
 			, prop_vfourcc_( pcos::key::from_string( "vfourcc" ) )
 			, prop_afourcc_( pcos::key::from_string( "afourcc" ) )
@@ -243,6 +245,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_format_ = std::wstring( L"" ) );
 			properties( ).append( prop_acodec_ = std::wstring( L"" ) );
 			properties( ).append( prop_vcodec_ = std::wstring( L"" ) );
+			properties( ).append( prop_video_stream_id_ = 0 );
+			properties( ).append( prop_audio_stream_id_ = 0 );
 			properties( ).append( prop_vfourcc_ = std::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = std::wstring( L"" ) );
 			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : std::wstring( L"" ) );
@@ -363,12 +367,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					close_video_codec( );
 				close_audio_codec( );
 
-				// Free the streams
-				for( size_t i = 0; i < oc_->nb_streams; i++ )
-					av_freep( &oc_->streams[ i ] );
-
-				// Free the context
-				av_free( oc_ );
+				avformat_free_context( oc_ );
 			}
 
 			// Clean up the allocated image
@@ -579,11 +578,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		void close_video_codec( )
 		{
 			if ( video_stream_ && video_stream_->codec ) 
-			{
 				avcodec_close( video_stream_->codec );
-				av_free( video_stream_->codec );
-				video_stream_->codec = NULL;
-			}
 		}
 
 		void close_audio_codec( )
@@ -592,11 +587,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				AVStream *stream = *iter;
 				if ( stream && stream->codec ) 
-				{
 					avcodec_close( stream->codec );
-					av_free( stream->codec );
-					stream->codec = NULL;
-				}
 			}
 		}
 
@@ -779,6 +770,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->codec_type = avcodec_get_type( codec_id );
 				c->codec_id = codec_id;
 
+				if( prop_video_stream_id_.value< int >( ) != 0 )
+					st->id = prop_video_stream_id_.value< int >( );
+
 				// ? unsure
 				c->reordered_opaque = AV_NOPTS_VALUE;
 
@@ -850,7 +844,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						tag = arg[ 0 ] + ( arg[ 1 ] << 8 ) + ( arg[ 2 ] << 16 ) + ( arg[ 3 ] << 24 );
 					c->codec_tag = tag;
 				}
-		
+
+				if( first_frame_ && first_frame_->has_image( ) )
+				{
+					if( first_frame_->get_image( )->field_order( ) != il::progressive )
+					{
+						c->flags |= CODEC_FLAG_INTERLACED_DCT;
+						c->flags |= CODEC_FLAG_INTERLACED_ME;
+					}
+				}
+
 				// Some formats want stream headers to be seperate
 				if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
 					c->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -939,6 +942,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->codec_id = codec_id;
 				c->channel_layout = AV_CH_LAYOUT_STEREO;
 				c->channels = 2;
+
+				if( prop_audio_stream_id_.value< int >( ) != 0 )
+					st->id = prop_audio_stream_id_.value< int >( ) + i;
 
 				//c->codec_id = codec_id;
 				//c->codec_type = AVMEDIA_TYPE_AUDIO;
@@ -1474,6 +1480,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//av_image_.quality = int( video_stream_->quality );
 				//av_image_.pict_type = 0;
 
+				//Set properties for interlaced encoding
+				if ( image->field_order( ) != il::progressive )
+				{
+					av_image_.interlaced_frame = 1;
+					if( image->field_order( ) == il::top_field_first )
+						av_image_.top_field_first = 1;
+					else
+						av_image_.top_field_first = 0;
+				}
+
 				int out_size;
 				ret = do_video_encode(false, &out_size);
 			}
@@ -1489,12 +1505,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			audio_type_ptr audio;
 			const short *data = 0;
+			int data_size = 0;
+
+			AVFrame input_frame;
 
 			if ( audio_queue_.size( ) )
 			{
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
 				data = ( short * )( audio->pointer( ) );
+				data_size = audio->size( );
 			}
 			else
 			{
@@ -1554,7 +1574,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 							audio_filters_[ stream ]->set_passthrough( audio );
 							audio_filters_[ stream ]->set_output( c );
 						}
-
 						int size = 0;
 						temp = audio_filters_[ stream ]->convert( audio, size );
 						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
@@ -1638,6 +1657,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_format_;
 		pcos::property prop_vcodec_;
 		pcos::property prop_acodec_;
+		pcos::property prop_video_stream_id_;
+		pcos::property prop_audio_stream_id_;
 		pcos::property prop_pix_fmt_;
 		pcos::property prop_vfourcc_;
 		pcos::property prop_afourcc_;

@@ -422,7 +422,7 @@ class ML_PLUGIN_DECLSPEC pusher_input : public input_type
 			, prop_length_( pcos::key::from_string( "length" ) )
 			, last_frame_( )
 		{ 
-			properties( ).append( prop_length_ = 1 << 30 );
+			properties( ).append( prop_length_ = INT_MAX );
 		}
 
 		virtual ~pusher_input( ) { }
@@ -1558,7 +1558,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		{
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
-			if ( fps_num > 0 && fps_den > 0 )
+			if ( fps_num > 0 && fps_den > 0 && src_frames_ != INT_MAX )
 				return int( cl::utilities::clamp< boost::int64_t >( boost::int64_t( ceil( map_source_to_dest( src_frames_ ) ) ), 0, std::numeric_limits< int >::max( ) ) );
 			else
 				return src_frames_;
