@@ -827,7 +827,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						tag = arg[ 0 ] + ( arg[ 1 ] << 8 ) + ( arg[ 2 ] << 16 ) + ( arg[ 3 ] << 24 );
 					c->codec_tag = tag;
 				}
-		
+
+				if( first_frame_ && first_frame_->has_image( ) )
+				{
+					if( first_frame_->get_image( )->field_order( ) != il::progressive )
+					{
+						c->flags |= CODEC_FLAG_INTERLACED_DCT;
+						c->flags |= CODEC_FLAG_INTERLACED_ME;
+					}
+				}
+
 				// Some formats want stream headers to be seperate
 				if ( oc_->oformat->flags & AVFMT_GLOBALHEADER ) 
 					c->flags |= CODEC_FLAG_GLOBAL_HEADER;
