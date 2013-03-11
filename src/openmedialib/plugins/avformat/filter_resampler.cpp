@@ -39,11 +39,14 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			: filter_simple()
 			, prop_output_channels_(pcos::key::from_string("channels"))
 			, prop_output_sample_freq_(pcos::key::from_string("frequency"))
+			, prop_af_(pcos::key::from_string("af"))
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, input_channels_(2)
 			, input_sample_freq_(48000)
 			, fps_numerator_(25)
 			, fps_denominator_(1)
+			, current_frequency_(-1)
+			, current_channels_(-1)
 			, dirty_(true)
 			, direction_( 1 )
 			, expected_( -1 )
@@ -52,10 +55,12 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		
 			properties( ).append( prop_output_channels_ = 2	);
 			properties( ).append( prop_output_sample_freq_ = 48000 );
+			properties( ).append( prop_af_ = std::wstring( L"" ) );
 			properties( ).append( prop_enable_ = 1 );
 		
 			prop_output_channels_.attach( property_observer_ );
 			prop_output_sample_freq_.attach( property_observer_ );
+			prop_af_.attach( property_observer_ );
 		}
 	
 		virtual const std::wstring get_uri( ) const { return L"resampler"; }
@@ -97,24 +102,21 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 
 			int out_frequency = prop_output_sample_freq_.value< int >( );
 			int out_channels = prop_output_channels_.value< int >( );
-			out_channels = out_channels <= 0 ? current_audio->channels( ) : out_channels;
+			std::wstring out_af = prop_af_.value< std::wstring >( );
 
-			// Small hack to allow resampler for channel conversion only
-			if(	out_frequency == -1 )
-			{
-				current_audio = audio::channel_convert( current_audio, out_channels, last_channels_ );
-				last_channels_ = current_audio;
-				if ( current_audio )
-					current_frame->set_audio( current_audio );
-				return;
-			}
+			if ( out_frequency <= 0 ) out_frequency = current_frequency_ <= 0 ? current_audio->frequency( ) : current_frequency_;
+			if ( out_channels <= 0 ) out_channels = current_channels_ <= 0 ? current_audio->channels( ) : current_channels_;
+			if ( out_af == L"" ) out_af = current_af_ == L"" ? current_audio->af( ) : current_af_;
+
+			current_frequency_ = out_frequency;
+			current_channels_ = out_channels;
+			current_af_ = out_af;
 
 			// since ffmpeg resampler will only accept 8 channels or less, force any input with more than 8 channels to conform
 			if( current_audio->channels() > 8 )
 			{
 				current_audio = audio::channel_convert(current_audio, 8, last_channels_);
-				last_channels_ = current_audio;
-				current_frame->set_audio( current_audio );
+				current_channels_ = out_channels = 8;
 			}
 
 			// Check if changes have occurred in the input
@@ -122,8 +124,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			{
 				dirty_ = fps_numerator_ != current_frame->get_fps_num( ) || 
 					     fps_denominator_ != current_frame->get_fps_den( ) ||
-					     input_channels_ != current_audio->channels( ) ||
-					     input_sample_freq_ != current_audio->frequency( );
+						 filter_.changed( current_audio );
 			}
 
 			if ( dirty_ )
@@ -134,6 +135,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 				filter_.set_passthrough( current_audio );
 				filter_.set_channels( out_channels );
 				filter_.set_frequency( out_frequency );
+				filter_.set_id( af_to_id( out_af ) );
 				dirty_ = false;
 			}
 
@@ -145,6 +147,19 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		}
 	
 	private:
+		ml::audio::identity af_to_id( const std::wstring &af )
+		{
+			ml::audio::identity id = ml::audio::pcm16_id;
+
+			if ( af == ml::audio::FORMAT_PCM8 ) id = ml::audio::pcm8_id;
+			else if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
+			else if ( af == ml::audio::FORMAT_PCM24 ) id = ml::audio::pcm24_id;
+			else if ( af == ml::audio::FORMAT_PCM32 ) id = ml::audio::pcm32_id;
+			else if ( af == ml::audio::FORMAT_FLOAT ) id = ml::audio::float_id;
+			
+			return id;
+		}
+
 		class property_observer : public pcos::observer
 		{
 		public:
@@ -190,12 +205,18 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		
 		pcos::property prop_output_channels_;
 		pcos::property prop_output_sample_freq_;
+		pcos::property prop_af_;
 		pcos::property prop_enable_;
 	
 		int	input_channels_;
 		int input_sample_freq_;
 		int fps_numerator_;
 		int fps_denominator_;
+		std::wstring af_;
+
+		int current_frequency_;
+		int current_channels_;
+		std::wstring current_af_;
 	
 		avaudio_filter filter_;
 		bool dirty_;

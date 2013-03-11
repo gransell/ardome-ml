@@ -67,6 +67,14 @@ class avaudio_filter
 			}
 		}
 
+		bool changed( ml::audio_type_ptr input, bool point_0 = false )
+		{
+			return input->frequency( ) != frequency_in_ || 
+				   input->channels( ) != channels_in_ || 
+				   aml_to_avformat( input->id( ) ) != format_in_ || 
+				   channels_to_layout( input->channels( ), point_0 ) != layout_in_;
+		}
+
 		void set_passthrough( AVCodecContext *codec, bool point_0 = false )
 		{
 			if ( codec )
@@ -108,13 +116,13 @@ class avaudio_filter
 
 		void set_frequency( int frequency )
 		{
-			frequency_out_ = frequency != -1 ? frequency_in_ : frequency;
+			frequency_out_ = frequency == -1 ? frequency_in_ : frequency;
 			setup( );
 		}
 
 		void set_channels( int channels, bool point_0 = false )
 		{
-			channels_out_ = channels != -1 ? channels_in_ : channels;
+			channels_out_ = channels == -1 ? channels_in_ : channels;
 			layout_out_ = channels_to_layout( channels_out_, point_0 );
 			setup( );
 		}

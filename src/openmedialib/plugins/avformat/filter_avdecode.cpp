@@ -846,7 +846,7 @@ private:
 
 				decoded_audio->set_position( position );
 				
-				// In the case of AES3 we get 24 bit want 32 - thus we bit shift here (for now)
+				// In the case of AES3 we get 24 bit but want 32 - thus we bit shift here (for now)
 				if( track_context->sample_fmt == AV_SAMPLE_FMT_S32 &&
 					track_context->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
 				{
