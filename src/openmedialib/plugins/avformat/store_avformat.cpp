@@ -1479,12 +1479,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			audio_type_ptr audio;
 			const short *data = 0;
+			int data_size = 0;
+
+			AVFrame input_frame;
 
 			if ( audio_queue_.size( ) )
 			{
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
 				data = ( short * )( audio->pointer( ) );
+				data_size = audio->size( );
 			}
 			else
 			{
@@ -1523,7 +1527,24 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 					else
 					{
-						pkt.size = avcodec_encode_audio( c, audio_outbuf_, audio_outbuf_size_, data );
+						int got_packet = 0;
+
+						avcodec_get_frame_defaults( &input_frame );
+						input_frame.nb_samples = c->frame_size;
+
+						pkt.data = audio_outbuf_;
+						pkt.size = audio_outbuf_size_;
+
+						if( ! do_flush )
+						{
+							avcodec_fill_audio_frame( &input_frame, c->channels, c->sample_fmt, (const uint8_t *)data, data_size, 1 );
+							ret = ( 0 == avcodec_encode_audio2( c, &pkt, &input_frame, &got_packet ) ) ? true : false;
+						}
+						else
+							ret = ( 0 == avcodec_encode_audio2( c, &pkt, 0, &got_packet ) ) ? true : false;
+
+						if( ! ( ret && got_packet == 1 ) )
+							pkt.size = 0;
 					}
 
 					// Write the compressed frame in the media file
