@@ -657,7 +657,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 
 			// Check if the source is complete. If it isn't, we'll
 			// subtract a gop from the duration in case of rollout.
-			if ( !slot->complete( ) && estimated_gop_size() != 1 )
+			if ( !slot->complete( ) && estimated_gop_size() != 1 && frames != 0 && frames != INT_MAX )
 				frames -= estimated_gop_size( );
 
 			return frames;
