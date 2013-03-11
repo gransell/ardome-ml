@@ -352,12 +352,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					close_video_codec( );
 				close_audio_codec( );
 
-				// Free the streams
-				for( size_t i = 0; i < oc_->nb_streams; i++ )
-					av_freep( &oc_->streams[ i ] );
-
-				// Free the context
-				av_free( oc_ );
+				avformat_free_context( oc_ );
 			}
 
 			// Clean up the allocated image
@@ -560,11 +555,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		void close_video_codec( )
 		{
 			if ( video_stream_ && video_stream_->codec ) 
-			{
 				avcodec_close( video_stream_->codec );
-				av_free( video_stream_->codec );
-				video_stream_->codec = NULL;
-			}
 		}
 
 		void close_audio_codec( )
@@ -573,11 +564,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				AVStream *stream = *iter;
 				if ( stream && stream->codec ) 
-				{
 					avcodec_close( stream->codec );
-					av_free( stream->codec );
-					stream->codec = NULL;
-				}
 			}
 		}
 
@@ -1464,6 +1451,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//av_image_.quality = int( video_stream_->quality );
 				//av_image_.pict_type = 0;
 
+				//Set properties for interlaced encoding
+				if ( image->field_order( ) != il::progressive )
+				{
+					av_image_.interlaced_frame = 1;
+					if( image->field_order( ) == il::top_field_first )
+						av_image_.top_field_first = 1;
+					else
+						av_image_.top_field_first = 0;
+				}
+
 				int out_size;
 				ret = do_video_encode(false, &out_size);
 			}
@@ -1621,6 +1618,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		pcos::property prop_format_;
 		pcos::property prop_vcodec_;
 		pcos::property prop_acodec_;
+		pcos::property prop_video_stream_id_;
+		pcos::property prop_audio_stream_id_;
 		pcos::property prop_pix_fmt_;
 		pcos::property prop_vfourcc_;
 		pcos::property prop_afourcc_;
