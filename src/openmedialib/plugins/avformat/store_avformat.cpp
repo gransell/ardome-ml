@@ -828,6 +828,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					{
 						c->flags |= CODEC_FLAG_INTERLACED_DCT;
 						c->flags |= CODEC_FLAG_INTERLACED_ME;
+						c->field_order = first_frame_->get_image( )->field_order( ) == il::top_field_first ? AV_FIELD_TT : AV_FIELD_BB;
 					}
 				}
 

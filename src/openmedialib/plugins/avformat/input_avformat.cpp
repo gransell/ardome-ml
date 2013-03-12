@@ -2315,8 +2315,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					images_.erase( images_.begin( ) );
 			}
 
+			AVStream *stream = get_video_stream( );
+			AVCodecContext *codec_context = stream->codec;
+
 			if ( av_frame_->interlaced_frame )
 				image->set_field_order( av_frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
+			else if ( codec_context->field_order == AV_FIELD_TT || codec_context->field_order == AV_FIELD_BT )
+				image->set_field_order( il::top_field_first );
+			else if ( codec_context->field_order == AV_FIELD_BB || codec_context->field_order == AV_FIELD_TB )
+				image->set_field_order( il::bottom_field_first );
 
 			if ( image )
 			{
