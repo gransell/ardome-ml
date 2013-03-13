@@ -11,7 +11,7 @@ def usage( ):
 	sys.exit( 1 )
 
 def find_files( dir, pattern ):
-	for root, dirs, files in os.walk( dir ):
+	for root, dirs, files in os.walk( dir, followlinks = True ):
 		if root.startswith( './.' ) or root.startswith( './build' ): continue
 		if root.startswith( '.\\.' ) or root.startswith( '.\\build' ): continue
 		for basename in files:
