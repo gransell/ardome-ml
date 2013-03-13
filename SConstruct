@@ -267,7 +267,9 @@ if env.check_externals( ):
 	
 	if env[ 'wrappers' ] == 'yes' and env['PLATFORM'] == 'win32':
 		env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
-	
+
+	os.system( 'scripts/vlicreate --target=%s --build=%s' % ( env[ 'target' ], 'release' ) )
+
 	# Makes it possible for the visual studio builder to terminate scons.
 	if not env.done( 'ardome-ml' ) : 
 		exit()
