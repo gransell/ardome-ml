@@ -185,7 +185,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		/// Implementation of the profile_property associated to this class
 		void assign( const std::string &name, const cl::profile_op &op, const std::string &value )
 		{
-			ARENFORCE_MSG( op == cl::profile_op::op_equals, "Only assignment operation may be used for profile property \"%1%\"" )
+			ARENFORCE_MSG( op == cl::op_equals, "Only assignment operation may be used for profile property \"%1%\"" )
 				( name );
 
 			if ( name == "video_codec" )
