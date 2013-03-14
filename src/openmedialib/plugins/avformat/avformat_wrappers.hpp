@@ -12,6 +12,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavutil/opt.h>
 }
 
 namespace cl = olib::opencorelib;
@@ -25,6 +26,9 @@ extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
+#define OPT_PREFIX "video_"
+#define OPT_NON_LINEAR_QUANT OPT_PREFIX ## "non_linear_quant"
+#define OPT_INTRA_VLC OPT_PREFIX ## "intra_vlc"
 
 class avformat_video : public cl::profile_wrapper, public cl::profile_property
 {
@@ -36,6 +40,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			, codec_( 0 )
 			, picture_( 0 )
 			, pkt_( )
+			, codec_opened_( false )
 			, video_codec_( "" )
 			, stream_codec_id_( "" )
 			, outbuf_size_( 0 )
@@ -44,6 +49,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			, key_( 0 )
 			, dim_( 0, 0 )
 			, sar_( 0, 0 )
+			, fps_( 0, 0 )
 		{ 
 			init( frame ); 
 		}
@@ -64,14 +70,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			field_order_ = frame->field_order( );
 			dim_ = ml::dimensions( frame->width( ), frame->height( ) );
 			sar_ = ml::fraction( frame->get_sar_num( ), frame->get_sar_den( ) );
-			context_->pix_fmt = oil_to_avformat( frame->pf( ) );
-			context_->width = frame->width( );
-			context_->height = frame->height( );
-			AVRational avr = { frame->get_fps_den( ), frame->get_fps_num( ) };
-			context_->time_base = avr;
-			AVRational sar = { frame->get_sar_num( ), frame->get_sar_den( ) };
-			context_->sample_aspect_ratio = sar;
-			outbuf_size_ = std::max< int >( 1024 * 256, context_->width * context_->height * 6 + 200 );
+			fps_ = ml::fraction( frame->get_fps_num( ), frame->get_fps_den( ) );
+			outbuf_size_ = std::max< int >( 1024 * 256, dim_.width * dim_.height * 6 + 200 );
 			outbuf_ = ( boost::uint8_t * )malloc( outbuf_size_ );
 		}
 
@@ -81,13 +81,13 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			context_ = avcodec_alloc_context3( 0 );
 			enroll( "video_codec", this );
 			enroll( "stream_codec_id", this );
+			enroll( OPT_NON_LINEAR_QUANT, this );
+			enroll( OPT_INTRA_VLC, this );
 			enroll( "video_bit_rate", context_->bit_rate );
 			enroll( "video_bit_rate_tolerance", context_->bit_rate_tolerance );
 			enroll( "video_flags", context_->flags );
-			//enroll( "video_sub_id", context_->sub_id );
 			enroll( "video_me_method", context_->me_method );
 			enroll( "video_gop_size", context_->gop_size );
-			//enroll( "video_rate_emu", context_->rate_emu );
 			enroll( "video_sample_rate", context_->sample_rate );
 			enroll( "video_channels", context_->channels );
 			enroll( "video_delay", context_->delay );
@@ -102,8 +102,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_rtp_payload_size", context_->rtp_payload_size );
 			enroll( "video_codec_tag", context_->codec_tag );
 			enroll( "video_workaround_bugs", context_->workaround_bugs );
-			//enroll( "video_luma_elim_threshold", context_->luma_elim_threshold );
-			//enroll( "video_chroma_elim_threshold", context_->chroma_elim_threshold );
 			enroll( "video_strict_std_compliance", context_->strict_std_compliance );
 			enroll( "video_b_quant_offset", context_->b_quant_offset );
 			enroll( "video_has_b_frames", context_->has_b_frames );
@@ -111,7 +109,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_rc_qsquish", context_->rc_qsquish );
 			enroll( "video_rc_qmod_amp", context_->rc_qmod_amp );
 			enroll( "video_rc_qmod_freq", context_->rc_qmod_freq );
-			//enroll( "video_rc_eq", context_->rc_eq );
 			enroll( "video_rc_max_rate", context_->rc_max_rate );
 			enroll( "video_rc_min_rate", context_->rc_min_rate );
 			enroll( "video_rc_buffer_size", context_->rc_buffer_size );
@@ -126,7 +123,6 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_p_masking", context_->p_masking );
 			enroll( "video_dark_masking", context_->dark_masking );
 			enroll( "video_idct_algo", context_->idct_algo );
-			//enroll( "video_dsp_mask", context_->dsp_mask );
 			enroll( "video_prediction_method", context_->prediction_method );
 			enroll( "video_me_cmp", context_->me_cmp );
 			enroll( "video_me_sub_cmp", context_->me_sub_cmp );
@@ -150,10 +146,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_lmax", context_->lmax );
 			enroll( "video_noise_reduction", context_->noise_reduction );
 			enroll( "video_rc_initial_buffer_occupancy", context_->rc_initial_buffer_occupancy );
-			//enroll( "video_inter_threshold", context_->inter_threshold );
 			enroll( "video_flags2", context_->flags2 );
 			enroll( "video_error_rate", context_->error_rate );
-			//enroll( "video_quantizer_noise_shaping", context_->quantizer_noise_shaping );
 			enroll( "video_thread_count", context_->thread_count );
 			enroll( "video_me_threshold", context_->me_threshold );
 			enroll( "video_mb_threshold", context_->mb_threshold );
@@ -171,33 +165,19 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 			enroll( "video_me_penalty_compensation", context_->me_penalty_compensation );
 			enroll( "video_bidir_refine", context_->bidir_refine );
 			enroll( "video_brd_scale", context_->brd_scale );
-			//enroll( "video_crf", context_->crf );
-			//enroll( "video_cqp", context_->cqp );
 			enroll( "video_keyint_min", context_->keyint_min );
 			enroll( "video_refs", context_->refs );
 			enroll( "video_chromaoffset", context_->chromaoffset );
-			//enroll( "video_bframebias", context_->bframebias );
 			enroll( "video_trellis", context_->trellis );
-			//enroll( "video_complexityblur", context_->complexityblur );
-			//enroll( "video_deblockalpha", context_->deblockalpha );
-			//enroll( "video_deblockbeta", context_->deblockbeta );
-			//enroll( "video_partitions", context_->partitions );
-			//enroll( "video_directpred", context_->directpred );
 			enroll( "video_cutoff", context_->cutoff );
 			enroll( "video_scenechange_factor", context_->scenechange_factor );
 			enroll( "video_mv0_threshold", context_->mv0_threshold );
 			enroll( "video_b_sensitivity", context_->b_sensitivity );
 			enroll( "video_compression_level", context_->compression_level );
-			//enroll( "video_use_lpc", context_->use_lpc );
-			//enroll( "video_lpc_coeff_precision", context_->lpc_coeff_precision );
 			enroll( "video_min_prediction_order", context_->min_prediction_order );
 			enroll( "video_max_prediction_order", context_->max_prediction_order );
-			//enroll( "video_prediction_order_method", context_->prediction_order_method );
-			//enroll( "video_min_partition_order", context_->min_partition_order );
-			//enroll( "video_max_partition_order", context_->max_partition_order );
 			enroll( "video_timecode_frame_start", context_->timecode_frame_start );
 			enroll( "video_bits_per_raw_sample", context_->bits_per_raw_sample );
-			//enroll( "video_channel_layout", context_->channel_layout );
 			enroll( "video_rc_max_available_vbv_use", context_->rc_max_available_vbv_use );
 			enroll( "video_rc_min_vbv_overflow_use", context_->rc_min_vbv_overflow_use );
 		}
@@ -205,8 +185,50 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		/// Implementation of the profile_property associated to this class
 		void assign( const std::string &name, const cl::profile_op &op, const std::string &value )
 		{
-			if ( name == "video_codec" ) video_codec_ = value;
-			if ( name == "stream_codec_id" ) stream_codec_id_ = value;
+			ARENFORCE_MSG( op == cl::profile_op::op_equals, "Only assignment operation may be used for profile property \"%1%\"" )
+				( name );
+
+			if ( name == "video_codec" )
+			{
+				video_codec_ = value;
+				codec_ = avcodec_find_encoder_by_name( video_codec_.c_str( ) );
+				ARENFORCE_MSG( codec_ != NULL, "avcodec_find_encoder_by_name call failed for codec %1%" )
+					( video_codec_ );
+				const int ret = avcodec_get_context_defaults3( context_, codec_ );
+				ARENFORCE_MSG( ret == 0, "avcodec_get_context_defaults3 call failed with code %1% for codec %2%" )
+					( ret )( video_codec_ );
+
+				context_->pix_fmt = oil_to_avformat( pf_ );
+				context_->width = dim_.width;
+				context_->height = dim_.height;
+				AVRational avr = { fps_.den, fps_.num };
+				context_->time_base = avr;
+				AVRational sar = { sar_.num, sar_.den };
+				context_->sample_aspect_ratio = sar;
+
+				context_->codec_type = avcodec_get_type( codec_->id );
+				context_->codec_id = codec_->id;
+
+				if ( video_codec_ == "mjpeg" )
+					context_->pix_fmt = PIX_FMT_YUVJ420P;
+			}
+			else if ( name == "stream_codec_id" )
+			{
+				stream_codec_id_ = value;
+			}
+			else if ( name == OPT_NON_LINEAR_QUANT || name == OPT_INTRA_VLC )
+			{
+				ARENFORCE( boost::algorithm::starts_with( name, OPT_PREFIX ) );
+
+				int int_val;
+				ARENFORCE_MSG( sscanf( value.c_str(), "%i", &int_val ) == 1, 
+					"Failed to interpret the value \"%1%\" of profile property \"%2%\" as an integer." )
+					( value )( name );
+
+				const int av_opt_result = av_opt_set_int( context_->priv_data, name.c_str() + strlen( OPT_PREFIX ), int_val, 0 );
+				ARENFORCE_MSG( av_opt_result == 0, "av_opt_set_int failed for profile property \"%1%\"" )
+					( name )( av_opt_result );
+			}
 		}
 
 		/// String serialisation courtesy function
@@ -226,23 +248,15 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		/// Provide the codec itself
 		AVCodec *codec( )
 		{
-			if ( !codec_ && video_codec_ != "" )
+			if( codec_ && !codec_opened_ )
 			{
-				codec_ = avcodec_find_encoder_by_name( video_codec_.c_str( ) );
-
-				if ( codec_ )
+				const int ret = avcodec_open2( context_, codec_, 0 );
+				if( ret < 0 )
 				{
-					context_->codec_type = avcodec_get_type( codec_->id );
-					context_->codec_id = codec_->id;
-
-					if ( video_codec_ == "mjpeg" ) context_->pix_fmt = PIX_FMT_YUVJ420P;
-
-					if ( avcodec_open2( context_, codec_, 0 ) < 0 ) 
-					{
-						std::cerr << "Unable to open codec" << std::endl;
-						codec_ = 0;
-					}
+					std::cerr << "Unable to open codec (code: " << ret << ")" << std::endl;
+					codec_ = 0;
 				}
+				codec_opened_ = true;
 			}
 
 			return codec_;
@@ -315,6 +329,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		AVCodec *codec_;
 		AVFrame *picture_;
 		AVPacket pkt_;
+		bool codec_opened_;
 		std::string video_codec_;
 		std::string stream_codec_id_;
 		int outbuf_size_;
@@ -323,6 +338,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		int key_;
 		ml::dimensions dim_;
 		ml::fraction sar_;
+		ml::fraction fps_;
 		pl::wstring pf_;
 		il::field_order_flags field_order_;
 };

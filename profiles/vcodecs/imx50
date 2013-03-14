@@ -19,6 +19,7 @@
 #   fault more investigation is needed for this one
 
 video_codec = mpeg2video
+
 video_bit_rate = 50000000
 video_rc_min_rate = 50000000
 video_rc_max_rate = 50000000
@@ -28,9 +29,8 @@ video_rc_max_available_vbv_use = 1
 video_flags |= 0x00040000
 video_flags |= 0x00080000
 video_intra_dc_precision = 1
-# video_flags2 |= CODEC_FLAG2_INTRA_VLC | CODEC_FLAG2_NON_LINEAR_QUANT
-video_flags2 |= 0x00000800
-video_flags2 |= 0x00010000
+video_non_linear_quant = 1
+video_intra_vlc = 1
 video_qmin = 1
 video_qmax = 3
 video_rtp_payload_size = 1
