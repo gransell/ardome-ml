@@ -27,8 +27,8 @@ extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 #define OPT_PREFIX "video_"
-#define OPT_NON_LINEAR_QUANT OPT_PREFIX ## "non_linear_quant"
-#define OPT_INTRA_VLC OPT_PREFIX ## "intra_vlc"
+static const char *OPT_NON_LINEAR_QUANT = OPT_PREFIX "non_linear_quant";
+static const char *OPT_INTRA_VLC = OPT_PREFIX "intra_vlc";
 
 class avformat_video : public cl::profile_wrapper, public cl::profile_property
 {
