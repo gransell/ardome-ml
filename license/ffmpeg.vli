@@ -29,7 +29,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/lame-3.99.5.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"ogg":
 	{
@@ -39,7 +40,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libogg-1.3.0.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"theora":
 	{
@@ -49,7 +51,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libtheora-1.1.1.tar.bz2",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"vorbis":
 	{
@@ -60,7 +63,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libvorbis-1.3.3.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"vpx":
 	{
@@ -70,7 +74,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libvpx-v1.1.0.tar.bz2", 
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"jpeg":
 	{
@@ -79,7 +84,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/jpegsrc.v9.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"openjpeg":
 	{
@@ -88,7 +94,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/openjpeg-1.5.1.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"vo-aacenc": 
 	{
@@ -99,7 +106,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/vo-aacenc-0.1.2.tar.gz",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"alsa":
 	{
@@ -110,7 +118,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/alsa-lib-1.0.13.tar.bz2",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"SDL":
 	{

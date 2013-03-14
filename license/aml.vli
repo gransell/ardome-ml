@@ -17,7 +17,8 @@
 		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/x264-2012-11-09.tar.bz2",
 		"employee": "jot@vizrt.com",
 		"role": "R&D",
-		"issues": ""
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
 	},
 	"loki":
 	{

@@ -10,6 +10,23 @@ def usage( ):
 	print "Usage: %s --target=<target> --build=<release|debug>" % sys.argv[ 0 ]
 	sys.exit( 1 )
 
+def parse_args( args ):
+	target, build = '','' 
+	for arg in args:
+		if arg.startswith( '--target=' ): target = arg[ len( '--target=' ) : ]
+		elif arg.startswith( '--build=' ): build = arg[ len( '--build=' ) : ]
+		else: usage( )
+	if target == '' or build == '': usage( )
+	return target, build
+
+def create_license_dir( target, build ):
+	build_dir = 'build/%s/%s' % ( build, target )
+	if not os.path.exists( build_dir ): usage( )
+	license_dir = '%s/license' % build_dir
+	if os.path.isdir( license_dir ): shutil.rmtree( license_dir )
+	os.mkdir( license_dir )
+	return license_dir
+
 def find_files( dir, pattern ):
 	for root, dirs, files in os.walk( dir, followlinks = True ):
 		if root.startswith( './.' ) or root.startswith( './build' ): continue
@@ -21,37 +38,37 @@ def find_files( dir, pattern ):
 
 def check_license( entries, path ):
 	for k in entries:
-		if 'license-file' in entries[ k ]:
-			entries[ k ][ 'license-file' ] = os.path.join( path, entries[ k ][ 'license-file' ] )
-		else:
-			entries[ k ][ 'license-file' ] = ''
+		entries[ k ][ 'license-file' ] = os.path.join( path, entries[ k ][ 'license-file' ] )
 
-target = ''
-build = ''
+def find_vli( ):
+	contents = { }
+	for f in find_files( ".", "*.vli" ):
+		entries = json.load( open( f ) )
+		path, file = os.path.dirname( os.path.abspath( f ) ), os.path.basename( f )
+		check_license( entries, path )
+		contents.update( entries )
+	return contents
 
-for arg in sys.argv[ 1 : ]:
-	if arg.startswith( '--target=' ): target = arg[ len( '--target=' ) : ]
-	elif arg.startswith( '--build=' ): build = arg[ len( '--build=' ) : ]
-	else: usage( )
+def is_relevant( license, target ):
+	result = not 'targets' in license
+	if not result:
+		for pattern in license[ 'targets' ]:
+			result = result or fnmatch.fnmatch( target, pattern )
+	return result
 
-build_dir = 'build/%s/%s' % ( build, target )
-license_dir = '%s/license' % build_dir
+def distribute_vli( contents, license_dir ):
+	count = 0
+	for k, v in sorted( contents.iteritems( ) ):
+		shutil.copy( v[ 'license-file' ], '%s/%d.txt' % ( license_dir, count ) )
+		v[ 'license-file' ] = '%d.txt' % count
+		count += 1
+	fd = open( '%s/license.vli' % license_dir, 'w' )
+	json.dump( contents, fd, sort_keys = True, indent = 4 )
+	fd.close( )
 
-if target == '' or build == '' or not os.path.exists( 'build/%s/%s' % ( build, target ) ): usage( )
-
-if os.path.isdir( license_dir ): shutil.rmtree( license_dir )
-
-os.mkdir( license_dir )
-
-contents = { }
-
-for f in find_files( ".", "*.vli" ):
-	entries = json.load( open( f ) )
-	path, file = os.path.dirname( os.path.abspath( f ) ), os.path.basename( f )
-	check_license( entries, path )
-	contents.update( entries )
-
-count = 0
+target, build = parse_args( sys.argv[ 1 : ] )
+license_dir = create_license_dir( target, build )
+contents = find_vli( )
 
 sys.stdout = open( '%s/license.html' % license_dir, 'w' )
 
@@ -115,17 +132,18 @@ body {
 """
 
 for k, v in sorted( contents.iteritems( ) ):
-	print '<div class="product">'
-	print '<span class="title">%s</span>' % k
-	print '<a class="show" href="#">show license</a>'
-	print '<span class="homepage"><a href="http://%s">homepage</a></span>' % v[ 'organisation' ]
-	print '<div class="licence">'
-	print '<pre>'
-	if os.path.exists( v[ 'license-file' ] ):
-		print open( v[ 'license-file' ] ).read( )
-	print '</pre>'
-	print '</div>'
-	print '</div>'
+	if is_relevant( v, target ): print """
+<div class="product">
+<span class="title">%s</span>
+<a class="show" href="#">show license</a>
+<span class="homepage"><a href="http://%s">homepage</a></span>
+<div class="licence">
+<pre>
+%s
+</pre>
+</div>
+</div>
+""" % ( k, v[ 'organisation' ], open( v[ 'license-file' ] ).read( ) )
 
 print """
 <script>
@@ -171,13 +189,5 @@ document.body.onload = function () {
 </html>
 """
 
-for k, v in sorted( contents.iteritems( ) ):
-	if 'license-file' in v and v[ 'license-file' ] != '':
-		shutil.copy( v[ 'license-file' ], '%s/%d.txt' % ( license_dir, count ) )
-		v[ 'license-file' ] = '%d.txt' % count
-		count += 1
-
-fd = open( '%s/license.vli' % license_dir, 'w' )
-json.dump( contents, fd, sort_keys = True, indent = 4 )
-fd.close( )
+distribute_vli( contents, license_dir )
 
