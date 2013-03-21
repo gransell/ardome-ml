@@ -64,10 +64,12 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	//Standard IMX50 video frame size
 	BOOST_REQUIRE_EQUAL( stream->length(), 250000 );
 
-	//Check that the mpeg2 picture coding extension looks like we expect. Specifically, that the
-	//8th byte is 0x98, which indicates that the non_linear_quant and intra_vlc encoder parameters
-	//are enabled.
-	boost::uint8_t picture_coding_ext[] = { 0x00, 0x00, 0x01, 0xB5, 0x8F, 0xFF, 0xF7, 0x98 };
+	//Check that the mpeg2 picture coding extension looks like we expect. Specifically, we want
+	//to check that:
+	//* The 8th byte is 0x98, which indicates that the non_linear_quant and intra_vlc encoder
+	//  parameters are enabled.
+	//* Byte 3-4 of the 7th byte is 10b, which corresponds to an intra_dc_precision value of 10.
+	boost::uint8_t picture_coding_ext[] = { 0x00, 0x00, 0x01, 0xB5, 0x8F, 0xFF, 0xFB, 0x98 };
 	BOOST_CHECK_EQUAL( memcmp( stream->bytes() + 38, picture_coding_ext, sizeof( picture_coding_ext ) ), 0 );
 }
 
