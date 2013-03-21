@@ -13,8 +13,6 @@
     #pragma warning(disable:4512)
     #pragma warning(disable:4100)
 
-#include <boost/variant.hpp>
-
 #endif // OLIB_COMPILED_WITH_VISUAL_STUDIO
 
 #ifdef OLIB_COMPILED_WITH_VISUAL_STUDIO  

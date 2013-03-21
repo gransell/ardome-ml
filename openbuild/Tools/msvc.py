@@ -78,9 +78,14 @@ class VSVersions:
 									regpath = "VCExpress\\9.0\\Setup\\VS", 
 									install_path = "Microsoft Visual Studio 9.0",
 									vsvars_sub_path	= "Common7\\Tools")
+
+	vs2010 = VisualStudio( version = "vs2010",	
+									regpath = "VisualStudio\\10.0\\Setup\\VS", 
+									install_path = "Microsoft Visual Studio 10.0",
+									vsvars_sub_path	= "Common7\\Tools")
 									
 	def all_versions( self ) : 
-		return [ self.vs2008, self.vs2005, self.vs2003, self.vs2008express ]
+		return [ self.vs2008, self.vs2005, self.vs2003, self.vs2008express, self.vs2010 ]
 		
 	def find_version( self, version ) :
 		for ver in self.all_versions() :

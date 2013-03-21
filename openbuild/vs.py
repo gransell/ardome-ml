@@ -24,7 +24,7 @@ class CompilerTool:
 				
 		precomp_flag, precomp_file = config.compiler_options.precompiled_header_source_file( the_file )
 		
-		if vsver == 'vs2008':
+		if vsver == 'vs2008' or vsver == 'vs2010' :
 			if precomp_flag == 3 : precomp_flag = 2
 		
 		return toolstr % ( precomp_flag, os.path.basename( precomp_file ), the_file.get_additional_cl_flags(config.name) ) 

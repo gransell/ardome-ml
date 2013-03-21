@@ -6,7 +6,10 @@ Import(['local_env'])
 
 local_env.packages( 'boost', 'boost_thread', 'boost_date_time', 'boost_system', 'loki', )
 options = local_env.optional( 'rubberband' )
-build = options[ 'have_rubberband' ]
+if local_env[ 'target'] == 'vs2010' :
+	build = False
+else :
+	build = options[ 'have_rubberband' ]
 
 if build:
 	src = [ 'plugin_rubberband.cpp' ]

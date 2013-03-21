@@ -9,18 +9,11 @@
 #include <opencorelib/cl/serializer.hpp>
 #include <opencorelib/cl/deserializer.hpp>
 
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-
-
 using std::ios_base;
 using std::istream;
 using std::istream_iterator;
 using std::ostream;
 using std::ostream_iterator;
-using namespace boost::archive::iterators;
-using namespace boost::archive::iterators;
 
 namespace olib{ namespace opencorelib{
 

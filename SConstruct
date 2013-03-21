@@ -27,6 +27,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 	def install_packages( self ):
 		if self[ 'target' ] == 'vs2003': pass
 		elif self[ 'target' ] == 'vs2008': pass
+		elif self[ 'target' ] == 'vs2010': pass
 		elif self[ 'target' ] == 'osx':
 			#self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
@@ -36,7 +37,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self[ 'target' ] == 'ubuntu32':
 			if os.path.exists( 'bcomp/boost' ):
 				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
-								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_signals.pc', 'boost_system.pc' ]:
+								 'boost_date_time.pc', 'boost_unit_test_framework.pc', 'boost.pc', 'boost_system.pc' ]:
 					self.install_config( 'config/ubuntu32/' + package, 'bcomp/boost' )
 			if os.path.exists( 'bcomp/ffmpeg' ):
 				self.install_config( 'config/ubuntu32/ffmpeg.pc', 'bcomp/ffmpeg' )
@@ -52,7 +53,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self.install_config( 'config/linux32/boost_filesystem.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_python.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_regex.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_signals.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_system.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_thread.pc', 'bcomp/boost' )
 				self.install_config( 'config/linux32/boost_unit_test_framework.pc', 'bcomp/boost' )
@@ -116,7 +116,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
 
-		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008':
+		if self[ 'target' ] == 'vs2003' or self[ 'target' ] == 'vs2008' or self [ 'target' ] == 'vs2010' :
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'site-packages' )
 		else:
 			version = sys.version_info
@@ -137,9 +137,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 
 	def check_externals( self ):
 		if self[ 'PLATFORM' ] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl", "uuid" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "libavformat", "loki", "xerces", "sdl", "uuid" )
 		else:
-			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "boost_python", "boost_signals", "libavformat", "loki", "xerces", "sdl" )
+			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
 		common = ' -DBOOST_FILESYSTEM_VERSION=2'

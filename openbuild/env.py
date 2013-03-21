@@ -195,6 +195,8 @@ class Environment( BaseEnvironment ):
 				self[ 'LINK' ] = 'llvm-g++'
 			else:
 				raise Exception( "Invalid compiler " )
+		elif self[ 'target' ] == 'vs2010' :
+			self.Append( CPPDEFINES = [ '_HAS_CPP0X=0' ] )
 
 		if self[ 'boost_assert_handler' ] == 'yes':
 			self.Append( CPPDEFINES = [ 'BOOST_ENABLE_ASSERT_HANDLER' ] )
