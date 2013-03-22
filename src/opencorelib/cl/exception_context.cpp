@@ -18,12 +18,12 @@ namespace olib
 {
 	namespace opencorelib
 	{
-        void ec_add_value(exception_context& ec, const char* exp,  char* const & obj)
+        void ec_add_value(exception_context& ec, const char* exp,  const char* obj)
         {
             ec.add_value( exp, str_util::to_t_string(obj));
         }
 
-        void ec_add_value(exception_context& ec, const char* exp,  wchar_t* const & obj)
+        void ec_add_value(exception_context& ec, const char* exp,  const wchar_t* obj)
         {
             ec.add_value( exp, str_util::to_t_string(obj));
         }
@@ -38,12 +38,12 @@ namespace olib
             ec.add_value( exp, str_util::to_t_string(obj));
         }
 
-        void ec_add_value_to_message( exception_context& ec, char* const & obj )
+        void ec_add_value_to_message( exception_context& ec, const char* obj )
         {
             ec.add_value_to_message( str_util::to_t_string(obj));
         }
 
-        void ec_add_value_to_message( exception_context& ec, wchar_t* const & obj )
+        void ec_add_value_to_message( exception_context& ec, const wchar_t* obj )
         {
             ec.add_value_to_message( str_util::to_t_string(obj));
         }

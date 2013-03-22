@@ -37,7 +37,7 @@ namespace olib
             /// Get a full path for app_name based on the current time.
             /** @param app_name Name of the application that wants to log.
                 @return A suitable file name. i.e. "my_log-2007-12-18-Mon.log" if app_name is "my_log" */
-            CORE_API t_string get_sutiable_logfile_name(const t_string& app_name );
+            CORE_API t_string get_suitable_logfile_name(const t_string& app_name );
 
             /// Formats a stringstream according to the given date and time formats.
             /** @param date_fmt A date format string according to boost::date_time.
@@ -63,12 +63,11 @@ namespace olib
 
             /// Creates a stream that is useful for log output.
             /** The function returns a stream object to log_file_path. 
-				If this directory doesn't exist it creates it.
-				Recommended usage is to call get_sutiable_logfile_name and pass 
-				the result of that function*/
-            CORE_API boost::shared_ptr< t_ofstream > 
-                get_default_log_stream(const olib::t_path& log_file_path);
-        }    
+                If this directory doesn't exist it creates it.
+                Recommended usage is to call get_sutiable_logfile_name and pass 
+                the result of that function*/
+			CORE_API void get_default_log_stream(const olib::t_path& log_file_path, std::ofstream &result);
+        }
     }
 }
 

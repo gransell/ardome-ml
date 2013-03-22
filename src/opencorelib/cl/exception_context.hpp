@@ -232,10 +232,10 @@ namespace olib
         }
 
         /// Specialization for char pointers.
-        CORE_API void ec_add_value( exception_context& ec, const char* exp, char* const & obj );
+        CORE_API void ec_add_value( exception_context& ec, const char* exp, const char* obj );
 
         /// Specialization for wchar_t pointers.
-        CORE_API void ec_add_value( exception_context& ec, const char* exp, wchar_t* const & obj );
+        CORE_API void ec_add_value( exception_context& ec, const char* exp, const wchar_t* & obj );
 
         /// Specialization for strings. 
         CORE_API void ec_add_value( exception_context& ec, const char* exp, const std::wstring& obj);
@@ -249,10 +249,10 @@ namespace olib
         }
 
         /// Specialization for char pointers.
-        CORE_API void ec_add_value_to_message( exception_context& ec, char* const & obj );
+        CORE_API void ec_add_value_to_message( exception_context& ec, const char* obj );
 
         /// Specialization for wchar_t pointers.
-        CORE_API void ec_add_value_to_message( exception_context& ec, wchar_t* const & obj );
+        CORE_API void ec_add_value_to_message( exception_context& ec, const wchar_t* obj );
 
         /// Specialization for strings. 
         CORE_API void ec_add_value_to_message( exception_context& ec, const std::wstring& obj);
