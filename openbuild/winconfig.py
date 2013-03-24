@@ -101,13 +101,14 @@ class WinConfig :
 			if 'flags' in namespace.keys( ):
 				namespace[ 'flags' ]( env, prefix )
 			
-	def packages( self, env, *packages ):
+	def packages( self, env, *packages, **kwargs ):
 		"""Add packages to the environment"""
 		env.checked = []
 		try:
 			env.requires( *packages )
 		except PackageNotFoundException, exc:
-			print "Exception when locating package:", exc.package_name
+			if kwargs.get( 'optional', False ) == False:
+				print "Exception when locating package:", exc.package_name
 			raise exc
 		
 	def optional( self, env, *packages ):
@@ -116,7 +117,7 @@ class WinConfig :
 		result = {}
 		for package in packages:
 			try:
-				env.packages( package )
+				self.packages( env, package, optional = True )
 				result[ 'have_' + package ] = 1
 			except PackageNotFoundException, e:
 				result[ 'have_' + package ] = 0
