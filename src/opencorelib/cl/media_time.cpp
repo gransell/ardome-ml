@@ -1,11 +1,6 @@
 #include "precompiled_headers.hpp"
 #include "media_time.hpp"
 
-#include "assert_defines.hpp"
-#include "assert.hpp"
-#include "log_defines.hpp"
-
-
 namespace olib
 {
    namespace opencorelib

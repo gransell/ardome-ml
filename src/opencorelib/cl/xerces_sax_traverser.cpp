@@ -4,19 +4,6 @@
 
 #include <numeric>
 
-#include "./enforce_defines.hpp"
-#include "./enforce.hpp"
-#include "./assert_defines.hpp"
-#include "./assert.hpp"
-#include "./string_defines.hpp"
-#include "./str_util.hpp"
-#include "./string_conversions.hpp"
-#include "./log_defines.hpp"
-#include "./logger.hpp"
-#include "./loghandler.hpp"
-#include "./exception_context.hpp"
-#include "./machine_readable_errors.hpp"
-
 using namespace olib::opencorelib::str_util;
 using namespace XERCES_CPP_NAMESPACE;
 

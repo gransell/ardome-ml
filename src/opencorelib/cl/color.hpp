@@ -1,9 +1,6 @@
 #ifndef _CORE_COLOR_H_
 #define _CORE_COLOR_H_
 
-#include <vector>
-#include "worker.hpp"
-
 namespace olib
 {
    namespace opencorelib

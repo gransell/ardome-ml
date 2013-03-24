@@ -1,9 +1,6 @@
 #include "precompiled_headers.hpp"
 #include "./color.hpp"
 
-#include "./enforce_defines.hpp"
-#include "./enforce.hpp"
-
 namespace olib
 {
    namespace opencorelib
