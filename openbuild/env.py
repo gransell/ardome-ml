@@ -328,15 +328,16 @@ class Environment( BaseEnvironment ):
 		elif self.debug_install: builds.pop( 0 )
 		return builds
 
-	def warnings_as_errors( self ):
-		cpp_compiler = self.subst( self[ 'CXX' ] )
-		if cpp_compiler == 'cl': #Visual Studio
-			self.Append( CPPFLAGS = '/WX' )
-			self.Append( LINKFLAGS = '/WX' )
-		elif cpp_compiler == 'g++':
-			self.Append( CPPFLAGS = '-Werror' )
-		else:
-			raise Exception, 'warnings_as_errors() not implemented for compiler "%s". Please add the appropriate flags' % cpp_compiler
+	def warnings_as_errors( self, targets = None ):
+		if targets is None or self[ 'target' ] in targets:
+			cpp_compiler = self.subst( self[ 'CXX' ] )
+			if cpp_compiler == 'cl': #Visual Studio
+				self.Append( CPPFLAGS = '/WX' )
+				self.Append( LINKFLAGS = '/WX' )
+			elif cpp_compiler == 'g++':
+				self.Append( CPPFLAGS = '-Werror' )
+			else:
+				raise Exception, 'warnings_as_errors() not implemented for compiler "%s". Please add the appropriate flags' % cpp_compiler
 
 	def package_install( self ):
 		"""	Installs includes, libs and frameworks listed in .pc files. """
