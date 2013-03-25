@@ -194,11 +194,54 @@ class VS2008 :
 	def solution_file_header( self ) :
 		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
 		
+class VS2010 :
+	
+	def version_string( self ) :
+		return "10,00"
+		
+	def compiler_tool( self, project, config, options ):
+		tool_str = """ <Tool
+					Name="VCCLCompilerTool"
+					AdditionalOptions="%s"
+					AdditionalIncludeDirectories="%s"
+					PreprocessorDefinitions="%s"
+					ExceptionHandling="%s"
+					RuntimeLibrary="%s"
+					RuntimeTypeInfo="%s"
+					UsePrecompiledHeader="%s"
+					PrecompiledHeaderThrough="%s"
+					WarningLevel="%s"
+					DebugInformationFormat="%s"/> """
+
+		
+		return tool_str % ( options.additional_options,
+							options.include_directories_as_string( project.root_dir),
+							options.preprocessor_flags_as_string(),
+							options.exception_handling(),
+							options.runtime_library( config.name ),
+							options.runtime_type_info_as_string(),
+							options.use_precompiled_headers(),
+							os.path.basename( options.precompiled_header_file() ),
+							options.warning_level,
+							options.debug_information_format( config.name) )
+										
+	def file_configuration( self, config, the_file, filetype ) :
+		if filetype == "source" or filetype == "header" or filetype == "resource":
+			res = "<FileConfiguration Name=\"" + config.name + "\">"
+			for tool in the_file.get_tools(config) :
+				res += tool.to_tool_xml( the_file, config, "vs2010" )
+			res += "</FileConfiguration>\n"
+			return res		
+		else : return ""	
+		
+	def solution_file_header( self ) :
+		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2010"
 		
 def create_visual_studio( ver ) :
 	if ver == "vs2003" : return VS2003()
 	if ver == "vs2008" : return VS2008()
 	if ver == "vs2008express" : return VS2008()
+	if ver == "vs2010" : return VS2010()
 	raise Exception, "Unsupported vs version %s " % ver
 		
 

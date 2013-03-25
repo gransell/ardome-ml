@@ -18,8 +18,8 @@ void TestExplicitStepInvoker()
     invoker_ptr n_inv( new non_invoker() );
     explicit_step_invoker invoker( n_inv );
     int n_calls = 0;
-    invoker.invoke(bind(inc, &n_calls));
-    invoker.invoke(bind(inc, &n_calls));
+    invoker.invoke(boost::bind(inc, &n_calls));
+    invoker.invoke(boost::bind(inc, &n_calls));
     BOOST_CHECK_EQUAL(0, n_calls);
     invoker.step();
     BOOST_CHECK_EQUAL(2, n_calls);
@@ -34,9 +34,9 @@ void TestExplicitStepInvokerSafe()
     invoker_ptr n_inv( new non_invoker() );
     explicit_step_invoker invoker( n_inv );
     int n_calls = 0;
-    invoker.invoke(bind(&inc, &n_calls));
+    invoker.invoke(boost::bind(&inc, &n_calls));
     invoker.invoke(&bad_function);
-    invoker.invoke(bind(&inc, &n_calls));
+    invoker.invoke(boost::bind(&inc, &n_calls));
     BOOST_CHECK_EQUAL(0, n_calls);
     invoker.step();
     BOOST_CHECK_EQUAL(2, n_calls);
@@ -55,9 +55,9 @@ void test_non_blocking_invoke()
      int n_calls = 0;
      
      invoke_callback_function_ptr cb( 
-         new invoke_callback_function(bind( &result_callback, boost::ref(cb_called), _1, _2 )) );
+         new invoke_callback_function(boost::bind( &result_callback, boost::ref(cb_called), _1, _2 )) );
 
-     invoker.non_blocking_invoke(bind(&inc, &n_calls), cb);
+     invoker.non_blocking_invoke(boost::bind(&inc, &n_calls), cb);
      
      BOOST_CHECK_EQUAL( 0, n_calls);
      invoker.step();

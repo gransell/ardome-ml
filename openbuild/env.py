@@ -195,8 +195,6 @@ class Environment( BaseEnvironment ):
 				self[ 'LINK' ] = 'llvm-g++'
 			else:
 				raise Exception( "Invalid compiler " )
-		elif self[ 'target' ] == 'vs2010' :
-			self.Append( CPPDEFINES = [ '_HAS_CPP0X=0' ] )
 
 		if self[ 'boost_assert_handler' ] == 'yes':
 			self.Append( CPPDEFINES = [ 'BOOST_ENABLE_ASSERT_HANDLER' ] )
@@ -261,7 +259,7 @@ class Environment( BaseEnvironment ):
 			# /GR = Enable Runtime Type Information 
 			# /EHa Enable C++ Exceptions, and make the native destructors run even when called from .NET
 			# /MDd Multi Threaded Debug Dll Runtime
-			self.Append( CCFLAGS = [ '/W3', '/Od', '/GR', '/EHa', '/MDd' ] )
+			self.Append( CCFLAGS = [ '/W3', '/Od', '/GR', '/EHa', '/MDd', '/Zm150' ] )
 			self.Append( LINKFLAGS = [ '/DEBUG' ] )
 		else:
 			raise( 'Unknown platform: %s', self[ 'PLATFORM' ] )

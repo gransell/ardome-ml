@@ -110,9 +110,8 @@ namespace olib
 		template <typename T>
 		void windows_selection_dialog<T>::unregister_window(windows_selection_dialog<T>& sd)
 		{
-			using boost::ref; using boost::bind;
 			std::list< windows_selection_dialog<T>* >::iterator fit;
-			fit = std::find_if(m_dialogs.begin(), m_dialogs.end(), bind(compare, _1, sd.m_hwnd ));
+			fit = std::find_if(m_dialogs.begin(), m_dialogs.end(), boost::bind(compare, _1, sd.m_hwnd ));
 			if( fit != m_dialogs.end()) 
 			{
 				m_dialogs.erase(fit);
@@ -131,7 +130,7 @@ namespace olib
 		BOOL CALLBACK windows_selection_dialog<T>::select_dlg_proc(HWND hwnd, UINT Message, WPARAM w_param, LPARAM l_param)
 		{
 			std::list< windows_selection_dialog<T>* >::iterator fit;
-			fit = std::find_if(m_dialogs.begin(), m_dialogs.end(), bind(compare, _1, hwnd));
+			fit = std::find_if(m_dialogs.begin(), m_dialogs.end(), boost::bind(compare, _1, hwnd));
 			if( fit != m_dialogs.end()) 
 			{
 				return (*fit)->dlg_proc(Message, w_param, l_param);
@@ -365,9 +364,8 @@ namespace olib
 		template <typename T>
 		void windows_selection_dialog<T>::message( const t_string& m)
 		{
-			using boost::ref; using boost::bind;
 			m_message.clear();
-			std::for_each(m.begin(), m.end(), bind( add_carriage_return, _1, ref(m_message)));
+			std::for_each(m.begin(), m.end(), boost::bind( add_carriage_return, _1, boost::ref(m_message)));
 		}
 
 		template <typename T>

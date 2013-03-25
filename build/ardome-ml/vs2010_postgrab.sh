@@ -137,10 +137,10 @@ cd ..
 if [ ! -d owl ]; then
 	
 	echo "Extracting OWL [~3 MB]..."
-	unzip -oq tmp/owl-vs2008.zip
+	unzip -oq tmp/owl-vs2010.zip
 
 	if [ ! $? == 0 ]; then
-          echo "Failed to run unzip unzip -oq tmp/owl-vs2008.zip. Terminating."
+          echo "Failed to run unzip unzip -oq tmp/owl-vs2010.zip. Terminating."
           exit
         fi
 fi
