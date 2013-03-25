@@ -52,9 +52,9 @@ namespace olib
             using namespace boost::date_time;
             using namespace boost::posix_time;
 
-			//Clear out the stream before using it
-			ss.str(_CT(""));
-			ss.clear();
+            //Clear out the stream before using it
+            ss.str(_CT(""));
+            ss.clear();
 
             ptime now = boost::posix_time::microsec_clock::local_time();
             std::locale loc = ss.getloc();
@@ -116,7 +116,7 @@ namespace olib
             }
         }
 
-        t_string log_utilities::get_sutiable_logfile_name(const t_string& app_name )
+        t_string log_utilities::get_suitable_logfile_name(const t_string& app_name )
         {
             using namespace boost::posix_time;
             ptime now = second_clock::local_time();
@@ -134,18 +134,14 @@ namespace olib
 
             t_format file_name(_CT("%s.%s.log"));
             file_name % app_name % ss.str(); 
-			return file_name.str();
+            return file_name.str();
         }
 
-        boost::shared_ptr< t_ofstream > log_utilities::get_default_log_stream(const olib::t_path& log_file_path)
+        void log_utilities::get_default_log_stream(const olib::t_path& log_file_path, std::ofstream &result)
         {
             utilities::make_sure_path_exists( log_file_path.parent_path() );
             
-            if( fs::exists( log_file_path ))
-                return boost::shared_ptr< t_ofstream >( new t_ofstream(log_file_path.string().c_str(), std::ios_base::app ));
-            else
-                return boost::shared_ptr< t_ofstream >( new t_ofstream(log_file_path.string().c_str()));
-            
+            result.open( to_string( log_file_path.string() ).c_str(), std::ios_base::app | std::ios_base::binary );
         }
     }
 }

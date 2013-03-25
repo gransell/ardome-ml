@@ -15,10 +15,21 @@
 #
 # AML integration notes: 
 # - It is assumed that the PAL restriction intimated there relates to the -r 25 switch
-# - the -dc 10 combination should correlate to 'video_intra_dc_precision = 10', but this is causing the encoder to seg
-#   fault more investigation is needed for this one
+# - The -dc 10 parameter correlates to the actual Intra DC precision value, but the codec expects the bit pattern
+#   of the dc_precision flag in the MPEG header (see also ISO/IEC 13818-2, chapt. 6.3.10, table 6-13):
+#   ---------------------------------------------------------------
+#   Intra DC precision value | video_intra_dc_precision bit pattern
+#   8                          00b = 0
+#   9                          01b = 1
+#   10                         10b = 2
+#   11                         11b = 3
+#   ---------------------------------------------------------------
+#   The ffmpeg binary itself does the translation from value to pattern, but since we set values on the codec
+#   directly, we must specify the bit pattern. Thus, we set video_intra_dc_precision to 2, which corresponds
+#   to -dc 10.
 
 video_codec = mpeg2video
+
 video_bit_rate = 50000000
 video_rc_min_rate = 50000000
 video_rc_max_rate = 50000000
@@ -27,10 +38,9 @@ video_rc_max_available_vbv_use = 1
 # video_flags |= CODEC_FLAG_INTERLACED_DCT | CODEC_FLAG_LOW_DELAY
 video_flags |= 0x00040000
 video_flags |= 0x00080000
-video_intra_dc_precision = 1
-# video_flags2 |= CODEC_FLAG2_INTRA_VLC | CODEC_FLAG2_NON_LINEAR_QUANT
-video_flags2 |= 0x00000800
-video_flags2 |= 0x00010000
+video_intra_dc_precision = 2
+video_non_linear_quant = 1
+video_intra_vlc = 1
 video_qmin = 1
 video_qmax = 3
 video_rtp_payload_size = 1

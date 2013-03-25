@@ -50,6 +50,9 @@
 
 namespace aml { namespace openmedialib {
 
+typedef std::vector< ml::frame_type_ptr >::iterator frame_vec_it;
+typedef std::vector< ml::frame_type_ptr >::reverse_iterator frame_vec_rev_it;
+
 static pl::pcos::key key_z_( pcos::key::from_string( "z" ) );
 static pl::pcos::key key_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) );
 static pl::pcos::key key_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) );
@@ -532,113 +535,114 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				if ( result == 0 )
 					result = ml::frame_type_ptr( new ml::frame_type( ) );
 
-				// Avoid compositing if backgrounds match and geometry is covers background
-				if ( result && 
-					 !frames.empty( ) && 
-					 result->properties( ).get_property_with_key( key_is_background_ ).valid( ) )
-				{
-					ml::frame_type_ptr frame = frames[ 0 ];
-
-					//If we didn't explicitly set a sar value for the background,
-					//we'll inherit the one from the first input source
-					if ( result->get_sar_num() == -1 && frame->get_sar_num() != -1 )
-					{
-						result->set_sar(frame->get_sar_num(), frame->get_sar_den());
-					}
-
-					if ( frame->width( ) == result->width( ) &&
-						 frame->height( ) == result->height( ) &&
-						 frame->get_sar_num( ) == result->get_sar_num( ) &&
-						 frame->get_sar_den( ) == result->get_sar_den( ) && 
-						 get_prop< double >( frame, key_x_, 0.0 ) == 0.0 &&
-						 get_prop< double >( frame, key_y_, 0.0 ) == 0.0 &&
-						 get_prop< double >( frame, key_w_, 1.0 ) == 1.0 &&
-						 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
-						 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
-						 matching_modes( frame, result ) &&
-						 !frame->get_alpha( ) )
-					{
-						ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->pf() );
-						if ( frame->pf() == result->pf() || prop_ignore_pf_.value< int >( ) )
-							result = frame;
-						else
-							result = ml::frame_convert( frame, result->pf( ) );
-						
-						frames.erase( frames.begin( ) );
-					}
-					else
-					{
-						ARLOG_DEBUG7( "Foreground mismatch %d" )( get_position( ) );
-					}
-				}
-
-				// Provide basic mixing capabilities in deferred mode
+				// Provide basic audio mixing capabilities. This needs to be done before the video
+				// composite logic below, since that might exclude video frames which are obscured,
+				// but their audio still needs to be heard.
 				ml::audio_type_ptr audio;
 				if( result->has_audio( ) )
 				{
 					audio = result->get_audio( );
 				}
 
+				for( frame_vec_it iter = frames.begin( ); iter != frames.end( ); ++iter )
+				{
+					if ( audio && ( *iter )->get_audio( ) )
+						audio = ml::audio::mixer( audio, ( *iter )->get_audio( ) );
+					else if ( !audio && ( *iter )->get_audio( ) )
+						audio = ( *iter )->get_audio( );
+				}
+
+				if ( result && result->properties( ).get_property_with_key( key_is_background_ ).valid( ) )
+				{
+					//Go through the frames from top to bottom z order and see if one of them
+					//completely obscures everything under it by matching the background
+					//dimensions and by having no alpha channel or alpha mix value.
+					//If it does, we can save time by not compositing anything below it,
+					//since it'll be invisible anyway. If the frame has an encoded video
+					//stream attached to it, this also allows us to reuse that as-is without
+					//any re-encoding.
+					for( frame_vec_rev_it rev_it = frames.rbegin(); rev_it != frames.rend(); ++rev_it )
+					{
+						const ml::frame_type_ptr &frame = *rev_it;
+
+						//If we didn't explicitly set a sar value for the background,
+						//we'll inherit the one from the first input source
+						if ( result->get_sar_num() == -1 && frame->get_sar_num() != -1 )
+						{
+							result->set_sar(frame->get_sar_num(), frame->get_sar_den());
+						}
+
+						if ( frame->width( ) == result->width( ) &&
+							 frame->height( ) == result->height( ) &&
+							 frame->get_sar_num( ) == result->get_sar_num( ) &&
+							 frame->get_sar_den( ) == result->get_sar_den( ) && 
+							 get_prop< double >( frame, key_x_, 0.0 ) == 0.0 &&
+							 get_prop< double >( frame, key_y_, 0.0 ) == 0.0 &&
+							 get_prop< double >( frame, key_w_, 1.0 ) == 1.0 &&
+							 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
+							 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
+							 matching_modes( frame, result ) &&
+							 !frame->get_alpha( ) )
+						{
+							//This frame completely obscures everything below it.
+							//We make this the new background frame and remove all the frames
+							//below it in the z-ordered frame list.
+
+							ARLOG_DEBUG7( "Foreground match %d %s" )( get_position( ) )( frame->pf() );
+							if ( frame->pf() == result->pf() || prop_ignore_pf_.value< int >( ) )
+								result = frame;
+							else
+								result = ml::frame_convert( frame, result->pf( ) );
+							
+							frames.erase( frames.begin(), rev_it.base() );
+							break;
+						}
+						else
+						{
+							ARLOG_DEBUG7( "Foreground mismatch %d" )( get_position( ) );
+						}
+					}
+				}
+
 				// Ignore deferred when running in muxer mode
 				bool deferred = prop_deferred_.value< int >( ) != 0 && resource_ == L"compositor";
 				pl::pcos::property vitc( key_vitc_image_ );
 
-				// Composite in z order
-				for( std::vector< ml::frame_type_ptr >::iterator iter = frames.begin( ); iter != frames.end( ); ++iter )
+				// Composite in bottom to top z order
+				for( frame_vec_it iter = frames.begin( ); iter != frames.end( ); ++iter )
 				{
-					if ( !deferred )
+					if ( ( *iter )->has_image( ) )
 					{
-						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
+						if( deferred )
 						{
+							//Deferred mode; just add this frame to the queue on the root frame.
+							//The store is responsible for compositing them.
+							result->push( *iter );
+						}
+						else
+						{
+							//Non-deferred mode. Do the composite ourselves.
 							pusher_0_->push( ml::frame_type_ptr( ) );
 							pusher_1_->push( ml::frame_type_ptr( ) );
 							pusher_0_->push( result );
 							pusher_1_->push( *iter );
 							composite_->seek( get_position( ) );
 							result = composite_->fetch( );
-
-							//Relay all properties
-							pcos::key_vector keys = (*iter)->properties().get_keys();
-							const pcos::property_container &props = (*iter)->properties();
-							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
-							for( ; cit != eit; ++cit )
-							{
-								if( !is_consumed_property( *cit ) )
-								{
-									pcos::property pcos_prop = props.get_property_with_key(*cit);
-									if( !pcos_prop.valid() ) continue;
-									result->properties( ).append( pcos_prop );
-								}
-							}
 						}
-					}
-					else
-					{
-						if ( audio && ( *iter )->get_audio( ) )
-							audio = ml::audio::mixer( audio, ( *iter )->get_audio( ) );
-						else if ( !audio && ( *iter )->get_audio( ) )
-							audio = ( *iter )->get_audio( );
-						if ( ( *iter )->has_image( ) || ( *iter )->get_audio( ) )
+
+						//Relay all properties
+						pcos::key_vector keys = (*iter)->properties().get_keys();
+						const pcos::property_container &props = (*iter)->properties();
+						pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
+						for( ; cit != eit; ++cit )
 						{
-
-							//Relay all properties
-							pcos::key_vector keys = (*iter)->properties().get_keys();
-							const pcos::property_container &props = (*iter)->properties();
-							pcos::key_vector::const_iterator cit( keys.begin()), eit(keys.end());
-							for( ; cit != eit; ++cit )
+							if( !is_consumed_property( *cit ) )
 							{
-								if( !is_consumed_property( *cit ) )
-								{
-									pcos::property pcos_prop = props.get_property_with_key(*cit);
-									if( !pcos_prop.valid() ) continue;
-									result->properties( ).append( pcos_prop );
-								}
+								pcos::property pcos_prop = props.get_property_with_key(*cit);
+								if( !pcos_prop.valid() ) continue;
+								result->properties( ).append( pcos_prop );
 							}
-                            
-							result->push( *iter );
 						}
-						if ( audio )
-							result->set_audio( audio );
 					}
 
 					/* We set the VITC based on the active_on_timeline property and
@@ -657,6 +661,9 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						vitc = ( *iter )->property_with_key( key_vitc_image_ ).value< il::image_type_ptr >( );
 					}
 				}
+
+				if ( audio )
+					result->set_audio( audio );
 
 				if ( vitc.is_a< il::image_type_ptr >( ) )
 				{

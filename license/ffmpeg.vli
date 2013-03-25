@@ -1,0 +1,135 @@
+{
+	"FFmpeg": 
+	{
+		"organisation": "www.ffmpeg.org",
+		"license-type": "LGPL",
+		"license-version": "3",
+		"license-file": "lgpl-3.0.txt",
+		"branch": "bzr://bzr.ardendo.se/data/bzr/external/ffmpeg/ffmpeg-aml-1_10/",
+		"employee-contact": "jot@vizrt.com",
+		"employee-role": "R&D",
+		"issues": ""
+	},
+	"zlib":
+	{
+		"organisation": "www.gzip.org",
+		"license-type": "Custom",
+		"license-file": "zlib.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/zlib-1.2.7.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": ""
+	},
+	"lame":
+	{
+		"organisation": "lame.sourceforge.net",
+		"license-type": "LGPL",
+		"license-version": "2",
+		"license-file": "lame.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/lame-3.99.5.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"ogg":
+	{
+		"organisation": "www.vorbis.com",
+		"license-type": "BSD",
+		"license-file": "ogg.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libogg-1.3.0.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"theora":
+	{
+		"organisation": "www.vorbis.com",
+		"license-type": "BSD",
+		"license-file": "theora.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libtheora-1.1.1.tar.bz2",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"vorbis":
+	{
+		"organisation": "www.vorbis.com",
+		"license-type": "BSD",
+		"license-text": "http://www.vorbis.com/faq/#slic",
+		"license-file": "vorbis.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libvorbis-1.3.3.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"vpx":
+	{
+		"organisation": "www.webmproject.org",
+		"license-type": "BSD",
+		"license-file": "vpx.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/libvpx-v1.1.0.tar.bz2", 
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"jpeg":
+	{
+		"organisation": "sourceforge.net/projects/libjpeg",
+		"license-file": "jpeg.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/jpegsrc.v9.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"openjpeg":
+	{
+		"organisation": "www.openjpeg.org",
+		"license-file": "openjpeg.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/openjpeg-1.5.1.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"vo-aacenc": 
+	{
+		"organisation": "sourceforge.net/projects/opencore-amr/files/vo-aacenc",
+		"license-type": "LGPL",
+		"license-version": "3.0",
+		"license-file": "lgpl-3.0.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/vo-aacenc-0.1.2.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"alsa":
+	{
+		"organisation": "www.alsa-project.org",
+		"license-type": "LGPL",
+		"license-version": "2.1",
+		"license-file": "lgpl-2.1.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/alsa-lib-1.0.13.tar.bz2",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"SDL":
+	{
+		"organisation": "www.libsdl.org",
+		"license-type": "LGPL",
+		"license-version": "2.1",
+		"license-file": "lgpl-2.1.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/SDL-1.2.15.tar.gz",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": ""
+	}
+}

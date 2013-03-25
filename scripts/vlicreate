@@ -1,0 +1,193 @@
+#!/usr/bin/env python
+
+import os
+import fnmatch
+import json
+import sys
+import shutil
+
+def usage( ):
+	print "Usage: %s --target=<target> --build=<release|debug>" % sys.argv[ 0 ]
+	sys.exit( 1 )
+
+def parse_args( args ):
+	target, build = '','' 
+	for arg in args:
+		if arg.startswith( '--target=' ): target = arg[ len( '--target=' ) : ]
+		elif arg.startswith( '--build=' ): build = arg[ len( '--build=' ) : ]
+		else: usage( )
+	if target == '' or build == '': usage( )
+	return target, build
+
+def create_license_dir( target, build ):
+	build_dir = 'build/%s/%s' % ( build, target )
+	if not os.path.exists( build_dir ): usage( )
+	license_dir = '%s/license' % build_dir
+	if os.path.isdir( license_dir ): shutil.rmtree( license_dir )
+	os.mkdir( license_dir )
+	return license_dir
+
+def find_files( dir, pattern ):
+	for root, dirs, files in os.walk( dir, followlinks = True ):
+		if root.startswith( './.' ) or root.startswith( './build' ): continue
+		if root.startswith( '.\\.' ) or root.startswith( '.\\build' ): continue
+		for basename in files:
+			if fnmatch.fnmatch( basename, pattern ):
+				filename = os.path.join( root, basename )
+				yield filename
+
+def check_license( entries, path ):
+	for k in entries:
+		entries[ k ][ 'license-file' ] = os.path.join( path, entries[ k ][ 'license-file' ] )
+
+def find_vli( ):
+	contents = { }
+	for f in find_files( ".", "*.vli" ):
+		entries = json.load( open( f ) )
+		path, file = os.path.dirname( os.path.abspath( f ) ), os.path.basename( f )
+		check_license( entries, path )
+		contents.update( entries )
+	return contents
+
+def is_relevant( license, target ):
+	result = not 'targets' in license
+	if not result:
+		for pattern in license[ 'targets' ]:
+			result = result or fnmatch.fnmatch( target, pattern )
+	return result
+
+def distribute_vli( contents, license_dir ):
+	count = 0
+	for k, v in sorted( contents.iteritems( ) ):
+		shutil.copy( v[ 'license-file' ], '%s/%d.txt' % ( license_dir, count ) )
+		v[ 'license-file' ] = '%d.txt' % count
+		count += 1
+	fd = open( '%s/license.vli' % license_dir, 'w' )
+	json.dump( contents, fd, sort_keys = True, indent = 4 )
+	fd.close( )
+
+target, build = parse_args( sys.argv[ 1 : ] )
+license_dir = create_license_dir( target, build )
+contents = find_vli( )
+
+sys.stdout = open( '%s/license.html' % license_dir, 'w' )
+
+print """<html>
+<head>
+<meta charset="utf-8">
+<title>Credits</title>
+<style>
+body {
+  font-family:Helvetica,Arial,sans-serif;
+  background-color:white;
+  font-size:84%;
+  max-width:1020px;
+}
+.page-title {
+  font-size:164%;
+  font-weight:bold;
+}
+.product {
+  background-color:#c3d9ff;
+  overflow:auto;
+  padding:2px;
+  margin-top:16px;
+  border-radius:5px;
+}
+.product .title {
+  font-size:110%;
+  font-weight:bold;
+  float:left;
+  margin:3px;
+}
+.product .homepage {
+  text-align:right;
+  float:right;
+  margin:3px;
+}
+.product .homepage::after {
+  content:" - ";
+}
+.product .show {
+  text-align:right;
+  float:right;
+  margin:3px;
+}
+.licence {
+  clear:both;
+  background-color:#e8eef7;
+  padding:16px;
+  border-radius:3px;
+  display:none;
+}
+.licence h3 {
+  margin-top:0px;
+}
+</style>
+</head>
+<body>
+<span class="page-title" style="float:left;">Credits</span>
+<a id="print-link" href="#" style="float:right;">Print</a>
+<div style="clear:both; overflow:auto;">
+"""
+
+for k, v in sorted( contents.iteritems( ) ):
+	if is_relevant( v, target ): print """
+<div class="product">
+<span class="title">%s</span>
+<a class="show" href="#">show license</a>
+<span class="homepage"><a href="http://%s">homepage</a></span>
+<div class="licence">
+<pre>
+%s
+</pre>
+</div>
+</div>
+""" % ( k, v[ 'organisation' ], open( v[ 'license-file' ] ).read( ) )
+
+print """
+<script>
+// Copyright (c) 2011 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+function $(o) {return document.getElementById(o);}
+
+function toggle(o) {
+  var licence = o.nextSibling;
+
+  while (licence.className != 'licence') {
+    if (!licence) return false;
+    licence = licence.nextSibling;
+  }
+
+  if (licence.style && licence.style.display == 'block') {
+    licence.style.display = 'none';
+    o.innerHTML = 'show license';
+  } else {
+    licence.style.display = 'block';
+    o.innerHTML = 'hide license';
+  }
+  return false;
+}
+
+document.body.onload = function () {
+  var links = document.getElementsByTagName("a");
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].className === "show") {
+      links[i].onclick = function () { return toggle(this); };
+    }
+  }
+
+  $("print-link").onclick = function () {
+    window.print();
+    return false;
+  }
+};
+</script>
+</body>
+</html>
+"""
+
+distribute_vli( contents, license_dir )
+

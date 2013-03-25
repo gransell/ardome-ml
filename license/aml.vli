@@ -1,0 +1,53 @@
+{
+	"boost":
+	{
+		"organisation": "www.boost.org",
+		"license-type": "Boost Software License",
+		"license-version": "1.0",
+		"license-file": "boost-1.0.txt",
+		"local": "bzr://repos.ardendo.se/blah",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": ""
+	},
+	"x264":
+	{
+		"organisation": "www.videolan.org/developers/x264.html",
+		"license-file": "vizrt-gpl-2.txt",
+		"local": "http://releases.ardendo.se/releases/external-source/amf-dependencies/x264-2012-11-09.tar.bz2",
+		"employee": "jot@vizrt.com",
+		"role": "R&D",
+		"issues": "",
+		"targets": [ "linux*", "ubuntu*" ]
+	},
+	"loki":
+	{
+		"organisation": "loki-lib.sourceforge.net",
+		"license-file": "mit.txt",
+		"license-type": "MIT"
+	},
+	"rubberband":
+	{
+		"organisation": "breakfastquay.com/rubberband/",
+		"license-file": "vizrt-gpl-2.txt",
+		"license-type": ""
+	},
+	"cairo":
+	{
+		"organisation": "cairographics.org",
+		"license-file": "lgpl-2.1.txt",
+		"license-type": "LGPL"
+	},
+	"librsvg":
+	{
+		"organisation": "live.gnome.org/LibRsvg",
+		"license-file": "lgpl-2.1.txt",
+		"license-type": "LGPL"
+	},
+	"xercesc":
+	{
+		"organisation": "xerces.apache.org",
+		"license-file": "apache-2.0.txt",
+		"license-type": "Apache"
+	}
+}
