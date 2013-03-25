@@ -2312,7 +2312,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if ( position < first && position < last )
 					images_.clear( );
 				else if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || images_.size( ) > prop_gop_cache_.value< int >( ) )
-					images_.erase( images_.begin( ) );
+					if ( ( *images_.begin( ) )->position( ) < get_position( ) )
+						images_.erase( images_.begin( ) );
 			}
 
 			AVStream *stream = get_video_stream( );
@@ -2582,7 +2583,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				int first = audio_[ 0 ]->position( );
 				if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || audio_.size( ) > prop_gop_cache_.value< int >( ) )
-					audio_.erase( audio_.begin( ) );
+					if ( ( *audio_.begin( ) )->position( ) < get_position( ) )
+						audio_.erase( audio_.begin( ) );
 			}
 
 			audio_.push_back( aud );
