@@ -1,6 +1,17 @@
 #!/bin/bash
+if [ $# -ne 1 ]; then
+    echo "Usage: vs_build_step.sh target (vs2008 or vs2010)"
+    exit 1
+fi
 
-echo "Trying to build ardome-ml-vs2008.zip target, creating directory named TMPZIP..."
+if [ $1 != "vs2008" -a $1 != "vs2010" ]; then
+    echo "Unknown target: $1"
+    exit 1
+fi
+
+TARGET=$1
+
+echo "Trying to build ardome-ml-$TARGET.zip target, creating directory named TMPZIP..."
 rm -rf TMPZIP
 
 mkdir TMPZIP || exit 1
@@ -19,8 +30,8 @@ mkdir TMPZIP/aml/py || exit 1
 mkdir TMPZIP/aml/doc/ || exit 1
 
 echo "Adding release files..."
-cp -r build/release/vs2008/bin/* TMPZIP/aml/bin/release/
-cp -r build/release/vs2008/lib/* TMPZIP/aml/lib/release/
+cp -r build/release/$TARGET/bin/* TMPZIP/aml/bin/release/
+cp -r build/release/$TARGET/lib/* TMPZIP/aml/lib/release/
 
 if [ ! $? == 0 ]; then
 	echo "Failed to copy release files"
@@ -28,10 +39,10 @@ if [ ! $? == 0 ]; then
 fi
 	  
 echo "Adding debug files..."
-cp -r build/debug/vs2008/bin/* TMPZIP/aml/bin/debug/
-cp -r build/debug/vs2008/lib/* TMPZIP/aml/lib/debug/
+cp -r build/debug/$TARGET/bin/* TMPZIP/aml/bin/debug/
+cp -r build/debug/$TARGET/lib/* TMPZIP/aml/lib/debug/
 
-cp bcomp/vs2008/ffmpeg/lib/*.lib TMPZIP/aml/lib/
+cp bcomp/$TARGET/ffmpeg/lib/*.lib TMPZIP/aml/lib/
 
 if [ ! $? == 0 ]; then
 	echo "Failed to copy debug files"
@@ -39,8 +50,8 @@ if [ ! $? == 0 ]; then
 fi
 
 echo "Adding ASTs and python files for wrappers..."
-cp -r build/debug/vs2008/asts/* TMPZIP/aml/asts/
-cp -r build/debug/vs2008/py/* TMPZIP/aml/py/
+cp -r build/debug/$TARGET/asts/* TMPZIP/aml/asts/
+cp -r build/debug/$TARGET/py/* TMPZIP/aml/py/
 
 echo "Adding include files"
 cp -r src/opencorelib  TMPZIP/aml/include/ardome-ml/
@@ -48,11 +59,11 @@ cp -r src/openimagelib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openmedialib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openpluginlib  TMPZIP/aml/include/ardome-ml/
 
-cp -r bcomp/vs2008/ffmpeg/include/* TMPZIP/aml/include/
+cp -r bcomp/$TARGET/ffmpeg/include/* TMPZIP/aml/include/
 
 echo "Adding winconfig files"
 cp  config/windows/ardome_ml.wc TMPZIP/aml/lib/winconfig/ 
-cp -r bcomp/vs2008/ffmpeg/lib/winconfig/*.wc TMPZIP/aml/lib/winconfig/
+cp -r bcomp/$TARGET/ffmpeg/lib/winconfig/*.wc TMPZIP/aml/lib/winconfig/
 
 echo "Adding openbuild"
 cp -r openbuild TMPZIP/
@@ -83,20 +94,20 @@ rm -rf TMPZIP/aml/bin/debug/examples
 rm -rf TMPZIP/aml/bin/release/plugins
 rm -rf TMPZIP/aml/bin/release/examples
 
-echo "Building zip-file ardome-ml-vs2008.zip .."
+echo "Building zip-file ardome-ml-$TARGET.zip .."
 cd TMPZIP 
-zip -mrq ardome-ml-vs2008.zip * 
+zip -mrq ardome-ml-$TARGET.zip * 
 
 if [ ! $? == 0 ]; then
-	echo "Failed to execture: zip -mrq ardome-ml-vs2008.zip * "
+	echo "Failed to execture: zip -mrq ardome-ml-$TARGET.zip * "
 	exit 1
 fi
 	
 cd ..	
-echo "Copying ardome-ml-vs2008.zip to folder where prod was issued..."
-mv TMPZIP/ardome-ml-vs2008.zip ./ 
+echo "Copying ardome-ml-$TARGET.zip to folder where prod was issued..."
+mv TMPZIP/ardome-ml-$TARGET.zip ./ 
 
 echo "Removing temporary folder, almost done..."
 rm -rf TMPZIP
 
-echo "Product ardome-ml-vs2008.zip created successfully!"
+echo "Product ardome-ml-$TARGET.zip created successfully!"

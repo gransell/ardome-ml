@@ -4,12 +4,11 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost', 'boost_thread', 'boost_date_time', 'boost_system', 'loki', )
+local_env.packages( 'boost', 'boost_thread', 'boost_date_time', 'boost_system', 'loki' )
+if local_env[ 'PLATFORM' ] == 'win32' :
+    local_env.packages( 'kiss_fft')
 options = local_env.optional( 'rubberband' )
-if local_env[ 'target'] == 'vs2010' :
-	build = False
-else :
-	build = options[ 'have_rubberband' ]
+build = options[ 'have_rubberband' ]
 
 if build:
 	src = [ 'plugin_rubberband.cpp' ]

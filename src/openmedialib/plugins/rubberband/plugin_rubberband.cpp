@@ -3,6 +3,10 @@
 // Copyright (C) 2009 Charles Yates
 // Released under the LGPL.
 
+#ifdef WIN32
+#include <kiss_fft.c>
+#include <kiss_fftr.c>
+#endif
 #include <stddef.h>
 #include <rubberband/RubberBandStretcher.h>
 

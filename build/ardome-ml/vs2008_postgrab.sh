@@ -17,13 +17,25 @@ if [ ! -d boost_1_37_0 ]; then
 	fi
 fi
 
-if [ ! -d rubberband-1.5.0 ]; then
+if [ ! -d vc90-rubberband-1.7.0 ]; then
 	echo "Extracting rubberband..."
-	tar zxf ../tmp/rubberband-1.7.0-win32.tgz
+	tar zxf ../tmp/vc90-rubberband-1.7.0.tgz
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar zxf rubberband-1.7.0-win32.tgz. Terminating."
+		echo "Failed to run: tar zxf vc90-rubberband-1.7.0.tgz. Terminating."
 		exit
 	fi
+fi
+
+if [ ! -d kiss_fft ]; then
+
+    echo "Extracting KISS FFT [~60 KB]..."
+
+    unzip -oq ../tmp/kiss_fft.zip
+
+    if [ ! $? == 0 ]; then
+        echo "Failed to run: unzip -oq ../tmp/kiss_fft.zip. Terminating."
+        exit 1
+    fi
 fi
 
 if [ ! -d openal ]; then

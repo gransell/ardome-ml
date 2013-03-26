@@ -16,8 +16,8 @@ vs2010_POSTGRAB: build/ardome-ml/vs2010_postgrab.sh
 vs2010_PREBAG: build/ardome-ml/update-rc.sh
 vs2010_TARGET: ardome-ml-vs2010.zip
 vs2010_BUILDSCRIPT: build/ardome-ml/vs_build_step.sh vs2010
-vs2010_BUILDSCRIPT2: build/ardome-ml/vs2008_build_zip.sh
-vs2010_TESTSCRIPT: build/ardome-ml/vs2008_test_step.sh
+vs2010_BUILDSCRIPT2: build/ardome-ml/vs_build_zip.sh vs2010
+vs2010_TESTSCRIPT: build/ardome-ml/vs_test_step.sh vs2010
 vs2010_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Buildsteps related to the Visual Studio 2008 compiler:
@@ -25,8 +25,8 @@ vs2008_POSTGRAB: build/ardome-ml/vs2008_postgrab.sh
 vs2008_PREBAG: build/ardome-ml/update-rc.sh
 vs2008_TARGET: ardome-ml-vs2008.zip
 vs2008_BUILDSCRIPT: build/ardome-ml/vs_build_step.sh vs2008
-vs2008_BUILDSCRIPT2: build/ardome-ml/vs2008_build_zip.sh
-vs2008_TESTSCRIPT: build/ardome-ml/vs2008_test_step.sh
+vs2008_BUILDSCRIPT2: build/ardome-ml/vs_build_zip.sh vs2008
+vs2008_TESTSCRIPT: build/ardome-ml/vs2008_step.sh vs2008
 vs2008_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Buildsteps related to the Visual Studio 2003 compiler:
