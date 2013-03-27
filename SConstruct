@@ -131,6 +131,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8', 'OLIB_ON_LINUX', '__STDC_CONSTANT_MACROS' ] ) 
 		elif self['PLATFORM'] == 'win32':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF16' ] ) 
+			self.Append( CPPFLAGS = [ '/Zm200' ] ) 
 			self.Append( CPPDEFINES = ['OLIB_USE_UTF16', 'AMF_ON_WINDOWS', 'WIN32', 'UNICODE', '_UNICODE', 'ML_PLUGIN_EXPORTS', '__STDC_CONSTANT_MACROS', 'NOMINMAX' ] )
 		else:
 			raise( "Unknown platform" )
