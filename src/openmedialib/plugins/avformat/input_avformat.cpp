@@ -957,6 +957,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, must_decode_( true )
 			, must_reopen_( false )
 			, key_search_( false )
+			, key_last_( -1 )
 			, audio_buf_used_( 0 )
 			, audio_buf_offset_( 0 )
 			, scaler_( 0 )
@@ -1180,11 +1181,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			// Attempt to open the resource
 			int error_code = io::open_file( &io_context_, cl::str_util::to_string( resource ).c_str(), AVIO_FLAG_READ );
-			if( error_code != 0 )
-			{
-				ARLOG_ERR( "Got error code %1% when attempting to open file: %2%" )( error_code )( resource );
-				return false;
-			}
 
 			context_ = avformat_alloc_context();
 			context_->pb = io_context_;
@@ -1196,7 +1192,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					( error_code )( resource );
 			}
 
-            if (error == 0 && context_->pb && context_->pb->seekable) 
+			if (error == 0 && context_->pb && context_->pb->seekable && resource.find( L"rtsp://" ) != 0) 
 			{
 				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
 				if ( prop_ts_index_.value< std::wstring >( ) != L"" )
