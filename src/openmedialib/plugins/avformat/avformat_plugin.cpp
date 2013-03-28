@@ -47,6 +47,10 @@ extern filter_type_ptr ML_PLUGIN_DECLSPEC create_avencode( const std::wstring & 
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const std::wstring & );
 extern filter_type_ptr ML_PLUGIN_DECLSPEC create_swscale( const std::wstring & );
 extern store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &, const frame_type_ptr & );
+
+namespace ring {
+extern void ML_PLUGIN_DECLSPEC register_protocol( void );
+}
 	
 extern void register_aml_aes3( );
 
@@ -349,6 +353,7 @@ namespace
 			atexit( &ml::unregister_lockmgr );
 			
 			olib::openmedialib::ml::register_aml_aes3( );
+			olib::openmedialib::ml::ring::register_protocol( );
 		}
 		else if( init < 0 && --refs == 0 )
 		{
