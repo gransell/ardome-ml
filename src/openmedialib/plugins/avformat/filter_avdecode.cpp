@@ -240,6 +240,7 @@ class stream_queue
 				{
 					int got = 0;
 					AVPacket pkt;
+					av_init_packet( &pkt );
 					pkt.data = 0;
 					pkt.size = 0;
 					if ( avcodec_decode_video2( context_, frame_, &got, &pkt ) >= 0 )
@@ -433,6 +434,7 @@ class stream_queue
 
 			int got = 0;
 			AVPacket avpkt;
+			av_init_packet( &avpkt );
 
 			switch( pkt->id( ) )
 			{
