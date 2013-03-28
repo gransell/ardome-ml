@@ -36,8 +36,8 @@ class CORE_API lru
 		typedef std::pair< const_iterator, const_iterator > pair;
 		typedef std::list< key_type > list;
 
-		lru( )
-		: size_( 50 )
+		lru( size_t size = 50 )
+		: size_( size )
 		{
 		}
 
@@ -119,6 +119,29 @@ class CORE_API lru
 			val_type result;
 			boost::system_time timeout = boost::get_system_time( ) + time;
 			while( !( result = fetch( index ) ) )
+				if ( !cond_.timed_wait( lock, timeout ) )
+					break;
+			return result;
+		}
+
+		/// Find an object for the index and return it, but don't change the lru state
+		val_type find( key_type index ) const
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			val_type result;
+			const_iterator iter = queue_.find( index );
+			if ( iter != queue_.end( ) )
+				result = iter->second;
+			return result;
+		}
+
+		/// Wait for an object, but don't change the lru state
+		val_type find( key_type index, boost::posix_time::time_duration time )
+		{
+			boost::recursive_mutex::scoped_lock lock( mutex_ );
+			val_type result;
+			boost::system_time timeout = boost::get_system_time( ) + time;
+			while( !( result = find( index ) ) )
 				if ( !cond_.timed_wait( lock, timeout ) )
 					break;
 			return result;
