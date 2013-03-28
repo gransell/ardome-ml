@@ -263,6 +263,8 @@ class avaudio_filter
 	private:
 		void setup( )
 		{
+			av_opt_set_int( resampler_, "in_channel_count", channels_in_, 0 );
+			av_opt_set_int( resampler_, "out_channel_count", channels_out_, 0 );
 			av_opt_set_int( resampler_, "in_channel_layout", layout_in_, 0 );
 			av_opt_set_int( resampler_, "out_channel_layout", layout_out_,  0 );
 			av_opt_set_int( resampler_, "in_sample_rate", frequency_in_, 0 );
