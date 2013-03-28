@@ -249,6 +249,15 @@ namespace {
 			break;
 		}
 	}
+
+	template< typename S > inline void mix_fallback( const S *input, int channels_in, int channels_out, std::vector< float > &sum)
+	{
+		for( int i = 0; i < channels_out; i ++ )
+			sum[ i ] = 0.0f;
+		
+		for ( int i = 0; i < channels_in; i ++ )
+			sum[ i % channels_out ] += float( input[ i ] );
+	}
 }
 
 template < typename T >
@@ -266,8 +275,7 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 		return input_audio;
 
 	// Reject if conversion isn't supported
-	if(!is_channel_conversion_supported(input_audio->channels(), channels))
-		return boost::shared_ptr< T >( );
+	bool supported = is_channel_conversion_supported(input_audio->channels(), channels);
 
 	// Create audio object for output
 	const int samples = input_audio->samples( );
@@ -294,7 +302,11 @@ ML_DECLSPEC boost::shared_ptr< T > channel_convert( const audio_type_ptr &in, in
 	for( int sample_idx = 0; sample_idx < samples; ++sample_idx)
 	{
 		// Add appropriate channels together with appropriate weightings requested channels
-		mix_sample< typename T::sample_type >( input, channels_in, channels, sum );
+		if ( supported )
+			mix_sample< typename T::sample_type >( input, channels_in, channels, sum );
+		else
+			mix_fallback< typename T::sample_type >( input, channels_in, channels, sum );
+
 		input += channels_in;
 
 		for(int ch = 0; ch < channels; ++ch)
