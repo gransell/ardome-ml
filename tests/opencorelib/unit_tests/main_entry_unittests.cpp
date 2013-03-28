@@ -12,7 +12,6 @@ void test_assert();
 void test_multivalue_property_parsing();
 void test_invoker();
 void test_messagequeue();
-void test_serious_error_handler();
 void test_span();
 void test_timecode();
 void test_plugin();
@@ -54,7 +53,6 @@ boost::unit_test_framework::test_suite* init_unit_test_suite ( int argc, char* a
     myTests["test_multivalue_property_parsing"] = &test_multivalue_property_parsing;
     myTests["test_invoker"] = &test_invoker;
 	myTests["test_messagequeue"] = &test_messagequeue;
-	//myTests["test_serious_error_handler"] = &test_serious_error_handler;
 	myTests["test_span"] = &test_span;
 	myTests["test_timecode"] = &test_timecode;
 	myTests["test_plugin"] = &test_plugin;
