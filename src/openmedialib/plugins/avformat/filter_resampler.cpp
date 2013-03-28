@@ -41,10 +41,6 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			, prop_output_sample_freq_(pcos::key::from_string("frequency"))
 			, prop_af_(pcos::key::from_string("af"))
 			, prop_enable_( pcos::key::from_string( "enable" ) )
-			, input_channels_(2)
-			, input_sample_freq_(48000)
-			, fps_numerator_(25)
-			, fps_denominator_(1)
 			, current_frequency_(-1)
 			, current_channels_(-1)
 			, dirty_(true)
@@ -53,7 +49,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		{
 			property_observer_ = boost::shared_ptr<pcos::observer>(new avformat_resampler_filter::property_observer(const_cast<avformat_resampler_filter*>(this)));
 		
-			properties( ).append( prop_output_channels_ = 2	);
+			properties( ).append( prop_output_channels_ = -1 );
 			properties( ).append( prop_output_sample_freq_ = 48000 );
 			properties( ).append( prop_af_ = std::wstring( L"" ) );
 			properties( ).append( prop_enable_ = 1 );
@@ -100,38 +96,53 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			if( !current_audio )
 				return;
 
+			// Obtain the requested values
 			int out_frequency = prop_output_sample_freq_.value< int >( );
 			int out_channels = prop_output_channels_.value< int >( );
 			std::wstring out_af = prop_af_.value< std::wstring >( );
 
+			// Fill in defaults from current frame if necessary
 			if ( out_frequency <= 0 ) out_frequency = current_frequency_ <= 0 ? current_audio->frequency( ) : current_frequency_;
 			if ( out_channels <= 0 ) out_channels = current_channels_ <= 0 ? current_audio->channels( ) : current_channels_;
 			if ( out_af == L"" ) out_af = current_af_ == L"" ? current_audio->af( ) : current_af_;
 
+			// Store the used values for subsequent reuse
 			current_frequency_ = out_frequency;
 			current_channels_ = out_channels;
 			current_af_ = out_af;
 
+			// FIXME: Hack to provide a uniform output if frequency is unchanged (should be handled by swresample)
+			if ( out_channels != current_audio->channels( ) )
+			{
+				current_audio = audio::channel_convert(current_audio, out_channels, last_channels_);
+				current_frame->set_audio( current_audio );
+			}
+
+			// Drop out now if we have what we want
+			if ( out_frequency == current_audio->frequency( ) && 
+				 out_channels == current_audio->channels( ) && 
+				 out_af == current_audio->af( ) )
+			{
+				last_channels_ = current_audio;
+				return;
+			}
+
 			// since ffmpeg resampler will only accept 8 channels or less, force any input with more than 8 channels to conform
-			if( current_audio->channels() > 8 )
+			if( current_audio->channels() > 8 && out_channels > 8 )
 			{
 				current_audio = audio::channel_convert(current_audio, 8, last_channels_);
-				current_channels_ = out_channels = 8;
+				current_channels_ = 8;
+				out_channels = out_channels <= 8 ? out_channels : 8;
 			}
 
 			// Check if changes have occurred in the input
 			if ( !dirty_ )
 			{
-				dirty_ = fps_numerator_ != current_frame->get_fps_num( ) || 
-					     fps_denominator_ != current_frame->get_fps_den( ) ||
-						 filter_.changed( current_audio );
+				dirty_ = filter_.changed( current_audio );
 			}
 
 			if ( dirty_ )
 			{
-				current_frame->get_fps( fps_numerator_, fps_denominator_ );
-				input_channels_	 = current_audio->channels( );
-				input_sample_freq_ = current_audio->frequency( );
 				filter_.set_passthrough( current_audio );
 				filter_.set_channels( out_channels );
 				filter_.set_frequency( out_frequency );
@@ -144,6 +155,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 
 			// Set current frame to have this new audio object, which now holds the resampled audio data
 			current_frame->set_audio(output_audio);
+			last_channels_ = output_audio;
 		}
 	
 	private:
@@ -208,10 +220,6 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		pcos::property prop_af_;
 		pcos::property prop_enable_;
 	
-		int	input_channels_;
-		int input_sample_freq_;
-		int fps_numerator_;
-		int fps_denominator_;
 		std::wstring af_;
 
 		int current_frequency_;
