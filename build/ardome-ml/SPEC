@@ -26,7 +26,7 @@ vs2008_PREBAG: build/ardome-ml/update-rc.sh
 vs2008_TARGET: ardome-ml-vs2008.zip
 vs2008_BUILDSCRIPT: build/ardome-ml/vs_build_step.sh vs2008
 vs2008_BUILDSCRIPT2: build/ardome-ml/vs_build_zip.sh vs2008
-vs2008_TESTSCRIPT: build/ardome-ml/vs2008_step.sh vs2008
+vs2008_TESTSCRIPT: build/ardome-ml/vs_test_step.sh vs2008
 vs2008_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Buildsteps related to the Visual Studio 2003 compiler:
