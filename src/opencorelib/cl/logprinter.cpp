@@ -80,7 +80,7 @@ namespace olib
         {
             using namespace boost::posix_time;
             olib::t_path full_path( dir );
-            ARENFORCE_MSG( fs::is_directory(full_path), full_path.external_directory_string() ); 
+            ARENFORCE_MSG( fs::is_directory(full_path), full_path.native() ); 
             // Match all files with the pattern:  
             // Prefix.YYYY-MM-DD-DAY.log
             olib::t_format wildcard_fmt(_CT("%s\\..*\\.log"));
@@ -98,7 +98,7 @@ namespace olib
                     if ( !fs::is_directory( *dir_itr ) )
                     {
                         olib::t_smatch what; 
-                        olib::t_string file_name = dir_itr->path().filename();
+                        olib::t_string file_name = dir_itr->path().filename().native();
                         if( boost::regex_match(file_name, what , wildcard ) )
                         {
                             std::time_t last_write = fs::last_write_time(*dir_itr);

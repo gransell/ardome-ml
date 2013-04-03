@@ -44,7 +44,7 @@ namespace olib
 
             #ifdef OLIB_ON_WINDOWS
             HMODULE mod;
-            ARENFORCE_WIN( mod = ::LoadLibraryW( p.string().c_str() ))(p.string());
+            ARENFORCE_WIN( mod = ::LoadLibraryW( p.c_str() ))( p );
 
             ARENFORCE_WIN(m_get_factory_function = (get_assembly_class_factory)
                 ::GetProcAddress( mod, "get_assembly_class_factory"))(p.string());

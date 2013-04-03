@@ -122,9 +122,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 			version = sys.version_info
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
-		# Provides support boost 1.4x but will be ignored with earlier revisions
-		self.Append( CPPDEFINES = [ 'BOOST_FILESYSTEM_VERSION=2' ] )
-
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )
 		elif self['PLATFORM'] == 'posix':

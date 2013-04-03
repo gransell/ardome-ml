@@ -1,9 +1,7 @@
 #include "precompiled_headers.hpp"
-#include <boost/test/test_tools.hpp>
+#include <boost/test/auto_unit_test.hpp>
 
 #include "opencorelib/cl/machine_readable_errors.hpp"
-
-#include "opencorelib/cl/str_util.hpp"
 
 using namespace olib;
 using namespace olib::opencorelib;
@@ -19,7 +17,7 @@ boost::test_tools::predicate_result is_of_reason(const base_exception& err, cons
     return true;
 }
 
-void test_int64_conversions()
+BOOST_AUTO_TEST_CASE( test_int64_conversions )
 {
 	t_string str(_CT("1010070214440750706"));
 	boost::int64_t v = parse_int64(str);

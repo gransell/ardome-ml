@@ -1,11 +1,8 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
 #include "opencorelib/cl/media_time.hpp"
-#include <boost/test/test_tools.hpp>
-#include <fstream>
 
-using std::ifstream;
-
-void test_timecode()
+BOOST_AUTO_TEST_CASE( test_timecode )
 {
     using namespace olib;
     using namespace olib::opencorelib;
@@ -165,3 +162,4 @@ void test_timecode()
 	BOOST_CHECK_NO_THROW( after_midnight.to_time_code( frame_rate::ntsc, true, true ) );
 	BOOST_CHECK( after_midnight.to_time_code( frame_rate::ntsc, true, true ) == time_code( 0, 0, 0, 0, true ) );
 }
+

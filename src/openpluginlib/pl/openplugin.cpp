@@ -45,7 +45,7 @@ namespace
 #endif
 	{
 #ifdef WIN32
-		return LoadLibrary( olib::opencorelib::str_util::to_wstring( path.native_file_string( ).c_str( ) ).c_str( ) );
+		return LoadLibrary( path.c_str() );
 #else
 		// CY: It is essential that RTLD_GLOBAL is used here for dynamic_cast to be
 		// functional. All g++ apps should also link with -Wl,-E.

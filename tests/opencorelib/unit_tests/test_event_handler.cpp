@@ -1,9 +1,7 @@
 #include "precompiled_headers.hpp"
 
-#include <boost/bind.hpp>
+#include <boost/test/auto_unit_test.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/test/test_tools.hpp>
-
 #include "opencorelib/cl/event_handler.hpp"
 
 using namespace olib;
@@ -46,7 +44,7 @@ void player_callback_receiver( const boost::shared_ptr< player >&, boost::int32_
 }
 
 
-void test_event_handler()
+BOOST_AUTO_TEST_CASE( test_event_handler )
 {
     boost::shared_ptr< player > a_player( new player() );
     

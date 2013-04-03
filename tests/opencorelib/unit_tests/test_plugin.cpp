@@ -1,6 +1,6 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
 
-#include <boost/test/test_tools.hpp>
 #include <boost/filesystem/operations.hpp>
 
 #include "opencorelib/cl/special_folders.hpp"
@@ -14,7 +14,7 @@ using namespace olib;
 using namespace olib::opencorelib;
 namespace fs = boost::filesystem;
 
-void test_plugin()
+BOOST_AUTO_TEST_CASE( test_plugin )
 {
     try 
     {  

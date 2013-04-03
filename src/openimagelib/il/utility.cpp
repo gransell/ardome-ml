@@ -3539,7 +3539,7 @@ namespace {
 		if ( plugins.size( ) == 0 ) return result;
 		discovery::const_iterator i = plugins.begin( );
 		// fprintf( stderr, "get_plug: using: %s\n", opl::to_string( i->name() ).c_str() );
-		return boost::shared_dynamic_cast<openimagelib_plugin>( i->create_plugin( "" ) );
+		return boost::dynamic_pointer_cast<openimagelib_plugin>( i->create_plugin( "" ) );
 	}
 }
 

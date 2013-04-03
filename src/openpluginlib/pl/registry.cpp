@@ -61,16 +61,17 @@ namespace
 		tokenizer tok( lp.begin( ), lp.end( ), sep );
 		for( tokenizer::const_iterator I = tok.begin( ); I != tok.end( ); ++I )
 		{
-			if( !fs::exists( fs::path( *I, fs::native ) ) || !fs::is_directory( fs::path( *I, fs::native ) ) ) continue;
+			fs::path plugin_dir( *I, fs::native );
+			if( !fs::exists( plugin_dir ) || !fs::is_directory( plugin_dir ) ) continue;
 
 			fs::directory_iterator end_iter;
-			for( fs::directory_iterator dir_iter( fs::path( *I, fs::native ) ); dir_iter != end_iter; ++dir_iter )
+			for( fs::directory_iterator dir_iter( plugin_dir ); dir_iter != end_iter; ++dir_iter )
 			{
 				// OLIBs native plugins.
-				if( boost::regex_match( ( *dir_iter ).string( ), opl_ex ) )
+				if( boost::regex_match( dir_iter->path( ).string( ), opl_ex ) )
 				{
 					opl_importer importer;
-					importer( fs::path( ( *dir_iter ).string( ), fs::native ) );
+					importer( dir_iter->path( ) );
 				
 					std::copy( importer.plugins.begin( ), importer.plugins.end( ), std::inserter( db, db.begin( ) ) );
 

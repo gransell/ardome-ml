@@ -8,11 +8,11 @@ fi
 
 cd vs2008
 
-if [ ! -d boost_1_37_0 ]; then
-	echo "Extracting boost [~140 MB on disk]..."
-	tar -jxf ../tmp/vc90-boost_1_37-wchar_t-on-ptree.tar.bz2
+if [ ! -d boost_1_53_0 ]; then
+	echo "Extracting boost..."
+	unzip -q ../tmp/boost-1_53_0.zip
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: tar -jxf ../tmp/vc90-boost_1_37-wchar_t-on-ptree.tar.bz2. Terminating."
+		echo "Failed to run: unzip -q ../tmp/boost-1_53_0.zip. Terminating."
 		exit
 	fi
 fi

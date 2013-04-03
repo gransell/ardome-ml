@@ -6,10 +6,6 @@
 #include "opencorelib/cl/platform.hpp"
 #include "opencorelib/cl/macro_definitions.hpp"
 
-#if defined(AMF_COMPILED_WITH_VISUAL_STUDIO)
-#include <tchar.h>
-#endif
-
 #include <iostream>
 
 #include <boost/bind.hpp>
@@ -24,19 +20,3 @@
 #include "opencorelib/cl/base_exception.hpp"
 #include "opencorelib/cl/logger.hpp"
 
-#ifdef _DEBUG
-	#ifdef OLIB_ON_WINDOWS
-		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests.exe")
-	#elif defined __UNIX_LIKE__
-		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests")
-	#endif
-#else
-	#ifdef OLIB_ON_WINDOWS
-		#define USEFULUNITTEST_EXE_NAME _CT("opencorelib_unit_tests.exe")
-	#elif defined __UNIX_LIKE__
-		#define USEFULUNITTEST_EXE_NAME _CT("core_unit_tests")
-	#endif
-#endif
-
-
-// TODO: reference additional headers your program requires here

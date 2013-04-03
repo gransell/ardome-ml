@@ -1,16 +1,17 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
 #include "opencorelib/cl/span.hpp"
 #include "opencorelib/cl/media_time.hpp"
 #include "opencorelib/cl/frames.hpp"
 
-using namespace olib::opencorelib;
-#include <boost/test/test_tools.hpp>
 #include <iostream>
 #include <set>
 #include <vector>
 #include <ostream>
 
-void test_span()
+using namespace olib::opencorelib;
+
+BOOST_AUTO_TEST_CASE( test_span )
 {
     time_span ts( media_time::zero(), media_time(10) );
     
@@ -89,6 +90,5 @@ void test_span()
 	frame_span t3_t4_t5_union = span_union( t3, t4_t5_union )[0];
 	frame_span t1_t2_union = span_union( t1, t2 )[0];
 	BOOST_REQUIRE( t1_t2_union == t3_t4_t5_union  );
-	
-	
 }
+

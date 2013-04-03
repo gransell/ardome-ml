@@ -901,10 +901,10 @@ class aml_stack
 				arg = arg.substr( 1, arg.size( ) - 2 );
 
 			olib::t_string url = cl::str_util::to_t_string( arg );
-			bool is_http_source = paths_.back( ).external_directory_string( ).find( _CT("http://") ) == 0;
+			bool is_http_source = paths_.back( ).native( ).find( _CT("http://") ) == 0;
 
 			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
-				url = olib::t_path( paths_.back( ) / url ).external_directory_string( );
+				url = olib::t_path( paths_.back( ) / url ).native( );
 
 			if ( !inputs_.empty( ) )
 				properties = inputs_.back( )->properties( );
@@ -948,7 +948,7 @@ class aml_stack
 			else if ( url.find( _CT("http://") ) == 0 && url.find( _CT(".aml") ) == arg.size( ) - 4 )
 				parse_http( url );
 			else if ( is_http_source && arg.find( L".aml" ) == arg.size( ) - 4 )
-				parse_http( paths_.back( ).external_directory_string( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
+				parse_http( paths_.back( ).native( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
 			else if ( url.find( _CT(".aml") ) == url.size( ) - 4 || url == _CT( "stdin:" ) )
 				parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"filter:" ) == 0 )

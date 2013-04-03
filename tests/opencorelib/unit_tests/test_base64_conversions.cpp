@@ -1,10 +1,9 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
 
 #include "./utils.hpp"
-
 #include "opencorelib/cl/detail/base64_conversions.hpp"
 
-#include <boost/test/test_tools.hpp>
 #include <sstream>
 #include <istream>
 
@@ -36,7 +35,7 @@ void test( const boost::uint8_t *data, size_t length )
 	}
 }
 
-void test_base64_conversions()
+BOOST_AUTO_TEST_CASE( test_base64_conversions )
 {
 	boost::uint8_t test_data[] = { 0x03, 0x10, 0xB8, 0xFF, 0xFF, 0x04, 0x34, 0x00 };
 	
