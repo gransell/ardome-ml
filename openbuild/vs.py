@@ -135,7 +135,7 @@ class VS2003:
 							options.wchar_t_built_in_as_string(),
 							options.use_precompiled_headers(),
 							os.path.basename( options.precompiled_header_file() ),
-							options.warning_level,
+							options.warning_level(),
 							options.debug_information_format( config.name) )
 							
 	def file_configuration( self, config, the_file, filetype ) :
@@ -179,7 +179,7 @@ class VS2008 :
 							options.runtime_type_info_as_string(),
 							options.use_precompiled_headers(),
 							os.path.basename( options.precompiled_header_file() ),
-							options.warning_level,
+							options.warning_level(),
 							options.debug_information_format( config.name) )
 										
 	def file_configuration( self, config, the_file, filetype ) :
@@ -195,7 +195,7 @@ class VS2008 :
 		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2008"
 		
 class VS2010 :
-	
+
 	def version_string( self ) :
 		return "10,00"
 		
@@ -222,7 +222,7 @@ class VS2010 :
 							options.runtime_type_info_as_string(),
 							options.use_precompiled_headers(),
 							os.path.basename( options.precompiled_header_file() ),
-							options.warning_level,
+							options.warning_level(),
 							options.debug_information_format( config.name) )
 										
 	def file_configuration( self, config, the_file, filetype ) :
@@ -235,7 +235,7 @@ class VS2010 :
 		else : return ""	
 		
 	def solution_file_header( self ) :
-		return "\nMicrosoft Visual Studio Solution File, Format Version 10.00\n# Visual Studio 2010"
+		return "\nMicrosoft Visual Studio Solution File, Format Version 11.00\n# Visual Studio 2010"
 		
 def create_visual_studio( ver ) :
 	if ver == "vs2003" : return VS2003()
@@ -260,7 +260,6 @@ class CompilerOptions:
 		self.runtime_type_info = True
 		self.precomp_headers = False, "", ""
 		self.sources_not_using_precomp = []
-		self.warning_level = 3
 		self.additional_options = ""
 		self.vc_version = ""
 		
@@ -269,7 +268,13 @@ class CompilerOptions:
 		
 	def get_vc_version( self ) :
 		return self.vc_version
-		
+	
+	def warning_level ( self ) :
+		if (self.vc_version == "vs2010"):
+			return "Level3"
+		else:
+			return 3
+	
 	def runtime_library( self, config_name ) :
 		""" Returns the c++-runtime library to use
 			
@@ -292,12 +297,23 @@ class CompilerOptions:
 			config_name --  [string] The name of the configuration. Should have 
 							debug in it if its supposed to use a debug runtime. """
 		m = re.compile("debug",re.I).search(config_name)
-		if( m ) : return "3"
-		return "2"
+		if( m ) : 
+			if ( self.vc_version == "vs2010" ) : 
+				return "MultiThreadedDebugDLL"
+			else : 
+				return "3"
+		else :
+			if (self.vc_version == "vs2010" ) :
+				return "MultiThreadedDLL"
+			else :
+				return "2"
 		
 	def exception_handling( self ) :
-		return "2"  #/EHa - Always use /EHa, even when compiling for native. Without it, if the code is called from a .NET module, 
-					#destructors won't be called if an exception is thrown!
+		if (self.vc_version == "vs2010") :
+			return "Async"
+		else :
+			return "2"  #/EHa - Always use /EHa, even when compiling for native. Without it, if the code is called from a .NET module, 
+						#destructors won't be called if an exception is thrown!
 
 	def runtime_type_info_as_string( self ) :
 		""" Returns the string 'TRUE' if runtime type info is going to be used, otherwise 'FALSE'"""
@@ -361,8 +377,16 @@ class CompilerOptions:
 		# 3 - Program Database
 		# 4 - Program Database for Edit and Continue
 		m = re.compile("debug",re.I).search(config_name)
-		if( m ) : return "1"
-		return "1"
+		if( m ) : 
+			if (self.vc_version == "vs2010") :
+				return "OldStyle"
+			else :
+				return "1"
+		else:
+			if (self.vc_version == "vs2010") :
+				return "OldStyle"
+			else:
+				return "1"
 			
 	def include_directories_as_string( self, root_dir ) :
 		res = ""
@@ -471,9 +495,65 @@ class BuildConfiguration:
 	def character_type( self ) :
 		if( self.character_set == "unicode") : return "1"
 		return "0"
-		
+
+V10DSPProjectConfiguration = """\
+\t<ProjectConfiguration Include="%s">
+\t\t<Configuration>%s</Configuration>
+\t\t<Platform>%s</Platform>
+\t</ProjectConfiguration>
+"""
+V10DSPPropertyGroupCondition = """\
+\t<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='%s'" Label="Configuration">
+\t\t<ConfigurationType>DynamicLibrary</ConfigurationType>
+\t\t<CharacterSet>Unicode</CharacterSet>
+\t</PropertyGroup>
+"""
+V10DSPImportGroupCondition = """\
+\t<ImportGroup Condition="'$(Configuration)|$(Platform)'=='%s'" Label="PropertySheets">
+\t\t<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+\t</ImportGroup>
+"""
+V10DSPropertyGroup = """\
+\t\t<OutDir Condition="'$(Configuration)|$(Platform)'=='%s'">%s\</OutDir>
+\t\t<IntDir Condition="'$(Configuration)|$(Platform)'=='%s'">%s\</IntDir>
+\t\t<LinkIncremental Condition="'$(Configuration)|$(Platform)'=='%s'">false</LinkIncremental>
+\t\t<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='%s'">AllRules.ruleset</CodeAnalysisRuleSet>
+\t\t<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='%s'" />
+\t\t<CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='%s'" />
+"""
+V10DSPItemDefinitionGroupConditionCompile = """\
+\t\t\t<AdditionalOptions>%s</AdditionalOptions>
+\t\t\t<AdditionalIncludeDirectories>%s</AdditionalIncludeDirectories>
+\t\t\t<PreprocessorDefinitions>%s</PreprocessorDefinitions>
+\t\t\t<ExceptionHandling>%s</ExceptionHandling>
+\t\t\t<RuntimeLibrary>%s</RuntimeLibrary>
+\t\t\t<RuntimeTypeInfo>%s</RuntimeTypeInfo>
+\t\t\t<PrecompiledHeaderFile>%s</PrecompiledHeaderFile>
+\t\t\t<WarningLevel>%s</WarningLevel>
+\t\t\t<DebugInformationFormat>%s</DebugInformationFormat>
+"""
+V10DSPItemDefinitionGroupConditionLink = """\
+\t\t\t<AdditionalDependencies>%s</AdditionalDependencies>
+\t\t\t<OutputFile>%s</OutputFile>
+\t\t\t<AdditionalLibraryDirectories>%s</AdditionalLibraryDirectories>
+\t\t\t<GenerateDebugInformation>%s</GenerateDebugInformation>
+\t\t\t<ProgramDatabaseFile>%s</ProgramDatabaseFile>
+\t\t\t<ImportLibrary>%s</ImportLibrary>
+"""
+V10DSPCPPFiles = """\
+\t\t\t<PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='%s'">Use</PrecompiledHeader>
+\t\t\t<PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='%s'">%s</PrecompiledHeaderFile>
+\t\t\t<AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='%s'">%%(AdditionalOptions)</AdditionalOptions>
+"""
+V10DSPProjectReference = """\
+\t\t<ProjectReference Include="%s">
+\t\t\t<Project>{%s}</Project>
+\t\t\t<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+\t\t</ProjectReference>
+"""
+
 class VSProject :
-	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=None, source_files=None, vc_version="vc71" ) :
+	def __init__( self, name, root_dir, relative_path, configurations = None, header_files=None, source_files=None, vc_version="vc71", deps=None, projects=None ) :
 		""" root_dir -- The directory where the SConstruct file resides
 			full_path -- The directory where the SConsript file resides. """
 			
@@ -495,7 +575,8 @@ class VSProject :
 		self.file_system_location = ""
 		self.relative_path = relative_path
 		self.root_dir = root_dir
-		
+		self.deps = deps
+		self.projects = projects
 		for conf in self.configurations:
 			conf.set_vc_version( self.vc_version )
 			#if conf.compiler_options.precomp_headers[0] and conf.compiler_options.precomp_headers[2] not in self.cpp_files:
@@ -503,11 +584,124 @@ class VSProject :
 		
 	def __str__(self) :
 		ostr = StringIO.StringIO();
-		ostr.write("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\n")
-		self.handle_project(ostr)
+		if( self.vc_version == "vs2010" ) :
+			ostr.write('<?xml version="1.0" encoding="utf-8"?>\n')
+			self.handle_project_vs2010(ostr)
+		else :
+			ostr.write("<?xml version=\"1.0\" encoding=\"Windows-1252\"?>\n")
+			self.handle_project(ostr)
 		return ostr.getvalue()
 		
-	   
+	  
+	def handle_project_vs2010(self, ostr):
+		project_header = """<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">\n"""
+		ostr.write( project_header )
+
+		ostr.write('\t<ItemGroup Label="ProjectConfigurations">\n')
+		for config in self.configurations:
+			ostr.write(V10DSPProjectConfiguration % (config.name, config.name.split("|")[0], config.name.split("|")[1] ) )
+		ostr.write('\t</ItemGroup>\n')
+
+		ostr.write('\t<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />\n')
+
+		for config in self.configurations:
+			ostr.write(V10DSPPropertyGroupCondition % (config.name) )
+
+		for config in self.configurations:
+			ostr.write(V10DSPImportGroupCondition % (config.name) )
+
+		ostr.write('\t<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />\n')
+		ostr.write('\t<ImportGroup Label="ExtensionSettings">\n')
+		ostr.write('\t</ImportGroup>\n')
+
+		ostr.write('\t<PropertyGroup Label="UserMacros" />\n')
+		ostr.write('\t<PropertyGroup>\n')
+		ostr.write('\t\t<_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>\n')
+
+		for config in self.configurations:
+			ostr.write(V10DSPropertyGroup % ( config.name, config.output_directory, config.name, config.intermediate_directory, 
+				config.name, config.name, config.name, config.name))
+		ostr.write('\t</PropertyGroup>\n')
+
+
+		for config in self.configurations:
+			itemDefinitionGroup = """\t<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='%s'">\n"""
+			ostr.write( itemDefinitionGroup % ( config.name ) )
+			ostr.write('\t\t<ClCompile>\n')
+			options = config.compiler_options
+			ostr.write( V10DSPItemDefinitionGroupConditionCompile % ( options.additional_options,
+				options.include_directories_as_string( self.root_dir),
+				options.preprocessor_flags_as_string(),
+				options.exception_handling(),
+				options.runtime_library( config.name ),
+				options.runtime_type_info_as_string(),
+				os.path.basename( options.precompiled_header_file() ),
+				options.warning_level(),
+				options.debug_information_format( config.name) ) )
+
+			ostr.write('\t\t</ClCompile>\n')
+			ostr.write('\t\t<Link>\n')
+			ostr.write( V10DSPItemDefinitionGroupConditionLink % ( config.linker_options.additional_dependencies_as_string(),
+				config.linker_options.output_file,
+                config.linker_options.additional_library_directories_as_string( self.root_dir),
+                config.linker_options.generate_debug_information_as_string(),
+                config.linker_options.program_database_file,
+                config.linker_options.import_library ) )
+			ostr.write('\t\t</Link>\n')
+			ostr.write('\t</ItemDefinitionGroup>\n')
+
+		""" CPP FILES """
+		ostr.write('\t<ItemGroup>\n')
+		files_to_use = self.get_files_with_filter( self.cpp_extensions() )
+		for cpp_file in files_to_use:
+
+			thepath = os.path.join(self.relative_sln, self.relative_path, cpp_file.name )
+			ostr.write ('\t\t<ClCompile Include="%s">\n' % ( thepath.replace("/", "\\") ) )
+			for config in self.configurations:
+				ostr.write ( V10DSPCPPFiles % ( config.name, 
+					config.name, 
+					os.path.basename( config.compiler_options.precompiled_header_file() ), 
+					config.name ) ) 
+
+			ostr.write('\t\t</ClCompile>\n')
+		ostr.write('\t</ItemGroup>\n')
+
+		""" H FILES """
+		ostr.write('\t<ItemGroup>\n')
+		files_to_use = self.get_files_with_filter( self.h_extensions() )	
+		for h_file in files_to_use:
+			thepath = os.path.join(self.relative_sln, self.relative_path, h_file.name )
+			ostr.write ('\t\t<ClCompile Include="%s" />\n' % ( thepath.replace("/", "\\") ) )
+		ostr.write('\t</ItemGroup>\n')
+
+		""" RES FILES """		
+		ostr.write('\t<ItemGroup>\n')
+		files_to_use = self.get_files_with_filter( self.res_extensions() )	
+		for res_file in files_to_use:
+			thepath = os.path.join(self.relative_sln, self.relative_path, res_file.name )
+			ostr.write ('\t\t<ClCompile Include="%s" />\n' % ( thepath.replace("/", "\\") ) )
+		ostr.write('\t</ItemGroup>\n')
+
+		""" Project Dependencies """		
+		ostr.write('\t<ItemGroup>\n')
+		if self.name in self.deps :
+			proj_deps = self.deps[ self.name ]
+			for d in proj_deps :
+				dependent_project = self.find_project_by_name( d )
+				# We might depend on pure object files, so these will not be found...
+				if dependent_project is None : continue	
+				ostr.write(V10DSPProjectReference % ( dependent_project.file_name, dependent_project.guid ))
+		ostr.write('\t</ItemGroup>\n')
+
+		ostr.write('\t<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />\n')
+		ostr.write('\t<ImportGroup Label="ExtensionTargets" />\n')
+		ostr.write("</Project>\n")
+
+	def find_project_by_name( self, project_name ) :
+		for proj in self.projects:
+			if proj.name == project_name : return proj
+		return None
+
 	def handle_project(self, ostr):
 		project_header = """<VisualStudioProject	 
 				ProjectType="Visual C++"
@@ -712,6 +906,8 @@ class VSSolution :
 			proj_file = self.root + self.target_dir +  proj.file_name
 			proj_file = proj_file.replace("\\", "/")
 			# print "Saving vcproj-file", proj_file
+			proj.deps = deps
+			proj.projects = self.projects
 			proj.relative_sln = self.relative_root
 			proj.guid = uuid.uuid4()
 			f = open( proj_file, "w");
@@ -719,7 +915,6 @@ class VSSolution :
 			f.close();
 		# Now, build the solution-file
 		vs = create_visual_studio(vs_version)
-		
 		sln = open(os.path.join( where_to_write, sln_file_name) , "w")
 		if vs_version != "vs2003" : sln = codecs.EncodedFile( sln, "utf-8-sig")
 		
@@ -729,20 +924,56 @@ class VSSolution :
 			
 		for proj in self.projects:
 			project_element = """Project("{%s}") = "%s", "%s", "{%s}" """
-			sln.write( project_element % (visual_studio_guid, proj.name, ".\\" + proj.file_name,  proj.guid ) )
+
+			if (vs_version == "vs2010" ) :
+				sln.write( project_element % (visual_studio_guid, proj.name, proj.file_name,  proj.guid ) )
+			else:
+				sln.write( project_element % (visual_studio_guid, proj.name, ".\\" + proj.file_name,  proj.guid ) )
 			sln.write( "\n" )
-			sln.write("\tProjectSection(ProjectDependencies) = postProject\n")
-			if proj.name in deps :
-				proj_deps = deps[ proj.name ]
-				for d in proj_deps :
-					dependent_project = self.find_project_by_name( d )
-					# We might depend on pure object files, so these will not be found...
-					if dependent_project is None : continue
-					sln.write("\t\t{%s}={%s}\n" % (dependent_project.guid, dependent_project.guid ))
-			
-			sln.write("\tEndProjectSection\n")
+
+			if (vs_version != "vs2010") :
+				sln.write("\tProjectSection(ProjectDependencies) = postProject\n")
+				if proj.name in deps :
+					proj_deps = deps[ proj.name ]
+					for d in proj_deps :
+						dependent_project = self.find_project_by_name( d )
+						# We might depend on pure object files, so these will not be found...
+						if dependent_project is None : continue
+						sln.write("\t\t{%s}={%s}\n" % (dependent_project.guid, dependent_project.guid ))
+				
+				sln.write("\tEndProjectSection\n")
+
+
 			sln.write("EndProject\n")
+
+		
+		if (vs_version == "vs2010") :
+			sln.write("Global\n")
+			sln.write("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution\n")
+			sln.write("\t\tDebug|Win32 = Debug|Win32\n")
+			sln.write("\t\tRelease|Win32 = Release|Win32\n")
+			sln.write("\tEndGlobalSection\n")
+			sln.write("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution\n")
+			for proj in self.projects:
+				
+				if proj.name in deps :
+					proj_deps = deps[ proj.name ]
+					for d in proj_deps :
+						dependent_project = self.find_project_by_name( d )
+						# We might depend on pure object files, so these will not be found...
+						if dependent_project is None : continue
+						sln.write("\t\t{%s}.Debug|Win32.ActiveCfg = Debug|Win32\n" % (dependent_project.guid))
+						sln.write("\t\t{%s}.Debug|Win32.Build.0 = Debug|Win32\n" % (dependent_project.guid))
+						sln.write("\t\t{%s}.Release|Win32.ActiveCfg = Release|Win32\n" % (dependent_project.guid))
+						sln.write("\t\t{%s}.Release|Win32.Build.0 = Release|Win32\n" % (dependent_project.guid))
 			
-		sln.write("Global\nEndGlobal\n")
+			sln.write("\tEndGlobalSection\n")
+			sln.write("\tGlobalSection(SolutionProperties) = preSolution\n")
+			sln.write("\t\tHideSolutionNode = FALSE\n")
+			sln.write("\tEndGlobalSection\n")
+			sln.write("EndGlobal\n")
+
+		else:
+			sln.write("Global\nEndGlobal\n")
 		sln.close()
 			

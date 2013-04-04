@@ -227,9 +227,13 @@ class VsBuilder :
 									configurations = [ curr_cfg ], 
 									header_files = self.prepare_files(config_name, headers, env, lib, None),
 									source_files = self.prepare_source_files(config_name, sources, env, lib, None), 
-									vc_version = self.vs_version )
-														
-			vcproj.file_name = lib + '.vcproj'
+									vc_version = self.vs_version)
+									
+			if ( self.vs_version == 'vs2010' ) :
+				vcproj.file_name = lib + '.vcxproj'
+			else :
+				vcproj.file_name = lib + '.vcproj'
+
 			self.vs_solution.projects.append(vcproj)
 
 		dll_file = os.path.join( env['win_target_path'], lib + '.dll')
