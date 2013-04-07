@@ -49,7 +49,7 @@ namespace
 #else
 		// CY: It is essential that RTLD_GLOBAL is used here for dynamic_cast to be
 		// functional. All g++ apps should also link with -Wl,-E.
-		return dlopen( path.native_file_string( ).c_str( ), RTLD_GLOBAL | RTLD_NOW );
+		return dlopen( path.c_str( ), RTLD_GLOBAL | RTLD_NOW );
 #endif
 	}
 	
