@@ -1491,7 +1491,7 @@ class aml_stack
 		{
            	olib::t_path apath( cl::str_util::to_t_string(filename));
            	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
-           	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+           	std::ifstream file( apath.c_str() , std::ifstream::in );
 
 			if ( !file.is_open( ) )
 				return false;
@@ -1509,7 +1509,7 @@ class aml_stack
 			{
             	olib::t_path apath( cl::str_util::to_t_string(filename));
             	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
-            	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+            	std::ifstream file( apath.c_str(), std::ifstream::in );
 
 				paths_.push_back( fs::system_complete( apath ).parent_path( ) );
 
@@ -2126,7 +2126,7 @@ static void query_type( aml_stack *stack, std::wstring type )
 
 		for ( std::vector< std::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
 		{
-			if ( fs::exists( olib::opencorelib::str_util::to_string( *f ) ) )
+			if ( fs::exists( olib::opencorelib::str_util::to_t_string( *f ) ) )
 			{
 				( *stack->output_ ) << olib::opencorelib::str_util::to_string( *f ) << " : ";
 				found = true;
@@ -3026,7 +3026,7 @@ static void op_popen( aml_stack *stack )
 static void op_path( aml_stack *stack )
 {
 	olib::t_path path = stack->paths_.back( );
-	stack->push( ml::input_type_ptr( new input_value( olib::opencorelib::str_util::to_wstring( path.string( ) ) ) ) );
+	stack->push( ml::input_type_ptr( new input_value( olib::opencorelib::str_util::to_wstring( path.native( ) ) ) ) );
 }
 
 #define const_aml_stack const_cast< input_aml_stack * >

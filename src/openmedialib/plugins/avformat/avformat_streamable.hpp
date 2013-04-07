@@ -59,7 +59,7 @@ struct whitelist
 			return false;
 
 		// check if whitelist exists
-		ARENFORCE_MSG( boost::filesystem::exists(inFilePath), "The specified whitelist file %s does not exist" )( inFilePath );
+		ARENFORCE_MSG( boost::filesystem::exists( inFilePath ), "The specified whitelist file %s does not exist" )( inFilePath );
 		
 		// Create an empty property tree object
 		using boost::property_tree::ptree;

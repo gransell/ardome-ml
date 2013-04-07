@@ -65,12 +65,12 @@ namespace
 		std::vector<std::wstring> filenames_copy( filenames );
 		for( const_iterator I = filenames_copy.begin( ); I != filenames_copy.end( ); ++I )
 		{
-			fs::path tmp( olib::opencorelib::str_util::to_string( *I ).c_str( ), fs::native );
+			fs::path tmp( olib::opencorelib::str_util::to_t_string( *I ) );
 
-			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( pa.get_opl_path().branch_path() / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( pa.get_opl_path().parent_path() / tmp.filename( ) ).c_str( ) ) );
 			
 #	ifdef WIN32
-			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( fs::path( opl::plugins_path( ).c_str( ), fs::native ) / tmp.leaf( ) ).string( ).c_str( ) ) );
+			filenames.push_back( olib::opencorelib::str_util::to_wstring( ( fs::path( olib::opencorelib::str_util::to_t_string( opl::plugins_path( ) ) / tmp.filename( ) ).c_str( ) ) ) );
 #	endif
 		}
 	}
@@ -156,7 +156,7 @@ bool plugin_opl_parser_action( opl_parser_action& pa )
 	item.out_filter	= value_from_name( pa, L"out_filter" );
 	item.libname	= pa.get_libname( );
 	item.merit		= static_cast<int>( wcstol( value_from_name( pa, L"merit" ).c_str( ), 0, 10 ) );
-	item.opl_path = olib::opencorelib::str_util::to_wstring( pa.get_opl_path( ).string() );
+	item.opl_path = olib::opencorelib::str_util::to_wstring( pa.get_opl_path( ).native() );
 
 	std::vector<std::wstring> temp;
 	vector_from_string( value_from_name( pa, L"extension" ), temp );

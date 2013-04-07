@@ -77,7 +77,7 @@ namespace olib
                     if(home_path.compare(_CT("\\")) != 0)
                     {
                         olib::t_path res( home_drive + home_path);
-                        ARASSERT( fs::is_directory(res) )(res);
+                        ARASSERT( fs::is_directory(res) )( res.native() );
                         return res;
                     }
                 }
@@ -89,7 +89,7 @@ namespace olib
                 {
                     user_profile = str_util::get_env_var( user_profile );
                     olib::t_path res( to_wstring(user_profile) ) ;
-                    ARASSERT( fs::is_directory(res) )(res);
+                    ARASSERT( fs::is_directory(res) )( res.native() );
                     return res;
                 }
                 
@@ -101,8 +101,8 @@ namespace olib
                 t_string temp_env(_CT("TEMP"));
                 if( str_util::env_var_exists(temp_env))
                 {
-                    t_string  temp_path = str_util::get_env_var(temp_env);
-                    olib::t_path wp( to_wstring( temp_path) );
+                    t_string temp_path = str_util::get_env_var(temp_env);
+                    olib::t_path wp( temp_path );
                     fs::create_directory(wp);
                     return wp;
                 }
@@ -111,7 +111,7 @@ namespace olib
 
                 //Cannot use ARLOG here, since it will call this method
                 T_CERR << _CT("Could not find TEMP environment variable.\n") <<
-                    _CT("Will use temp directory: ") << wp << std::endl;
+                    _CT("Will use temp directory: ") << wp.native() << std::endl;
 
                 fs::create_directory(wp);
                 return wp;

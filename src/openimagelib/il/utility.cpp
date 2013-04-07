@@ -3549,7 +3549,7 @@ image_type_ptr load_image( const std::wstring &resource )
 	if ( !plug )
 		return image_type_ptr( );
 	
-	return plug->load( fs::wpath( resource.c_str(), fs::native ) );
+	return plug->load( fs::path( resource ) );
 }
 
 bool store_image( const std::wstring &resource, image_type_ptr image )
@@ -3561,7 +3561,7 @@ bool store_image( const std::wstring &resource, image_type_ptr image )
 		return false;
 	}
 	
-	return plug->store( fs::wpath( resource.c_str(), fs::native ), image );	
+	return plug->store( fs::path( resource ), image );	
 }
 
 } } }

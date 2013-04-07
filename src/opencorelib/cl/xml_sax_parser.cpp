@@ -46,7 +46,7 @@ namespace olib
 
             static t_string create_schema_location( t_string& str, const schema_map::value_type& vt )
             {
-                t_string path_to_schema( str_util::to_t_string(vt.second.string()));
+                t_string path_to_schema( vt.second.native() );
                 boost::algorithm::replace_all( path_to_schema, _CT(" "), _CT("%20"));
                 if(!str.empty()) str += _CT(" ");
                 return str + vt.first + _CT(" ") + path_to_schema;

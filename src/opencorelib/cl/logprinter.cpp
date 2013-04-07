@@ -141,7 +141,7 @@ namespace olib
         {
             utilities::make_sure_path_exists( log_file_path.parent_path() );
             
-            result.open( to_string( log_file_path.string() ).c_str(), std::ios_base::app | std::ios_base::binary );
+            result.open( log_file_path.c_str(), std::ios_base::app | std::ios_base::binary );
         }
     }
 }

@@ -107,7 +107,7 @@ namespace olib
 		CORE_API t_ostream& operator<<( t_ostream& os, const library_info& info )
 		{
 			os << info.m_version << _CT("\t") << info.m_build_nr << _CT("\t") 
-				<< info.m_filename << _CT("\t") << info.m_company << _CT("\t") << info.m_product;
+				<< info.m_filename.native() << _CT("\t") << info.m_company << _CT("\t") << info.m_product;
 			return os;
 		}
 

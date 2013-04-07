@@ -29,8 +29,11 @@
 
 #include <openpluginlib/pl/registry.hpp>
 #include <openpluginlib/pl/opl_importer.hpp>
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/str_util.hpp>
 
 namespace fs = boost::filesystem;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace openpluginlib { namespace detail {
 
@@ -61,7 +64,7 @@ namespace
 		tokenizer tok( lp.begin( ), lp.end( ), sep );
 		for( tokenizer::const_iterator I = tok.begin( ); I != tok.end( ); ++I )
 		{
-			fs::path plugin_dir( *I, fs::native );
+			fs::path plugin_dir( cl::str_util::to_t_string( *I ) );
 			if( !fs::exists( plugin_dir ) || !fs::is_directory( plugin_dir ) ) continue;
 
 			fs::directory_iterator end_iter;
