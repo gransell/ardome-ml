@@ -92,7 +92,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace io {
 				if( *out_context == NULL )
 				{
 					av_free( buf );
-					AVERROR( ENOMEM );
+					return AVERROR( ENOMEM );
 				}
 				ARASSERT( ( *out_context )->av_class == NULL );
 
