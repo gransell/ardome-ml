@@ -8,7 +8,7 @@ fi
 
 cd vs2008
 
-if [ ! -d boost_1_53_0 ]; then
+if [ ! -d boost-1_53_0 ]; then
 	echo "Extracting boost..."
 	unzip -q ../tmp/boost-1_53_0.zip
 	if [ ! $? == 0 ]; then

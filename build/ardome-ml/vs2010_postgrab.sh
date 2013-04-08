@@ -8,11 +8,11 @@ fi
 
 cd vs2010
 
-if [ ! -d boost_1_47_0 ]; then
-	echo "Extracting boost [~140 MB on disk]..."
-	unzip -oq ../tmp/vc100-boost_1_47_0.zip
+if [ ! -d boost-1_53_0 ]; then
+	echo "Extracting boost..."
+	unzip -oq ../tmp/boost-1_53_0.zip
 	if [ ! $? == 0 ]; then
-		echo "Failed to run: unzip -oq ../tmp/vc100-boost_1_47_0.zip. Terminating."
+		echo "Failed to run: unzip -oq ../tmp/boost-1_53_0.zip. Terminating."
 		exit
 	fi
 fi
