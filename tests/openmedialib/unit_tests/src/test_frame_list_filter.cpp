@@ -23,69 +23,69 @@ namespace
     }
 }
 
-BOOST_AUTO_TEST_SUITE( frame_frame_list_filter )
+BOOST_AUTO_TEST_SUITE( frame_list_filter )
 
-BOOST_AUTO_TEST_CASE( frame_frame_list_filter_case )
+BOOST_AUTO_TEST_CASE( frame_list_filter_case )
 {
-    // create playlist filter which merges the inputs
-    filter_type_ptr l_playlist_filter = create_filter( L"playlist" );
-    
-    BOOST_REQUIRE( l_playlist_filter );
+	// create playlist filter which merges the inputs
+	filter_type_ptr playlist_filter = create_filter( L"playlist" );
 
-    l_playlist_filter->property( "slots" ) = gk_num_inputs;
+	BOOST_REQUIRE(playlist_filter );
 
-    // create 8 color inputs which will create 1 frame of specified color
-    std::vector<input_type_ptr> l_inputs;
+	playlist_filter->property( "slots" ) = gk_num_inputs;
 
-    for (int i = 0; i < gk_num_inputs; ++i)
-    {
-	input_type_ptr l_color_input = create_delayed_input( L"colour:" );
+	// create 8 color inputs which will create 1 frame of specified color
+	std::vector<input_type_ptr>inputs;
 
-	BOOST_REQUIRE( l_color_input );
+	for (int i = 0; i < gk_num_inputs; ++i)
+	{
+		input_type_ptr color_input = create_delayed_input( L"colour:" );
 
-	l_color_input->property( "colourspace" ) = std::wstring( L"r8g8b8" );
-	l_color_input->property( "out" ) = 1;
+		BOOST_REQUIRE(color_input );
 
-	l_color_input->property( "r" ) = internal_create_redvalue_from_int( i );
+		color_input->property( "colourspace" ) = std::wstring( L"r8g8b8" );
+		color_input->property( "out" ) = 1;
 
-	BOOST_REQUIRE( l_color_input->init() );
+		color_input->property( "r" ) = internal_create_redvalue_from_int( i );
 
-	l_inputs.push_back(l_color_input);
+		BOOST_REQUIRE(color_input->init() );
 
-	BOOST_REQUIRE( l_playlist_filter->connect( l_color_input, i ) );
+		inputs.push_back(color_input);
 
-    }
+		BOOST_REQUIRE(playlist_filter->connect(color_input, i ) );
 
-
-    // create the frame_list filter
-    filter_type_ptr l_frame_list_filter = create_filter( L"frame_list" );
-
-    BOOST_REQUIRE( l_frame_list_filter );
-
-    // configure it with the frame sequence
-    l_frame_list_filter->property( "frames" ) = gk_frame_list;
-
-    BOOST_REQUIRE( l_frame_list_filter->connect( l_playlist_filter ) );
-
-    // not sure why this is needed (is it?)
-    l_frame_list_filter->sync();
-
-    // start grabbing the frames
-
-    for(std::vector<int>::const_iterator i = gk_frame_list.begin(), 
-	e = gk_frame_list.end(); i != e; ++i)
-    {
-	frame_type_ptr l_frame = l_frame_list_filter->fetch();
-	BOOST_REQUIRE( l_frame );
-
-	image_type_ptr l_image = l_frame->get_image();
-	BOOST_REQUIRE( l_image );
-	BOOST_CHECK_EQUAL( *(l_image->data( 0 ) ), internal_create_redvalue_from_int( *i ) );
-
-	l_frame_list_filter->seek(1, true);
+	}
 
 
-    }
+	// create the frame_list filter
+	filter_type_ptr frame_list_filter = create_filter( L"frame_list" );
+
+	BOOST_REQUIRE(frame_list_filter );
+
+	// configure it with the frame sequence
+	frame_list_filter->property( "frames" ) = gk_frame_list;
+
+	BOOST_REQUIRE(frame_list_filter->connect(playlist_filter ) );
+
+	// not sure why this is needed (is it?)
+	frame_list_filter->sync();
+
+	// start grabbing the frames
+
+	for(std::vector<int>::const_iterator i = gk_frame_list.begin(), 
+		e = gk_frame_list.end(); i != e; ++i)
+	{
+		frame_type_ptr frame =frame_list_filter->fetch();
+		BOOST_REQUIRE(frame );
+
+		image_type_ptr image =frame->get_image();
+		BOOST_REQUIRE( image );
+		BOOST_CHECK_EQUAL( *(image->data( 0 ) ), internal_create_redvalue_from_int( *i ) );
+
+		frame_list_filter->seek(1, true);
+
+
+	}
 
 }
 
