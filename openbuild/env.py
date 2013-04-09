@@ -163,15 +163,20 @@ class Environment( BaseEnvironment ):
 			else :
 				raise Exception( "Invalid arch flag " + str(self['arch']) )
 			
+			# Check version of Xcode installed to determine root OSX SDK directory (root SDK dir changed in Xcode 4.3)
+			OSX_SDK_dir_prefix = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/"
+			if tuple(map(int, self[ 'xcode_ver' ].split("."))) < (4,3) :
+				OSX_SDK_dir_prefix = "/"
+
 			if self[ 'min_osx_ver' ] == '10.5' :
-				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
+				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
 			elif self[ 'min_osx_ver' ] == '10.6' :
-				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
+				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
 			elif self[ 'min_osx_ver' ] == '10.7' :
-				self.Append( CCFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', '/Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
+				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
+				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
 			else :
 				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
 			

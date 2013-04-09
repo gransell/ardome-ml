@@ -5,15 +5,16 @@
 import os
 import sys
 import glob
-import openbuild.opt
-import openbuild.env
-import openbuild.utils
 
 sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'external', 'Mako-0.2.3', 'lib' ) )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'release', 'py' ) )
 sys.path.append( os.path.join(os.getcwd(), 'wrappers', 'py' ) )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp/aml/release/lib/openbuild') )
+
+import openbuild.opt
+import openbuild.env
+import openbuild.utils
 
 class AMLEnvironment( openbuild.env.Environment ):
 
