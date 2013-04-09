@@ -10,9 +10,6 @@ namespace olib
 	{
 		typedef std::vector< std::pair<t_string, t_string > >  name_value_container;
 	
-		template<class T>
-		struct identity { typedef T type; };
-
 		/// A class that stores information about the context where an assertion or exception occurred.
 		/** This class is used by the assertions and exceptions in amf.
 			Is stores information about where and why the exception/assertion occurred
@@ -83,7 +80,7 @@ namespace olib
              template <class T>
              void add_value_to_message( const T& t)
              {
-                 add_value_to_message(t, identity<T>( ) );
+                 m_message % t;
              }
 			
 
@@ -197,30 +194,6 @@ namespace olib
             t_string m_source;
             t_string m_target_site;
 
-            template <class T>
-            void add_value_to_message( const T& t, identity<T>)
-            {
-                m_message % t;
-            }
-
-            void add_value_to_message( const char* t, identity<const char*> )
-            {
-                if ( t == 0 ) {
-                    m_message % "( NULL )";
-                } else {
-                    m_message % t;
-                }
-            }
-
-            void add_value_to_message( char* t, identity<char*> )
-            {
-                if ( t == 0 ) {
-                    m_message % "( NULL )";
-                } else {
-                    m_message % t;
-                }
-            }
-
 		};
 
         template <class T>
@@ -235,7 +208,7 @@ namespace olib
         CORE_API void ec_add_value( exception_context& ec, const char* exp, const char* obj );
 
         /// Specialization for wchar_t pointers.
-        CORE_API void ec_add_value( exception_context& ec, const char* exp, const wchar_t* & obj );
+        CORE_API void ec_add_value( exception_context& ec, const char* exp, const wchar_t* obj );
 
         /// Specialization for strings. 
         CORE_API void ec_add_value( exception_context& ec, const char* exp, const std::wstring& obj);

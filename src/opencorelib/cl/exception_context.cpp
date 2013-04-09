@@ -13,19 +13,30 @@
 #include "utilities.hpp"
 #include "str_util.hpp"
 
+namespace
+{
+    template< typename CharType >
+    olib::t_string presentation_string( const CharType *str )
+    {
+        if (str == NULL)
+            return _CT("( NULL )");
+        else
+            return olib::opencorelib::str_util::to_t_string( str );
+    }
+}
 
 namespace olib
 {
-	namespace opencorelib
-	{
+    namespace opencorelib
+    {
         void ec_add_value(exception_context& ec, const char* exp,  const char* obj)
         {
-            ec.add_value( exp, str_util::to_t_string(obj));
+            ec.add_value( exp, presentation_string( obj ) );
         }
 
         void ec_add_value(exception_context& ec, const char* exp,  const wchar_t* obj)
         {
-            ec.add_value( exp, str_util::to_t_string(obj));
+            ec.add_value( exp, presentation_string( obj ) );
         }
 
         void ec_add_value( exception_context& ec, const char* exp, const std::wstring& obj)
@@ -40,12 +51,12 @@ namespace olib
 
         void ec_add_value_to_message( exception_context& ec, const char* obj )
         {
-            ec.add_value_to_message( str_util::to_t_string(obj));
+            ec.add_value_to_message( presentation_string( obj ) );
         }
 
         void ec_add_value_to_message( exception_context& ec, const wchar_t* obj )
         {
-            ec.add_value_to_message( str_util::to_t_string(obj));
+            ec.add_value_to_message( presentation_string( obj ) );
         }
 
         void ec_add_value_to_message( exception_context& ec, const std::wstring& obj)
