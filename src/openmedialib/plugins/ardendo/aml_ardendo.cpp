@@ -31,6 +31,7 @@ extern ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_preview( const std::ws
 
 // OML Filter plugins
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_aml( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_frame_list ( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_audio_convert( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_charcoal( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_chroma_key( const std::wstring & );
@@ -103,6 +104,8 @@ public:
 			return create_pitch( resource );
 		if ( resource == L"audio_convert" )
 			return create_audio_convert( resource );
+		if ( resource == L"frame_list" )
+			return create_frame_list( resource );
 		if ( resource == L"charcoal" )
 			return create_charcoal( resource );
 		if ( resource == L"chroma_key" )
