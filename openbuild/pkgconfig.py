@@ -29,6 +29,9 @@ class PkgConfig:
 						prefix = r.rsplit( '/', 2 )[ 0 ]
 						if prefix.endswith( '/debug' ): pkg = 'debug_' + pkg
 						if prefix.endswith( '/release' ): pkg = 'release_' + pkg
+						if pkg in flags:
+							raise Exception, 'Found two different pkgconfig files for package %s:\n%s\nand:\n%s' % \
+								( pkg, os.path.join( flags[ pkg ], 'lib/pkgconfig', f ), os.path.join( r, f ) )
 						flags[ pkg ] = prefix
 						paths[ prefix ] = 1
 						full_paths[ r ] = 1

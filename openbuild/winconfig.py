@@ -40,6 +40,9 @@ class WinConfig :
 						prefix = r.rsplit( '\\', 2 )[ 0 ]
 						type = prefix.split( os.sep )[-1]
 						if type in [ 'debug', 'release'] : pkg += '_' + type
+						if pkg in flags:
+							raise Exception, 'Found two different winconfig files for package %s:\n%s\nand:\n%s' % \
+								( pkg, os.path.join( flags[ pkg ][ 'file' ] ), os.path.join( r, f ) )
 						flags[ pkg ] = { 'prefix': prefix, 'file': os.path.join( r, f ) }
 		
 	def locate_package( self, env, package_name ) :
