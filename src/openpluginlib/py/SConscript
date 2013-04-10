@@ -10,7 +10,7 @@ Import(['local_env'])
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_date_time', 'boost_system', 'boost_regex', 'boost_python' )
 
 prefix = sys.exec_prefix
-if local_env[ 'target' ] == 'vs2003' or local_env[ 'target' ] == 'vs2008' or local_env[ 'target' ] == 'vs2008express' :
+if local_env[ 'target' ].startswith( 'vs' ) :
 	local_env.Append( CPPPATH = [ '%s/include' % prefix ] )
 	local_env.Append( LIBPATH = [ '%s/libs' % prefix ] )
 	local_env.Append( LIBS = [ 'User32.lib', 'Oleaut32.lib', 'Winmm.lib', 'Gdi32.lib', 'shell32.lib' ,'ole32.lib' ] )
