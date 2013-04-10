@@ -15,5 +15,5 @@ tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/window
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/openal-1_1-custom_oal_soft-windows.zip -> openal.zip
 tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/windows/direct_x_june_2006_wc.zip -> directx.zip
 
-tmp : http://releases.ardendo.se/builds/owl/vs2008/owl-vs2008-0_3-B4.zip -> owl-vs2008.zip
+tmp : http://releases.ardendo.se/builds/owl/vs2008/owl-vs2008-0_4-B1.zip -> owl-vs2008.zip
 
