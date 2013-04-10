@@ -1,4 +1,4 @@
-: http://releases.ardendo.se/builds/external-source/boost/osx/boost-1_53_0-osx-1_53_0-B5.zip -> boost.zip
+: http://releases.ardendo.se/builds/external-source/boost/osx/boost-1_53_0-osx-1_53_0-B6.zip -> boost.zip
 
 SNAPSHOT=0 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/ffmpeg-aml-1_10-osx-10.6-x86_64.tar.bz2 -> ffmpeg.tar.bz2
 SNAPSHOT=1 : http://releases.ardendo.se/builds/ffmpeg-aml/osx/ffmpeg-aml-1_11_0-LATEST.tbz2 -> ffmpeg.tar.bz2
