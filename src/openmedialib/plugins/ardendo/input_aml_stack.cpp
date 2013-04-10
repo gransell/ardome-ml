@@ -901,10 +901,10 @@ class aml_stack
 				arg = arg.substr( 1, arg.size( ) - 2 );
 
 			olib::t_string url = cl::str_util::to_t_string( arg );
-			bool is_http_source = paths_.back( ).external_directory_string( ).find( _CT("http://") ) == 0;
+			bool is_http_source = paths_.back( ).native( ).find( _CT("http://") ) == 0;
 
 			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
-				url = olib::t_path( paths_.back( ) / url ).external_directory_string( );
+				url = olib::t_path( paths_.back( ) / url ).native( );
 
 			if ( !inputs_.empty( ) )
 				properties = inputs_.back( )->properties( );
@@ -948,7 +948,7 @@ class aml_stack
 			else if ( url.find( _CT("http://") ) == 0 && url.find( _CT(".aml") ) == arg.size( ) - 4 )
 				parse_http( url );
 			else if ( is_http_source && arg.find( L".aml" ) == arg.size( ) - 4 )
-				parse_http( paths_.back( ).external_directory_string( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
+				parse_http( paths_.back( ).native( ) + _CT("/") + cl::str_util::to_t_string( arg ) );
 			else if ( url.find( _CT(".aml") ) == url.size( ) - 4 || url == _CT( "stdin:" ) )
 				parse_file( cl::str_util::to_wstring( url ) );
 			else if ( arg.find( L"filter:" ) == 0 )
@@ -1491,7 +1491,7 @@ class aml_stack
 		{
            	olib::t_path apath( cl::str_util::to_t_string(filename));
            	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
-           	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+           	std::ifstream file( apath.c_str() , std::ifstream::in );
 
 			if ( !file.is_open( ) )
 				return false;
@@ -1509,7 +1509,7 @@ class aml_stack
 			{
             	olib::t_path apath( cl::str_util::to_t_string(filename));
             	/// TODO: Fix this so filename is opened via olib::fs_t_ifstream instead            
-            	std::ifstream file(  cl::str_util::to_string(apath.string()).c_str() , std::ifstream::in );
+            	std::ifstream file( apath.c_str(), std::ifstream::in );
 
 				paths_.push_back( fs::system_complete( apath ).parent_path( ) );
 
@@ -2126,7 +2126,7 @@ static void query_type( aml_stack *stack, std::wstring type )
 
 		for ( std::vector< std::wstring >::iterator f = files.begin( ); !found && f != files.end( ); ++f )
 		{
-			if ( fs::exists( olib::opencorelib::str_util::to_string( *f ) ) )
+			if ( fs::exists( olib::opencorelib::str_util::to_t_string( *f ) ) )
 			{
 				( *stack->output_ ) << olib::opencorelib::str_util::to_string( *f ) << " : ";
 				found = true;
@@ -3026,7 +3026,7 @@ static void op_popen( aml_stack *stack )
 static void op_path( aml_stack *stack )
 {
 	olib::t_path path = stack->paths_.back( );
-	stack->push( ml::input_type_ptr( new input_value( olib::opencorelib::str_util::to_wstring( path.string( ) ) ) ) );
+	stack->push( ml::input_type_ptr( new input_value( olib::opencorelib::str_util::to_wstring( path.native( ) ) ) ) );
 }
 
 #define const_aml_stack const_cast< input_aml_stack * >

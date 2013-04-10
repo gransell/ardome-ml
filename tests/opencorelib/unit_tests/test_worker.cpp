@@ -1,11 +1,11 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
 
 #include "opencorelib/cl/worker.hpp"
 #include "opencorelib/cl/utilities.hpp"
 #include "opencorelib/cl/jobbase.hpp"
 #include "opencorelib/cl/thread_pool.hpp"
 
-#include <boost/test/test_tools.hpp> 
 #include <boost/thread.hpp>
 
 using namespace boost;
@@ -69,7 +69,9 @@ public:
 
 boost::recursive_mutex MyJobClass::m_Mtx;
 
-void TestWorker()
+BOOST_AUTO_TEST_SUITE( test_worker )
+
+BOOST_AUTO_TEST_CASE( test_single_job )
 {
     worker aWorker;
     boost::shared_ptr< MyJobClass > aJob( new MyJobClass(500, NULL) );
@@ -81,7 +83,7 @@ void TestWorker()
     aWorker.stop( boost::posix_time::seconds(1) );
 }
 
-void TestWorker2()
+BOOST_AUTO_TEST_CASE( test_multiple_jobs )
 {
     worker aWorker;
 
@@ -99,7 +101,7 @@ void TestWorker2()
     BOOST_CHECK( aTimer.elapsed() < boost::posix_time::seconds(5) );
 }
 
-void TestTerminateWorker()
+BOOST_AUTO_TEST_CASE( test_terminate_worker )
 {
     worker aWorker;
     aWorker.start();
@@ -119,7 +121,7 @@ void TestTerminateWorker()
     BOOST_CHECK( aJob->get_result() == -100 );
 }
 
-void TestWorkerError()
+BOOST_AUTO_TEST_CASE( test_worker_error )
 {
     worker aWorker;
     aWorker.start();
@@ -136,7 +138,7 @@ void TestWorkerError()
     }
 }
 
-void TestThreadPool()
+BOOST_AUTO_TEST_CASE( test_thread_pool )
 {
 	const boost::uint32_t num_workers = 10;
 	const boost::uint32_t num_jobs_to_run = 50;
@@ -179,7 +181,7 @@ private:
     int& m_counter;
 };
 
-void test_reoccurring_job()
+BOOST_AUTO_TEST_CASE( test_reoccurring_job )
 {
     worker aWorker;
     aWorker.start();
@@ -203,13 +205,5 @@ void test_reoccurring_job()
     BOOST_CHECK_EQUAL( 1, dummy );
 }
 
-void test_worker()
-{
-    TestWorker();
-    TestWorker2();
-    TestTerminateWorker();
-    TestThreadPool();
-    TestWorkerError();
-    test_reoccurring_job();
-}
+BOOST_AUTO_TEST_SUITE_END()
 

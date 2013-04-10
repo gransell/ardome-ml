@@ -46,7 +46,7 @@ void opl_importer::operator( )( const boost::filesystem::path& file )
 	parser->setContentHandler(this);
 	parser->setErrorHandler(this);
 
-	parser->parse(opencorelib::xml::from_string( file.native_file_string( ).c_str( ) ).c_str( ));
+	parser->parse( opencorelib::xml::from_string( file.native( ) ).c_str( ) );
 
 	plugins = action_.plugins;
 	auto_load = action_.get_auto_load();

@@ -7,21 +7,17 @@ Import(['local_env'])
 local_env.packages( 'boost_filesystem', 'boost_regex', 'boost_thread', 'boost_system', 'boost_unit_test_framework', 'xerces', 'boost_date_time' )
 
 test_sources = ['main_entry_unittests.cpp',
-				'test_assert.cpp',
 				'test_base64_conversions.cpp',
 				'test_color.cpp',
                 'test_composite_property_parsing.cpp',
 				'test_event_handler.cpp',
-				# 'test_frames.cpp', Currently empty!!
 				'test_int64_conversions.cpp',
 				'test_invoker.cpp',
 				'test_jira_amf_1809.cpp',
-				'test_messagequeue.cpp',
 				'test_plugin.cpp',
 				'test_span.cpp',
 				'test_string_conversions.cpp',
 				'test_timecode.cpp',
-				'test_time_helpers.cpp',
 				'test_utilities.cpp',
 				'test_uuid.cpp',
 				'test_worker.cpp' ]

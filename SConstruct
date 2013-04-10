@@ -48,15 +48,6 @@ class AMLEnvironment( openbuild.env.Environment ):
 			if os.path.exists( 'bcomp/xercesc' ):
 				self.install_config( 'config/ubuntu64/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'linux32':
-			if os.path.exists( 'bcomp/boost' ):
-				self.install_config( 'config/linux32/boost.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_date_time.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_filesystem.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_python.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_regex.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_system.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_thread.pc', 'bcomp/boost' )
-				self.install_config( 'config/linux32/boost_unit_test_framework.pc', 'bcomp/boost' )
 			self.install_config( 'config/linux32/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux32/xerces.pc', 'bcomp/xercesc' )
 			self.install_config( 'config/linux32/ffmpeg.pc', 'bcomp/ffmpeg' )
@@ -123,8 +114,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			version = sys.version_info
 			self[ 'python_packages' ] = os.path.join( '$stage_libdir', 'python%d.%d' % ( version[ 0 ], version[ 1 ] ), 'site-packages' )
 
-		# Provides support boost 1.4x but will be ignored with earlier revisions
-		self.Append( CPPDEFINES = [ 'BOOST_FILESYSTEM_VERSION=2' ] )
+		self.Append( CPPDEFINES = [ 'BOOST_FILESYSTEM_NO_DEPRECATED' ] )
 
 		if self['PLATFORM'] == 'darwin':
 			self.Append( CPPDEFINES = [ 'OLIB_USE_UTF8' ] )

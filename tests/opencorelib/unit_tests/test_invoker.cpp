@@ -1,5 +1,5 @@
 #include "precompiled_headers.hpp"
-#include <boost/test/test_tools.hpp> 
+#include <boost/test/auto_unit_test.hpp> 
 
 #include "opencorelib/cl/invoker.hpp"
 
@@ -13,7 +13,9 @@ void inc(int* n) {
     ++*n;
 }
 
-void TestExplicitStepInvoker()
+BOOST_AUTO_TEST_SUITE( test_invoker )
+
+BOOST_AUTO_TEST_CASE( test_explicit_step_invoker )
 {
     invoker_ptr n_inv( new non_invoker() );
     explicit_step_invoker invoker( n_inv );
@@ -29,7 +31,7 @@ void bad_function() {
     throw std::runtime_error("This invoked function throws");
 }
 
-void TestExplicitStepInvokerSafe()
+BOOST_AUTO_TEST_CASE( test_explicit_step_invoker_safe )
 {
     invoker_ptr n_inv( new non_invoker() );
     explicit_step_invoker invoker( n_inv );
@@ -47,7 +49,7 @@ void result_callback( int& to_inc, invoke_result::type res, std_exception_ptr ep
     to_inc++;
 }
 
-void test_non_blocking_invoke()
+BOOST_AUTO_TEST_CASE( test_non_blocking_invoke )
 {
      invoker_ptr n_inv( new non_invoker() );
      explicit_step_invoker invoker( n_inv );
@@ -65,9 +67,5 @@ void test_non_blocking_invoke()
      BOOST_CHECK_EQUAL( 1, cb_called);
 }
 
-void test_invoker()
-{
-    TestExplicitStepInvoker();
-    TestExplicitStepInvokerSafe();
-    test_non_blocking_invoke();
-}
+BOOST_AUTO_TEST_SUITE_END()
+

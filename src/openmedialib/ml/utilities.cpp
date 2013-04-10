@@ -119,7 +119,7 @@ static openmedialib_plugin_ptr get_plug( const std::wstring &resource, const std
 	discovery plugins( query );
 	if ( plugins.size( ) == 0 ) return result;
 	discovery::const_iterator i = plugins.begin( );
-	return boost::shared_dynamic_cast<openmedialib_plugin>( i->create_plugin( "" ) );
+	return boost::dynamic_pointer_cast<openmedialib_plugin>( i->create_plugin( "" ) );
 }
 
 // Check if a plugin is avaialble

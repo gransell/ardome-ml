@@ -45,11 +45,11 @@ namespace
 #endif
 	{
 #ifdef WIN32
-		return LoadLibrary( olib::opencorelib::str_util::to_wstring( path.native_file_string( ).c_str( ) ).c_str( ) );
+		return LoadLibrary( path.c_str() );
 #else
 		// CY: It is essential that RTLD_GLOBAL is used here for dynamic_cast to be
 		// functional. All g++ apps should also link with -Wl,-E.
-		return dlopen( path.native_file_string( ).c_str( ), RTLD_GLOBAL | RTLD_NOW );
+		return dlopen( path.c_str( ), RTLD_GLOBAL | RTLD_NOW );
 #endif
 	}
 	
@@ -111,7 +111,7 @@ plugin_resolver::~plugin_resolver( )
 bool load_shared_library( plugin_resolver& resolver, const std::vector<std::wstring>& shared_name )
 {
 	typedef std::vector<std::wstring>::const_iterator const_iterator;
-	fs::path key = fs::path( olib::opencorelib::str_util::to_string( *shared_name.begin( ) ).c_str( ), fs::native );
+	fs::path key( olib::opencorelib::str_util::to_t_string( *shared_name.begin( ) ) );
 	std::string error = "";
 	
 	if ( plugin_cache.find( key ) != plugin_cache.end( ) )
@@ -124,7 +124,7 @@ bool load_shared_library( plugin_resolver& resolver, const std::vector<std::wstr
 	for( const_iterator I = shared_name.begin( ); I != shared_name.end( ); ++I )
 	{
 		//Check if the file exists before trying to dlopen it
-		fs::path lib_path(olib::opencorelib::str_util::to_string( *I ).c_str( ), fs::native);
+		fs::path lib_path( olib::opencorelib::str_util::to_t_string( *I ) );
 		if( !fs::exists(lib_path) )
 		{
 			continue;

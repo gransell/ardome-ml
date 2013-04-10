@@ -48,8 +48,8 @@ namespace olib{ namespace opencorelib{
 
 	CORE_API void serialize_to_path( object_ptr obj, const olib::t_path &filepath, const olib::t_string &serializer_plugin, serialization_mode::type mode )
 	{
-		std::ofstream ofs( str_util::to_string( filepath.string() ).c_str(), ( mode == serialization_mode::binary ? ios_base::out | ios_base::binary : ios_base::out ) );
-		ARENFORCE_MSG(ofs.good(), "Failed to create output stream to file \"%1%\"")( filepath.string() );
+		std::ofstream ofs( filepath.c_str(), ( mode == serialization_mode::binary ? ios_base::out | ios_base::binary : ios_base::out ) );
+		ARENFORCE_MSG(ofs.good(), "Failed to create output stream to file \"%1%\"")( filepath.native() );
 
 		serialize_to_stream( obj, ofs, serializer_plugin, mode );
 	}
@@ -90,8 +90,8 @@ namespace olib{ namespace opencorelib{
 
 	CORE_API object_ptr deserialize_from_path( const olib::t_path &filepath, const olib::t_string &deserializer_plugin, serialization_mode::type mode )
 	{
-		std::ifstream ifs( str_util::to_string( filepath.string() ).c_str(), ( mode == serialization_mode::binary ? ios_base::in | ios_base::binary : ios_base::in ) );
-		ARENFORCE_MSG( ifs.good(), "Failed to open file %1% for reading." )( filepath.string() );
+		std::ifstream ifs( filepath.c_str(), ( mode == serialization_mode::binary ? ios_base::in | ios_base::binary : ios_base::in ) );
+		ARENFORCE_MSG( ifs.good(), "Failed to open file %1% for reading." )( filepath.native() );
 
 		return deserialize_from_stream( ifs, deserializer_plugin, mode );
 	}

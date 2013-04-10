@@ -15,10 +15,10 @@ if [ -e "xercesc.tar.bz2" ]
 	tar -jxf xercesc.tar.bz2 || exit 1
 fi
 
-if [ -e "boost.tar.bz2" ] 
+if [ -e "boost.zip" ] 
 	then
 	echo "Extracting boost..."
-	tar -jxf boost.tar.bz2 || exit 1
+	unzip -q boost.zip || exit 1
 fi
 
 if [ -e "ffmpeg.tar.bz2" ] 

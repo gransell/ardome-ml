@@ -48,7 +48,6 @@ typedef std::list< std::wstring > wstring_list;
 
 namespace fs = boost::filesystem;
 namespace cl = olib::opencorelib;
-using boost::filesystem::wpath;
 
 namespace olib { namespace openpluginlib {
 
@@ -133,22 +132,21 @@ namespace
 		// search for paths in the OFX_PLUGIN_PATH
 		// environment variable, look in Common Files (both
 		// localised and non-localised locations).
-		char* ofx_path_env = getenv( "OFX_PLUGIN_PATH" );
-		if( ofx_path_env )
+		if( cl::str_util::env_var_exists( _CT("OFX_PLUGIN_PATH") ) )
 		{
-			std::string plugin_path( ofx_path_env );
-			
-			typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+			t_string ofx_path_env = cl::str_util::get_env_var( _CT("OFX_PLUGIN_PATH") );
+			typedef boost::tokenizer<boost::char_separator<TCHAR>, t_string::const_iterator, t_string> tokenizer;
 #	ifdef WIN32
-			boost::char_separator<char> sep( ";" );
+			boost::char_separator<TCHAR> sep( _CT(";") );
 #	else
-			boost::char_separator<char> sep( ":" );
+			boost::char_separator<TCHAR> sep( _CT(":") );
 #	endif
-			tokenizer tok( plugin_path.begin( ), plugin_path.end( ), sep );
+			tokenizer tok( ofx_path_env.begin( ), ofx_path_env.end( ), sep );
 			for( tokenizer::const_iterator I = tok.begin( ); I != tok.end( ); ++I )
 			{
-				if( !fs::exists( fs::path( *I, fs::native ) ) || !fs::is_directory( fs::path( *I, fs::native ) ) ) continue;
-				paths.push_back( *I );
+				const fs::path plugin_dir( *I );
+				if( !fs::exists( plugin_dir ) || !fs::is_directory( plugin_dir ) ) continue;
+				paths.push_back( cl::str_util::to_string( *I ) );
 			}
 		}
 		
@@ -354,7 +352,7 @@ void auto_load( )
 		struct detail::plugin_resolver resolver;
 		ARENFORCE_MSG( load_shared_library( resolver, i->filenames ), 
 			"Failed to auto-load plugin in \"%1%\" (%2%)\nThe full path is \"%3%\"." )
-			( wpath(i->opl_path).leaf() )( i->name )( i->opl_path );
+			( fs::path(i->opl_path).filename().c_str() )( i->name )( i->opl_path );
 		resolver.init( );
 	}
 	detail::registry::instance( ).auto_clear( );

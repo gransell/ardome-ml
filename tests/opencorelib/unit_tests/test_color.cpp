@@ -1,24 +1,12 @@
 #include "precompiled_headers.hpp"
-#include <boost/test/test_tools.hpp>
 
-#include "opencorelib/cl/invoker.hpp"
+#include <boost/test/auto_unit_test.hpp>
 #include "opencorelib/cl/color.hpp"
-#include "opencorelib/cl/minimal_string_defines.hpp"
-#include <boost/algorithm/string.hpp>
 
 using namespace olib::opencorelib;
 
-void test_color()
+BOOST_AUTO_TEST_CASE( test_color )
 {
-    //invoker_ptr inv = create_invoker(0);
-
-    olib::t_path a_path(_CT("\\\\ardomedev\\lr0\\date\\folder\\file.mpeg"));
-
-    olib::t_string rootn = a_path.root_name();
-    olib::t_string rootp = a_path.root_path().string();
-
-    boost::algorithm::trim_left_if( rootn, boost::algorithm::is_any_of(_CT("\\/")));
-
     boost::uint8_t vals[8];
     memset(vals, 0, 8);
     vals[0] = 255;

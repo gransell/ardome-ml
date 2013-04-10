@@ -43,7 +43,7 @@ namespace olib {
                 if( res ) {
                     // Remove last part of the path since that is the dylib file name
                     boost::filesystem::path temp_path(info.dli_fname);
-                    temp_path.remove_leaf();
+                    temp_path.remove_filename();
                     ret = temp_path.string();
                 }
 				return ret;

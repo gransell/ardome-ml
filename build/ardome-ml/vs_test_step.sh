@@ -18,7 +18,7 @@ echo "Sleeping for 10 seconds to give the computer time to recover from the buil
 sleep 10
 
 echo "Running unit tests for opencorelib ..."
-build/release/$TARGET/bin/opencore_unit_tests.exe all_tests --log_level=all > core_unit_tests.log 2>&1 
+build/release/$TARGET/bin/opencore_unit_tests.exe --log_level=all > core_unit_tests.log 2>&1 
 
 if [ ! $? == 0 ]; then
   cat core_unit_tests.log

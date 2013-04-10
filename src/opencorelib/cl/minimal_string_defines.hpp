@@ -35,6 +35,7 @@
 #include <sstream>
 #include <fstream>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #ifdef OLIB_ON_WINDOWS
 	#include <tchar.h>
@@ -82,8 +83,8 @@ namespace olib
                 <attribute name="convert" value="yes"></attribute>
             </bindgen>
             */
-	typedef boost::filesystem::wpath t_path;
-	typedef boost::filesystem::wdirectory_iterator t_directory_iterator;
+	typedef boost::filesystem::path t_path;
+	typedef boost::filesystem::directory_iterator t_directory_iterator;
 
     #define T_COUT std::wcout
     #define T_CERR std::wcerr

@@ -102,6 +102,10 @@ class PkgConfig:
 				include = os.popen( self.pkgconfig_cmd( env, pkg, "--variable=" + key ) ).read( ).replace( '\n', '' )
 				if include != '':
 					for component in include.split( ' ' ):
+						globbed_files = glob.glob( component )
+						if len( globbed_files ) == 0:
+							raise Exception, "Could not find the file:\n%s\nreferred to by rule \"%s\" in pkgconfig file for package \"%s\"" % ( component, key, package )
+
 						for file in glob.glob( component ):
 							name = ''
 							if component.find( '*' ) != -1: name = file.rsplit( '/', 1 )[ -1 ]

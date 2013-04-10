@@ -107,7 +107,7 @@ namespace olib
 		CORE_API t_ostream& operator<<( t_ostream& os, const library_info& info )
 		{
 			os << info.m_version << _CT("\t") << info.m_build_nr << _CT("\t") 
-				<< info.m_filename << _CT("\t") << info.m_company << _CT("\t") << info.m_product;
+				<< info.m_filename.native() << _CT("\t") << info.m_company << _CT("\t") << info.m_product;
 			return os;
 		}
 
@@ -237,7 +237,7 @@ namespace olib
                 	make_sure_path_exists(ph.parent_path()); 
                 	boost::filesystem::create_directory(ph); 
 		}
-		catch( boost::filesystem::basic_filesystem_error<olib::t_path> &exception)
+		catch( boost::filesystem::filesystem_error &exception)
 		{
 			std::wcerr << "exists exits: " << exception.what( ) << std::endl;
 		}

@@ -88,11 +88,11 @@ namespace olib
 
 					ARENFORCE( info );
 					DWORD unused(0);
-					DWORD info_size = ::GetFileVersionInfoSize( info->get_filename().string().c_str(), &unused );
+					DWORD info_size = ::GetFileVersionInfoSize( info->get_filename().c_str(), &unused );
 					if( info_size == 0 ) return;
 
 					std::vector< char > data( info_size );
-					ARENFORCE_WIN( ::GetFileVersionInfo( info->get_filename().string().c_str(), unused, data.size(), (void*)&data[0]) != 0 );
+					ARENFORCE_WIN( ::GetFileVersionInfo( info->get_filename().c_str(), unused, data.size(), (void*)&data[0]) != 0 );
 
 					// Get the language ID
 					TCHAR  szLang[30];

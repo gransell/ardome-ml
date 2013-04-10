@@ -1,8 +1,8 @@
 #include "precompiled_headers.hpp"
+#include <boost/test/auto_unit_test.hpp>
+
 #include "opencorelib/cl/utilities.hpp"
 #include "opencorelib/cl/special_folders.hpp"
-#include "opencorelib/cl/str_util.hpp"
-#include <boost/test/test_tools.hpp>
 
 using namespace olib;
 using namespace olib::opencorelib;
@@ -15,7 +15,7 @@ void T_CHECK_EQUAL(const t_string& correct, const t_string& given) {
   BOOST_CHECK_MESSAGE(given.compare(correct) == 0, msg);
 }
 
-void test_utilities()
+BOOST_AUTO_TEST_CASE( test_utilities )
 {
     t_string host1(_CT("my_server"));
     t_string base_url(_CT("/f1/f2\\f3\\\\f5\\"));
@@ -40,9 +40,5 @@ void test_utilities()
     BOOST_CHECK( !wp.empty() );
 
 	std::vector< olib::opencorelib::library_info_ptr > infos = olib::opencorelib::utilities::get_loaded_libraries();
-
-	/*for(size_t i = 0; i < infos.size(); ++i  )
-	{
-		T_COUT << *(infos[i]) << std::endl;
-	}*/
 }
+

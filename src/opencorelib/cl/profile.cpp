@@ -13,9 +13,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 
-#include "opencorelib/cl/enforce_defines.hpp"
+#include <opencorelib/cl/str_util.hpp>
 
 namespace fs = boost::filesystem;
+namespace cl = olib::opencorelib;
 
 namespace olib { namespace opencorelib {
 
@@ -163,12 +164,12 @@ profile_ptr profile_load( const std::string &profile )
 {
 	typedef boost::shared_ptr< profile_impl > profile_impl_ptr;
 	profile_impl_ptr result( new profile_impl( ) );
-	if ( fs::exists( profile ) )
+	if ( fs::exists( cl::str_util::to_t_string( profile ) ) )
 	{
 		std::ifstream stream( profile.c_str( ), std::ifstream::in );
 		result->parse( stream );
 	}
-	else if ( fs::exists( base_directory + profile ) )
+	else if ( fs::exists( cl::str_util::to_t_string( base_directory + profile ) ) )
 	{
 		std::ifstream stream( ( base_directory + profile ).c_str( ), std::ifstream::in );
 		result->parse( stream );

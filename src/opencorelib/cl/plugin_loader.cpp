@@ -44,10 +44,10 @@ namespace olib
 
             #ifdef OLIB_ON_WINDOWS
             HMODULE mod;
-            ARENFORCE_WIN( mod = ::LoadLibraryW( p.string().c_str() ))(p.string());
+            ARENFORCE_WIN( mod = ::LoadLibraryW( p.c_str() ))( p.native() );
 
             ARENFORCE_WIN(m_get_factory_function = (get_assembly_class_factory)
-                ::GetProcAddress( mod, "get_assembly_class_factory"))(p.string());
+                ::GetProcAddress( mod, "get_assembly_class_factory"))(p.native());
             m_handle = (boost::int64_t)mod;
             
             #else // mac or unix
@@ -75,7 +75,7 @@ namespace olib
             if(m_handle == 0) return;
             #ifdef OLIB_ON_WINDOWS
                 ARENFORCE_WIN( ::FreeLibrary( (HMODULE)(m_handle) ) == TRUE )
-                                                    (m_path.string());
+                                                    (m_path.native());
             #else // mac or unix
                 ARENFORCE( dlclose( (void*)(m_handle) ) == 0 )
                         (m_path.string())(std::string( dlerror( ) ) );
@@ -95,9 +95,9 @@ namespace olib
             try
             {            
                 olib::t_path full_path = olib::t_path( m_base_path ) / olib::t_path( xml_file_name );
-                ARLOG_DEBUG2( _CT("Loading plugin metdata from \"%1%\"."))(to_t_string(full_path.string()));
+                ARLOG_DEBUG2( _CT("Loading plugin metdata from \"%1%\"."))(full_path.native());
                 ARENFORCE_MSG_ERR(  fs::exists(full_path), _CT("The plugin file can not be found. Path=%s"), 
-                                    olib::error::file_not_found())(to_t_string(full_path.string()));
+                                    olib::error::file_not_found())(full_path.native());
                     
                 schema_map schemas;
                 schemas[_CT("http://www.ardendo.com/amf/core/")] = plugin_schema_location;
