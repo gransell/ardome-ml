@@ -18,7 +18,7 @@ fi
 if [ -e "boost.zip" ] 
 	then
 	echo "Extracting boost..."
-	unzip -q boost.zip || exit 1
+	unzip -q -o boost.zip || exit 1
 fi
 
 if [ -e "ffmpeg.tar.bz2" ] 
@@ -55,5 +55,9 @@ if [ -e "black_magic_decklink_sdk.tbz2" ]
 then
 	echo 'Extracting decklink'
 	tar xjf black_magic_decklink_sdk.tbz2 || exit 1
+	if [ -e "decklink_sdk" ]
+		then
+		rm -r decklink_sdk
+	fi
 	mv 'Blackmagic DeckLink SDK 8.6' decklink_sdk
 fi
