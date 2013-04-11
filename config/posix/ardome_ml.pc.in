@@ -1,0 +1,29 @@
+
+#
+# pkgconfig for OpenLibraries
+#
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+OPENIMAGELIB_PLUGINS=@OPENIMAGELIB_PLUGINPATH@
+OPENMEDIALIB_PLUGINS=@OPENMEDIALIB_PLUGINPATH@
+
+Name: Ardome Media Library
+Description: A library suite for non-linear editing, visual effects and rich media applications.
+Version: @OL_MAJOR@.@OL_MINOR@.@OL_SUB@
+
+Libs: @OPENCORELIB_LDFLAGS@ \
+	  @OPENPLUGINLIB_LDFLAGS@ \
+	  @OPENIMAGELIB_LDFLAGS@ \
+	  @OPENMEDIALIB_LDFLAGS@ \
+	  @OLIB_LDFLAGS@
+
+Cflags: -I${includedir}/ardome-ml -I${libdir}/ardome-ml/include @OLIB_CORE_CXXFLAGS@ -pthread
+
+install_libs=${libdir}
+install_include=${includedir}
+install_share=${prefix}/share
+

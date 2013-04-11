@@ -170,7 +170,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@OPENMEDIALIB_LDFLAGS@', '-lopenmedialib_ml' ),
 					   ( '@OLIB_CORE_CXXFLAGS@', clone.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
-				openbuild.utils.search_and_replace( 'ardome_ml.pc.in', 'ardome_ml.pc', tokens )
+				openbuild.utils.search_and_replace( os.path.join( 'config', self['PLATFORM'], 'ardome_ml.pc.in' ), 'ardome_ml.pc', tokens )
 				clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
 	def install_openbuild( self ):
