@@ -62,6 +62,8 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"yuv411";
 	else if ( fmt == PIX_FMT_YUV411P )
 		return L"yuv411p";
+	else if ( fmt == PIX_FMT_UYVY422 )
+		return L"uyv422";
 	else if ( fmt == PIX_FMT_YUYV422 )
 		return L"yuv422";
 	else if ( fmt == PIX_FMT_YUV422P )
@@ -116,6 +118,7 @@ std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
 		case CODEC_ID_PCM_U24BE: return "http://www.ardendo.com/apf/codec/aiff";
 		case CODEC_ID_DVVIDEO: return "http://www.ardendo.com/apf/codec/dv/dvcpro";
 		case CODEC_ID_DNXHD: return "http://www.ardendo.com/apf/codec/vc3/vc3";
+		case AV_CODEC_ID_PRORES: return "http://www.ardendo.com/apf/codec/prores/prores";
 		default: return "";
 	}
 
@@ -151,6 +154,8 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 		return CODEC_ID_DVVIDEO;
 	else if( apf_codec_id == "vc3/vc3" )
 		return CODEC_ID_DNXHD;
+	else if( apf_codec_id == "prores/prores" )
+		return AV_CODEC_ID_PRORES;
 	else if( apf_codec_id == "aes" )
 		return static_cast< enum CodecID >( AML_AES3_CODEC_ID );
 	else if( apf_codec_id == "pcm" )
