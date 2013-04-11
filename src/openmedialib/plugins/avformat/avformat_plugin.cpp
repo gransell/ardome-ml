@@ -64,6 +64,8 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"yuv411p";
 	else if ( fmt == PIX_FMT_UYVY422 )
 		return L"uyv422";
+	else if ( fmt == PIX_FMT_YUV422P10LE )
+		return L"yuv422p10le";
 	else if ( fmt == PIX_FMT_YUYV422 )
 		return L"yuv422";
 	else if ( fmt == PIX_FMT_YUV422P )
@@ -90,7 +92,6 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"r8g8b8a8";
 	else if ( fmt == PIX_FMT_BGR32_1 )
 		return L"b8g8r8a8";
-
 	return L"";
 }
 
@@ -198,6 +199,8 @@ const PixelFormat oil_to_avformat( const std::wstring &fmt )
 		return PIX_FMT_YUYV422;
 	else if ( fmt == L"uyv422" )
 		return PIX_FMT_UYVY422;
+	else if ( fmt == L"yuv422p10le" )
+		return PIX_FMT_YUV422P10LE;
 	else if ( fmt == L"yuv422p" )
 		return PIX_FMT_YUV422P;
 	else if ( fmt == L"yuv444p" )
