@@ -134,7 +134,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			return self.check_dependencies( "boost_date_time", "boost_regex", "boost_thread", "boost_filesystem", "libavformat", "loki", "xerces", "sdl" )
 
 	def olib_core_cxxflags( self ):
-		common = ' -DBOOST_FILESYSTEM_VERSION=2'
+		common = ' -DBOOST_FILESYSTEM_NO_DEPRECATED'
 		if self['PLATFORM'] == 'darwin':
 			return '-DOLIB_USE_UTF8' + common
 		elif self['PLATFORM'] == 'posix':
