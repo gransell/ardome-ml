@@ -30,11 +30,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		elif self[ 'target' ] == 'vs2008': pass
 		elif self[ 'target' ] == 'vs2010': pass
 		elif self[ 'target' ] == 'osx':
-			#self.install_config( 'config/osx/ffmpeg.pc', 'bcomp/ffmpeg' )
 			self.install_config( 'config/osx/loki.pc', 'bcomp/loki' )
-			if os.path.exists( 'bcomp/SDL' ):
-				self.install_config( 'config/osx/sdl.pc', 'bcomp/SDL' )
-			#self.install_config( 'config/osx/xerces.pc', 'bcomp/xercesc' )
 		elif self[ 'target' ] == 'ubuntu32':
 			if os.path.exists( 'bcomp/boost' ):
 				for package in [ 'boost_python.pc', 'boost_filesystem.pc', 'boost_thread.pc', 'boost_regex.pc', 
@@ -51,12 +47,9 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/linux32/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux32/xerces.pc', 'bcomp/xercesc' )
 			self.install_config( 'config/linux32/ffmpeg.pc', 'bcomp/ffmpeg' )
-			if os.path.exists( 'bcomp/sdl' ):
-				self.install_config( 'config/linux32/sdl.pc', 'bcomp/sdl' )
 		elif self[ 'target' ] == 'linux64':
 			self.install_config( 'config/linux64/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux64/xerces.pc', 'bcomp/xercesc' )
-			self.install_config( 'config/linux64/sdl.pc', 'bcomp/sdl' )
 			self.install_config( 'config/linux64/ffmpeg.pc', 'bcomp/ffmpeg' )
 
 	def configure_platform( self ):
