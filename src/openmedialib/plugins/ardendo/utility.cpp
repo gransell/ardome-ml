@@ -153,7 +153,7 @@ std::string print_track_packets( const ml::audio::track_type::map& track_packets
 	return res.str();
 }
 
-void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
+void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool evaluate )
 {
 	int num, den;
 	frame->get_fps( num, den );
@@ -186,8 +186,9 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame )
 		stream << "Audio Stream : No" << endl;
 	}
 
-	if ( frame->get_image( ) )
-		stream << "Has Image    : Yes, position = " << frame->get_image( )->position( ) << endl;
+	il::image_type_ptr image = evaluate ? frame->get_image( ) : frame->get_evaluated_image( );
+	if ( image )
+		stream << "Has Image    : Yes, position = " << image->position( ) << endl;
 	else
 		stream << "Has Image    : No" << endl;
 
@@ -334,14 +335,14 @@ void report_props( std::ostream &stream, const pl::pcos::property_container &pro
 	stream << endl;
 }
 
-void frame_report_basic( const ml::frame_type_ptr &frame )
+void frame_report_basic( const ml::frame_type_ptr &frame, bool evaluate )
 {
-	report_frame( cout, frame );
+	report_frame( cout, frame, evaluate );
 }
 
-void frame_report_image( const ml::frame_type_ptr &frame )
-{
-	report_image( cout, frame->get_image( ), frame->get_sar_num( ), frame->get_sar_den( ) );
+void frame_report_image( const ml::frame_type_ptr &frame, bool evaluate )
+{	
+	report_image( cout, !evaluate ? frame->get_evaluated_image( ) : frame->get_image( ), frame->get_sar_num( ), frame->get_sar_den( ) );
 }
 
 void frame_report_alpha( const ml::frame_type_ptr &frame )

@@ -204,6 +204,9 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Return the const list of audio stream components associated to this frame
 		const audio::block_type_ptr &audio_block( ) const { return audio_block_; }
 
+		/// Get the image associated to the frame. Just return the member variable without triggering the decoding from stream.
+		const olib::openimagelib::il::image_type_ptr get_evaluated_image( ) const { return image_; }
+
 	protected:
 	
 		/// Copy constructor from a frame_type_ptr

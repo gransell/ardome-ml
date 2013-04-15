@@ -63,6 +63,8 @@ extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_threader( const std::wstrin
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_transport( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_volume( const std::wstring & );
 extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_pass( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_remove( const std::wstring & );
+extern ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_evaluate( const std::wstring & );
 
 //
 // Plugin object
@@ -165,7 +167,11 @@ public:
 		if ( resource == L"volume" )
 			return create_volume( resource );
 		if ( resource == L"lowpass" )
-		  return create_pass( resource );
+			return create_pass( resource );
+		if ( resource == L"remove" )
+			return create_remove( resource );
+		if ( resource == L"evaluate" )
+			return create_evaluate( resource );
 
 		return ml::filter_type_ptr( );
 	}

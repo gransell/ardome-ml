@@ -25,10 +25,12 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 			, prop_enabled_( pcos::key::from_string( "enabled" ) )
 			, prop_count_( pcos::key::from_string( "count" ) )
 			, prop_deferrable_( pcos::key::from_string( "deferrable" ) )
+			, prop_evaluate_( pcos::key::from_string( "evaluate" ) )
 		{
 			properties( ).append( prop_enabled_ = 1 );
 			properties( ).append( prop_count_ = 1 );
 			properties( ).append( prop_deferrable_ = 0 );
+			properties( ).append( prop_evaluate_ = 1 );
 		}
 
 		virtual ~store_null( )
@@ -42,8 +44,9 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 				std::deque< ml::frame_type_ptr > queue = ml::frame_type::unfold( frame );
 				for( std::deque< ml::frame_type_ptr >::iterator iter = queue.begin( ); iter != queue.end( ); ++iter )
 				{
-					frame_report_basic( *iter );
-					frame_report_image( *iter );
+					bool evaluate = prop_evaluate_.value< int >( );
+					frame_report_basic( *iter, evaluate );
+					frame_report_image( *iter, evaluate );
 					frame_report_alpha( *iter );
 					frame_report_audio( *iter );
 					frame_report_props( *iter );
@@ -67,6 +70,7 @@ class ML_PLUGIN_DECLSPEC store_null : public ml::store_type
 		pcos::property prop_enabled_;
 		pcos::property prop_count_;
 		pcos::property prop_deferrable_;
+		pcos::property prop_evaluate_;
 };
 
 ml::store_type_ptr ML_PLUGIN_DECLSPEC create_store_null( )

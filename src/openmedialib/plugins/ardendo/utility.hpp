@@ -53,15 +53,15 @@ extern void copy_plane( il::image_type_ptr output, il::image_type_ptr input, siz
 extern void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample );
 
 // Report to stream
-extern void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame );
+extern void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool dont_evaluate = false );
 extern void report_image( std::ostream &stream, const il::image_type_ptr &img, int num = 1, int den = 1 );
 extern void report_alpha( std::ostream &stream, const il::image_type_ptr img );
 extern void report_audio( std::ostream &stream, const ml::audio_type_ptr &audio );
 extern void report_props( std::ostream &stream, const pl::pcos::property_container &props );
 
 // Frame interogation utilities
-extern void frame_report_basic( const ml::frame_type_ptr &frame );
-extern void frame_report_image( const ml::frame_type_ptr &frame );
+extern void frame_report_basic( const ml::frame_type_ptr &frame, bool evaluate = true );
+extern void frame_report_image( const ml::frame_type_ptr &frame, bool evaluate = true );
 extern void frame_report_alpha( const ml::frame_type_ptr &frame );
 extern void frame_report_audio( const ml::frame_type_ptr &frame );
 extern void frame_report_props( const ml::frame_type_ptr &frame );
