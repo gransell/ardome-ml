@@ -22,5 +22,10 @@ if [ ! $? == 0 ]; then
   exit 1
 fi
 
+if [ -n "$TEST_REPORT_PATH" ]; then
+  cp tests/test_output/opencore/opencore_test_results.xml $TEST_REPORT_PATH/
+  cp tests/test_output/openmedialib/unit_test_results.xml $TEST_REPORT_PATH/
+fi
+
 echo "All unit tests passed!"
 echo -e "Testphase done. Continue with production...\n\n"
