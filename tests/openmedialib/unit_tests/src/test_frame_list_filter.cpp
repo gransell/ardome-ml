@@ -3,7 +3,6 @@
 #include <openmedialib/ml/utilities.hpp>
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/frame.hpp>
-// #include <openmedialib/il/basic_image.hpp>
 #include <opencorelib/cl/str_util.hpp>
 #include <openmedialib/ml/filter.hpp>
 
@@ -23,9 +22,7 @@ namespace
     }
 }
 
-BOOST_AUTO_TEST_SUITE( frame_list_filter )
-
-BOOST_AUTO_TEST_CASE( frame_list_filter_case )
+BOOST_AUTO_TEST_CASE( frame_list_filter )
 {
 	// create playlist filter which merges the inputs
 	filter_type_ptr playlist_filter = create_filter( L"playlist" );
@@ -89,5 +86,4 @@ BOOST_AUTO_TEST_CASE( frame_list_filter_case )
 
 }
 
-BOOST_AUTO_TEST_SUITE_END()
 
