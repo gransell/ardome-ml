@@ -7,6 +7,8 @@ import os
 
 Import(['local_env'])
 
+local_env.warnings_as_errors()
+
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_date_time', 'boost_system', 'boost_regex', 'boost_python' )
 
 prefix = sys.exec_prefix
