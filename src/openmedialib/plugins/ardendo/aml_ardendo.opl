@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openlibraries version="1.0">
 	<openmedialib name="oml" version="0.1.0">
-		<plugin name="Ardendo plugin" type="filter" extension='"aml", "aml_pitch", "audio_convert", "charcoal", "chroma_key", "colour_space", "color_space", "compositor", "extract", "evaluate", "hold", "interlace", "invert", "locked_audio", "loop", "lowpass", "mix_matrix", "mono", "montage", "muxer", "mvitc_write", "mvitc_decode", "offset", "pitch", "pulldown", "remove", "repeat", "sar", "sleep", "slots", "step", "store", "tee", "threader", "transport", "volume"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
+		<plugin name="Ardendo plugin" type="filter" extension='"aml", "frame_list", "aml_pitch", "audio_convert", "charcoal", "chroma_key", "colour_space", "color_space", "compositor", "extract", "evaluate", "hold", "interlace", "invert", "locked_audio", "loop", "lowpass", "mix_matrix", "mono", "montage", "muxer", "mvitc_write", "mvitc_decode", "offset", "pitch", "pulldown", "remove", "repeat", "sar", "sleep", "slots", "step", "store", "tee", "threader", "transport", "volume"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
 		<plugin name="Ardendo plugin" type="input" extension='"aml_stack:.*", ".*\.awi", ".*\.aml", "silence:", "tone:"' merit="50" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
 		<plugin name="Ardendo plugin" type="output" extension='"awi:", ".*\.awi", "null:", "preview:", ".*\.ppm"' merit="4" filename='"libopenmedialib_ardendo.so", "libopenmedialib_ardendo.dylib", "openmedialib_ardendo.dll"'/>
 	</openmedialib>
