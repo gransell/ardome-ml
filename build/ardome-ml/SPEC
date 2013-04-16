@@ -35,6 +35,7 @@ osx_BUILDSCRIPT2: build/release/osx/bin/opencore_unit_tests all_tests
 osx_BUILDSCRIPT3: build/release/osx/bin/openmedialib_unit_tests
 osx_BUILDSCRIPT4: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-10.5
 osx_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+osx_TESTTARGET2: tests/test_output/openmedialib/unit_test_results.xml
 
 ### Build using with install_name set to @loader_path/../lib/ 
 osx_loader_TARGET: ardome-ml-osx-loader-path-10.5.tbz2 
