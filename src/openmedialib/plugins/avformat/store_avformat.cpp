@@ -463,7 +463,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//if ( av_set_parameters( oc_, NULL ) >= 0 )
 				{
 					// Attempt to open video and audio streams
-					if ( open_video_stream( ) && open_audio_stream( ) )
+					ret = open_video_stream( ) && open_audio_stream( );
+					if ( ret )
 					{
 						if ( fmt_->flags & AVFMT_NEEDNUMBER )
 							if ( !av_filename_number_test(oc_->filename) )
@@ -555,24 +556,17 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 		void write_ts_index( )
 		{
+			ARENFORCE( ts_context_ );
+
 			std::vector< boost::uint8_t > buffer;
 
-			if ( ts_context_ )
-			{
-				ts_generator_audio_.flush( buffer );
-				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+			ts_generator_audio_.flush( buffer );
+			avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 
-				ts_generator_video_.flush( buffer );
-				avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
+			ts_generator_video_.flush( buffer );
+			avio_write( ts_context_, ( unsigned char * )( &buffer[ 0 ] ), buffer.size( ) );
 
-				avio_flush( ts_context_ );
-			}
-			else
-			{
-				// Flush the generators just in case data is being written to them
-				ts_generator_audio_.flush( buffer );
-				ts_generator_video_.flush( buffer );
-			}
+			avio_flush( ts_context_ );
 		}
 
 		void close_video_codec( )
@@ -1286,9 +1280,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if( oc_->pb && c->coded_frame && ( c->coded_frame->key_frame || c->coded_frame->pict_type == AV_PICTURE_TYPE_I ) && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) )
 				{
 					if ( ts_context_ )
+					{
 						ts_generator_video_.enroll( encoded_images_, oc_->pb->pos );
-
-					write_ts_index( );
+						write_ts_index( );
+					}
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = encoded_images_;
 					ts_last_offset_ = oc_->pb->pos;
@@ -1351,9 +1346,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{       
 					if ( ts_context_ )
+					{
 						ts_generator_video_.enroll( stream->position( ), oc_->pb->pos );
+						write_ts_index( );
+					}
 
-					write_ts_index( );
 					pkt.flags |= AV_PKT_FLAG_KEY;
 					ts_last_position_ = push_count_ - 1;
 					ts_last_offset_ = oc_->pb->pos;
@@ -1596,9 +1593,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 								if( audio_packet_num_ % 8 == 0 )
 								{
 									if( ts_context_ )
+									{
 										ts_generator_audio_.enroll( audio_packet_num_, oc_->pb->pos );
-
-									write_ts_index( );
+										write_ts_index( );
+									}
 								}
 								audio_packet_num_++;
 							}

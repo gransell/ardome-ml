@@ -81,8 +81,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	real_bytes_per_sample_ = bytes_per_sample_;
 
 	switch (ident) {
-		case ml::audio::pcm8_id:
-			real_bytes_per_sample_ = 1; break;
 		case ml::audio::pcm16_id:
 			real_bytes_per_sample_ = 2; break;
 		case ml::audio::pcm24_id:

@@ -287,7 +287,6 @@ class avaudio_filter
 
 			switch( id )
 			{
-				case ml::audio::pcm8_id:
 				case ml::audio::pcm16_id:
 					format = AV_SAMPLE_FMT_S16;
 					break;
@@ -311,10 +310,6 @@ class avaudio_filter
 
 			switch( audio->id( ) )
 			{
-				case ml::audio::pcm8_id:
-					result = ml::audio::coerce( ml::audio::FORMAT_PCM16, audio );
-					break;
-
 				case ml::audio::pcm24_id:
 					result = ml::audio::coerce( ml::audio::FORMAT_PCM32, audio );
 					break;

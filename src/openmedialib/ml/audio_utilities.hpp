@@ -11,6 +11,11 @@
 #include <string>
 #include <vector>
 
+using boost::uint8_t;
+using boost::uint16_t;
+using boost::uint32_t;
+using boost::int32_t;
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Convenience function to allocate an audio type by the identity
@@ -99,6 +104,17 @@ extern ML_DECLSPEC identity af_to_id( const std::wstring &af );
 
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
+
+extern ML_DECLSPEC uint32_t bswap_32( const uint32_t src );
+
+// aiff is stored reversed. so reverse every 4-byte word, then copy last 3 bytes of the result onto the output.
+extern ML_DECLSPEC void pack_pcm24_from_aiff32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
+
+// just copy the first 3 bytes of every 4 bytes onto the output buffer
+extern ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
+
+// swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time. so the input data has to be 16-byte aligned.
+extern ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t length );
 
 } } } }
 

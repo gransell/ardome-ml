@@ -163,8 +163,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		{
 			ml::audio::identity id = ml::audio::pcm16_id;
 
-			if ( af == ml::audio::FORMAT_PCM8 ) id = ml::audio::pcm8_id;
-			else if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
+			if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
 			else if ( af == ml::audio::FORMAT_PCM24 ) id = ml::audio::pcm24_id;
 			else if ( af == ml::audio::FORMAT_PCM32 ) id = ml::audio::pcm32_id;
 			else if ( af == ml::audio::FORMAT_FLOAT ) id = ml::audio::float_id;
