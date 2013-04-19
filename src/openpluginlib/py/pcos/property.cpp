@@ -44,7 +44,7 @@ void ( pcos::property::*set_store_type_ptr )( const ml::store_type_ptr& ) = &pco
 void back_reference_set( pcos::property* p, py::back_reference<int> x )
 {
 	if (x.source().ptr()->ob_type == &PyBool_Type) {
-		p->set< bool >( x.get() );
+		p->set< bool >( x.get() != 0 );
 	}
 	else {
 		p->set< int >( x.get() );
