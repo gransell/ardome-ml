@@ -22,23 +22,37 @@ namespace olib { namespace openmedialib { namespace ml { namespace audio {
 // Look up table for ids
 static const std::wstring id_to_af_table[ ] = { FORMAT_PCM8, FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
 
-// Convenience function to allocate an audio type by the string identifier
-ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int channels, int samples, bool init_to_zero )
+// Convenience function to allocate an audio type by id
+ML_DECLSPEC audio_type_ptr allocate( const identity& id, int frequency, int channels, int samples, bool init_to_zero )
 {
 	audio_type_ptr result;
 
-	if ( af == FORMAT_PCM8 )
-		result = pcm8_ptr( new pcm8( frequency, channels, samples, init_to_zero ) );
-	else if ( af == FORMAT_PCM16 )
-		result = pcm16_ptr( new pcm16( frequency, channels, samples, init_to_zero ) );
-	else if ( af == FORMAT_PCM24 )
-		result = pcm24_ptr( new pcm24( frequency, channels, samples, init_to_zero ) );
-	else if ( af == FORMAT_PCM32 )
-		result = pcm32_ptr( new pcm32( frequency, channels, samples, init_to_zero ) );
-	else if ( af == FORMAT_FLOAT )
-		result = floats_ptr( new floats( frequency, channels, samples, init_to_zero ) );
-	
+	switch( id )
+	{
+		case ml::audio::pcm8_id:
+			result = pcm8_ptr( new pcm8( frequency, channels, samples, init_to_zero ) );
+			break;
+		case ml::audio::pcm16_id:
+			result = pcm16_ptr( new pcm16( frequency, channels, samples, init_to_zero ) );
+			break;
+		case ml::audio::pcm24_id:
+			result = pcm24_ptr( new pcm24( frequency, channels, samples, init_to_zero ) );
+			break;
+		case ml::audio::pcm32_id:
+			result = pcm32_ptr( new pcm32( frequency, channels, samples, init_to_zero ) );
+			break;
+		case ml::audio::float_id:
+			result = floats_ptr( new floats( frequency, channels, samples, init_to_zero ) );
+			break;
+	}
+
 	return result;
+}
+
+// Convenience function to allocate an audio type by the string identifier
+ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int channels, int samples, bool init_to_zero )
+{
+	return allocate( af_to_id(af), frequency, channels, samples, init_to_zero);
 }
 
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
@@ -55,27 +69,69 @@ ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency
 		if ( samples == -1 )
 			samples = source->samples( );
 
-		result = allocate( source->af( ), frequency, channels, samples, init_to_zero );
+		result = allocate( source->id( ), frequency, channels, samples, init_to_zero );
 	}
 
 	return result;
 }
 
 // Convenience function to coerce an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source )
+ML_DECLSPEC audio_type_ptr coerce( const identity& id, const audio_type_ptr &source )
 {
 	audio_type_ptr result;
 
-	if ( af == FORMAT_PCM8 )
-		result = coerce< pcm8 >( source );
-	else if ( af == FORMAT_PCM16 )
-		result = coerce< pcm16 >( source );
-	else if ( af == FORMAT_PCM24 )
-		result = coerce< pcm24 >( source );
-	else if ( af == FORMAT_PCM32 )
-		result = coerce< pcm32 >( source );
-	else if ( af == FORMAT_FLOAT )
-		result = coerce< floats >( source );
+	switch( id )
+	{
+		case ml::audio::pcm8_id:
+			result = coerce< pcm8 >( source );
+			break;
+		case ml::audio::pcm16_id:
+			result = coerce< pcm16 >( source );
+			break;
+		case ml::audio::pcm24_id:
+			result = coerce< pcm24 >( source );
+			break;
+		case ml::audio::pcm32_id:
+			result = coerce< pcm32 >( source );
+			break;
+		case ml::audio::float_id:
+			result = coerce< floats >( source );
+			break;
+	}
+
+	return result;
+}
+
+
+// Convenience function to coerce an audio_type_ptr to a specific type
+ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source )
+{
+	return coerce( af_to_id(af), source);
+}
+
+// Convenience function to force an audio_type_ptr to a specific type
+ML_DECLSPEC audio_type_ptr force( const identity& id, const audio_type_ptr &source )
+{
+	audio_type_ptr result;
+
+	switch( id )
+	{
+		case ml::audio::pcm8_id:
+			result = force< pcm8 >( source );
+			break;
+		case ml::audio::pcm16_id:
+			result = force< pcm16 >( source );
+			break;
+		case ml::audio::pcm24_id:
+			result = force< pcm24 >( source );
+			break;
+		case ml::audio::pcm32_id:
+			result = force< pcm32 >( source );
+			break;
+		case ml::audio::float_id:
+			result = force< floats >( source );
+			break;
+	}
 
 	return result;
 }
@@ -83,18 +139,32 @@ ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr 
 // Convenience function to force an audio_type_ptr to a specific type
 ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &source )
 {
+	return force( af_to_id( af ), source );
+}
+
+// Convenience function to cast an audio_type_ptr to a specific type
+ML_DECLSPEC audio_type_ptr cast( const identity& id, const audio_type_ptr &source )
+{
 	audio_type_ptr result;
 
-	if ( af == FORMAT_PCM8 )
-		result = force< pcm8 >( source );
-	else if ( af == FORMAT_PCM16 )
-		result = force< pcm16 >( source );
-	else if ( af == FORMAT_PCM24 )
-		result = force< pcm24 >( source );
-	else if ( af == FORMAT_PCM32 )
-		result = force< pcm32 >( source );
-	else if ( af == FORMAT_FLOAT )
-		result = force< floats >( source );
+	switch( id )
+	{
+		case ml::audio::pcm8_id:
+			result = cast< pcm8 >( source );
+			break;
+		case ml::audio::pcm16_id:
+			result = cast< pcm16 >( source );
+			break;
+		case ml::audio::pcm24_id:
+			result = cast< pcm24 >( source );
+			break;
+		case ml::audio::pcm32_id:
+			result = cast< pcm32 >( source );
+			break;
+		case ml::audio::float_id:
+			result = cast< floats >( source );
+			break;
+	}
 
 	return result;
 }
@@ -102,20 +172,7 @@ ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &
 // Convenience function to cast an audio_type_ptr to a specific type
 ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source )
 {
-	audio_type_ptr result;
-
-	if ( af == FORMAT_PCM8 )
-		result = cast< pcm8 >( source );
-	else if ( af == FORMAT_PCM16 )
-		result = cast< pcm16 >( source );
-	else if ( af == FORMAT_PCM24 )
-		result = cast< pcm24 >( source );
-	else if ( af == FORMAT_PCM32 )
-		result = cast< pcm32 >( source );
-	else if ( af == FORMAT_FLOAT )
-		result = cast< floats >( source );
-
-	return result;
+	return cast( af_to_id( af ), source );
 }
 
 // Convenience function to convert to another channel arrangement without changing type
@@ -346,17 +403,17 @@ ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 	if( audios.size() == 1 )
 		return audios[ 0 ];
 	
-	std::wstring af = (*audios.begin())->af();
+	identity id = (*audios.begin())->id();
 	
 	int channels = 0;
 	for( size_t i = 0; i < audios.size(); ++i )
 	{
-		if( audios[ i ]->af() != af ) audios[ i ] = coerce( af, audios[ i ] );
+		if( audios[ i ]->id() != id) audios[ i ] = coerce( id, audios[ i ] );
 		
 		channels += audios[ i ]->channels();
 	}
 	
-	audio_type_ptr ret = allocate( af, (*audios.begin())->frequency(), channels, (*audios.begin())->samples() );
+	audio_type_ptr ret = allocate( id, (*audios.begin())->frequency(), channels, (*audios.begin())->samples() );
 	
 	int current_channel = 0;
 	for( size_t i = 0; i < audios.size(); ++i )
@@ -409,8 +466,23 @@ ML_DECLSPEC reseat_ptr create_reseat( )
 	return reseat_ptr( new reseat_impl( ) );
 }
 
+// Convert a string to an id
+ML_DECLSPEC identity af_to_id( const std::wstring &af )
+{
+	identity id = ml::audio::pcm8_id;
+
+	if ( af == ml::audio::FORMAT_PCM8 ) id = ml::audio::pcm8_id;
+	else if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
+	else if ( af == ml::audio::FORMAT_PCM24 ) id = ml::audio::pcm24_id;
+	else if ( af == ml::audio::FORMAT_PCM32 ) id = ml::audio::pcm32_id;
+	else if ( af == ml::audio::FORMAT_FLOAT ) id = ml::audio::float_id;
+	else ARENFORCE_MSG( false, "Could not convert af-string to id" )( af );
+	
+	return id;
+}
+
 // Convert an id to a printable string
-const std::wstring &id_to_af( const identity &id )
+ML_DECLSPEC const std::wstring &id_to_af( const identity &id )
 {
 	return id_to_af_table[ id ];
 }

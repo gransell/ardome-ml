@@ -13,6 +13,9 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
+// Convenience function to allocate an audio type by the identity
+extern ML_DECLSPEC audio_type_ptr allocate( const identity &id, int frequency, int channels, int samples, bool init_to_zero = true );
+
 // Convenience function to allocate an audio type by the string identifier
 extern ML_DECLSPEC audio_type_ptr allocate( const std::wstring &, int frequency, int channels, int samples, bool init_to_zero = true );
 
@@ -20,10 +23,19 @@ extern ML_DECLSPEC audio_type_ptr allocate( const std::wstring &, int frequency,
 extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequency = -1, int channels = -1, int samples = -1, bool init_to_zero = true );
 
 // Convenience function to coerce an audio_type_ptr to a specific type
+extern ML_DECLSPEC audio_type_ptr coerce( const identity &id, const audio_type_ptr &source );
+
+// Convenience function to coerce an audio_type_ptr to a specific type
 extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source );
 
 // Convenience function to force an audio_type_ptr to a specific type
+extern ML_DECLSPEC audio_type_ptr force( const identity &id, const audio_type_ptr &source );
+
+// Convenience function to force an audio_type_ptr to a specific type
 extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &source );
+
+// Convenience function to cast an audio_type_ptr to a specific type
+extern ML_DECLSPEC audio_type_ptr cast( const identity &id, const audio_type_ptr &source );
 
 // Convenience function to cast an audio_type_ptr to a specific type
 extern ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source );
@@ -81,6 +93,9 @@ extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num,
 
 // Method to determine the sample offset for a given frame number at a specified frequency and frame rate
 extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, locked_profile::type profile = locked_profile::unknown );
+
+// Convert a string to an id
+extern ML_DECLSPEC identity af_to_id( const std::wstring &af );
 
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
