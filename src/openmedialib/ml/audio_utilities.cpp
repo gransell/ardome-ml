@@ -16,11 +16,12 @@
 #include <openmedialib/ml/audio_mixer.hpp>
 #include <openmedialib/ml/audio_reseat.hpp>
 #include <openmedialib/ml/audio_volume.hpp>
+#include <emmintrin.h>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Look up table for ids
-static const std::wstring id_to_af_table[ ] = { FORMAT_PCM8, FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
+static const std::wstring id_to_af_table[ ] = { FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
 
 // Convenience function to allocate an audio type by id
 ML_DECLSPEC audio_type_ptr allocate( const identity& id, int frequency, int channels, int samples, bool init_to_zero )
@@ -29,9 +30,6 @@ ML_DECLSPEC audio_type_ptr allocate( const identity& id, int frequency, int chan
 
 	switch( id )
 	{
-		case ml::audio::pcm8_id:
-			result = pcm8_ptr( new pcm8( frequency, channels, samples, init_to_zero ) );
-			break;
 		case ml::audio::pcm16_id:
 			result = pcm16_ptr( new pcm16( frequency, channels, samples, init_to_zero ) );
 			break;
@@ -82,9 +80,6 @@ ML_DECLSPEC audio_type_ptr coerce( const identity& id, const audio_type_ptr &sou
 
 	switch( id )
 	{
-		case ml::audio::pcm8_id:
-			result = coerce< pcm8 >( source );
-			break;
 		case ml::audio::pcm16_id:
 			result = coerce< pcm16 >( source );
 			break;
@@ -113,12 +108,8 @@ ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr 
 ML_DECLSPEC audio_type_ptr force( const identity& id, const audio_type_ptr &source )
 {
 	audio_type_ptr result;
-
 	switch( id )
 	{
-		case ml::audio::pcm8_id:
-			result = force< pcm8 >( source );
-			break;
 		case ml::audio::pcm16_id:
 			result = force< pcm16 >( source );
 			break;
@@ -149,9 +140,6 @@ ML_DECLSPEC audio_type_ptr cast( const identity& id, const audio_type_ptr &sourc
 
 	switch( id )
 	{
-		case ml::audio::pcm8_id:
-			result = cast< pcm8 >( source );
-			break;
 		case ml::audio::pcm16_id:
 			result = cast< pcm16 >( source );
 			break;
@@ -182,9 +170,7 @@ ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &audio, int cha
 
 	if ( audio )
 	{
-		if ( audio->id( ) == pcm8_id )
-			result = channel_convert< pcm8 >( audio, channels, last );
-		else if ( audio->id( ) == pcm16_id )
+		if ( audio->id( ) == pcm16_id )
 			result = channel_convert< pcm16 >( audio, channels, last );
 		else if ( audio->id( ) == pcm24_id )
 			result = channel_convert< pcm24 >( audio, channels, last );
@@ -204,9 +190,7 @@ ML_DECLSPEC audio_type_ptr channel_extract( const audio_type_ptr &audio, int cha
 
 	if ( audio )
 	{
-		if ( audio->id( ) == pcm8_id )
-			result = channel_extract< pcm8 >( audio, channel );
-		else if ( audio->id( ) == pcm16_id )
+		if ( audio->id( ) == pcm16_id )
 			result = channel_extract< pcm16 >( audio, channel );
 		else if ( audio->id( ) == pcm24_id )
 			result = channel_extract< pcm24 >( audio, channel );
@@ -225,9 +209,7 @@ ML_DECLSPEC audio_type_ptr channel_extract_count( const audio_type_ptr &audio, i
 
 	if ( audio )
 	{
-		if ( audio->id( ) == pcm8_id )
-			result = channel_extract_count< pcm8 >( audio, count );
-		else if ( audio->id( ) == pcm16_id )
+		if ( audio->id( ) == pcm16_id )
 			result = channel_extract_count< pcm16 >( audio, count );
 		else if ( audio->id( ) == pcm24_id )
 			result = channel_extract_count< pcm24 >( audio, count );
@@ -248,9 +230,7 @@ ML_DECLSPEC audio_type_ptr pitch( const audio_type_ptr &audio, int required )
 
 	if ( audio )
 	{
-		if ( audio->id( ) == pcm8_id )
-			result = pitch< pcm8 >( audio, required );
-		else if ( audio->id( ) == pcm16_id )
+		if ( audio->id( ) == pcm16_id )
 			result = pitch< pcm16 >( audio, required );
 		else if ( audio->id( ) == pcm24_id )
 			result = pitch< pcm24 >( audio, required );
@@ -270,9 +250,7 @@ ML_DECLSPEC audio_type_ptr reverse( const audio_type_ptr &audio )
 
 	if ( audio )
 	{
-		if ( audio->id( ) == pcm8_id )
-			result = reverse< pcm8 >( audio );
-		else if ( audio->id( ) == pcm16_id )
+		if ( audio->id( ) == pcm16_id )
 			result = reverse< pcm16 >( audio );
 		else if ( audio->id( ) == pcm24_id )
 			result = reverse< pcm24 >( audio );
@@ -292,9 +270,7 @@ ML_DECLSPEC audio_type_ptr channel_place( audio_type_ptr &a, const audio_type_pt
 
 	if ( a )
 	{
-		if ( a->id( ) == pcm8_id )
-			result = place< pcm8 >( a, b, out, in );
-		else if ( a->id( ) == pcm16_id )
+		if ( a->id( ) == pcm16_id )
 			result = place< pcm16 >( a, b, out, in );
 		else if ( a->id( ) == pcm24_id )
 			result = place< pcm24 >( a, b, out, in );
@@ -314,9 +290,7 @@ ML_DECLSPEC audio_type_ptr mixer( const audio_type_ptr &a, const audio_type_ptr 
 
 	if ( a )
 	{
-		if ( a->id( ) == pcm8_id )
-			result = mixer< pcm8 >( a, b, c );
-		else if ( a->id( ) == pcm16_id )
+		if ( a->id( ) == pcm16_id )
 			result = mixer< pcm16 >( a, b, c );
 		else if ( a->id( ) == pcm24_id )
 			result = mixer< pcm24 >( a, b, c );
@@ -336,9 +310,7 @@ ML_DECLSPEC audio_type_ptr volume( const audio_type_ptr &a, float start, float e
 
 	if ( a )
 	{
-		if ( a->id( ) == pcm8_id )
-			result = volume< pcm8 >( a, start, end );
-		else if ( a->id( ) == pcm16_id )
+		if ( a->id( ) == pcm16_id )
 			result = volume< pcm16 >( a, start, end );
 		else if ( a->id( ) == pcm24_id )
 			result = volume< pcm24 >( a, start, end );
@@ -358,9 +330,7 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 
 	if ( b )
 	{
-		if ( ( a && a->id( ) == pcm8_id ) || b->id( ) == pcm8_id )
-			result = channel_mixer< pcm8 >( a, b, levels, max_level, mute, c );
-		else if ( ( a && a->id( ) == pcm16_id ) || b->id( ) == pcm16_id )
+		if ( ( a && a->id( ) == pcm16_id ) || b->id( ) == pcm16_id )
 			result = channel_mixer< pcm16 >( a, b, levels, max_level, mute, c );
 		else if ( ( a && a->id( ) == pcm24_id ) || b->id( ) == pcm24_id )
 			result = channel_mixer< pcm24 >( a, b, levels, max_level, mute, c );
@@ -434,9 +404,7 @@ ML_DECLSPEC audio_type_ptr mix_matrix( audio_type_ptr &a, const std::vector< dou
 
 	if ( a )
 	{
-		if ( a->id( ) == pcm8_id )
-			result = mix_matrix< pcm8 >( a, b, c );
-		else if ( a->id( ) == pcm16_id )
+		if ( a->id( ) == pcm16_id )
 			result = mix_matrix< pcm16 >( a, b, c );
 		else if ( a->id( ) == pcm24_id )
 			result = mix_matrix< pcm24 >( a, b, c );
@@ -469,10 +437,9 @@ ML_DECLSPEC reseat_ptr create_reseat( )
 // Convert a string to an id
 ML_DECLSPEC identity af_to_id( const std::wstring &af )
 {
-	identity id = ml::audio::pcm8_id;
+	identity id = ml::audio::pcm32_id;
 
-	if ( af == ml::audio::FORMAT_PCM8 ) id = ml::audio::pcm8_id;
-	else if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
+	if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
 	else if ( af == ml::audio::FORMAT_PCM24 ) id = ml::audio::pcm24_id;
 	else if ( af == ml::audio::FORMAT_PCM32 ) id = ml::audio::pcm32_id;
 	else if ( af == ml::audio::FORMAT_FLOAT ) id = ml::audio::float_id;
@@ -500,6 +467,43 @@ ML_DECLSPEC type from_string( const olib::t_string& p )
 	return dv;
 }
 
+}
+
+ML_DECLSPEC uint32_t bswap_32( const uint32_t src )
+{
+	return ((src >> 24) & 0xff) | ((src >>  8) & 0xff00) | ((src <<  8) & 0xff0000) | ((src << 24) & 0xff000000);
+}
+
+// aiff is stored reversed. so reverse every 4-byte word, then copy last 3 bytes of the result onto the output.
+ML_DECLSPEC void pack_pcm24_from_aiff32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
+{
+	for( uint32_t i = 0; i < samples * channels; ++i, src += 4, dest += 3 )
+	{
+		uint32_t unswapped = *reinterpret_cast< const uint32_t * >( src );
+		uint32_t swapped = bswap_32( unswapped );
+		memcpy( dest, reinterpret_cast< const uint8_t * >( &swapped ) + 1, 3 );
+	}
+}
+
+// just copy the first 3 bytes of every 4 bytes onto the output buffer
+ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
+{
+	for( uint32_t i = 0; i < samples * channels; ++i, src += 4, dest += 3 )
+	{
+		memcpy( dest, src, 3 );
+	}
+}
+
+// swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time. so the input data has to be 16-byte aligned.
+// pcm to aiff16. byteswap16_inplace
+ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes )
+{		
+	for( int i = 0; i < num_bytes; i += 16 )
+	{
+		__m128i s = _mm_load_si128(  reinterpret_cast< const __m128i * >( &data[ i ] ) );		// load data
+		s = _mm_or_si128( _mm_slli_epi16( s, 8 ), _mm_srli_epi16( s, 8 ) );						// shift left, shift right, OR
+		_mm_store_si128( reinterpret_cast< __m128i * >( &data[ i ] ), s );						// store swapped data
+	}
 }
 
 
