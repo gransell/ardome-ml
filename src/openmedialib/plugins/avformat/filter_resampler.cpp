@@ -14,6 +14,7 @@
 #include <openpluginlib/pl/pcos/observer.hpp>
 
 #include "avaudio_base.hpp"
+#include "utils.hpp"
 
 #include <vector>
 
@@ -43,6 +44,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, current_frequency_(-1)
 			, current_channels_(-1)
+			, filter_( 0 )
 			, dirty_(true)
 			, direction_( 1 )
 			, expected_( -1 )
@@ -57,6 +59,11 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			prop_output_channels_.attach( property_observer_ );
 			prop_output_sample_freq_.attach( property_observer_ );
 			prop_af_.attach( property_observer_ );
+		}
+		
+		virtual ~avformat_resampler_filter()
+		{
+			delete filter_;
 		}
 	
 		virtual const std::wstring get_uri( ) const { return L"resampler"; }
@@ -138,19 +145,21 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			// Check if changes have occurred in the input
 			if ( !dirty_ )
 			{
-				dirty_ = filter_.changed( current_audio );
+				dirty_ =	( filter_->get_in_frequency( ) != current_audio->frequency( ) ) ||
+							( filter_->get_in_channels( ) != current_audio->channels( ) ) ||
+							( filter_->get_in_format( ) != aml_id_to_AVSampleFormat( current_audio->id( ) ) );
 			}
 
 			if ( dirty_ )
 			{
-				filter_.set_passthrough( current_audio );
-				filter_.set_channels( out_channels );
-				filter_.set_frequency( out_frequency );
-				filter_.set_id( af_to_id( out_af ) );
+				delete filter_;
+
+				filter_ = new avaudio_convert_to_aml( current_audio->frequency( ), out_frequency, current_audio->channels( ), out_channels, aml_id_to_AVSampleFormat( current_audio->id( ) ), ml::audio::af_to_id( out_af ) );
+
 				dirty_ = false;
 			}
 
-			ml::audio_type_ptr output_audio = filter_.convert( current_audio );
+			ml::audio_type_ptr output_audio = filter_->convert( current_audio );
 			output_audio->set_position( current_audio->position( ) );
 
 			// Set current frame to have this new audio object, which now holds the resampled audio data
@@ -159,18 +168,6 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		}
 	
 	private:
-		ml::audio::identity af_to_id( const std::wstring &af )
-		{
-			ml::audio::identity id = ml::audio::pcm16_id;
-
-			if ( af == ml::audio::FORMAT_PCM8 ) id = ml::audio::pcm8_id;
-			else if ( af == ml::audio::FORMAT_PCM16 ) id = ml::audio::pcm16_id;
-			else if ( af == ml::audio::FORMAT_PCM24 ) id = ml::audio::pcm24_id;
-			else if ( af == ml::audio::FORMAT_PCM32 ) id = ml::audio::pcm32_id;
-			else if ( af == ml::audio::FORMAT_FLOAT ) id = ml::audio::float_id;
-			
-			return id;
-		}
 
 		class property_observer : public pcos::observer
 		{
@@ -226,7 +223,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		int current_channels_;
 		std::wstring current_af_;
 	
-		avaudio_filter filter_;
+		avaudio_convert_to_aml *filter_;
 		bool dirty_;
 		audio_type_ptr last_channels_;
 		int direction_;

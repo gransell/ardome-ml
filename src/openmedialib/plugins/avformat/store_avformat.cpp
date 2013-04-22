@@ -505,7 +505,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Write the header
 			if ( ret )
 			{
-				avformat_write_header( oc_, 0 );
+				ret = ( avformat_write_header( oc_, 0 ) == 0 );
 
 				if ( prop_ts_auto_.value< int >( ) && prop_ts_index_.value< std::wstring >( ) == L"" )
 					ret = io::open_file( &ts_context_, olib::opencorelib::str_util::to_string( std::wstring( resource( ) + L".awi" ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
@@ -1155,7 +1155,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->sample_fmt = codec->sample_fmts[0];
 
 				// Continue if we can open it
-				ARENFORCE( avcodec_open2( c, codec, 0 ) >= 0 );
+				int err = avcodec_open2( c, codec, 0 ) ;
+				ARENFORCE_MSG( err == 0, "Error opening AV codec \"%1%\"" ) ( av_err2str( err ) );
 
 				if ( c->frame_size <= 1 ) 
 				{
@@ -1533,6 +1534,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					int got_packet = 0;
 					AVCodecContext *c = ( *iter )->codec;
 
+					// make sure the context has had a codec associated with it.
+					if ( 0 == c->codec )
+					{
+						continue;
+					}
+
 					AVPacket pkt;
 					pkt.size = 0;
 					pkt.data = 0;
@@ -1558,25 +1565,24 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 						if ( audio_filters_[ stream ] == 0 )
 						{
-							audio_filters_[ stream ] = new avaudio_filter( );
-							audio_filters_[ stream ]->set_passthrough( audio->frequency( ), channels_to_write, audio->id( ) );
-							audio_filters_[ stream ]->set_output( c );
+							audio_filters_[ stream ] = new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, channels_to_write, c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt );
 						}
 
-						int size = 0;
-						temp = audio_filters_[ stream ]->convert( ( const boost::uint8_t ** )&audio_tmpbuf_, audio->samples( ), size );
+						temp = audio_filters_[ stream ]->convert( ( const boost::uint8_t ** )&audio_tmpbuf_, audio->samples( ) );
+						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
+					}
+					else if ( !do_flush )
+					{
+						if ( audio_filters_[ stream ] == 0 )
+						{
+							audio_filters_[ stream ] = new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, audio->channels( ), c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt );
+						}
+						temp = audio_filters_[ stream ]->convert( audio );
 						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
 					}
 					else
 					{
-						if ( audio_filters_[ stream ] == 0 )
-						{
-							audio_filters_[ stream ] = new avaudio_filter( );
-							audio_filters_[ stream ]->set_passthrough( audio );
-							audio_filters_[ stream ]->set_output( c );
-						}
-						int size = 0;
-						temp = audio_filters_[ stream ]->convert( audio, size );
+						// flush the codec by sending in a 0-pointer
 						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
 					}
 
@@ -1633,7 +1639,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVOutputFormat *fmt_;
 		std::vector< AVStream * > audio_stream_;
 		std::vector< AVBitStreamFilterContext * > bitstream_filters_;
-		std::map< size_t, avaudio_filter * > audio_filters_;
+		std::map< size_t, avaudio_convert_to_AVFrame* > audio_filters_;
 		AVStream *video_stream_;
 		struct SwsContext *img_convert_;
 		int audio_input_frame_size_;

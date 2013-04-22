@@ -11,7 +11,7 @@ options = local_env.optional( 'libswscale' )
 if options[ 'have_libswscale' ]:
     local_env.Append( CPPDEFINES = [ 'HAVE_SWSCALE' ] )
 
-src = [ 'avformat_plugin.cpp', 'filter_avdecode.cpp', 'filter_resampler.cpp', 'filter_swscale.cpp', 'input_avformat.cpp', 'io_cache.cpp', 'store_avformat.cpp', 'aes3_decoder.cpp' ]
+src = [ 'avformat_plugin.cpp', 'avaudio_base.cpp', 'filter_avdecode.cpp', 'filter_resampler.cpp', 'filter_swscale.cpp', 'input_avformat.cpp', 'io_cache.cpp', 'store_avformat.cpp', 'aes3_decoder.cpp' ]
 
 if local_env[ 'PLATFORM' ] == 'win32' :
 	local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS', '_CRT_SECURE_NO_WARNINGS' ] )

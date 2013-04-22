@@ -59,7 +59,7 @@ template< typename T, identity B, int min_val, int max_val > class ML_DECLSPEC t
 // Forward declarations of the specific types
 typedef ML_DECLSPEC template_ < boost::int8_t, pcm8_id, -127, 127 > pcm8;
 typedef ML_DECLSPEC template_ < boost::int16_t, pcm16_id, -32767, 32767 > pcm16;
-typedef ML_DECLSPEC template_ < boost::int32_t, pcm24_id, -8388607, 8388607 > pcm24;
+typedef ML_DECLSPEC template_ < boost::int32_t, pcm24_id, -2147483647, 2147483647 > pcm24;
 typedef ML_DECLSPEC template_ < boost::int32_t, pcm32_id, -2147483647, 2147483647 > pcm32;
 typedef ML_DECLSPEC template_ < float, float_id, -1, 1 > floats;
 

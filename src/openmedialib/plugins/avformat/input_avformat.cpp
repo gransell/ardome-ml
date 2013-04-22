@@ -98,6 +98,7 @@ namespace {
 		}
 		return 0;
 	}
+
 }
 	
 
@@ -2463,14 +2464,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			if ( audio_filter_ == 0 )
 			{
-				audio_filter_ = new avaudio_filter( codec_context );
-				audio_filter_->set_aml_format( );
+				// should we check if it's pcm24 here, and if so, send that as last parameter instead?
+				audio_filter_ = new avaudio_convert_to_aml( codec_context->sample_rate, codec_context->sample_rate, codec_context->channels, codec_context->channels, codec_context->sample_fmt, AVSampleFormat_to_aml_id(codec_context->sample_fmt) );
 			}
 
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;
 			int frequency = codec_context->sample_rate;
-			int bps = audio_filter_->bps( );
+			int bps = aml_id_to_bytes_per_sample( audio_filter_->get_out_format( ) );
 			int skip = 0;
 			bool ignore = false;
 
@@ -2560,12 +2561,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				}
 
 				int audio_size = 0;
-				AVFrame *temp_frame = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples, audio_size );
+				audio_type_ptr temp = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples, audio_size );
 
 				// Copy the new samples to the main buffer
-				memcpy( audio_buf_ + audio_buf_used_, temp_frame->data[ 0 ], audio_size );
-
-				avcodec_free_frame( &temp_frame );
+				memcpy( audio_buf_ + audio_buf_used_, temp->pointer( ), audio_size );
 
 				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
@@ -2640,7 +2639,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				first_audio_frame_ = false;
 			}
 
-			audio_type_ptr aud = ml::audio::allocate( audio_filter_->af( ), frequency, channels, samples, false );
+			audio_type_ptr aud = ml::audio::allocate( audio_filter_->get_out_format( ), frequency, channels, samples, false );
 			aud->set_position( position );
 			memcpy( aud->pointer( ), buf, aud->size( ) );
 
@@ -2749,7 +2748,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if( channels != 0 && frequency != 0 )
 				{
 					int samples = samples_for_frame( frequency, current );
-					audio_type_ptr aud = audio::allocate( audio_filter_->af( ), frequency, channels, samples, true );
+					audio_type_ptr aud = audio::allocate( audio_filter_->get_out_format( ), frequency, channels, samples, true );
 					aud->set_position( current );
 					frame->set_audio( aud );
 					frame->set_duration( double( samples ) / double( frequency ) );
@@ -2883,7 +2882,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		avformat_demux demuxer_;
 		bool is_streaming_;
 
-		avaudio_filter *audio_filter_;
+		avaudio_convert_to_aml *audio_filter_;
 };
 
 input_type_ptr ML_PLUGIN_DECLSPEC create_input_avformat( const std::wstring &resource )
