@@ -75,7 +75,22 @@ namespace olib
                                                    		  xerces_size_type maxToRead )
         { 
             m_is.read( (char*)toFill, maxToRead);
-            return m_is.gcount();
+            const std::streamsize num_read = m_is.gcount();
+
+            //This should never happen, since we asked for maxToRead number of
+            //bytes, which is of type xerces_size_type.
+            ARASSERT( num_read <= std::numeric_limits< xerces_size_type >::max() );
+
+            return static_cast< xerces_size_type >( num_read );
+        }
+
+        xerces_file_pos std_bin_input_stream::curPos() const
+        {
+            const std::streamoff offset = m_is.tellg();
+            ARENFORCE_MSG( offset <= std::numeric_limits< xerces_file_pos >::max(),
+                "Stream offset %1% is too large to be represented as a xerces_file_pos")
+                ( offset );
+            return static_cast< xerces_file_pos >( offset );
         }
 
         xerces_string L2( const char* str )

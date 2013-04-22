@@ -496,9 +496,9 @@ ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const
 
 // swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time. so the input data has to be 16-byte aligned.
 // pcm to aiff16. byteswap16_inplace
-ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t length )
+ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes )
 {		
-	for( int i = 0; i < length; i += 16 )
+	for( int i = 0; i < num_bytes; i += 16 )
 	{
 		__m128i s = _mm_load_si128(  reinterpret_cast< const __m128i * >( &data[ i ] ) );		// load data
 		s = _mm_or_si128( _mm_slli_epi16( s, 8 ), _mm_srli_epi16( s, 8 ) );						// shift left, shift right, OR

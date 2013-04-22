@@ -833,7 +833,12 @@ class aml_stack
 			}
 			else
 			{
-				throw( std::string( "Invalid property " ) + name + " on input " + olib::opencorelib::str_util::to_string( inputs_.back( )->get_uri( ) ) );
+				//throw( std::string( "Invalid property " ) + name + " on input " + olib::opencorelib::str_util::to_string( inputs_.back( )->get_uri( ) ) );
+				std::string msg( "Invalid property " + name );
+				if ( !inputs_.empty() )
+					msg += " on input " + olib::opencorelib::str_util::to_string( inputs_.back( )->get_uri( ) );
+
+				throw ( msg );
 			}
 		}
 

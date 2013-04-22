@@ -105,16 +105,22 @@ extern ML_DECLSPEC identity af_to_id( const std::wstring &af );
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
 
+// Returns the reversed bytes in the 32-bit input src. For example: 0x12345678 becomes 0x78563412
 extern ML_DECLSPEC uint32_t bswap_32( const uint32_t src );
 
-// aiff is stored reversed. so reverse every 4-byte word, then copy last 3 bytes of the result onto the output.
+// AIFF is stored reversed. so reverse every 4-byte word, then copy last 3 bytes of the result onto the output.
+// Size of src should be at least samples * channels * 4 bytes.
+// Size of dest should be at least samples * channels * 3 bytes.
 extern ML_DECLSPEC void pack_pcm24_from_aiff32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
 
-// just copy the first 3 bytes of every 4 bytes onto the output buffer
+// Just copy the first 3 bytes of every 4 bytes onto the output buffer (dest).
+// Size of src should be at least samples * channels * 4 bytes.
+// Size of dest should be at least samples * channels * 3 bytes.
 extern ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
 
-// swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time. so the input data has to be 16-byte aligned.
-extern ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t length );
+// Swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time (SSE). so the input data has to be 16-byte aligned.
+// num_bytes should be the total number of bytes in the buffer (data). It should be divisible by 16.
+extern ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes );
 
 } } } }
 
