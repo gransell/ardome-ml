@@ -48,7 +48,6 @@ def create_options( file, args ):
 		opts.Add( 'generate_xcode', 'Do not build. Generate XCode projects instead', 'no' )
 		opts.Add( 'arch', 'What architecture to build for. Alternatives are i386, x86_64 and combined', 'x86_64' )
 		opts.Add( 'min_osx_ver', 'What OSX version to target. Default is 10.6', '10.6' )
-		opts.Add( 'xcode_ver', 'What version of Xcode is being used. Default is 4.4', '4.4' )
 
 	if os.name == 'posix':
 		opts.Add( 'compiler', 'What compiler to build with. Valid options are gcc and clang.', 'gcc' )
