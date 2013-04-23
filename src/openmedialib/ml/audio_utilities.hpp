@@ -105,6 +105,11 @@ extern ML_DECLSPEC identity af_to_id( const std::wstring &af );
 // Map an id to the audio format
 extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
 
+// return the number of significant bytes to represent audio id. This could be considered a measure of fidelity?
+extern ML_DECLSPEC int id_to_significant_bytes_per_sample( const identity& id );
+// return the number of bytes used to store each sample
+extern ML_DECLSPEC int id_to_storage_bytes_per_sample( const identity& id );
+
 // Returns the reversed bytes in the 32-bit input src. For example: 0x12345678 becomes 0x78563412
 extern ML_DECLSPEC uint32_t bswap_32( const uint32_t src );
 

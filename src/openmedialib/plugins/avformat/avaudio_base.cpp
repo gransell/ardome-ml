@@ -4,6 +4,8 @@
 
 
 #include <openmedialib/plugins/avformat/avaudio_base.hpp>
+#include <opencorelib/cl/enforce_defines.hpp>
+
 namespace olib { namespace openmedialib { namespace ml {
 
 AVSampleFormat aml_id_to_AVSampleFormat( audio::identity id)
@@ -19,6 +21,8 @@ AVSampleFormat aml_id_to_AVSampleFormat( audio::identity id)
 			return AV_SAMPLE_FMT_FLT;
 	}
 	
+	ARENFORCE_MSG( false, "invalid audio id" );
+	return AV_SAMPLE_FMT_NONE; 
 }
 
 audio::identity AVSampleFormat_to_aml_id( AVSampleFormat fmt )
@@ -40,24 +44,14 @@ audio::identity AVSampleFormat_to_aml_id( AVSampleFormat fmt )
 		case AV_SAMPLE_FMT_FLTP:
 		case AV_SAMPLE_FMT_DBLP:
 			return audio::float_id;
+		case AV_SAMPLE_FMT_NONE:
+		case AV_SAMPLE_FMT_NB:
+			break;
 
 	}
 
-}
-
-int aml_id_to_bytes_per_sample( audio::identity id )
-{
-	switch ( id )
-	{
-		case audio::pcm16_id:
-			return sizeof( boost::int16_t );
-
-		case audio::pcm32_id:
-			return sizeof( boost::int32_t );
-
-		case audio::float_id:
-			return sizeof( float );
-	}
+	ARENFORCE_MSG( false, "invalid AV_SAMPLE_FMT" );
+	return audio::float_id;
 }
 
 namespace
@@ -208,7 +202,7 @@ audio_type_ptr avaudio_convert_to_aml::convert( const boost::uint8_t **src, int 
 {
 	int out_samples = output_samples( samples, frequency_in_, frequency_out_ );
 
-	out_size = out_samples * channels_out_ * aml_id_to_bytes_per_sample( format_out_ );
+	out_size = out_samples * channels_out_ * id_to_storage_bytes_per_sample( format_out_ );
 
 	ml::audio_type_ptr result = ml::audio::allocate( aml_id_to_AVcompatible_aml_id( format_out_ ), frequency_out_, channels_out_, out_samples, false );
 

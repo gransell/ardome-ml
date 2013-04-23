@@ -1227,7 +1227,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( push_count_ % prop_gop_size_.value< int >( ) == 0 )
 					audio_block_->set_position( push_count_ );
 		
-				int bytes = audio_input_frame_size_ * current->channels( ) * current->sample_size( );
+				int bytes = audio_input_frame_size_ * current->channels( ) * current->sample_storage_size( );
 				int available = current->size( );
 				int offset = 0;
 

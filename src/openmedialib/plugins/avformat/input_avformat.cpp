@@ -2480,7 +2480,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			// Get the audio info from the codec context
 			int channels = codec_context->channels;
 			int frequency = codec_context->sample_rate;
-			int bps = aml_id_to_bytes_per_sample( audio_filter_->get_out_format( ) );
+			int bps = id_to_storage_bytes_per_sample( audio_filter_->get_out_format( ) );
 			int skip = 0;
 			bool ignore = false;
 

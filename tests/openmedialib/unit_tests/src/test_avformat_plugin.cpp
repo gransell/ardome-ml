@@ -139,9 +139,9 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 	// analyze data
 	BOOST_CHECK_EQUAL( audio::pcm24_id, audio->id( ) );
-	BOOST_CHECK_EQUAL( samples * channels * 4, audio->size( ) );
+	BOOST_CHECK_EQUAL( 4, audio->sample_storage_size( ) );
+	BOOST_CHECK_EQUAL( samples * channels * audio->sample_storage_size(), audio->size( ) );
 	BOOST_CHECK_EQUAL( samples, audio->samples( ) );
-	BOOST_CHECK_EQUAL( 4, audio->sample_size( ) );
 	BOOST_CHECK_EQUAL( frequency, audio->frequency( ) );
 
 	boost::uint32_t *data = (boost::uint32_t*)audio->pointer();

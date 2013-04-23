@@ -454,6 +454,42 @@ ML_DECLSPEC const std::wstring &id_to_af( const identity &id )
 	return id_to_af_table[ id ];
 }
 
+ML_DECLSPEC int id_to_significant_bytes_per_sample( const identity& id )
+{
+	switch ( id )
+	{
+		case audio::pcm16_id:
+			return audio::pcm16::sample_storage_size_static();
+		case audio::pcm24_id:
+			return 3;
+		case audio::pcm32_id:
+			return audio::pcm32::sample_storage_size_static();
+		case audio::float_id:
+			return audio::floats::sample_storage_size_static();
+	}
+
+	ARENFORCE_MSG( false, "invalid audio id" );
+	return 0;
+}
+
+ML_DECLSPEC int id_to_storage_bytes_per_sample( const identity& id )
+{
+	switch ( id )
+	{
+		case audio::pcm16_id:
+			return audio::pcm16::sample_storage_size_static();
+		case audio::pcm24_id:
+			return audio::pcm24::sample_storage_size_static();
+		case audio::pcm32_id:
+			return audio::pcm32::sample_storage_size_static();
+		case audio::float_id:
+			return audio::floats::sample_storage_size_static();
+	}
+
+	ARENFORCE_MSG( false, "invalid audio id" );
+	return 0;
+}
+
 namespace locked_profile {
 
 ML_DECLSPEC type from_string( const olib::t_string& p )

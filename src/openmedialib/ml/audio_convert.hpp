@@ -21,7 +21,7 @@ void convert( T &dst, const U &src )
 
 	if ( dst.id( ) == src.id( ) )
 	{
-		memcpy( dst_p, src_p, count * src.sample_size( ) );
+		memcpy( dst_p, src_p, count * src.sample_storage_size( ) );
 	}
 	else if ( src.id( ) == float_id )
 	{

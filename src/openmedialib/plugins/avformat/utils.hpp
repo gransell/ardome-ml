@@ -18,7 +18,6 @@ extern const std::wstring avformat_to_oil( int );
 extern const PixelFormat oil_to_avformat( const std::wstring & );
 extern AVSampleFormat aml_id_to_AVSampleFormat( audio::identity );
 extern audio::identity AVSampleFormat_to_aml_id( AVSampleFormat fmt );
-extern int aml_id_to_bytes_per_sample( audio::identity id );
 } } }
 
 #endif

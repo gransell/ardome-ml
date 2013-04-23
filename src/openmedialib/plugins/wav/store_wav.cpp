@@ -75,7 +75,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	ml::audio::identity ident = audio->id();
 
-	bytes_per_sample_ = audio->sample_size();
+	bytes_per_sample_ = audio->sample_storage_size();
 	frequency_ = audio->frequency();
 	channels_ = audio->channels();
 	real_bytes_per_sample_ = bytes_per_sample_;

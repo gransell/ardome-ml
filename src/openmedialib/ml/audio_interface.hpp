@@ -20,8 +20,8 @@ class ML_DECLSPEC base
 		/// The identity of the audio type
 		virtual identity id( ) const = 0;
 
-		/// The number of bytes in each sample
-		virtual int sample_size( ) const = 0;
+		/// The number of bytes of storage required for sample
+		virtual int sample_storage_size( ) const = 0;
 
 		/// The frequency of the audio object
 		virtual int frequency( ) const  = 0;
