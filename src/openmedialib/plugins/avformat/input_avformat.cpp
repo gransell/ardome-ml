@@ -70,6 +70,13 @@ static const AVRational ml_av_time_base_q = { 1, AV_TIME_BASE };
 namespace {
 	int context_to_sample_width( const AVCodecContext *ctx )
 	{
+		// special case for our representation of pcm24 / aiff24
+		if ( CODEC_ID_PCM_S24LE == ctx->codec_id ||
+			 CODEC_ID_PCM_S24BE == ctx->codec_id )
+		{
+			return 3;
+		}
+
 		switch( ctx->sample_fmt )
 		{
 			case AV_SAMPLE_FMT_U8:
@@ -94,8 +101,10 @@ namespace {
 
 			case AV_SAMPLE_FMT_NONE:
 			case AV_SAMPLE_FMT_NB:
-				ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( ctx->sample_fmt ) );
+				break;
 		}
+
+		ARENFORCE_MSG( false, "Unsupported sample format" )( av_get_sample_fmt_name( ctx->sample_fmt ) );
 		return 0;
 	}
 

@@ -5,6 +5,7 @@ local_env.optional( 'ffmpeg' )
 
 test_sources = [
 	'src/main.cpp',
+	'src/utils.cpp',
 	'src/io_tester.cpp',
 	'src/test_awi.cpp',
 	'src/test_custom_io.cpp',

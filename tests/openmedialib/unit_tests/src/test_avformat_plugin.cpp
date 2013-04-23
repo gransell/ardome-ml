@@ -6,17 +6,19 @@
 #include <openmedialib/ml/filter.hpp>
 #include <openmedialib/ml/audio_block.hpp>
 #include <openmedialib/plugins/avformat/avformat_stream.hpp>
+#include "utils.hpp"
 
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
 
-#define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
+#define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/"
+#define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
 
 BOOST_AUTO_TEST_SUITE( avformat_plugin )
 
 BOOST_AUTO_TEST_CASE( amf_1864_wrong_mp4_duration )
 {
-	input_type_ptr inp = create_input( "avformat:" MEDIA_REPO_PREFIX "/AMF-1864/conformed01064700-01065108.mp4" );
+	input_type_ptr inp = create_input( "avformat:" MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-1864/conformed01064700-01065108.mp4" );
 
 	BOOST_REQUIRE( inp );
 	BOOST_CHECK_EQUAL( inp->get_frames(), 129 );
@@ -32,7 +34,7 @@ BOOST_AUTO_TEST_CASE( amf_1864_wrong_mp4_duration )
 
 BOOST_AUTO_TEST_CASE( amf_1922_number_of_frames_wrong_for_streamed_quicktimefile )
 {
-	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/AMF-1922/XDCAMHD_1080i60_6ch_24bit.mov" ) );
+	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-1922/XDCAMHD_1080i60_6ch_24bit.mov" ) );
 	BOOST_REQUIRE( inp );
 	inp->property( "packet_stream" ) = 1;
 
@@ -76,36 +78,6 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	BOOST_CHECK_EQUAL( memcmp( stream->bytes() + 38, picture_coding_ext, sizeof( picture_coding_ext ) ), 0 );
 }
 
-namespace
-{
-
-	// subclassing stream_avformat just to get most of the stream_type implementation. We
-	// still need to overload codec() since it can't get set 
-	// to http://www.ardendo.com/apf/codec/aes using the stream_avformat class
-	class stream_test : public stream_avformat
-	{
-		public:
-			stream_test( size_t length, boost::int64_t position, 
-						 boost::int64_t key, int bitrate, int frequency, int channels, 
-						 int samples, int sample_size , std::string codec_str)
-				: stream_avformat( CODEC_ID_NONE, length, position, key, bitrate, frequency, channels, samples, sample_size)
-				  , codec_str_( codec_str )
-		{
-		}
-
-			const std::string &codec( ) const { return codec_str_; }
-
-		private:
-
-			std::string codec_str_;
-
-	};
-
-	typedef boost::shared_ptr< stream_test > stream_test_ptr ;
-
-}
-
-
 
 BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 {
@@ -115,9 +87,9 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 
 	// create the stream
-	stream_test_ptr stream = stream_test_ptr( new stream_test( samples * channels * 4, 0, 0, 0, frequency, channels, samples, 3, "http://www.ardendo.com/apf/codec/aes" ) );
+	stream_mock_ptr stream = stream_mock_ptr( new stream_mock("http://www.ardendo.com/apf/codec/aes", samples * channels * 4, 0, 0, 0, frequency, channels, samples, 3 ) );
 	boost::uint32_t *data_in = (boost::uint32_t*) stream->bytes();
-	const boost::uint32_t aes_sample = 0x0FFFFFF0;
+	const boost::uint32_t aes_sample = 0x0ABCDEF0;
 
 	for ( int i = 0; i < samples * channels; ++i )
 	{
@@ -174,16 +146,46 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 	boost::uint32_t *data = (boost::uint32_t*)audio->pointer();
 
-	const boost::uint32_t pcm_sample = 0xFFFFFF00;
-	bool pcm_out_is_FFFFFF00 = true;
-	for ( int i = 0; i < samples && pcm_out_is_FFFFFF00 ; ++i, ++data )
+	const boost::uint32_t pcm_sample = 0xABCDEF00;
+	bool pcm_out_is_left_shifted_AES_in = true;
+	for ( int i = 0; i < samples && pcm_out_is_left_shifted_AES_in; ++i, ++data )
 	{
-		pcm_out_is_FFFFFF00 = ( *data == pcm_sample );
+		pcm_out_is_left_shifted_AES_in = ( *data == pcm_sample );
 	}
 
-	BOOST_CHECK( pcm_out_is_FFFFFF00 );
+	BOOST_CHECK( pcm_out_is_left_shifted_AES_in );
 
 }
+
+BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
+{
+	// check that pcm24 in results in pcm24 out from input_avformat when packet_stream = 1
+	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_720p50_6ch_24bit.mov" ) );
+	BOOST_REQUIRE( inp );
+	inp->property( "packet_stream" ) = 1;
+
+	BOOST_REQUIRE( inp->init() );
+	inp->sync();
+
+	frame_type_ptr frame = inp->fetch();
+	BOOST_REQUIRE( frame );
+
+
+	audio::block_type_ptr audio_block = frame->audio_block( );
+	BOOST_REQUIRE( audio_block );
+
+	BOOST_REQUIRE( audio_block->tracks.size() );
+
+	audio::track& audio_track = audio_block->tracks.begin()->second;
+	BOOST_REQUIRE( audio_track.packets.size() );
+
+	stream_type_ptr audio_stream = audio_track.packets.begin()->second;
+
+	BOOST_CHECK_EQUAL( audio_stream->sample_size(), 3 );
+	BOOST_CHECK_EQUAL( audio_stream->codec(), "http://www.ardendo.com/apf/codec/pcm" );
+
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()
 
