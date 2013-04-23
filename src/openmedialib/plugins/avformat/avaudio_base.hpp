@@ -53,7 +53,6 @@ class avaudio_resampler
 					  const boost::uint8_t **in, 
 					  int in_count);
 
-
 	private:
 
 		SwrContext *resampler_;

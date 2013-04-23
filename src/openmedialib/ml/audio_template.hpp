@@ -114,9 +114,6 @@ class ML_DECLSPEC template_ : public base
 		void set_position( int position )  
 		{ position_ = position; }
 
-		void convert( pcm8 &dst ) const
-		{ audio::convert< pcm8, template_< T, B, min_val, max_val > >( dst, *this ); }
-
 		void convert( pcm16 &dst ) const
 		{ audio::convert< pcm16, template_< T, B, min_val, max_val > >( dst, *this ); }
 

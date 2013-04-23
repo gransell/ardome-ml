@@ -10,7 +10,6 @@ AVSampleFormat aml_id_to_AVSampleFormat( audio::identity id)
 {
 	switch( id )
 	{
-		case audio::pcm8_id:
 		case audio::pcm16_id:
 			return AV_SAMPLE_FMT_S16;
 		case audio::pcm24_id:
@@ -50,9 +49,6 @@ int aml_id_to_bytes_per_sample( audio::identity id )
 {
 	switch ( id )
 	{
-		case audio::pcm8_id:
-			return sizeof( boost::int8_t );
-
 		case audio::pcm16_id:
 			return sizeof( boost::int16_t );
 

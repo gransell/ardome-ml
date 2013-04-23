@@ -255,11 +255,6 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 			switch( bits_ )
 			{
-				case 8:
-					result = ml::audio::allocate( ml::audio::FORMAT_PCM8, frequency_, channels_, samples, false );
-					memcpy( result->pointer( ), &buffer[ 0 ], result->size( ) );
-					break;
-
 				case 16:
 					result = ml::audio::allocate( ml::audio::FORMAT_PCM16, frequency_, channels_, samples, false );
 					memcpy( result->pointer( ), &buffer[ 0 ], result->size( ) );

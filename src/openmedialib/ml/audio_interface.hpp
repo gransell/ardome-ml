@@ -61,9 +61,6 @@ class ML_DECLSPEC base
 		/// Clone this audio object
 		virtual audio_type_ptr clone( ) const = 0;
 
-		/// Convert to a pcm8 object
-		virtual void convert( pcm8 &dst ) const = 0;
-
 		/// Convert to a pcm16 object
 		virtual void convert( pcm16 &dst ) const = 0;
 
