@@ -4,8 +4,7 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
-
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'libswscale', 'loki' )
 src = [ 
 		'analyse.cpp',
 		'analyse_dnxhd.cpp',
@@ -19,6 +18,7 @@ src = [
         'filter.cpp',
         'fix_stream.cpp',
         'frame.cpp',
+		'image/utility.cpp',
         'indexer.cpp',
         'io.cpp',
         'keys.cpp',
@@ -64,10 +64,16 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'filter_simple.hpp', 
 			'fix_stream.hpp', 
 			'frame.hpp', 
+			'image/image_interface.hpp',
+			'image/utility.hpp',
+			'image/image_types.hpp',
+			'image/image.hpp',
+			'image/ffmpeg_image.hpp',
+			'image/ffmpeg_utility.hpp',
 			'input_creator_handler.hpp', 
 			'input.hpp', 
-			'io.hpp', 
 			'indexer.hpp', 
+			'io.hpp', 
 			'keys.hpp', 
 			'ml.hpp', 
 			'openmedialib_plugin.hpp', 

@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( frame_list_filter )
 		frame_type_ptr frame =frame_list_filter->fetch();
 		BOOST_REQUIRE(frame );
 
-		image_type_ptr image =frame->get_image();
+		olib::openimagelib::il::image_type_ptr image =frame->get_image();
 		BOOST_REQUIRE( image );
 		BOOST_CHECK_EQUAL( *(image->data( 0 ) ), internal_create_redvalue_from_int( *i ) );
 

@@ -123,6 +123,17 @@
 #include <opencorelib/cl/lru.hpp>
 #include <opencorelib/cl/utilities.hpp>
 
+
+
+#include <openmedialib/ml/image/image.hpp>
+/*
+#include <openmedialib/ml/image/image.hpp>
+#include <openmedialib/ml/image/utility.hpp>
+#include <openmedialib/ml/types.hpp>
+*/
+/*
+*/
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -149,11 +160,13 @@ namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ml = olib::openmedialib::ml;
+namespace image = olib::openmedialib::ml::image;
 namespace il = olib::openimagelib::il;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-// Utility functionality common to the plugin
+	
+
 inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 {
 	unsigned char *ptr = img->data( plane );
@@ -169,8 +182,25 @@ inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
 		}
 	}
 }
+inline void fill2( ml::image_type_ptr img, size_t plane, unsigned char val )
+{
+	unsigned char *ptr = img->data( plane );
+	int width = img->width( plane );
+	int height = img->height( plane );
+	int diff = img->pitch( plane );
 
-inline void fillRGB( il::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
+	if ( ptr ) // && val >= 16 && val <= 240 )
+	{
+		while( height -- )
+		{
+			memset( ptr, val, width );
+			ptr += diff;
+		}
+	}
+	
+}
+
+inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
 {
 	unsigned char *ptr = img->data( );
 	int width = img->width( );
@@ -231,7 +261,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_background_( pcos::key::from_string( "background" ) )
 		{
 			// Default to a black PAL video
-			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = t_string( "yuv420p" ) );
 			properties( ).append( prop_r_ = 0x00 );
 			properties( ).append( prop_g_ = 0x00 );
 			properties( ).append( prop_b_ = 0x00 );
@@ -294,13 +324,13 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			// Obtain property values
 			acquire_values( );
 
-			il::image_type_ptr image;
+			ml::image_type_ptr image;
 			il::image_type_ptr alpha;
 
 			// Create and populate the image
 			if ( prop_deferred_.value< int >( ) == 0 )
 			{
-				image = il::allocate( prop_colourspace_.value< std::wstring >( ).c_str(), get_width( ), get_height( ) );
+				image = ml::image::allocate( prop_colourspace_.value< t_string >( ).c_str(), get_width( ), get_height( ) );
 				if ( image )
 				{
 					image->set_writable( true );
@@ -317,13 +347,13 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 					}
 				}
 
-				image->set_field_order( il::field_order_flags( prop_interlace_.value< int >( ) ) );
+				image->set_field_order( ml::image::field_order_flags( prop_interlace_.value< int >( ) ) );
 			}
 			else
 			{
 				if ( deferred_image_ == 0 || deferred_image_->width( ) != get_width( ) || deferred_image_->height( ) != get_height( ) )
 				{
-					deferred_image_ = il::allocate( prop_colourspace_.value< std::wstring >( ).c_str(), get_width( ), get_height( ) );
+					deferred_image_ = ml::image::allocate( prop_colourspace_.value< t_string >( ).c_str(), get_width( ), get_height( ) );
 					if ( deferred_image_ )
 					{
 						deferred_image_->set_writable( false );
@@ -344,7 +374,11 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				image = deferred_image_;
 				alpha = deferred_alpha_;
 
-				image->set_field_order( il::field_order_flags( prop_interlace_.value< int >( ) ) );
+				
+				
+				image->set_field_order( ml::image::field_order_flags( prop_interlace_.value< int >( ) ) );
+
+				
 			}
 
 			if ( get_process_flags( ) & ml::process_image )
@@ -356,8 +390,12 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				result->set_duration( 1.0 / fps( ) );
 				result->set_position( get_position( ) );
 
+				il::image_type_ptr image_il = il::allocate( L"yuv420p", get_width( ), get_height( ) );
+				memcpy( image_il->data( 0 ), image->data( 0 ), image_il->size( ));
+				//image_il->data( 1 ) = image->data( 1 );
+				//image_il->data( 2 ) = image->data( 2 );
 				// Set the image
-				result->set_image( image );
+				result->set_image( image_il );
 				result->set_alpha( alpha );
 
 				// Identify image as a background
@@ -368,20 +406,22 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 		virtual bool reuse( ) { return false; }
 
-		void populate( il::image_type_ptr image )
+		void populate( ml::image_type_ptr image )
 		{
-			if ( il::is_yuv_planar( image ) )
+			if ( image->is_yuv_planar( ) )
 			{
 				int y, u, v;
 				il::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
-				fill( image, 0, ( unsigned char )y );
-				fill( image, 1, ( unsigned char )u );
-				fill( image, 2, ( unsigned char )v );
+				fill2( image, 0, ( unsigned char )y );
+				fill2( image, 1, ( unsigned char )u );
+				fill2( image, 2, ( unsigned char )v );
 			}
+			/*
 			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == L"r8g8b8" )
 			{
 				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
 			}
+			*/
 		}
 
 	private:
@@ -400,7 +440,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		pcos::property prop_out_;
 		pcos::property prop_deferred_;
 		pcos::property prop_background_;
-		il::image_type_ptr deferred_image_;
+		ml::image_type_ptr deferred_image_;
 		il::image_type_ptr deferred_alpha_;
 };
 
