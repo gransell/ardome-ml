@@ -19,9 +19,11 @@ void convert( T &dst, const U &src )
 	typename T::sample_type *dst_p = dst.data( );
 	typename U::sample_type *src_p = src.data( );
 
-	if ( dst.id( ) == src.id( ) )
+	if ( dst.id( ) == src.id( ) ||
+		 ( pcm24_id == dst.id( ) && pcm32_id == src.id( ) ) ||
+		 ( pcm32_id == dst.id( ) && pcm24_id == src.id( ) ) ) // special case for pcm24 <--> pcm32
 	{
-		memcpy( dst_p, src_p, count * src.sample_storage_size( ) );
+		memcpy( dst_p, src_p, count * dst.sample_storage_size( ) );
 	}
 	else if ( src.id( ) == float_id )
 	{

@@ -133,7 +133,7 @@ class ML_DECLSPEC template_ : public base
 		void init_data( bool init_to_zero )
 		{
 			// 16 bytes padding
-			data_size_ = channels_ * samples_ * sizeof( sample_type ) + 16;
+			data_size_ = channels_ * samples_ * this->sample_storage_size( ) + 16;
 			
 			if( data_size_ == 0 )
 			{

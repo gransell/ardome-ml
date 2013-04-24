@@ -157,15 +157,20 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 }
 
-BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
-{
-	// check that pcm24 in results in pcm24 out from input_avformat when packet_stream = 1
-	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_720p50_6ch_24bit.mov" ) );
+	void test_24pcm_input( std::wstring input_str )
+	{
+	// check that pcm24 source material results in pcm24 out from input_avformat when packet_stream = 1
+	// also check that the decoded audio is pcm24
+	input_type_ptr inp = create_delayed_input( input_str );
 	BOOST_REQUIRE( inp );
 	inp->property( "packet_stream" ) = 1;
 
 	BOOST_REQUIRE( inp->init() );
-	inp->sync();
+
+	filter_type_ptr decode_filter = create_filter( L"decode" );
+	BOOST_REQUIRE( decode_filter );
+	decode_filter->connect( inp );
+	decode_filter->sync();
 
 	frame_type_ptr frame = inp->fetch();
 	BOOST_REQUIRE( frame );
@@ -184,6 +189,29 @@ BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
 	BOOST_CHECK_EQUAL( audio_stream->sample_size(), 3 );
 	BOOST_CHECK_EQUAL( audio_stream->codec(), "http://www.ardendo.com/apf/codec/pcm" );
 
+	frame = decode_filter->fetch();
+	BOOST_REQUIRE( frame );
+
+	audio_type_ptr audio = frame->get_audio();
+	BOOST_REQUIRE( audio );
+
+	BOOST_CHECK_EQUAL( audio->id( ), audio::pcm24_id );
+
+}
+
+BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
+{
+	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_720p50_6ch_24bit.mov" ) );
+}
+
+BOOST_AUTO_TEST_CASE( avformat_input_pcm24_25p )
+{
+	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_1080p25_6ch_24bit.mov" ) );
+}
+
+BOOST_AUTO_TEST_CASE( avformat_input_pcm24_30p )
+{
+	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_1080p30_6ch_24bit.mov" ) );
 }
 
 
