@@ -13,11 +13,7 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 }
 
-
-
 namespace olib { namespace openmedialib { namespace ml { namespace image {
-
-
 
 AVPixelFormat ML_to_AV( MLPixelFormat pixfmt )
 {
@@ -27,6 +23,8 @@ AVPixelFormat ML_to_AV( MLPixelFormat pixfmt )
 		return AV_PIX_FMT_YUVA420P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P )
 		return AV_PIX_FMT_YUV422P;
+	else if (pixfmt == ML_PIX_FMT_YUV444P )
+		return AV_PIX_FMT_YUV444P;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8 )
 		return AV_PIX_FMT_RGB24;
 	else if (pixfmt == ML_PIX_FMT_R10G10B10 )

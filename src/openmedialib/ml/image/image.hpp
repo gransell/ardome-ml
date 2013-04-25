@@ -12,7 +12,7 @@
 #include <openmedialib/ml/image/utility.hpp>
 #include <openmedialib/ml/image/image_interface.hpp>
 
-#include <openmedialib/ml/image/ffmpeg_image.hpp>
+//#include <openmedialib/ml/image/ffmpeg_image.hpp>
 
 #endif
 

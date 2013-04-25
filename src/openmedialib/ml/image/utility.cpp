@@ -8,21 +8,21 @@
 //#include <openmedialib/ml/image/image_interface.hpp>
 #include <openmedialib/ml/image/image_types.hpp>
 #include <openmedialib/ml/image/image_interface.hpp>
+
+
 #include <openmedialib/ml/image/ffmpeg_image.hpp>
+#include <openmedialib/ml/image/ffmpeg_utility.hpp>
 
 //#include <openmedialib/ml/types.hpp>
 #include <boost/assign/list_of.hpp>
+#include <map>
+
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
-
-/*
-// Forward declaration to the template which implements the various types
-template< typename T > class ML_DECLSPEC ffmpeg_image;
-*/
 
 static int image_depth ( MLPixelFormat pf ) {
 	
@@ -33,11 +33,6 @@ static int image_depth ( MLPixelFormat pf ) {
 	return 8;
 }
 
-ML_DECLSPEC image_type_ptr allocate ( olib::t_string pf, int width, int height )
-{
-	//return allocate( MLPixelFormatMap[ pf ], width, height );
-	return image_type_ptr( );	
-}
 ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 {
 	if ( image_depth( pf ) == 8 )
@@ -49,10 +44,15 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 	return image_type_ptr( );	
 }
 
+ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height )
+{
+	return ml::image::allocate( MLPixelFormatMap[ pf ], width, height );
+}
+
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf )
 {
 	image_type_ptr dst = allocate( pf, src->width( ), src->height( ) );
-	//ml::image::convert_ffmpeg_image( src, dst );
+	ml::image::convert_ffmpeg_image( src, dst );
 	return dst;
 }
 

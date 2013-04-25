@@ -35,14 +35,14 @@ enum MLPixelFormat {
 
 
 namespace {
-std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
+ML_DECLSPEC std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 ("yuv420p", 	ML_PIX_FMT_YUV420P)
 ("yuva420p", 	ML_PIX_FMT_YUVA420P)
 ("yuv422p", 	ML_PIX_FMT_YUV422P)
 ("yuv422",		ML_PIX_FMT_YUV422)
 ("uyv422", 		ML_PIX_FMT_UYV422)
-("uyv444",	 	ML_PIX_FMT_YUV444)
-("uyv444p", 	ML_PIX_FMT_YUV444P)
+("yuv444",	 	ML_PIX_FMT_YUV444)
+("yuv444p", 	ML_PIX_FMT_YUV444P)
 ("yuv411", 		ML_PIX_FMT_YUV411)
 ("yuv411p", 	ML_PIX_FMT_YUV411P)
 ("yuv422p10le", ML_PIX_FMT_YUV422P10LE)
