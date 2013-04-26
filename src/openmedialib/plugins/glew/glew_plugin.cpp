@@ -137,13 +137,13 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 			gluLookAt( 0.0f, 0.0f, -3.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
 		}
 
-		GLenum pixelformat_to_gl( ostd::wstring pf )
+		GLenum pixelformat_to_gl( olib::t_string pf )
 		{
-			if( pf == L"r8g8b8" )
+			if( pf == "r8g8b8" )
 				return GL_RGB;
-			else if( pf == L"b8g8r8" )
+			else if( pf == "b8g8r8" )
 				return GL_BGR;
-			else if( pf == L"r8g8b8a8" )
+			else if( pf == "r8g8b8a8" )
 				return GL_RGBA;
 			else
 				return 0;

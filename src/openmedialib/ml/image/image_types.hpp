@@ -29,6 +29,7 @@ enum MLPixelFormat {
 	ML_PIX_FMT_YUV411,
 	ML_PIX_FMT_YUV411P,
     ML_PIX_FMT_R8G8B8,
+	ML_PIX_FMT_R8G8B8A8,
     ML_PIX_FMT_R10G10B10,
 };
 
@@ -46,6 +47,7 @@ ML_DECLSPEC std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::
 ("yuv411p", 	ML_PIX_FMT_YUV411P)
 ("yuv422p10le", ML_PIX_FMT_YUV422P10LE)
 ("r8g8b8", 		ML_PIX_FMT_R8G8B8)
+("r8g8b8a8", 		ML_PIX_FMT_R8G8B8A8)
 ("r10g10b10", 	ML_PIX_FMT_R10G10B10);
 }
 

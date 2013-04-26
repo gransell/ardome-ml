@@ -226,7 +226,7 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 			if ( prop_image_.value< int >( ) == 1 )
 			{
 				ml::image_type_ptr image = frame->get_image( );
-				frame->set_image( image ? ml::image_type_ptr( ( image->clone( ml::image::writable ) ) ) : image );
+				frame->set_image( image ? ml::image_type_ptr( static_cast<ml::image::image*>( image->clone( ml::image::writable ) ) ) : image );
 			}
 
 			return frame;

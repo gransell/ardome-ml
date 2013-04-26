@@ -784,7 +784,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.den = prop_fps_num_.value< int >( );
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
-				std::string pixfmt = olib::opencorelib::str_util::to_string( prop_pix_fmt_.value< std::wstring >( ) );
+				std::string pixfmt = olib::opencorelib::str_util::to_string( prop_pix_fmt_.value< olib::t_string >( ) );
 				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< olib::t_string >( ) );
 
 				// Fix b frames

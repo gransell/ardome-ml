@@ -82,7 +82,7 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 
 ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 {
-/*
+
     if ( im && im->field_order( ) != progressive )
     {
         im->set_field_order( progressive );
@@ -105,7 +105,7 @@ ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
             }
         }
     }
-*/
+
     return im;
 }
 
