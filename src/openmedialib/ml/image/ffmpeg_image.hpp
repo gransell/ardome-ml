@@ -63,6 +63,12 @@ public:
     }
     ~ffmpeg_image( ) { deallocate ( ); }
 
+	ffmpeg_image *clone( int flags = cropped )
+	{
+		//FIXME
+		return new ffmpeg_image( MLpixfmt_, width_, height_ );
+	}
+	
 	MLPixelFormat ml_pixel_format( ) { return MLpixfmt_; }
 
     int width( size_t index = 0 )
@@ -178,6 +184,12 @@ public:
 
         return true;
     }
+
+	// Clear the cropped image by returning everything back to the storage planes
+    void crop_clear( )
+    {
+    }
+
 
 private:
     MLPixelFormat MLpixfmt_;

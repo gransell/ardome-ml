@@ -21,7 +21,7 @@
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace io = ml::io;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 // If this function would appear in a later version of avformat,

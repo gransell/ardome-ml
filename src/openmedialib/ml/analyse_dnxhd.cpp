@@ -6,7 +6,6 @@
 #include "analyse_dnxhd.hpp"
 #include <opencorelib/cl/enforce_defines.hpp>
 
-namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -102,7 +101,7 @@ int vidformat2index( const int fps_num, const int fps_den )
 
 analyse_dnxhd::analyse_dnxhd( )
 : id_( -1 )
-, field_( il::progressive )
+, field_( ml::image::progressive )
 {
 }
 
@@ -118,9 +117,9 @@ bool analyse_dnxhd::analysis( boost::uint8_t *data, const size_t size )
 	{
 		id_ = cid_index( id_ );
 		if ( data[ 5 ] & 2 )
-			field_ = ( data[ 5 ] & 1 ) == 0 ? il::top_field_first : il::bottom_field_first;
+			field_ = ( data[ 5 ] & 1 ) == 0 ? ml::image::top_field_first : ml::image::bottom_field_first;
 		else
-			field_ = il::progressive;
+			field_ = ml::image::progressive;
 	}
 	return id_ != -1;
 }
@@ -136,7 +135,7 @@ bool analyse_dnxhd::collect( olib::openpluginlib::pcos::property_container &prop
 		properties.append( pl::pcos::property( key_width_ ) = dnxhd->width );
 		properties.append( pl::pcos::property( key_height_ ) = dnxhd->height );
 		properties.append( pl::pcos::property( key_pf_ ) = std::wstring( L"yuv422" ) );
-		properties.append( pl::pcos::property( key_field_order_ ) = int( dnxhd->interlaced ? il::top_field_first : il::progressive ) );
+		properties.append( pl::pcos::property( key_field_order_ ) = int( dnxhd->interlaced ? ml::image::top_field_first : ml::image::progressive ) );
 		properties.append( pl::pcos::property( key_sar_num_ ) = 1 );
 		properties.append( pl::pcos::property( key_sar_den_ ) = 1 );
 		properties.append( pl::pcos::property( key_picture_coding_type_ ) = 0 );

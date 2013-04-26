@@ -21,7 +21,7 @@
 
 namespace opl = olib::openpluginlib;
 namespace plugin = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -45,10 +45,10 @@ class ML_PLUGIN_DECLSPEC caca_store : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
-			il::image_type_ptr img = frame->get_image( );
+			ml::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
-				img = il::convert( img, L"r8g8b8a8" );
+				img = ml::image::convert( img, L"r8g8b8a8" );
 				int w = img->width( );
 				int h = img->height( );
         		unsigned int const event_mask = CACA_EVENT_RESIZE;

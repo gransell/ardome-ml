@@ -46,7 +46,7 @@ namespace
 	int offset_x = 1;
 	int offset_y = 0;
 
-	il::image_type_ptr orig;
+	ml::image_type_ptr orig;
 	
 #ifdef WIN32
 	const opl::string plugin_path( "./plugins" );
@@ -107,7 +107,7 @@ static GLuint download_texture( const boost::filesystem::path& path )
 	boost::shared_ptr<il::openimagelib_plugin> plug = boost::shared_dynamic_cast<il::openimagelib_plugin>( i->create_plugin( "" ) );
 	if( !plug ) return 0;
 
-	il::image_type_ptr image = plug->load( path );
+	ml::image_type_ptr image = plug->load( path );
 	if( !image ) return 0;
 
 	orig   = image;
@@ -137,7 +137,7 @@ static void display( void )
 
 	orig->crop_clear( );
 	orig->crop( crop_x, crop_y, IMG_SIZE, IMG_SIZE );
-	il::image_type_ptr new_im = il::conform( orig, il::cropped | il::flipped | il::flopped );
+	ml::image_type_ptr new_im = il::conform( orig, il::cropped | il::flipped | il::flopped );
 
 	glBindTexture( GL_TEXTURE_2D, texid_jpg );
 	glEnable( GL_TEXTURE_2D );
@@ -216,7 +216,7 @@ static void keyboard( unsigned char key, int /*x*/, int /*y*/ )
 	switch( key )
 	{
 		case 27:
-			orig = il::image_type_ptr( );
+			orig = ml::image_type_ptr( );
 			exit( 0 );
 			break;
 		

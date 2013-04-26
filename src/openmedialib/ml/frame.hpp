@@ -9,9 +9,9 @@
 #define OPENMEDIALIB_FRAME_INC_
 
 #include <openmedialib/ml/types.hpp>
-#include <openimagelib/il/il.hpp>
 #include <openmedialib/ml/audio.hpp>
 #include <openmedialib/ml/stream.hpp>
+//#include <openmedialib/ml/image/image.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
@@ -64,7 +64,7 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Set the image associated to the frame.
 		/// decoded should only be set to true if the image
 		/// object is a decoded representation of the stream in the frame
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded = false );
+		virtual void set_image( olib::openmedialib::ml::image_type_ptr image, bool decoded = false );
 
 		/// Set the packet associated to the frame.
 		virtual void set_stream( olib::openmedialib::ml::stream_type_ptr );
@@ -73,13 +73,13 @@ namespace olib { namespace openmedialib { namespace ml {
 		virtual olib::openmedialib::ml::stream_type_ptr get_stream( );
 
 		/// Get the image associated to the frame.
-		virtual olib::openimagelib::il::image_type_ptr get_image( );
+		virtual olib::openmedialib::ml::image_type_ptr get_image( );
 
 		/// Set the alpha mask associated to the frame.
-		virtual void set_alpha( olib::openimagelib::il::image_type_ptr image );
+		virtual void set_alpha( olib::openmedialib::ml::image_type_ptr image );
 
 		/// Get the alpha mask associated to the frame.
-		virtual olib::openimagelib::il::image_type_ptr get_alpha( );
+		virtual olib::openmedialib::ml::image_type_ptr get_alpha( );
 
 		/// Set the audio associated to the frame.
 		/// decoded should only be set to true if the audio
@@ -172,10 +172,10 @@ namespace olib { namespace openmedialib { namespace ml {
 		virtual int height( ) const;
 
 		/// Obtain colourspace from packet or image
-		std::wstring pf( ) const;
+		t_string pf( ) const;
 
 		/// Obtain field order from packet or image
-		virtual olib::openimagelib::il::field_order_flags field_order( ) const;
+		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const;
 
 		/// Indicates the input's audio codec if known ("" if unknown or n/a)
 		virtual std::string audio_codec( ) const;
@@ -205,7 +205,7 @@ namespace olib { namespace openmedialib { namespace ml {
 		const audio::block_type_ptr &audio_block( ) const { return audio_block_; }
 
 		/// Get the image associated to the frame. Just return the member variable without triggering the decoding from stream.
-		const olib::openimagelib::il::image_type_ptr get_evaluated_image( ) const { return image_; }
+		const olib::openmedialib::ml::image_type_ptr get_evaluated_image( ) const { return image_; }
 
 	protected:
 	
@@ -214,8 +214,8 @@ namespace olib { namespace openmedialib { namespace ml {
 	
 		olib::openpluginlib::pcos::property_container properties_;
 		olib::openmedialib::ml::stream_type_ptr stream_;
-		olib::openimagelib::il::image_type_ptr image_;
-		olib::openimagelib::il::image_type_ptr alpha_;
+		olib::openmedialib::ml::image_type_ptr image_;
+		olib::openmedialib::ml::image_type_ptr alpha_;
 		audio_type_ptr audio_;
 		double pts_;
 		int position_;

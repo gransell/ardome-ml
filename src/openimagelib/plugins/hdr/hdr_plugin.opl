@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openimagelib name="oil" version="0.2.0">
-		<plugin name="OpenLibraries HDR plugin" type="input" in_filter="*.hdr" extension='".*\.hdr"' merit="80" filename='"libopenimagelib_hdr.so", "libopenimagelib_hdr.dylib", "openimagelib_hdr-vc71-d-0_4_1.dll", "openimagelib_hdr-vc71-r-0_4_1.dll", "openimagelib_hdr-vc80-d-0_4_1.dll", "openimagelib_hdr-vc80-r-0_4_1.dll"'/>
-	</openimagelib>
-</openlibraries>

@@ -19,6 +19,8 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+namespace ml = olib::openmedialib::ml;
+
 namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
@@ -60,12 +62,12 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		void charcoal( ml::frame_type_ptr &result )
 		{
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
+				result = frame_convert( result, "yuv420p" );
 
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr input = result->get_image( );
-				il::image_type_ptr output = il::allocate( input );
+				ml::image_type_ptr input = result->get_image( );
+				ml::image_type_ptr output = ml::image::allocate( input );
 				charcoal_plane( output, input, 0 );
 				copy_plane( output, input, 1 );
 				copy_plane( output, input, 2 );
@@ -73,7 +75,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 			}
 		}
 
-		void charcoal_plane( il::image_type_ptr output, il::image_type_ptr input, int plane )
+		void charcoal_plane( ml::image_type_ptr output, ml::image_type_ptr input, int plane )
 		{
 			unsigned char *dst = output->data( plane );
 			int w = output->width( plane );

@@ -43,7 +43,7 @@ namespace
 	size_t crop_h = 2;
 	size_t orig_w, orig_h;
 
-	il::image_type_ptr orig;
+	ml::image_type_ptr orig;
 	
 #ifdef WIN32
 	const opl::string plugin_path( "./plugins" );
@@ -84,7 +84,7 @@ static GLuint download_texture( const boost::filesystem::path& path )
 	boost::shared_ptr<il::openimagelib_plugin> plug = boost::shared_dynamic_cast<il::openimagelib_plugin>( i->create_plugin( "" ) );
 	if( !plug ) return 0;
 
-	il::image_type_ptr image = plug->load( path );
+	ml::image_type_ptr image = plug->load( path );
 	if( !image ) return 0;
 
 	orig   = image;
@@ -117,7 +117,7 @@ static void display( void )
 	glEnable( GL_DEPTH_TEST );
 
 	orig->crop( 0, 0, static_cast<int>( crop_w ), static_cast<int>( crop_h ), false );
-	il::image_type_ptr new_im = il::conform( orig, il::cropped | il::flipped | il::flopped  );
+	ml::image_type_ptr new_im = il::conform( orig, il::cropped | il::flipped | il::flopped  );
 
 	std::pair<int, GLenum> pf = opl::pf_to_gl_format( new_im->pf( ).c_str( ) );
 
@@ -185,7 +185,7 @@ static void keyboard( unsigned char key, int /*x*/, int /*y*/ )
 	switch( key )
 	{
 		case 27:
-			orig = il::image_type_ptr( );
+			orig = ml::image_type_ptr( );
 			exit( 0 );
 			break;
 		

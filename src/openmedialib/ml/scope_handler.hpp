@@ -30,8 +30,8 @@ public:
     void insert_frame_for_position( const key_type &pos, const frame_type_ptr& f );
     audio_type_ptr audio_for_position( const key_type &pos );
     void insert_audio_for_position( const key_type &pos, const audio_type_ptr& f );
-    openimagelib::il::image_type_ptr image_for_position( const key_type &pos );
-    void insert_image_for_position( const key_type &pos, const openimagelib::il::image_type_ptr& f );
+    openmedialib::ml::image_type_ptr image_for_position( const key_type &pos );
+    void insert_image_for_position( const key_type &pos, const openmedialib::ml::image_type_ptr& f );
 
 	void clear( )
 	{
@@ -73,7 +73,7 @@ private:
     
     
     std::map< key_type, ml::frame_type_ptr > frames_;
-    std::map< key_type, openimagelib::il::image_type_ptr > images_;
+    std::map< key_type, openmedialib::ml::image_type_ptr > images_;
     std::map< key_type, ml::audio_type_ptr > audios_;
     
     std::list< key_type > lru_;

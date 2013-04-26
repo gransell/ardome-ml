@@ -1,11 +1,6 @@
 #ifndef ML_IMAGE_INC_
 #define ML_IMAGE_INC_
-
-#include <openmedialib/ml/openmedialib_plugin.hpp>
-
-namespace cl = olib::opencorelib;
-namespace ml = olib::openmedialib::ml;
-namespace image = olib::openmedialib::ml::image;
+//#include <openmedialib/ml/openmedialib_plugin.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
@@ -18,6 +13,15 @@ struct default_plane
     int height;
     int linesize;
 };
+
+typedef enum
+{
+    cropped = 0x1,
+    flipped = 0x2,
+    flopped = 0x4,
+    writable = 0x8
+}
+clone_flags;
 
 // Field order flags
 typedef enum
@@ -32,6 +36,7 @@ class ML_DECLSPEC image
 {
 public:
 	virtual ~image( ) { }
+	virtual image *clone( int flags = cropped ) = 0;
 	virtual MLPixelFormat ml_pixel_format( ) = 0;
 	virtual int width( size_t index = 0 ) = 0;
 	virtual int height( size_t index = 0 ) = 0;
@@ -67,6 +72,7 @@ public:
 	virtual int size( ) const = 0;
 	// Crop an image
     virtual bool crop( int x, int y, int w, int h, bool crop = true ) = 0;
+	virtual void crop_clear( ) = 0;
 
 };
 

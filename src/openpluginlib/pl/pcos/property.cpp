@@ -21,7 +21,8 @@
 #include <opencorelib/cl/minimal_string_defines.hpp>
 #include <opencorelib/cl/str_util.hpp>
 
-#include <openimagelib/il/basic_image.hpp>
+#include <openmedialib/ml/types.hpp>
+//#include <openmedialib/ml/image/image_interface.hpp>
 
 #include <boost/cstdint.hpp>
 
@@ -30,6 +31,7 @@ typedef std::list< std::wstring > wstring_list;
 typedef std::vector< std::string > string_vec;
 typedef std::vector< std::wstring > wstring_vec;
 
+/*
 namespace olib
 {
     namespace openmedialib
@@ -50,8 +52,9 @@ namespace olib
         }
     }
 }
+*/
 
-namespace il = olib::openimagelib::il;
+//
 namespace ml = olib::openmedialib::ml;
 namespace cl = olib::opencorelib;
 
@@ -333,9 +336,9 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::wstring >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< wstring_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_list >() const;
 
-template OPENPLUGINLIB_DECLSPEC il::image_type_ptr property::value< il::image_type_ptr >() const;
-template OPENPLUGINLIB_DECLSPEC void property::set< il::image_type_ptr >( const il::image_type_ptr& );
-template OPENPLUGINLIB_DECLSPEC bool property::is_a< il::image_type_ptr >() const;
+template OPENPLUGINLIB_DECLSPEC ml::image_type_ptr property::value< ml::image_type_ptr >() const;
+template OPENPLUGINLIB_DECLSPEC void property::set< ml::image_type_ptr >( const ml::image_type_ptr& );
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::image_type_ptr >() const;
 
 template OPENPLUGINLIB_DECLSPEC ml::store_type_ptr property::value< ml::store_type_ptr >() const;
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::store_type_ptr >( const ml::store_type_ptr& );
@@ -471,9 +474,9 @@ template <> OPENPLUGINLIB_DECLSPEC void* parse_string( const std::wstring& )
 	return 0;
 }
 
-template <> OPENPLUGINLIB_DECLSPEC il::image_type_ptr parse_string( const std::wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::image_type_ptr parse_string( const std::wstring& )
 {
-	return il::image_type_ptr();
+	return ml::image_type_ptr();
 }
 
 template <> OPENPLUGINLIB_DECLSPEC ml::frame_type_ptr parse_string( const std::wstring& )

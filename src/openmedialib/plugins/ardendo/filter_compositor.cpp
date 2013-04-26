@@ -387,14 +387,14 @@ static bool sort_on_z_order( const ml::frame_type_ptr &lhs, const ml::frame_type
 	return false;
 }
 
-ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, il::rescale_filter filter )
+ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, ml::image::rescale_filter filter )
 {
 	return ml::frame_rescale( frame, w, h, filter );
 }
 
-il::image_type_ptr image_rescale( const il::image_type_ptr &img, int w, int h, int d, il::rescale_filter filter )
+ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, int d, ml::image::rescale_filter filter )
 {
-	return il::rescale( img, w, h, d, filter );
+	return ml::image::rescale( img, w, h, d, filter );
 }
 
 #define const_compositor const_cast< filter_compositor * >
@@ -658,17 +658,17 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					}
 
 					if ( ( is_active_on_timeline && ( *iter )->property_with_key( key_vitc_image_ ).valid( ) ) ) {
-						vitc = ( *iter )->property_with_key( key_vitc_image_ ).value< il::image_type_ptr >( );
+						vitc = ( *iter )->property_with_key( key_vitc_image_ ).value< ml::image_type_ptr >( );
 					}
 				}
 
 				if ( audio )
 					result->set_audio( audio );
 
-				if ( vitc.is_a< il::image_type_ptr >( ) )
+				if ( vitc.is_a< ml::image_type_ptr >( ) )
 				{
 					if ( result->property_with_key( key_vitc_image_ ).valid( ) )
-						result->property_with_key( key_vitc_image_ ) = vitc.value< il::image_type_ptr >( );
+						result->property_with_key( key_vitc_image_ ) = vitc.value< ml::image_type_ptr >( );
 					else
 						result->properties( ).append( vitc );
 				}

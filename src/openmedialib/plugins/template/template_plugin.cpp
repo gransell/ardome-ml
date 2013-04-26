@@ -31,7 +31,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { 
@@ -64,8 +64,6 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 		// Fetch method
 		void do_fetch( frame_type_ptr &result )
 		{
-			typedef il::image< unsigned char, il::r8g8b8 > r8g8b8_image_type;
-
 			// Construct a frame and populate with basic information
 			frame_type *frame = new frame_type( );
 			result = frame_type_ptr( frame );
@@ -79,7 +77,7 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 			// Generate an image
 			int width = get_width( );
 			int height = get_height( );
-			il::image_type_ptr image = il::image_type_ptr( new il::image_type( r8g8b8_image_type( width, height, 1 ) ) );
+			ml::image_type_ptr image = ml::image::allocate( "r8g8b8", width, height );
 			memset( image->data( ), int( 255 * ( double( get_position( ) ) / double( get_frames( ) ) ) ), image->size( ) );
 			frame->set_image( image );
 		}
@@ -97,10 +95,10 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 
 		virtual bool push( frame_type_ptr frame )
 		{
-			il::image_type_ptr img = frame->get_image( );
+			ml::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
-				img = il::convert( img, L"r8g8b8" );
+				img = ml::image::convert( img, "r8g8b8" );
 				int w = img->width( );
 				int h = img->height( );
 				fprintf( stdout, "P6\n%d %d\n255\n", w, h );
@@ -207,7 +205,7 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 
 		virtual const std::wstring get_uri( ) const { return L"template:"; }
 
-		inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
+		inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 		{
 			unsigned char *ptr = img->data( plane );
 			int width = img->width( plane );
@@ -236,10 +234,10 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 				result = input->fetch( );
 				if ( result && result->get_image( ) )
 				{
-					il::image_type_ptr img = result->get_image( );
+					ml::image_type_ptr img = result->get_image( );
 					if ( img )
 					{
-						img = il::convert( img, L"yuv420p" );
+						img = ml::image::convert( img, "yuv420p" );
 						fill( img, 1, prop_u_.value< int >( ) );
 						fill( img, 2, prop_v_.value< int >( ) );
 					}

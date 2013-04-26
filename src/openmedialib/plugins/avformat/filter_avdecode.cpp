@@ -45,7 +45,7 @@ extern "C" {
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml {
 	
@@ -178,12 +178,12 @@ class stream_queue
 			return result;
 		}
 
-		il::image_type_ptr decode_image( int position )
+		ml::image_type_ptr decode_image( int position )
 		{
 			boost::recursive_mutex::scoped_lock lock( mutex_ );
 			lru_cache_type::key_type my_key = lru_key_for_position( position );
 						
-			il::image_type_ptr img = lru_cache_->image_for_position( my_key );
+			ml::image_type_ptr img = lru_cache_->image_for_position( my_key );
 			
 			if( img )
 			{
@@ -245,7 +245,7 @@ class stream_queue
 					pkt.size = 0;
 					if ( avcodec_decode_video2( context_, frame_, &got, &pkt ) >= 0 )
 					{
-						il::image_type_ptr image;
+						ml::image_type_ptr image;
 						if ( got )
 						{
 							const PixelFormat fmt = context_->pix_fmt;
@@ -263,7 +263,7 @@ class stream_queue
 				}
 			}
 
-			return il::image_type_ptr( );
+			return ml::image_type_ptr( );
 		}
 
 		ml::audio_type_ptr decode_audio( int position )
@@ -446,7 +446,7 @@ class stream_queue
 					{
 						if ( got )
 						{
-							il::image_type_ptr image;
+							ml::image_type_ptr image;
 							const PixelFormat fmt = context_->pix_fmt;
 							const int width = context_->width;
 							const int height = context_->height;
@@ -617,11 +617,11 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 		}
 
 		/// Get the image associated to the frame.
-		virtual olib::openimagelib::il::image_type_ptr get_image( )
+		virtual olib::openmedialib::ml::image_type_ptr get_image( )
 		{
 			if ( !image_ && ( stream_ && stream_->id( ) == ml::stream_video ) )
 			{
-				il::image_type_ptr img = queue_->decode_image( original_position_ );
+				ml::image_type_ptr img = queue_->decode_image( original_position_ );
 				if ( img )
 				{
 					img->set_sar_num( sar_num_ );
@@ -1167,14 +1167,14 @@ class avformat_video_streamer : public ml::stream_type
 			return stream_ ? stream_->samples( ) : 0;
 		}
 	
-		virtual const std::wstring pf( ) const 
+		virtual const t_string pf( ) const 
 		{ 
-			return stream_ ? stream_->pf( ) : std::wstring( L"" );
+			return stream_ ? stream_->pf( ) : t_string( "" );
 		}
 
-		virtual olib::openimagelib::il::field_order_flags field_order( ) const 
+		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const 
 		{ 
-			return stream_ ? stream_->field_order( ) : olib::openimagelib::il::top_field_first;
+			return stream_ ? stream_->field_order( ) : olib::openmedialib::ml::image::top_field_first;
 		}
 
 	private:
@@ -1201,7 +1201,7 @@ class avformat_encode_filter : public filter_simple
 			, initialised_( false )
 			, encoding_( false )
 			, video_wrapper_( 0 )
-			, pf_( L"" )
+			, pf_( "" )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );
@@ -1397,7 +1397,7 @@ class avformat_encode_filter : public filter_simple
 		bool encoding_;
 		cl::profile_manager manager_;
 		avformat_video *video_wrapper_;
-		std::wstring pf_;
+		t_string pf_;
 		avformat_video_streamer_ptr video_streamer_;
 };
 

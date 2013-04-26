@@ -13,7 +13,7 @@
 
 
 namespace opl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 
 using namespace std;
@@ -120,7 +120,7 @@ protected:
 			while( !image_cached )
 			{
 				// fetch the image at the given track position
-				il::image_type_ptr image = video_tracks_[video_index_]->decode( current );
+				ml::image_type_ptr image = video_tracks_[video_index_]->decode( current );
 				if(image)
 				{
 					if( images_.size() )

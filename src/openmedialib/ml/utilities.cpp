@@ -30,7 +30,6 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 
 // Windows work around
@@ -270,36 +269,36 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	return output_audio;
 }
 
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const std::wstring &pf )
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &pf )
 {
 	frame_type_ptr result = frame;
 
 	if ( result && result->get_image( ) )
 	{
-		il::image_type_ptr src = result->get_image( );
+		ml::image_type_ptr src = result->get_image( );
 
 		if ( src && src->pf( ) != pf )
 		{
-			il::image_type_ptr alpha = il::extract_alpha( src );
+			ml::image_type_ptr alpha = ml::image::extract_alpha( src );
 			if ( alpha )
 				result->set_alpha( alpha );
-			result->set_image( il::convert( src, pf ) );
+			result->set_image( ml::image::convert( src, pf ) );
 		}
 	}
 
 	return result;
 }
 
-ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, il::rescale_filter filter )
+ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, ml::image::rescale_filter filter )
 {
 	frame_type_ptr result = frame;
 
 	if ( result )
 	{
 		if ( result->get_alpha( ) )
-			result->set_alpha( il::rescale( result->get_alpha( ), new_w, new_h, 1, filter ) );
+			result->set_alpha( ml::image::rescale( result->get_alpha( ), new_w, new_h, 1, filter ) );
 		if ( result->get_image( ) )
-			result->set_image( il::rescale( result->get_image( ), new_w, new_h, 1, filter ) );
+			result->set_image( ml::image::rescale( result->get_image( ), new_w, new_h, 1, filter ) );
 	}
 
 	return result;

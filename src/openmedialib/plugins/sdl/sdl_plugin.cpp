@@ -52,7 +52,7 @@
 namespace pl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -141,9 +141,9 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = std::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "yuv422" ) );
 #else
-			properties( ).append( prop_pf_ = std::wstring( L"yuv420p" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "yuv420p" ) );
 #endif
 		}
 
@@ -181,7 +181,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			if ( frame == 0 && last_frame_ == 0 )
 				return false;
 
-			il::image_type_ptr img;
+			ml::image_type_ptr img;
 
 			// Obtain the current image or force previous frame
 			if ( frame )
@@ -242,7 +242,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			}
 
 			// Convert to requested colour space
-			img = il::convert( img, prop_pf_.value< std::wstring >( ).c_str( ) );
+			img = ml::image::convert( img, prop_pf_.value< olib::t_string >( ).c_str( ) );
 			last_image_ = img;
 			frame->get_sar( last_sar_num_, last_sar_den_ );
 
@@ -370,7 +370,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		// Fetch a configured overlay for the the image 
 		// TODO: Paramerise colour space
-		SDL_Overlay *fetch_overlay( frame_type_ptr frame, il::image_type_ptr &img )
+		SDL_Overlay *fetch_overlay( frame_type_ptr frame, ml::image_type_ptr &img )
 		{
 			double this_aspect = double( prop_width_.value< int >( ) ) / double( prop_height_.value< int >( ) );
 			int cx = 0;
@@ -503,14 +503,14 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		Uint32 get_format( )
 		{
-			std::wstring pf = prop_pf_.value< std::wstring >( ).c_str( );
-			if ( pf == L"yuv422" )
+			olib::t_string pf = prop_pf_.value< olib::t_string >( ).c_str( );
+			if ( pf == "yuv422" )
 				return SDL_YUY2_OVERLAY;
 			return SDL_YV12_OVERLAY;
 		}
 
 		frame_type_ptr last_frame_;
-		il::image_type_ptr last_image_;
+		ml::image_type_ptr last_image_;
 		int last_sar_num_;
 		int last_sar_den_;
 		pcos::property prop_winid_;

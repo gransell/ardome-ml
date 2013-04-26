@@ -71,7 +71,7 @@ static GLuint download_photoshop_texture( const boost::filesystem::path& path )
 	boost::shared_ptr<il::openimagelib_plugin> plug = boost::shared_static_cast<il::openimagelib_plugin>( i->create_plugin( "" ) );
 	if( !plug ) return 0;
 	
-	il::image_type_ptr image = plug->load( path );
+	ml::image_type_ptr image = plug->load( path );
 	if( !image ) return 0;
 	
 	return 0;

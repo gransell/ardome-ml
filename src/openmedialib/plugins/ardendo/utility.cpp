@@ -106,7 +106,7 @@ void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input )
 	}
 }
 
-void copy_plane( il::image_type_ptr output, il::image_type_ptr input, size_t plane )
+void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
 {
 	boost::uint8_t *dst = output->data( plane );
 	boost::uint8_t *src = input->data( plane );
@@ -123,7 +123,7 @@ void copy_plane( il::image_type_ptr output, il::image_type_ptr input, size_t pla
 	}
 }
 
-void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample )
+void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
 {
 	boost::uint8_t *ptr = img->data( plane );
 	int w = img->width( plane );
@@ -186,7 +186,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool e
 		stream << "Audio Stream : No" << endl;
 	}
 
-	il::image_type_ptr image = evaluate ? frame->get_image( ) : frame->get_evaluated_image( );
+	ml::image_type_ptr image = evaluate ? frame->get_image( ) : frame->get_evaluated_image( );
 	if ( image )
 		stream << "Has Image    : Yes, position = " << image->position( ) << endl;
 	else
@@ -202,7 +202,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool e
 	stream << endl;
 }
 
-void report_image( std::ostream &stream, const il::image_type_ptr &img, int num, int den )
+void report_image( std::ostream &stream, const ml::image_type_ptr &img, int num, int den )
 {
 	stream << "Image Report" << endl << endl;
 
@@ -211,9 +211,9 @@ void report_image( std::ostream &stream, const il::image_type_ptr &img, int num,
 		double ar = double( img->width( ) * num ) / ( img->height( ) * den );
 
 		const char *type = "Progressive";
-		if ( img->field_order( ) == il::top_field_first )
+		if ( img->field_order( ) == ml::image::top_field_first )
 			type = "Interlaced (top field first)";
-		else if ( img->field_order( ) == il::bottom_field_first )
+		else if ( img->field_order( ) == ml::image::bottom_field_first )
 			type = "Interlaced (bottom field first)";
 
 		stream << "Colour Space: " << olib::opencorelib::str_util::to_string( img->pf( ) ) << endl;
@@ -237,7 +237,7 @@ void report_image( std::ostream &stream, const il::image_type_ptr &img, int num,
 	stream << endl;
 }
 
-void report_alpha( std::ostream &stream, const il::image_type_ptr img )
+void report_alpha( std::ostream &stream, const ml::image_type_ptr img )
 {
 	stream << "Alpha Report" << endl << endl;
 

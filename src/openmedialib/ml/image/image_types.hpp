@@ -11,7 +11,6 @@
 #include <boost/assign/list_of.hpp>
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/minimal_string_defines.hpp>
-
 #include <map>
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {

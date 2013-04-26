@@ -6,7 +6,6 @@
 // For more information, see http://www.openlibraries.org.
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
 #ifdef WIN32
@@ -27,7 +26,6 @@
 
 namespace pl = olib::openpluginlib;
 namespace plugin = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 
 #define ML_HAS_REFRESH_CACHE
 
@@ -466,9 +464,9 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 		virtual bool push( frame_type_ptr frame )
 		{
 			typedef pl::discovery<il_query_traits> discovery;
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			if ( image == 0 ) return false;
-			image = il::convert( image, L"r8g8b8" );
+			image = ml::image::convert( image, "r8g8b8" );
 
 			std::ostringstream out;
 			out << path_;

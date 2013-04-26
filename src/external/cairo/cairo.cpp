@@ -4,10 +4,8 @@
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/utilities.hpp>
 
-#include <openimagelib/il/utility.hpp>
-
 namespace cl = olib::opencorelib;
-namespace il = olib::openimagelib::il;
+namespace ml = olib::openmedialib::ml;
 
 #if WIN32
 #	define snprintf sprintf_s
@@ -226,18 +224,18 @@ surface_ptr surface::make( size_t width, size_t height )
 	return surface_ptr( new surface( width, height ) );
 }
 
-il::image_type_ptr surface::to_image( ) const
+ml::image_type_ptr surface::to_image( ) const
 {
 	size_t w = width( );
 	size_t h = height( );
 	ARENFORCE_MSG( w * h, "Cannot write cairo image with zero size" );
 
 #	if BYTE_ORDER == LITTLE_ENDIAN
-#		define PLANE_FORMAT L"b8g8r8a8"
+#		define PLANE_FORMAT "b8g8r8a8"
 #	else
-#		define PLANE_FORMAT L"a8r8g8b8"
+#		define PLANE_FORMAT "a8r8g8b8"
 #	endif
-	il::image_type_ptr image = il::allocate( PLANE_FORMAT, (int)w, (int)h );
+	ml::image_type_ptr image = ml::image::allocate( PLANE_FORMAT, (int)w, (int)h );
 
 	size_t in_stride  = stride( );
 	size_t out_stride = (size_t)image->pitch( );

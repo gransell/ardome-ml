@@ -19,7 +19,6 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
 #include <GL/glew.h>
@@ -31,7 +30,6 @@
 #endif
 
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 
 ml::input_type_ptr orig;
@@ -140,8 +138,8 @@ static void display( void )
 	int phy_w, phy_h, req_w, req_h;
 	calculate_dimensions( frame, phy_w, phy_h, req_w, req_h );
 
-	il::image_type_ptr new_im = il::convert( image, L"r8g8b8" );
-	new_im = il::conform( new_im, il::cropped | il::flipped );
+	ml::image_type_ptr new_im = ml::image::convert( image, L"r8g8b8" );
+	new_im = ml::image::conform( new_im, ml::image::cropped | ml::image::flipped );
 
 
 

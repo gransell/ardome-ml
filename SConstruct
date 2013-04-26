@@ -56,7 +56,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 		self[ 'stage_ast' ] = os.path.join( '$stage_prefix', 'asts' )
 		if self['PLATFORM'] == 'posix' or self[ 'PLATFORM' ] == 'darwin':
 			if self[ 'PLATFORM' ] == 'darwin':
-				self[ 'il_plugin' ] = ''
+#				self[ 'il_plugin' ] = ''
 				self[ 'ml_plugin' ] = ''
 				self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'Resources', 'schemas' )
 				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'Resources', 'examples' )
@@ -65,7 +65,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self[ 'stage_wrapper_py' ] = os.path.join( '$stage_prefix', 'py' )
 				self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'Resources' )
 			else:
-				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
+#				self[ 'il_plugin' ] = os.path.join( 'ardome-ml', 'openimagelib', 'plugins' )
 				self[ 'ml_plugin' ] = os.path.join( 'ardome-ml', 'openmedialib', 'plugins' )
 				self[ 'stage_mf_schemas' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'schemas' )
 				self[ 'stage_examples' ] = os.path.join( '$stage_prefix', 'share', 'amf', 'examples' )
@@ -73,20 +73,20 @@ class AMLEnvironment( openbuild.env.Environment ):
 				self[ 'stage_profiles' ] = os.path.join( '$stage_prefix', 'share', 'aml', 'profiles' )
 				self[ 'stage_share' ] = os.path.join( '$stage_prefix', 'share', 'aml' )
 				
-			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
+#			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$libdir', '$il_plugin' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$libdir', '$ml_plugin' )
-			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
+#			self[ 'stage_il_plugin' ] = os.path.join( '$stage_libdir', '$il_plugin' )
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_libdir', '$ml_plugin' )
 		else:
 			self[ 'stage_libdir' ] = os.path.join( '$stage_prefix', 'lib' )
 			self[ 'stage_bin' ] = os.path.join( '$stage_prefix', 'bin' )
-			self[ 'il_plugin' ] = os.path.join( 'bin', 'aml-plugins' )
+#			self[ 'il_plugin' ] = os.path.join( 'bin', 'aml-plugins' )
 			self[ 'ml_plugin' ] = os.path.join( 'bin', 'aml-plugins' )
 			self[ 'mf_plugin' ] = os.path.join( 'bin', 'plugins' )
 			self[ 'examples' ] = os.path.join( 'bin', 'examples' )
-			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$il_plugins' )
+#			self[ 'install_il_plugin' ] = os.path.join( '$prefix', '$il_plugins' )
 			self[ 'install_ml_plugin' ] = os.path.join( '$prefix', '$ml_plugins' )
-			self[ 'stage_il_plugin' ] = os.path.join( '$stage_prefix', '$il_plugin' )
+#			self[ 'stage_il_plugin' ] = os.path.join( '$stage_prefix', '$il_plugin' )
 			self[ 'stage_ml_plugin' ] = os.path.join( '$stage_prefix', '$ml_plugin' )
 			self[ 'stage_mf_plugin' ] = os.path.join( '$stage_prefix', '$mf_plugin' )
 			self[ 'stage_mf_schemas' ] = os.path.join( '$stage_bin', 'schemas' )
@@ -96,7 +96,7 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self[ 'stage_share' ] = os.path.join( '$stage_bin' )
 
 		self[ 'cl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'opencorelib', 'cl' )
-		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
+#		self[ 'il_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openimagelib', 'il' )
 		self[ 'ml_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openmedialib', 'ml' )
 		self[ 'pl_include' ] = os.path.join( '$stage_include', 'ardome-ml', 'openpluginlib', 'pl' )
 		self[ 'pcos_include' ] = os.path.join( '$pl_include', 'pcos' )
@@ -154,12 +154,12 @@ class AMLEnvironment( openbuild.env.Environment ):
 					   ( '@exec_prefix@', '${prefix}/bin' ),
 					   ( '@libdir@', os.path.join( '${prefix}', clone[ 'libdir' ] ) ),
 					   ( '@includedir@', '${prefix}/include' ),
-					   ( '@OPENIMAGELIB_PLUGINPATH@', clone[ 'install_il_plugin' ] ),
+#					   ( '@OPENIMAGELIB_PLUGINPATH@', clone[ 'install_il_plugin' ] ),
 					   ( '@OPENMEDIALIB_PLUGINPATH@', clone[ 'install_ml_plugin' ] ), 
 					   ( '@OL_MAJOR@.@OL_MINOR@.@OL_SUB@', '1.0.0' ),
 					   ( '@OPENCORELIB_LDFLAGS@', '-L${libdir} -lopencorelib_cl' ),
 					   ( '@OPENPLUGINLIB_LDFLAGS@', '-lopenpluginlib_pl' ),
-					   ( '@OPENIMAGELIB_LDFLAGS@', '-lopenimagelib_il' ),
+#					   ( '@OPENIMAGELIB_LDFLAGS@', '-lopenimagelib_il' ),
 					   ( '@OPENMEDIALIB_LDFLAGS@', '-lopenmedialib_ml' ),
 					   ( '@OLIB_CORE_CXXFLAGS@', clone.olib_core_cxxflags( ) ),
 					   ( '@OLIB_LDFLAGS@', clone.olib_ldflags( ) ) ]
@@ -202,36 +202,36 @@ if env.check_externals( ):
 	cl_test_plugin = env.build( 'tests/opencorelib/unit_tests/plugin_test_assembly/', [cl] )
 	
 	pl = env.build( 'src/openpluginlib/pl', [ cl ] )
-	il = env.build( 'src/openimagelib/il', [ pl ] )
-	ml = env.build( 'src/openmedialib/ml', [ pl, cl, il ] )
+#	il = env.build( 'src/openimagelib/il', [ pl ] )
+	ml = env.build( 'src/openmedialib/ml', [ pl, cl ] )
 
 	#Openmedialib tests
-	ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
+	ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, ml ] )
 
 	cairo = None
 	if env['PLATFORM'] != 'darwin':
-		cairo = env.build( 'src/external/cairo', [ cl, pl, il ] )
+		cairo = env.build( 'src/external/cairo', [ cl, pl ] )
 
 	plugins = []
-	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/distributor', [ cl, pl, il, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, il, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/avformat', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/gensys', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/template', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/sdl', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/openal', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/ardendo', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/tools/amlbatch', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/caca', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/decode', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/distributor', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/rsvg', [ cl, pl, ml ] ) )
 	if cairo is not None:
-		plugins.append( env.build( 'src/openmedialib/plugins/textoverlay', [ cl, pl, il, ml, cairo ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, il, ml ] ) )
+		plugins.append( env.build( 'src/openmedialib/plugins/textoverlay', [ cl, pl, ml, cairo ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/raw', [ cl, pl, ml ] ) )
 	plugins.append( env.build( 'src/openmedialib/plugins/sox', [ cl, pl, ml ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml, il ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/wav', [ cl, pl, ml, il ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/quicktime_decoder', [ cl, pl, ml, il ] ) )
-	plugins.append( env.build( 'src/openmedialib/plugins/decklink', [ cl, pl, ml, il ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/rubberband', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/wav', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/quicktime_decoder', [ cl, pl, ml ] ) )
+	plugins.append( env.build( 'src/openmedialib/plugins/decklink', [ cl, pl, ml ] ) )
 
 	if env['PLATFORM'] == 'win32' :
 		os.system( "python ./scripts/amldocs src/openmedialib/plugins > scripts/amldocs.aml" )
@@ -242,9 +242,9 @@ if env.check_externals( ):
 
 	if env.have_boost_python( ) and ( not env.has_key( 'generate_xcode' ) or env[ 'generate_xcode' ] != 'yes' ):
 		print 'Building python bindings'
-		env.build( 'src/openpluginlib/py', [ cl, pl, il, ml ] )
-		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
-		env.build( 'src/openmedialib/py', [ cl, pl, il, ml ] )
+		env.build( 'src/openpluginlib/py', [ cl, pl, ml ] )
+#		env.build( 'src/openimagelib/py', [ cl, pl, il ] )
+		env.build( 'src/openmedialib/py', [ cl, pl, ml ] )
 
 	env.create_package( )
 	if env[ 'PLATFORM' ] != 'win32':
@@ -252,7 +252,7 @@ if env.check_externals( ):
 		env.package_install( )
 	
 	if env[ 'wrappers' ] == 'yes' and env['PLATFORM'] == 'win32':
-		env.build( 'wrappers', [ cl, pl, il, ml ], externals = plugins )
+		env.build( 'wrappers', [ cl, pl, ml ], externals = plugins )
 
 	os.system( 'scripts/vlicreate --target=%s --build=%s' % ( env[ 'target' ], 'release' ) )
 

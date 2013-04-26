@@ -17,7 +17,7 @@ namespace olib { namespace openmedialib { namespace ml {
 
 namespace cl = olib::opencorelib;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 
 class avaudio_filter
 {

@@ -65,13 +65,13 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		void invert( ml::frame_type_ptr &result )
 		{
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
+				result = frame_convert( result, "yuv420p" );
 
-			result->set_image( il::conform( result->get_image( ), il::writable ) );
+			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr image = result->get_image( );
+				ml::image_type_ptr image = result->get_image( );
 				int planes = prop_planes_.value< int >( );
 
 				// Assumes sane cropping values
@@ -94,7 +94,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		}
 
 		// Invert the plane requested
-		void invert_plane( il::image_type_ptr image, int plane, int negate )
+		void invert_plane( ml::image_type_ptr image, int plane, int negate )
 		{
 			unsigned char *ptr = image->data( plane );
 			int w = image->width( plane );

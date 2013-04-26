@@ -17,13 +17,13 @@ extern "C" {
 }
 
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const PixelFormat oil_to_avformat( const std::wstring & );
+extern const PixelFormat oil_to_avformat( const olib::t_string & );
 
 namespace 
 {
@@ -42,23 +42,23 @@ namespace
 	typedef boost::function< void ( int &w, int &h ) > correct_function;
 
 	// Typedef to hold the pf -> corrections function
-	typedef std::map< std::wstring, correct_function > corrections_map;
+	typedef std::map< t_string, correct_function > corrections_map;
 
 	// Create the corrections map
 	static corrections_map create_corrections( )
 	{
 		corrections_map result;
 
-		result[ std::wstring( L"b8g8r8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"b8g8r8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"r8g8b8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ std::wstring( L"yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
-		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 1, 2, _1, _2 );
-		result[ std::wstring( L"yuv444p" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"yuv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ std::wstring( L"uyv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( "b8g8r8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( "b8g8r8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( "r8g8b8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( "r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( "yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( "yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
+		result[ olib::t_string( "yuv422p" ) ] = boost::bind( correct, 1, 2, _1, _2 );
+		result[ olib::t_string( "yuv444p" ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( "yuv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( "uyv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
 
 		return result;
 	}
@@ -67,7 +67,7 @@ namespace
 	static const corrections_map corrections = create_corrections( );
 
 	// Corrects the width/height to match the colourspace rules
-	static void correct( const std::wstring &pf, int &w, int &h )
+	static void correct( const t_string &pf, int &w, int &h )
 	{
 		corrections_map::const_iterator iter = corrections.find( pf );
 		if ( iter != corrections.end( ) )
@@ -79,8 +79,8 @@ namespace
 		geometry( )
 		: interp( SWS_FAST_BILINEAR )
 		, mode( L"fill" )
-		, pf( L"" )
-		, field_order( il::progressive )
+		, pf( "" )
+		, field_order( ml::image::progressive )
 		, width( 0 )
 		, height( 0 )
 		, sar_num( 0 )
@@ -107,10 +107,10 @@ namespace
 		std::wstring mode;
 
 		// Specifies the picture format of the full image
-		std::wstring pf;
+		t_string pf;
 
 		// Specifies the field order of the output
-		il::field_order_flags field_order;
+		ml::image::field_order_flags field_order;
 
 		// Specifies the dimensions of the full image
 		int width, height, sar_num, sar_den;
@@ -131,7 +131,7 @@ namespace
 	};
 
 	// Fill an AVPicture with a potentially cropped aml image
-	AVPicture fill_picture( il::image_type_ptr image )
+	AVPicture fill_picture( ml::image_type_ptr image )
 	{
 		AVPicture picture;
 
@@ -275,10 +275,10 @@ namespace
 
 	// Draw the necessary border around the cropped image
 	// TODO: Correctly support border colour in all colour spaces
-	void border( il::image_type_ptr image, const geometry &shape )
+	void border( ml::image_type_ptr image, const geometry &shape )
 	{
 		int yuv[ 3 ];
-		il::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], shape.r, shape.g, shape.b );
+		ml::image::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], shape.r, shape.g, shape.b );
 
 		const int iwidth = image->width( );
 		const int iheight = image->height( );
@@ -289,7 +289,7 @@ namespace
 			const float hps = float( image->height( i ) ) / iheight;
 
 			boost::uint8_t *ptr = image->data( i );
-			const boost::uint8_t value = il::is_yuv_planar( image ) ?  yuv[ i ] : 0;
+			const boost::uint8_t value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
 
 			const int width = int( iwidth * wps );
 			const int pitch = image->pitch( i );
@@ -309,10 +309,10 @@ namespace
 		}
 	}
 
-	il::image_type_ptr rescale( struct SwsContext *&scaler_, const il::image_type_ptr &input, const struct geometry &shape )
+	ml::image_type_ptr rescale( struct SwsContext *&scaler_, const ml::image_type_ptr &input, const struct geometry &shape )
 	{
 		// Allocate the output image
-		il::image_type_ptr output = il::allocate( shape.pf, shape.width, shape.height );
+		ml::image_type_ptr output = ml::image::allocate( shape.pf, shape.width, shape.height );
 
 		// Determine the libswscale pix format values
 		PixelFormat in_format = oil_to_avformat( input->pf( ) );
@@ -367,14 +367,14 @@ namespace
 	void rescale( struct SwsContext *&scaler_, const ml::frame_type_ptr &frame, struct geometry &shape )
 	{
 		// Obtain the image
-		il::image_type_ptr image = frame->get_image( );
+		ml::image_type_ptr image = frame->get_image( );
 
 		// Convert to progressive if required
-		if ( shape.field_order == il::progressive && image->field_order( ) != il::progressive )
-			image = il::deinterlace( image );
+		if ( shape.field_order == ml::image::progressive && image->field_order( ) != ml::image::progressive )
+			image = ml::image::deinterlace( image );
 
 		// If no conversion is specified, retain that of the input
-		if ( shape.pf == L"" )
+		if ( shape.pf == "" )
 			shape.pf = image->pf( );
 
 		// Deal with the properties specified
@@ -461,7 +461,7 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 			, scaler_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_pf_ = std::wstring( L"" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "" ) );
 			properties( ).append( prop_progressive_ = 0 );
 			properties( ).append( prop_interp_ = 4 );
 			properties( ).append( prop_width_ = -1 );
@@ -508,10 +508,10 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 					struct geometry shape;
 
 					// Deal with the properties now
-					shape.field_order = prop_progressive_.value< int >( ) ? il::progressive : frame->get_image( )->field_order( );
+					shape.field_order = prop_progressive_.value< int >( ) ? ml::image::progressive : frame->get_image( )->field_order( );
 					shape.mode = prop_mode_.value< std::wstring >( );
 					shape.interp = prop_interp_.value< int >( );
-					shape.pf = prop_pf_.value< std::wstring >( );
+					shape.pf = prop_pf_.value< olib::t_string >( );
 					shape.width = prop_width_.value< int >( );
 					shape.height = prop_height_.value< int >( );
 					shape.sar_num = prop_sar_num_.value< int >( );

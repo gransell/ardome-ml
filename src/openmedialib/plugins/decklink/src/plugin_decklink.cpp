@@ -15,7 +15,7 @@
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 void intrusive_ptr_add_ref( IUnknown *p )

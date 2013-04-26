@@ -4,9 +4,8 @@
 // Released under the LGPL.
 
 #include "analyse_dv.hpp"
-#include <openimagelib/il/basic_image.hpp>
+#include <openmedialib/ml/image/image.hpp>
 
-namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -22,24 +21,24 @@ typedef struct dv_type
 	size_t size;
 	int width;
 	int height;
-	std::wstring pf;
-	il::field_order_flags field;
+	olib::t_string pf;
+	ml::image::field_order_flags field;
 }
 dv_type;
 
 static const dv_type dv_profiles[ ] =
 {
-	{ 0,  0x0, 30000, 1001, 120000,  720,  480, L"yuv411p", il::bottom_field_first },	// DV25 NTSC
-	{ 1,  0x0,    25,    1, 144000,  720,  576, L"yuv420p", il::bottom_field_first },	// DV25 PAL
-	{ 1,  0x0,    25,    1, 144000,  720,  576, L"yuv411p", il::bottom_field_first },	// DVCPRO
-	{ 0,  0x4, 30000, 1001, 240000,  720,  480, L"yuv422p", il::bottom_field_first },	// DVCPRO50 NTSC
-	{ 1,  0x4,    25,    1, 288000,  720,  576, L"yuv422p", il::bottom_field_first },	// DVCPRO50 PAL
-	{ 0, 0x14, 30000, 1001, 480000, 1280, 1080, L"yuv422p", il::top_field_first	   },	// DV100 HD NTSC
-	{ 1, 0x14,    25,    1, 576000, 1440, 1080, L"yuv422p", il::top_field_first	   },	// DV100 HD PAL
-	{ 0, 0x18, 60000, 1001, 240000,  960,  720, L"yuv422p", il::progressive		   },	// DVCPRO HD NTSC
-	{ 1, 0x18,    50,    1, 288000,  960,  720, L"yuv422p", il::progressive		   },	// DVCPRO HD PAL
-	{ 1,  0x1,    25,    1, 144000,  720,  576, L"yuv420p", il::bottom_field_first },	// DV25 PAL?
-	{ -1, 0x0,     1,    1,      0,    0,    0,        L"", il::progressive		   }
+	{ 0,  0x0, 30000, 1001, 120000,  720,  480, "yuv411p", ml::image::bottom_field_first },	// DV25 NTSC
+	{ 1,  0x0,    25,    1, 144000,  720,  576, "yuv420p", ml::image::bottom_field_first },	// DV25 PAL
+	{ 1,  0x0,    25,    1, 144000,  720,  576, "yuv411p", ml::image::bottom_field_first },	// DVCPRO
+	{ 0,  0x4, 30000, 1001, 240000,  720,  480, "yuv422p", ml::image::bottom_field_first },	// DVCPRO50 NTSC
+	{ 1,  0x4,    25,    1, 288000,  720,  576, "yuv422p", ml::image::bottom_field_first },	// DVCPRO50 PAL
+	{ 0, 0x14, 30000, 1001, 480000, 1280, 1080, "yuv422p", ml::image::top_field_first	   },	// DV100 HD NTSC
+	{ 1, 0x14,    25,    1, 576000, 1440, 1080, "yuv422p", ml::image::top_field_first	   },	// DV100 HD PAL
+	{ 0, 0x18, 60000, 1001, 240000,  960,  720, "yuv422p", ml::image::progressive		   },	// DVCPRO HD NTSC
+	{ 1, 0x18,    50,    1, 288000,  960,  720, "yuv422p", ml::image::progressive		   },	// DVCPRO HD PAL
+	{ 1,  0x1,    25,    1, 144000,  720,  576, "yuv420p", ml::image::bottom_field_first },	// DV25 PAL?
+	{ -1, 0x0,     1,    1,      0,    0,    0,        "", ml::image::progressive		   }
 };
 
 analyse_dv::analyse_dv( )

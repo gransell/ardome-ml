@@ -17,13 +17,13 @@ extern "C" {
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const PixelFormat oil_to_avformat( const std::wstring & );
-extern il::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
+extern const PixelFormat oil_to_avformat( const olib::t_string & );
+extern ml::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 #define OPT_PREFIX "video_"
 static const char *OPT_NON_LINEAR_QUANT = OPT_PREFIX "non_linear_quant";
@@ -284,10 +284,10 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 					picture_->linesize[ 1 ] = frame->get_image( )->pitch( 1 );
 					picture_->linesize[ 2 ] = frame->get_image( )->pitch( 2 );
 
-					if ( field_order_ != il::progressive )
+					if ( field_order_ != ml::image::progressive )
 					{
 						picture_->interlaced_frame = 1;
-						picture_->top_field_first = ( field_order_ == il::top_field_first );
+						picture_->top_field_first = ( field_order_ == ml::image::top_field_first );
 					}
 
 					error = avcodec_encode_video2( context_, &pkt_, picture_, &got_packet );
@@ -338,8 +338,8 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 		ml::dimensions dim_;
 		ml::fraction sar_;
 		ml::fraction fps_;
-		std::wstring pf_;
-		il::field_order_flags field_order_;
+		t_string pf_;
+		ml::image::field_order_flags field_order_;
 };
 
 } } }

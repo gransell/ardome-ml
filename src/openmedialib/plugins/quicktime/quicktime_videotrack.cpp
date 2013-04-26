@@ -98,7 +98,7 @@ void quicktime_videotrack::add_decoded_image( image_type_ptr image, TimeValue64 
 	image->set_position( sample_num );
 	
 	if( interlace_ )
-		image->set_field_order( top_field_first_ ? il::top_field_first : il::bottom_field_first );
+		image->set_field_order( top_field_first_ ? ml::image::top_field_first : ml::image::bottom_field_first );
 
 	image_buffer_ = image;
 	next_frame_to_return_++;
@@ -120,7 +120,7 @@ void quicktime_videotrack::set_wanted_frame(int wanted_f )
 }
 
 
-il::image_type_ptr quicktime_videotrack::decode( int current )
+ml::image_type_ptr quicktime_videotrack::decode( int current )
 {
 	OSStatus err;
 	TimeValue64 track_position;
@@ -135,7 +135,7 @@ il::image_type_ptr quicktime_videotrack::decode( int current )
 
 	// check size
 	if( current >= get_frame_count( ))
-		return il::image_type_ptr( );
+		return ml::image_type_ptr( );
 
 	// calc required track position
 	if( frame_track_list_.size() && current < frame_track_list_.size() )
@@ -198,7 +198,7 @@ il::image_type_ptr quicktime_videotrack::decode( int current )
 							&sample_flags);
 
 	if (err != noErr) 
-		return il::image_type_ptr( );
+		return ml::image_type_ptr( );
 	
 	// set up data for next frame to be decoded
 	ICMFrameTimeRecord qt_frame_time = {0};
@@ -576,7 +576,7 @@ bool quicktime_videotrack::create_decode_decompression_session( )
 	OSStatus err = ICMDecompressionSessionCreate( NULL, qt_image_desc_, qt_session_options, 
         qt_pixel_buffer_attributes, &qt_callback_method, &qt_decompression_session_ );
 
-	image_buffer_ = il::image_type_ptr();
+	image_buffer_ = ml::image_type_ptr();
 
 	return true;
 }
@@ -708,7 +708,7 @@ void get_decoded_frame( void *video_track, OSStatus result,
 
 		// create image with decoded data
 		// the native colour space of the Mac is ARGB 32. The mac doesn't seem to like using other colour spaces
-		il::image_type_ptr image = il::allocate( L"a8r8g8b8", vtrack->get_width( ), vtrack->get_height( ) );
+		ml::image_type_ptr image = ml::image::allocate( "a8r8g8b8", vtrack->get_width( ), vtrack->get_height( ) );
 		memcpy( image->data( ), CVPixelBufferGetBaseAddress( qt_pixel_buffer ), image->pitch()*image->height()  );
 		vtrack->add_decoded_image( image, display_time );
 

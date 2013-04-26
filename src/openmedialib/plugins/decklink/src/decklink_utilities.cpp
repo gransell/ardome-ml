@@ -4,22 +4,22 @@
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <openmedialib/ml/frame.hpp>
 #include <openmedialib/ml/audio.hpp>
-#include <openimagelib/il/basic_image.hpp>
+#include <openmedialib/ml/image/image.hpp>
 
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 
 namespace amf { namespace openmedialib { namespace decklink { namespace utilities {
 
 BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 {
-	il::image_type_ptr img = frame->get_image();
+	ml::image_type_ptr img = frame->get_image();
 	int fps_num = frame->get_fps_num();
 	int fps_den = frame->get_fps_den();
 	
 	if( frame->height() == 1080 )
 	{
-		if( img->field_order() != il::progressive )
+		if( img->field_order() != ml::image::progressive )
 		{
 			if( fps_num == 25 && fps_den == 1 )
 			{
@@ -88,7 +88,7 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 	else // Assume SD material
 	{
 #if 0
-		if( img->field_order() == il::progressive )
+		if( img->field_order() == ml::image::progressive )
 		{
 			if( fps_num == 30000 && fps_den == 1001 )
 			{
@@ -122,17 +122,17 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 }
 	
 	
-BMDPixelFormat frame_to_pixel_format( const std::wstring pf )
+BMDPixelFormat frame_to_pixel_format( const olib::t_string pf )
 {
-	if( pf == L"uyv422" )
+	if( pf == "uyv422" )
 	{
 		return bmdFormat8BitYUV;
 	}
-	else if( pf == L"a8r8g8b8" )
+	else if( pf == "a8r8g8b8" )
 	{
 		return bmdFormat8BitARGB;
 	}
-	else if( pf == L"b8g8r8a8" )
+	else if( pf == "b8g8r8a8" )
 	{
 		return bmdFormat8BitBGRA;
 	}

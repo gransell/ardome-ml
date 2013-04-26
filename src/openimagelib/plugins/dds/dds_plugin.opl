@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openimagelib name="oil" version="0.2.0">
-		<plugin name="OpenLibraries DDS plugin" type="input" in_filter="*.dds" extension='".*\.dds"' merit="80" filename='"libopenimagelib_dds.so", "libopenimagelib_dds.dylib", "openimagelib_dds-vc71-d-0_4_1.dll", "openimagelib_dds-vc71-r-0_4_1.dll", "openimagelib_dds-vc80-d-0_4_1.dll", "openimagelib_dds-vc80-r-0_4_1.dll"'/>
-	</openimagelib>
-</openlibraries>

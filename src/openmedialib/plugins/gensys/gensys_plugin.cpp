@@ -123,17 +123,7 @@
 #include <opencorelib/cl/lru.hpp>
 #include <opencorelib/cl/utilities.hpp>
 
-
-
-
 #include <openmedialib/ml/image/image.hpp>
-/*
-#include <openmedialib/ml/image/image.hpp>
-#include <openmedialib/ml/image/utility.hpp>
-#include <openmedialib/ml/types.hpp>
-*/
-/*
-*/
 
 #include <iostream>
 #include <cstdlib>
@@ -162,28 +152,12 @@ namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ml = olib::openmedialib::ml;
 namespace image = olib::openmedialib::ml::image;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml { 
 
 	
-
-inline void fill( il::image_type_ptr img, size_t plane, unsigned char val )
-{
-	unsigned char *ptr = img->data( plane );
-	int width = img->width( plane );
-	int height = img->height( plane );
-	int diff = img->pitch( plane );
-	if ( ptr ) // && val >= 16 && val <= 240 )
-	{
-		while( height -- )
-		{
-			memset( ptr, val, width );
-			ptr += diff;
-		}
-	}
-}
-inline void fill2( ml::image_type_ptr img, size_t plane, unsigned char val )
+inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 {
 	unsigned char *ptr = img->data( plane );
 	int width = img->width( plane );
@@ -326,7 +300,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			acquire_values( );
 
 			ml::image_type_ptr image;
-			il::image_type_ptr alpha;
+			ml::image_type_ptr alpha;
 
 			// Create and populate the image
 			if ( prop_deferred_.value< int >( ) == 0 )
@@ -340,7 +314,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 				if ( prop_a_.value< int >( ) != 0xff )
 				{
-					alpha = il::allocate( L"l8", get_width( ), get_height( ) );
+					alpha = ml::image::allocate( "l8", get_width( ), get_height( ) );
 					if ( alpha )
 					{
 						alpha->set_writable( true );
@@ -363,7 +337,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 					if ( prop_a_.value< int >( ) != 0xff )
 					{
-						deferred_alpha_ = il::allocate( L"l8", get_width( ), get_height( ) );
+						deferred_alpha_ = ml::image::allocate( "l8", get_width( ), get_height( ) );
 						if ( deferred_alpha_ )
 						{
 							deferred_alpha_->set_writable( false );
@@ -391,12 +365,8 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				result->set_duration( 1.0 / fps( ) );
 				result->set_position( get_position( ) );
 
-				il::image_type_ptr image_il = il::allocate( L"yuv420p", get_width( ), get_height( ) );
-				memcpy( image_il->data( 0 ), image->data( 0 ), image_il->size( ));
-				//image_il->data( 1 ) = image->data( 1 );
-				//image_il->data( 2 ) = image->data( 2 );
 				// Set the image
-				result->set_image( image_il );
+				result->set_image( image );
 				result->set_alpha( alpha );
 
 				// Identify image as a background
@@ -412,17 +382,17 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			if ( image->is_yuv_planar( ) )
 			{
 				int y, u, v;
-				il::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
-				fill2( image, 0, ( unsigned char )y );
-				fill2( image, 1, ( unsigned char )u );
-				fill2( image, 2, ( unsigned char )v );
+				ml::image::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
+				fill( image, 0, ( unsigned char )y );
+				fill( image, 1, ( unsigned char )u );
+				fill( image, 2, ( unsigned char )v );
 			}
-			/*
-			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == L"r8g8b8" )
+			
+			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == "r8g8b8" )
 			{
 				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
 			}
-			*/
+			
 		}
 
 	private:
@@ -442,7 +412,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 		pcos::property prop_deferred_;
 		pcos::property prop_background_;
 		ml::image_type_ptr deferred_image_;
-		il::image_type_ptr deferred_alpha_;
+		ml::image_type_ptr deferred_alpha_;
 };
 
 // A generic frame pusher input
@@ -589,9 +559,9 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
-					result = frame_convert( result, L"yuv420p" );
-				il::image_type_ptr img = result->get_image( );
-				img = il::conform( img, il::writable );
+					result = frame_convert( result, "yuv420p" );
+				ml::image_type_ptr img = result->get_image( );
+				img = ml::image::conform( img, ml::image::writable );
 				if ( img )
 				{
 					fill( img, 1, ( unsigned char )prop_u_.value< int >( ) );
@@ -644,7 +614,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_pf_ = std::wstring( L"yuv420p" ) );
+			properties( ).append( prop_pf_ = t_string( "yuv420p" ) );
 			properties( ).append( prop_default_ = std::wstring( L"" ) );
 		}
 
@@ -669,7 +639,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 				}
 				else if ( prop_image_.value< int >( ) == 0 )
 				{
-					result->set_image( il::image_type_ptr( ) );
+					result->set_image( ml::image_type_ptr( ) );
 				}
 
 				if ( prop_audio_.value< int >( ) == 1 )
@@ -740,7 +710,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 					if ( input_pusher_ )
 					{
 						// Push and fetch here
-						result->set_image( il::image_type_ptr( ) );
+						result->set_image( ml::image_type_ptr( ) );
 						input_pusher_->push( result );
 						input_default_->seek( get_position( ) );
 						result = input_default_->fetch( );
@@ -771,7 +741,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 
 			if ( !result->has_image( ) )
 			{
-				il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ).c_str( ), 720, 576 );
+				ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< t_string >( ).c_str( ), 720, 576 );
 				fill( image, 0, ( unsigned char )16 );
 				fill( image, 1, ( unsigned char )128 );
 				fill( image, 2, ( unsigned char )128 );
@@ -846,11 +816,11 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
-					result = frame_convert( result, L"yuv420p" );
-				il::image_type_ptr img = result->get_image( );
+					result = frame_convert( result, "yuv420p" );
+				ml::image_type_ptr img = result->get_image( );
 
 				// Ensure the image component is writable
-				img = il::conform( img, il::writable );
+				img = ml::image::conform( img, ml::image::writable );
 				result->set_image( img );
 
 				if ( img )
@@ -895,7 +865,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 					}
 
 					result = frame_crop( result, px, py, pw, ph );
-					result->set_image( il::image_type_ptr( static_cast<il::image_type*>( result->get_image( )->clone( il::cropped ) ) ) );
+					result->set_image( ml::image_type_ptr( static_cast<ml::image::image*>( result->get_image( )->clone( ml::image::cropped ) ) ) );
 				}
 			}
 		}
@@ -965,8 +935,8 @@ struct geometry { int x, y, w, h, cx, cy, cw, ch; };
 class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 {
 	public:
-		typedef frame_type_ptr ( *frame_rescale_type )( frame_type_ptr, int, int, il::rescale_filter );
-		typedef il::image_type_ptr ( *image_rescale_type )( const il::image_type_ptr &, int, int, int, il::rescale_filter );
+		typedef frame_type_ptr ( *frame_rescale_type )( frame_type_ptr, int, int, ml::image::rescale_filter );
+		typedef ml::image_type_ptr ( *image_rescale_type )( const ml::image_type_ptr &, int, int, int, ml::image::rescale_filter );
 
 		composite_filter( )
 			: filter_type( )
@@ -1030,8 +1000,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 
 			if ( result && overlay )
 			{
-				il::image_type_ptr dst = result->get_image( );
-				il::image_type_ptr src = overlay->get_image( );
+				ml::image_type_ptr dst = result->get_image( );
+				ml::image_type_ptr src = overlay->get_image( );
 
 				if ( dst && src )
 				{
@@ -1182,8 +1152,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			//If both the source and destination images are interlaced, 
 			//we need to place the source at an even line to avoid
 			//flipping the field order.
-			if ( dst->get_image()->field_order( ) != il::progressive &&
-			     src->get_image()->field_order( ) != il::progressive )
+			if ( dst->get_image()->field_order( ) != ml::image::progressive &&
+			     src->get_image()->field_order( ) != ml::image::progressive )
 			{
 				if( result.y % 2 ) result.y += 1;
 			}
@@ -1194,37 +1164,37 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry geom )
 		{
 			// Ensure conformance
-			std::wstring original_pf = background->pf();
+			olib::t_string original_pf = background->pf();
 			if ( !is_yuv_planar( background ) )
 			{
-				background = frame_convert( background, L"yuv444p" );
+				background = frame_convert( background, "yuv444p" );
 			}
 
 			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
-			foreground->set_image( il::conform( foreground->get_image( ), il::writable ) );
-			foreground->set_alpha( il::conform( foreground->get_alpha( ), il::writable ) );
+			foreground->set_image( ml::image::conform( foreground->get_image( ), ml::image::writable ) );
+			foreground->set_alpha( ml::image::conform( foreground->get_alpha( ), ml::image::writable ) );
 
 			// Crop to computed geometry
 			foreground = frame_crop( foreground, geom.cx, geom.cy, geom.cw, geom.ch );
 
 			// Aquire requested rescaling algorithm
-			il::rescale_filter filter = il::BILINEAR_SAMPLING;
+			ml::image::rescale_filter filter = ml::image::BILINEAR_SAMPLING;
 			if ( prop_interp_.value< std::wstring >( ) == L"point" )
-				filter = il::POINT_SAMPLING;
+				filter = ml::image::POINT_SAMPLING;
 			else if ( prop_interp_.value< std::wstring >( ) == L"bicubic" )
-				filter = il::BICUBIC_SAMPLING;
-			if ( background->get_image( )->field_order( ) == il::progressive ) 
-			    foreground->set_image( il::deinterlace( foreground->get_image( ) ) );
+				filter = ml::image::BICUBIC_SAMPLING;
+			if ( background->get_image( )->field_order( ) == ml::image::progressive ) 
+			    foreground->set_image( ml::image::deinterlace( foreground->get_image( ) ) );
 			
 			foreground = ml::frame_rescale( foreground, geom.w, geom.h, filter );
 
 			// We're going to update both image and alpha here
-			background->set_image( il::conform( background->get_image( ), il::writable ) );
-			background->set_alpha( il::conform( background->get_alpha( ), il::writable ) );
+			background->set_image( ml::image::conform( background->get_image( ), ml::image::writable ) );
+			background->set_alpha( ml::image::conform( background->get_alpha( ), ml::image::writable ) );
 
 			// Extract images
-			il::image_type_ptr dst = background->get_image( );
-			il::image_type_ptr src = foreground->get_image( );
+			ml::image_type_ptr dst = background->get_image( );
+			ml::image_type_ptr src = foreground->get_image( );
 
 			// Obtain the src and dst image dimensions
 			int src_width = src->width( );
@@ -1260,13 +1230,13 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				src_height -= ( dst_y + src_height - dst_height );
 
 			// Scale down the alphas to the size of the chroma planes 
-			il::image_type_ptr half_src_alpha; 
-			il::image_type_ptr half_dst_alpha;
+			ml::image_type_ptr half_src_alpha; 
+			ml::image_type_ptr half_dst_alpha;
 
 			if ( background->get_alpha( ) )
-				half_dst_alpha = il::rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
+				half_dst_alpha = ml::image::rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
 			if ( foreground->get_alpha( ) )
-				half_src_alpha = il::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
+				half_src_alpha = ml::image::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
 
 			// Determine the x and y factors for the chroma plane sizes
 			int plane_x_factor = background->get_image( )->width( ) / background->get_image( )->width( 1 );
@@ -1305,7 +1275,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else if ( !background->get_alpha( ) && foreground->get_alpha( ) )
 					{
-						il::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
+						ml::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
@@ -1327,7 +1297,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else if ( background->get_alpha( ) && !foreground->get_alpha( ) )
 					{
-						il::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
+						ml::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
 						unsigned char *dst_alpha_ptr = dst_alpha->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
 						while ( temp_h -- )
@@ -1348,10 +1318,10 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					}
 					else
 					{
-						il::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
+						ml::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
 						unsigned char *dst_alpha_ptr = dst_alpha->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
-						il::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
+						ml::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
 						unsigned char *src_alpha_ptr = src_alpha->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
@@ -1482,9 +1452,9 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 		frame_type_ptr process_image( frame_type_ptr result )
 		{
 			if ( !is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
-			result->set_image( il::conform( result->get_image( ), il::writable ) );
-			il::image_type_ptr img = result->get_image( );
+				result = frame_convert( result, "yuv420p" );
+			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
+			ml::image_type_ptr img = result->get_image( );
 			if ( img )
 			{
 				// Interpret properties
@@ -2083,12 +2053,12 @@ class ML_PLUGIN_DECLSPEC deinterlace_filter : public filter_simple
 
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
-				if ( result->get_image( )->field_order( ) != il::progressive || prop_force_.value< int >( ) )
+				if ( result->get_image( )->field_order( ) != ml::image::progressive || prop_force_.value< int >( ) )
 				{
-					result->set_image( il::conform( result->get_image( ), il::writable ) );
+					result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 					if ( prop_force_.value< int >( ) )
-						result->get_image( )->set_field_order( prop_force_.value< int >( ) == 2 ? il::bottom_field_first : il::top_field_first );
-					result->set_image( il::deinterlace( result->get_image( ) ) );
+						result->get_image( )->set_field_order( prop_force_.value< int >( ) == 2 ? ml::image::bottom_field_first : ml::image::top_field_first );
+					result->set_image( ml::image::deinterlace( result->get_image( ) ) );
 				}
 			}
 		}
@@ -2413,7 +2383,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
-			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
+			properties( ).append( prop_colourspace_ = olib::t_string( "yuv420p" ) );
 			properties( ).append( prop_scattered_ = 0 );
 			properties( ).append( prop_reverse_ = 0 );
 		}
@@ -2425,7 +2395,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 
 		virtual void on_slot_change( ml::input_type_ptr input, int )
 		{
-			previous_ = il::image_type_ptr( );
+			previous_ = ml::image_type_ptr( );
 		}
 
 	protected:
@@ -2460,25 +2430,25 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			if ( frame->get_audio( ) != 0 )
 			{
 				int type = prop_type_.value< int >( );
-				std::wstring colourspace = prop_colourspace_.value< std::wstring >( );
+				olib::t_string colourspace = prop_colourspace_.value< olib::t_string >( );
 				int width = prop_width_.value< int >( );
 				int height = prop_height_.value< int >( );
-				il::image_type_ptr image = frame->get_image( );
+				ml::image_type_ptr image = frame->get_image( );
 
 				if ( image == 0 || prop_force_.value< int >( ) == 1 )
 				{
-					if ( colourspace == L"yuv420p" )
+					if ( colourspace == "yuv420p" )
 					{
 						int by, bu, bv;
-						il::rgb24_to_yuv444( by, bu, bv, 0, 0, 0 );
-						image = il::allocate( L"yuv420p", width, height );
+						ml::image::rgb24_to_yuv444( by, bu, bv, 0, 0, 0 );
+						image = ml::image::allocate( "yuv420p", width, height );
 						fill( image, 0, by );
 						fill( image, 1, bu );
 						fill( image, 2, bv );
 					}
 					else
 					{
-						image = il::allocate( L"r8g8b8", width, height );
+						image = ml::image::allocate( "r8g8b8", width, height );
 						memset( image->data( ), 0, image->size( ) );
 					}
 
@@ -2487,17 +2457,17 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 				}
 				else
 				{
-					if ( image->pf( ) == L"yuv420p" || image->pf( ) == L"r8g8b8" )
+					if ( image->pf( ) == "yuv420p" || image->pf( ) == "r8g8b8" )
 						colourspace = image->pf( );
 					else
 						frame_convert( frame, colourspace.c_str() );
 				}
 
-				if ( type == 0 && colourspace == L"r8g8b8" )
+				if ( type == 0 && colourspace == "r8g8b8" )
 					wave_rgb( frame );
-				else if ( type == 0 && colourspace == L"yuv420p" )
+				else if ( type == 0 && colourspace == "yuv420p" )
 					wave_yuv( frame );
-				else if ( type == 1 && colourspace == L"yuv420p" )
+				else if ( type == 1 && colourspace == "yuv420p" )
 					wave_yuv_split( frame );
 				else
 					wave_rgb( frame );
@@ -2506,14 +2476,14 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 
 		void wave_rgb( frame_type_ptr frame )
 		{
-			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
+			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
 			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
 
 			if ( prop_reverse_.value< int >( ) )
 				audio = ml::audio::reverse( audio );
 
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 
 			int width = image->width( );
 			int height = image->height( );
@@ -2618,20 +2588,20 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 
 		void wave_yuv( frame_type_ptr frame )
 		{
-			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
+			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
 			int ry, ru, rv;
-			il::rgb24_to_yuv444( ry, ru, rv, 255, 0, 0 );
+			ml::image::rgb24_to_yuv444( ry, ru, rv, 255, 0, 0 );
 
 			int gy, gu, gv;
-			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
+			ml::image::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
 
 			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
 
 			if ( prop_reverse_.value< int >( ) )
 				audio = ml::audio::reverse( audio );
 
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			int width = image->width( );
 			int height = image->height( );
 
@@ -2669,16 +2639,16 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 
 		void wave_yuv_split( frame_type_ptr frame )
 		{
-			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
+			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
 			int ry, ru, rv;
-			il::rgb24_to_yuv444( ry, ru, rv, 255, 0, 0 );
+			ml::image::rgb24_to_yuv444( ry, ru, rv, 255, 0, 0 );
 
 			int gy, gu, gv;
-			il::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
+			ml::image::rgb24_to_yuv444( gy, gu, gv, 255, 255, 255 );
 
 			audio_type_ptr audio = ml::audio::coerce< ml::audio::pcm16 >( frame->get_audio( ) );
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			int width = image->width( );
 			int height = image->height( );
 
@@ -2729,7 +2699,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 		pcos::property prop_colourspace_;
 		pcos::property prop_scattered_;
 		pcos::property prop_reverse_;
-		il::image_type_ptr previous_;
+		ml::image_type_ptr previous_;
 		int previous_sar_num_;
 		int previous_sar_den_;
 };

@@ -48,7 +48,7 @@ namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace io = ml::io;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -249,7 +249,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_audio_stream_id_ = 0 );
 			properties( ).append( prop_vfourcc_ = std::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = std::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : std::wstring( L"" ) );
+			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : olib::t_string( "" ) );
 
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
@@ -785,7 +785,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
 				std::string pixfmt = olib::opencorelib::str_util::to_string( prop_pix_fmt_.value< std::wstring >( ) );
-				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< std::wstring >( ) );
+				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< olib::t_string >( ) );
 
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
@@ -847,11 +847,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				if( first_frame_ && first_frame_->has_image( ) )
 				{
-					if( first_frame_->get_image( )->field_order( ) != il::progressive )
+					if( first_frame_->get_image( )->field_order( ) != ml::image::progressive )
 					{
 						c->flags |= CODEC_FLAG_INTERLACED_DCT;
 						c->flags |= CODEC_FLAG_INTERLACED_ME;
-						c->field_order = first_frame_->get_image( )->field_order( ) == il::top_field_first ? AV_FIELD_TT : AV_FIELD_BB;
+						c->field_order = first_frame_->get_image( )->field_order( ) == ml::image::top_field_first ? AV_FIELD_TT : AV_FIELD_BB;
 					}
 				}
 
@@ -1195,8 +1195,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( video_stream_ && frame->has_image( ) )
 			{
 				AVCodecContext *c = video_stream_->codec;
-				const std::wstring pf = avformat_to_oil( c->pix_fmt );
-				if ( pf != L"" && !video_copy_ )
+				const t_string pf = avformat_to_oil( c->pix_fmt );
+				if ( pf != "" && !video_copy_ )
 				{
 					frame = ml::frame_convert( frame, pf );
 					video_queue_.push_back( frame );
@@ -1421,15 +1421,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( video_copy_ )
 				return do_stream_write( frame );
 
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			AVCodecContext *c = video_stream_->codec;
 
 			// Convert the image to the colour space required
-			const std::wstring pf = avformat_to_oil( c->pix_fmt );
+			const t_string pf = avformat_to_oil( c->pix_fmt );
 
-			if ( pf != L"" )
+			if ( pf != "" )
 			{
-				image = il::convert( image, pf );
+				image = ml::image::convert( image, pf );
 				// Need an ffmpeg fallback here...
 				if ( image == 0 )
 					return false;
@@ -1482,10 +1482,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				//av_image_.pict_type = 0;
 
 				//Set properties for interlaced encoding
-				if ( image->field_order( ) != il::progressive )
+				if ( image->field_order( ) != ml::image::progressive )
 				{
 					av_image_.interlaced_frame = 1;
-					if( image->field_order( ) == il::top_field_first )
+					if( image->field_order( ) == ml::image::top_field_first )
 						av_image_.top_field_first = 1;
 					else
 						av_image_.top_field_first = 0;

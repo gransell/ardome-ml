@@ -43,7 +43,7 @@ class ML_PLUGIN_DECLSPEC filter_remove : public ml::filter_simple
 			
 			std::wstring component =  prop_component_.value< std::wstring >();
 			if (component == L"image")
-				result->set_image( olib::openimagelib::il::image_type_ptr() );
+				result->set_image( olib::openmedialib::ml::image_type_ptr() );
 			else if (component == L"audio")
 				result->set_audio( olib::openmedialib::ml::audio_type_ptr() );
 			else if (component == L"stream")

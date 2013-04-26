@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openimagelib name="oil" version="0.2.0">
-		<plugin name="OpenLibraries JPG plugin" type="input" in_filter="*.jpg" extension='".*\.jpg"' merit="80" filename='"libopenimagelib_jpg.so", "./plugins/openimagelib_jpg-vc80-d-0_4_1.dll" "./plugins/openimagelib_jpg-vc71-d-0_4_1.dll"'/>
-		<plugin name="OpenLibraries JPG plugin" type="output" extension='".*\.jpg"' merit="80" filename='"libopenimagelib_jpg.so", "libopenimagelib_jpg.dylib", "./plugins/openimagelib_jpg-vc80-d-0_4_1.dll" "./plugins/openimagelib_jpg-vc71-d-0_4_1.dll"'/>
-	</openimagelib>
-</openlibraries>

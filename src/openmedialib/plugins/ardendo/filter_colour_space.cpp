@@ -28,7 +28,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			: ml::filter_simple()
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 		{
-			properties( ).append( prop_pf_ = std::wstring( L"r8g8b8a8" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "r8g8b8a8" ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -45,7 +45,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			result = fetch_from_slot( );
 
 			// Handle the frame with image case
-			if ( result && result->get_image( ) && ( std::wstring( result->get_image( )->pf( ) ) != prop_pf_.value< std::wstring >( ) ) )
+			if ( result && result->get_image( ) && ( olib::t_string( result->get_image( )->pf( ) ) != prop_pf_.value< olib::t_string >( ) ) )
 				change_colour_space( result );
 		}
 
@@ -55,17 +55,17 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 		void change_colour_space( ml::frame_type_ptr & result )
 		{
 			// Take a back up just in case
-			il::image_type_ptr image = result->get_image( );
+			ml::image_type_ptr image = result->get_image( );
 
 			// Try a straight convert
-			result = frame_convert( result, prop_pf_.value< std::wstring >( ).c_str( ) );
+			result = frame_convert( result, prop_pf_.value< olib::t_string >( ).c_str( ) );
 
 			// If that failed, the convert is missing, so go through a proxy format first
 			if ( !result->get_image( ) )
 			{
 				// Inefficient back up plan
-				il::image_type_ptr alternative = il::convert( image, L"b8g8r8a8" );
-				alternative = il::convert( alternative, std::wstring( prop_pf_.value< std::wstring >( ).c_str( ) ) );
+				ml::image_type_ptr alternative = ml::image::convert( image, "b8g8r8a8" );
+				alternative = ml::image::convert( alternative, olib::t_string( prop_pf_.value< olib::t_string >( ).c_str( ) ) );
 
 				// If we now have an image, assign to the frame, otherwise leave the original 
 				// colourspace in place

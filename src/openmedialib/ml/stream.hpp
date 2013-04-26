@@ -6,8 +6,8 @@
 #ifndef OPENMEDIALIB_PACKET_H_
 #define OPENMEDIALIB_PACKET_H_
 
+#include <openmedialib/ml/image/image.hpp>
 #include <openmedialib/ml/types.hpp>
-#include <openimagelib/il/basic_image.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
 
 #include <boost/shared_ptr.hpp>
@@ -66,10 +66,10 @@ class ML_DECLSPEC stream_type
 		virtual const fraction sar( ) const { return fraction( 1, 1 ); }
 
 		/// Returns the picture format of the image associated to this packet
-		virtual const std::wstring pf( ) const { return std::wstring( L"" ); }
+		virtual const t_string pf( ) const { return t_string( "" ); }
 
 		/// Returns the field order of the image associated with this packet
-		virtual olib::openimagelib::il::field_order_flags field_order( ) const = 0;
+		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const = 0;
 
 		/// Returns the frequency associated to the audio in the packet (0 if n/a)
 		virtual const int frequency( ) const { return 0; }

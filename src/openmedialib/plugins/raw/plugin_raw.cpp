@@ -27,7 +27,6 @@ extern "C" {
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace io = ml::io;
-namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -47,7 +46,7 @@ std::string avio_gets( AVIOContext *s )
 	return result;
 }
 
-int bytes_per_image( const il::image_type_ptr &image )
+int bytes_per_image( const ml::image_type_ptr &image )
 {
 	int result = 0;
 	if ( image )
@@ -84,7 +83,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, offset_( 0 )
 			, parsed_( false )
 		{
-			properties( ).append( prop_pf_ = std::wstring( L"yuv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "yuv422" ) );
 			properties( ).append( prop_width_ = 1920 );
 			properties( ).append( prop_height_ = 1080 );
 			properties( ).append( prop_fps_num_ = 25 );
@@ -140,7 +139,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( token.find( "pf=" ) == 0 ) prop_pf_ = cl::str_util::to_wstring( token.substr( 3 ) );
+					if ( token.find( "pf=" ) == 0 ) prop_pf_ = cl::str_util::to_t_string( token.substr( 3 ) );
 					else if ( token.find( "width=" ) == 0 ) prop_width_ = boost::lexical_cast< int >( token.substr( 6 ) );
 					else if ( token.find( "height=" ) == 0 ) prop_height_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else if ( token.find( "sar_num=" ) == 0 ) prop_sar_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
@@ -157,8 +156,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
 
-			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
-			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< std::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
+			ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< olib::t_string >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
+			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< olib::t_string >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 			int pad = prop_pad_.value< int >( );
@@ -208,8 +207,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			// Generate an image
 			int width = prop_width_.value< int >( );
 			int height = prop_height_.value< int >( );
-			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), width, height );
-			image->set_field_order( static_cast< il::field_order_flags >( prop_field_order_.value < int >( ) ) );
+			ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< olib::t_string >( ), width, height );
+			image->set_field_order( static_cast< ml::image::field_order_flags >( prop_field_order_.value < int >( ) ) );
 			bool error = false;
 
 			if ( image )
@@ -477,7 +476,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			if ( frame->has_image( ) )
 			{
 				valid_ = true;
-				il::image_type_ptr image = frame->get_image( );
+				ml::image_type_ptr image = frame->get_image( );
 				pf_ = image->pf( );
 				width_ = image->width( );
 				height_ = image->height( );
@@ -566,7 +565,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		{
 			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
 
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			bool success = true;
 			if ( image != 0 )
 			{
@@ -618,7 +617,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		pl::pcos::property prop_pad_;
 		std::wstring spec_;
 		AVIOContext *context_;
-		std::wstring pf_;
+		olib::t_string pf_;
 		int valid_;
 		int width_;
 		int height_;
@@ -627,7 +626,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		int sar_num_;
 		int sar_den_;
 		int bytes_;
-		il::field_order_flags field_order_;
+		ml::image::field_order_flags field_order_;
 		bool started_;
 		std::vector< boost::uint8_t > padding_;
 };

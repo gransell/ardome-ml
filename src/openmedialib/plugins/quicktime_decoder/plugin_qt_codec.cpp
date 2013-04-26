@@ -21,7 +21,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml { namespace quicktime {
@@ -46,7 +46,7 @@ public:
 	, image_( )
 	, next_frame_to_decoder_( 0 )
 	, sar_( 1, 1 )
-	, field_order_( il::progressive )
+	, field_order_( ml::image::progressive )
 	, lru_cache_( )
 	{
 		lru_cache_ = ml::the_scope_handler::Instance().lru_cache( L"temp" );
@@ -79,7 +79,7 @@ public:
 			
 			// create image with decoded data
 			// the native colour space of the Mac is ARGB 32. The mac doesn't seem to like using other colour spaces
-			il::image_type_ptr image = il::allocate( L"yuv422", 1920, 1080 );
+			ml::image_type_ptr image = ml::image::allocate( "yuv422", 1920, 1080 );
 			image->set_sar_num( sar_.num );
 			image->set_sar_den( sar_.den );
 			image->set_field_order( field_order_ );
@@ -104,7 +104,7 @@ protected:
 		int wanted_position = get_position( );
 		
 		lru_cache_type::key_type my_key = lru_key_for_position( wanted_position );
-		il::image_type_ptr img = lru_cache_->image_for_position( my_key );
+		ml::image_type_ptr img = lru_cache_->image_for_position( my_key );
 		
 		if( img )
 		{
@@ -169,7 +169,7 @@ protected:
 		// Reset the position of our input
 		fetch_slot( 0 )->seek( get_position( ) );
 		
-		il::image_type_ptr image;
+		ml::image_type_ptr image;
 		ARENFORCE_MSG( image = lru_cache_->image_for_position( my_key ), "Failed to decode image" );
 		result->set_image( image, true );
 	}
@@ -241,9 +241,9 @@ protected:
 			if( field_info.fields == kQTFieldsInterlaced )
 			{
 				if( field_info.detail == kQTFieldDetailTemporalBottomFirst)
-					field_order_ = il::bottom_field_first;
+					field_order_ = ml::image::bottom_field_first;
 				else
-					field_order_ = il::top_field_first;
+					field_order_ = ml::image::top_field_first;
 			}
 		}
 
@@ -303,13 +303,13 @@ private:
 	// The expected position. So that we know if we have to seek to closest i-frame or not
 	boost::int32_t expected_;
 	// When a decode has succeeded
-	il::image_type_ptr image_;
+	ml::image_type_ptr image_;
 	// How far ahead of the actual position we are
 	boost::int32_t next_frame_to_decoder_;
 	// The sar that we are going to get out
 	fraction sar_;
 	// Field order information collected from decoder.
-	il::field_order_flags field_order_;
+	ml::image::field_order_flags field_order_;
 	// Cache images that have been decoded
 	lru_cache_type_ptr lru_cache_;
 };

@@ -32,7 +32,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -270,7 +270,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Set the image associated to the frame.
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded )
+		virtual void set_image( olib::openmedialib::ml::image_type_ptr image, bool decoded )
 		{
 			frame_type::set_image( image, decoded );
 			evaluated_ = eval_image | eval_stream;
@@ -280,7 +280,7 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		}
 
 		/// Get the image associated to the frame.
-		virtual olib::openimagelib::il::image_type_ptr get_image( )
+		virtual olib::openmedialib::ml::image_type_ptr get_image( )
 		{
 			if( !( evaluated_ & eval_image ) ) evaluate( eval_image );
 			return image_;
@@ -1038,12 +1038,12 @@ class ML_PLUGIN_DECLSPEC filter_rescale : public filter_simple
 				frame = fetch_from_slot( );
 				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 				{
-					il::image_type_ptr image = frame->get_image( );
+					ml::image_type_ptr image = frame->get_image( );
 					if ( prop_progressive_.value< int >( ) == 1 )
-						image = il::deinterlace( image );
+						image = ml::image::deinterlace( image );
 					else if ( prop_progressive_.value< int >( ) == -1 )
-						image->set_field_order( il::progressive );
-					image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
+						image->set_field_order( ml::image::progressive );
+					image = ml::image::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), ml::image::rescale_filter( prop_interp_.value< int >( ) ) );
 					frame->set_image( image );
 					frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
 				}
@@ -1092,9 +1092,9 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 			if ( prop_order_.value< int >( ) && frame && frame->has_image( ) )
 			{
 				// Fetch image
-				il::image_type_ptr image = frame->get_image( );
+				ml::image_type_ptr image = frame->get_image( );
 
-				if ( image->field_order( ) != il::progressive && image->field_order( ) != il::field_order_flags( prop_order_.value< int >( ) ) )
+				if ( image->field_order( ) != ml::image::progressive && image->field_order( ) != ml::image::field_order_flags( prop_order_.value< int >( ) ) )
 				{
 					// Do we have a previous frame and is it the one preceding this request?
 					if ( !previous_ || previous_->position( ) != get_position( ) - 1 )
@@ -1102,26 +1102,26 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 						if ( get_position( ) > 0 )
 							previous_ = fetch_slot( 0 )->fetch( get_position( ) - 1 )->get_image( );
 						else
-							previous_ = il::image_type_ptr( );
+							previous_ = ml::image_type_ptr( );
 					}
 
 					// If we have a previous frame, merge the fields accordingly, otherwise duplicate the first field
 					if ( previous_ )
 					{
 						// Image is definitely in the wrong order - think this is correct for both?
-						il::image_type_ptr merged;
+						ml::image_type_ptr merged;
 						if ( prop_order_.value< int >( ) == 2 )
 							merged = merge( image, 0, previous_, 1 );
 						else
 							merged = merge( previous_, 0, image, 1 );
-						merged->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+						merged->set_field_order( ml::image::field_order_flags( prop_order_.value< int >( ) ) );
 						merged->set_position( get_position( ) );
 						frame->set_image( merged );
 					}
 					else
 					{
-						il::image_type_ptr merged = merge( image, 0, image, 0 );
-						merged->set_field_order( il::field_order_flags( prop_order_.value< int >( ) ) );
+						ml::image_type_ptr merged = merge( image, 0, image, 0 );
+						merged->set_field_order( ml::image::field_order_flags( prop_order_.value< int >( ) ) );
 						merged->set_position( get_position( ) );
 						frame->set_image( merged );
 					}
@@ -1133,11 +1133,11 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 			}
 		}
 
-		il::image_type_ptr merge( il::image_type_ptr image1, int scan1, il::image_type_ptr image2, int scan2 )
+		ml::image_type_ptr merge( ml::image_type_ptr image1, int scan1, ml::image_type_ptr image2, int scan2 )
 		{
 			// Create a new image which has the same dimensions
 			// NOTE: we assume that image dimensions are consistent (should we?)
-			il::image_type_ptr result = il::allocate( image1 );
+			ml::image_type_ptr result = ml::image::allocate( image1 );
 
 			for ( int i = 0; i < result->plane_count( ); i ++ )
 			{
@@ -1166,7 +1166,7 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 
 	private:
 		pl::pcos::property prop_order_;
-		il::image_type_ptr previous_;
+		ml::image_type_ptr previous_;
 };
 
 class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool

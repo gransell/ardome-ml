@@ -48,19 +48,19 @@ static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
 
 // These are defined in filter_compositor.cpp - they are defined using mc booster when available
-extern il::image_type_ptr image_rescale( const il::image_type_ptr &img, int w, int h, int d, il::rescale_filter filter );
-extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, il::rescale_filter filter );
+extern ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, int d, ml::image::rescale_filter filter );
+extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, ml::image::rescale_filter filter );
 
 static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, int cw, int lines )
 {
-	if ( frame->get_image( ) && frame->get_image( )->pf( ) == L"yuv420p" )
+	if ( frame->get_image( ) && frame->get_image( )->pf( ) == "yuv420p" )
 	{
 		unsigned char R = ( unsigned char )frame->properties( ).get_property_with_key( key_r_ ).value< int >( );
 		unsigned char G = ( unsigned char )frame->properties( ).get_property_with_key( key_g_ ).value< int >( );
 		unsigned char B = ( unsigned char )frame->properties( ).get_property_with_key( key_b_ ).value< int >( );
 
 		int Y, U, V;
-		il::rgb24_to_yuv444( Y, U, V, R, G, B );
+		ml::image::rgb24_to_yuv444( Y, U, V, R, G, B );
 
 		int pitch_y = frame->get_image( )->pitch( 0 );
 		int pitch_u = frame->get_image( )->pitch( 1 );

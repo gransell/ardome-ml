@@ -34,7 +34,7 @@ extern "C" {
 
 namespace plugin = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -54,45 +54,45 @@ extern void ML_PLUGIN_DECLSPEC register_protocol( void );
 	
 extern void register_aml_aes3( );
 
-const std::wstring avformat_to_oil( int fmt )
+const olib::t_string avformat_to_oil( int fmt )
 {
 	if ( fmt == PIX_FMT_YUV420P )
-		return L"yuv420p";
+		return "yuv420p";
 	else if ( fmt == PIX_FMT_UYYVYY411 )
-		return L"yuv411";
+		return "yuv411";
 	else if ( fmt == PIX_FMT_YUV411P )
-		return L"yuv411p";
+		return "yuv411p";
 	else if ( fmt == PIX_FMT_UYVY422 )
-		return L"uyv422";
+		return "uyv422";
 	else if ( fmt == PIX_FMT_YUV422P10LE )
-		return L"yuv422p10le";
+		return "yuv422p10le";
 	else if ( fmt == PIX_FMT_YUYV422 )
-		return L"yuv422";
+		return "yuv422";
 	else if ( fmt == PIX_FMT_YUV422P )
-		return L"yuv422p";
+		return "yuv422p";
 	else if ( fmt == PIX_FMT_YUV444P )
-		return L"yuv444p";
+		return "yuv444p";
 	else if ( fmt == PIX_FMT_RGB24 )
-		return L"r8g8b8";
+		return "r8g8b8";
 	else if ( fmt == PIX_FMT_BGR24 )
-		return L"b8g8r8";
+		return "b8g8r8";
 	else if ( fmt == PIX_FMT_ARGB )
-		return L"a8r8g8b8";
+		return "a8r8g8b8";
 	else if ( fmt == PIX_FMT_ABGR )
-		return L"a8b8g8r8";
+		return "a8b8g8r8";
 	else if ( fmt == PIX_FMT_BGRA )
-		return L"b8g8r8a8";
+		return "b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGBA )
-		return L"b8g8r8a8";
+		return "b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGB32 )
-		return L"r8g8b8a8";
+		return "r8g8b8a8";
 	else if ( fmt == PIX_FMT_BGR32 )
-		return L"b8g8r8a8";
+		return "b8g8r8a8";
 	else if ( fmt == PIX_FMT_RGB32_1 )
-		return L"r8g8b8a8";
+		return "r8g8b8a8";
 	else if ( fmt == PIX_FMT_BGR32_1 )
-		return L"b8g8r8a8";
-	return L"";
+		return "b8g8r8a8";
+	return "";
 }
 
 std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
@@ -187,61 +187,61 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 	return CODEC_ID_NONE;
 }
 
-const PixelFormat oil_to_avformat( const std::wstring &fmt )
+const PixelFormat oil_to_avformat( const t_string &fmt )
 {
-	if ( fmt == L"yuv420p" )
+	if ( fmt == "yuv420p" )
 		return PIX_FMT_YUV420P;
-	else if ( fmt == L"yuv411" )
+	else if ( fmt == "yuv411" )
 		return PIX_FMT_UYYVYY411;
-	else if ( fmt == L"yuv411p" )
+	else if ( fmt == "yuv411p" )
 		return PIX_FMT_YUV411P;
-	else if ( fmt == L"yuv422" )
+	else if ( fmt == "yuv422" )
 		return PIX_FMT_YUYV422;
-	else if ( fmt == L"uyv422" )
+	else if ( fmt == "uyv422" )
 		return PIX_FMT_UYVY422;
-	else if ( fmt == L"yuv422p10le" )
+	else if ( fmt == "yuv422p10le" )
 		return PIX_FMT_YUV422P10LE;
-	else if ( fmt == L"yuv422p" )
+	else if ( fmt == "yuv422p" )
 		return PIX_FMT_YUV422P;
-	else if ( fmt == L"yuv444p" )
+	else if ( fmt == "yuv444p" )
 		return PIX_FMT_YUV444P;
-	else if ( fmt == L"r8g8b8" )
+	else if ( fmt == "r8g8b8" )
 		return PIX_FMT_RGB24;
-	else if ( fmt == L"b8g8r8" )
+	else if ( fmt == "b8g8r8" )
 		return PIX_FMT_BGR24;
-	else if ( fmt == L"b8g8r8a8" )
+	else if ( fmt == "b8g8r8a8" )
 		return PIX_FMT_BGR32;
-	else if ( fmt == L"r8g8b8a8" )
+	else if ( fmt == "r8g8b8a8" )
 		return PIX_FMT_RGB32;
 	return PIX_FMT_NONE;
 }
 
-il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
+ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
 {
-	il::image_type_ptr image;
+	ml::image_type_ptr image;
 	PixelFormat dst_fmt = pix_fmt;
-	std::wstring format = avformat_to_oil( pix_fmt );
+	olib::t_string format = avformat_to_oil( pix_fmt );
 	int even = width % 4 != 0 ? 4 - ( width % 4 ) : 0;
 	int even_h = height % 2;
 
 	if ( pix_fmt == PIX_FMT_YUVJ420P )
 	{
-		format = L"yuv420p";
+		format = "yuv420p";
 		dst_fmt = PIX_FMT_YUV420P;
 	}
 	else if ( pix_fmt == PIX_FMT_YUVJ422P )
 	{
-		format = L"yuv422p";
+		format = "yuv422p";
 		dst_fmt = PIX_FMT_YUV422P;
 	}
-	else if ( format == L"" )
+	else if ( format == "" )
 	{
-		format = L"b8g8r8a8";
+		format = "b8g8r8a8";
 		dst_fmt = PIX_FMT_BGRA;
 	}
 
 	AVPicture output;
-	image = il::allocate( format, width + even, height + even_h );
+	image = ml::image::allocate( format, width + even, height + even_h );
 	avpicture_fill( &output, image->data( ), dst_fmt, width + even, height + even_h );
 	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
 	if ( img_convert_ != NULL )
@@ -252,16 +252,16 @@ il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
         if( height == 720 )
         {
             //HD 720 progressive
-            image->set_field_order( il::progressive );
+            image->set_field_order( ml::image::progressive );
         }
         else if( height > 720 )
         {
             //HD material, set top field first
-            image->set_field_order( il::top_field_first );
+            image->set_field_order( ml::image::top_field_first );
         }
         else
         {
-            image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
+            image->set_field_order( frame->top_field_first ? ml::image::top_field_first : ml::image::bottom_field_first );
         }
     }
 

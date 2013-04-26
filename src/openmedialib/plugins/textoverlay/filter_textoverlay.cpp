@@ -81,7 +81,7 @@
 
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ext = aml::external;
@@ -142,7 +142,7 @@ protected:
 
 	void draw_text( ml::frame_type_ptr& bg_frame );
 
-	il::image_type_ptr redraw( ml::frame_type_ptr& bg_frame );
+	ml::image_type_ptr redraw( ml::frame_type_ptr& bg_frame );
 
 	// The main access point to the filter
 	void do_fetch( ml::frame_type_ptr& frame );
@@ -379,11 +379,11 @@ void filter_textoverlay::draw_text( ml::frame_type_ptr& bg_frame )
 	}
 }
 
-il::image_type_ptr filter_textoverlay::redraw( ml::frame_type_ptr& bg_frame )
+ml::image_type_ptr filter_textoverlay::redraw( ml::frame_type_ptr& bg_frame )
 {
 	bool needs_clearing = !!cairo_surface_;
 
-	il::image_type_ptr image = bg_frame->get_image( );
+	ml::image_type_ptr image = bg_frame->get_image( );
 
 	double sar = bg_frame->sar( );
 
@@ -422,7 +422,7 @@ void filter_textoverlay::do_fetch( ml::frame_type_ptr& frame )
 	if ( !frame )
 		return; // What do?
 
-	il::image_type_ptr image = frame->get_image( );
+	ml::image_type_ptr image = frame->get_image( );
 
 	if ( !image )
 		return; // What do?
@@ -436,13 +436,13 @@ void filter_textoverlay::do_fetch( ml::frame_type_ptr& frame )
 	// for all time codes.
 
 	if ( get_dirty( ) || !cairo_context_ || get_type( ) == "tc" ) {
-		il::image_type_ptr image = redraw( frame );
+		ml::image_type_ptr image = redraw( frame );
 
 		overlay_ = ml::frame_type_ptr( new ml::frame_type( ) );
 		overlay_->set_image( image );
 
 		if ( !get_deferred( ) )
-			overlay_ = ml::frame_convert( overlay_, L"yuv420p" );
+			overlay_ = ml::frame_convert( overlay_, "yuv420p" );
 
 		overlay_->set_sar( 1, 1 );
 		overlay_->set_fps( frame->get_fps_num( ), frame->get_fps_den( ) );

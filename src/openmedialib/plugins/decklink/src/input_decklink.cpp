@@ -30,7 +30,6 @@
 #include <DeckLinkAPI.h>
 
 namespace cl = olib::opencorelib;
-namespace il = olib::openimagelib::il;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 
@@ -57,7 +56,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			lru_.resize( queue );
 			frame_count_ = 0;
 			lru_.clear( );
-			last_image_ = il::image_type_ptr( );
+			last_image_ = ml::image_type_ptr( );
 			samples_ = 0;
 		}
 
@@ -74,7 +73,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			channels_ = channels;
 		}
 
-		void set_image( const std::wstring pf, int width, int height )
+		void set_image( const olib::t_string pf, int width, int height )
 		{
 			pf_ = pf;
 			width_ = width;
@@ -118,7 +117,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			// Handle Video Frame
 			if( picture )
 			{
-				il::image_type_ptr image;
+				ml::image_type_ptr image;
 				if ( picture->GetFlags() & bmdFrameHasNoInputSource )
 				{
 					// Log failure for all frames except 0 to avoid errors during auto detect
@@ -133,7 +132,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 					// TODO: sort out field order, sar and deal with non-matching pitch on the destination image
 					void *bytes;
 					picture->GetBytes( &bytes );
-					image = il::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
+					image = ml::image::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
 					image->set_position( frame_count_ );
 					boost::uint8_t *dst = ( boost::uint8_t * )image->data( );
 					memcpy( dst, bytes, image->size( ) );
@@ -187,12 +186,12 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 
 	private:
 		ml::lru_frame_type lru_;
-		il::image_type_ptr last_image_;
+		ml::image_type_ptr last_image_;
 		ULONG ref_count_;
 		int frame_count_;
 		int fps_num_;
 		int fps_den_;
-		std::wstring pf_;
+		olib::t_string pf_;
 		int width_;
 		int height_;
 		std::wstring af_;
@@ -221,7 +220,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, decklink_iter_( 0 )
 		, decklink_delegate_( 0 )
 		{
-			properties( ).append( prop_pf_ = std::wstring( L"uyv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( "uyv422" ) );
 			properties( ).append( prop_af_ = std::wstring( L"pcm16" ) );
 			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );
@@ -316,7 +315,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			}
 
 			// Check that the picture format is valid
-			if ( error == S_OK && prop_pf_.value< std::wstring >( ) != L"uyv422" )
+			if ( error == S_OK && prop_pf_.value< olib::t_string >( ) != "uyv422" )
 			{
 				error = S_FALSE;
 				ARLOG( "The AML decklink plugin currently only supports a picture format of uyv422." ).level( cl::log_level::error );
@@ -465,7 +464,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			{
 				decklink_delegate_->reset( prop_queue_.value< int >( ) );
 				decklink_delegate_->set_fps( fps_num, fps_den );
-				decklink_delegate_->set_image( prop_pf_.value< std::wstring >( ), width, height );
+				decklink_delegate_->set_image( prop_pf_.value< olib::t_string >( ), width, height );
 				decklink_delegate_->set_audio( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
 			}
 

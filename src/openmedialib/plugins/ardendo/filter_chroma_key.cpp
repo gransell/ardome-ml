@@ -59,13 +59,13 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 		{
 			// Convert frame if necessary
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
+				result = frame_convert( result, "yuv420p" );
 
 			// If frame (after convert) is still valid
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr alpha = result->get_alpha( );
-				il::image_type_ptr input = result->get_image( );
+				ml::image_type_ptr alpha = result->get_alpha( );
+				ml::image_type_ptr input = result->get_image( );
 
 				// Get the size of the image
 				size_t w = input->width( );
@@ -78,12 +78,12 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				// Make sure that we have an alpha mask which is the same size as the chroma
 				if ( !alpha )
 				{
-					alpha = il::allocate( L"l8", cw, ch );
+					alpha = ml::image::allocate( "l8", cw, ch );
 					fill_plane( alpha, 0, 255 );
 				}
 				else
 				{
-					alpha = il::rescale( alpha, cw, ch );
+					alpha = ml::image::rescale( alpha, cw, ch );
 				}
 
 				// Process chroma
@@ -112,7 +112,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				}
 
 				// Update the alpha on the frame accordingly
-				alpha = il::rescale( alpha, w, h, 1, il::BICUBIC_SAMPLING );
+				alpha = ml::image::rescale( alpha, w, h, 1, ml::image::BICUBIC_SAMPLING );
 				result->set_alpha( alpha );
 			}
 		}

@@ -97,8 +97,8 @@ class ML_PLUGIN_DECLSPEC filter_hold : public ml::filter_type
 				result->set_position( position );
 				if ( result->has_audio( ) )
 					silence_audio( result, position - frame );
-				if ( result->has_image( ) && result->get_image( )->field_order( ) != il::progressive )
-					result->set_image( il::deinterlace( il::conform( result->get_image( ), il::writable ) ) );
+				if ( result->has_image( ) && result->get_image( )->field_order( ) != ml::image::progressive )
+					result->set_image( ml::image::deinterlace( ml::image::conform( result->get_image( ), ml::image::writable ) ) );
 			}
 			else if ( active && position >= hold_frame + count )
 			{

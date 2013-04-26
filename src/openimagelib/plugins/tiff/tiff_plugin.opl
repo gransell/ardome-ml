@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openimagelib name="oil" version="0.2.0">
-		<plugin name="OpenLibraries TIFF plugin" type="input" in_filter="*.tiff *.tif" extension='".*\.tiff", ".*\.tif"' merit="30" filename='"libopenimagelib_tiff.so", "libopenimagelib_tiff.dylib", "openimagelib_tiff-vc71-d-0_4_1.dll", "openimagelib_tiff-vc71-r-0_4_1.dll", "openimagelib_tiff-vc80-d-0_4_1.dll", "openimagelib_tiff-vc80-r-0_4_1.dll"'/>
-	</openimagelib>
-</openlibraries>

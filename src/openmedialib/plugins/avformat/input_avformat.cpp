@@ -59,7 +59,7 @@ extern "C" {
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -640,7 +640,7 @@ class avformat_demux
 						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
 																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
-																		   avformat_to_oil( codec->pix_fmt ), il::top_field_first, estimated_gop_size ) );
+																		   avformat_to_oil( codec->pix_fmt ), ml::image::top_field_first, estimated_gop_size ) );
 					}
 						break;
 
@@ -2272,7 +2272,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			// NOTE: if replaces prop_gen_index_ logic which is now removed (use packet_stream=1 and the awi store instead)
 			if ( true )
 			{
-				il::image_type_ptr image;
+				ml::image_type_ptr image;
 
 				int error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, packet );
 
@@ -2297,7 +2297,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				if ( error >= 0 && ( key_search_ == false && got_pict ) )
 					image = image_convert( );
 				else if ( images_.size( ) )
-					image = il::image_type_ptr( images_.back( )->clone( ) );
+					image = ml::image_type_ptr( images_.back( )->clone( ) );
 
 				// mvitc is deprecated - only supported now to remove the signal
 				if ( ts_pusher_ && ts_filter_->properties( ).get_property_with_key( ml::keys::enable ).value< int >( ) && image )
@@ -2341,7 +2341,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			return ret;
 		}
 
-		il::image_type_ptr image_convert( )
+		ml::image_type_ptr image_convert( )
 		{
 			AVStream *stream = get_video_stream( );
 			AVCodecContext *codec_context = stream->codec;
@@ -2351,7 +2351,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			return convert_to_oil( scaler_, av_frame_, codec_context->pix_fmt, width, height );
 		}
 
-		void store_image( il::image_type_ptr image, int position )
+		void store_image( ml::image_type_ptr image, int position )
 		{
 			if ( first_video_frame_ )
 			{
@@ -2376,11 +2376,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			AVCodecContext *codec_context = stream->codec;
 
 			if ( av_frame_->interlaced_frame )
-				image->set_field_order( av_frame_->top_field_first ? il::top_field_first : il::bottom_field_first );
+				image->set_field_order( av_frame_->top_field_first ? ml::image::top_field_first : ml::image::bottom_field_first );
 			else if ( codec_context->field_order == AV_FIELD_TT || codec_context->field_order == AV_FIELD_BT )
-				image->set_field_order( il::top_field_first );
+				image->set_field_order( ml::image::top_field_first );
 			else if ( codec_context->field_order == AV_FIELD_BB || codec_context->field_order == AV_FIELD_TB )
-				image->set_field_order( il::bottom_field_first );
+				image->set_field_order( ml::image::bottom_field_first );
 
 			if ( image )
 			{
@@ -2683,12 +2683,12 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			bool exact = false;
 			int current = get_position( );
 			int closest = 1 << 16;
-			std::deque< il::image_type_ptr >::iterator result = images_.end( );
-			std::deque< il::image_type_ptr >::iterator iter;
+			std::deque< ml::image_type_ptr >::iterator result = images_.end( );
+			std::deque< ml::image_type_ptr >::iterator iter;
 
 			for ( iter = images_.begin( ); iter != images_.end( ); ++iter )
 			{
-				il::image_type_ptr img = *iter;
+				ml::image_type_ptr img = *iter;
 				int diff = current - img->position( );
 				if ( std::abs( diff ) <= closest )
 				{
@@ -2845,7 +2845,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		AVCodec *video_codec_;
 		AVCodec *audio_codec_;
 
-		std::deque < il::image_type_ptr > images_;
+		std::deque < ml::image_type_ptr > images_;
 		std::deque < audio_type_ptr > audio_;
 		bool must_decode_;
 		bool must_reopen_;

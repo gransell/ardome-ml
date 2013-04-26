@@ -35,12 +35,14 @@ struct openeffectslib_default_query_traits
 	{ return std::wstring( L"openeffectslib" ); }
 };
 
+/*
 struct openimagelib_default_query_traits
 	: public default_query_traits
 {
 	std::wstring libname( ) const
 	{ return std::wstring( L"openimagelib" ); }
 };
+*/
 
 struct openmedialib_default_query_traits
 	: public default_query_traits
