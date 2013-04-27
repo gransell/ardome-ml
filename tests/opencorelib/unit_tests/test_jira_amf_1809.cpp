@@ -1,5 +1,5 @@
 #include "precompiled_headers.hpp"
-#include <boost/test/test_tools.hpp>
+#include <boost/test/auto_unit_test.hpp>
 
 #include <opencorelib/cl/logtarget.hpp>
 #include <opencorelib/cl/loghandler.hpp>
@@ -56,7 +56,7 @@ void test_log()
 }
 
 //J#AMF-1809: Segfault when logging NULL char pointer
-void test_jira_amf_1809()
+BOOST_AUTO_TEST_CASE( test_jira_amf_1809 )
 {
 	const log_level::severity current_log_level = the_log_handler::instance().get_global_log_level();
 	if( current_log_level < log_level::info )
