@@ -40,7 +40,7 @@ extern "C" {
 }
 
 #include "utils.hpp"
-#include "avaudio_base.hpp"
+#include "avaudio_convert.hpp"
 
 #define MAX_AUDIO_PACKET_SIZE (128 * 1024)
 
@@ -1153,7 +1153,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				// Continue if we can open it
 				int err = avcodec_open2( c, codec, 0 ) ;
-				ARENFORCE_MSG( err == 0, "Error opening AV codec \"%1%\"" ) ( vmf_av_err2str( err ) );
+				ARENFORCE_MSG( err == 0, "Error opening AV codec \"%1%\"" ) ( AVError_to_string( err ) );
 
 				if ( c->frame_size <= 1 ) 
 				{
@@ -1210,7 +1210,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				audio_type_ptr current = frame->get_audio( );
 				if ( first_audio_object_ )
-					current = audio::coerce( first_audio_object_->af( ), frame->get_audio( ) );
+					current = audio::coerce( first_audio_object_->id( ), frame->get_audio( ) );
 				else
 					first_audio_object_ = current;
 
@@ -1218,7 +1218,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( audio_block_ == 0 )
 				{
 					audio_block_used_ = 0;
-					audio_block_ = audio::allocate( first_audio_object_->af( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
+					audio_block_ = audio::allocate( first_audio_object_->id( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -1238,7 +1238,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					available -= bytes - audio_block_used_;
 					offset += bytes - audio_block_used_;
 					audio_block_used_ = 0;
-					audio_block_ = audio::allocate( first_audio_object_->af( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
+					audio_block_ = audio::allocate( first_audio_object_->id( ), current->frequency( ), current->channels( ), audio_input_frame_size_, true );
 					audio_block_->set_position( push_count_ );
 				}
 
@@ -1509,8 +1509,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			const short *data = 0;
 			int data_size = 0;
 
-			AVFrame input_frame;
-
 			if ( audio_queue_.size( ) )
 			{
 				audio = *( audio_queue_.begin( ) );
@@ -1545,7 +1543,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					pkt.data = 0;
 					av_init_packet( &pkt );
 
-					AVFrame *temp = 0;
+					boost::shared_ptr< AVFrame > temp;
 
 					if ( prop_audio_split_.value< int >( ) && !do_flush )
 					{
@@ -1565,25 +1563,25 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 						if ( audio_filters_[ stream ] == 0 )
 						{
-							audio_filters_[ stream ] = new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, channels_to_write, c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt );
+							audio_filters_[ stream ].reset( new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, channels_to_write, c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt ) );
 						}
 
 						temp = audio_filters_[ stream ]->convert( ( const boost::uint8_t ** )&audio_tmpbuf_, audio->samples( ) );
-						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
+						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
 					}
 					else if ( !do_flush )
 					{
 						if ( audio_filters_[ stream ] == 0 )
 						{
-							audio_filters_[ stream ] = new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, audio->channels( ), c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt );
+							audio_filters_[ stream ].reset( new avaudio_convert_to_AVFrame( audio->frequency( ), c->sample_rate, audio->channels( ), c->channels, aml_id_to_AVSampleFormat( audio->id( ) ), c->sample_fmt ) );
 						}
 						temp = audio_filters_[ stream ]->convert( audio );
-						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
+						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
 					}
 					else
 					{
 						// flush the codec by sending in a 0-pointer
-						avcodec_encode_audio2( c, &pkt, temp, &got_packet );
+						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
 					}
 
 					// Write the compressed frame in the media file
@@ -1614,7 +1612,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						ret = write_packet( oc_, &pkt, c, bitstream_filters_[ pkt.stream_index ] ) == 0;
 						if( !first_audio_ )
 						{
-							avcodec_free_frame( &temp );
 							break;
 						}
 					}
@@ -1622,7 +1619,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					{
 						ret = false;
 					}
-					avcodec_free_frame( &temp );
 				}	
 			}
 			first_audio_ = false;
@@ -1640,7 +1636,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVOutputFormat *fmt_;
 		std::vector< AVStream * > audio_stream_;
 		std::vector< AVBitStreamFilterContext * > bitstream_filters_;
-		std::map< size_t, avaudio_convert_to_AVFrame* > audio_filters_;
+		std::map< size_t, boost::shared_ptr< avaudio_convert_to_AVFrame > > audio_filters_;
 		AVStream *video_stream_;
 		struct SwsContext *img_convert_;
 		int audio_input_frame_size_;

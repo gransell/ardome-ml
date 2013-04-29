@@ -40,7 +40,7 @@ class ML_DECLSPEC base
 		virtual void original_samples( int samples ) = 0;
 
 		/// A textual description of the audio format
-		virtual const std::wstring &af( ) const = 0;
+		virtual const olib::t_string &af( ) const = 0;
 
 		/// The position of the audio object relative to the graph it belongs to
 		virtual int position( ) const  = 0;

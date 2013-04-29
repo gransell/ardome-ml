@@ -19,10 +19,10 @@
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Supported audio formats
-const std::wstring FORMAT_PCM16 = L"pcm16";
-const std::wstring FORMAT_PCM24 = L"pcm24";
-const std::wstring FORMAT_PCM32 = L"pcm32";
-const std::wstring FORMAT_FLOAT = L"float";
+const olib::t_string FORMAT_PCM16 = _CT("pcm16");
+const olib::t_string FORMAT_PCM24 = _CT("pcm24");
+const olib::t_string FORMAT_PCM32 = _CT("pcm32");
+const olib::t_string FORMAT_FLOAT = _CT("float");
 
 // Enumerated type for audio id's
 typedef enum

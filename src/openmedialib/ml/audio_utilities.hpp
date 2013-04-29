@@ -19,31 +19,19 @@ using boost::int32_t;
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Convenience function to allocate an audio type by the identity
-extern ML_DECLSPEC audio_type_ptr allocate( const identity &id, int frequency, int channels, int samples, bool init_to_zero = true );
-
-// Convenience function to allocate an audio type by the string identifier
-extern ML_DECLSPEC audio_type_ptr allocate( const std::wstring &, int frequency, int channels, int samples, bool init_to_zero = true );
+extern ML_DECLSPEC audio_type_ptr allocate( identity id, int frequency, int channels, int samples, bool init_to_zero = true );
 
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
 extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequency = -1, int channels = -1, int samples = -1, bool init_to_zero = true );
 
 // Convenience function to coerce an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr coerce( const identity &id, const audio_type_ptr &source );
-
-// Convenience function to coerce an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr coerce( identity id, const audio_type_ptr &source );
 
 // Convenience function to force an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr force( const identity &id, const audio_type_ptr &source );
-
-// Convenience function to force an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr force( identity id, const audio_type_ptr &source );
 
 // Convenience function to cast an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr cast( const identity &id, const audio_type_ptr &source );
-
-// Convenience function to cast an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr cast( identity id, const audio_type_ptr &source );
 
 // Convenience function to convert to another channel arrangement without changing type
 extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int channels, const audio_type_ptr &c = audio_type_ptr( ) );
@@ -100,15 +88,15 @@ extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num,
 extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, locked_profile::type profile = locked_profile::unknown );
 
 // Convert a string to an id
-extern ML_DECLSPEC identity af_to_id( const std::wstring &af );
+extern ML_DECLSPEC identity af_to_id( const olib::t_string &af );
 
 // Map an id to the audio format
-extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
+extern ML_DECLSPEC const olib::t_string &id_to_af( identity id );
 
 // return the number of significant bytes to represent audio id. This could be considered a measure of fidelity?
-extern ML_DECLSPEC int id_to_significant_bytes_per_sample( const identity& id );
+extern ML_DECLSPEC int id_to_significant_bytes_per_sample( identity id );
 // return the number of bytes used to store each sample
-extern ML_DECLSPEC int id_to_storage_bytes_per_sample( const identity& id );
+extern ML_DECLSPEC int id_to_storage_bytes_per_sample( identity id );
 
 // Returns the reversed bytes in the 32-bit input src. For example: 0x12345678 becomes 0x78563412
 extern ML_DECLSPEC uint32_t bswap_32( const uint32_t src );

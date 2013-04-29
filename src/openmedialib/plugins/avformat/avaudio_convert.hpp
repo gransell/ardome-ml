@@ -2,8 +2,8 @@
 //
 // Copyright (C) Vizrt 2013
 
-#ifndef AML_AVFORMAT_AVAUDIO
-#define AML_AVFORMAT_AVAUDIO
+#ifndef AML_AVFORMAT_AVAUDIO_CONVERT
+#define AML_AVFORMAT_AVAUDIO_CONVERT
 
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
@@ -16,8 +16,6 @@ extern "C" {
 
 
 // ########################################################################################
-
-
 
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -46,6 +44,8 @@ class avaudio_resampler
 		avaudio_resampler( const avaudio_resampler& );
 		avaudio_resampler& operator=( const avaudio_resampler& );
 
+		static void destroy( SwrContext *s );
+
 	public:
 
 		int resample( boost::uint8_t **out, 
@@ -55,7 +55,7 @@ class avaudio_resampler
 
 	private:
 
-		SwrContext *resampler_;
+		boost::shared_ptr< SwrContext > resampler_;
 };
 
 
@@ -81,7 +81,6 @@ class avaudio_convert_to_aml
 
 	public:
 
-		audio_type_ptr convert( const boost::uint8_t **src, int samples, int& out_size);
 		audio_type_ptr convert( const boost::uint8_t **src, int samples );
 		audio_type_ptr convert_with_offset( const boost::uint8_t **src, int samples, int offset_samples );
 		audio_type_ptr convert( const audio_type_ptr& audio );
@@ -94,8 +93,6 @@ class avaudio_convert_to_aml
 
 	private:
 
-		avaudio_resampler *resampler_;
-
 		int frequency_in_; 
 		int channels_in_; 
 		AVSampleFormat format_in_;
@@ -103,6 +100,7 @@ class avaudio_convert_to_aml
 		int channels_out_; 
 		audio::identity format_out_;
 
+		avaudio_resampler resampler_;
 };
 
 // ########################################################################################
@@ -127,12 +125,12 @@ class avaudio_convert_to_AVFrame
 
 	public:
 
-		AVFrame *convert( const boost::uint8_t **src, int samples );
-		AVFrame *convert( const audio_type_ptr& audio );
+		boost::shared_ptr< AVFrame > convert( const boost::uint8_t **src, int samples );
+		boost::shared_ptr< AVFrame > convert( const audio_type_ptr& audio );
+
+		static void destroy_AVFrame( AVFrame* f);
 
 	private:
-
-		avaudio_resampler *resampler_;
 
 		int frequency_in_; 
 		int channels_in_; 
@@ -140,6 +138,8 @@ class avaudio_convert_to_AVFrame
 		int frequency_out_; 
 		int channels_out_; 
 		AVSampleFormat format_out_;
+
+		avaudio_resampler resampler_;
 
 };
 

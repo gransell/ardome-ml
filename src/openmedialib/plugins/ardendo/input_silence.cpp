@@ -31,7 +31,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			, prop_out_( pcos::key::from_string( "out" ) )
 			, prop_profile_( pcos::key::from_string( "profile" ) )
 		{
-			properties( ).append( prop_af_ = std::wstring( ml::audio::FORMAT_PCM16 ) );
+			properties( ).append( prop_af_ = cl::str_util::to_wstring( ml::audio::FORMAT_PCM16 ) );
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
@@ -83,7 +83,7 @@ class ML_PLUGIN_DECLSPEC input_silence : public ml::input_type
 			int samples = ml::audio::samples_for_frame( get_position( ), frequency, fps_num, fps_den, 
 				ml::audio::locked_profile::from_string( cl::str_util::to_t_string( prop_profile_.value< std::wstring >( ) ) ) );
 
-			result->set_audio( ml::audio::allocate( prop_af_.value< std::wstring >( ), frequency, channels, samples, true ) );
+			result->set_audio( ml::audio::allocate( ml::audio::af_to_id( cl::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), frequency, channels, samples, true ) );
 
 			result->set_fps( fps_num, fps_den );
 			result->set_pts( get_position( ) * 1.0 / fps( ) );

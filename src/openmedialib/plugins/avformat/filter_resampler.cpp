@@ -13,7 +13,7 @@
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
-#include "avaudio_base.hpp"
+#include "avaudio_convert.hpp"
 #include "utils.hpp"
 
 #include <vector>
@@ -63,7 +63,6 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		
 		virtual ~avformat_resampler_filter()
 		{
-			delete filter_;
 		}
 	
 		virtual const std::wstring get_uri( ) const { return L"resampler"; }
@@ -111,7 +110,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			// Fill in defaults from current frame if necessary
 			if ( out_frequency <= 0 ) out_frequency = current_frequency_ <= 0 ? current_audio->frequency( ) : current_frequency_;
 			if ( out_channels <= 0 ) out_channels = current_channels_ <= 0 ? current_audio->channels( ) : current_channels_;
-			if ( out_af == L"" ) out_af = current_af_ == L"" ? current_audio->af( ) : current_af_;
+			if ( out_af == L"" ) out_af = current_af_ == L"" ? opencorelib::str_util::to_wstring( current_audio->af( ) ) : current_af_;
 
 			// Store the used values for subsequent reuse
 			current_frequency_ = out_frequency;
@@ -128,7 +127,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			// Drop out now if we have what we want
 			if ( out_frequency == current_audio->frequency( ) && 
 				 out_channels == current_audio->channels( ) && 
-				 out_af == current_audio->af( ) )
+				 out_af == opencorelib::str_util::to_wstring( current_audio->af( ) ) )
 			{
 				last_channels_ = current_audio;
 				return;
@@ -152,9 +151,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 
 			if ( dirty_ )
 			{
-				delete filter_;
-
-				filter_ = new avaudio_convert_to_aml( current_audio->frequency( ), out_frequency, current_audio->channels( ), out_channels, aml_id_to_AVSampleFormat( current_audio->id( ) ), ml::audio::af_to_id( out_af ) );
+				filter_.reset(new avaudio_convert_to_aml( current_audio->frequency( ), out_frequency, current_audio->channels( ), out_channels, aml_id_to_AVSampleFormat( current_audio->id( ) ), ml::audio::af_to_id( opencorelib::str_util::to_t_string( out_af ) ) ) );
 
 				dirty_ = false;
 			}
@@ -223,7 +220,7 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		int current_channels_;
 		std::wstring current_af_;
 	
-		avaudio_convert_to_aml *filter_;
+		boost::scoped_ptr< avaudio_convert_to_aml > filter_;
 		bool dirty_;
 		audio_type_ptr last_channels_;
 		int direction_;

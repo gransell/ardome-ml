@@ -92,7 +92,7 @@ class ML_DECLSPEC template_ : public base
 		void original_samples( int samples )
 		{ orig_samples_ = samples; }
 
-		const std::wstring &af( ) const
+		const olib::t_string &af( ) const
 		{ return id_to_af( id_ ); }
 
 		void *pointer( ) const

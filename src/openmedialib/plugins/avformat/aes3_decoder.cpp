@@ -38,7 +38,6 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 		buf_size -= 4;
 	}
 	
-	// If we dont have correct byte allignment then use unalligned SSE load
 	if( ( reinterpret_cast< boost::int64_t >( buf ) % 16 ) != 0 )
 	{
 		ARLOG_ERR( "AES audio samples not 16 byte aligned" );
@@ -68,7 +67,6 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 	}
 	
 	if( ( ret = avctx->get_buffer( avctx, &s->frame ) ) < 0 ) {
-		//ARLOG_ERR( "Failed to allocate buffer" );
 		return ret;
     }
 	

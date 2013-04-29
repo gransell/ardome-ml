@@ -34,7 +34,7 @@
 #include "avformat_wrappers.hpp"
 #include "utils.hpp"
 #include "avformat_streamable.hpp"
-#include "avaudio_base.hpp"
+#include "avaudio_convert.hpp"
 
 #ifdef WIN32
 #	include <windows.h>
@@ -2569,20 +2569,19 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					break;
 				}
 
-				int audio_size = 0;
-				audio_type_ptr temp = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples, audio_size );
+				audio_type_ptr temp = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples );
 
 				// Copy the new samples to the main buffer
-				memcpy( audio_buf_ + audio_buf_used_, temp->pointer( ), audio_size );
+				memcpy( audio_buf_ + audio_buf_used_, temp->pointer( ), temp->size( ) );
 
-				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << audio_size << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
+				if ( getenv( "AML_DTS_LOG" ) ) std::cerr << "bytes = " << pkt_.pts << " " << temp->size( ) << " " << pkt_.duration << " " << int( checksum( pkt_ ) ) << " " << get_audio_stream( )->time_base.num << " " << get_audio_stream( )->time_base.den << std::endl;
 
 				// Decrement the length by the number of bytes parsed
 				len -= ret;
 
 				// Increment the number of bytes used in the buffer
-				if ( audio_size > 0 )
-					audio_buf_used_ += audio_size;
+				if ( temp->size( ) > 0 )
+					audio_buf_used_ += temp->size( );
 
 				// Current index in the buffer
 				int index = 0;

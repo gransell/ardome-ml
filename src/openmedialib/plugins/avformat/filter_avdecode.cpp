@@ -40,7 +40,7 @@ extern "C" {
 
 #include "avformat_wrappers.hpp"
 #include "avformat_stream.hpp"
-#include "avaudio_base.hpp"
+#include "avaudio_convert.hpp"
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
