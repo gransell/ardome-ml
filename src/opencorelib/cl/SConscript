@@ -220,6 +220,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 
 local_env.copy_project_files( local_env[ 'stage_mf_schemas' ], [ 
 	'schemas/amf-plugin.xsd',
+	'schemas/amf-plugin_example.xml'
 ] )
 
 Return( 'object' )
