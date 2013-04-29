@@ -1,7 +1,7 @@
-
 #include <iostream>
 #include "frame.hpp"
 #include "stream.hpp"
+#include "audio_block.hpp"
 #include <deque>
 #include <boost/rational.hpp>
 
@@ -274,7 +274,16 @@ void frame_type::clear_exceptions( )
 std::string frame_type::container( ) const
 {
 	if ( stream_ )
+	{
 		return stream_->container( );
+	}
+	else if ( audio_block_ && !audio_block_->tracks.empty() )
+	{
+		//Use the first stream on the first track of the audio block
+		const audio::track_type &trk = audio_block_->tracks.begin( )->second;
+		if ( !trk.packets.empty( ) )
+			return trk.packets.begin()->second->container( );
+	}
 	return "";
 }
 
