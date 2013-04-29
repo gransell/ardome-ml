@@ -237,29 +237,29 @@ protected:
         if ( plane_count( ) == 1 ) {
             plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * sizeof( T ), width_, height_, width_ * block_size( ) * sizeof( T ) };
             planes_.push_back( plane );
+
+            return;
         }
 
         plane plane;
-        if ( plane_count( ) >= 2 )
-        {
-            plane.pitch = ( ( width_ + 3 ) & -4 ) * sizeof( T );
-            plane.width = width_;
-            plane.height = height_;
-            plane.linesize = width_ * sizeof( T );
-            planes_.push_back( plane );
-        }
+        plane.offset = 0;
+        plane.pitch = ( ( width_ + 3 ) & -4 ) * sizeof( T );
+        plane.width = width_;
+        plane.height = height_;
+        plane.linesize = width_ * sizeof( T );
+        planes_.push_back( plane );
+        if ( plane_count( ) <= 1 ) { return; }
 
-        if ( plane_count( ) >= 3 )
-        {
-            plane.offset *= 2;
-            planes_.push_back( plane );
-        }
+        plane.offset += plane.pitch * sizeof( T ) * height_;
+        planes_.push_back( plane );
+        if ( plane_count( ) <= 2 ) { return; }
 
-        if ( plane_count( ) >= 4 )
-        {
-            plane.offset *= 2;
-            planes_.push_back( plane );
-        }
+        plane.offset *= 2;
+        planes_.push_back( plane );
+        if ( plane_count( ) <= 3 ) { return; }
+
+        plane.offset *= 2;
+        planes_.push_back( plane );
     }
 
     void alloc_yuv_planes( )

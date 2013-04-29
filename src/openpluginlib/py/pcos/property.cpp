@@ -16,7 +16,6 @@
 #include <openpluginlib/pl/pcos/any.hpp>
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/store.hpp>
-#include <openmedialib/ml/image/image.hpp>
 #include <boost/cstdint.hpp>
 
 namespace opl	= olib::openpluginlib;
@@ -43,7 +42,7 @@ void ( pcos::property::*set_store_type_ptr )( const ml::store_type_ptr& ) = &pco
 void back_reference_set( pcos::property* p, py::back_reference<int> x )
 {
 	if (x.source().ptr()->ob_type == &PyBool_Type) {
-		p->set< bool >( x.get() );
+		p->set< bool >( x.get() != 0 );
 	}
 	else {
 		p->set< int >( x.get() );

@@ -79,7 +79,7 @@ public:
 			
 			// create image with decoded data
 			// the native colour space of the Mac is ARGB 32. The mac doesn't seem to like using other colour spaces
-			ml::image_type_ptr image = ml::image::allocate( "yuv422", 1920, 1080 );
+			ml::image_type_ptr image = ml::image::allocate( _CT("yuv422"), 1920, 1080 );
 			image->set_sar_num( sar_.num );
 			image->set_sar_den( sar_.den );
 			image->set_field_order( field_order_ );

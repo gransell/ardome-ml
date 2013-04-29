@@ -708,7 +708,7 @@ void get_decoded_frame( void *video_track, OSStatus result,
 
 		// create image with decoded data
 		// the native colour space of the Mac is ARGB 32. The mac doesn't seem to like using other colour spaces
-		ml::image_type_ptr image = ml::image::allocate( "a8r8g8b8", vtrack->get_width( ), vtrack->get_height( ) );
+		ml::image_type_ptr image = ml::image::allocate( _CT("a8r8g8b8"), vtrack->get_width( ), vtrack->get_height( ) );
 		memcpy( image->data( ), CVPixelBufferGetBaseAddress( qt_pixel_buffer ), image->pitch()*image->height()  );
 		vtrack->add_decoded_image( image, display_time );
 

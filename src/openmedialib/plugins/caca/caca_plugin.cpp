@@ -48,7 +48,7 @@ class ML_PLUGIN_DECLSPEC caca_store : public store_type
 			ml::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
-				img = ml::image::convert( img, "r8g8b8a8" );
+				img = ml::image::convert( img, _CT("r8g8b8a8") );
 				int w = img->width( );
 				int h = img->height( );
         		unsigned int const event_mask = CACA_EVENT_RESIZE;

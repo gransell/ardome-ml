@@ -236,7 +236,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_background_( pcos::key::from_string( "background" ) )
 		{
 			// Default to a black PAL video
-			properties( ).append( prop_colourspace_ = t_string( "yuv420p" ) );
+			properties( ).append( prop_colourspace_ = t_string( _CT("yuv420p") ) );
 			properties( ).append( prop_r_ = 0x00 );
 			properties( ).append( prop_g_ = 0x00 );
 			properties( ).append( prop_b_ = 0x00 );
@@ -314,7 +314,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 				if ( prop_a_.value< int >( ) != 0xff )
 				{
-					alpha = ml::image::allocate( "l8", get_width( ), get_height( ) );
+					alpha = ml::image::allocate( _CT("l8"), get_width( ), get_height( ) );
 					if ( alpha )
 					{
 						alpha->set_writable( true );
@@ -337,7 +337,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 
 					if ( prop_a_.value< int >( ) != 0xff )
 					{
-						deferred_alpha_ = ml::image::allocate( "l8", get_width( ), get_height( ) );
+						deferred_alpha_ = ml::image::allocate( _CT("l8"), get_width( ), get_height( ) );
 						if ( deferred_alpha_ )
 						{
 							deferred_alpha_->set_writable( false );
@@ -388,7 +388,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				fill( image, 2, ( unsigned char )v );
 			}
 			
-			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == "r8g8b8" )
+			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == _CT("r8g8b8") )
 			{
 				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
 			}
@@ -559,7 +559,7 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
-					result = frame_convert( result, "yuv420p" );
+					result = frame_convert( result, _CT("yuv420p") );
 				ml::image_type_ptr img = result->get_image( );
 				img = ml::image::conform( img, ml::image::writable );
 				if ( img )
@@ -614,7 +614,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_pf_ = t_string( "yuv420p" ) );
+			properties( ).append( prop_pf_ = t_string( _CT("yuv420p") ) );
 			properties( ).append( prop_default_ = std::wstring( L"" ) );
 		}
 
@@ -816,7 +816,7 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 			if ( prop_enable_.value< int >( ) && result && result->get_image( ) )
 			{
 				if ( !is_yuv_planar( result ) )
-					result = frame_convert( result, "yuv420p" );
+					result = frame_convert( result, _CT("yuv420p") );
 				ml::image_type_ptr img = result->get_image( );
 
 				// Ensure the image component is writable
@@ -1167,7 +1167,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			olib::t_string original_pf = background->pf();
 			if ( !is_yuv_planar( background ) )
 			{
-				background = frame_convert( background, "yuv444p" );
+				background = frame_convert( background, _CT("yuv444p") );
 			}
 
 			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
@@ -1452,7 +1452,7 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 		frame_type_ptr process_image( frame_type_ptr result )
 		{
 			if ( !is_yuv_planar( result ) )
-				result = frame_convert( result, "yuv420p" );
+				result = frame_convert( result, _CT("yuv420p") );
 			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 			ml::image_type_ptr img = result->get_image( );
 			if ( img )
@@ -2383,7 +2383,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
-			properties( ).append( prop_colourspace_ = olib::t_string( "yuv420p" ) );
+			properties( ).append( prop_colourspace_ = olib::t_string( _CT("yuv420p") ) );
 			properties( ).append( prop_scattered_ = 0 );
 			properties( ).append( prop_reverse_ = 0 );
 		}
@@ -2437,18 +2437,18 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 
 				if ( image == 0 || prop_force_.value< int >( ) == 1 )
 				{
-					if ( colourspace == "yuv420p" )
+					if ( colourspace == _CT("yuv420p") )
 					{
 						int by, bu, bv;
 						ml::image::rgb24_to_yuv444( by, bu, bv, 0, 0, 0 );
-						image = ml::image::allocate( "yuv420p", width, height );
+						image = ml::image::allocate( _CT("yuv420p"), width, height );
 						fill( image, 0, by );
 						fill( image, 1, bu );
 						fill( image, 2, bv );
 					}
 					else
 					{
-						image = ml::image::allocate( "r8g8b8", width, height );
+						image = ml::image::allocate( _CT("r8g8b8"), width, height );
 						memset( image->data( ), 0, image->size( ) );
 					}
 
@@ -2457,17 +2457,17 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 				}
 				else
 				{
-					if ( image->pf( ) == "yuv420p" || image->pf( ) == "r8g8b8" )
+					if ( image->pf( ) == _CT("yuv420p") || image->pf( ) == _CT("r8g8b8") )
 						colourspace = image->pf( );
 					else
 						frame_convert( frame, colourspace.c_str() );
 				}
 
-				if ( type == 0 && colourspace == "r8g8b8" )
+				if ( type == 0 && colourspace == _CT("r8g8b8") )
 					wave_rgb( frame );
-				else if ( type == 0 && colourspace == "yuv420p" )
+				else if ( type == 0 && colourspace == _CT("yuv420p") )
 					wave_yuv( frame );
-				else if ( type == 1 && colourspace == "yuv420p" )
+				else if ( type == 1 && colourspace == _CT("yuv420p") )
 					wave_yuv_split( frame );
 				else
 					wave_rgb( frame );

@@ -36,12 +36,10 @@ echo "Adding opl-files..."
 cp bcomp/ardome-ml/src/openmedialib/plugins/avformat/avformat_plugin.opl TMPZIP/bin/release/aml-plugins 
 cp bcomp/ardome-ml/src/openmedialib/plugins/gensys/gensys_plugin.opl TMPZIP/bin/release/aml-plugins
 cp bcomp/ardome-ml/src/openmedialib/plugins/sdl/sdl_plugin.opl TMPZIP/bin/release/aml-plugins
-cp bcomp/ardome-ml/src/openimagelib/plugins/gdi+/gdi_plugin.opl TMPZIP/bin/release/aml-plugins
 
 cp bcomp/ardome-ml/src/openmedialib/plugins/avformat/avformat_plugin.opl TMPZIP/bin/debug/aml-plugins 
 cp bcomp/ardome-ml/src/openmedialib/plugins/gensys/gensys_plugin.opl TMPZIP/bin/debug/aml-plugins
 cp bcomp/ardome-ml/src/openmedialib/plugins/sdl/sdl_plugin.opl TMPZIP/bin/debug/aml-plugins
-cp bcomp/ardome-ml/src/openimagelib/plugins/gdi+/gdi_plugin.opl TMPZIP/bin/debug/aml-plugins
 
 if [ ! $? == 0 ]; then
 	echo "Failed to copy opl files"

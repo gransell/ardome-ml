@@ -28,7 +28,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			: ml::filter_simple()
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( "r8g8b8a8" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("r8g8b8a8") ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -64,7 +64,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			if ( !result->get_image( ) )
 			{
 				// Inefficient back up plan
-				ml::image_type_ptr alternative = ml::image::convert( image, "b8g8r8a8" );
+				ml::image_type_ptr alternative = ml::image::convert( image, _CT("b8g8r8a8") );
 				alternative = ml::image::convert( alternative, olib::t_string( prop_pf_.value< olib::t_string >( ).c_str( ) ) );
 
 				// If we now have an image, assign to the frame, otherwise leave the original 

@@ -466,7 +466,7 @@ class ML_PLUGIN_DECLSPEC oil_store : public store_type
 			typedef pl::discovery<il_query_traits> discovery;
 			ml::image_type_ptr image = frame->get_image( );
 			if ( image == 0 ) return false;
-			image = ml::image::convert( image, "r8g8b8" );
+			image = ml::image::convert( image, _CT("r8g8b8") );
 
 			std::ostringstream out;
 			out << path_;

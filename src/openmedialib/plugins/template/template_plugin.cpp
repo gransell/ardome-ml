@@ -77,7 +77,7 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 			// Generate an image
 			int width = get_width( );
 			int height = get_height( );
-			ml::image_type_ptr image = ml::image::allocate( "r8g8b8", width, height );
+			ml::image_type_ptr image = ml::image::allocate( _CT("r8g8b8"), width, height );
 			memset( image->data( ), int( 255 * ( double( get_position( ) ) / double( get_frames( ) ) ) ), image->size( ) );
 			frame->set_image( image );
 		}
@@ -98,7 +98,7 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 			ml::image_type_ptr img = frame->get_image( );
 			if ( img != 0 )
 			{
-				img = ml::image::convert( img, "r8g8b8" );
+				img = ml::image::convert( img, _CT("r8g8b8") );
 				int w = img->width( );
 				int h = img->height( );
 				fprintf( stdout, "P6\n%d %d\n255\n", w, h );
@@ -237,7 +237,7 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 					ml::image_type_ptr img = result->get_image( );
 					if ( img )
 					{
-						img = ml::image::convert( img, "yuv420p" );
+						img = ml::image::convert( img, _CT("yuv420p") );
 						fill( img, 1, prop_u_.value< int >( ) );
 						fill( img, 2, prop_v_.value< int >( ) );
 					}

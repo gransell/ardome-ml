@@ -292,12 +292,12 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 					int bytes = 0;
 					if ( gdk_pixbuf_get_has_alpha( pixbuf ) )
 					{
-						image = ml::image::allocate( "r8g8b8a8", w, h );
+						image = ml::image::allocate( _CT("r8g8b8a8"), w, h );
 						bytes = w * 4;
 					}
 					else
 					{
-						image = ml::image::allocate( "r8g8b8", w, h );
+						image = ml::image::allocate( _CT("r8g8b8"), w, h );
 						bytes = w * 3;
 					}
 	

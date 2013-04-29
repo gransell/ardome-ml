@@ -35,20 +35,20 @@ enum MLPixelFormat {
 
 
 namespace {
-ML_DECLSPEC std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
-("yuv420p", 	ML_PIX_FMT_YUV420P)
-("yuva420p", 	ML_PIX_FMT_YUVA420P)
-("yuv422p", 	ML_PIX_FMT_YUV422P)
-("yuv422",		ML_PIX_FMT_YUV422)
-("uyv422", 		ML_PIX_FMT_UYV422)
-("yuv444",	 	ML_PIX_FMT_YUV444)
-("yuv444p", 	ML_PIX_FMT_YUV444P)
-("yuv411", 		ML_PIX_FMT_YUV411)
-("yuv411p", 	ML_PIX_FMT_YUV411P)
-("yuv422p10le", ML_PIX_FMT_YUV422P10LE)
-("r8g8b8", 		ML_PIX_FMT_R8G8B8)
-("r8g8b8a8", 		ML_PIX_FMT_R8G8B8A8)
-("r10g10b10", 	ML_PIX_FMT_R10G10B10);
+std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
+(_CT("yuv420p"), 	ML_PIX_FMT_YUV420P)
+(_CT("yuva420p"), 	ML_PIX_FMT_YUVA420P)
+(_CT("yuv422p"), 	ML_PIX_FMT_YUV422P)
+(_CT("yuv422"),		ML_PIX_FMT_YUV422)
+(_CT("uyv422"), 		ML_PIX_FMT_UYV422)
+(_CT("yuv444"),	 	ML_PIX_FMT_YUV444)
+(_CT("yuv444p"), 	ML_PIX_FMT_YUV444P)
+(_CT("yuv411"), 		ML_PIX_FMT_YUV411)
+(_CT("yuv411p"), 	ML_PIX_FMT_YUV411P)
+(_CT("yuv422p10le"), ML_PIX_FMT_YUV422P10LE)
+(_CT("r8g8b8"), 		ML_PIX_FMT_R8G8B8)
+(_CT("r8g8b8a8"), 	ML_PIX_FMT_R8G8B8A8)
+(_CT("r10g10b10"), 	ML_PIX_FMT_R10G10B10);
 }
 
 // Forward declaration to the base image interface which all formats share
@@ -57,8 +57,8 @@ class ML_DECLSPEC image;
 // Forward declaration to the template which implements the various types
 template< typename T > class ML_DECLSPEC ffmpeg_image;
 
-typedef ML_DECLSPEC ffmpeg_image<uint8_t>               image_type_8;
-typedef ML_DECLSPEC ffmpeg_image<uint16_t>              image_type_16;
+typedef ML_DECLSPEC ffmpeg_image<boost::uint8_t>               image_type_8;
+typedef ML_DECLSPEC ffmpeg_image<boost::uint16_t>              image_type_16;
 typedef ML_DECLSPEC ffmpeg_image<float>                 image_type_float;
 typedef ML_DECLSPEC boost::shared_ptr<image_type_8>     image_type_8_ptr;
 typedef ML_DECLSPEC boost::shared_ptr<image_type_16>    image_type_16_ptr;

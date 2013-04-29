@@ -3,6 +3,7 @@
 
 #include <opencorelib/cl/enforce_defines.hpp>
 #include <opencorelib/cl/utilities.hpp>
+#include <openmedialib/ml/image/image.hpp>
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
@@ -231,9 +232,9 @@ ml::image_type_ptr surface::to_image( ) const
 	ARENFORCE_MSG( w * h, "Cannot write cairo image with zero size" );
 
 #	if BYTE_ORDER == LITTLE_ENDIAN
-#		define PLANE_FORMAT "b8g8r8a8"
+#		define PLANE_FORMAT _CT("b8g8r8a8")
 #	else
-#		define PLANE_FORMAT "a8r8g8b8"
+#		define PLANE_FORMAT _CT("a8r8g8b8")
 #	endif
 	ml::image_type_ptr image = ml::image::allocate( PLANE_FORMAT, (int)w, (int)h );
 

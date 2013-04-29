@@ -1169,7 +1169,7 @@ class avformat_video_streamer : public ml::stream_type
 	
 		virtual const t_string pf( ) const 
 		{ 
-			return stream_ ? stream_->pf( ) : t_string( "" );
+			return stream_ ? stream_->pf( ) : t_string( _CT("") );
 		}
 
 		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const 
@@ -1201,7 +1201,7 @@ class avformat_encode_filter : public filter_simple
 			, initialised_( false )
 			, encoding_( false )
 			, video_wrapper_( 0 )
-			, pf_( "" )
+			, pf_( _CT("") )
 		{
 			properties( ).append( prop_enable_ = 1 );
 			properties( ).append( prop_force_ = 0 );

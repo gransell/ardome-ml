@@ -442,7 +442,7 @@ void filter_textoverlay::do_fetch( ml::frame_type_ptr& frame )
 		overlay_->set_image( image );
 
 		if ( !get_deferred( ) )
-			overlay_ = ml::frame_convert( overlay_, "yuv420p" );
+			overlay_ = ml::frame_convert( overlay_, _CT("yuv420p") );
 
 		overlay_->set_sar( 1, 1 );
 		overlay_->set_fps( frame->get_fps_num( ), frame->get_fps_den( ) );

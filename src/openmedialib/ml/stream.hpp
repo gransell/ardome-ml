@@ -66,7 +66,7 @@ class ML_DECLSPEC stream_type
 		virtual const fraction sar( ) const { return fraction( 1, 1 ); }
 
 		/// Returns the picture format of the image associated to this packet
-		virtual const t_string pf( ) const { return t_string( "" ); }
+		virtual const t_string pf( ) const { return t_string( _CT("") ); }
 
 		/// Returns the field order of the image associated with this packet
 		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const = 0;

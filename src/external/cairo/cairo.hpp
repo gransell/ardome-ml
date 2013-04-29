@@ -11,6 +11,7 @@
 
 #include <string>
 
+namespace ml = olib::openmedialib::ml;
 namespace aml { namespace external { namespace cairo {
 
 
@@ -84,7 +85,7 @@ public:
 
 	static surface_ptr make( size_t width, size_t height );
 
-	olib::openmedialib::ml::image_type_ptr to_image( ) const;
+    ml::image_type_ptr to_image( ) const;
 
 	cairo_surface_t* native( );
 

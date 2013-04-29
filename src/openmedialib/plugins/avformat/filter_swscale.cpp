@@ -49,16 +49,16 @@ namespace
 	{
 		corrections_map result;
 
-		result[ olib::t_string( "b8g8r8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( "b8g8r8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( "r8g8b8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( "r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( "yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ olib::t_string( "yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
-		result[ olib::t_string( "yuv422p" ) ] = boost::bind( correct, 1, 2, _1, _2 );
-		result[ olib::t_string( "yuv444p" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( "yuv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ olib::t_string( "uyv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( _CT("b8g8r8") ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( _CT("b8g8r8a8") ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( _CT("r8g8b8") ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( _CT("r8g8b8a8") ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( _CT("yuv411p") ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( _CT("yuv420p") ) ] = boost::bind( correct, 2, 2, _1, _2 );
+		result[ olib::t_string( _CT("yuv422p") ) ] = boost::bind( correct, 1, 2, _1, _2 );
+		result[ olib::t_string( _CT("yuv444p") ) ] = boost::bind( correct, 1, 1, _1, _2 );
+		result[ olib::t_string( _CT("yuv422") ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( _CT("uyv422") ) ] = boost::bind( correct, 4, 1, _1, _2 );
 
 		return result;
 	}
@@ -79,7 +79,7 @@ namespace
 		geometry( )
 		: interp( SWS_FAST_BILINEAR )
 		, mode( L"fill" )
-		, pf( "" )
+		, pf( _CT("") )
 		, field_order( ml::image::progressive )
 		, width( 0 )
 		, height( 0 )
@@ -374,7 +374,7 @@ namespace
 			image = ml::image::deinterlace( image );
 
 		// If no conversion is specified, retain that of the input
-		if ( shape.pf == "" )
+		if ( shape.pf == _CT("") )
 			shape.pf = image->pf( );
 
 		// Deal with the properties specified
@@ -461,7 +461,7 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 			, scaler_( 0 )
 		{
 			properties( ).append( prop_enable_ = 1 );
-			properties( ).append( prop_pf_ = olib::t_string( "" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("") ) );
 			properties( ).append( prop_progressive_ = 0 );
 			properties( ).append( prop_interp_ = 4 );
 			properties( ).append( prop_width_ = -1 );

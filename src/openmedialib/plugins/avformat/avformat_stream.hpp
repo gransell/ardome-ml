@@ -82,7 +82,7 @@ class stream_avformat : public ml::stream_type
 			, channels_( channels )
 			, samples_( samples )
 			, sample_size_( sample_size )
-			, pf_( "" )
+			, pf_( _CT("") )
 			, field_order_( olib::openmedialib::ml::image::top_field_first )
 			, estimated_gop_size_( 0 )
 			, index_( 0 )

@@ -11,7 +11,7 @@
 #include <openpluginlib/py/py.hpp>
 
 #include <openpluginlib/pl/pcos/any.hpp>
-#include <openmedialib/ml/image/image.hpp>
+#include <openmedialib/ml/types.hpp>
 
 namespace opl	= olib::openpluginlib;
 namespace pcos	= olib::openpluginlib::pcos;

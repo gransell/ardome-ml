@@ -310,7 +310,7 @@ t_string frame_type::pf( ) const
 		return image_->pf( );
 	else if ( stream_ )
 		return stream_->pf( );
-	return "";
+	return _CT("");
 }
 
 ml::image::field_order_flags frame_type::field_order( ) const

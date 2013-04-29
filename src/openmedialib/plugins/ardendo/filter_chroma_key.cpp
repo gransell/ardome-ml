@@ -59,7 +59,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 		{
 			// Convert frame if necessary
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, "yuv420p" );
+				result = frame_convert( result, _CT("yuv420p") );
 
 			// If frame (after convert) is still valid
 			if ( result && result->get_image( ) )
@@ -78,7 +78,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				// Make sure that we have an alpha mask which is the same size as the chroma
 				if ( !alpha )
 				{
-					alpha = ml::image::allocate( "l8", cw, ch );
+					alpha = ml::image::allocate( _CT("l8"), cw, ch );
 					fill_plane( alpha, 0, 255 );
 				}
 				else

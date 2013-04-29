@@ -65,7 +65,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		void invert( ml::frame_type_ptr &result )
 		{
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, "yuv420p" );
+				result = frame_convert( result, _CT("yuv420p") );
 
 			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 

@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_write : public ml::filter_simple
 		void write( ml::frame_type_ptr &frame )
 		{
 			if ( !ml::is_yuv_planar( frame ) )
-				frame = ml::frame_convert( frame, "yuv420p" );
+				frame = ml::frame_convert( frame, _CT("yuv420p") );
 
 			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
@@ -119,7 +119,7 @@ class ML_PLUGIN_DECLSPEC filter_mvitc_decode : public ml::filter_type
 		void decode( ml::frame_type_ptr &frame )
 		{
 			if ( !ml::is_yuv_planar( frame ) )
-				frame = ml::frame_convert( frame, "yuv420p" );
+				frame = ml::frame_convert( frame, _CT("yuv420p") );
 
 			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 

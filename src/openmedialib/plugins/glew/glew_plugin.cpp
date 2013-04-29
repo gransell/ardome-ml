@@ -139,11 +139,11 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 
 		GLenum pixelformat_to_gl( olib::t_string pf )
 		{
-			if( pf == "r8g8b8" )
+			if( pf == _CT("r8g8b8") )
 				return GL_RGB;
-			else if( pf == "b8g8r8" )
+			else if( pf == _CT("b8g8r8") )
 				return GL_BGR;
-			else if( pf == "r8g8b8a8" )
+			else if( pf == _CT("r8g8b8a8") )
 				return GL_RGBA;
 			else
 				return 0;
@@ -253,7 +253,7 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 				calculate_dimensions( frame, phy_w, phy_h, req_w, req_h );
 
 				// Convert to a format which the GPU knows
-				image_type_ptr new_im = ml::image::convert( image, L"b8g8r8" );
+				image_type_ptr new_im = ml::image::convert( image, _CT("b8g8r8") );
 
 				float tex_w, tex_h;
 				GLenum target;

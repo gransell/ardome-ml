@@ -249,7 +249,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_audio_stream_id_ = 0 );
 			properties( ).append( prop_vfourcc_ = std::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = std::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : olib::t_string( "" ) );
+			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : olib::t_string( _CT("") ) );
 
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
@@ -1196,7 +1196,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				AVCodecContext *c = video_stream_->codec;
 				const t_string pf = avformat_to_oil( c->pix_fmt );
-				if ( pf != "" && !video_copy_ )
+				if ( pf != _CT("") && !video_copy_ )
 				{
 					frame = ml::frame_convert( frame, pf );
 					video_queue_.push_back( frame );
@@ -1427,7 +1427,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Convert the image to the colour space required
 			const t_string pf = avformat_to_oil( c->pix_fmt );
 
-			if ( pf != "" )
+			if ( pf != _CT("") )
 			{
 				image = ml::image::convert( image, pf );
 				// Need an ffmpeg fallback here...

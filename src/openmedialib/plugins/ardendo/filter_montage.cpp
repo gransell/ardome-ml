@@ -53,7 +53,7 @@ extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h,
 
 static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, int cw, int lines )
 {
-	if ( frame->get_image( ) && frame->get_image( )->pf( ) == "yuv420p" )
+	if ( frame->get_image( ) && frame->get_image( )->pf( ) == _CT("yuv420p") )
 	{
 		unsigned char R = ( unsigned char )frame->properties( ).get_property_with_key( key_r_ ).value< int >( );
 		unsigned char G = ( unsigned char )frame->properties( ).get_property_with_key( key_g_ ).value< int >( );

@@ -62,7 +62,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		void charcoal( ml::frame_type_ptr &result )
 		{
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, "yuv420p" );
+				result = frame_convert( result, _CT("yuv420p") );
 
 			if ( result && result->get_image( ) )
 			{

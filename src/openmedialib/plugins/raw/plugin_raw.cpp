@@ -83,7 +83,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, offset_( 0 )
 			, parsed_( false )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( "yuv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv422") ) );
 			properties( ).append( prop_width_ = 1920 );
 			properties( ).append( prop_height_ = 1080 );
 			properties( ).append( prop_fps_num_ = 25 );

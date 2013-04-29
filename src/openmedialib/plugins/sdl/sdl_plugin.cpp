@@ -141,9 +141,9 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = olib::t_string( "yuv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv422") ) );
 #else
-			properties( ).append( prop_pf_ = olib::t_string( "yuv420p" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv420p") ) );
 #endif
 		}
 
@@ -504,7 +504,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 		Uint32 get_format( )
 		{
 			olib::t_string pf = prop_pf_.value< olib::t_string >( ).c_str( );
-			if ( pf == "yuv422" )
+			if ( pf == _CT("yuv422") )
 				return SDL_YUY2_OVERLAY;
 			return SDL_YV12_OVERLAY;
 		}

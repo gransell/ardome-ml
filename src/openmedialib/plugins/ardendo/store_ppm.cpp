@@ -70,7 +70,7 @@ class ML_PLUGIN_DECLSPEC store_ppm : public ml::store_type
 				ml::image_type_ptr img = frame->get_image( );
 				if ( file_ != 0 )
 				{
-					img = ml::image::convert( img, "r8g8b8" );
+					img = ml::image::convert( img, _CT("r8g8b8") );
 					int p = img->pitch( );
 					int w = img->width( );
 					int h = img->height( );

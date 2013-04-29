@@ -27,7 +27,7 @@ void test_image_r8g8b8( )
 
 void test_image_yuv420p( )
 {
-	ml::image_type_ptr img = ml::image::allocate( "yuv420p", 1920, 1080 );
+	ml::image_type_ptr img = ml::image::allocate( _CT("yuv420p"), 1920, 1080 );
 	BOOST_REQUIRE( img );
 	img = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1920, 1080 );
 	BOOST_REQUIRE( img );

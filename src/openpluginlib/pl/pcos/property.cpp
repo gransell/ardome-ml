@@ -21,8 +21,10 @@
 #include <opencorelib/cl/minimal_string_defines.hpp>
 #include <opencorelib/cl/str_util.hpp>
 
-#include <openmedialib/ml/types.hpp>
-//#include <openmedialib/ml/image/image_interface.hpp>
+
+//#include <openmedialib/ml/types.hpp>
+//#include <openmedialib/ml/image/image.hpp>
+//#include <openmedialib/ml/openmedialib_plugin.hpp>
 
 #include <boost/cstdint.hpp>
 
@@ -31,13 +33,18 @@ typedef std::list< std::wstring > wstring_list;
 typedef std::vector< std::string > string_vec;
 typedef std::vector< std::wstring > wstring_vec;
 
-/*
+
 namespace olib
 {
     namespace openmedialib
     {
         namespace ml
         {
+            /*
+            namespace image {
+                class image_type;
+            }
+            */
             class frame_type;
             class store_type;
             class input_type;
@@ -49,10 +56,14 @@ namespace olib
             typedef boost::shared_ptr< input_type > input_type_ptr;
             typedef boost::shared_ptr< audio_type > audio_type_ptr;
             typedef boost::shared_ptr< stream_type > stream_type_ptr;
+            //typedef boost::shared_ptr< image::image_type > image_type_ptr;
+            
+            namespace image { class image; }
+            typedef boost::shared_ptr < image::image > image_type_ptr;
         }
     }
 }
-*/
+
 
 //
 namespace ml = olib::openmedialib::ml;

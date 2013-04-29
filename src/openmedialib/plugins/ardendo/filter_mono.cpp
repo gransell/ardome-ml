@@ -45,7 +45,7 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 		void mono( ml::frame_type_ptr &frame, boost::uint8_t cut_off )
 		{
 			if ( !ml::is_yuv_planar( frame ) )
-				frame = ml::frame_convert( frame, "yuv420p" );
+				frame = ml::frame_convert( frame, _CT("yuv420p") );
 
 			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 

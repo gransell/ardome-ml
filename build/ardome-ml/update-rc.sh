@@ -5,7 +5,6 @@ if [ "$BUILDNUMBER" != "LATEST" ]; then
 echo "Updating RC files..."
 
 prebag-rc src/opencorelib/cl/msw/core.rc
-prebag-rc src/openimagelib/il/msw/imagelib.rc
 prebag-rc src/openmedialib/ml/msw/medialib.rc
 prebag-rc src/openmedialib/plugins/ardendo/aml_filters.rc
 prebag-rc src/openmedialib/plugins/avformat/msw/avformatplugin.rc
