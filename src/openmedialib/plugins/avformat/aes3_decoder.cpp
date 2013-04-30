@@ -38,7 +38,6 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 		buf_size -= 4;
 	}
 	
-	// If we dont have correct byte allignment then use unalligned SSE load
 	if( ( reinterpret_cast< boost::int64_t >( buf ) % 16 ) != 0 )
 	{
 		ARLOG_ERR( "AES audio samples not 16 byte aligned" );
@@ -60,9 +59,14 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			break;
 		}
 	}
+
+	if ( 0 == tpf )
+	{
+		ARLOG_ERR( "AES audio malformed. Non standard buffer size (doesn't conform to 4 or 8 tracks)." );
+		return AVERROR_INVALIDDATA;
+	}
 	
 	if( ( ret = avctx->get_buffer( avctx, &s->frame ) ) < 0 ) {
-		//ARLOG_ERR( "Failed to allocate buffer" );
 		return ret;
     }
 	
@@ -171,8 +175,8 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			while( total_iterations-- > 0 )
 			{
 				__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
-				__m128i l_shift = _mm_slli_epi32( src, 4 );
-				__m128i final = _mm_srai_epi32( l_shift, 8 );
+				__m128i r_shift = _mm_srli_epi32( src, 4 );
+				__m128i final = _mm_slli_epi32( r_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
 				
 				buf += source_step_size;
@@ -195,8 +199,8 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 			while( total_iterations-- > 0 )
 			{
 				__m128i src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
-				__m128i l_shift = _mm_slli_epi32( src, 4 );
-				__m128i final = _mm_srai_epi32( l_shift, 8 );
+				__m128i r_shift = _mm_srli_epi32( src, 4 );
+				__m128i final = _mm_slli_epi32( r_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
 				
 				buf += source_step_size;
@@ -204,8 +208,8 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 				
 				
 				src = _mm_load_si128( reinterpret_cast< const __m128i * >( buf ) );
-				l_shift = _mm_slli_epi32( src, 4 );
-				final = _mm_srai_epi32( l_shift, 8 );
+				r_shift = _mm_srli_epi32( src, 4 );
+				final = _mm_slli_epi32( r_shift, 8 );
 				_mm_storeu_si128( reinterpret_cast< __m128i * >( dst ), final );
 				
 				buf += source_step_size;

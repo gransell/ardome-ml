@@ -20,8 +20,8 @@ class ML_DECLSPEC base
 		/// The identity of the audio type
 		virtual identity id( ) const = 0;
 
-		/// The number of bytes in each sample
-		virtual int sample_size( ) const = 0;
+		/// The number of bytes of storage required for sample
+		virtual int sample_storage_size( ) const = 0;
 
 		/// The frequency of the audio object
 		virtual int frequency( ) const  = 0;
@@ -40,7 +40,7 @@ class ML_DECLSPEC base
 		virtual void original_samples( int samples ) = 0;
 
 		/// A textual description of the audio format
-		virtual const std::wstring &af( ) const = 0;
+		virtual const olib::t_string &af( ) const = 0;
 
 		/// The position of the audio object relative to the graph it belongs to
 		virtual int position( ) const  = 0;

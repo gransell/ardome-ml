@@ -19,7 +19,7 @@ namespace
 
 	ml::audio_type_ptr create_test_pattern_audio()
 	{
-		ml::audio_type_ptr aud = ml::audio::allocate( ml::audio::FORMAT_PCM16, 48000, 1, 1920, false );
+		ml::audio_type_ptr aud = ml::audio::allocate( ml::audio::pcm16_id, 48000, 1, 1920, false );
 		unsigned char *audio_data = static_cast< unsigned char * >( aud->pointer() );
 		//1,2,3...254,254,1,2,3...
 		for( int i = 0; i < aud->samples() * 2; ++i )

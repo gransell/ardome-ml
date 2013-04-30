@@ -123,7 +123,7 @@ void py_audio( )
 		.def( "frequency", &ml::audio::base::frequency )
 		.def( "channels", &ml::audio::base::channels )
 		.def( "samples", &ml::audio::base::samples )
-		.def( "sample_size", &ml::audio::base::sample_size )
+		.def( "sample_storage_size", &ml::audio::base::sample_storage_size )
 		.def( "af", &ml::audio::base::af, py::return_value_policy< py::return_by_value >( ) )
 		.def( "position", &ml::audio::base::position )
 		.def( "set_position", &ml::audio::base::set_position )
@@ -277,9 +277,9 @@ bool is( ml::input_type_ptr a, ml::input_type_ptr b )
 	return a == b;
 }
 
-audio_type_ptr audio_allocate0( const std::wstring &af, int frequency, int channels, int samples )
+audio_type_ptr audio_allocate0( const olib::t_string &af, int frequency, int channels, int samples )
 {
-	return audio::allocate( af, frequency, channels, samples );
+	return audio::allocate( audio::af_to_id( af ), frequency, channels, samples );
 }
 
 audio_type_ptr audio_allocate1( const audio_type_ptr &audio, int frequency, int channels, int samples )

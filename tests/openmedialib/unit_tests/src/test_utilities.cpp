@@ -30,27 +30,27 @@ BOOST_AUTO_TEST_CASE( test_pack_pcm24_from_pcm32 )
 	uint8_t *src = test_src, *dest = test_dest;
 	for( int i = 0; i < samples * channels; ++i, src += input_sample_size_in_bytes, dest += output_sample_size_in_bytes )
 	{
-		BOOST_CHECK_EQUAL( src[0], dest[0] );
-		BOOST_CHECK_EQUAL( src[1], dest[1] );
-		BOOST_CHECK_EQUAL( src[2], dest[2] );
+		BOOST_CHECK_EQUAL( src[1], dest[0] );
+		BOOST_CHECK_EQUAL( src[2], dest[1] );
+		BOOST_CHECK_EQUAL( src[3], dest[2] );
 	}
 }
 
-BOOST_AUTO_TEST_CASE( test_pack_pcm24_from_aiff32 )
+BOOST_AUTO_TEST_CASE( test_pack_aiff24_from_pcm32 )
 {	
 	const int samples = 2, channels = 2, input_sample_size_in_bytes = 4, output_sample_size_in_bytes = 3;
 	uint8_t test_src[samples * channels * input_sample_size_in_bytes];
 	uint8_t test_dest[samples * channels * output_sample_size_in_bytes];
 
 	initialize_array( test_src, sizeof( test_src ) );
-	au::pack_pcm24_from_aiff32( test_dest, test_src, samples, channels );
+	au::pack_aiff24_from_pcm32( test_dest, test_src, samples, channels );
 	
 	uint8_t *src = test_src, *dest = test_dest;
 	for( int i = 0; i < samples * channels; ++i, src += input_sample_size_in_bytes, dest += output_sample_size_in_bytes )
 	{
-		BOOST_CHECK_EQUAL( src[0], dest[2] );
-		BOOST_CHECK_EQUAL( src[1], dest[1] );
-		BOOST_CHECK_EQUAL( src[2], dest[0] );
+		BOOST_CHECK_EQUAL( src[1], dest[2] );
+		BOOST_CHECK_EQUAL( src[2], dest[1] );
+		BOOST_CHECK_EQUAL( src[3], dest[0] );
 	}
 }
 

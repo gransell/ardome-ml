@@ -116,7 +116,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			il::image_type_ptr img = frame->get_image( );
 			ml::audio_type_ptr aud = frame->get_audio( );
 
-			aud = ml::audio::coerce( ml::audio::FORMAT_PCM32, aud );
+			aud = ml::audio::coerce( ml::audio::pcm32_id, aud );
 
 			if ( img )
 				img = il::convert( img, prop_pf_.value< std::wstring >( ) );

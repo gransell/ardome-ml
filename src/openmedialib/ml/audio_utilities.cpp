@@ -21,10 +21,10 @@
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
 // Look up table for ids
-static const std::wstring id_to_af_table[ ] = { FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
+static const olib::t_string id_to_af_table[ ] = { FORMAT_PCM16, FORMAT_PCM24, FORMAT_PCM32, FORMAT_FLOAT };
 
 // Convenience function to allocate an audio type by id
-ML_DECLSPEC audio_type_ptr allocate( const identity& id, int frequency, int channels, int samples, bool init_to_zero )
+ML_DECLSPEC audio_type_ptr allocate( identity id, int frequency, int channels, int samples, bool init_to_zero )
 {
 	audio_type_ptr result;
 
@@ -45,12 +45,6 @@ ML_DECLSPEC audio_type_ptr allocate( const identity& id, int frequency, int chan
 	}
 
 	return result;
-}
-
-// Convenience function to allocate an audio type by the string identifier
-ML_DECLSPEC audio_type_ptr allocate( const std::wstring &af, int frequency, int channels, int samples, bool init_to_zero )
-{
-	return allocate( af_to_id(af), frequency, channels, samples, init_to_zero);
 }
 
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
@@ -74,7 +68,7 @@ ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &source, int frequency
 }
 
 // Convenience function to coerce an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr coerce( const identity& id, const audio_type_ptr &source )
+ML_DECLSPEC audio_type_ptr coerce( identity id, const audio_type_ptr &source )
 {
 	audio_type_ptr result;
 
@@ -98,14 +92,8 @@ ML_DECLSPEC audio_type_ptr coerce( const identity& id, const audio_type_ptr &sou
 }
 
 
-// Convenience function to coerce an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source )
-{
-	return coerce( af_to_id(af), source);
-}
-
 // Convenience function to force an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr force( const identity& id, const audio_type_ptr &source )
+ML_DECLSPEC audio_type_ptr force( identity id, const audio_type_ptr &source )
 {
 	audio_type_ptr result;
 	switch( id )
@@ -127,14 +115,8 @@ ML_DECLSPEC audio_type_ptr force( const identity& id, const audio_type_ptr &sour
 	return result;
 }
 
-// Convenience function to force an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &source )
-{
-	return force( af_to_id( af ), source );
-}
-
 // Convenience function to cast an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr cast( const identity& id, const audio_type_ptr &source )
+ML_DECLSPEC audio_type_ptr cast( identity id, const audio_type_ptr &source )
 {
 	audio_type_ptr result;
 
@@ -155,12 +137,6 @@ ML_DECLSPEC audio_type_ptr cast( const identity& id, const audio_type_ptr &sourc
 	}
 
 	return result;
-}
-
-// Convenience function to cast an audio_type_ptr to a specific type
-ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source )
-{
-	return cast( af_to_id( af ), source );
 }
 
 // Convenience function to convert to another channel arrangement without changing type
@@ -368,8 +344,6 @@ ML_DECLSPEC audio_type_ptr channel_mixer( audio_type_ptr &a, const audio_type_pt
 ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 {
 	ARENFORCE_MSG( !audios.empty(), "Trying to combine empty audio vector" );
-	ARENFORCE_MSG( *audios.begin(), "Null audio objects are not allowed in audio vector" );
-	
 	if( audios.size() == 1 )
 		return audios[ 0 ];
 	
@@ -378,6 +352,8 @@ ML_DECLSPEC audio_type_ptr combine( std::vector< audio_type_ptr >& audios )
 	int channels = 0;
 	for( size_t i = 0; i < audios.size(); ++i )
 	{
+		ARENFORCE_MSG( audios[ i ], "Null audio objects are not allowed in audio vector" );
+	
 		if( audios[ i ]->id() != id) audios[ i ] = coerce( id, audios[ i ] );
 		
 		channels += audios[ i ]->channels();
@@ -435,7 +411,7 @@ ML_DECLSPEC reseat_ptr create_reseat( )
 }
 
 // Convert a string to an id
-ML_DECLSPEC identity af_to_id( const std::wstring &af )
+ML_DECLSPEC identity af_to_id( const olib::t_string &af )
 {
 	identity id = ml::audio::pcm32_id;
 
@@ -449,9 +425,45 @@ ML_DECLSPEC identity af_to_id( const std::wstring &af )
 }
 
 // Convert an id to a printable string
-ML_DECLSPEC const std::wstring &id_to_af( const identity &id )
+ML_DECLSPEC const olib::t_string &id_to_af( identity id )
 {
 	return id_to_af_table[ id ];
+}
+
+ML_DECLSPEC int id_to_significant_bytes_per_sample( identity id )
+{
+	switch ( id )
+	{
+		case audio::pcm16_id:
+			return audio::pcm16::sample_storage_size_static();
+		case audio::pcm24_id:
+			return 3;
+		case audio::pcm32_id:
+			return audio::pcm32::sample_storage_size_static();
+		case audio::float_id:
+			return audio::floats::sample_storage_size_static();
+	}
+
+	ARENFORCE_MSG( false, "invalid audio id" );
+	return 0;
+}
+
+ML_DECLSPEC int id_to_storage_bytes_per_sample( identity id )
+{
+	switch ( id )
+	{
+		case audio::pcm16_id:
+			return audio::pcm16::sample_storage_size_static();
+		case audio::pcm24_id:
+			return audio::pcm24::sample_storage_size_static();
+		case audio::pcm32_id:
+			return audio::pcm32::sample_storage_size_static();
+		case audio::float_id:
+			return audio::floats::sample_storage_size_static();
+	}
+
+	ARENFORCE_MSG( false, "invalid audio id" );
+	return 0;
 }
 
 namespace locked_profile {
@@ -474,20 +486,21 @@ ML_DECLSPEC uint32_t bswap_32( const uint32_t src )
 	return ((src >> 24) & 0xff) | ((src >>  8) & 0xff00) | ((src <<  8) & 0xff0000) | ((src << 24) & 0xff000000);
 }
 
-// aiff is stored reversed. so reverse every 4-byte word, then copy last 3 bytes of the result onto the output.
-ML_DECLSPEC void pack_pcm24_from_aiff32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
+// aiff is stored reversed. so reverse every 4-byte word, then copy first 3 bytes of the result onto the output.
+ML_DECLSPEC void pack_aiff24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
 {
 	for( uint32_t i = 0; i < samples * channels; ++i, src += 4, dest += 3 )
 	{
 		uint32_t unswapped = *reinterpret_cast< const uint32_t * >( src );
 		uint32_t swapped = bswap_32( unswapped );
-		memcpy( dest, reinterpret_cast< const uint8_t * >( &swapped ) + 1, 3 );
+		memcpy( dest, reinterpret_cast< const uint8_t * >( &swapped ), 3 );
 	}
 }
 
-// just copy the first 3 bytes of every 4 bytes onto the output buffer
+// just copy the last 3 bytes of every 4 bytes onto the output buffer
 ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
 {
+	src++;	// instead of having to do a +1 for every memcpy, just start from an offsetted location and increase by 4 each time.
 	for( uint32_t i = 0; i < samples * channels; ++i, src += 4, dest += 3 )
 	{
 		memcpy( dest, src, 3 );

@@ -41,8 +41,8 @@ class ML_PLUGIN_DECLSPEC filter_lowpass : public ml::filter_simple
 		{
 		  result = fetch_from_slot( );
 		  
-		  ml::audio_type_ptr input_audio  = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
- 		  ml::audio_type_ptr output_audio = ml::audio::force( ml::audio::FORMAT_FLOAT, result->get_audio( ) );
+		  ml::audio_type_ptr input_audio  = ml::audio::force( ml::audio::float_id, result->get_audio( ) );
+ 		  ml::audio_type_ptr output_audio = ml::audio::force( ml::audio::float_id, result->get_audio( ) );
 		  int samples                     =          input_audio->samples( );
 		  int channels                    =          input_audio->channels( );
 		  float *input_ptr                = (float*) input_audio->pointer( );

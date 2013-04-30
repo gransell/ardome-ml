@@ -68,8 +68,8 @@ class ML_DECLSPEC template_ : public base
 		identity id( ) const 
 		{ return id_; }
 
-		int sample_size( ) const
-		{ return sizeof( sample_type ); }
+		int sample_storage_size( ) const
+		{ return this->sample_storage_size_static( ); }
 
 		int size( ) const
 		{ return sizeof( sample_type ) * samples_ * channels_; }
@@ -92,7 +92,7 @@ class ML_DECLSPEC template_ : public base
 		void original_samples( int samples )
 		{ orig_samples_ = samples; }
 
-		const std::wstring &af( ) const
+		const olib::t_string &af( ) const
 		{ return id_to_af( id_ ); }
 
 		void *pointer( ) const
@@ -126,11 +126,14 @@ class ML_DECLSPEC template_ : public base
 		void convert( floats &dst ) const
 		{ audio::convert< floats, template_< T, B, min_val, max_val > >( dst, *this ); }
 
+		static int sample_storage_size_static()
+		{ return sizeof( sample_type ); }
+
 	private:
 		void init_data( bool init_to_zero )
 		{
 			// 16 bytes padding
-			data_size_ = channels_ * samples_ * sizeof( sample_type ) + 16;
+			data_size_ = channels_ * samples_ * this->sample_storage_size( ) + 16;
 			
 			if( data_size_ == 0 )
 			{

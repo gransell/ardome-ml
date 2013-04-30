@@ -20,6 +20,8 @@
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
 
+#include <opencorelib/cl/str_util.hpp>
+
 namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
@@ -30,7 +32,7 @@ class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 			: ml::filter_simple( )
 			, prop_af_( pcos::key::from_string( "af" ) )
 		{
-			properties( ).append( prop_af_ = std::wstring( ml::audio::FORMAT_FLOAT ) );
+			properties( ).append( prop_af_ = olib::t_string( ml::audio::FORMAT_FLOAT ) );
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -56,7 +58,7 @@ class ML_PLUGIN_DECLSPEC filter_audio_convert : public ml::filter_simple
 		// Change the colour space to the requested
 		void change_audio( ml::frame_type_ptr &result )
 		{
-			ml::audio_type_ptr audio = ml::audio::coerce( prop_af_.value< std::wstring >( ), result->get_audio( ) );
+			ml::audio_type_ptr audio = ml::audio::coerce( ml::audio::af_to_id( olib::opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), result->get_audio( ) );
 			if ( audio )
 				result->set_audio( audio );
 		}
