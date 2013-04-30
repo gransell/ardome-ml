@@ -29,6 +29,9 @@ src = [
 
 if local_env[ 'PLATFORM' ] == 'win32':
 	src.append( 'msw/medialib.rc' )
+	
+if local_env[ 'target' ] == 'linux32' :
+    local_env.Append( CPPFLAGS = ['-march=pentium4', '-mfpmath=sse'] )
 
 object = local_env.shared_library( 'openmedialib_ml', src )
 
