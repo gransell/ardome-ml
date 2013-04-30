@@ -4,7 +4,11 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavutil', 'libavformat', 'loki' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
+
+#Workaround until J#AMF-2014 is resolved
+if local_env['PLATFORM'] != 'win32':
+	local_env.packages( 'libavutil' )
 
 src = [ 
 		'analyse.cpp',
