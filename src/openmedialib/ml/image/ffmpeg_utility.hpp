@@ -95,6 +95,39 @@ ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_pt
 	ARENFORCE ( dst_height == src->height( ) );
 }
 
+ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst )
+{
+    AVPicture input = fill_picture( src );
+    AVPicture output = fill_picture( dst );
+
+    ARENFORCE( sws_isSupportedInput( ML_to_AV( src->ml_pixel_format( ) ) ) );
+    ARENFORCE( sws_isSupportedOutput( ML_to_AV( dst->ml_pixel_format( ) ) ) );
+
+
+    struct SwsContext *img_convert;
+    img_convert = sws_getContext( src->width( ),
+            src->height( ),
+            ML_to_AV( src->ml_pixel_format( ) ),
+            dst->width( ),
+            dst->height( ),
+            ML_to_AV( dst->ml_pixel_format( ) ),
+            SWS_BICUBIC,
+            NULL,
+            NULL,
+            NULL);
+
+
+    ARENFORCE( img_convert != NULL );
+
+    int dst_height = sws_scale( img_convert,
+        input.data,
+        input.linesize,
+        0,
+        src->height( ),
+        output.data,
+        output.linesize );
+}
+
 } } } }
 
 

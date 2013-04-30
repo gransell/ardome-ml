@@ -18,6 +18,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 
 enum MLPixelFormat {
+    ML_PIX_FMT_NONE,
     ML_PIX_FMT_YUV420P,
     ML_PIX_FMT_YUVA420P,
     ML_PIX_FMT_UYV422,

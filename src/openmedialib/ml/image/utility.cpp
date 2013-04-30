@@ -4,16 +4,12 @@
 * Released under the LGPL.
 */
 #include <openmedialib/ml/utilities.hpp>
-//#include <openmedialib/ml/image/utility.hpp>
-//#include <openmedialib/ml/image/image_interface.hpp>
 #include <openmedialib/ml/image/image_types.hpp>
 #include <openmedialib/ml/image/image_interface.hpp>
-
 
 #include <openmedialib/ml/image/ffmpeg_image.hpp>
 #include <openmedialib/ml/image/ffmpeg_utility.hpp>
 
-//#include <openmedialib/ml/types.hpp>
 #include <boost/assign/list_of.hpp>
 #include <map>
 
@@ -35,6 +31,7 @@ static int image_depth ( MLPixelFormat pf ) {
 
 ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 {
+    ARENFORCE_MSG( pf != ML_PIX_FMT_NONE, "Invalid picture format");
 	if ( image_depth( pf ) == 8 )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
 	else if ( image_depth( pf ) == 10 )
@@ -70,7 +67,13 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_str
 
 image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_d, rescale_filter filter )
 {
-    return im;
+    if( im->width( ) == new_w && im->height( ) == new_h && im->depth( ) == new_d ) {
+        return im;
+    }
+
+    image_type_ptr new_im = allocate( im->ml_pixel_format( ), new_w, new_h );
+    ml::image::rescale_ffmpeg_image( im, new_im ); 
+    return new_im;
 }
 
 
@@ -132,7 +135,6 @@ ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field )
     // Default our return to the source
     image_type_ptr new_im = im;
 
-/*
     // Only do something if we have an image and it isn't progressive
     if ( im && im->field_order( ) != progressive )
     {
@@ -162,7 +164,7 @@ ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field )
             }
         }
     }
-*/
+
     return new_im;
 }
 

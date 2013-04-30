@@ -52,8 +52,6 @@ public:
         allocate( );
         desc_ = av_pix_fmt_desc_get(pixfmt_);
         av_pix_fmt_get_chroma_sub_sample( pixfmt_, &chroma_w_, &chroma_h_ );
-//        fprintf(stderr, "bpp: %d\n", av_get_bits_per_pixel(desc_));
-
 
         if ( desc_->flags & PIX_FMT_RGB ) {
             alloc_rgb_planes( );
