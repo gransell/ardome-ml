@@ -47,27 +47,44 @@ public:
     , sar_den_( 1 )
     , field_order_( progressive )
     {
-        pixfmt_ = ML_to_AV(MLpixfmt_);
-        ARENFORCE(pixfmt_ != AV_PIX_FMT_NONE);
+        AVpixfmt_ = ML_to_AV(MLpixfmt_);
+        ARENFORCE(AVpixfmt_ != AV_PIX_FMT_NONE);
         allocate( );
-        desc_ = av_pix_fmt_desc_get(pixfmt_);
-        av_pix_fmt_get_chroma_sub_sample( pixfmt_, &chroma_w_, &chroma_h_ );
-
-        if ( desc_->flags & PIX_FMT_RGB ) {
-            alloc_rgb_planes( );
-        } else {
-            alloc_yuv_planes( );
-        }
     }
-    ~ffmpeg_image( ) { deallocate ( ); }
 
+    ~ffmpeg_image( ) { deallocate ( ); }
+private:
+    ffmpeg_image( ffmpeg_image& other, int flags )
+        : MLpixfmt_ ( other.ml_pixel_format( ) )
+        , AVpixfmt_ ( other.av_pixel_format( ) )
+        , width_ ( other.width( ) )
+        , height_ ( other.height( ) )
+        , writable_ ( true )
+        , pts_ ( other.pts( ) )
+        , position_ ( other.position( ) )
+        , sar_num_ ( -1 )
+        , sar_den_ ( 1 )
+        , field_order_( other.field_order( ) )
+    {
+        allocate( );
+        memcpy( data( ), other.data( ), other.size( ));
+    }
+
+public:
 	ffmpeg_image *clone( int flags = cropped )
 	{
-		//FIXME
-		return new ffmpeg_image( MLpixfmt_, width_, height_ );
+        return new ffmpeg_image( *this, flags );
 	}
+
+    bool matching ( int flags ) const
+    {
+        //FIXME
+        bool match_writable = ( flags & writable ) != 0 ? is_writable( ) : true;
+        return match_writable;
+    }
 	
 	MLPixelFormat ml_pixel_format( ) { return MLpixfmt_; }
+	AVPixelFormat av_pixel_format( ) { return AVpixfmt_; }
 
     int width( size_t index = 0 )
     {
@@ -83,7 +100,7 @@ public:
 
     int plane_count ( )
     {
-        //return av_pix_fmt_count_planes( pixfmt_ );
+        //return av_pix_fmt_count_planes( AVpixfmt_ );
         int i, planes[4] = { 0 }, ret = 0;
 
         for (i = 0; i < desc_->nb_components; i++) {
@@ -135,14 +152,28 @@ public:
     const_iterator  end( )              const { return planes_.end( ); }
     bool            empty( )            const { return planes_.empty( ); }
 	
-    uint8_t *data ( size_t index = 0 )
+    uint8_t *data( size_t index = 0 )
     {
         return data_ + offset( index );
     }
 
     int depth( ) { return 1; }
 
-    t_string pf( ) const { return cl::str_util::to_t_string( desc_->name ); }
+    t_string pf( ) const 
+    {
+        std::map<t_string, MLPixelFormat>::const_iterator it;
+        t_string key = _CT("");
+        for (it = MLPixelFormatMap.begin(); it != MLPixelFormatMap.end(); ++it)
+        {
+            if (it->second == MLpixfmt_)
+            {
+                key = it->first;
+                break;
+            }
+        }
+
+        return key;
+    }
 
 /*
         bool is_flipped( )          const { return flipped_; }
@@ -174,7 +205,7 @@ public:
 		return desc_->flags & PIX_FMT_PLANAR ? true : false;
 	}
 
-	int size( ) const { return avpicture_get_size(pixfmt_, width_,height_); }
+	int size( ) const { return avpicture_get_size(AVpixfmt_, width_,height_); }
 
     // Crop an image
     bool crop( int x, int y, int w, int h, bool crop = true )
@@ -212,7 +243,7 @@ private:
 
     field_order_flags field_order_;
     const AVPixFmtDescriptor *desc_;
-    AVPixelFormat pixfmt_;
+    AVPixelFormat AVpixfmt_;
     planes planes_;
 
      // Get the requested plane
@@ -226,8 +257,18 @@ protected:
     void allocate( )
     {
         int numBytes;
-        numBytes=avpicture_get_size(pixfmt_, width_,height_);
+        numBytes=avpicture_get_size(AVpixfmt_, width_,height_);
         data_=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
+
+        desc_ = av_pix_fmt_desc_get(AVpixfmt_);
+        
+        av_pix_fmt_get_chroma_sub_sample( AVpixfmt_, &chroma_w_, &chroma_h_ );
+
+        if ( desc_->flags & PIX_FMT_RGB ) {
+            alloc_rgb_planes( );
+        } else {
+            alloc_yuv_planes( );
+        }
     }
 
     void alloc_rgb_planes( )
@@ -270,7 +311,7 @@ protected:
         plane.height = height_;
 
         if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
-            plane.pitch = plane.linesize = av_image_get_linesize( pixfmt_, width_, 0 );
+            plane.pitch = plane.linesize = av_image_get_linesize( AVpixfmt_, width_, 0 );
         } else {
             plane.pitch = width_;
             plane.linesize = width_;
@@ -282,7 +323,7 @@ protected:
 
         // PLANE 2
         plane.offset += width_ * height_;
-        plane.linesize = plane.pitch = plane.width = av_image_get_linesize( pixfmt_, width_, 1 );
+        plane.linesize = plane.pitch = plane.width = av_image_get_linesize( AVpixfmt_, width_, 1 );
         if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
             plane.height = height_ / 2;
         }

@@ -7,13 +7,14 @@
 #define AML_IMAGE_UTILITIES_H_
 
 #include <openmedialib/ml/types.hpp>
+#include <openmedialib/ml/image/image_interface.hpp>
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 
 inline image_type_ptr conform( image_type_ptr image, int flags )
 {
-	//if ( image && !image->matching( flags ) )
-	//			image = image_type_ptr( static_cast<image_type*>( image->clone( flags ) ) );
+//	if ( image && !image->matching( flags ) )
+//	    image = ml::image_type_ptr( static_cast<ml::image::image*>( image->clone( flags ) ) );
 	return image;
 }
 

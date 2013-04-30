@@ -24,7 +24,8 @@ static int image_depth ( MLPixelFormat pf ) {
 	
 	if ( pf == ML_PIX_FMT_YUV422P10LE )
 		return 10;
-
+	if ( pf == ML_PIX_FMT_YUV422P10 )
+		return 10;
 
 	return 8;
 }
@@ -58,7 +59,6 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelForm
 	return dst;
 }
 
-
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string pf )
 {
 	return convert( src,  MLPixelFormatMap[ pf ] );
@@ -76,10 +76,58 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_
     return new_im;
 }
 
+static int locate_alpha_offset( const MLPixelFormat pf )
+{
+    int result = -1;
+    
+    if ( pf == ML_PIX_FMT_R8G8B8A8 )
+        result = 3;
+    else if ( pf == ML_PIX_FMT_B8G8R8A8 )
+        result = 3;
+    else if ( pf == ML_PIX_FMT_A8R8G8B8 )
+        result = 0;
+    else if ( pf == ML_PIX_FMT_A8B8G8R8 )
+        result = 0;
+
+    return result;
+}
 
 ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 {
-    return im;
+    image_type_ptr result;
+
+    if ( im )
+    {
+        int offset = locate_alpha_offset( im->ml_pixel_format( ) );
+        if ( offset >= 0 )
+        {
+            result = allocate( ML_PIX_FMT_L8, im->width( ), im->height( ) );
+
+            const uint8_t *src = im->data( );
+            uint8_t *dst = result->data( );
+
+            int h = im->height( );
+
+            int src_rem = im->pitch( ) - im->linesize( );
+            int dst_rem = result->pitch( ) - result->linesize( );
+
+            while( h -- )
+            {
+                int w = im->width( );
+
+                while ( w -- )
+                {
+                    *dst ++ = src[ offset ];
+                    src += 4;
+                }
+
+                src += src_rem;
+                dst += dst_rem;
+            }
+        }
+    }
+
+    return result;
 }
 
 
@@ -91,8 +139,8 @@ ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
         im->set_field_order( progressive );
         for ( int i = 0; i < im->plane_count( ); i ++ )
         {
-            unsigned char *dst = im->data( i );
-            unsigned char *src = im->data( i ) + im->pitch( i );
+            uint8_t *dst = im->data( i );
+            uint8_t *src = im->data( i ) + im->pitch( i );
             int linesize = im->linesize( i );
             int src_pitch = im->pitch( i ) - linesize;
             int height = im->height( i ) - 1;

@@ -1,6 +1,5 @@
 #ifndef ML_IMAGE_INC_
 #define ML_IMAGE_INC_
-//#include <openmedialib/ml/openmedialib_plugin.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
@@ -66,6 +65,7 @@ public:
     virtual void set_field_order( field_order_flags flags ) = 0;
 	virtual int count( ) const = 0;    
 	virtual bool empty( ) const = 0;
+	virtual bool matching( int flags ) const = 0;
 	virtual t_string pf( ) const = 0;
 	virtual bool is_yuv_planar( ) = 0;
 	// The size of the full image
@@ -73,7 +73,6 @@ public:
 	// Crop an image
     virtual bool crop( int x, int y, int w, int h, bool crop = true ) = 0;
 	virtual void crop_clear( ) = 0;
-
 };
 
 } } } }

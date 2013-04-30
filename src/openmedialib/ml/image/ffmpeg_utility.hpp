@@ -25,10 +25,18 @@ AVPixelFormat ML_to_AV( MLPixelFormat pixfmt )
 		return AV_PIX_FMT_YUV422P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P10LE )
 		return AV_PIX_FMT_YUV422P10LE;
+	else if (pixfmt == ML_PIX_FMT_YUV422P10 )
+		return AV_PIX_FMT_YUV422P10;
 	else if (pixfmt == ML_PIX_FMT_YUV422 )
 		return AV_PIX_FMT_YUYV422;
 	else if (pixfmt == ML_PIX_FMT_YUV444P )
 		return AV_PIX_FMT_YUV444P;
+	else if (pixfmt == ML_PIX_FMT_L8 )
+		return AV_PIX_FMT_GRAY8;
+	else if (pixfmt == ML_PIX_FMT_L8A8 )
+		return AV_PIX_FMT_GRAY8A;
+	else if (pixfmt == ML_PIX_FMT_L16 )
+		return AV_PIX_FMT_GRAY16;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8 )
 		return AV_PIX_FMT_RGB24;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8A8 )
