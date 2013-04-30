@@ -150,7 +150,6 @@ class Environment( BaseEnvironment ):
 		self.package_list = self.package_manager.walk( self )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-undefined', 'dynamic_lookup', ] )
 			if self[ 'arch' ] == 'i386' :
 				self.Append( CCFLAGS = [ '-arch', 'i386' ] )
 				self.Append( LINKFLAGS = [ '-arch', 'i386' ] )

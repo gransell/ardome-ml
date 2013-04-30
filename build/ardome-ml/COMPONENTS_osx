@@ -1,4 +1,4 @@
-: http://releases.ardendo.se/builds/external-source/boost/osx/boost-1_53_0-osx-1_53_0-B6.zip -> boost.zip
+: http://releases.ardendo.se/builds/external-source/boost/osx/boost-1_53_0-osx-1_53_0-B7.zip -> boost.zip
 
 SNAPSHOT=0 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/ffmpeg-aml-1_10-osx-10.6-x86_64.tar.bz2 -> ffmpeg.tar.bz2
 SNAPSHOT=1 : http://releases.ardendo.se/builds/ffmpeg-aml/osx/ffmpeg-aml-1_11_0-LATEST.tbz2 -> ffmpeg.tar.bz2
@@ -8,6 +8,6 @@ SNAPSHOT=1 : http://releases.ardendo.se/builds/ffmpeg-aml/osx/ffmpeg-aml-1_11_0-
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/xercesc-2.8-macosx-10.6-x86_64.tar.bz2 -> xercesc.tar.bz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/loki-0.1.6.tbz2 -> loki.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/doxygen-1.5.7.1.tbz2 -> doxygen.tbz2
-: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/rubberband-1.7.0-osx_i386_x86_64.tbz2 -> rubberband.tbz2
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/osx/rubberband-1.7.0-osx_i386_x86_64-B2.tbz2 -> rubberband.tbz2
  owl : bzr://bzr.ardendo.se/data/bzr/owl/trunk
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/black_magic_decklink_sdk_8.6.tbz2 -> black_magic_decklink_sdk.tbz2
