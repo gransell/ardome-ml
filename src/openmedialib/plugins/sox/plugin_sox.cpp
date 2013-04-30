@@ -130,7 +130,7 @@ protected:
 				working_frame = src_input->fetch( );
 				
 				// Sox expects 32 bit samples
-				ml::audio_type_ptr input = ml::audio::coerce( L"pcm32", working_frame->get_audio( ) );
+				ml::audio_type_ptr input = ml::audio::coerce( ml::audio::pcm32_id, working_frame->get_audio( ) );
 				
 				size_t isamp = input->samples( );
 				size_t osamp = needed_samples_;
