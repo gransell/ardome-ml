@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( test_pack_aiff24_from_pcm32 )
 BOOST_AUTO_TEST_CASE( test_byteswap16_inplace )
 {	
 	// byteswap16_inplace uses SSE instructions that need input data to be 16-byte aligned. so use aligned_alloc to allocate test data.
-	boost::shared_ptr< uint8_t[] > test_buf( static_cast< uint8_t * >( olib::opencorelib::utilities::aligned_alloc( 16, 32 ) ), &olib::opencorelib::utilities::aligned_free );
+	boost::shared_ptr< uint8_t > test_buf( static_cast< uint8_t * >( olib::opencorelib::utilities::aligned_alloc( 16, 32 ) ), &olib::opencorelib::utilities::aligned_free );
 	initialize_array( test_buf.get(), 32 );
 	uint8_t test_orig_values[32];
 	memcpy( test_orig_values, test_buf.get(), 32 );
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE( test_byteswap16_inplace )
 
 	for( int i = 0; i < 32; i += 2 )
 	{
-		BOOST_CHECK_EQUAL( test_buf[i], test_orig_values[i + 1] );
-		BOOST_CHECK_EQUAL( test_buf[i + 1], test_orig_values[i] );
+		BOOST_CHECK_EQUAL( test_buf.get()[i], test_orig_values[i + 1] );
+		BOOST_CHECK_EQUAL( test_buf.get()[i + 1], test_orig_values[i] );
 	}
 }
 
