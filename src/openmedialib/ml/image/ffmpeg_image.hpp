@@ -40,6 +40,8 @@ public:
     , ch_( h )
     , width_ ( w )
     , height_ ( h )
+	, flipped_( false )
+	, flopped_( false )
     , writable_( true )
     , pts_( 0 )
     , position_( 0 )
@@ -50,6 +52,8 @@ public:
         AVpixfmt_ = ML_to_AV(MLpixfmt_);
         ARENFORCE(AVpixfmt_ != AV_PIX_FMT_NONE);
         allocate( );
+		
+		crop_clear( );
     }
 
     ~ffmpeg_image( ) { deallocate ( ); }
@@ -57,9 +61,11 @@ private:
     ffmpeg_image( ffmpeg_image& other, int flags )
         : MLpixfmt_ ( other.ml_pixel_format( ) )
         , AVpixfmt_ ( other.av_pixel_format( ) )
-        , width_ ( other.width( ) )
-        , height_ ( other.height( ) )
+        , width_ ( other.width( 0, flags & cropped ) )
+        , height_ ( other.height( 0, flags & cropped ) )
         , writable_ ( true )
+		, flipped_( ( flags & flipped ) != 0 )
+		, flopped_( ( flags & flopped ) != 0 )
         , pts_ ( other.pts( ) )
         , position_ ( other.position( ) )
         , sar_num_ ( -1 )
@@ -67,7 +73,50 @@ private:
         , field_order_( other.field_order( ) )
     {
         allocate( );
-        memcpy( data( ), other.data( ), other.size( ));
+        //memcpy( data( ), other.data( ), other.size( ));
+
+		crop_clear( );
+
+	
+		// Extract specific requirements from the flags
+		bool need_flip = is_flipped( ) != other.is_flipped( );
+		bool need_flop = is_flopped( ) != other.is_flopped( );
+
+		// Obtain the number of planes and iterate through each
+		size_t count = plane_count( );
+
+		for ( size_t i = 0; i < count; i ++ )
+		{
+			// We need the src and pitch of the cropped source plane
+			uint8_t *src = other.data( i );
+			int src_pitch = other.pitch( i );
+
+			// The destination plane, pitch and height
+			uint8_t *dst = data( i );
+			int dst_width = width( i );
+			int dst_pitch = pitch( i );
+			int dst_scan = linesize( i );
+			int dst_height = height( i );
+
+			// We need to orient the dest correctly
+			if ( need_flip )
+			{
+				dst += dst_pitch * ( dst_height - 1 );
+				dst_pitch = - dst_pitch;
+			}
+
+			// Now copy each scan line in the plane
+			while( dst_height -- )
+			{
+				if ( need_flop )
+					flop_scan_line( i, dst, src, dst_width );
+				else
+					memcpy( dst, src, dst_scan );
+				dst += dst_pitch;
+				src += src_pitch;
+			}
+		}
+
     }
 
 public:
@@ -76,25 +125,27 @@ public:
         return new ffmpeg_image( *this, flags );
 	}
 
-    bool matching ( int flags ) const
-    {
-        //FIXME
-        bool match_writable = ( flags & writable ) != 0 ? is_writable( ) : true;
-        return match_writable;
-    }
+	bool matching( int flags ) const
+	{
+		bool match_writable = ( flags & writable ) != 0 ? is_writable( ) : true;
+		bool want_crop = ( flags & cropped ) != 0;
+		bool want_flip = ( flags & flipped ) != 0;
+		bool want_flop = ( flags & flopped ) != 0;
+		return match_writable && ( want_flip == is_flipped( ) ) && ( want_flop == is_flopped( ) ) && ( !is_cropped( ) || !want_crop );
+	}
 	
 	MLPixelFormat ml_pixel_format( ) { return MLpixfmt_; }
 	AVPixelFormat av_pixel_format( ) { return AVpixfmt_; }
 
-    int width( size_t index = 0 )
+    int width( size_t index = 0, bool crop = true ) const
     {
-        const plane *p = get_plane( index );
+        const plane *p = get_plane( index, crop );
         return p ? p->width : 0;
     }
 
-    int height( size_t index = 0 )
+    int height( size_t index = 0, bool crop = true ) const
     {
-        const plane *p = get_plane( index );
+        const plane *p = get_plane( index, crop );
         return p ? p->height : 0;
     }
 
@@ -117,25 +168,25 @@ public:
         return desc_->comp[index].depth_minus1 + 1;
     }
 
-    int linesize( size_t index = 0 )
+    int linesize( size_t index = 0, bool crop = true )
     {
-        const plane *p = get_plane( index );
+        const plane *p = get_plane( index, crop );
         return p ? p->linesize : 0;
     }
 
-    int pitch( size_t index = 0 )
+    int pitch( size_t index = 0, bool crop = true )
     {
-        const plane *p = get_plane( index );
+        const plane *p = get_plane( index, crop );
         return p ? p->pitch : 0;
     }
 
-    int offset( size_t index = 0 )
+    int offset( size_t index = 0, bool crop = true )
     {
-        const plane *p = get_plane( index );
+        const plane *p = get_plane( index, crop );
         return p ? p->offset : 0;
     }
 
-    int block_size( )
+    int block_size( ) const
     {
         return desc_->nb_components;
     }
@@ -152,9 +203,9 @@ public:
     const_iterator  end( )              const { return planes_.end( ); }
     bool            empty( )            const { return planes_.empty( ); }
 	
-    uint8_t *data( size_t index = 0 )
+    uint8_t *data( size_t index = 0, bool crop = true )
     {
-        return data_ + offset( index );
+        return data_ + offset( index, crop );
     }
 
     int depth( ) { return 1; }
@@ -175,13 +226,12 @@ public:
         return key;
     }
 
-/*
-        bool is_flipped( )          const { return flipped_; }
+    bool is_flipped( )          const { return flipped_; }
     void set_flipped( bool flipped )  { flipped_ = flipped; crop_sync( ); }
 
     bool is_flopped( )          const { return flopped_; }
     void set_flopped( bool flopped )  { flopped_ = flopped; crop_sync( ); }
-*/
+
     bool is_writable( )         const { return writable_; }
     void set_writable( bool writable ){ writable_ = writable; }
 
@@ -210,14 +260,62 @@ public:
     // Crop an image
     bool crop( int x, int y, int w, int h, bool crop = true )
     {
+		// Get the original width and height
+		int ow = width( 0, crop );
+		int oh = height( 0, crop );
 
-        return true;
+		// Ensure the specified geometry is valid
+		bool valid = x >= 0 && y >=0 && x < ow && y < oh && x + w <= ow && y + h <= oh;
+
+		if ( valid )
+		{
+			// Need these flags to ensure that the plane crop is correct
+			int flags = 0;
+			flags |= is_flipped( ) ? flipped : 0;
+			flags |= is_flopped( ) ? flopped : 0;
+
+			// If we're cropping a crop, increment the x,y by the previous coords
+			if ( crop )
+			{
+				x += cx_;
+				y += cy_;
+			}
+
+			// Return to the storage planes
+			crop_clear( );
+
+			// Invoke the virtual method for cropping the planes - note that the 
+			// geometry may change to meet the requirements of a colour space (for 
+			// example, ensuring that x falls on an even pixel)
+			crop_planes( crop_, x, y, w, h, flags );
+
+			// Store the new geometry of the crop
+			cx_ = x;
+			cy_ = y;
+			cw_ = w;
+			ch_ = h;
+		}
+
+		return valid;
     }
+
+
 
 	// Clear the cropped image by returning everything back to the storage planes
     void crop_clear( )
     {
+		crop_.clear( );
+		std::copy( planes_.begin( ), planes_.end( ), std::back_inserter( crop_ ) );
+		cx_ = cy_ = 0;
+		cw_ = width( );
+		ch_ = height( );
     }
+
+	// Determines if the image is cropped or not
+	bool is_cropped( ) const
+	{
+		return cx_ != 0 || cy_ != 0 || cw_ != width( 0, false ) || ch_ != height( 0, false );
+	}
 
 
 private:
@@ -245,12 +343,145 @@ private:
     const AVPixFmtDescriptor *desc_;
     AVPixelFormat AVpixfmt_;
     planes planes_;
+	planes crop_;
 
      // Get the requested plane
-    inline const plane *get_plane( size_t index ) const
+    inline const plane *get_plane( size_t index, bool crop ) const
     {
-        return index < planes_.size( ) ? &planes_[ index ] : 0;
+		const planes &planes = get_planes( crop ); 
+		return index < planes.size( ) ? &planes[ index ] : 0;
     }
+
+
+	// Synchronise the crop information (typically used after orientation changes)
+	void crop_sync( )
+	{
+		crop( cx_, cy_, cw_, ch_, false );
+	}
+
+	// Convenience method to assist image class
+	virtual const planes &get_planes( bool crop ) const
+	{ 
+		return crop ? crop_ : planes_ ; 
+	}
+
+	
+	virtual void crop_planes( planes &crop, int &x, int &y, int &w, int &h, int flags )
+	{
+        if ( desc_->flags & PIX_FMT_RGB )
+			crop_planes_rgb( crop, x, y, w, h, flags );
+		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)
+			crop_planes_411_packed( crop, x, y, w, h, flags );
+		else
+			crop_planes_yuv( crop, x, y, w, h, flags );
+
+	}
+	
+	virtual void crop_planes_rgb( planes &crop, int &x, int &y, int &w, int &h, int flags )
+	{
+		bool is_flipped = ( flags & flipped ) != 0;
+		bool is_flopped = ( flags & flopped ) != 0;
+
+		plane &p = crop[ 0 ];
+		p.width = w;
+		p.height = h;
+		p.linesize = w * block_size( );
+
+		if ( !is_flipped )
+			p.offset = p.pitch * y;
+		else
+			p.offset = ( ( height_ - y - h ) * p.pitch );
+
+		if ( !is_flopped )
+			p.offset += x * block_size( );
+		else
+			p.offset += ( width_ - w - x ) * block_size( );
+	}
+	
+	virtual void crop_planes_yuv( planes &crop, int &x, int &y, int &w, int &h, int flags )
+	{
+		bool is_flipped = ( flags & flipped ) != 0;
+		bool is_flopped = ( flags & flopped ) != 0;
+
+		for ( int i = 0; i < plane_count( ); i++ )
+		//for ( int i = 0; i < 1; i++ )
+		{
+			int shift_x = ( i > 0 ? chroma_w_: 0 );
+			int shift_y = ( i > 0 ? chroma_h_: 0 );
+
+			plane &p = crop[ i ];
+			p.width = w >> shift_x;
+			p.height = h >> shift_y;
+			//p.linesize = w;
+			p.linesize = p.width;
+			
+			//p.linesize = av_image_get_linesize( pixfmt_, p.width, i );
+
+			if ( !is_flipped )
+				p.offset = ( p.pitch * ( y >> shift_y ) ) ;
+			else
+				p.offset = ( ( ( height_ - y - h ) * p.pitch ) >> shift_y ) ;
+
+			if ( !is_flopped )
+				p.offset += ( x >> shift_x );
+			else
+				p.offset += ( (width_ - w - x) >> shift_x ) ;
+
+			p.offset = offset( i, false ) + p.offset;
+		}
+	}
+
+	virtual void crop_planes_411_packed( planes &crop, int &x, int &y, int &w, int &h, int flags )
+	{
+		bool is_flipped = ( flags & flipped ) != 0;
+		bool is_flopped = ( flags & flopped ) != 0;
+
+		plane &p = crop[ 0 ];
+		p.width = w;
+		p.height = h;
+		p.linesize = w * 3 / 2;
+
+		if ( !is_flipped )
+			p.offset = p.pitch * y;
+		else
+			p.offset = ( ( height_ - y - h ) * p.pitch );
+
+		if ( !is_flopped )
+			p.offset += x * 3 / 2;
+		else
+			p.offset += ( width_ - w - x ) * 3 / 2;
+	}
+
+
+	// Flop scan which assumes block_size_ is known and <= 4 - associated plane is
+	// the first argument, thus allowing a different block/sample size per plane
+	virtual void flop_scan_line( size_t, uint8_t *dst, const uint8_t *src, int w ) const
+	{
+		int bytes_to_copy = 1;		// yuv, with planes
+        if ( desc_->flags & PIX_FMT_RGB )
+			bytes_to_copy = block_size( );
+		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)	
+		{
+			w /= 4;		// amr: why?
+			bytes_to_copy = 6;
+		}
+		
+		src += w - bytes_to_copy;
+		while( w -- )
+		{
+			switch( bytes_to_copy )
+			{
+				case 6:	*dst ++ = *src ++;
+				case 5:	*dst ++ = *src ++;
+				case 4:	*dst ++ = *src ++;
+				case 3:	*dst ++ = *src ++;
+				case 2:	*dst ++ = *src ++;
+				case 1:	*dst ++ = *src ++;
+			}
+
+			src -= 2 * bytes_to_copy;
+		}
+	}
 
 protected:
 

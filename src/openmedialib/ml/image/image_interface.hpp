@@ -37,19 +37,19 @@ public:
 	virtual ~image( ) { }
 	virtual image *clone( int flags = cropped ) = 0;
 	virtual MLPixelFormat ml_pixel_format( ) = 0;
-	virtual int width( size_t index = 0 ) = 0;
-	virtual int height( size_t index = 0 ) = 0;
+	virtual int width( size_t index = 0, bool crop = true ) const = 0;
+	virtual int height( size_t index = 0, bool crop = true ) const = 0;
 	virtual int bitdepth( size_t index = 0 ) = 0;
 	virtual int plane_count( ) = 0;
-	virtual int linesize( size_t index = 0 ) = 0;
-    virtual int pitch( size_t index = 0 ) = 0;
-    virtual int offset( size_t index = 0 ) = 0;
-    virtual int block_size( ) = 0;
+	virtual int linesize( size_t index = 0, bool crop = true ) = 0;
+    virtual int pitch( size_t index = 0, bool crop = true ) = 0;
+    virtual int offset( size_t index = 0, bool crop = true ) = 0;
+    virtual int block_size( ) const = 0;
     virtual int get_crop_x( ) const = 0;
     virtual int get_crop_y( ) const = 0;
     virtual int get_crop_w( ) const = 0;
     virtual int get_crop_h( ) const = 0;
-    virtual boost::uint8_t *data ( size_t index = 0 ) = 0;
+    virtual boost::uint8_t *data ( size_t index = 0, bool crop = true ) = 0;
     virtual int depth( ) = 0;
 	virtual bool is_writable( ) const = 0;
     virtual void set_writable( bool writable ) = 0;
@@ -73,6 +73,8 @@ public:
 	// Crop an image
     virtual bool crop( int x, int y, int w, int h, bool crop = true ) = 0;
 	virtual void crop_clear( ) = 0;
+    virtual void set_flipped( bool flipped ) = 0;
+    virtual void set_flopped( bool flopped ) = 0;
 };
 
 } } } }
