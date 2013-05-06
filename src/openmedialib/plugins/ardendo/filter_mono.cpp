@@ -49,7 +49,8 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 
 			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
-			ml::image_type_ptr result = frame->get_image( );
+            boost::shared_ptr< ml::image::image_type_8 > result = 
+                ml::image::coerce< ml::image::image_type_8 >( frame->get_image( ) );
 
 			if ( result )
 			{

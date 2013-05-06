@@ -66,9 +66,11 @@ static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, in
 		int pitch_u = frame->get_image( )->pitch( 1 );
 		int pitch_v = frame->get_image( )->pitch( 2 );
 
-		boost::uint8_t *py = frame->get_image( )->data( 0 ) + pitch_y * cy + cx;
-		boost::uint8_t *pu = frame->get_image( )->data( 1 ) + pitch_u * ( cy / 2 ) + ( cx / 2 );
-		boost::uint8_t *pv = frame->get_image( )->data( 2 ) + pitch_v * ( cy / 2 ) + ( cx / 2 );
+        boost::shared_ptr< ml::image::image_type_8 > image = ml::image::coerce< ml::image::image_type_8 >( frame->get_image( ) );
+
+		boost::uint8_t *py = image->data( 0 ) + pitch_y * cy + cx;
+		boost::uint8_t *pu = image->data( 1 ) + pitch_u * ( cy / 2 ) + ( cx / 2 );
+		boost::uint8_t *pv = image->data( 2 ) + pitch_v * ( cy / 2 ) + ( cx / 2 );
 
 		while( lines -- )
 		{

@@ -75,13 +75,15 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 			}
 		}
 
-		void charcoal_plane( ml::image_type_ptr output, ml::image_type_ptr input, int plane )
+		void charcoal_plane( ml::image_type_ptr o, ml::image_type_ptr i, int plane )
 		{
-			unsigned char *dst = output->data( plane );
+            boost::shared_ptr< ml::image::image_type_8 > output = ml::image::coerce< ml::image::image_type_8 >( o );
+            boost::shared_ptr< ml::image::image_type_8 > input = ml::image::coerce< ml::image::image_type_8 >( i );
+            boost::uint8_t *dst = output->data( plane );
 			int w = output->width( plane );
 			int h = output->height( plane ) - 2;
 			int p = input->pitch( plane );
-			unsigned char *src = input->data( plane ) + p + 1;
+            boost::uint8_t *src = input->data( plane ) + p + 1;
 			int dst_rem = output->pitch( plane ) - w;
 			int src_rem = input->pitch( plane ) - w + 2;
 			int t;

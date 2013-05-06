@@ -307,7 +307,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 						int dst_pitch = overlay->pitches[ plane ];
 						int w = img->linesize( plane );
 						int h = img->height( plane );
-						uint8_t *src = img->data( plane );
+						uint8_t *src = ml::image::coerce< ml::image::image_type_8 >( img )->data( plane );
 						int src_pitch = img->pitch( plane );
 
 						// TODO: Fix this work around to correct chroma order 

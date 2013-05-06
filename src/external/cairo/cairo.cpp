@@ -242,7 +242,7 @@ ml::image_type_ptr surface::to_image( ) const
 	size_t out_stride = (size_t)image->pitch( );
 
 	const unsigned char* in = data( );
-	unsigned char*      out = image->data( );
+	unsigned char*      out = ml::image::coerce< ml::image::image_type_8 >( image )->data( );
 
 	size_t _stride = std::min< size_t >( in_stride, out_stride );
 

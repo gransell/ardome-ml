@@ -1139,11 +1139,14 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 			// NOTE: we assume that image dimensions are consistent (should we?)
 			ml::image_type_ptr result = ml::image::allocate( image1 );
 
+            boost::shared_ptr< ml::image::image_type_8 > result_type = ml::image::coerce< ml::image::image_type_8 >( result );
+            boost::shared_ptr< ml::image::image_type_8 > image1_type = ml::image::coerce< ml::image::image_type_8 >( image1 );
+            boost::shared_ptr< ml::image::image_type_8 > image2_type = ml::image::coerce< ml::image::image_type_8 >( image2 );
 			for ( int i = 0; i < result->plane_count( ); i ++ )
 			{
-				boost::uint8_t *dst_row = result->data( i );
-				boost::uint8_t *src1_row = image1->data( i ) + image1->pitch( i ) * scan1;
-				boost::uint8_t *src2_row = image2->data( i ) + image2->pitch( i ) * scan2;
+				boost::uint8_t *dst_row = result_type->data( i );
+				boost::uint8_t *src1_row = image1_type->data( i ) + image1->pitch( i ) * scan1;
+				boost::uint8_t *src2_row = image2_type->data( i ) + image2->pitch( i ) * scan2;
 				int dst_linesize = result->linesize( i );
 				int dst_stride = result->pitch( i );
 				int src_stride = image1->pitch( i ) * 2;

@@ -78,7 +78,7 @@ class ML_PLUGIN_DECLSPEC template_input : public input_type
 			int width = get_width( );
 			int height = get_height( );
 			ml::image_type_ptr image = ml::image::allocate( _CT("r8g8b8"), width, height );
-			memset( image->data( ), int( 255 * ( double( get_position( ) ) / double( get_frames( ) ) ) ), image->size( ) );
+			memset( ml::image::coerce< ml::image::image_type_8 >( image )->data( ), int( 255 * ( double( get_position( ) ) / double( get_frames( ) ) ) ), image->size( ) );
 			frame->set_image( image );
 		}
 };
@@ -102,7 +102,7 @@ class ML_PLUGIN_DECLSPEC template_store : public store_type
 				int w = img->width( );
 				int h = img->height( );
 				fprintf( stdout, "P6\n%d %d\n255\n", w, h );
-				fwrite( img->data( ), w * h * 3, 1, stdout );
+				fwrite( ml::image::coerce< ml::image::image_type_8 >( img )->data( ), w * h * 3, 1, stdout );
 				fflush( stdout );
 			}
 			return img != 0;
@@ -207,7 +207,7 @@ class ML_PLUGIN_DECLSPEC template_filter : public filter_type
 
 		inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 		{
-			unsigned char *ptr = img->data( plane );
+			unsigned char *ptr = ml::image::coerce< ml::image::image_type_8 >( img )->data( plane );
 			int width = img->width( plane );
 			int height = img->height( plane );
 			int diff = img->pitch( plane );

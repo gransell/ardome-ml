@@ -108,8 +108,11 @@ void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input )
 
 void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
 {
-	boost::uint8_t *dst = output->data( plane );
-	boost::uint8_t *src = input->data( plane );
+    boost::shared_ptr< ml::image::image_type_8 > output_type_8 = ml::image::coerce< ml::image::image_type_8 >( output );
+    boost::shared_ptr< ml::image::image_type_8 > input_type_8 = ml::image::coerce< ml::image::image_type_8 >( input );
+
+	boost::uint8_t *dst = output_type_8->data( plane );
+	boost::uint8_t *src = input_type_8->data( plane );
 	int w = output->width( plane );
 	int h = output->height( plane );
 	int dst_p = output->pitch( plane );
@@ -125,7 +128,8 @@ void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t pla
 
 void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
 {
-	boost::uint8_t *ptr = img->data( plane );
+    boost::shared_ptr< ml::image::image_type_8 > img_type_8 = ml::image::coerce< ml::image::image_type_8 >( img );
+	boost::uint8_t *ptr = img_type_8->data( plane );
 	int w = img->width( plane );
 	int h = img->height( plane );
 	int p = img->pitch( plane );

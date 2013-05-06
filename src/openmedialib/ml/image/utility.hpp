@@ -13,11 +13,12 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 inline image_type_ptr conform( image_type_ptr image, int flags )
 {
-	//if ( image && !image->matching( flags ) )
-	//    image = ml::image_type_ptr( static_cast<ml::image::image*>( image->clone( flags ) ) );
+	if ( image && !image->matching( flags ) )
+	    image = ml::image_type_ptr( static_cast<ml::image::image*>( image->clone( flags ) ) );
 	return image;
 }
 
+extern ML_DECLSPEC int image_depth ( MLPixelFormat pf );
 extern ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height );
 extern ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height );
 extern ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img );

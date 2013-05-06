@@ -239,10 +239,16 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 		format = _CT("b8g8r8a8");
 		dst_fmt = PIX_FMT_BGRA;
 	}
+	else if ( pix_fmt == AV_PIX_FMT_YUV422P10LE )
+	{
+		format = _CT("yuv422p");
+		dst_fmt = AV_PIX_FMT_YUV422P;
+	}
 
 	AVPicture output;
 	image = ml::image::allocate( format, width + even, height + even_h );
-	avpicture_fill( &output, image->data( ), dst_fmt, width + even, height + even_h );
+    boost::shared_ptr< ml::image::image_type_8 > image_type = ml::image::coerce< ml::image::image_type_8 >( image );
+	avpicture_fill( &output, (uint8_t*)image_type->data( ), dst_fmt, width + even, height + even_h );
 	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
 	if ( img_convert_ != NULL )
 		sws_scale( img_convert_, frame->data, frame->linesize, 0, height + even_h, output.data, output.linesize );

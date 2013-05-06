@@ -64,8 +64,8 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 			// If frame (after convert) is still valid
 			if ( result && result->get_image( ) )
 			{
-				ml::image_type_ptr alpha = result->get_alpha( );
-				ml::image_type_ptr input = result->get_image( );
+                ml::image_type_ptr alpha = result->get_alpha( );
+                boost::shared_ptr< ml::image::image_type_8 > input = ml::image::coerce< ml::image::image_type_8 >( result->get_image( ) );
 
 				// Get the size of the image
 				size_t w = input->width( );
@@ -84,16 +84,17 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				else
 				{
 					alpha = ml::image::rescale( alpha, cw, ch );
-				}
+                }
 
+                boost::shared_ptr< ml::image::image_type_8 > alpha_type_8 = ml::image::coerce< ml::image::image_type_8 >( alpha );
 				// Process chroma
 				boost::uint8_t *pu = input->data( 1 );
 				boost::uint8_t *pv = input->data( 2 );
-				boost::uint8_t *pa = alpha->data( );
+				boost::uint8_t *pa = alpha_type_8->data( );
 
 				size_t ru = input->pitch( 1 ) - cw;
 				size_t rv = input->pitch( 2 ) - cw;
-				size_t ra = alpha->pitch( ) - cw;
+				size_t ra = alpha_type_8->pitch( ) - cw;
 
 				while( ch -- )
 				{

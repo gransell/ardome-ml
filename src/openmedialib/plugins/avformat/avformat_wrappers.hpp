@@ -277,9 +277,11 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 
 				if ( new_image )
 				{
-					picture_->data[ 0 ] = frame->get_image( )->data( 0 );
-					picture_->data[ 1 ] = frame->get_image( )->data( 1 );
-					picture_->data[ 2 ] = frame->get_image( )->data( 2 );
+                    boost::shared_ptr< ml::image::image_type_8 > image_type =
+                        ml::image::coerce< ml::image::image_type_8 >( frame->get_image( ) );
+					picture_->data[ 0 ] = image_type->data( 0 );
+					picture_->data[ 1 ] = image_type->data( 1 );
+					picture_->data[ 2 ] = image_type->data( 2 );
 					picture_->linesize[ 0 ] = frame->get_image( )->pitch( 0 );
 					picture_->linesize[ 1 ] = frame->get_image( )->pitch( 1 );
 					picture_->linesize[ 2 ] = frame->get_image( )->pitch( 2 );

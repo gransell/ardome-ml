@@ -301,7 +301,7 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 						bytes = w * 3;
 					}
 	
-					boost::uint8_t *dst = image->data( );
+					boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( );
 					int dst_pitch = image->pitch( );
 	
 					while( h -- )

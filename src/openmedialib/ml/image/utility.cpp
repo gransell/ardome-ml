@@ -20,11 +20,13 @@ namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
-static int image_depth ( MLPixelFormat pf ) {
+ML_DECLSPEC int image_depth ( MLPixelFormat pf ) {
 	
-	if ( pf == ML_PIX_FMT_YUV422P10LE )
+	if ( pf == ML_PIX_FMT_YUV420P10 )
 		return 10;
-	if ( pf == ML_PIX_FMT_YUV422P10 )
+    else if ( pf == ML_PIX_FMT_YUV422P10LE )
+		return 10;
+    else if ( pf == ML_PIX_FMT_YUV422P10 )
 		return 10;
 
 	return 8;
@@ -98,13 +100,15 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 
     if ( im )
     {
+        boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
         int offset = locate_alpha_offset( im->ml_pixel_format( ) );
         if ( offset >= 0 )
         {
             result = allocate( ML_PIX_FMT_L8, im->width( ), im->height( ) );
+            boost::shared_ptr< ml::image::image_type_8 > result_type_8 = ml::image::coerce< ml::image::image_type_8 >( result );
 
-            const uint8_t *src = im->data( );
-            uint8_t *dst = result->data( );
+            const boost::uint8_t *src = im_type_8->data( );
+            boost::uint8_t *dst = result_type_8->data( );
 
             int h = im->height( );
 
@@ -139,8 +143,9 @@ ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
         im->set_field_order( progressive );
         for ( int i = 0; i < im->plane_count( ); i ++ )
         {
-            uint8_t *dst = im->data( i );
-            uint8_t *src = im->data( i ) + im->pitch( i );
+            boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
+            boost::uint8_t *dst = im_type_8->data( i );
+            boost::uint8_t *src = im_type_8->data( i ) + im->pitch( i );
             int linesize = im->linesize( i );
             int src_pitch = im->pitch( i ) - linesize;
             int height = im->height( i ) - 1;
@@ -198,8 +203,10 @@ ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field )
         // Copy every second scan line from each plane to extract the field
         for ( int i = 0; i < im->plane_count( ); i ++ )
         {
-            unsigned char *src = im->data( i ) + field * im->pitch( i );
-            unsigned char *dst = new_im->data( i );
+            boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
+            boost::shared_ptr< ml::image::image_type_8 > new_im_type_8 = ml::image::coerce< ml::image::image_type_8 >( new_im );
+            unsigned char *src = im_type_8->data( i ) + field * im->pitch( i );
+            unsigned char *dst = new_im_type_8->data( i );
             int src_pitch = 2 * im->pitch( i );
             int dst_pitch = new_im->pitch( i );
             int linesize = new_im->linesize( i );

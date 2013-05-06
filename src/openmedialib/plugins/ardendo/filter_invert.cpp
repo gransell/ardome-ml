@@ -82,11 +82,11 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 
 				// Invert each plane
 				if ( planes & 1 )
-					invert_plane( image, 0, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 0, 255 );
 				if ( planes & 2 )
-					invert_plane( image, 1, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 1, 255 );
 				if ( planes & 4 )
-					invert_plane( image, 2, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 2, 255 );
 
 				// Restore to full image
 				image->crop_clear( );
@@ -94,9 +94,9 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		}
 
 		// Invert the plane requested
-		void invert_plane( ml::image_type_ptr image, int plane, int negate )
+		void invert_plane( boost::shared_ptr< ml::image::image_type_8 > image, int plane, int negate )
 		{
-			unsigned char *ptr = image->data( plane );
+            boost::uint8_t *ptr = image->data( plane );
 			int w = image->width( plane );
 			int h = image->height( plane );
 			int remainder = image->pitch( plane ) - w;

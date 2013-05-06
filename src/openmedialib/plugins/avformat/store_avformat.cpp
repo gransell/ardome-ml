@@ -1440,7 +1440,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 				for ( plane = 0; plane < image->plane_count( ); plane ++ )
 				{
-					uint8_t *src = image->data( plane );
+					uint8_t *src = ml::image::coerce< ml::image::image_type_8 >( image )->data( plane );
 					uint8_t *dst = av_image_.data[ plane ];
 					int height = image->height( plane );
 					while( height -- )
@@ -1456,7 +1456,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPicture input;
 				int width = image->width( );
 				int height = image->height( );
-				avpicture_fill( &input, image->data( ), oil_to_avformat( image->pf( ) ), width, height );
+				avpicture_fill( &input, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), oil_to_avformat( image->pf( ) ), width, height );
 				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, oil_to_avformat( image->pf( ) ), SWS_BICUBIC, NULL, NULL, NULL );
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );

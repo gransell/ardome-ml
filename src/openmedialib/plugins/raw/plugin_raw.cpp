@@ -219,7 +219,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				{
 					for ( int p = 0; p < image->plane_count( ); p ++ )
 					{
-						boost::uint8_t *dst = image->data( p );
+						boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
 						int pitch = image->pitch( p );
 						int width = image->linesize( p );
 						int height = image->height( p );
@@ -232,7 +232,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				}
 				else
 				{
-					error |= avio_read( context_, image->data( ), image->size( ) ) != image->size( );
+					error |= avio_read( context_, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), image->size( ) ) != image->size( );
 				}
 
 				if ( pad )
@@ -577,7 +577,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				{
 					for ( int p = 0; success && p < image->plane_count( ); p ++ )
 					{
-						const boost::uint8_t *dst = image->data( p );
+						const boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
 						int pitch = image->pitch( p );
 						int width = image->linesize( p );
 						int height = image->height( p );
@@ -590,7 +590,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				}
 				else
 				{
-					avio_write( context_, image->data( ), image->size( ) );
+					avio_write( context_, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), image->size( ) );
 				}
 
 				if ( pad )

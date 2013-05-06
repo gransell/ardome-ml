@@ -3,7 +3,6 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
-
 struct default_plane
 {
     int offset;
@@ -49,7 +48,6 @@ public:
     virtual int get_crop_y( ) const = 0;
     virtual int get_crop_w( ) const = 0;
     virtual int get_crop_h( ) const = 0;
-    virtual boost::uint8_t *data ( size_t index = 0, bool crop = true ) = 0;
     virtual int depth( ) = 0;
 	virtual bool is_writable( ) const = 0;
     virtual void set_writable( bool writable ) = 0;

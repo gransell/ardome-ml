@@ -20,6 +20,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 enum MLPixelFormat {
     ML_PIX_FMT_NONE,
     ML_PIX_FMT_YUV420P,
+    ML_PIX_FMT_YUV420P10,
     ML_PIX_FMT_YUVA420P,
     ML_PIX_FMT_UYV422,
     ML_PIX_FMT_YUV422P,
@@ -45,6 +46,7 @@ enum MLPixelFormat {
 namespace {
 std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 (_CT("yuv420p"),    ML_PIX_FMT_YUV420P)
+(_CT("yuv420p10"),  ML_PIX_FMT_YUV420P10)
 (_CT("yuva420p"),   ML_PIX_FMT_YUVA420P)
 (_CT("yuv422p"),    ML_PIX_FMT_YUV422P)
 (_CT("yuv422"),     ML_PIX_FMT_YUV422)

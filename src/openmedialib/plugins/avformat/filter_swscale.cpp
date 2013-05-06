@@ -139,7 +139,7 @@ namespace
 		{
 			if ( i < image->plane_count( ) )
 			{
-				picture.data[ i ] = image->data( i );
+				picture.data[ i ] = ml::image::coerce< ml::image::image_type_8 >( image )->data( i );
 				picture.linesize[ i ] = image->pitch( i );
 			}
 			else
@@ -288,7 +288,7 @@ namespace
 			const float wps = float( image->linesize( i ) ) / iwidth;
 			const float hps = float( image->height( i ) ) / iheight;
 
-			boost::uint8_t *ptr = image->data( i );
+			boost::uint8_t *ptr = ml::image::coerce< ml::image::image_type_8 >( image )->data( i );
 			const boost::uint8_t value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
 
 			const int width = int( iwidth * wps );

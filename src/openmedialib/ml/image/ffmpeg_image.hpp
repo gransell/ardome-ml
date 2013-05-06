@@ -1,26 +1,12 @@
 #ifndef FFMPEG_IMAGE_H_
 #define FFMPEG_IMAGE_H_
 
-#include <boost/shared_ptr.hpp>
-#include <openmedialib/ml/openmedialib_plugin.hpp>
-//#include <openmedialib/ml/types.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
-#include <opencorelib/cl/str_util.hpp>
 
 #include <openmedialib/ml/image/image_interface.hpp>
 #include <openmedialib/ml/image/ffmpeg_utility.hpp>
 
-extern "C" {
-#include <libavformat/avio.h>
-#include <libavutil/mem.h>
-#include <libavutil/pixdesc.h>
-#include <libavutil/imgutils.h>
-#include <libavcodec/avcodec.h>
-}
-
-namespace cl = olib::opencorelib;
-namespace ml = olib::openmedialib::ml;
-namespace image = olib::openmedialib::ml::image;
+#include <opencorelib/cl/log_defines.hpp>
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
@@ -28,6 +14,7 @@ template<typename T>
 class ML_DECLSPEC ffmpeg_image : public image
 {
 public:
+    typedef T data_type;
     typedef default_plane 					plane;
     typedef std::vector< plane > 			planes;
     typedef planes::const_iterator          const_iterator;
@@ -50,7 +37,7 @@ public:
     , field_order_( progressive )
     {
         AVpixfmt_ = ML_to_AV(MLpixfmt_);
-        ARENFORCE(AVpixfmt_ != AV_PIX_FMT_NONE);
+        ARENFORCE(AVpixfmt_ != -1);
         allocate( );
 		
 		crop_clear( );
@@ -88,11 +75,11 @@ private:
 		for ( size_t i = 0; i < count; i ++ )
 		{
 			// We need the src and pitch of the cropped source plane
-			uint8_t *src = other.data( i );
+            data_type *src = other.data( i );
 			int src_pitch = other.pitch( i );
 
 			// The destination plane, pitch and height
-			uint8_t *dst = data( i );
+            data_type *dst = data( i );
 			int dst_width = width( i );
 			int dst_pitch = pitch( i );
 			int dst_scan = linesize( i );
@@ -135,7 +122,7 @@ public:
 	}
 	
 	MLPixelFormat ml_pixel_format( ) { return MLpixfmt_; }
-	AVPixelFormat av_pixel_format( ) { return AVpixfmt_; }
+	int av_pixel_format( ) { return AVpixfmt_; }
 
     int width( size_t index = 0, bool crop = true ) const
     {
@@ -151,21 +138,12 @@ public:
 
     int plane_count ( )
     {
-        //return av_pix_fmt_count_planes( AVpixfmt_ );
-        int i, planes[4] = { 0 }, ret = 0;
-
-        for (i = 0; i < desc_->nb_components; i++) {
-            planes[desc_->comp[i].plane] = 1;
-        }
-        for (i = 0; i < FF_ARRAY_ELEMS(planes); i++) {
-            ret += planes[i];
-        }
-        return ret;
+        return utility_plane_count( AVpixfmt_ );
     }
 
     int bitdepth( size_t index = 0 )
     {
-        return desc_->comp[index].depth_minus1 + 1;
+        return utility_bitdepth( AVpixfmt_, index );
     }
 
     int linesize( size_t index = 0, bool crop = true )
@@ -188,7 +166,7 @@ public:
 
     int block_size( ) const
     {
-        return desc_->nb_components;
+        return utility_nb_components( AVpixfmt_ );
     }
 
     int get_crop_x( ) const { return cx_; }
@@ -203,7 +181,7 @@ public:
     const_iterator  end( )              const { return planes_.end( ); }
     bool            empty( )            const { return planes_.empty( ); }
 	
-    uint8_t *data( size_t index = 0, bool crop = true )
+    data_type *data( size_t index = 0, bool crop = true )
     {
         return data_ + offset( index, crop );
     }
@@ -252,10 +230,10 @@ public:
 
 	bool is_yuv_planar( ) 
 	{
-		return desc_->flags & PIX_FMT_PLANAR ? true : false;
+		return is_pixfmt_planar( AVpixfmt_ );
 	}
 
-	int size( ) const { return avpicture_get_size(AVpixfmt_, width_,height_); }
+	int size( ) const { return utility_avpicture_get_size(AVpixfmt_, width_,height_); }
 
     // Crop an image
     bool crop( int x, int y, int w, int h, bool crop = true )
@@ -299,8 +277,6 @@ public:
 		return valid;
     }
 
-
-
 	// Clear the cropped image by returning everything back to the storage planes
     void crop_clear( )
     {
@@ -328,7 +304,7 @@ private:
     int height_;
     int chroma_w_;
     int chroma_h_;
-    uint8_t *data_;
+    data_type *data_;
     bool flipped_;
     bool flopped_;
     bool writable_;
@@ -340,8 +316,8 @@ private:
     int sar_den_;
 
     field_order_flags field_order_;
-    const AVPixFmtDescriptor *desc_;
-    AVPixelFormat AVpixfmt_;
+    UtilityAVPixFmtDescriptor *desc_;
+    int AVpixfmt_;
     planes planes_;
 	planes crop_;
 
@@ -368,12 +344,14 @@ private:
 	
 	virtual void crop_planes( planes &crop, int &x, int &y, int &w, int &h, int flags )
 	{
-        if ( desc_->flags & PIX_FMT_RGB )
+     
+        if ( is_pixfmt_rgb( AVpixfmt_ ) )
 			crop_planes_rgb( crop, x, y, w, h, flags );
-		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)
-			crop_planes_411_packed( crop, x, y, w, h, flags );
+//		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)
+//			crop_planes_411_packed( crop, x, y, w, h, flags );
 		else
 			crop_planes_yuv( crop, x, y, w, h, flags );
+           
 
 	}
 	
@@ -455,16 +433,21 @@ private:
 
 	// Flop scan which assumes block_size_ is known and <= 4 - associated plane is
 	// the first argument, thus allowing a different block/sample size per plane
-	virtual void flop_scan_line( size_t, uint8_t *dst, const uint8_t *src, int w ) const
+	virtual void flop_scan_line( size_t, data_type *dst, const data_type *src, int w ) const
 	{
+
+
 		int bytes_to_copy = 1;		// yuv, with planes
-        if ( desc_->flags & PIX_FMT_RGB )
+        if ( is_pixfmt_rgb( AVpixfmt_ ) )
 			bytes_to_copy = block_size( );
+
+/*
 		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)	
 		{
 			w /= 4;		// amr: why?
 			bytes_to_copy = 6;
 		}
+*/
 		
 		src += w - bytes_to_copy;
 		while( w -- )
@@ -488,14 +471,15 @@ protected:
     void allocate( )
     {
         int numBytes;
-        numBytes=avpicture_get_size(AVpixfmt_, width_,height_);
-        data_=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
+        numBytes=utility_avpicture_get_size(AVpixfmt_, width_,height_);
+        ARLOG_CRIT("[ %1% ] NUMBYTES: %2%")( pf( ) )( numBytes );
+        data_=(data_type *)utility_av_malloc(numBytes);
 
-        desc_ = av_pix_fmt_desc_get(AVpixfmt_);
+        desc_ = utility_av_pix_fmt_desc_get(AVpixfmt_);
         
-        av_pix_fmt_get_chroma_sub_sample( AVpixfmt_, &chroma_w_, &chroma_h_ );
+        utility_av_pix_fmt_get_chroma_sub_sample( AVpixfmt_, &chroma_w_, &chroma_h_ );
 
-        if ( desc_->flags & PIX_FMT_RGB ) {
+        if ( is_pixfmt_rgb( AVpixfmt_ ) ) {
             alloc_rgb_planes( );
         } else {
             alloc_yuv_planes( );
@@ -505,7 +489,7 @@ protected:
     void alloc_rgb_planes( )
     {
         if ( plane_count( ) == 1 ) {
-            plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * sizeof( T ), width_, height_, width_ * block_size( ) * sizeof( T ) };
+            plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * sizeof( data_type ), width_, height_, width_ * block_size( ) * sizeof( data_type ) };
             planes_.push_back( plane );
 
             return;
@@ -513,14 +497,14 @@ protected:
 
         plane plane;
         plane.offset = 0;
-        plane.pitch = ( ( width_ + 3 ) & -4 ) * sizeof( T );
+        plane.pitch = ( ( width_ + 3 ) & -4 ) * sizeof( data_type );
         plane.width = width_;
         plane.height = height_;
-        plane.linesize = width_ * sizeof( T );
+        plane.linesize = width_ * sizeof( data_type );
         planes_.push_back( plane );
         if ( plane_count( ) <= 1 ) { return; }
 
-        plane.offset += plane.pitch * sizeof( T ) * height_;
+        plane.offset += plane.pitch * sizeof( data_type ) * height_;
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
@@ -542,7 +526,7 @@ protected:
         plane.height = height_;
 
         if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
-            plane.pitch = plane.linesize = av_image_get_linesize( AVpixfmt_, width_, 0 );
+            plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
         } else {
             plane.pitch = width_;
             plane.linesize = width_;
@@ -554,10 +538,11 @@ protected:
 
         // PLANE 2
         plane.offset += width_ * height_;
-        plane.linesize = plane.pitch = plane.width = av_image_get_linesize( AVpixfmt_, width_, 1 );
+        plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 1 );
         if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
             plane.height = height_ / 2;
         }
+
 
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
@@ -582,7 +567,7 @@ protected:
     void deallocate( )
     {
         if ( data_ ) {
-            av_free( data_ );
+            utility_av_free( data_ );
         }
     }
 

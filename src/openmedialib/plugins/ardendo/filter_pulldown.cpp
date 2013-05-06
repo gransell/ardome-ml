@@ -105,12 +105,20 @@ class filter_pulldown : public ml::filter_type
 			if ( field0 && field1 )
 			{
 				image = ml::image::allocate( field0->pf( ), field0->width( ), field0->height( ) * 2 );
+                
+                boost::shared_ptr< ml::image::image_type_8 > image_type_8 =
+                    ml::image::coerce< ml::image::image_type_8 >( image );
+               
+                boost::shared_ptr< ml::image::image_type_8 > field0_type_8 =
+                    ml::image::coerce< ml::image::image_type_8 >( field0 );
+                boost::shared_ptr< ml::image::image_type_8 > field1_type_8 =
+                    ml::image::coerce< ml::image::image_type_8 >( field1 );
 
 				for ( int p = 0; p < image->plane_count( ); p ++ )
 				{
-					boost::uint8_t *dest_ptr = image->data( p );
-					boost::uint8_t *field0_ptr = field0->data( p );
-					boost::uint8_t *field1_ptr = field1->data( p );
+					boost::uint8_t *dest_ptr = image_type_8->data( p );
+					boost::uint8_t *field0_ptr = field0_type_8->data( p );
+					boost::uint8_t *field1_ptr = field1_type_8->data( p );
 					int field0_pitch = field0->pitch( p );
 					int field1_pitch = field1->pitch( p );
 					int linesize = image->linesize( p );
