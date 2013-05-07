@@ -70,8 +70,10 @@ int ML_to_AV( MLPixelFormat pixfmt )
 {
 	if (pixfmt == ML_PIX_FMT_YUV420P )
 		return (int)AV_PIX_FMT_YUV420P;
-	if (pixfmt == ML_PIX_FMT_YUV420P10 )
+    else if (pixfmt == ML_PIX_FMT_YUV420P10 )
 		return (int)AV_PIX_FMT_YUV420P10;
+    else if (pixfmt == ML_PIX_FMT_YUV420P16 )
+		return (int)AV_PIX_FMT_YUV420P16;
 	else if (pixfmt == ML_PIX_FMT_YUVA420P )
 		return (int)AV_PIX_FMT_YUVA420P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P )
@@ -80,10 +82,14 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUV422P10LE;
 	else if (pixfmt == ML_PIX_FMT_YUV422P10 )
 		return (int)AV_PIX_FMT_YUV422P10;
+	else if (pixfmt == ML_PIX_FMT_YUV422P16 )
+		return (int)AV_PIX_FMT_YUV422P16;
 	else if (pixfmt == ML_PIX_FMT_YUV422 )
 		return (int)AV_PIX_FMT_YUYV422;
 	else if (pixfmt == ML_PIX_FMT_YUV444P )
 		return (int)AV_PIX_FMT_YUV444P;
+	else if (pixfmt == ML_PIX_FMT_UYYVYY411 )
+		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_L8 )
 		return (int)AV_PIX_FMT_GRAY8;
 	else if (pixfmt == ML_PIX_FMT_L8A8 )
@@ -112,7 +118,6 @@ bool is_pixfmt_planar( int pixfmt )
     return desc->flags & PIX_FMT_PLANAR ? true : false;
 }
 
-// Fill an AVPicture with a potentially cropped aml image
 template<typename T>
 AVPicture fill_picture( ml::image_type_ptr image )
 {
@@ -123,8 +128,9 @@ AVPicture fill_picture( ml::image_type_ptr image )
     {
         if ( i < image->plane_count( ) )
         {
-            picture.data[ i ] = image_type->data( i );
-            picture.linesize[ i ] = image->pitch( i );
+            picture.data[ i ] = (boost::uint8_t*)image_type->data( i );
+            
+            picture.linesize[ i ] = image->linesize( i );
         }
         else
         {
@@ -136,40 +142,18 @@ AVPicture fill_picture( ml::image_type_ptr image )
     return picture;
 }
 
-template<>
-AVPicture fill_picture<ml::image::image_type_16>( ml::image_type_ptr image )
-{
-    AVPicture picture;
-
-    boost::shared_ptr< ml::image::image_type_16 > image_type = ml::image::coerce< ml::image::image_type_16 >( image );
-    for ( int i = 0; i < AV_NUM_DATA_POINTERS; i ++ )
-    {
-        if ( i < image->plane_count( ) )
-        {
-            picture.data[ i ] = (uint8_t*)image_type->data( i );
-            picture.linesize[ i ] = image->pitch( i );
-        }
-        else
-        {
-            picture.data[ i ] = 0;
-            picture.linesize[ i ] = 0;
-        }
-    }
-
-    return picture;
-}
 ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst)
 {
 
     AVPicture input;
     AVPicture output;
-    if (src->bitdepth( ) == 10 ) 
+    if (src->bitdepth( ) > 8 ) 
 	    input = fill_picture< ml::image::image_type_16 >( src );	
     else
 	    input = fill_picture< ml::image::image_type_8 >( src );	
        
  
-    if (dst->bitdepth( ) == 10 ) 
+    if (dst->bitdepth( ) > 8 ) 
 	    output = fill_picture< ml::image::image_type_16 >( dst );	
     else
 	    output = fill_picture< ml::image::image_type_8 >( dst );	

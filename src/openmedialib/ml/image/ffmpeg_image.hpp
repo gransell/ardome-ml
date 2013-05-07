@@ -347,8 +347,8 @@ private:
      
         if ( is_pixfmt_rgb( AVpixfmt_ ) )
 			crop_planes_rgb( crop, x, y, w, h, flags );
-//		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)
-//			crop_planes_411_packed( crop, x, y, w, h, flags );
+		else if (MLpixfmt_ == ML_PIX_FMT_UYYVYY411)
+			crop_planes_411_packed( crop, x, y, w, h, flags );
 		else
 			crop_planes_yuv( crop, x, y, w, h, flags );
            
@@ -438,16 +438,12 @@ private:
 
 
 		int bytes_to_copy = 1;		// yuv, with planes
-        if ( is_pixfmt_rgb( AVpixfmt_ ) )
+        if ( is_pixfmt_rgb( AVpixfmt_ ) ) {
 			bytes_to_copy = block_size( );
-
-/*
-		else if (AVpixfmt_ == AV_PIX_FMT_UYYVYY411)	
-		{
+        } else if (AVpixfmt_ == ML_PIX_FMT_UYYVYY411) {
 			w /= 4;		// amr: why?
 			bytes_to_copy = 6;
 		}
-*/
 		
 		src += w - bytes_to_copy;
 		while( w -- )
@@ -472,7 +468,6 @@ protected:
     {
         int numBytes;
         numBytes=utility_avpicture_get_size(AVpixfmt_, width_,height_);
-        ARLOG_CRIT("[ %1% ] NUMBYTES: %2%")( pf( ) )( numBytes );
         data_=(data_type *)utility_av_malloc(numBytes);
 
         desc_ = utility_av_pix_fmt_desc_get(AVpixfmt_);
@@ -524,14 +519,8 @@ protected:
         plane.offset = 0;
         plane.width = width_;
         plane.height = height_;
-
-        if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
-            plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
-        } else {
-            plane.pitch = width_;
-            plane.linesize = width_;
-        }
-
+        plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
+        
         planes_.push_back( plane );
 
         if ( plane_count( ) <= 1 ) { return; }
@@ -543,12 +532,12 @@ protected:
             plane.height = height_ / 2;
         }
 
-
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
         // PLANE 3
 
+        plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 2 );
         if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
             plane.offset += ( width_ * height_ ) / 4;
         } else if ( chroma_w_ == 1 && chroma_h_ == 0 ) {

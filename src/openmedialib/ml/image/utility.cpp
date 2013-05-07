@@ -24,10 +24,14 @@ ML_DECLSPEC int image_depth ( MLPixelFormat pf ) {
 	
 	if ( pf == ML_PIX_FMT_YUV420P10 )
 		return 10;
+    else if ( pf == ML_PIX_FMT_YUV420P16 )
+		return 16;
     else if ( pf == ML_PIX_FMT_YUV422P10LE )
 		return 10;
     else if ( pf == ML_PIX_FMT_YUV422P10 )
 		return 10;
+    else if ( pf == ML_PIX_FMT_YUV422P16 )
+		return 16;
 
 	return 8;
 }
@@ -37,7 +41,7 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
     ARENFORCE_MSG( pf != ML_PIX_FMT_NONE, "Invalid picture format");
 	if ( image_depth( pf ) == 8 )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
-	else if ( image_depth( pf ) == 10 )
+	else if ( image_depth( pf ) > 8 )
 		return ml::image::image_type_16_ptr( new ml::image::image_type_16( pf, width, height ) );
 	
 

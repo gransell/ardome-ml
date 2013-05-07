@@ -21,16 +21,19 @@ enum MLPixelFormat {
     ML_PIX_FMT_NONE,
     ML_PIX_FMT_YUV420P,
     ML_PIX_FMT_YUV420P10,
+    ML_PIX_FMT_YUV420P16,
     ML_PIX_FMT_YUVA420P,
     ML_PIX_FMT_UYV422,
     ML_PIX_FMT_YUV422P,
     ML_PIX_FMT_YUV422,
     ML_PIX_FMT_YUV422P10,
     ML_PIX_FMT_YUV422P10LE,
+    ML_PIX_FMT_YUV422P16,
 	ML_PIX_FMT_YUV444,
 	ML_PIX_FMT_YUV444P,
 	ML_PIX_FMT_YUV411,
 	ML_PIX_FMT_YUV411P,
+    ML_PIX_FMT_UYYVYY411,
     ML_PIX_FMT_L8,
     ML_PIX_FMT_L8A8,
     ML_PIX_FMT_L16,
@@ -47,6 +50,7 @@ namespace {
 std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 (_CT("yuv420p"),    ML_PIX_FMT_YUV420P)
 (_CT("yuv420p10"),  ML_PIX_FMT_YUV420P10)
+(_CT("yuv420p16"),  ML_PIX_FMT_YUV420P16)
 (_CT("yuva420p"),   ML_PIX_FMT_YUVA420P)
 (_CT("yuv422p"),    ML_PIX_FMT_YUV422P)
 (_CT("yuv422"),     ML_PIX_FMT_YUV422)
@@ -55,8 +59,10 @@ std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 (_CT("yuv444p"),    ML_PIX_FMT_YUV444P)
 (_CT("yuv411"),     ML_PIX_FMT_YUV411)
 (_CT("yuv411p"),    ML_PIX_FMT_YUV411P)
+(_CT("uyyvyy411"),  ML_PIX_FMT_UYYVYY411)
 (_CT("yuv422p10"),  ML_PIX_FMT_YUV422P10)
 (_CT("yuv422p10le"),ML_PIX_FMT_YUV422P10LE)
+(_CT("yuv422p16"),  ML_PIX_FMT_YUV422P16)
 (_CT("l8"),         ML_PIX_FMT_L8)
 (_CT("l8a8"),       ML_PIX_FMT_L8A8)
 (_CT("l16"),        ML_PIX_FMT_L16)

@@ -156,29 +156,11 @@ namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-template<typename T>    
+template<typename T>
 inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 {
-	typename T::data_type *ptr = ml::image::coerce< T >( img )->data( plane );
-	int width = img->width( plane );
-	int height = img->height( plane );
-	int diff = img->pitch( plane );
-
-	if ( ptr ) // && val >= 16 && val <= 240 )
-	{
-		while( height -- )
-		{
-			memset( ptr, val, width );
-			ptr += diff;
-		}
-	}
-	
-}
-
-inline void fill16( ml::image_type_ptr img, size_t plane, boost::uint16_t val )
-{
-	boost::uint16_t *ptr = ml::image::coerce< ml::image::image_type_16 >( img )->data( plane );
-	int width = img->width( plane );
+    boost::uint8_t *ptr = (boost::uint8_t*)ml::image::coerce< T >( img )->data( plane );
+	int width = img->linesize( plane );
 	int height = img->height( plane );
 	int diff = img->pitch( plane );
 
@@ -402,9 +384,11 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				int y, u, v;
 				ml::image::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
                 if ( image->bitdepth( ) == 10 ) {
-					fill16( image, 0, ( boost::uint16_t )y );
-					fill16( image, 1, ( boost::uint16_t )u );
-					fill16( image, 2, ( boost::uint16_t )v );
+                    //FIXME
+                } else if ( image->bitdepth( ) == 16 ) {
+					fill< ml::image::image_type_16 >( image, 0, ( boost::uint8_t )y );
+					fill< ml::image::image_type_16 >( image, 1, ( boost::uint8_t )u );
+					fill< ml::image::image_type_16 >( image, 2, ( boost::uint8_t )v );
                 } else {
                     fill< ml::image::image_type_8 >( image, 0, ( unsigned char )y );
                     fill< ml::image::image_type_8 >( image, 1, ( unsigned char )u );
