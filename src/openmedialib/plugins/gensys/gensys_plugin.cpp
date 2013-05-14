@@ -164,11 +164,30 @@ inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 	int height = img->height( plane );
 	int diff = img->pitch( plane );
 
+	int val_shifted = val;
+	int val_width_in_bytes = 1;
+	
+	if (img->bitdepth() == 16)
+	{
+		val_shifted <<= 8;
+		val_width_in_bytes = 2;
+	}
+	else if (img->bitdepth() == 10)
+	{
+		val_shifted <<= 2;
+		val_width_in_bytes = 2;
+	}
+
 	if ( ptr ) // && val >= 16 && val <= 240 )
 	{
 		while( height -- )
 		{
-			memset( ptr, val, width );
+			//memset( ptr, val, width );
+
+			boost::uint8_t *ptr_running = ptr;
+			for (int i = 0; i < width; i++, ptr_running += val_width_in_bytes)
+				memcpy(ptr_running, (const void *)&val_shifted, val_width_in_bytes);
+
 			ptr += diff;
 		}
 	}
@@ -385,6 +404,9 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				ml::image::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
                 if ( image->bitdepth( ) == 10 ) {
                     //FIXME
+					fill< ml::image::image_type_16 >( image, 0, ( boost::uint8_t )y );
+					fill< ml::image::image_type_16 >( image, 1, ( boost::uint8_t )u );
+					fill< ml::image::image_type_16 >( image, 2, ( boost::uint8_t )v );
                 } else if ( image->bitdepth( ) == 16 ) {
 					fill< ml::image::image_type_16 >( image, 0, ( boost::uint8_t )y );
 					fill< ml::image::image_type_16 >( image, 1, ( boost::uint8_t )u );
