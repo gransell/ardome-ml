@@ -7,6 +7,7 @@
 #include <openmedialib/ml/audio_block.hpp>
 #include <openmedialib/plugins/avformat/avformat_stream.hpp>
 #include "utils.hpp"
+#include <cmath>
 
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
@@ -212,6 +213,239 @@ BOOST_AUTO_TEST_CASE( avformat_input_pcm24_25p )
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_30p )
 {
 	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_1080p30_6ch_24bit.mov" ) );
+}
+
+#define abs( a ) a < 0 ? -1 * a : a
+
+
+template< typename audio_type > 
+void test_resampler( boost::uint32_t sample_rate_in, boost::uint32_t sample_rate_out, 
+					 boost::uint32_t fps_num_in, boost::uint32_t fps_den_in, 
+					 boost::uint32_t channels_in, boost::uint32_t num_frames )
+{
+	const audio::identity id_in = audio_type::static_id();
+	const boost::uint32_t frequency_in = 440;
+
+	const typename audio_type::sample_type id_amplitude = audio_type::max_sample( );
+	const typename audio_type::sample_type amplitude = id_amplitude / ( 2 * channels_in ); // to prevent clipping if/when mixing channels
+
+	const typename audio_type::sample_type tolerance = id_amplitude / 10000;
+
+	const boost::uint32_t samples_to_discard_in_output_check = frequency_in / 4;
+
+	// create pusher input to feed frame with
+	input_type_ptr inp = create_input( "pusher:" );
+	BOOST_REQUIRE( inp );
+	inp->property( "length" ) = int( num_frames );
+	BOOST_REQUIRE( inp->init() );
+
+	// create resampler filter
+	filter_type_ptr resampler_filter = create_filter( L"resampler" );
+	BOOST_REQUIRE( resampler_filter );
+	resampler_filter->property( "frequency" ) = int( sample_rate_out );
+	resampler_filter->connect( inp );
+	resampler_filter->sync();
+
+
+
+	frame_type_ptr frame;
+	boost::uint32_t samples_to_and_inc_frame = 0;
+	for ( boost::uint32_t iframe = 0; iframe < num_frames; ++iframe )
+	{
+		const boost::uint32_t samples_in = audio::samples_for_frame( iframe, sample_rate_in, fps_num_in, fps_den_in );
+
+		audio_type_ptr cur_audio = audio::allocate( id_in, sample_rate_in, channels_in, samples_in, false );
+
+		typename audio_type::sample_type *dst = static_cast<typename audio_type::sample_type*>( cur_audio->pointer( ) );
+		for ( boost::uint32_t isample = 0; isample < samples_in; ++isample )
+		{
+			typename audio_type::sample_type val = amplitude * std::sin( frequency_in * 6.28318530718 * samples_to_and_inc_frame / sample_rate_in );
+			for ( boost::uint8_t channel = 0; channel < channels_in; ++channel, ++dst )
+			{
+				*dst = val;
+			}
+			++samples_to_and_inc_frame;
+		}
+
+		// create frame and add audio to it
+		frame.reset( new frame_type( ) );
+		frame->set_position( iframe );
+		frame->set_audio( cur_audio );
+		frame->set_fps( fps_num_in, fps_den_in );
+
+		inp->push( frame );
+
+
+
+	}
+
+
+
+	samples_to_and_inc_frame = 0;
+
+//     how many samples should we skip at the tail end:
+	const boost::uint32_t total_samples_to_end_at = audio::samples_to_frame( num_frames, sample_rate_out, fps_num_in, fps_den_in ) - samples_to_discard_in_output_check;
+
+	for ( boost::uint32_t iframe = 0; iframe < num_frames; ++iframe )
+	{
+		resampler_filter->seek( iframe );
+
+		frame_type_ptr frame = resampler_filter->fetch( );
+
+		if ( 0 == frame ) // to prevent log spam
+			BOOST_REQUIRE( frame );
+
+		audio_type_ptr audio_out = frame->get_audio( );
+		if ( 0 == audio_out ) // to prevent log spam
+			BOOST_REQUIRE( audio_out );
+
+		if ( audio_out->id( ) != id_in )
+			BOOST_REQUIRE_EQUAL( audio_out->id( ), id_in );
+
+		const boost::uint32_t samples_out = audio_out->samples( );
+		const boost::uint32_t expected_samples_out = audio::samples_for_frame( iframe, sample_rate_out, fps_num_in, fps_den_in );
+		if ( expected_samples_out != samples_out ) // to prevent log spam
+			BOOST_CHECK( expected_samples_out == samples_out );
+		
+		typename audio_type::sample_type* buf = static_cast<typename audio_type::sample_type*>( audio_out->pointer( ) );
+
+		boost::uint32_t isample = 0;
+		if ( iframe == 0 ) // this assumes samples_to_discard_in_output_check is less than the number of samples in a frame, a reasonable assumption
+		{
+			isample = samples_to_discard_in_output_check;
+			buf += samples_to_discard_in_output_check * channels_in;
+			samples_to_and_inc_frame = samples_to_discard_in_output_check;
+		}
+
+
+		for ( ; isample < samples_out; ++isample, ++samples_to_and_inc_frame )
+		{
+			if ( total_samples_to_end_at < samples_to_and_inc_frame )
+				break;
+
+			typename audio_type::sample_type expected_value = amplitude * std::sin( frequency_in * 6.28318530718 * samples_to_and_inc_frame / sample_rate_out );
+
+			for ( boost::uint32_t channel = 0; channel < channels_in; ++channel, ++buf )
+			{
+				if ( abs( expected_value - *buf ) <= tolerance )
+					continue;
+
+				BOOST_REQUIRE_EQUAL( expected_value, *buf );
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE( avformat_filter_resampler )
+{
+	boost::uint32_t sample_rate_in	= 48000;
+	boost::uint32_t sample_rate_out = 48000;
+	boost::uint32_t fps_num_in		= 25;
+	boost::uint32_t fps_den_in		= 1;
+	boost::uint32_t channels_in		= 1;
+	boost::uint32_t frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 48000;
+	sample_rate_out = 44100;
+	fps_num_in		= 25;
+	fps_den_in		= 1;
+	channels_in		= 1;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 25;
+	fps_den_in		= 1;
+	channels_in		= 1;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 48000;
+	sample_rate_out = 44100;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 1;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 1;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 2;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 6;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 8;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
+	sample_rate_in	= 44100;
+	sample_rate_out = 48000;
+	fps_num_in		= 30000;
+	fps_den_in		= 1001;
+	channels_in		= 32;
+	frames			= 64;
+
+	test_resampler<audio::pcm16>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm24>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::pcm32>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+	test_resampler<audio::floats>( sample_rate_in, sample_rate_out, fps_num_in, fps_den_in, channels_in, frames );
+
 }
 
 

@@ -56,17 +56,20 @@ class ML_DECLSPEC template_ : public base
 			opencorelib::utilities::aligned_free( data_ );
 		}
 
-		const sample_type min_sample( ) const
+		static const sample_type min_sample( )
 		{ return sample_type( min_val ); }
 
-		const sample_type max_sample( ) const
+		static const sample_type max_sample( )
 		{ return sample_type( max_val ); }
 
 		audio_type_ptr clone( ) const
 		{ return audio_type_ptr( new template_< sample_type, B, min_val, max_val >( static_cast<const base&>(*this) ) ); }
 
 		identity id( ) const 
-		{ return id_; }
+		{ return static_id( ); }
+
+		static identity static_id( )
+		{ return B; }
 
 		int sample_storage_size( ) const
 		{ return this->sample_storage_size_static( ); }

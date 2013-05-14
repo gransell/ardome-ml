@@ -44,10 +44,11 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			, prop_enable_( pcos::key::from_string( "enable" ) )
 			, current_frequency_(-1)
 			, current_channels_(-1)
-			, filter_( 0 )
+			, resampler_( 0 )
 			, dirty_(true)
 			, direction_( 1 )
 			, expected_( -1 )
+			, latest_processed_position_( -1 )
 		{
 			property_observer_ = boost::shared_ptr<pcos::observer>(new avformat_resampler_filter::property_observer(const_cast<avformat_resampler_filter*>(this)));
 		
@@ -76,93 +77,255 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 		}
 
 	protected:
+
 		void do_fetch( frame_type_ptr &current_frame )
+		{
+			int wanted_position = this->get_position( );
+
+			this->internal_do_fetch( current_frame );
+
+			this->seek( wanted_position );
+			this->cleanup_frame_cache( );
+		}
+
+	private:
+
+		class cached_audio;
+
+
+		void internal_do_fetch( frame_type_ptr &current_frame )
 		{
 			// Cache a local copy of current position
 			int current_pos = get_position();
 
 			// Make sure we know the direction of the samples so we can correct as required
 			if ( current_pos != expected_ )
+			{
 				direction_ = expected_ - current_pos == 2 ? -1 : 1;
+				this->flush_resampler( );
+				dirty_ = true;
+			}
 
 			// Next expected frame
 			expected_ = current_pos + direction_;
 
-			// Ensure the cache is full
-			current_frame = fetch_from_slot( 0 );
-
-			if ( prop_enable_.value< int >( ) == 0 || !current_frame )
+			if ( false == this->fetch_current_frame( current_frame ) )
+			{
+				this->flush_resampler( );
 				return;
+			}
 
-			// Ensure the audio samples are in the right direction
-			current_frame = current_frame->shallow( );
-			reverse( current_frame );
+			if ( prop_enable_.value< int >( ) == 0 )
+			{
+				this->flush_resampler( );
+				return;
+			}
 
 			ml::audio_type_ptr current_audio = current_frame->get_audio( );
-			if( !current_audio )
-				return;
 
 			// Obtain the requested values
 			int out_frequency = prop_output_sample_freq_.value< int >( );
 			int out_channels = prop_output_channels_.value< int >( );
-			std::wstring out_af = prop_af_.value< std::wstring >( );
+			olib::t_string out_af = opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) );
 
 			// Fill in defaults from current frame if necessary
 			if ( out_frequency <= 0 ) out_frequency = current_frequency_ <= 0 ? current_audio->frequency( ) : current_frequency_;
 			if ( out_channels <= 0 ) out_channels = current_channels_ <= 0 ? current_audio->channels( ) : current_channels_;
-			if ( out_af == L"" ) out_af = current_af_ == L"" ? opencorelib::str_util::to_wstring( current_audio->af( ) ) : current_af_;
+			if ( out_af == _CT( "" ) ) out_af = current_af_ == _CT( "" ) ? current_audio->af( ) : current_af_;
 
-			// Store the used values for subsequent reuse
+			// Store the used values for subsequent reuse. 
 			current_frequency_ = out_frequency;
 			current_channels_ = out_channels;
 			current_af_ = out_af;
 
-			// FIXME: Hack to provide a uniform output if frequency is unchanged (should be handled by swresample)
-			if ( out_channels != current_audio->channels( ) )
-			{
-				current_audio = audio::channel_convert(current_audio, out_channels, last_channels_);
-				current_frame->set_audio( current_audio );
-			}
-
 			// Drop out now if we have what we want
 			if ( out_frequency == current_audio->frequency( ) && 
 				 out_channels == current_audio->channels( ) && 
-				 out_af == opencorelib::str_util::to_wstring( current_audio->af( ) ) )
+				 out_af == current_audio->af( ) )
 			{
-				last_channels_ = current_audio;
 				return;
 			}
 
-			// since ffmpeg resampler will only accept 8 channels or less, force any input with more than 8 channels to conform
-			if( current_audio->channels() > 8 && out_channels > 8 )
+			avformat_resampler_filter::cached_audio audio_out;
+			int out_samples = ml::audio::samples_for_frame( current_pos, out_frequency, current_frame->get_fps_num( ), current_frame->get_fps_den( ) );
+
+			audio_out.set_audio( ml::audio::allocate( ml::audio::af_to_id( out_af ), 
+													  out_frequency, 
+													  out_channels, 
+													  out_samples ) );
+
+			audio_out.set_current_position( 0 );
+
+			while ( false == audio_out.filled( ) )
 			{
-				current_audio = audio::channel_convert(current_audio, 8, last_channels_);
-				current_channels_ = 8;
-				out_channels = out_channels <= 8 ? out_channels : 8;
+				ml::audio_type_ptr current_audio = this->fetch_next_audio( );
+
+				if ( 0 == current_audio )
+					break;
+
+				this->convert_audio( current_audio, audio_out, out_frequency, out_channels, out_af );
+				
 			}
 
-			// Check if changes have occurred in the input
+
+
+			if ( false == audio_out.filled( ) )
+			{
+				this->flush_resampler( &audio_out );
+				this->pad_with_zeroes( audio_out );
+			}
+
+			ml::audio_type_ptr audio_out_ptr = audio_out.get_audio( );
+			audio_out_ptr->set_position( current_frame->get_audio( )->position( ) );
+			audio_out_ptr = ml::audio::coerce( ml::audio::af_to_id( out_af ), audio_out_ptr );
+			current_frame->set_audio( audio_out_ptr );
+
+
+
+		}
+
+		bool fetch_current_frame( frame_type_ptr& a_frame )
+		{
+			for(frame_list::iterator i = in_frame_cache_.begin(), 
+				e = in_frame_cache_.end(); i != e; ++i)
+			{
+				 if ( (*i)->get_position( ) == this->get_position( ) )
+				 {
+					 a_frame = *i;
+					 return true;
+				 }
+			}
+
+			a_frame = fetch_from_slot( 0 );
+
+			if ( 0 == a_frame || 0 == a_frame->get_audio( ) )
+				return false;
+
+			a_frame = a_frame->shallow( );
+			this->reverse( a_frame );
+
+			in_frame_cache_.push_back( a_frame );
+
+
+			return true;
+
+		}
+
+
+		ml::audio_type_ptr fetch_next_audio( )
+		{
+			int next_position = latest_processed_position_ < 0 ? this->get_position( ) : latest_processed_position_ + direction_;
+
+			if ( 0 > next_position || this->get_frames( ) <= next_position )
+			{
+				return ml::audio_type_ptr();
+			}
+
+			this->seek( next_position );
+
+			frame_type_ptr tmpframe;
+
+			if ( false == this->fetch_current_frame( tmpframe ) )
+				return ml::audio_type_ptr();
+
+
+			return tmpframe->get_audio( );
+
+		}
+
+		void convert_audio( ml::audio_type_ptr& audio_in, avformat_resampler_filter::cached_audio& audio_out, 
+							const int& out_freq, const int& out_chan, const olib::t_string& out_af )
+		{
 			if ( !dirty_ )
 			{
-				dirty_ =	( filter_->get_in_frequency( ) != current_audio->frequency( ) ) ||
-							( filter_->get_in_channels( ) != current_audio->channels( ) ) ||
-							( filter_->get_in_format( ) != aml_id_to_AVSampleFormat( current_audio->id( ) ) );
+				dirty_ =	( resampler_->get_frequency_in( ) != audio_in->frequency( ) ) ||
+							( resampler_->get_channels_in( ) != audio_in->channels( ) ) ||
+							( resampler_->get_format_in( ) != aml_id_to_AVSampleFormat( audio_in->id( ) ) );
 			}
 
 			if ( dirty_ )
 			{
-				filter_.reset(new avaudio_convert_to_aml( current_audio->frequency( ), out_frequency, current_audio->channels( ), out_channels, aml_id_to_AVSampleFormat( current_audio->id( ) ), ml::audio::af_to_id( opencorelib::str_util::to_t_string( out_af ) ) ) );
+				// reset the resampler since input has changed
+				// first flush the resampler
+				this->flush_resampler( &audio_out );
+
+				resampler_.reset(new avaudio_resampler( audio_in->frequency( ), 
+														out_freq, 
+														audio_in->channels( ), 
+														out_chan, 
+														avaudio_resampler::channels_to_layout( audio_in->channels( ) ),
+														avaudio_resampler::channels_to_layout( out_chan ),
+														aml_id_to_AVSampleFormat( audio_in->id( ) ), 
+														aml_id_to_AVSampleFormat( ml::audio::af_to_id( out_af ) ) ) );
 
 				dirty_ = false;
 			}
 
-			ml::audio_type_ptr output_audio = filter_->convert( current_audio );
-			output_audio->set_position( current_audio->position( ) );
 
-			// Set current frame to have this new audio object, which now holds the resampled audio data
-			current_frame->set_audio(output_audio);
-			last_channels_ = output_audio;
+
+			int out_offset = audio_out.get_byte_offset( );
+
+			
+			int resampled_count = resampler_->resample( (boost::uint8_t*) audio_out.get_audio( )->pointer( ) + out_offset, 
+														audio_out.get_audio( )->samples( ) - audio_out.get_current_position( ), 
+														(boost::uint8_t*) audio_in->pointer( ),
+														audio_in->samples( ) );
+
+
+			latest_processed_position_ = this->get_position();
+
+			audio_out.set_current_position( audio_out.get_current_position( ) + resampled_count );
+
 		}
+
+		void flush_resampler( avformat_resampler_filter::cached_audio* audio = 0 )
+		{
+			latest_processed_position_ = -1;
+
+			if ( 0 == resampler_ )
+			{
+				return;
+			}
+
+			if ( audio )
+			{
+				int out_offset = audio->get_byte_offset( );
+
+				int resampled_count = 
+					resampler_->drain( (boost::uint8_t*) audio->get_audio( )->pointer( ) + out_offset, 
+									   audio->get_audio( )->samples( ) - audio->get_current_position( ) );
+
+				audio->set_current_position( audio->get_current_position( ) + resampled_count );
+			}
+
+			// make sure resampler is empty. Flush 10000 bytes at a time
+			// FIXME: isn't there a way to know how many samples are still in the resampler?
+			while (resampler_->drain( 10000 ) ) {}
+
+		}
+
+		void pad_with_zeroes( avformat_resampler_filter::cached_audio& audio )
+		{
+			int out_offset = audio.get_byte_offset( );
+			memset( static_cast<boost::uint8_t*>( audio.get_audio( )->pointer( ) ) + out_offset, 0, audio.get_audio( )->size( ) - out_offset );
+		}
+
+		void cleanup_frame_cache( )
+		{
+			for(frame_list::iterator i = in_frame_cache_.begin(), 
+				e = in_frame_cache_.end(); i != e; )
+			{
+				if ( (*i)->get_position( ) != expected_ ||
+					 (*i)->get_position( ) != this->get_position( ) )
+				{
+					i = in_frame_cache_.erase( i );
+					continue;
+				}
+
+				++i;
+			}
+		}
+
 	
 	private:
 
@@ -181,6 +344,69 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 	
 			private:
 				avformat_resampler_filter* filter_;
+		};
+
+		class cached_audio
+		{
+			public:
+
+				cached_audio()
+					: current_sample_position_(-1)
+				{}
+
+				bool init_with_frame( frame_type_ptr& frame )
+				{
+					if ( 0 == frame->get_audio( ) )
+					{
+						return false;
+					}
+
+					current_audio_ = frame->get_audio( );
+					current_sample_position_ = 0;
+
+					return true;
+				}
+
+				void set_audio( ml::audio_type_ptr audio_ptr )
+				{
+					current_audio_ = audio_ptr;
+				}
+
+				ml::audio_type_ptr& get_audio( )
+				{
+					return current_audio_;
+				}
+
+				bool filled( ) const
+				{
+					return ( 0 != current_audio_ ) && ( current_sample_position_ == current_audio_->samples() );
+				}
+
+				int get_byte_offset( ) const
+				{
+					if ( 0 == current_audio_ )
+					{
+						return 0;
+					}
+
+					return current_sample_position_ * current_audio_->channels( ) * current_audio_->sample_storage_size( );
+				}
+
+				int get_current_position( ) const
+				{
+					return current_sample_position_;
+				}
+
+				void set_current_position( int new_position )
+				{
+					current_sample_position_ = new_position;
+				}
+
+			private:
+
+				int						current_sample_position_;
+				ml::audio_type_ptr		current_audio_;
+
 		};
 
 		// Handles the audio direction
@@ -218,13 +444,16 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 
 		int current_frequency_;
 		int current_channels_;
-		std::wstring current_af_;
+		olib::t_string current_af_;
 	
-		boost::scoped_ptr< avaudio_convert_to_aml > filter_;
+		boost::scoped_ptr< avaudio_resampler > resampler_;
 		bool dirty_;
-		audio_type_ptr last_channels_;
 		int direction_;
 		int expected_;
+		int latest_processed_position_;
+
+		typedef std::list<frame_type_ptr> frame_list;
+		frame_list in_frame_cache_;
 };
 
 filter_type_ptr ML_PLUGIN_DECLSPEC create_resampler( const std::wstring &resource )
