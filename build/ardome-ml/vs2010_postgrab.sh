@@ -1,6 +1,12 @@
 #!/bin/bash
 cd bcomp
 
+function die
+{
+	echo $*
+	exit
+}
+
 if [ ! -d vs2010 ]; then
 	echo "Creating vs2010 subdir to bcomp"
 	mkdir vs2010
@@ -155,6 +161,14 @@ if [ ! -d owl ]; then
           echo "Failed to run unzip unzip -oq tmp/owl-vs2010.zip. Terminating."
           exit
         fi
+fi
+
+if [ ! -d decklink_sdk ]; then
+
+	echo "Extracting decklink.."
+	tar xvfj black_magic_decklink_sdk.tbz2 &&
+	mv "Blackmagic DeckLink SDK 8.6" decklink_sdk ||
+	die "Failed to tar xvfj black_magic_decklink_sdk.tbz2. Terminating."
 fi
 
 echo "Postgrab succeeded!"
