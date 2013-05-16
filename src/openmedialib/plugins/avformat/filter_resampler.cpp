@@ -80,6 +80,13 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 
 		void do_fetch( frame_type_ptr &current_frame )
 		{
+			if ( prop_enable_.value< int >( ) == 0 )
+			{
+				this->flush_resampler( );
+				current_frame = this->fetch_from_slot( 0 );
+				return;
+			}
+
 			int wanted_position = this->get_position( );
 
 			this->internal_do_fetch( current_frame );
@@ -115,11 +122,9 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 				return;
 			}
 
-			if ( prop_enable_.value< int >( ) == 0 )
-			{
-				this->flush_resampler( );
-				return;
-			}
+
+			// we don't want any downstream filters corrupting the frame in our cache: shallow copy it
+			current_frame = current_frame->shallow( );
 
 			ml::audio_type_ptr current_audio = current_frame->get_audio( );
 
@@ -201,11 +206,9 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 			if ( 0 == a_frame || 0 == a_frame->get_audio( ) )
 				return false;
 
-			a_frame = a_frame->shallow( );
 			this->reverse( a_frame );
 
 			in_frame_cache_.push_back( a_frame );
-
 
 			return true;
 
@@ -427,10 +430,10 @@ class ML_PLUGIN_DECLSPEC avformat_resampler_filter : public filter_simple
 				{
 					audio = ml::audio::reverse( audio );
 					property = ( int )( property.value< int >( ) ? 0 : 1 );
+					frame->set_audio( audio );
 				}
 			}
 
-			frame->set_audio( audio );
 		}
 
 		boost::shared_ptr<pcos::observer> property_observer_;
