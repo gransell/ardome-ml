@@ -340,7 +340,7 @@ ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr frame, float volume )
 	if ( frame && frame->get_audio( ) )
 	{
 		audio_type_ptr audio = frame->get_audio( );
-		audio = audio::coerce( audio::pcm16_id, audio );
+		audio = audio::force( audio::pcm16_id, audio );
 
 		const int channels = audio->channels( );
 		const int samples = audio->samples( );
