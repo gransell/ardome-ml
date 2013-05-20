@@ -611,7 +611,20 @@ class Environment( BaseEnvironment ):
 
 		new_lib = self.SharedLibrary( lib, sources, *keywords )
 		return new_lib
-		
+
+	def static_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		if "static_library" in dir(self.build_manager) :
+			return self.build_manager.static_library( self, lib, sources, headers, pre, nopre, *keywords )
+
+		self.setup_precompiled_headers( sources, pre, nopre, True )
+
+		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
+		self.setup_clr_compilation()
+
+		new_lib = self.StaticLibrary( lib, sources, *keywords )
+		return new_lib
+
 	def dot_net_library( self, lib, sources, headers=None, dot_net_assemblies=[], pre=None, nopre=None, *keywords ) :
 	
 		self.Append( CPPFLAGS = [ '/EHa', '/clr' ] ) 

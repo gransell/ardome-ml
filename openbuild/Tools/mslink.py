@@ -150,6 +150,7 @@ def exists(env):
 	
 def generate(env):
 	SCons.Tool.createSharedLibBuilder(env)
+	SCons.Tool.createStaticLibBuilder(env)
 	SCons.Tool.createProgBuilder(env)
 	
 	current_visual_studio_version = msvc.current_vc_version( env ) 
