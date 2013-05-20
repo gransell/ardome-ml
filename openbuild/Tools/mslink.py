@@ -130,8 +130,8 @@ def RegServerFunc(target, source, env):
 regServerAction = SCons.Action.Action("$REGSVRCOM", "$REGSVRCOMSTR")
 regServerCheck = SCons.Action.Action(RegServerFunc, None)
 
-mergeManifestActionProg = SCons.Action.Action('mt.exe -manifest ${TARGET}.manifest -outputresource:${TARGET};1')
-mergeManifestActionDll = SCons.Action.Action('mt.exe -manifest ${TARGET}.manifest -outputresource:${TARGET};2')
+mergeManifestActionProg = SCons.Action.Action('mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:${TARGET};1')
+mergeManifestActionDll = SCons.Action.Action('mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:${TARGET};2')
 
 shlibLinkAction = SCons.Action.Action('${TEMPFILE("$SHLINK $SHLINKFLAGS $_SHLINK_TARGETS $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $_SHLINK_SOURCES")}')
 progLinkAction = SCons.Action.Action('${TEMPFILE("$LINK $LINKFLAGS /OUT:$TARGET.windows $( $_LIBDIRFLAGS $) $_LIBFLAGS $_PDB $SOURCES.windows")}')
