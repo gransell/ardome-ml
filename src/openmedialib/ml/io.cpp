@@ -126,7 +126,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace io {
 			return 0;
 
 		//Make a final flush before closing.
-		//avio_close does this internally, but then there's not
+		//avio_close does this internally, but then there's no
 		//way to detect if it failed or not, since it destroys the
 		//context containing the error flags right after.
 		int flush_result = 0;
