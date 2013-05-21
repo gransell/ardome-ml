@@ -256,7 +256,7 @@ def setup_standard_environment( env ):
 	env['CFILESUFFIX'] = '.c'
 	env['CXXFILESUFFIX'] = '.cc'
 
-	env['PCHCOM'] = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo${TARGETS[1]} /Yc"$PCHSTOP" /Fp${TARGETS[0]} $CCPDBFLAGS $PCHPDBFLAGS'
+	env['PCHCOM'] = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo${TARGETS[1]} /Yc"$PCHSTOP" /Ylsuppress_lnk4206_warning /Fp${TARGETS[0]} $CCPDBFLAGS $PCHPDBFLAGS'
 	env['BUILDERS']['PCH'] = pch_builder
 	
 
