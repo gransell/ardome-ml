@@ -165,7 +165,7 @@ node::attribute node::operator[](const std::string& attrib) {
 	return a;
 }
 
-node node::first(const std::string& s) {
+node node::first(const std::string& s) const {
 	if ( !n_ )
 		return node();
 
@@ -187,7 +187,7 @@ node node::first(const std::string& s) {
 }
 
 // ns_uri is ignored, getNsUri seems not to work for some reason
-node node::first(const std::string& s, const std::string& ns_uri) {
+node node::first(const std::string& s, const std::string& ns_uri) const {
 	if ( !n_ )
 		return node();
 
@@ -208,7 +208,7 @@ node node::first(const std::string& s, const std::string& ns_uri) {
 	return node();
 }
 
-nodes node::all(const std::string& s) {
+nodes node::all(const std::string& s) const {
 	nodes _nodes;
 
 	if ( !n_ )
@@ -232,7 +232,7 @@ nodes node::all(const std::string& s) {
 }
 
 // ns_uri is ignored, getNsUri seems not to work for some reason
-nodes node::all(const std::string& s, const std::string& ns_uri) {
+nodes node::all(const std::string& s, const std::string& ns_uri) const {
 	nodes _nodes;
 
 	if ( !n_ )
@@ -307,7 +307,7 @@ node node::createChild(const std::string& _name)
 		std::string ns_uri;
 
 		// Lookup namespace URI
-		node* n = this;
+		const node* n = this;
 		do {
 			if (ns.empty())
 				ns = n->node_ns_;
@@ -447,7 +447,7 @@ node& node::removeAttribute(const std::string& name) {
 	return *this;
 }
 
-node::node(node* parent, DOMNode* nodeptr)
+node::node(const node* parent, DOMNode* nodeptr)
 : n_(nodeptr)
 , parent_(parent)
 , owner_(nodeptr->getOwnerDocument())

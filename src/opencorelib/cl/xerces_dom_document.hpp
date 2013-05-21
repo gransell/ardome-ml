@@ -87,6 +87,7 @@ private:
 class CORE_API file_document : public document {
 public:
 	file_document(const std::string& filename);
+	file_document(std::istream &xml_input_stream);
 };
 
 } // namespace dom

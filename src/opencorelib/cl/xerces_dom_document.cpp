@@ -153,6 +153,18 @@ file_document::file_document(const std::string& filename)
 	n_ = &*doc;
 }
 
+file_document::file_document(std::istream &xml_input_stream)
+{
+	XercesDOMParser parser;
+
+	olib::opencorelib::std_input_source stream_buf(xml_input_stream);
+
+	parser.parse(stream_buf);
+
+	doc = DocPtr(parser.adoptDocument());
+	n_ = &*doc;
+}
+
 
 } // namespace dom
 

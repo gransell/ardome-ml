@@ -109,15 +109,17 @@ public:
 	// * nsuri: s needs to be part of nsuri
 	// The first function (without ns_uri) will inherit the settings from
 	// its parent.
-	node first(const std::string& s);
-	node first(const std::string& s, const std::string& ns_uri);
+	node first(const std::string& s) const;
+	node first(const std::string& s, const std::string& ns_uri) const;
 
 	// Same as first() but returns all nodes with a certain name
-	nodes all(const std::string& s);
-	nodes all(const std::string& s, const std::string& ns_uri);
+	nodes all(const std::string& s) const;
+	nodes all(const std::string& s, const std::string& ns_uri) const;
 
 	std::string getNsUri() const;
 	std::string getName() const;
+
+	// Returns the text value of the node, including any descendants
 	std::string getValue() const;
 
 	/*
@@ -144,7 +146,7 @@ public:
 	node& removeAttribute(const std::string& name);
 
 protected:
-	node(node* parent, XERCES_CPP_NAMESPACE::DOMNode* nodeptr);
+	node(const node* parent, XERCES_CPP_NAMESPACE::DOMNode* nodeptr);
 
 	void onStreamInput(const std::string& s);
 
@@ -152,7 +154,7 @@ protected:
 	void flush();
 
 	XERCES_CPP_NAMESPACE::DOMNode* n_;
-	node* parent_;
+	const node* parent_;
 
 private:
 	friend class document;
@@ -164,7 +166,7 @@ private:
 
 	// A namespace map for this particular node
 	typedef std::map< std::string, std::string > NamespaceMap;
-	typedef NamespaceMap::iterator NamespaceMapIter;
+	typedef NamespaceMap::const_iterator NamespaceMapIter;
 	NamespaceMap nsmap_;
 };
 
