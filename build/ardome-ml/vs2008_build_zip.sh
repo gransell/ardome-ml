@@ -72,16 +72,13 @@ find TMPZIP/aml/bin/debug/ -name "*Unittests*" -type f -print0 | xargs -0 rm -f
 
 echo "Purging lib-files from the bin directory"
 find TMPZIP/aml/bin/debug/ -name "*.lib" -type f -print0 | xargs -0 rm -f
+find TMPZIP/aml/bin/debug/plugins -name "*.lib" -type f -print0 | xargs -0 rm -f
 find TMPZIP/aml/bin/release/ -name "*.lib" -type f -print0 | xargs -0 rm -f
+find TMPZIP/aml/bin/release/plugins -name "*.lib" -type f -print0 | xargs -0 rm -f
 
 echo "Purging .pyc-files "
 find TMPZIP/openbuild/ -name "*.pyc" -type f -print0 | xargs -0 rm -f
 find TMPZIP/aml/py  -name "*.pyc" -type f -print0 | xargs -0 rm -f
-
-rm -rf TMPZIP/aml/bin/debug/plugins
-rm -rf TMPZIP/aml/bin/debug/examples
-rm -rf TMPZIP/aml/bin/release/plugins
-rm -rf TMPZIP/aml/bin/release/examples
 
 echo "Building zip-file ardome-ml-vs2008.zip .."
 cd TMPZIP 
