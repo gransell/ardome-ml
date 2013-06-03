@@ -19,6 +19,15 @@ namespace il = olib::openimagelib::il;
 namespace ml = olib::openmedialib::ml;
 namespace du = amf::openmedialib::decklink::utilities;
 
+// To make this work on windows, linux and osx, the following type definitions are added to 
+// work around subtle differences in the API interface between Windows and everything else
+#ifndef _WIN32
+typedef bool BOOL;
+typedef uint32_t BM_UINT32;
+#else
+typedef unsigned long BM_UINT32;
+#endif
+
 namespace amf { namespace openmedialib { 
 
 class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLinkVideoOutputCallback, public IDeckLinkAudioOutputCallback
@@ -205,12 +214,12 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			boost::mutex::scoped_lock lck( mutex_audio_ );
 	
 			// Try to maintain the number of audio samples buffered in the API at a specified waterlevel
-			boost::uint32_t buffered;
-			if ( device_->GetBufferedAudioSampleFrameCount( ( unsigned long * )&buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
+			BM_UINT32 buffered;
+			if ( device_->GetBufferedAudioSampleFrameCount( &buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
 			{
 				ml::audio_type_ptr audio = downloaded_audio_.front( ).second;
-				boost::uint32_t samples;
-				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, ( unsigned long * )&samples );
+				BM_UINT32 samples;
+				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, &samples );
 				if ( samples != audio->samples( ) )
 					std::cerr << "offered " << audio->samples( ) << " took " << samples << std::endl;
 				downloaded_audio_.pop_front( );
