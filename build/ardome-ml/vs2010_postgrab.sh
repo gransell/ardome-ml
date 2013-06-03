@@ -167,7 +167,8 @@ if [ ! -d decklink_sdk ]; then
 
 	echo "Extracting decklink.."
 	tar xvfj black_magic_decklink_sdk.tbz2 &&
-	mv "Blackmagic DeckLink SDK 8.6" decklink_sdk ||
+	mv "Blackmagic DeckLink SDK 8.6" decklink_sdk &&
+	( cd decklink_sdk/Win/include && midl /header DeckLinkAPI.h DeckLinkAPI.idl && mv DeckLinkAPI_i.c DeckLinkAPIDispatch.cpp ) ||
 	die "Failed to tar xvfj black_magic_decklink_sdk.tbz2. Terminating."
 fi
 
