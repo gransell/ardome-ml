@@ -1,4 +1,3 @@
-
 #include <deque>
 
 #include <opencorelib/cl/lru.hpp>
@@ -60,7 +59,13 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			BMDVideoOutputFlags output_flags = du::frame_to_output_flags( last_frame_ );
 
 			// Attempt to obtain the decklink iterator
+#			ifndef _WIN32
 			du::decklink_iterator_ptr dli( CreateDeckLinkIteratorInstance( ), false );
+#			else
+			IDeckLinkIterator *deckLinkIterator = NULL;
+			CoCreateInstance(CLSID_CDeckLinkIterator, NULL, CLSCTX_ALL, IID_IDeckLinkIterator, (void**)&deckLinkIterator);
+			du::decklink_iterator_ptr dli( deckLinkIterator, false );
+#			endif
 
 			// Check if the drivers exist
 			HRESULT error = dli == 0 ? S_FALSE : S_OK;
@@ -182,7 +187,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			return ml::frame_type_ptr();
 		}
 		
-		virtual HRESULT ScheduledFrameCompleted( IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result )
+		virtual HRESULT STDMETHODCALLTYPE ScheduledFrameCompleted( IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result )
 		{
 			boost::mutex::scoped_lock lck( mutex_image_ );
 			downloaded_image_.pop_front();
@@ -190,22 +195,22 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			return S_OK;
 		}
 		
-		virtual HRESULT ScheduledPlaybackHasStopped( void )
+		virtual HRESULT STDMETHODCALLTYPE ScheduledPlaybackHasStopped( void )
 		{
 			return S_OK;
 		}
 		
-		virtual HRESULT RenderAudioSamples( bool preroll )
+		virtual HRESULT STDMETHODCALLTYPE RenderAudioSamples( BOOL preroll )
 		{
 			boost::mutex::scoped_lock lck( mutex_audio_ );
 	
 			// Try to maintain the number of audio samples buffered in the API at a specified waterlevel
 			boost::uint32_t buffered;
-			if ( device_->GetBufferedAudioSampleFrameCount( &buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
+			if ( device_->GetBufferedAudioSampleFrameCount( ( unsigned long * )&buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
 			{
 				ml::audio_type_ptr audio = downloaded_audio_.front( ).second;
 				boost::uint32_t samples;
-				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, &samples );
+				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, ( unsigned long * )&samples );
 				if ( samples != audio->samples( ) )
 					std::cerr << "offered " << audio->samples( ) << " took " << samples << std::endl;
 				downloaded_audio_.pop_front( );

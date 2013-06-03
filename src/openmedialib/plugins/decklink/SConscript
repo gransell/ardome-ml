@@ -12,6 +12,7 @@ if os.path.isdir( str( Dir( '#bcomp/decklink_sdk' ) ) ):
 		local_env.Append( FRAMEWORKS = [ 'CoreFoundation' ] )
 	else:
 		local_env.Append( CPPPATH = [ '#bcomp/decklink_sdk/Win/include', ] )
+		local_env.Append( LIBS = [ 'ole32', ] )
 
 	srcs = [ 'src/plugin_decklink.cpp', 'src/input_decklink.cpp', 'src/store_decklink.cpp', 'src/decklink_utilities.cpp' ]
 

@@ -284,7 +284,11 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			bool found = false;
 
 			// Create the decklink iterator
+#			ifndef _WIN32
 			decklink_iter_ = CreateDeckLinkIteratorInstance( );
+#			else
+			CoCreateInstance(CLSID_CDeckLinkIterator, NULL, CLSCTX_ALL, IID_IDeckLinkIterator, (void**)&decklink_iter_ );
+#			endif
 
 			// Check if the drivers exist
 			HRESULT error = decklink_iter_ == 0 ? S_FALSE : S_OK;
@@ -480,7 +484,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			// Attempt to enable the audio feed
 			if ( error == S_OK )
 			{
-				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, 16, prop_channels_.value< int >( ) );
+				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, BMDAudioSampleType( 16 ), prop_channels_.value< int >( ) );
 				ARLOG_IF( error != S_OK, "Failed to enable audio input." ).level( cl::log_level::error );
 			}
 
