@@ -26,7 +26,7 @@ public:
 		ARENFORCE( log_file.good() );
 
 		unit_test_log.set_format( XML );
-		unit_test_log.set_threshold_level( log_test_units );
+		unit_test_log.set_threshold_level( log_successful_tests );
 		unit_test_log.set_stream( log_file );
 	}
 };
