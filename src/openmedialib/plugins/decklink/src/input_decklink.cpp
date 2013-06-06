@@ -36,6 +36,12 @@ namespace pl = olib::openpluginlib;
 
 namespace amf { namespace openmedialib {
 
+#ifndef WIN32
+#define BD_HOME "HOME"
+#else
+#define BD_HOME "USERPROFILE"
+#endif
+
 class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 {
 	public:
@@ -371,7 +377,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		// Provides the location of the mode order preferences file
 		std::string file_preferences( int card )
 		{
-			return std::string( getenv( "HOME" ) ) + "/.aml.decklink." + boost::lexical_cast< std::string >( card );
+			return std::string( getenv( BD_HOME ) ) + "/.aml.decklink." + boost::lexical_cast< std::string >( card );
 		}
 
 		// Load the mode order for this card, or generate the default order

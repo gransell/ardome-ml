@@ -89,8 +89,21 @@ extern "C"
 	
 	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		if( !amf::openmedialib::is_decklink_device_present( ) ) 
+		ARLOG_INFO( "Decklink plugin loaded." );
+#		ifdef WIN32
+		HRESULT error = CoInitialize( NULL );
+		if ( error != S_OK )
+		{
+			ARLOG( "COM failed to initialise." ).level( cl::log_level::error );
 			return false;
+		}
+#		endif
+		if( !amf::openmedialib::is_decklink_device_present( ) ) 
+		{
+			ARLOG( "No Decklink device found." ).level( cl::log_level::error );
+			return false;
+		}
+		ARLOG_INFO( "Decklink plugin initialised." );
 		*plug = new amf::openmedialib::aml_decklink;
 		return true;
 	}
