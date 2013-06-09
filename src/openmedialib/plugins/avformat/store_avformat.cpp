@@ -819,7 +819,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->qblur = static_cast<float>(prop_video_qblur_.value< double >( ));
 				c->qcompress = static_cast<float>(prop_video_qcomp_.value< double >( ));
 
-				c->rc_eq = strdup("tex^qComp");
+				c->rc_eq = av_strdup("tex^qComp");
 				c->rc_override_count = 0;
 				c->thread_count = prop_thread_count_.value< int >( );
 		
