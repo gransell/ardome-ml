@@ -65,8 +65,6 @@ void test_jira_amf_1809()
 	boost::shared_ptr< testing_logtarget > my_target( new testing_logtarget() );
 	the_log_handler::instance().add_target( my_target );
 
-	const char *narrow_str = NULL;
-	const wchar_t *wide_str = NULL;
 	test_log< char >();
 	BOOST_CHECK_EQUAL( my_target->num_messages_logged_, 1 );
 	BOOST_CHECK( !my_target->wrong_message_ );
