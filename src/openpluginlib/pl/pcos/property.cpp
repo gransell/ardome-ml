@@ -278,6 +278,7 @@ template OPENPLUGINLIB_DECLSPEC double_list property::value< double_list >() con
 template OPENPLUGINLIB_DECLSPEC bool property::value< bool >() const;
 template OPENPLUGINLIB_DECLSPEC string property::value< string >() const;
 template OPENPLUGINLIB_DECLSPEC void* property::value< void* >() const;
+template OPENPLUGINLIB_DECLSPEC byte_vec property::value< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int_vec property::value< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC double_vec property::value< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int64_vec property::value< int64_vec >() const;
@@ -311,6 +312,7 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< bool >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void* >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_vec >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int64_vec >() const;
@@ -445,6 +447,11 @@ template <> OPENPLUGINLIB_DECLSPEC double_vec parse_string( const wstring& )
 template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const wstring& )
 {
 	return int64_vec( );
+}
+
+template <> OPENPLUGINLIB_DECLSPEC byte_vec parse_string( const wstring& )
+{
+	return byte_vec( );
 }
 
 template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const wstring& )

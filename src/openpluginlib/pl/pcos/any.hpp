@@ -265,6 +265,7 @@ namespace olib { namespace openpluginlib { namespace pcos {
 typedef std::list< int > int_list;
 typedef std::list< unsigned int > uint_list;
 typedef std::list< double > double_list;
+typedef std::vector<boost::uint8_t> byte_vec;
 typedef std::vector<int> int_vec;
 typedef std::vector<unsigned int> uint_vec;
 typedef std::vector<double> double_vec;
