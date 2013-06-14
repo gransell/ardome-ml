@@ -554,7 +554,10 @@ protected:
 				 
 		if ( plane_count( ) <= 3 ) { return; }
 
-		//TODO PLANE 4
+		// PLANE 4
+		plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 3 );
+		plane.offset +=  width_ * height_;
+		planes_.push_back( plane );
 
     }
 

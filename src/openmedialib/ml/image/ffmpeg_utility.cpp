@@ -185,8 +185,6 @@ ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_pt
 		output.data, 
 		output.linesize );
 	
-	std::cerr << "dst " << dst_height << " " << dst->width( ) << "x" << dst->height( ) << " " << " src " << src->width( ) << "x" << src->height( ) << std::endl;
-
 	ARENFORCE ( dst_height == src->height( ) );
 }
 
