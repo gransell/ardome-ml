@@ -144,7 +144,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 				
 				char *data = 0;
 				ARENFORCE_MSG( temp->GetBytes( (void **)&data ) == S_OK, "Failed to get data pointer to downloaded frame" );
-				memcpy( data, img->data(), img->size() );
+				memcpy( data, img->ptr(), img->size() );
 				
 				downloaded_image_.push_back( std::make_pair( frames_, img ) );
 	

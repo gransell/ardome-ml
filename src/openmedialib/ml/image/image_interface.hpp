@@ -73,6 +73,7 @@ public:
 	virtual void crop_clear( ) = 0;
     virtual void set_flipped( bool flipped ) = 0;
     virtual void set_flopped( bool flopped ) = 0;
+	virtual void *ptr( size_t index = 0, bool cropped = true ) = 0;
 };
 
 } } } }

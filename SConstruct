@@ -229,10 +229,10 @@ if env.check_externals( ):
 	
 	os.system( "chmod +x scripts/amldocs.aml" )
 
-	if env.have_boost_python( ) and ( not env.has_key( 'generate_xcode' ) or env[ 'generate_xcode' ] != 'yes' ):
-		print 'Building python bindings'
-		env.build( 'src/openpluginlib/py', [ cl, pl, ml ] )
-		env.build( 'src/openmedialib/py', [ cl, pl, ml ] )
+	#if env.have_boost_python( ) and ( not env.has_key( 'generate_xcode' ) or env[ 'generate_xcode' ] != 'yes' ):
+	#	print 'Building python bindings'
+	#	env.build( 'src/openpluginlib/py', [ cl, pl, ml ] )
+	#	env.build( 'src/openmedialib/py', [ cl, pl, ml ] )
 
 	env.create_package( )
 	if env[ 'PLATFORM' ] != 'win32':

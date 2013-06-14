@@ -33,7 +33,7 @@ int utility_av_image_get_linesize( int pixfmt, int width, int plane )
 { return (int)av_image_get_linesize( AVPixelFormat(pixfmt), width, plane ); }
 
 void *utility_av_malloc( int bytes )
-{ return av_malloc( bytes ); }
+{ return av_malloc( bytes + 8 ); }
 
 void utility_av_free( void *buf )
 { return av_free( buf ); }
@@ -88,6 +88,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUYV422;
 	else if (pixfmt == ML_PIX_FMT_YUV444P )
 		return (int)AV_PIX_FMT_YUV444P;
+	else if (pixfmt == ML_PIX_FMT_YUVA444P )
+		return (int)AV_PIX_FMT_YUVA444P;
 	else if (pixfmt == ML_PIX_FMT_UYYVYY411 )
 		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_L8 )
@@ -183,6 +185,8 @@ ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_pt
 		output.data, 
 		output.linesize );
 	
+	std::cerr << "dst " << dst_height << " " << dst->width( ) << "x" << dst->height( ) << " " << " src " << src->width( ) << "x" << src->height( ) << std::endl;
+
 	ARENFORCE ( dst_height == src->height( ) );
 }
 

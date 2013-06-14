@@ -134,8 +134,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 					picture->GetBytes( &bytes );
 					image = ml::image::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
 					image->set_position( frame_count_ );
-					boost::uint8_t *dst = ( boost::uint8_t * )image->data( );
-					memcpy( dst, bytes, image->size( ) );
+					memcpy( image->ptr( ), bytes, image->size( ) );
 				}
 				frame->set_image( image );
 				last_image_ = image;

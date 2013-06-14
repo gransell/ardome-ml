@@ -186,6 +186,11 @@ public:
         return data_ + offset( index, crop );
     }
 
+	void *ptr( size_t index = 0, bool crop = true )
+	{
+		return static_cast< void * >( data( index, crop ) );
+	}
+
     int depth( ) { return 1; }
 
     t_string pf( ) const 

@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat' )
+local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat', 'libswscale' )
 local_env.optional( 'ffmpeg' )
 
 test_sources = [
