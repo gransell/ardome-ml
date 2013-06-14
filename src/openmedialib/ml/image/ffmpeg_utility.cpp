@@ -102,6 +102,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_GRAY16;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8 )
 		return (int)AV_PIX_FMT_RGB24;
+	else if (pixfmt == ML_PIX_FMT_B8G8R8 )
+		return (int)AV_PIX_FMT_BGR24;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8A8 )
 		return (int)AV_PIX_FMT_RGBA;
 	else if (pixfmt == ML_PIX_FMT_R10G10B10 )

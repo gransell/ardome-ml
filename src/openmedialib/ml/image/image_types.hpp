@@ -39,6 +39,7 @@ enum MLPixelFormat {
     ML_PIX_FMT_L8A8,
     ML_PIX_FMT_L16,
     ML_PIX_FMT_R8G8B8,
+    ML_PIX_FMT_B8G8R8,
 	ML_PIX_FMT_R8G8B8A8,
     ML_PIX_FMT_B8G8R8A8,
     ML_PIX_FMT_A8R8G8B8,
@@ -69,6 +70,7 @@ std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 (_CT("l8a8"),       ML_PIX_FMT_L8A8)
 (_CT("l16"),        ML_PIX_FMT_L16)
 (_CT("r8g8b8"),     ML_PIX_FMT_R8G8B8)
+(_CT("b8g8r8"),     ML_PIX_FMT_B8G8R8)
 (_CT("r8g8b8a8"),   ML_PIX_FMT_R8G8B8A8)
 (_CT("b8g8r8a8"),   ML_PIX_FMT_B8G8R8A8)
 (_CT("a8r8g8b8"),   ML_PIX_FMT_A8R8G8B8)
