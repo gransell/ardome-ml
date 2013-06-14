@@ -3,6 +3,7 @@
 
 #include<openmedialib/ml/stream.hpp>
 #include<openmedialib/ml/types.hpp>
+#include<opencorelib/cl/minimal_string_defines.hpp>
 
 // default implementation of ml::stream_type to be used in testing. Reimplement as necessary
 class stream_mock : public olib::openmedialib::ml::stream_type
@@ -71,7 +72,7 @@ class stream_mock : public olib::openmedialib::ml::stream_type
 		/// Returns the sample size of the audio in the packet (0 if n/a)
 		virtual const int sample_size( ) const;
 	
-		virtual const std::wstring pf( ) const ;
+		virtual const olib::t_string pf( ) const ;
 
 		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const;
 
@@ -91,7 +92,7 @@ class stream_mock : public olib::openmedialib::ml::stream_type
 		int channels_;
 		int samples_;
 		int sample_size_;
-		std::wstring pf_;
+		olib::t_string pf_;
 		olib::openmedialib::ml::image::field_order_flags field_order_;
 		int estimated_gop_size_;
 		size_t index_;
