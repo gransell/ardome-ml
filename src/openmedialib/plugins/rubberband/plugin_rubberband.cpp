@@ -236,7 +236,7 @@ class rubber
 					result = ml::frame_type_ptr( );
 					ARENFORCE_MSG( frame, "Frame required for rubberband %d" )( source_ );
 					if ( !frame->get_audio( ) )
-						frame->set_audio( ml::audio::allocate( ml::audio::FORMAT_FLOAT, frequency_, channels_, ml::audio::samples_for_frame( source_, frequency_, frame->get_fps_num( ), frame->get_fps_den( ) ) ) );
+						frame->set_audio( ml::audio::allocate( ml::audio::float_id, frequency_, channels_, ml::audio::samples_for_frame( source_, frequency_, frame->get_fps_num( ), frame->get_fps_den( ) ) ) );
 					ml::audio_type_ptr audio = frame->get_audio( );
 					ARLOG_DEBUG7( "Caching frame %d of %d" )( source_ )( total_frames );
 					cache_->insert_frame_for_position( lru_key_for_position( source_ ), frame );
@@ -244,7 +244,7 @@ class rubber
 					source_ += increment_;
 					reverse_audio( frame, increment_ );
 					audio = frame->get_audio();
-					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::FORMAT_FLOAT, audio );
+					ml::audio_type_ptr floats = ml::audio::coerce( ml::audio::float_id, audio );
 					ARENFORCE_MSG( floats->pointer( ), "Audio conversion failed for rubberband" );
 					float_ptr *channels = convert( floats );
 					try
@@ -349,7 +349,7 @@ class rubber
 		ml::audio_type_ptr retrieve( int position, int samples )
 		{
 			float_ptr *array = allocate( samples );
-			ml::audio_type_ptr output = ml::audio::allocate( L"float", frequency_, channels_, samples, false );
+			ml::audio_type_ptr output = ml::audio::allocate( ml::audio::float_id, frequency_, channels_, samples, false );
 			try
 			{
 				rubber_->retrieve( array, samples );	

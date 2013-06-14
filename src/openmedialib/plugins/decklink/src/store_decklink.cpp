@@ -1,4 +1,3 @@
-
 #include <deque>
 
 #include <opencorelib/cl/lru.hpp>
@@ -19,6 +18,15 @@ namespace pl = olib::openpluginlib;
 
 namespace ml = olib::openmedialib::ml;
 namespace du = amf::openmedialib::decklink::utilities;
+
+// To make this work on windows, linux and osx, the following type definitions are added to 
+// work around subtle differences in the API interface between Windows and everything else
+#ifndef _WIN32
+typedef bool BOOL;
+typedef uint32_t BM_UINT32;
+#else
+typedef unsigned long BM_UINT32;
+#endif
 
 namespace amf { namespace openmedialib { 
 
@@ -60,7 +68,13 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			BMDVideoOutputFlags output_flags = du::frame_to_output_flags( last_frame_ );
 
 			// Attempt to obtain the decklink iterator
+#			ifndef _WIN32
 			du::decklink_iterator_ptr dli( CreateDeckLinkIteratorInstance( ), false );
+#			else
+			IDeckLinkIterator *deckLinkIterator = NULL;
+			CoCreateInstance(CLSID_CDeckLinkIterator, NULL, CLSCTX_ALL, IID_IDeckLinkIterator, (void**)&deckLinkIterator);
+			du::decklink_iterator_ptr dli( deckLinkIterator, false );
+#			endif
 
 			// Check if the drivers exist
 			HRESULT error = dli == 0 ? S_FALSE : S_OK;
@@ -116,7 +130,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			ml::image_type_ptr img = frame->get_image( );
 			ml::audio_type_ptr aud = frame->get_audio( );
 
-			aud = ml::audio::coerce( ml::audio::FORMAT_PCM32, aud );
+			aud = ml::audio::coerce( ml::audio::pcm32_id, aud );
 
 			if ( img )
 				img = ml::image::convert( img, prop_pf_.value< olib::t_string >( ) );
@@ -182,7 +196,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			return ml::frame_type_ptr();
 		}
 		
-		virtual HRESULT ScheduledFrameCompleted( IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result )
+		virtual HRESULT STDMETHODCALLTYPE ScheduledFrameCompleted( IDeckLinkVideoFrame *completedFrame, BMDOutputFrameCompletionResult result )
 		{
 			boost::mutex::scoped_lock lck( mutex_image_ );
 			downloaded_image_.pop_front();
@@ -190,21 +204,21 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			return S_OK;
 		}
 		
-		virtual HRESULT ScheduledPlaybackHasStopped( void )
+		virtual HRESULT STDMETHODCALLTYPE ScheduledPlaybackHasStopped( void )
 		{
 			return S_OK;
 		}
 		
-		virtual HRESULT RenderAudioSamples( bool preroll )
+		virtual HRESULT STDMETHODCALLTYPE RenderAudioSamples( BOOL preroll )
 		{
 			boost::mutex::scoped_lock lck( mutex_audio_ );
 	
 			// Try to maintain the number of audio samples buffered in the API at a specified waterlevel
-			boost::uint32_t buffered;
+			BM_UINT32 buffered;
 			if ( device_->GetBufferedAudioSampleFrameCount( &buffered ) == S_OK && buffered < 48000 && downloaded_audio_.size( ) )
 			{
 				ml::audio_type_ptr audio = downloaded_audio_.front( ).second;
-				boost::uint32_t samples;
+				BM_UINT32 samples;
 				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, &samples );
 				if ( samples != audio->samples( ) )
 					std::cerr << "offered " << audio->samples( ) << " took " << samples << std::endl;

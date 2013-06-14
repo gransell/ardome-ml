@@ -35,6 +35,12 @@ namespace pl = olib::openpluginlib;
 
 namespace amf { namespace openmedialib {
 
+#ifndef WIN32
+#define BD_HOME "HOME"
+#else
+#define BD_HOME "USERPROFILE"
+#endif
+
 class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 {
 	public:
@@ -45,6 +51,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		, fps_den_( 0 )
 		, width_( 0 )
 		, height_( 0 )
+		, id_( ml::audio::pcm16_id )
 		, frequency_( 0 )
 		, channels_( 0 )
 		, samples_( 0 )
@@ -66,9 +73,9 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			fps_den_ = fps_den;
 		}
 
-		void set_audio( const std::wstring af, int frequency, int channels )
+		void set_audio( ml::audio::identity id, int frequency, int channels )
 		{
-			af_ = af;
+			id_ = id;
 			frequency_ = frequency;
 			channels_ = channels;
 		}
@@ -146,7 +153,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 				void *bytes;
 				samples = sound->GetSampleFrameCount( );
 				sound->GetBytes( &bytes );
-				ml::audio_type_ptr audio = ml::audio::allocate( af_, frequency_, channels_, samples, false );
+				ml::audio_type_ptr audio = ml::audio::allocate( id_ , frequency_, channels_, samples, false );
 				memcpy( audio->pointer( ), bytes, audio->size( ) );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
@@ -155,7 +162,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			{
 				samples = ml::audio::samples_to_frame( frame_count_ + 1, frequency_, fps_num_, fps_den_ ) - samples_;
 				ARLOG( "No audio frame received for %d with %d hz %d channels @ %d:%d fps generating %d" )( frame_count_ )( frequency_ )( channels_ )( fps_num_ )( fps_den_ )( samples ).level( cl::log_level::error );
-				ml::audio_type_ptr audio = ml::audio::allocate( af_, frequency_, channels_, samples, true );
+				ml::audio_type_ptr audio = ml::audio::allocate( id_, frequency_, channels_, samples, true );
 				audio->set_position( frame_count_ );
 				frame->set_audio( audio );
 			}
@@ -193,7 +200,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		olib::t_string pf_;
 		int width_;
 		int height_;
-		std::wstring af_;
+		ml::audio::identity id_;
 		int frequency_;
 		int channels_;
 		boost::int64_t samples_;
@@ -281,7 +288,11 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			bool found = false;
 
 			// Create the decklink iterator
+#			ifndef _WIN32
 			decklink_iter_ = CreateDeckLinkIteratorInstance( );
+#			else
+			CoCreateInstance(CLSID_CDeckLinkIterator, NULL, CLSCTX_ALL, IID_IDeckLinkIterator, (void**)&decklink_iter_ );
+#			endif
 
 			// Check if the drivers exist
 			HRESULT error = decklink_iter_ == 0 ? S_FALSE : S_OK;
@@ -364,7 +375,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		// Provides the location of the mode order preferences file
 		std::string file_preferences( int card )
 		{
-			return std::string( getenv( "HOME" ) ) + "/.aml.decklink." + boost::lexical_cast< std::string >( card );
+			return std::string( getenv( BD_HOME ) ) + "/.aml.decklink." + boost::lexical_cast< std::string >( card );
 		}
 
 		// Load the mode order for this card, or generate the default order
@@ -464,7 +475,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 				decklink_delegate_->reset( prop_queue_.value< int >( ) );
 				decklink_delegate_->set_fps( fps_num, fps_den );
 				decklink_delegate_->set_image( prop_pf_.value< olib::t_string >( ), width, height );
-				decklink_delegate_->set_audio( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
+				decklink_delegate_->set_audio( ml::audio::af_to_id( olib::opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
 			}
 
 			// Attempt to enable the video feed
@@ -477,7 +488,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			// Attempt to enable the audio feed
 			if ( error == S_OK )
 			{
-				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, 16, prop_channels_.value< int >( ) );
+				error = decklink_input_->EnableAudioInput( bmdAudioSampleRate48kHz, BMDAudioSampleType( 16 ), prop_channels_.value< int >( ) );
 				ARLOG_IF( error != S_OK, "Failed to enable audio input." ).level( cl::log_level::error );
 			}
 

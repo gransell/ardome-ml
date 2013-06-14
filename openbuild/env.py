@@ -150,7 +150,6 @@ class Environment( BaseEnvironment ):
 		self.package_list = self.package_manager.walk( self )
 		
 		if self[ 'PLATFORM' ] == 'darwin':
-			self.Append( LINKFLAGS = [ '-undefined', 'dynamic_lookup', ] )
 			if self[ 'arch' ] == 'i386' :
 				self.Append( CCFLAGS = [ '-arch', 'i386' ] )
 				self.Append( LINKFLAGS = [ '-arch', 'i386' ] )
@@ -164,23 +163,27 @@ class Environment( BaseEnvironment ):
 				raise Exception( "Invalid arch flag " + str(self['arch']) )
 			
 			# Check version of Xcode installed to determine root OSX SDK directory (root SDK dir changed in Xcode 4.3)
-			OSX_SDK_dir_prefix = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/"
-			if tuple(map(int, self[ 'xcode_ver' ].split("."))) < (4,3) :
-				OSX_SDK_dir_prefix = "/"
+			proc = subprocess.Popen(["xcode-select", "--print-path"], stdout=subprocess.PIPE)
+			OSX_SDK_dir = proc.stdout.read()
+			proc.wait()
 
-			if self[ 'min_osx_ver' ] == '10.5' :
-				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.5.sdk', '-mmacosx-version-min=10.5' ] )
-			elif self[ 'min_osx_ver' ] == '10.6' :
-				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.6.sdk', '-mmacosx-version-min=10.6' ] )
-			elif self[ 'min_osx_ver' ] == '10.7' :
-				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
-				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir_prefix + 'Developer/SDKs/MacOSX10.7.sdk', '-mmacosx-version-min=10.7' ] )
+			OSX_SDK_dir = OSX_SDK_dir.strip()
+
+			# Unfortunately the dirs returned by xcode-select aren't rooted the same way in earlier versions of Xcode
+			if OSX_SDK_dir == '/Developer':
+				OSX_SDK_dir += '/SDKs/'
+			else:
+				OSX_SDK_dir += '/Platforms/MacOSX.platform/Developer/SDKs/'
+
+			supported_osx_min_vers = [ '10.5', '10.6', '10.7', '10.8' ]
+
+			if self[ 'min_osx_ver' ] in supported_osx_min_vers:
+				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir + 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk', '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
+				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir + 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk', '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
 			else :
 				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
-			
-			
+                       
+
 		if os.name == 'posix':
 			if self[ 'compiler' ] == 'gcc':
 				self[ 'CC' ] = 'gcc'
@@ -608,7 +611,20 @@ class Environment( BaseEnvironment ):
 
 		new_lib = self.SharedLibrary( lib, sources, *keywords )
 		return new_lib
-		
+
+	def static_library( self, lib, sources, headers=None, pre=None, nopre=None, *keywords ):
+		if "static_library" in dir(self.build_manager) :
+			return self.build_manager.static_library( self, lib, sources, headers, pre, nopre, *keywords )
+
+		self.setup_precompiled_headers( sources, pre, nopre, True )
+
+		if self[ 'PLATFORM' ] == 'win32':
+			self['PDB'] = lib + '.pdb'
+		self.setup_clr_compilation()
+
+		new_lib = self.StaticLibrary( lib, sources, *keywords )
+		return new_lib
+
 	def dot_net_library( self, lib, sources, headers=None, dot_net_assemblies=[], pre=None, nopre=None, *keywords ) :
 	
 		self.Append( CPPFLAGS = [ '/EHa', '/clr' ] ) 

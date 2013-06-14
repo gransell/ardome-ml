@@ -56,20 +56,23 @@ class ML_DECLSPEC template_ : public base
 			opencorelib::utilities::aligned_free( data_ );
 		}
 
-		const sample_type min_sample( ) const
+		static const sample_type min_sample( )
 		{ return sample_type( min_val ); }
 
-		const sample_type max_sample( ) const
+		static const sample_type max_sample( )
 		{ return sample_type( max_val ); }
 
 		audio_type_ptr clone( ) const
 		{ return audio_type_ptr( new template_< sample_type, B, min_val, max_val >( static_cast<const base&>(*this) ) ); }
 
 		identity id( ) const 
-		{ return id_; }
+		{ return static_id( ); }
 
-		int sample_size( ) const
-		{ return sizeof( sample_type ); }
+		static identity static_id( )
+		{ return B; }
+
+		int sample_storage_size( ) const
+		{ return this->sample_storage_size_static( ); }
 
 		int size( ) const
 		{ return sizeof( sample_type ) * samples_ * channels_; }
@@ -92,7 +95,7 @@ class ML_DECLSPEC template_ : public base
 		void original_samples( int samples )
 		{ orig_samples_ = samples; }
 
-		const std::wstring &af( ) const
+		const olib::t_string &af( ) const
 		{ return id_to_af( id_ ); }
 
 		void *pointer( ) const
@@ -114,9 +117,6 @@ class ML_DECLSPEC template_ : public base
 		void set_position( int position )  
 		{ position_ = position; }
 
-		void convert( pcm8 &dst ) const
-		{ audio::convert< pcm8, template_< T, B, min_val, max_val > >( dst, *this ); }
-
 		void convert( pcm16 &dst ) const
 		{ audio::convert< pcm16, template_< T, B, min_val, max_val > >( dst, *this ); }
 
@@ -129,11 +129,14 @@ class ML_DECLSPEC template_ : public base
 		void convert( floats &dst ) const
 		{ audio::convert< floats, template_< T, B, min_val, max_val > >( dst, *this ); }
 
+		static int sample_storage_size_static()
+		{ return sizeof( sample_type ); }
+
 	private:
 		void init_data( bool init_to_zero )
 		{
 			// 16 bytes padding
-			data_size_ = channels_ * samples_ * sizeof( sample_type ) + 16;
+			data_size_ = channels_ * samples_ * this->sample_storage_size( ) + 16;
 			
 			if( data_size_ == 0 )
 			{

@@ -366,7 +366,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 				offset_ = avio_tell( context_ );
 			}
 
-			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), 1, false );
+			ml::audio_type_ptr audio = ml::audio::allocate( ml::audio::af_to_id( opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), 1, false );
 			samples_size_ = audio->size( );
 
 			if ( is_seekable( ) )
@@ -425,7 +425,7 @@ class ML_PLUGIN_DECLSPEC input_aud : public input_type
 			else
 				error = avio_read( context_, ( unsigned char * )( &samples ), sizeof( samples ) ) != sizeof( samples );
 
-			ml::audio_type_ptr audio = ml::audio::allocate( prop_af_.value< std::wstring >( ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples, false );
+			ml::audio_type_ptr audio = ml::audio::allocate( ml::audio::af_to_id( opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ), samples, false );
 
 			if ( audio )
 				error = avio_read( context_, static_cast< unsigned char * >( audio->pointer( ) ), audio->size( ) ) != audio->size( );
@@ -756,7 +756,7 @@ class ML_PLUGIN_DECLSPEC store_aud : public store_type
 		pl::pcos::property prop_stream_;
 		std::wstring spec_;
 		AVIOContext *context_;
-		std::wstring af_;
+		olib::t_string af_;
 		int valid_;
 		int frequency_;
 		int channels_;

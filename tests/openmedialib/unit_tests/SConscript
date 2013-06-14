@@ -5,6 +5,7 @@ local_env.optional( 'ffmpeg' )
 
 test_sources = [
 	'src/main.cpp',
+	'src/utils.cpp',
 	'src/io_tester.cpp',
 	'src/test_awi.cpp',
 	'src/test_custom_io.cpp',
@@ -13,6 +14,7 @@ test_sources = [
 	'src/test_compositor_filter.cpp',
 	'src/test_frame_list_filter.cpp',
 	'src/test_image.cpp',
+	'src/test_utilities.cpp',
 	]
 
 object = local_env.console_program( 'openmedialib_unit_tests', test_sources )

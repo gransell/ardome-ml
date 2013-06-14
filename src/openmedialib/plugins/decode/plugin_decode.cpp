@@ -523,6 +523,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			
 			// FIXME: Create audio decode filter
 			ml::filter_type_ptr decode = ml::create_filter( codec_filter );
+			ARENFORCE_MSG( decode, "Could not get a valid decoder filter" );
 			if ( decode->property( "threads" ).valid( ) ) 
 				decode->property( "threads" ) = prop_inner_threads_.value< int >( );
 			if ( decode->property( "scope" ).valid( ) ) 
@@ -546,7 +547,6 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			if ( decoder_.size( ) == 0 )
 			{
 				result = filter_create( prop_filter_.value< std::wstring >( ) );
-				ARENFORCE_MSG( result, "Could not get a valid decoder filter" );
 				decoder_.push_back( result );
 				ARLOG_INFO( "Creating decoder. This = %1%, source_uri = %2%, scope = %3%" )( this )( prop_source_uri_.value< std::wstring >( ) )( prop_scope_.value< std::wstring >( ) );
 			}

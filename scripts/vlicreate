@@ -27,14 +27,21 @@ def create_license_dir( target, build ):
 	os.mkdir( license_dir )
 	return license_dir
 
-def find_files( dir, pattern ):
-	for root, dirs, files in os.walk( dir, followlinks = True ):
-		if root.startswith( './.' ) or root.startswith( './build' ): continue
-		if root.startswith( '.\\.' ) or root.startswith( '.\\build' ): continue
-		for basename in files:
-			if fnmatch.fnmatch( basename, pattern ):
+def find_files( directory, pattern ):
+	check = [ directory ]
+	while len( check ):
+		d = check.pop( 0 )
+		for root, dirs, files in os.walk( d ):
+			if root.startswith( './.' ) or root.startswith( './build' ): continue
+			if root.startswith( '.\\.' ) or root.startswith( '.\\build' ): continue
+			for basename in dirs:
+				dirname = os.path.join( root, basename )
+				if os.path.islink( dirname ) and not os.readlink( dirname ) == '.':
+					check += [ dirname ]
+			for basename in files:
 				filename = os.path.join( root, basename )
-				yield filename
+				if fnmatch.fnmatch( basename, pattern ):
+					yield filename
 
 def check_license( entries, path ):
 	for k in entries:

@@ -11,22 +11,27 @@
 #include <string>
 #include <vector>
 
+using boost::uint8_t;
+using boost::uint16_t;
+using boost::uint32_t;
+using boost::int32_t;
+
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
-// Convenience function to allocate an audio type by the string identifier
-extern ML_DECLSPEC audio_type_ptr allocate( const std::wstring &, int frequency, int channels, int samples, bool init_to_zero = true );
+// Convenience function to allocate an audio type by the identity
+extern ML_DECLSPEC audio_type_ptr allocate( identity id, int frequency, int channels, int samples, bool init_to_zero = true );
 
 // Convenience funtion to allocat audio type based on existing audio object (arguments of -1 stipulate that we receive defaults from source)
 extern ML_DECLSPEC audio_type_ptr allocate( const audio_type_ptr &, int frequency = -1, int channels = -1, int samples = -1, bool init_to_zero = true );
 
 // Convenience function to coerce an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr coerce( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr coerce( identity id, const audio_type_ptr &source );
 
 // Convenience function to force an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr force( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr force( identity id, const audio_type_ptr &source );
 
 // Convenience function to cast an audio_type_ptr to a specific type
-extern ML_DECLSPEC audio_type_ptr cast( const std::wstring &af, const audio_type_ptr &source );
+extern ML_DECLSPEC audio_type_ptr cast( identity id, const audio_type_ptr &source );
 
 // Convenience function to convert to another channel arrangement without changing type
 extern ML_DECLSPEC audio_type_ptr channel_convert( const audio_type_ptr &a, int channels, const audio_type_ptr &c = audio_type_ptr( ) );
@@ -82,8 +87,39 @@ extern ML_DECLSPEC int samples_for_frame( int frame, int frequency, int fps_num,
 // Method to determine the sample offset for a given frame number at a specified frequency and frame rate
 extern ML_DECLSPEC boost::int64_t samples_to_frame( int frame, int frequency, int fps_num, int fps_den, locked_profile::type profile = locked_profile::unknown );
 
+// Convert a string to an id
+extern ML_DECLSPEC identity af_to_id( const olib::t_string &af );
+
 // Map an id to the audio format
-extern ML_DECLSPEC const std::wstring &id_to_af( const identity &id );
+extern ML_DECLSPEC const olib::t_string &id_to_af( identity id );
+
+// return the number of significant bytes to represent audio id. This could be considered a measure of fidelity?
+extern ML_DECLSPEC int id_to_significant_bytes_per_sample( identity id );
+// return the number of bytes used to store each sample
+extern ML_DECLSPEC int id_to_storage_bytes_per_sample( identity id );
+
+// Returns the reversed bytes in the 32-bit input src. For example: 0x12345678 becomes 0x78563412
+extern ML_DECLSPEC uint32_t bswap_32( const uint32_t src );
+
+// AIFF is stored reversed. so reverse every 4-byte word, then copy first 3 bytes of the result onto the output.
+// Size of src should be at least samples * channels * 4 bytes.
+// Size of dest should be at least samples * channels * 3 bytes.
+// byte position	3	2	1	0
+// input pcm32		C	B	A	X
+// output aiff24		A	B	C
+extern ML_DECLSPEC void pack_aiff24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
+
+// Just copy the last 3 bytes of every 4 bytes onto the output buffer (dest).
+// Size of src should be at least samples * channels * 4 bytes.
+// Size of dest should be at least samples * channels * 3 bytes.
+// byte position	3	2	1	0
+// input pcm32		C	B	A	X
+// output pcm24			C	B	A
+extern ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
+
+// Swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time (SSE). so the input data has to be 16-byte aligned.
+// num_bytes should be the total number of bytes in the buffer (data). It should be divisible by 16.
+extern ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes );
 
 } } } }
 

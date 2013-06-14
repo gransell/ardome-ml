@@ -62,13 +62,13 @@ class reseat_impl : public reseat
 
 				while( index != requested && queue.size( ) > 0 )
 				{
-					audio = audio::coerce( temp->af( ), queue[ 0 ] );
+					audio = audio::coerce( temp->id( ), queue[ 0 ] );
 
 					int remainder = audio->samples( ) - offset;
 					int samples_from_packet = requested - index < remainder ? requested - index : remainder;
 
-					void *src = ( void * )( ( boost::uint8_t * )audio->pointer( ) + offset * channels * audio->sample_size( ) );
-					memcpy( dst, src, samples_from_packet * channels * audio->sample_size( ) );
+					void *src = ( void * )( ( boost::uint8_t * )audio->pointer( ) + offset * channels * audio->sample_storage_size( ) );
+					memcpy( dst, src, samples_from_packet * channels * audio->sample_storage_size( ) );
 
 					if ( samples_from_packet == remainder )
 					{
@@ -83,12 +83,12 @@ class reseat_impl : public reseat
 					}
 
 					index += samples_from_packet;
-					dst = ( void * )( ( boost::uint8_t * )( dst ) + samples_from_packet * channels * audio->sample_size( ) );
+					dst = ( void * )( ( boost::uint8_t * )( dst ) + samples_from_packet * channels * audio->sample_storage_size( ) );
 				}
 				
 				// If index < requested we did not have enough samples in our queue so we should silence the last samples
 				if( index < requested )
-					memset( dst, 0, ( requested - index ) * channels * audio->sample_size( ) );
+					memset( dst, 0, ( requested - index ) * channels * audio->sample_storage_size( ) );
 				
 			}
 			return result;

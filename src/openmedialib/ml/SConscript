@@ -5,6 +5,11 @@
 Import(['local_env'])
 
 local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'libswscale', 'loki' )
+
+#Workaround until J#AMF-2014 is resolved
+if local_env['PLATFORM'] != 'win32':
+	local_env.packages( 'libavutil' )
+
 src = [ 
 		'analyse.cpp',
 		'analyse_dnxhd.cpp',
@@ -30,6 +35,9 @@ src = [
 
 if local_env[ 'PLATFORM' ] == 'win32':
 	src.append( 'msw/medialib.rc' )
+	
+if local_env[ 'target' ] == 'linux32' :
+    local_env.Append( CPPFLAGS = ['-march=pentium4', '-mfpmath=sse'] )
 
 object = local_env.shared_library( 'openmedialib_ml', src )
 

@@ -17,3 +17,4 @@ tmp: http://releases.ardendo.se/releases/external-source/amf-dependencies/window
 
 tmp: http://releases.ardendo.se/builds/owl/vs2010/owl-vs2010-0_4-B1.zip -> owl-vs2010.zip
 
+: http://releases.ardendo.se/releases/external-source/amf-dependencies/black_magic_decklink_sdk_8.6.tbz2 -> black_magic_decklink_sdk.tbz2

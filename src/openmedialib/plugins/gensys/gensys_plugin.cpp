@@ -679,9 +679,8 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 						int frequency = prop_frequency_.value< int >( );
 						int channels = prop_channels_.value< int >( );
 						int samples = audio::samples_for_frame( get_position( ), frequency, result->get_fps_num( ), result->get_fps_den( ) );
-						audio_type_ptr temp = audio::allocate( audio::FORMAT_PCM16, frequency, channels, samples, true );
-						audio::pcm16_ptr aud = audio::coerce< audio::pcm16 >( temp );
-						result->set_audio( aud );
+						audio_type_ptr temp = audio::allocate( audio::pcm16_id, frequency, channels, samples, true );
+						result->set_audio( temp );
 					}
 				}
 				else if ( prop_audio_.value< int >( ) == 0 )

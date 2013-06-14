@@ -97,10 +97,7 @@ namespace olib
 
             /// Which byte-pos are we on?
             /** Required to implement by BinInputStream. */
-            virtual xerces_file_pos curPos() const
-            {
-                return m_is.tellg();
-            }
+            virtual xerces_file_pos curPos() const;
 
             /// Read a number of bytes from the stream
             /** Required to implement by BinInputStream. */

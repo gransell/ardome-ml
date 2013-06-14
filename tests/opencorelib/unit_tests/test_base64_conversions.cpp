@@ -1,7 +1,6 @@
 #include "precompiled_headers.hpp"
 #include <boost/test/auto_unit_test.hpp>
 
-#include "./utils.hpp"
 #include "opencorelib/cl/detail/base64_conversions.hpp"
 
 #include <sstream>
@@ -31,7 +30,9 @@ void test( const boost::uint8_t *data, size_t length )
 	BOOST_CHECK_EQUAL( length, result.size() );
 	for( size_t i=0; i<length; i++ )
 	{
-		BOOST_CHECK_EQUAL( data[i], result[i] );
+		//Avoid excessive log spam if log level is set to success or all
+		if( data[i] != result[i] )
+			BOOST_CHECK_EQUAL( data[i], result[i] );
 	}
 }
 

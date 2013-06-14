@@ -28,15 +28,20 @@ void intrusive_ptr_release( IUnknown *p )
 	p->Release();
 }
 
-
 namespace amf { namespace openmedialib { 
 	
 extern ml::input_type_ptr create_input_decklink( const std::wstring& resource );
 extern ml::store_type_ptr create_store_decklink( const std::wstring& resource, const ml::frame_type_ptr& frame );
-	
+
 bool is_decklink_device_present( )
 {
+#ifndef _WIN32
 	decklink::utilities::decklink_iterator_ptr dli( CreateDeckLinkIteratorInstance(), false );
+#else
+	IDeckLinkIterator *deckLinkIterator = NULL;
+	CoCreateInstance(CLSID_CDeckLinkIterator, NULL, CLSCTX_ALL, IID_IDeckLinkIterator, (void**)&deckLinkIterator);
+	decklink::utilities::decklink_iterator_ptr dli( deckLinkIterator, false );
+#endif
 	
 	if( !dli ) return false;
 		
@@ -57,12 +62,11 @@ public:
 	{
 		return create_input_decklink( resource );
 	}
-	
+
 	virtual ml::store_type_ptr store( const std::wstring &resource, const ml::frame_type_ptr &frame )
 	{
 		return create_store_decklink( resource, frame );
 	}
-
 };
 
 } }
@@ -85,8 +89,21 @@ extern "C"
 	
 	ML_PLUGIN_DECLSPEC bool openplugin_create_plugin( const char*, pl::openplugin** plug )
 	{
-		if( !amf::openmedialib::is_decklink_device_present( ) ) return false;
-		
+		ARLOG_INFO( "Decklink plugin loaded." );
+#		ifdef WIN32
+		HRESULT error = CoInitialize( NULL );
+		if ( error != S_OK )
+		{
+			ARLOG( "COM failed to initialise." ).level( cl::log_level::error );
+			return false;
+		}
+#		endif
+		if( !amf::openmedialib::is_decklink_device_present( ) ) 
+		{
+			ARLOG( "No Decklink device found." ).level( cl::log_level::error );
+			return false;
+		}
+		ARLOG_INFO( "Decklink plugin initialised." );
 		*plug = new amf::openmedialib::aml_decklink;
 		return true;
 	}

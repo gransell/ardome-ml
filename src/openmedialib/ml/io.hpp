@@ -24,7 +24,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace io {
 		*/
 		typedef int ( *open_func_t )( void **out_private_data, const char *uri, int flags );
 
-		/// Called when file_close() is called on the AVIOContext associated with the handler.
+		/// Called when close_file() is called on the AVIOContext associated with the handler.
 		/**
 		The handler is responsible for freeing any resources associated with the instance when
 		this function is called.

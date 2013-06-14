@@ -686,7 +686,7 @@ class ML_PLUGIN_DECLSPEC sdl_audio : public store_type
 		{
 			bool result = true;
 
-			audio_type_ptr audio = audio::coerce( audio::FORMAT_PCM16, input );
+			audio_type_ptr audio = audio::coerce( audio::pcm16_id, input );
 
 			if ( audio->channels( ) > 2 )
 			{

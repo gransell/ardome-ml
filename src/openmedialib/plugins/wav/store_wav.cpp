@@ -75,14 +75,12 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 
 	ml::audio::identity ident = audio->id();
 
-	bytes_per_sample_ = audio->sample_size();
+	bytes_per_sample_ = audio->sample_storage_size();
 	frequency_ = audio->frequency();
 	channels_ = audio->channels();
 	real_bytes_per_sample_ = bytes_per_sample_;
 
 	switch (ident) {
-		case ml::audio::pcm8_id:
-			real_bytes_per_sample_ = 1; break;
 		case ml::audio::pcm16_id:
 			real_bytes_per_sample_ = 2; break;
 		case ml::audio::pcm24_id:
@@ -164,9 +162,10 @@ inline void saveRange(AVIOContext* file, void* array, size_t nbytes, std::vector
 bool store_wav::push(ml::frame_type_ptr frame)
 {
 	ARLOG_DEBUG5("store_wav::push()");
-	ARENFORCE_MSG(frame, "store_wav::push(): Frame is NULL?!");
+	ARENFORCE_MSG(frame, "store_wav::push(): Frame pushed is NULL!");
 
 	ml::audio_type_ptr audio(frame->get_audio());
+	ARENFORCE_MSG(audio, "store_wav::push(): Audio in frame pushed is NULL!");
 
 	// These are the values from the audio object
 	int samples = audio->samples();

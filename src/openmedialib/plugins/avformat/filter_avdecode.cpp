@@ -40,7 +40,7 @@ extern "C" {
 
 #include "avformat_wrappers.hpp"
 #include "avformat_stream.hpp"
-#include "avaudio_base.hpp"
+#include "avaudio_convert.hpp"
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
@@ -266,39 +266,6 @@ class stream_queue
 			return ml::image_type_ptr( );
 		}
 
-		ml::audio_type_ptr decode_audio( int position )
-		{
-			boost::recursive_mutex::scoped_lock lock( mutex_ );
-			lru_cache_type::key_type my_key = lru_key_for_position( position );
-			
-			audio_type_ptr aud = lru_cache_->audio_for_position( my_key );
-			
-			if( aud )
-				return aud;
-			
-			ml::frame_type_ptr frame = fetch( position );
-
-			if ( frame && frame->get_stream( ) )
-			{
-				int start = expected_;
-
-				if ( position + offset_ != expected_ )
-					start = frame->get_stream( )->key( );
-
-				if ( gop_open_ && start == position && position != 0 )
-					start = fetch( start - 1 )->get_stream( )->key( );
-
-				ml::frame_type_ptr temp = fetch( start ++ )->shallow( );
-
-				while( temp && temp->get_stream( ) && decode( temp, position ) )
-					temp = fetch( start ++ )->shallow( );
-
-				return temp->get_audio( );
-			}
-
-			return ml::audio_type_ptr( );
-		}
-
 		ml::fraction sar( )
 		{
 			ml::fraction result( 0, 1 );
@@ -415,11 +382,6 @@ class stream_queue
 			if ( context_ == 0 )
 			{
 				create_video_codec( result->get_stream(), &context_, &codec_, result->get_stream()->estimated_gop_size() == 1, threads_ , compliance_ );
-				if ( result->get_stream( )->id( ) == ml::stream_audio )
-				{
-					audio_filter_.set_passthrough( context_ );
-					audio_filter_.set_aml_format( );
-				}
 				avcodec_flush_buffers( context_);
 			}
 
@@ -501,36 +463,6 @@ class stream_queue
 
 					break;
 
-				case ml::stream_audio:
-					{
-						avpkt.data = pkt->bytes( );
-						avpkt.size = pkt->length( );
-						
-						avcodec_get_frame_defaults( frame_ );
-						
-						int got_frame = 0;
-						int length = avcodec_decode_audio4( context_, frame_, &got_frame, &avpkt );
-						
-
-						if ( got_frame )
-						{
-							int channels = context_->channels;
-							int frequency = context_->sample_rate;
-							int samples = frame_->nb_samples;
-
-							audio_type_ptr audio( ml::audio::allocate( audio_filter_.af( ), frequency, channels, samples ) );
-							memcpy( audio->pointer( ), frame_->data[ 0 ], audio->size( ) );
-							audio->set_position( pkt->position( ) );
-							result->set_audio( audio );
-
-							if ( result->get_position( ) >= position + offset_ )
-								found = true;
-
-							expected_ ++;
-						}
-					}
-					break;
-
 				default:
 					break;
 			}
@@ -564,7 +496,6 @@ class stream_queue
 		int offset_;
 		lru_cache_type_ptr lru_cache_;
 		struct SwsContext *scaler_;
-		avaudio_filter audio_filter_;
 };
 
 typedef boost::shared_ptr< stream_queue > stream_queue_ptr;
@@ -610,12 +541,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 			return image_ || ( stream_ && stream_->id( ) == ml::stream_video );
 		}
 
-		/// Indicates if the frame has audio
-		virtual bool has_audio( )
-		{
-			return audio_ || ( stream_ && stream_->id( ) == ml::stream_audio );
-		}
-
 		/// Get the image associated to the frame.
 		virtual olib::openmedialib::ml::image_type_ptr get_image( )
 		{
@@ -632,18 +557,6 @@ class ML_PLUGIN_DECLSPEC frame_avformat : public ml::frame_type
 			return image_;
 		}
 
-		/// Set the audio associated to the frame.
-		virtual void set_audio( audio_type_ptr audio )
-		{
-		}
-
-		/// Get the audio associated to the frame.
-		virtual audio_type_ptr get_audio( )
-		{
-			if ( !audio_ && ( stream_ && stream_->id( ) == ml::stream_audio ) )
-				audio_ = queue_->decode_audio( original_position_ );
-			return audio_;
-		}
 
 		// Calculate the duration of the frame
 		virtual double get_duration( ) const
@@ -707,7 +620,7 @@ public:
 		}
 		
 		audio_type_ptr combined = audio::combine( result_audios );
-		
+
 		result->set_audio( combined, true );
 
 		expected_ = result->get_position( ) + 1;
@@ -725,10 +638,10 @@ private:
 			av_free( ctx );
 		}
 		
-		std::map< size_t, avaudio_filter * >::const_iterator itr;
+		std::map< size_t, avaudio_convert_to_aml* >::const_iterator itr;
 		for( itr = audio_filters_.begin(); itr != audio_filters_.end(); ++itr )
 		{
-			avaudio_filter *ctx = itr->second;
+			avaudio_convert_to_aml *ctx = itr->second;
 			delete ctx;
 		}
 
@@ -760,8 +673,22 @@ private:
 			
 			reseats_[ tracks_to_decode_[ i ] ] = audio::create_reseat( );
 
-			audio_filters_[ tracks_to_decode_[ i ] ] = new avaudio_filter( audio_contexts_[ tracks_to_decode_[ i ] ] );
-			audio_filters_[ tracks_to_decode_[ i ] ]->set_aml_format( );
+			// create converter to generate aml-audio
+			AVCodecContext *c = audio_contexts_[ tracks_to_decode_[ i ] ] ;
+			int freq_in_out = c->sample_rate;
+			int chan_in_out = c->channels;
+			AVSampleFormat AV_fmt_in = c->sample_fmt;
+			audio::identity aml_format_out = AVSampleFormat_to_aml_id( AV_fmt_in );
+
+			// check if "encoded" audio is 32bit AES or pcm24, in which case we should configure the converter to output pcm24
+			if( c->sample_fmt == AV_SAMPLE_FMT_S32 && c->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) ||
+				( c->codec_id == CODEC_ID_PCM_S24LE ) ||
+				( c->codec_id == CODEC_ID_PCM_S24BE ) )
+			{
+				aml_format_out = audio::pcm24_id;
+			}
+
+			audio_filters_[ tracks_to_decode_[ i ] ] = new avaudio_convert_to_aml( freq_in_out, freq_in_out, chan_in_out, chan_in_out, AV_fmt_in, aml_format_out );
 		}
 		
 		ARENFORCE_MSG( decoded_frame_ = avcodec_alloc_frame( ) , "Failed to allocate AVFrame for decoding. Out of memory?" ); 
@@ -807,21 +734,18 @@ private:
 			avpkt.size = strm->length( );
 			
 			int got_frame = 0;
-			int error = avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
-			
+			avcodec_decode_audio4( track_context, decoded_frame_, &got_frame, &avpkt );
+
 			//ARENFORCE_MSG( error >= 0, "Error while decoding audio for track %1%. Error = %2%" )( track )( error );
 			
 			next_packets_to_decoders_[ track ] += packets_it->second->samples();
 
 			if( got_frame )
 			{
-				ml::audio_type_ptr decoded_audio = audio_filters_[ track ]->convert( ( const boost::uint8_t ** ) decoded_frame_->data, decoded_frame_->nb_samples );
-
 				int channels = track_context->channels;
 				int frequency = track_context->sample_rate;
 				int samples = decoded_frame_->nb_samples;
-				int buffer_offset = 0;
-				
+
 				ARLOG_DEBUG7( "Managed to decode packet %1% on track %2%. Channels = %3%, frequency = %4%, samples = %5%, discard = %6%" )
 				( strm->position() )( track )( channels )( frequency )( samples )( left_to_discard );
 				
@@ -832,34 +756,13 @@ private:
 						left_to_discard -= samples;
 						continue;
 					}
-					
-					samples -= left_to_discard;
-					buffer_offset = left_to_discard * channels * audio_filters_[ track ]->bps( );
-					left_to_discard = 0;
 				}
 
-				// If we have discarded some samples we may end up in the middle of an audio object so in that case we create a new one with the
-				// requested number of samples and copy the data to that object.
-				if( buffer_offset != 0 ) {
-					ml::audio_type_ptr temp = ml::audio::allocate( audio_filters_[ track ]->af( ), track_context->sample_rate, track_context->channels, samples );
-					memcpy( temp->pointer( ), decoded_frame_->data[ 0 ] + buffer_offset, temp->size( ) );
-					decoded_audio = temp;
-				}
+				ml::audio_type_ptr decoded_audio = audio_filters_[ track ]->convert_with_offset( ( const boost::uint8_t ** ) decoded_frame_->data, decoded_frame_->nb_samples - left_to_discard, left_to_discard );
+
+				left_to_discard = 0;
 
 				decoded_audio->set_position( position );
-				
-				// In the case of AES3 we get 24 bit but want 32 - thus we bit shift here (for now)
-				if( track_context->sample_fmt == AV_SAMPLE_FMT_S32 &&
-					track_context->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
-				{
-					boost::int32_t * start = static_cast< boost::int32_t * >( decoded_audio->pointer( ) );
-					boost::int32_t * end = start + decoded_audio->size( ) / sizeof(boost::int32_t);
-					
-					for (boost::int32_t *ptr = start; ptr != end; ++ptr)
-					{
-						*(ptr) <<= 8;
-					}
-				}
 				
 				track_reseater->append( decoded_audio );
 			}
@@ -876,10 +779,15 @@ private:
 		// create the audio object manually. This is because the reseater does not
 		// cache the information
 		if( track_reseater->size( ) == 0 )
-			ret = ml::audio::allocate( audio_filters_[ track ]->af( ), track_context->sample_rate, track_context->channels, wanted_samples, true );
+		{
+			ret = ml::audio::allocate( audio_filters_[ track ]->get_out_format( ), track_context->sample_rate, track_context->channels, wanted_samples, true );
+		}
 		else
+		{
 			ret = track_reseater->retrieve( wanted_samples, true );
+		}
 		
+
 		return ret;
 	}
 
@@ -888,7 +796,7 @@ private:
 	
 	//Maps from stream index to context/codec for that stream
 	std::map< size_t, AVCodecContext * > audio_contexts_;
-	std::map< size_t, avaudio_filter * > audio_filters_;
+	std::map< size_t, avaudio_convert_to_aml* > audio_filters_;
 	std::map< size_t, AVCodec * > audio_codecs_;
 	AVFrame *decoded_frame_;
 	

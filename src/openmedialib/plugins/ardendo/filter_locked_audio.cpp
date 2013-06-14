@@ -210,7 +210,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
                         
 						for ( size_t i = 0; i < table.size( ); i ++ )
 						{
-							int size = table[ i ] * channels_ * audio_span_->sample_size( );
+							int size = table[ i ] * channels_ * audio_span_->sample_storage_size( );
 
 							if ( int( i ) >= start_audio && int( i ) <= final_audio && frames_[ i ] && frames_[ i ]->get_audio( ) )
 							{
@@ -236,7 +236,7 @@ class ML_PLUGIN_DECLSPEC filter_locked_audio : public ml::filter_simple
 					{
 						boost::uint8_t *ptr = ( boost::uint8_t *)audio_span_->pointer( );
 						for ( int index = start; index < get_position( ); index ++ )
-							ptr += table[ index - start ] * channels_ * audio_span_->sample_size( );
+							ptr += table[ index - start ] * channels_ * audio_span_->sample_storage_size( );
 						ml::audio_type_ptr aud = ml::audio::allocate( audio_span_, -1, -1, table[ get_position( ) - start ], false );
 						memcpy( aud->pointer( ), ptr, aud->size( ) );
 						result->set_audio( aud );
