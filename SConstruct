@@ -10,7 +10,6 @@ sys.path.append( os.path.join(os.getcwd(), 'bcomp') )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'external', 'Mako-0.2.3', 'lib' ) )
 sys.path.append( os.path.join(os.getcwd(), 'bcomp', 'owl', 'release', 'py' ) )
 sys.path.append( os.path.join(os.getcwd(), 'wrappers', 'py' ) )
-sys.path.append( os.path.join(os.getcwd(), 'bcomp/aml/release/lib/openbuild') )
 
 import openbuild.opt
 import openbuild.env
@@ -166,18 +165,17 @@ class AMLEnvironment( openbuild.env.Environment ):
 				openbuild.utils.search_and_replace( os.path.join( 'config', self['PLATFORM'], 'ardome_ml.pc.in' ), 'ardome_ml.pc', tokens )
 				clone.Install( clone[ 'stage_pkgconfig' ], 'ardome_ml.pc' )
 
-	def install_openbuild( self ):
+	def install_extra_pkgconfig( self ):
 		for type in self.build_types( ):
 			clone = self.Clone( )
 			type( clone )
 			use = clone.subst( clone[ 'stage_libdir' ] )
-			clone.install_dir( os.path.join( use, 'openbuild' ), os.path.join( clone.root, 'openbuild' ) )
 			if clone[ 'PLATFORM' ] != 'win32':
 				path = os.path.join( 'pkgconfig', clone[ 'target' ] )
 				list = glob.glob( os.path.join( path, "*.pc" ) )
 				for package in list:
 					if package.find( os.sep + 'build_' ) == -1 and package.endswith( '.pc' ):
-						clone.Install( os.path.join( use, 'openbuild', 'pkgconfig' ), package )
+						clone.Install( os.path.join( use, 'pkgconfig' ), package )
 
 	def have_boost_python( self ):
 		clone = self.Clone( )
@@ -248,7 +246,7 @@ if env.check_externals( ):
 
 	env.create_package( )
 	if env[ 'PLATFORM' ] != 'win32':
-		env.install_openbuild( )
+		env.install_extra_pkgconfig( )
 		env.package_install( )
 	
 	if env[ 'wrappers' ] == 'yes' and env['PLATFORM'] == 'win32':
