@@ -14,7 +14,7 @@ if [ -n "$TEST_REPORT_PATH" ]; then
   cp tests/test_output/openmedialib/unit_test_results.xml $TEST_REPORT_PATH/
 fi
 
-if [ $BAGTARGET == "gcov" ]; then
+if [ "$BAGTARGET" == "gcov" ]; then
   if [ -f "build/ardome-ml/gcovr.py" ]; then
     if [ -z "$WORKSPACE" ]; then
       WORKSPACE=`pwd`
