@@ -70,6 +70,14 @@ linux32_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
 linux32_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
 linux32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
+### Build for 32 bit LSB 3.1 system with gcov 3.4
+gcov_TARGET: ardome-ml-gcov.tbz2
+gcov_POSTGRAB: build/ardome-ml/linux_postgrab.sh
+gcov_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
+gcov_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
+gcov_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
+gcov_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
 ubuntu64_PREGRAB: build/ardome-ml/ubuntu_check_deps.sh

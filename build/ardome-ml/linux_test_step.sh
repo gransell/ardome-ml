@@ -14,3 +14,16 @@ if [ -n "$TEST_REPORT_PATH" ]; then
   cp tests/test_output/openmedialib/unit_test_results.xml $TEST_REPORT_PATH/
 fi
 
+if [ $BAGTARGET == "gcov" ]; then
+  if [ -f "build/ardome-ml/gcovr.py" ]; then
+    if [ -z "$WORKSPACE" ]; then
+      WORKSPACE=`pwd`
+    fi
+    echo "Running gcov on all tests in $WORKSPACE"
+    cp build/ardome-ml/gcovr.py .
+    python gcovr.py --xml >> branch-coverage.xml
+    cp branch-coverage.xml $WORKSPACE/tests/
+    rm gcovr.py
+  fi
+fi
+

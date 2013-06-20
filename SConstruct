@@ -46,6 +46,12 @@ class AMLEnvironment( openbuild.env.Environment ):
 			self.install_config( 'config/linux32/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux32/xerces.pc', 'bcomp/xercesc' )
 			self.install_config( 'config/linux32/ffmpeg.pc', 'bcomp/ffmpeg' )
+		elif self[ 'target' ] == 'gcov':
+                        self.Append( CCFLAGS = ['-fprofile-arcs', '-ftest-coverage'] )
+                        self.Append( LINKFLAGS = ['-fprofile-arcs'] )
+			self.install_config( 'config/linux32/loki.pc', 'bcomp/loki-0.1.6' )
+			self.install_config( 'config/linux32/xerces.pc', 'bcomp/xercesc' )
+			self.install_config( 'config/linux32/ffmpeg.pc', 'bcomp/ffmpeg' )
 		elif self[ 'target' ] == 'linux64':
 			self.install_config( 'config/linux64/loki.pc', 'bcomp/loki-0.1.6' )
 			self.install_config( 'config/linux64/xerces.pc', 'bcomp/xercesc' )

@@ -37,6 +37,9 @@ if local_env[ 'PLATFORM' ] == 'win32':
 if local_env[ 'target' ] == 'linux32' :
     local_env.Append( CPPFLAGS = ['-march=pentium4', '-mfpmath=sse'] )
 
+if local_env[ 'target' ] == 'gcov' :
+    local_env.Append( CPPFLAGS = ['-march=pentium4', '-mfpmath=sse'] )
+
 object = local_env.shared_library( 'openmedialib_ml', src )
 
 local_env.release( object )
