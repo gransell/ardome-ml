@@ -2,4 +2,3 @@
 : http://releases.ardendo.se/builds/ffmpeg-aml/linux64/ffmpeg-aml-1_11_0-B3.tbz2 -> ffmpeg.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/linux64/rubberband-1.5.0-linux64.tar.bz2 -> rubberband.tbz2
 : http://releases.ardendo.se/releases/external-source/amf-dependencies/black_magic_decklink_sdk_8.6.tbz2 -> black_magic_decklink_sdk.tbz2
-: http://releases.ardendo.se/builds/external-source/boost/linux64/boost-1_53_0-linux64-1_53_0-B8.zip -> boost.zip
