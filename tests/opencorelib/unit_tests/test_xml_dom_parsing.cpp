@@ -81,7 +81,8 @@ BOOST_AUTO_TEST_SUITE( test_xml_dom_parsing )
 
 BOOST_AUTO_TEST_CASE( test_file_document_parser )
 {
-	test_xml_parsing< dom::file_document >( std::istringstream( valid_xml ) );
+	std::istringstream strm( valid_xml );
+	test_xml_parsing< dom::file_document >( strm );
 }
 
 BOOST_AUTO_TEST_CASE( test_fragment_parser )
@@ -91,7 +92,8 @@ BOOST_AUTO_TEST_CASE( test_fragment_parser )
 
 BOOST_AUTO_TEST_CASE( test_invalid_xml_with_file_document_parser )
 {
-	test_invalid_xml< dom::file_document >( std::istringstream( invalid_xml ) );
+	std::istringstream strm( invalid_xml );
+	test_invalid_xml< dom::file_document >( strm );
 }
 
 BOOST_AUTO_TEST_CASE( test_invalid_xml_with_fragment_parser )
