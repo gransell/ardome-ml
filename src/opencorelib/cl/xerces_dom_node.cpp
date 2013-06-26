@@ -1,14 +1,15 @@
-
 #include "precompiled_headers.hpp"
 #include "./xerces_utilities.hpp"
 #include "./xerces_dom_node.hpp"
 #include "./str_util.hpp"
 
-namespace olib { namespace opencorelib { namespace xml {
-
 #if defined (XERCES_CPP_NAMESPACE)
 	using namespace XERCES_CPP_NAMESPACE;
 #endif
+
+#include "detail/xerces_dom_utils.hpp"
+
+namespace olib { namespace opencorelib { namespace xml {
 
 exception::exception(const std::string& msg) throw()
 : msg(msg)
@@ -477,6 +478,17 @@ node& node::removeAttribute(const std::string& name) {
 	dnnm->removeNamedItem(xml::from_string(name).c_str());
 
 	return *this;
+}
+
+int node::getSourceLineNumber() const {
+	if (!n_)
+		return -1;
+
+	cl_dom_parser::source_location *sloc = static_cast< cl_dom_parser::source_location * >(
+		n_->getUserData( source_location_key ) );
+	ARENFORCE( sloc != NULL );
+
+	return sloc->line_;
 }
 
 node::node(const node* parent, DOMNode* nodeptr)

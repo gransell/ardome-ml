@@ -11,6 +11,7 @@ static const std::string valid_xml(
 	"<outer_tag>\n"
 	"  <inner_tag attrib1=\"value1\" attrib2=\"value2\">String value here</inner_tag>\n"
 	"  <inner_tag/>\n"
+	"  \n"
 	"  <nested_tag attrib=\"value\">\n"
 	"    <nested_tag attrib=\"another value\">5</nested_tag>\n"
 	"  </nested_tag>\n"
@@ -37,25 +38,31 @@ void test_xml_parsing( InputType &xml_input )
 
 	dom::node outer_node = instance.first( "outer_tag" );
 	BOOST_REQUIRE( outer_node.valid() );
+	BOOST_REQUIRE_EQUAL( outer_node.getSourceLineNumber(), 1 );
 
 	dom::nodes inner_nodes = outer_node.all( "inner_tag" );
 	BOOST_REQUIRE_EQUAL( inner_nodes.size(), 2 );
 
 	BOOST_REQUIRE( inner_nodes[0].valid() );
+	BOOST_REQUIRE_EQUAL( inner_nodes[0].getSourceLineNumber(), 2 );
 	check_attrib( inner_nodes[0], "attrib1", "value1" );
 	check_attrib( inner_nodes[0], "attrib2", "value2" );
 	BOOST_REQUIRE_EQUAL( inner_nodes[0].getValue(), "String value here" );
 
 	BOOST_REQUIRE( inner_nodes[1].valid() );
+	BOOST_REQUIRE_EQUAL( inner_nodes[1].getSourceLineNumber(), 3 );
 	BOOST_REQUIRE_EQUAL( inner_nodes[1].getValue(), "" );
 
 	dom::node nested_node = outer_node.first( "nested_tag" );
 	BOOST_REQUIRE( nested_node.valid() );
+	BOOST_REQUIRE_EQUAL( nested_node.getSourceLineNumber(), 5 );
 	check_attrib( nested_node, "attrib", "value" );
 	BOOST_REQUIRE_EQUAL( nested_node.getValue(), "" );
 	BOOST_REQUIRE_EQUAL( nested_node.getValueRecursively(), "\n    5\n  " );
+
 	dom::node nested_node2 = nested_node.first( "nested_tag" );
 	BOOST_REQUIRE( nested_node2.valid() );
+	BOOST_REQUIRE_EQUAL( nested_node2.getSourceLineNumber(), 6 );
 	check_attrib( nested_node2, "attrib", "another value" );
 	BOOST_REQUIRE_EQUAL( nested_node2.getValue(), "5" );
 }

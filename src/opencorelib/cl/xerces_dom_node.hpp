@@ -158,6 +158,10 @@ public:
 	node& setAttribute(const std::string& name, const std::string& val);
 	node& removeAttribute(const std::string& name);
 
+	// Returns the line number in the source XML document for the
+	// start tag of this node.
+	int getSourceLineNumber() const;
+
 protected:
 	node(const node* parent, XERCES_CPP_NAMESPACE::DOMNode* nodeptr);
 
