@@ -119,8 +119,21 @@ public:
 	std::string getNsUri() const;
 	std::string getName() const;
 
-	// Returns the text value of the node, including any descendants
+	// Returns the text value of the node, given that it has no
+	// child nodes. If there are child nodes, an empty string is
+	// returned.
 	std::string getValue() const;
+
+	// Returns the text value of the node, including the text values from
+	// any child nodes. Note that whitespace (including line breaks) is
+	// preserved.
+	// For example, given the following XML:
+	// <outer>
+	//   <inner>Value</inner>
+	// </outer>
+	// Calling getValue() on the node corresponding to "outer" would return
+	// the string: "\n  Value\n".
+	std::string getValueRecursively() const;
 
 	/*
 	 * Creates a child node.

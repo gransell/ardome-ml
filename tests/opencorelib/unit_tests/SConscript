@@ -20,7 +20,8 @@ test_sources = ['main_entry_unittests.cpp',
 				'test_timecode.cpp',
 				'test_utilities.cpp',
 				'test_uuid.cpp',
-				'test_worker.cpp' ]
+				'test_worker.cpp',
+				'test_xml_dom_parsing.cpp', ]
 				
 if local_env[ 'PLATFORM' ] == 'win32' :
 	local_env.Append( CPPDEFINES = [ '_SCL_SECURE_NO_WARNINGS' ] )

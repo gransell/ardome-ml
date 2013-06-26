@@ -276,11 +276,43 @@ std::string node::getName() const {
 	return i == std::string::npos ? s : s.substr(i + 1);
 }
 
-std::string node::getValue() const {
+std::string node::getValueRecursively() const {
 	if ( !n_ )
 		return "";
 	const XMLCh* name = n_->getTextContent( );
 	return xml::to_string(name);
+}
+
+std::string node::getValue() const {
+	if ( !n_ )
+		return "";
+	DOMNodeList* children = n_->getChildNodes();
+
+	//Attributes and the text content itself count as nodes, so
+	//we must check the node list for actual element nodes.
+	bool foundElementNode = false;
+	for ( XMLSize_t i = 0; i < children->getLength(); ++i )
+	{
+		if ( children->item( i )->getNodeType() == DOMNode::ELEMENT_NODE )
+		{
+			foundElementNode = true;
+			break;
+		}
+	}
+
+	if ( foundElementNode )
+	{
+		//There are actual child nodes, so don't return
+		//anything here (if you want all the inner values,
+		//use the getValueRecursively() method instead).
+		return "";
+	}
+	else
+	{
+		//No child nodes, so return the text content.
+		const XMLCh* name = n_->getTextContent( );
+		return xml::to_string(name);
+	}
 }
 
 node node::createChild(const std::string& _name)

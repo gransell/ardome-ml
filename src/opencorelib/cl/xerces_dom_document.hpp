@@ -63,7 +63,7 @@ protected:
 	bool writeNode(XERCES_CPP_NAMESPACE::XMLFormatTarget* ft,
 	               bool asFragment = false) const;
 
-	DocPtr doc;
+	DocPtr doc_;
 };
 
 /*
@@ -75,9 +75,6 @@ protected:
 class CORE_API fragment : public document {
 public:
 	fragment(const std::string& xmltext);
-
-private:
-	DomParserPtr parser_;
 };
 
 /*
