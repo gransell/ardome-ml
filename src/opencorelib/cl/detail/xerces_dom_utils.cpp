@@ -9,6 +9,11 @@
 
 namespace olib { namespace opencorelib { namespace xml { namespace dom {
 
+	xerces_string source_location_key()
+	{
+		return L2("opencorelib_xml_dom_source_location");
+	}
+
 	namespace
 	{
 		//Handles the lifetime of user data attached to nodes
@@ -124,7 +129,7 @@ namespace olib { namespace opencorelib { namespace xml { namespace dom {
 		source_location *loc = new source_location( locator->getLineNumber() );
 
 		XercesDOMParser::fCurrentNode->setUserData(
-			source_location_key, loc, &s_the_user_data_handler );
+			source_location_key().c_str(), loc, &s_the_user_data_handler );
 	}
 
 } } } }

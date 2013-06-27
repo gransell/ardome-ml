@@ -485,7 +485,7 @@ int node::getSourceLineNumber() const {
 		return -1;
 
 	cl_dom_parser::source_location *sloc = static_cast< cl_dom_parser::source_location * >(
-		n_->getUserData( source_location_key ) );
+		n_->getUserData( source_location_key().c_str() ) );
 	ARENFORCE( sloc != NULL );
 
 	return sloc->line_;

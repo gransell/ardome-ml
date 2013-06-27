@@ -4,7 +4,7 @@
 
 namespace olib { namespace opencorelib { namespace xml { namespace dom {
 
-	static const XMLCh *source_location_key = L"opencorelib_xml_dom_source_location";
+	xerces_string source_location_key();
 
 	//Custom subclass to the normal DOMParser, which records line and
 	//column number for each node.
@@ -13,7 +13,7 @@ namespace olib { namespace opencorelib { namespace xml { namespace dom {
 	{
 	public:
 		cl_dom_parser();
-		~cl_dom_parser();
+		virtual ~cl_dom_parser();
 
 		//Base class override
 		virtual void startElement(

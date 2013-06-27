@@ -71,6 +71,7 @@ sources = [
 	'xerces_sax_traverser.cpp',
 	'xerces_dom_document.cpp',
 	'xerces_dom_node.cpp',
+	'detail/xerces_dom_utils.cpp',
 	'xerces_utilities.cpp',
 	'xml_sax_parser.cpp' ] 
 
