@@ -8,12 +8,6 @@
 
 namespace olib { namespace opencorelib { namespace xml {
 
-void delete_doc_ptr( XERCES_CPP_NAMESPACE::DOMDocument* docptr )
-{
-	if (docptr)
-		docptr->release();
-};
-
 typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::DOMDocument> DocPtr;
 typedef boost::shared_ptr<XERCES_CPP_NAMESPACE::XercesDOMParser> DomParserPtr;
 

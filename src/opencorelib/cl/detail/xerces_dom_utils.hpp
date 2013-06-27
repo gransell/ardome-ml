@@ -1,3 +1,6 @@
+#ifndef OPENCORELIB_XERCES_DOM_UTILS_H_
+#define OPENCORELIB_XERCES_DOM_UTILS_H_
+
 #include <xercesc/dom/DOMErrorHandler.hpp>
 #include <xercesc/dom/DOMUserDataHandler.hpp>
 #include <xercesc/internal/XMLScanner.hpp>
@@ -51,3 +54,4 @@ namespace olib { namespace opencorelib { namespace xml { namespace dom {
 	};
 } } } }
 
+#endif //OPENCORELIB_XERCES_DOM_UTILS_H_

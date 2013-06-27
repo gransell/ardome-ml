@@ -8,6 +8,15 @@
 
 #include "detail/xerces_dom_utils.hpp"
 
+namespace
+{
+	void delete_doc_ptr( XERCES_CPP_NAMESPACE::DOMDocument *doc_ptr )
+	{
+		if( doc_ptr )
+			doc_ptr->release();
+	}
+}
+
 namespace olib { namespace opencorelib { namespace xml { namespace dom {
 
 fragment_filter::fragment_filter()
