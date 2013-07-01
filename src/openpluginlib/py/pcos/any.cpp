@@ -12,6 +12,7 @@
 
 #include <openpluginlib/pl/pcos/any.hpp>
 #include <openmedialib/ml/types.hpp>
+#include <openmedialib/ml/image/image_interface.hpp>
 
 namespace opl	= olib::openpluginlib;
 namespace pcos	= olib::openpluginlib::pcos;
