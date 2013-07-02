@@ -547,6 +547,8 @@ protected:
             plane.offset += ( width_ * height_ ) / 4;
         } else if ( chroma_w_ == 1 && chroma_h_ == 0 ) {
             plane.offset += ( width_ * height_ ) / 2;
+        } else {
+            plane.offset += width_ * height_;
         }
 
         planes_.push_back( plane );
