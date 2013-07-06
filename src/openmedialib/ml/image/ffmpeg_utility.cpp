@@ -82,6 +82,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUV422P10LE;
 	else if (pixfmt == ML_PIX_FMT_YUV422P10 )
 		return (int)AV_PIX_FMT_YUV422P10;
+	else if (pixfmt == ML_PIX_FMT_YUVA444P10 )
+		return (int)AV_PIX_FMT_YUVA444P10LE;
 	else if (pixfmt == ML_PIX_FMT_YUV422P16 )
 		return (int)AV_PIX_FMT_YUV422P16;
 	else if (pixfmt == ML_PIX_FMT_YUV422 )
@@ -90,8 +92,6 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_UYVY422;
 	else if (pixfmt == ML_PIX_FMT_YUV444P )
 		return (int)AV_PIX_FMT_YUV444P;
-	else if (pixfmt == ML_PIX_FMT_YUVA444P )
-		return (int)AV_PIX_FMT_YUVA444P;
 	else if (pixfmt == ML_PIX_FMT_UYYVYY411 )
 		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_L8 )
@@ -128,15 +128,15 @@ template<typename T>
 AVPicture fill_picture( ml::image_type_ptr image )
 {
     AVPicture picture;
-
     boost::shared_ptr< T > image_type = ml::image::coerce< T >( image );
+	int bps = image->bitdepth( ) > 8 ? 2 : 1;
+
     for ( int i = 0; i < AV_NUM_DATA_POINTERS; i ++ )
     {
         if ( i < image->plane_count( ) )
         {
             picture.data[ i ] = (boost::uint8_t*)image_type->data( i );
-            
-            picture.linesize[ i ] = image->linesize( i );
+            picture.linesize[ i ] = image->linesize( i ) * bps;
         }
         else
         {
@@ -150,14 +150,13 @@ AVPicture fill_picture( ml::image_type_ptr image )
 
 ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst)
 {
-
     AVPicture input;
     AVPicture output;
+
     if (src->bitdepth( ) > 8 ) 
 	    input = fill_picture< ml::image::image_type_16 >( src );	
     else
 	    input = fill_picture< ml::image::image_type_8 >( src );	
-       
  
     if (dst->bitdepth( ) > 8 ) 
 	    output = fill_picture< ml::image::image_type_16 >( dst );	
@@ -187,7 +186,7 @@ ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_pt
 		0, 
 		src->height( ), 
 		output.data, 
-		output.linesize );
+		output.linesize);
 	
 	ARENFORCE ( dst_height == src->height( ) );
 }

@@ -72,6 +72,8 @@ private:
 		// Obtain the number of planes and iterate through each
 		size_t count = plane_count( );
 
+		int bytes_per_sample = storage_bytes( );
+
 		for ( size_t i = 0; i < count; i ++ )
 		{
 			// We need the src and pitch of the cropped source plane
@@ -98,7 +100,7 @@ private:
 				if ( need_flop )
 					flop_scan_line( i, dst, src, dst_width );
 				else
-					memcpy( dst, src, dst_scan );
+					memcpy( dst, src, dst_scan * bytes_per_sample );
 				dst += dst_pitch;
 				src += src_pitch;
 			}
@@ -145,6 +147,11 @@ public:
     {
         return utility_bitdepth( AVpixfmt_, index );
     }
+
+	int storage_bytes( ) const
+	{
+		return sizeof( data_type );
+	}
 
     int linesize( size_t index = 0, bool crop = true )
     {
@@ -489,7 +496,7 @@ protected:
     void alloc_rgb_planes( )
     {
         if ( plane_count( ) == 1 ) {
-            plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * sizeof( data_type ), width_, height_, width_ * block_size( ) * sizeof( data_type ) };
+            plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * storage_bytes( ), width_, height_, width_ * block_size( ) * storage_bytes( ) };
             planes_.push_back( plane );
 
             return;
@@ -497,14 +504,14 @@ protected:
 
         plane plane;
         plane.offset = 0;
-        plane.pitch = ( ( width_ + 3 ) & -4 ) * sizeof( data_type );
+        plane.pitch = ( ( width_ + 3 ) & -4 ) * storage_bytes( );
         plane.width = width_;
         plane.height = height_;
-        plane.linesize = width_ * sizeof( data_type );
+        plane.linesize = width_ * storage_bytes( );
         planes_.push_back( plane );
         if ( plane_count( ) <= 1 ) { return; }
 
-        plane.offset += plane.pitch * sizeof( data_type ) * height_;
+        plane.offset += plane.pitch * storage_bytes( ) * height_;
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
@@ -520,47 +527,36 @@ protected:
     {
         plane plane;
 
+		int bytes_per_sample = storage_bytes( );
+
         // PLANE 1
         plane.offset = 0;
         plane.width = width_;
         plane.height = height_;
-        plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
-        
+        plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 ) / bytes_per_sample;
         planes_.push_back( plane );
-
         if ( plane_count( ) <= 1 ) { return; }
 
         // PLANE 2
-        plane.offset += width_ * height_;
-        plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 1 );
-        if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
-            plane.height = height_ / 2;
-        }
-
+        plane.offset += plane.pitch * height_;
+        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 1 ) / bytes_per_sample;
+		plane.width = width_ / ( chroma_w_ + 1 );
+		plane.height = height_ / ( chroma_h_ + 1 );
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
         // PLANE 3
-
-        plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 2 );
-        if ( chroma_w_ == 1 && chroma_h_ == 1 ) {
-            plane.offset += ( width_ * height_ ) / 4;
-        } else if ( chroma_w_ == 1 && chroma_h_ == 0 ) {
-            plane.offset += ( width_ * height_ ) / 2;
-        } else {
-            plane.offset += width_ * height_;
-        }
-
+        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 2 ) / bytes_per_sample;
+		plane.offset += plane.pitch * plane.height;
         planes_.push_back( plane );
-       
-				 
 		if ( plane_count( ) <= 3 ) { return; }
 
 		// PLANE 4
-		plane.linesize = plane.pitch = plane.width = utility_av_image_get_linesize( AVpixfmt_, width_, 3 );
-		plane.offset +=  width_ * height_;
+		plane.offset += plane.pitch * plane.height;
+        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 3 ) / bytes_per_sample;
+		plane.width = width_;
+		plane.height = height_;
 		planes_.push_back( plane );
-
     }
 
     void deallocate( )

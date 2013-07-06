@@ -20,19 +20,20 @@ namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
-ML_DECLSPEC int image_depth ( MLPixelFormat pf ) {
-	
+ML_DECLSPEC int image_depth ( MLPixelFormat pf ) 
+{
 	if ( pf == ML_PIX_FMT_YUV420P10 )
 		return 10;
     else if ( pf == ML_PIX_FMT_YUV420P16 )
 		return 16;
     else if ( pf == ML_PIX_FMT_YUV422P10LE )
 		return 10;
+    else if ( pf == ML_PIX_FMT_YUVA444P10 )
+		return 10;
     else if ( pf == ML_PIX_FMT_YUV422P10 )
 		return 10;
     else if ( pf == ML_PIX_FMT_YUV422P16 )
 		return 16;
-
 	return 8;
 }
 
@@ -43,8 +44,6 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
 	else if ( image_depth( pf ) > 8 )
 		return ml::image::image_type_16_ptr( new ml::image::image_type_16( pf, width, height ) );
-	
-
 	return image_type_ptr( );	
 }
 
@@ -70,12 +69,10 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_str
 	return convert( src,  MLPixelFormatMap[ pf ] );
 }
 
-
 image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_d, rescale_filter filter )
 {
-    if( im->width( ) == new_w && im->height( ) == new_h && im->depth( ) == new_d ) {
+    if( im->width( ) == new_w && im->height( ) == new_h && im->depth( ) == new_d )
         return im;
-    }
 
     image_type_ptr new_im = allocate( im->ml_pixel_format( ), new_w, new_h );
     ml::image::rescale_ffmpeg_image( im, new_im ); 
@@ -98,21 +95,22 @@ static int locate_alpha_offset( const MLPixelFormat pf )
     return result;
 }
 
+template< typename T >
 ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 {
     image_type_ptr result;
 
     if ( im )
     {
-        boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
+        boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
         int offset = locate_alpha_offset( im->ml_pixel_format( ) );
         if ( offset >= 0 )
         {
             result = allocate( ML_PIX_FMT_L8, im->width( ), im->height( ) );
-            boost::shared_ptr< ml::image::image_type_8 > result_type_8 = ml::image::coerce< ml::image::image_type_8 >( result );
+            boost::shared_ptr< T > result_type = ml::image::coerce< T >( result );
 
-            const boost::uint8_t *src = im_type_8->data( );
-            boost::uint8_t *dst = result_type_8->data( );
+            const boost::uint8_t *src = im_type->data( );
+            boost::uint8_t *dst = result_type->data( );
 
             int h = im->height( );
 
@@ -138,37 +136,54 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
     return result;
 }
 
+ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
+{
+    image_type_ptr result;
+    if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
+        result = extract_alpha< ml::image::image_type_8 >( im );
+	return result;
+}
+
+template< typename T >
+ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
+{
+	if ( im->field_order( ) != progressive )
+	{
+		im->set_field_order( progressive );
+		boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
+		ARENFORCE_MSG( im_type, "Unable to coerce to image type associated to %d" )( im->bitdepth( ) );
+		for ( int i = 0; i < im->plane_count( ); i ++ )
+		{
+			typename T::data_type *dst = im_type->data( i );
+			typename T::data_type *src = im_type->data( i ) + im->pitch( i );
+			int linesize = im->linesize( i );
+			int src_pitch = im->pitch( i ) - linesize;
+			int height = im->height( i ) - 1;
+			while( height -- )
+			{
+				for ( int w = 0; w < linesize; w ++ )
+				{
+					*dst = ( *src ++ + *dst ) >> 1;
+					dst ++;
+				}
+				dst += src_pitch;
+				src += src_pitch;
+			}
+		}
+	}
+
+	return im;
+}
 
 ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 {
-
-    if ( im && im->field_order( ) != progressive )
-    {
-        im->set_field_order( progressive );
-        for ( int i = 0; i < im->plane_count( ); i ++ )
-        {
-            boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
-            boost::uint8_t *dst = im_type_8->data( i );
-            boost::uint8_t *src = im_type_8->data( i ) + im->pitch( i );
-            int linesize = im->linesize( i );
-            int src_pitch = im->pitch( i ) - linesize;
-            int height = im->height( i ) - 1;
-            while( height -- )
-            {
-                for ( int w = 0; w < linesize; w ++ )
-                {
-                    *dst = ( *src ++ + *dst ) >> 1;
-                    dst ++;
-                }
-                dst += src_pitch;
-                src += src_pitch;
-            }
-        }
-    }
-
-    return im;
+	image_type_ptr result;
+	if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
+		result = deinterlace< ml::image::image_type_8 >( im );
+	else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
+		result = deinterlace< ml::image::image_type_16 >( im );
+	return result;
 }
-
 
 inline unsigned char clamp_sample( const int v ) { return ( unsigned char )( v < 0 ? 0 : v > 255 ? 255 : v ); }
 
@@ -187,45 +202,55 @@ inline void yuv444_to_bgr( unsigned char *&dst, const int y, const int rc, const
 }
 
 // Obtain the fields in presentation order
+template< typename T >
 ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field )
 {
-    // Default our return to the source
-    image_type_ptr new_im = im;
+	// Default our return to the source
+	image_type_ptr new_im = im;
 
-    // Only do something if we have an image and it isn't progressive
-    if ( im && im->field_order( ) != progressive )
-    {
-        // Allocate an image which is half the size of the source
-        new_im = allocate( im->pf( ), im->width( ), im->height( ) / 2 );
+	// Only do something if we have an image and it isn't progressive
+	if ( im && im->field_order( ) != progressive )
+	{
+		// Allocate an image which is half the size of the source
+		new_im = allocate( im->pf( ), im->width( ), im->height( ) / 2 );
 
-        // The apps field 0 depends on the field order of the image
-        if ( im->field_order( ) == top_field_first )
-            field = field == 0 ? 0 : 1;
-        else
-            field = field == 1 ? 0 : 1;
+		// The apps field 0 depends on the field order of the image
+		if ( im->field_order( ) == top_field_first )
+			field = field == 0 ? 0 : 1;
+		else
+			field = field == 1 ? 0 : 1;
 
-        // Copy every second scan line from each plane to extract the field
-        for ( int i = 0; i < im->plane_count( ); i ++ )
-        {
-            boost::shared_ptr< ml::image::image_type_8 > im_type_8 = ml::image::coerce< ml::image::image_type_8 >( im );
-            boost::shared_ptr< ml::image::image_type_8 > new_im_type_8 = ml::image::coerce< ml::image::image_type_8 >( new_im );
-            unsigned char *src = im_type_8->data( i ) + field * im->pitch( i );
-            unsigned char *dst = new_im_type_8->data( i );
-            int src_pitch = 2 * im->pitch( i );
-            int dst_pitch = new_im->pitch( i );
-            int linesize = new_im->linesize( i );
-            int height = new_im->height( i );
-            while( height -- )
-            {
-                memcpy( dst, src, linesize );
-                dst += dst_pitch;
-                src += src_pitch;
-            }
-        }
-    }
+		// Copy every second scan line from each plane to extract the field
+		for ( int i = 0; i < im->plane_count( ); i ++ )
+		{
+			boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
+			boost::shared_ptr< T > new_im_type = ml::image::coerce< T >( new_im );
+			typename T::data_type *src = im_type->data( i ) + field * im->pitch( i );
+			typename T::data_type *dst = new_im_type->data( i );
+			int src_pitch = 2 * im->pitch( i );
+			int dst_pitch = new_im->pitch( i );
+			int linesize = new_im->linesize( i ) * new_im->storage_bytes( );
+			int height = new_im->height( i );
+			while( height -- )
+			{
+				memcpy( dst, src, linesize );
+				dst += dst_pitch;
+				src += src_pitch;
+			}
+		}
+	}
 
-    return new_im;
+	return new_im;
 }
 
+ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int f )
+{
+	image_type_ptr result;
+	if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
+		result = field< ml::image::image_type_8 >( im, f );
+	else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
+		result = field< ml::image::image_type_16 >( im, f );
+	return result;
+}
 
 } } } }
