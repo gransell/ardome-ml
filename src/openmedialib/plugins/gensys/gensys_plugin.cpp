@@ -156,49 +156,45 @@ namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { 
 
-template<typename T>
+template< typename T >
 inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 {
-    boost::uint8_t *ptr = (boost::uint8_t*)ml::image::coerce< T >( img )->data( plane );
+    typename T::data_type *ptr = ml::image::coerce< T >( img )->data( plane );
+
 	int width = img->linesize( plane );
 	int height = img->height( plane );
-	int diff = img->pitch( plane );
+	int diff = img->pitch( plane ) - width;
 
-	int val_shifted = val;
-	int val_width_in_bytes = 1;
-	
-	if (img->bitdepth() == 16)
-	{
-		val_shifted <<= 8;
-		val_width_in_bytes = 2;
-	}
-	else if (img->bitdepth() == 10)
-	{
-		val_shifted <<= 2;
-		val_width_in_bytes = 2;
-	}
+	typename T::data_type val_shifted = static_cast< typename T::data_type >( val << ( img->bitdepth( ) - 8 ) );
 
-	if ( ptr ) // && val >= 16 && val <= 240 )
+	if ( ptr )
 	{
 		while( height -- )
 		{
-			//memset( ptr, val, width );
-
-			boost::uint8_t *ptr_running = ptr;
-			for (int i = 0; i < width; i++, ptr_running += val_width_in_bytes)
-				memcpy(ptr_running, (const void *)&val_shifted, val_width_in_bytes);
-
+			for ( int i = 0; i < width; i++ )
+				*ptr ++ = val_shifted;
 			ptr += diff;
 		}
 	}
-	
 }
 
+inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
+{
+	if ( ml::image::coerce< ml::image::image_type_8 >( img ) )
+        fill< ml::image::image_type_8 >( img, plane, val );
+	else if ( ml::image::coerce< ml::image::image_type_16 >( img ) )
+        fill< ml::image::image_type_16 >( img, plane, val );
+}
+
+template< typename T >
 inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
 {
-	unsigned char *ptr = ml::image::coerce< ml::image::image_type_8 >( img )->data( );
+	typename T::data_type *ptr = ml::image::coerce< T >( img )->data( );
 	int width = img->width( );
 	int height = img->height( );
+	typename T::data_type rs = static_cast< typename T::data_type >( r << ( img->bitdepth( ) - 8 ) );
+	typename T::data_type gs = static_cast< typename T::data_type >( g << ( img->bitdepth( ) - 8 ) );
+	typename T::data_type bs = static_cast< typename T::data_type >( b << ( img->bitdepth( ) - 8 ) );
 	if ( ptr )
 	{
 		while( height -- )
@@ -206,12 +202,20 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 			int x = width;
 			while ( x -- )
 			{
-				memset( ptr++, r, 1 );
-				memset( ptr++, g, 1 );
-				memset( ptr++, b, 1 );
+				*ptr ++ = rs;
+				*ptr ++ = gs;
+				*ptr ++ = bs;
 			}
 		}
 	}
+}
+
+inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, unsigned char b )
+{
+	if ( ml::image::coerce< ml::image::image_type_8 >( img ) )
+        fillRGB< ml::image::image_type_8 >( img, r, g, b );
+	else if ( ml::image::coerce< ml::image::image_type_16 >( img ) )
+        fillRGB< ml::image::image_type_16 >( img, r, g, b );
 }
 
 static pl::pcos::key key_is_background_( pcos::key::from_string( "is_background" ) );
@@ -337,7 +341,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 					if ( alpha )
 					{
 						alpha->set_writable( true );
-						fill< ml::image::image_type_8 >( alpha, 0, ( unsigned char )( prop_a_.value< int >( ) ) );
+						fill( alpha, 0, ( unsigned char )( prop_a_.value< int >( ) ) );
 					}
 				}
 
@@ -360,7 +364,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 						if ( deferred_alpha_ )
 						{
 							deferred_alpha_->set_writable( false );
-							fill< ml::image::image_type_8 >( deferred_alpha_, 0, ( unsigned char )( prop_a_.value< int >( ) ) );
+							fill( deferred_alpha_, 0, ( unsigned char )( prop_a_.value< int >( ) ) );
 						}
 					}
 				}
@@ -402,20 +406,9 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			{
 				int y, u, v;
 				ml::image::rgb24_to_yuv444( y, u, v, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
-                if ( image->bitdepth( ) == 10 ) {
-                    //FIXME
-					fill< ml::image::image_type_16 >( image, 0, ( boost::uint8_t )y );
-					fill< ml::image::image_type_16 >( image, 1, ( boost::uint8_t )u );
-					fill< ml::image::image_type_16 >( image, 2, ( boost::uint8_t )v );
-                } else if ( image->bitdepth( ) == 16 ) {
-					fill< ml::image::image_type_16 >( image, 0, ( boost::uint8_t )y );
-					fill< ml::image::image_type_16 >( image, 1, ( boost::uint8_t )u );
-					fill< ml::image::image_type_16 >( image, 2, ( boost::uint8_t )v );
-                } else {
-                    fill< ml::image::image_type_8 >( image, 0, ( unsigned char )y );
-                    fill< ml::image::image_type_8 >( image, 1, ( unsigned char )u );
-                    fill< ml::image::image_type_8 >( image, 2, ( unsigned char )v );
-                }
+				fill( image, 0, ( boost::uint8_t )y );
+				fill( image, 1, ( boost::uint8_t )u );
+				fill( image, 2, ( boost::uint8_t )v );
 			}
 			
 			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == _CT("r8g8b8") )
@@ -594,8 +587,8 @@ class ML_PLUGIN_DECLSPEC chroma_filter : public filter_simple
 				img = ml::image::conform( img, ml::image::writable );
 				if ( img )
 				{
-					fill< ml::image::image_type_8 >( img, 1, ( unsigned char )prop_u_.value< int >( ) );
-					fill< ml::image::image_type_8 >( img, 2, ( unsigned char )prop_v_.value< int >( ) );
+					fill( img, 1, ( unsigned char )prop_u_.value< int >( ) );
+					fill( img, 2, ( unsigned char )prop_v_.value< int >( ) );
 				}
 				result->set_image( img );
 			}
@@ -771,9 +764,9 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			if ( !result->has_image( ) )
 			{
 				ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< t_string >( ).c_str( ), 720, 576 );
-				fill< ml::image::image_type_8 >( image, 0, ( unsigned char )16 );
-				fill< ml::image::image_type_8 >( image, 1, ( unsigned char )128 );
-				fill< ml::image::image_type_8 >( image, 2, ( unsigned char )128 );
+				fill( image, 0, ( unsigned char )16 );
+				fill( image, 1, ( unsigned char )128 );
+				fill( image, 2, ( unsigned char )128 );
 				result->set_image( image );
 				result->set_sar( 59, 54 );
 			}
@@ -1190,14 +1183,32 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			return result;
 		}
 
-		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry geom )
+		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry &geom )
 		{
+			ml::frame_type_ptr result;
+
 			// Ensure conformance
 			olib::t_string original_pf = background->pf();
 			if ( !is_yuv_planar( background ) )
-			{
 				background = frame_convert( background, _CT("yuv444p") );
-			}
+
+			if ( ml::image::coerce< ml::image::image_type_8 >( background->get_image( ) ) )
+				result = composite< ml::image::image_type_8 >( background, fg, geom );
+			else if ( ml::image::coerce< ml::image::image_type_16 >( background->get_image( ) ) )
+				result = composite< ml::image::image_type_16 >( background, fg, geom );
+
+			//If we converted to yuv444p at the top, we convert back to the original here
+			if( original_pf != background->pf( ) )
+				background = frame_convert( background, original_pf );
+
+			return result;
+		}
+
+		template< typename P >
+		frame_type_ptr composite( frame_type_ptr background, frame_type_ptr fg, struct geometry &geom )
+		{
+			const int bit_depth = background->get_image( )->bitdepth( );
+			const int max_sample = ( 1 << bit_depth ) - 1;
 
 			ml::frame_type_ptr foreground = frame_convert( fg->shallow( ), background->get_image( )->pf( ) );
 			foreground->set_image( ml::image::conform( foreground->get_image( ), ml::image::writable ) );
@@ -1277,15 +1288,15 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				if ( src_width > 0 && src_height > 0 )
 				{
 					// Calculate the byte offsets
-					unsigned char *src_ptr = ml::image::coerce< ml::image::image_type_8 >( src )->data( p ) + src_y * src->pitch( p ) + src_x;
-					unsigned char *dst_ptr = ml::image::coerce< ml::image::image_type_8 >( dst )->data( p ) + dst_y * dst->pitch( p ) + dst_x;
+					typename P::data_type *src_ptr = ml::image::coerce< P >( src )->data( p ) + src_y * src->pitch( p ) + src_x;
+					typename P::data_type *dst_ptr = ml::image::coerce< P >( dst )->data( p ) + dst_y * dst->pitch( p ) + dst_x;
 
 					// Obtain the pitches of both images and reduce by the distance travelled on each row
 					int src_remainder = src->pitch( p ) - src_width;
 					int dst_remainder = dst->pitch( p ) - src_width;
 					int temp_h = src_height;
-					int mix = int( 255 * prop_mix_.value< double >( ) );
-					int xim = 255 - mix;
+					int mix = int( max_sample * prop_mix_.value< double >( ) );
+					int xim = max_sample - mix;
 
 					if ( !background->get_alpha( ) && !foreground->get_alpha( ) )
 					{
@@ -1294,7 +1305,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * xim + *src_ptr * mix ) / 255 );
+								*dst_ptr = static_cast< typename P::data_type >( ( *dst_ptr * xim + *src_ptr * mix ) / max_sample );
 								src_ptr ++;
 								dst_ptr ++;
 							}
@@ -1305,7 +1316,7 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					else if ( !background->get_alpha( ) && foreground->get_alpha( ) )
 					{
 						ml::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
-						unsigned char *src_alpha_ptr = ml::image::coerce< ml::image::image_type_8 >( src_alpha )->data( ) + src_y * src_alpha->pitch( ) + src_x;
+						typename P::data_type *src_alpha_ptr = ml::image::coerce< P >( src_alpha )->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
 						if ( temp_h > src_alpha->height( ) ) temp_h = src_alpha->height( );
@@ -1314,8 +1325,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								alpha = ( *src_alpha_ptr ++ * mix ) / 255;
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( 255 - alpha ) + *src_ptr * alpha ) / 255 );
+								alpha = ( *src_alpha_ptr ++ * mix ) / max_sample;
+								*dst_ptr = static_cast< typename P::data_type >( ( *dst_ptr * ( max_sample - alpha ) + *src_ptr * alpha ) / max_sample );
 								src_ptr ++;
 								dst_ptr ++;
 							}
@@ -1327,15 +1338,15 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					else if ( background->get_alpha( ) && !foreground->get_alpha( ) )
 					{
 						ml::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
-						unsigned char *dst_alpha_ptr = ml::image::coerce< ml::image::image_type_8 >( dst_alpha )->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
+						typename P::data_type *dst_alpha_ptr = ml::image::coerce< P >( dst_alpha )->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
 						while ( temp_h -- )
 						{
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( xim ) + *src_ptr * mix ) / 255 );
-								*dst_alpha_ptr = 255;
+								*dst_ptr = static_cast< typename P::data_type >( ( *dst_ptr * ( xim ) + *src_ptr * mix ) / max_sample );
+								*dst_alpha_ptr = max_sample;
 								src_ptr ++;
 								dst_ptr ++;
 								dst_alpha_ptr ++;
@@ -1348,10 +1359,10 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					else
 					{
 						ml::image_type_ptr dst_alpha = p == 0 ? background->get_alpha( ) : half_dst_alpha;
-						unsigned char *dst_alpha_ptr = ml::image::coerce< ml::image::image_type_8 >( dst_alpha )->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
+						typename P::data_type *dst_alpha_ptr = ml::image::coerce< P >( dst_alpha )->data( ) + dst_y * dst_alpha->pitch( ) + dst_x;
 						int dst_alpha_remainder = dst_alpha->pitch( ) - src_width;
 						ml::image_type_ptr src_alpha = p == 0 ? foreground->get_alpha( ) : half_src_alpha;
-						unsigned char *src_alpha_ptr = ml::image::coerce< ml::image::image_type_8 >( src_alpha )->data( ) + src_y * src_alpha->pitch( ) + src_x;
+						typename P::data_type *src_alpha_ptr = ml::image::coerce< P >( src_alpha )->data( ) + src_y * src_alpha->pitch( ) + src_x;
 						int src_alpha_remainder = src_alpha->pitch( ) - src_width;
 						int alpha = 0;
 						while ( temp_h -- )
@@ -1359,9 +1370,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 							int temp_w = src_width;
 							while( temp_w -- )
 							{
-								alpha = ( mix * *src_alpha_ptr ) / 255;
-								*dst_ptr = static_cast< unsigned char >( ( *dst_ptr * ( 255 - alpha ) + *src_ptr * alpha ) >> 8 );
-								*dst_alpha_ptr = ( ( *src_alpha_ptr * mix ) / 255 ) | *dst_alpha_ptr;
+								alpha = ( mix * *src_alpha_ptr ) / max_sample;
+								*dst_ptr = static_cast< typename P::data_type >( ( *dst_ptr * ( max_sample - alpha ) + *src_ptr * alpha ) >> bit_depth );
+								*dst_alpha_ptr = ( ( *src_alpha_ptr * mix ) / max_sample ) | *dst_alpha_ptr;
 								src_alpha_ptr ++;
 								dst_alpha_ptr ++;
 								src_ptr ++;
@@ -1387,12 +1398,6 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 					dst_width /= plane_x_factor;
 					dst_height /= plane_y_factor;
 				}
-			}
-
-			//If we converted to yuv444p at the top, we convert back to the original here
-			if( original_pf != background->pf( ) )
-			{
-				background = frame_convert( background, original_pf );
 			}
 
 			return background;
@@ -1482,20 +1487,42 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 		{
 			if ( !is_yuv_planar( result ) )
 				result = frame_convert( result, _CT("yuv420p") );
+
+			if ( ml::image::coerce< ml::image::image_type_8 >( result->get_image( ) ) )
+				result = process_image< ml::image::image_type_8 >( result );
+			else if ( ml::image::coerce< ml::image::image_type_16 >( result->get_image( ) ) )
+				result = process_image< ml::image::image_type_16 >( result );
+			
+			return result;
+		}
+
+		template< typename T >
+		frame_type_ptr process_image( frame_type_ptr result )
+		{
 			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 			ml::image_type_ptr img = result->get_image( );
 			if ( img )
 			{
-				// Interpret properties
-				int contrast = int( 256 * prop_contrast_.value< double >( ) );
-				int brightness = int( 256 * prop_brightness_.value< double >( ) );
-				int sin_hue = int( 256 * ( std::sin( M_PI * prop_hue_.value< double >( ) / 180.0 ) ) );
-				int cos_hue = int( 256 * ( std::cos( M_PI * prop_hue_.value< double >( ) / 180.0 ) ) );
-				int contrast_saturation = int( 256 * prop_contrast_.value< double >( ) * prop_saturation_.value< double >( ) );
+				const int bits = img->bitdepth( );
+				const int upper = static_cast< typename T::data_type >( 255 << ( bits - 8 ) );
+				const int middle = upper / 2;
+				// 16 .. 235 for non 709?
+				const int lower_y = 0;
+				const int upper_y = static_cast< typename T::data_type >( 255 << ( bits - 8 ) );
+				// 16 .. 240 for non 709?
+				const int lower_uv = 0;
+				const int upper_uv = static_cast< typename T::data_type >( 255 << ( bits - 8 ) );
 
-				unsigned char *y = ml::image::coerce< ml::image::image_type_8 >( img )->data( 0 );
-				unsigned char *cb = ml::image::coerce< ml::image::image_type_8 >( img )->data( 1 );
-				unsigned char *cr = ml::image::coerce< ml::image::image_type_8 >( img )->data( 2 );
+				// Interpret properties
+				int contrast = int( upper * prop_contrast_.value< double >( ) );
+				int brightness = int( upper * prop_brightness_.value< double >( ) );
+				int sin_hue = int( upper * ( std::sin( M_PI * prop_hue_.value< double >( ) / 180.0 ) ) );
+				int cos_hue = int( upper * ( std::cos( M_PI * prop_hue_.value< double >( ) / 180.0 ) ) );
+				int contrast_saturation = int( upper * prop_contrast_.value< double >( ) * prop_saturation_.value< double >( ) );
+
+				typename T::data_type *y = ml::image::coerce< T >( img )->data( 0 );
+				typename T::data_type *cb = ml::image::coerce< T >( img )->data( 1 );
+				typename T::data_type *cr = ml::image::coerce< T >( img )->data( 2 );
 
 				int w = img->width( 0 );
 				int h = img->height( 0 );
@@ -1509,7 +1536,7 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 					t = w;
 					while( t -- )
 					{
-						*y = limit( ( ( ( *y - 16 ) * contrast + brightness ) >> 8 ) + 16, 16, 235 );
+						*y = limit( ( ( ( *y - lower_y ) * contrast + brightness ) >> bits ) + lower_y, lower_y, upper_y );
 						y ++;
 					}
 					y += y_rem;
@@ -1523,9 +1550,9 @@ class ML_PLUGIN_DECLSPEC correction_filter : public filter_simple
 					t = w;
 					while( t -- )
 					{
-						*cb = limit( ( ( ( ( ( *cb - 128 ) * cos_hue + ( *cr - 128 ) * sin_hue ) >> 8 ) * contrast_saturation ) >> 8 ) + 128, 16, 240 );
+						*cb = limit( ( ( ( ( ( *cb - middle ) * cos_hue + ( *cr - middle ) * sin_hue ) >> bits ) * contrast_saturation ) >> bits ) + middle, lower_uv, upper_uv );
 						cb ++;
-						*cr = limit( ( ( ( ( ( *cr - 128 ) * cos_hue - ( *cb - 128 ) * sin_hue ) >> 8 ) * contrast_saturation ) >> 8 ) + 128, 16, 240 );
+						*cr = limit( ( ( ( ( ( *cr - middle ) * cos_hue - ( *cb - middle ) * sin_hue ) >> bits ) * contrast_saturation ) >> bits ) + middle, lower_uv, upper_uv );
 						cr ++;
 					}
 					cb += cb_rem;
@@ -2471,9 +2498,9 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 						int by, bu, bv;
 						ml::image::rgb24_to_yuv444( by, bu, bv, 0, 0, 0 );
 						image = ml::image::allocate( _CT("yuv420p"), width, height );
-						fill< ml::image::image_type_8 >( image, 0, by );
-						fill< ml::image::image_type_8 >( image, 1, bu );
-						fill< ml::image::image_type_8 >( image, 2, bv );
+						fill( image, 0, by );
+						fill( image, 1, bu );
+						fill( image, 2, bv );
 					}
 					else
 					{
