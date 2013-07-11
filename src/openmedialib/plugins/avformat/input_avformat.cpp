@@ -1577,9 +1577,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				if ( aml_index_->total_frames( ) > frames_ )
 				{
-					av_read_pause( context_ );
-					prop_file_size_ = boost::int64_t( avio_size( context_->pb ) );
-					int new_frames = aml_index_->calculate( prop_file_size_.value< boost::int64_t >( ) );
+					const boost::int64_t file_size = avio_size( context_->pb );
+					prop_file_size_ = file_size;
+					int new_frames = aml_index_->calculate( file_size );
 					ARENFORCE_MSG( new_frames >= frames_, "Media shrunk on sync! Last duration was: %1%, new duration is: %2% (index frames: %3%)" )
 						( frames_ )( new_frames )( aml_index_->total_frames( ) );
 					frames_ = new_frames;
@@ -2778,7 +2778,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				io::open_file( &keepalive, olib::opencorelib::str_util::to_string( resource_ ).c_str( ), AVIO_FLAG_READ );
 
 				// AML specific reopen hack - enforces a reopen from a non-cached source
-				av_read_pause( context_ );
+				avio_size( context_->pb );
 			}
 
 			// Preserve the current position (since we need to seek to start and end here)
