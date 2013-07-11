@@ -79,6 +79,22 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	BOOST_CHECK_EQUAL( memcmp( stream->bytes() + 38, picture_coding_ext, sizeof( picture_coding_ext ) ), 0 );
 }
 
+//J#AMF-2123: avformat plugin fails when loading partial ts file with .awi index and packet_stream=1
+BOOST_AUTO_TEST_CASE( amf_2123_failed_to_read_partial_ts )
+{
+	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-2123/DemoFromArtBeats_first6MB.ts" ) );
+	BOOST_REQUIRE( inp );
+	inp->property( "ts_index" ) = to_wstring( MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-2123/DemoFromArtBeats.awi" );
+	inp->property( "packet_stream" ) = 1;
+
+	BOOST_REQUIRE( inp->init() );
+
+	//Before the fix, an exception was thrown here due to a failed sanity check
+	inp->sync();
+
+	BOOST_CHECK_EQUAL( inp->get_frames(), 1200 );
+}
+
 
 BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 {

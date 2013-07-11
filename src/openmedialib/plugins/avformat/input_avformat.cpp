@@ -1837,7 +1837,9 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				start_time_ = context_->start_time;
 
 			// Set the duration
-			if (frames_ > 0)
+			if ( aml_index_ )
+				sync_with_index();
+			else if (frames_ > 0)
 		                ;
 			else if ( uint64_t( context_->duration ) != AV_NOPTS_VALUE )
 				frames_ = int( ceil( ( avformat_input::fps( ) * context_->duration ) / ( double )AV_TIME_BASE ) );
