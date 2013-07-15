@@ -2,6 +2,7 @@ Import(['local_env'])
 
 local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat' )
 local_env.optional( 'ffmpeg' )
+options = local_env.optional( 'x264', 'ffmpeg_x264_adapter' )
 
 test_sources = [
 	'src/main.cpp',
@@ -15,6 +16,9 @@ test_sources = [
 	'src/test_frame_list_filter.cpp',
 	'src/test_utilities.cpp',
 	]
+
+if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
+	test_sources.append( 'src/test_x264_encoding.cpp' )
 
 object = local_env.console_program( 'openmedialib_unit_tests', test_sources )
 local_env.release( object )

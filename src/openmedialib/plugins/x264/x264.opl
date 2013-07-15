@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openlibraries version="1.0">
+	<openmedialib name="oml" version="0.1.0" auto_load="true">
+		<!-- Note: dummy input - plugin only exists to register x264 with FFmpeg -->
+		<plugin name="Ardendo libx264 wrapper" type="input" extension='"_libx264_:.*"' merit="50" filename='"libopenmedialib_aml_x264.so", "libopenmedialib_aml_x264.dylib", "openmedialib_aml_x264.dll"'/>
+	</openmedialib>
+</openlibraries>

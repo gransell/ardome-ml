@@ -12,9 +12,6 @@
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
 
-#define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/"
-#define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
-
 BOOST_AUTO_TEST_SUITE( avformat_plugin )
 
 BOOST_AUTO_TEST_CASE( amf_1864_wrong_mp4_duration )
