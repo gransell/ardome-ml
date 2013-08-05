@@ -189,7 +189,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, video_copy_( false )
 			, first_audio_( true )
 			, encoded_images_( 0 )
+			, first_had_image_( false )
+			, first_had_audio_( false )
 		{
+			ARENFORCE_MSG( frame, "No frame passed in construction of %s" )( resource );
+
 			// Show stats
 			properties( ).append( prop_show_stats_ = 0 );
 			properties( ).append( prop_debug_ = 0 );
@@ -202,7 +206,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			audio_tmpbuf_ = audio_tmpbuf_ptr_ + ( 64 - ( boost::int64_t( audio_tmpbuf_ptr_ ) % 64 ) );
 
 			// Extract rules from the frame
-			// TODO: Ensure this doesn't cause a foul up...
+			first_had_image_ = frame->has_image( );
+			first_had_audio_ = frame->has_audio( );
 			properties( ).append( prop_enable_audio_ = ( ( frame->get_audio( ) != 0 ) ? 1 : 0 ) );
 			properties( ).append( prop_enable_video_ = ( ( frame->has_image( ) != 0 ) ? 1 : 0 ) );
 
@@ -573,6 +578,17 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			double audio_pts = 0.0;
 			double video_pts = 0.0;
+
+			if ( frame->has_image( ) != first_had_image_ || frame->has_audio( ) != first_had_audio_ )
+			{
+				ARLOG_NOTICE( "Inconsistent components in frame %d - first had %s and %s, this has %s and %s - end of encode" )
+							( frame->get_position( ) )
+							( first_had_image_ ? "image" : "no image" )
+							( first_had_audio_ ? "audio" : "no audio" )
+							( frame->has_image( ) ? "image" : "no image" )
+							( frame->has_audio( ) ? "audio" : "no audio" );
+				return false;
+			}
 
 			queue( frame );
 
@@ -1722,6 +1738,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		bool video_copy_;
 		bool first_audio_;
 		int encoded_images_;
+
+		bool first_had_image_;
+		bool first_had_audio_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const pl::wstring &resource, const frame_type_ptr &frame )
