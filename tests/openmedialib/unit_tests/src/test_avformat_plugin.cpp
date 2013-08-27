@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE( avformat_input_pcm24_25p )
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_30p )
 {
-	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCamHD_1080p30_6ch_24bit.mov" ) );
+	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCamHD_1080p29.97_6ch_24bit.mov" ) );
 }
 
 #define abs( a ) a < 0 ? -1 * a : a
