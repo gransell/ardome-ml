@@ -58,7 +58,10 @@ namespace
 		{
 			source->seek( i );
 			ml::frame_type_ptr fr = source->fetch();
-			BOOST_REQUIRE( avformat_store->push( fr ) );
+			if ( false == avformat_store->push( fr ) )
+			{
+				BOOST_FAIL( "Failed to push frame to store " );
+			}
 		}
 		avformat_store->complete();
 	}
