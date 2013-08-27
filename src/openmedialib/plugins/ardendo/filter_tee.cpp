@@ -51,7 +51,7 @@ class ML_PLUGIN_DECLSPEC filter_tee : public ml::filter_simple
 			if ( prop_enable_.value< int >( ) )
 			{
 				// Keep a queue of preroll frames here and ensure the pushers have some material to work with
-				while ( queue_.size( ) < prop_preroll_.value< int >( ) && position_ < get_frames( ) )
+				while ( int( queue_.size( ) ) < prop_preroll_.value< int >( ) && position_ < get_frames( ) )
 				{
 					fetch_slot( 0 )->seek( position_ ++ );
 					ml::frame_type_ptr frame = fetch_slot( 0 )->fetch( )->shallow( );
