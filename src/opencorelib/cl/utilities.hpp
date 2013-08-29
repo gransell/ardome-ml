@@ -183,6 +183,8 @@ namespace olib
 			 * Free memory allocated with aligned_alloc.
 			 */
 			CORE_API void aligned_free( void *ptr );
+
+			CORE_API t_string regex_escape( const t_string& string_to_escape );
 		}
 	}
 }
