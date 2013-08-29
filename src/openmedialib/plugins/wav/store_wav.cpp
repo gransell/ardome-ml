@@ -237,7 +237,6 @@ void store_wav::vitalizeHeader() {
 
 	int64_t s_filelen = avio_size(file_);
 	ARENFORCE_MSG(s_filelen != -1 , "Could not get file size");
-	const uint64_t filelen = (uint64_t)s_filelen;
 
 	setupHeaders(wave_block_, fmt_block_, ds64_block_, data_block_, accumulated_samples_, real_bytes_per_sample_, channels_);
 
