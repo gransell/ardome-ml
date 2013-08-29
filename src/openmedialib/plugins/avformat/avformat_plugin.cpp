@@ -95,7 +95,7 @@ const std::wstring avformat_to_oil( int fmt )
 	return L"";
 }
 
-std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
+std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
 {
 	switch( codec_id )
 	{
@@ -126,7 +126,7 @@ std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
 	return "";
 }
 
-CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
+AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 {
 	std::string apf_codec_id = stream->codec( );
 	const std::string prefix = "http://www.ardendo.com/apf/codec/";
@@ -158,7 +158,7 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 	else if( apf_codec_id == "prores/prores" )
 		return AV_CODEC_ID_PRORES;
 	else if( apf_codec_id == "aes" )
-		return static_cast< enum CodecID >( AML_AES3_CODEC_ID );
+		return static_cast< enum AVCodecID >( AML_AES3_CODEC_ID );
 	else if( apf_codec_id == "pcm" )
 	{
 		int sample_size = stream->sample_size( );

@@ -187,7 +187,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, push_count_( 0 )
 			, last_audio_( -1 )
 			, audio_packet_num_( 0 )
-			, audio_variable_( false )
 			, first_frame_( frame )
 			, video_copy_( false )
 			, first_audio_( true )
@@ -446,8 +445,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVCodec *audio = obtain_audio_codec( );
 				AVCodec *video = obtain_video_codec( );
 
-				CodecID audio_codec = audio ? audio->id : CODEC_ID_NONE;
-				CodecID video_codec = video ? video->id : CODEC_ID_NONE;
+				AVCodecID audio_codec = audio ? audio->id : CODEC_ID_NONE;
+				AVCodecID video_codec = video ? video->id : CODEC_ID_NONE;
 
 				// Open video and audio codec streams
 				if ( prop_enable_video_.value< int >( ) == 1 && video_codec != CODEC_ID_NONE )
@@ -698,7 +697,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVCodec *obtain_video_codec( )
 		{
 			AVCodec *codec = 0;
-			CodecID codec_id = fmt_->video_codec;
+			AVCodecID codec_id = fmt_->video_codec;
 
 			if ( prop_vcodec_.value< std::wstring >( ) == L"copy" )
 			{
@@ -732,7 +731,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		AVCodec *obtain_audio_codec( )
 		{
 			AVCodec *codec = 0;
-			CodecID codec_id = fmt_->audio_codec;
+			AVCodecID codec_id = fmt_->audio_codec;
 
 			if ( prop_acodec_.value< std::wstring >( ) != L"" )
 			{
@@ -755,7 +754,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		}
 
 		// Generate a video stream
-		AVStream *add_video_stream( CodecID codec_id )
+		AVStream *add_video_stream( AVCodecID codec_id )
 		{
 			// Create a new stream
 			AVStream *st = avformat_new_stream( oc_, 0 );
@@ -894,13 +893,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( prop_4mv_.value< int >( ) )
 					c->flags |= CODEC_FLAG_4MV;
 
-				c->flags2 |= CODEC_FLAG2_STRICT_GOP;
+				//c->mpv_flags |= FF_MPV_FLAG_STRICT_GOP;
  			}
  
 			return st;
 		}
 
-		void add_audio_streams( CodecID codec_id )
+		void add_audio_streams( AVCodecID codec_id )
 		{
 			int streams = 1;
 			int channels = prop_channels_.value< int >( );
@@ -938,9 +937,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->strict_std_compliance = prop_strict_.value< int >( );
 				c->codec_type = avcodec_get_type( codec_id );
 				c->codec_id = codec_id;
-				c->channel_layout = AV_CH_LAYOUT_STEREO;
-				c->channels = 2;
-
 				if( prop_audio_stream_id_.value< int >( ) != 0 )
 					st->id = prop_audio_stream_id_.value< int >( ) + i;
 
@@ -958,6 +954,45 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					c->time_base.den = c->sample_rate;
 				}
 				c->channels = (std::min)( channels_per_stream, channels - i * channels_per_stream );
+
+				switch( c->channels )
+				{
+					case 1:
+						c->channel_layout = AV_CH_LAYOUT_MONO;
+						break;
+
+					case 2:
+						c->channel_layout = AV_CH_LAYOUT_STEREO;
+						break;
+
+					case 3:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_2POINT1 : AV_CH_LAYOUT_2_1;
+						break;
+
+					case 4:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_3POINT1 : AV_CH_LAYOUT_QUAD;
+						break;
+
+					case 5:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_4POINT1 : AV_CH_LAYOUT_5POINT0;
+						break;
+
+					case 6:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_5POINT1 : AV_CH_LAYOUT_6POINT0;
+						break;
+
+					case 7:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_6POINT1 : AV_CH_LAYOUT_7POINT0;
+						break;
+
+					case 8:
+						c->channel_layout = !audio_split ? AV_CH_LAYOUT_7POINT1 : AV_CH_LAYOUT_OCTAGONAL;
+						break;
+
+					default:
+						ARENFORCE_MSG( false, "Invalid number of channels %s in stream %s" )( c->channels )( i );
+						break;
+				};
 
 				// The bitrate property sets the bitrate for one stream. If we have fewer channels than
 				// channels_per_stream in the stream, we'll have to lower the bitrate accordingly.
@@ -1060,7 +1095,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					if ( stream->properties( ).get_property_with_key( key_has_b_frames_ ).valid( ) )
 	 					video_enc->has_b_frames = stream->properties( ).get_property_with_key( key_has_b_frames_ ).value< int >( );
 
-					video_enc->codec_id = CodecID( stream->properties( ).get_property_with_key( key_codec_id_ ).value< int >( ) );
+					video_enc->codec_id = AVCodecID( stream->properties( ).get_property_with_key( key_codec_id_ ).value< int >( ) );
 					video_enc->codec_type = AVMediaType( stream->properties( ).get_property_with_key( key_codec_type_ ).value< int >( ) );
 					//if ( stream->properties( ).get_property_with_key( key_codec_tag_ ).value< boost::int64_t >( ) != 0 )
 						//if ( video_enc->codec_tag == 0 )
@@ -1138,7 +1173,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		{
 			bool ret = true;
 
-			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); iter != audio_stream_.end( ); ++iter )
+			for ( std::vector< AVStream * >::iterator iter = audio_stream_.begin( ); ret && iter != audio_stream_.end( ); ++iter )
 			{
 				// Get the context
 				AVCodecContext *c = ( *iter )->codec;
@@ -1149,32 +1184,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				// Continue if codec found
 				ARENFORCE( codec != NULL );
 
-				c->sample_fmt = codec->sample_fmts[0];
-
 				// Continue if we can open it
-				int err = avcodec_open2( c, codec, 0 ) ;
+				AVDictionary *options = 0;
+				int err = avcodec_open2( c, codec, &options ) ;
 				ARENFORCE_MSG( err == 0, "Error opening AV codec \"%1%\"" ) ( AVError_to_string( err ) );
 
 				if ( c->frame_size <= 1 ) 
-				{
-				   audio_input_frame_size_ = audio_outbuf_size_ / c->channels;
-				   switch( ( *iter )->codec->codec_id ) 
-				   {
-					  case CODEC_ID_PCM_S16LE:
-					  case CODEC_ID_PCM_S16BE:
-					  case CODEC_ID_PCM_U16LE:
-					  case CODEC_ID_PCM_U16BE:
-						 audio_input_frame_size_ >>= 1;
-						 break;
-					  default:
-						 break;
-				   }
-				   audio_variable_ = true;
-				} 
+					audio_input_frame_size_ = 1024;
 				else 
-				{
-				   audio_input_frame_size_ = c->frame_size;
-				}
+					audio_input_frame_size_ = c->frame_size;
 
 				// Some formats want stream headers to be seperate
 				if( oc_->oformat->flags & AVFMT_GLOBALHEADER )
@@ -1262,14 +1280,20 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if(finalize)
 				image = NULL;
 
-			*out_size = avcodec_encode_video( c, video_outbuf_, video_outbuf_size_, image );
+			AVPacket pkt;
+			av_init_packet( &pkt );
+			pkt.data = video_outbuf_;
+			pkt.size = video_outbuf_size_;
+
+			int got_packet = 0;
+
+			avcodec_encode_video2( c, &pkt, image, &got_packet );
+
+			*out_size = pkt.size;
 
 			// If zero size, it means the image was buffered
 			if ( *out_size > 0 )
 			{
-				AVPacket pkt;
-				av_init_packet( &pkt );
-
 				if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 				{
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
@@ -1294,8 +1318,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 
 				pkt.stream_index = video_stream_->index;
-				pkt.data = video_outbuf_;
-				pkt.size = *out_size;
 
 				if ( log_file_ && prop_pass_.value< int >( ) == 1 && c->stats_out )
 					fprintf( log_file_, "%s", c->stats_out );
@@ -1313,6 +1335,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			{
 				ret = true;
 			}
+
+			av_free_packet( &pkt );
+
 			return ret;
 		}
 
@@ -1386,7 +1411,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				if ( a > 0 )
 				{
 					av_free_packet( pkt );
-					new_pkt.destruct = av_destruct_packet;
 				} 
 				else if ( a < 0 )
 				{
@@ -1506,15 +1530,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			bool ret = true;
 
 			audio_type_ptr audio;
-			const short *data = 0;
-			int data_size = 0;
+			boost::uint8_t *data = 0;
 
 			if ( audio_queue_.size( ) )
 			{
 				audio = *( audio_queue_.begin( ) );
 				audio_queue_.pop_front( );
-				data = ( short * )( audio->pointer( ) );
-				data_size = audio->size( );
+				data = static_cast< boost::uint8_t * >( audio->pointer( ) );
 			}
 			else
 			{
@@ -1545,20 +1567,21 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					boost::shared_ptr< AVFrame > temp;
 
-					if ( prop_audio_split_.value< int >( ) && !do_flush )
+					if ( prop_audio_split_.value< int >( ) && audio )
 					{
 						int samples = audio->samples( );
 						int channels = audio->channels( );
 						int channels_to_write = c->channels;
 						int start_channel = stream * prop_audio_split_.value< int >( );
+						int size = audio->sample_storage_size( );
 
-						short *dst = ( short * )audio_tmpbuf_;
-						const short *src = data + start_channel;
+						boost::uint8_t *dst = audio_tmpbuf_;
+						const boost::uint8_t *src = data + start_channel * size;
 						while( samples -- )
 						{
-							memcpy( dst, src, sizeof(short) * channels_to_write );
-							dst += channels_to_write;
-							src += channels;
+							memcpy( dst, src, size * channels_to_write );
+							dst += channels_to_write * size;
+							src += channels * size;
 						}
 
 						if ( audio_filters_[ stream ] == 0 )
@@ -1569,7 +1592,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						temp = audio_filters_[ stream ]->convert( ( const boost::uint8_t ** )&audio_tmpbuf_, audio->samples( ) );
 						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
 					}
-					else if ( !do_flush )
+					else if ( audio )
 					{
 						if ( audio_filters_[ stream ] == 0 )
 						{
@@ -1578,7 +1601,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 						temp = audio_filters_[ stream ]->convert( audio );
 						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
 					}
-					else
+
+					if ( !audio && do_flush )
 					{
 						// flush the codec by sending in a 0-pointer
 						avcodec_encode_audio2( c, &pkt, temp.get(), &got_packet );
@@ -1619,6 +1643,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					{
 						ret = false;
 					}
+
+					av_free_packet( &pkt );
 				}	
 			}
 			first_audio_ = false;
@@ -1759,7 +1785,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		int push_count_;
 		int last_audio_;
 		boost::uint32_t audio_packet_num_;
-		bool audio_variable_;
 
 		frame_type_ptr first_frame_;
 		bool video_copy_;
