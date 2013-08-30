@@ -32,7 +32,7 @@ namespace olib
                     my_log will be examined.
                 @param older_than_days Only files older than this value in days will
                     be deleted. */
-            CORE_API void delete_old_log_files(const t_string& dir, const t_string& pfx, int older_than_days);
+			CORE_API void delete_old_log_files(const olib::t_path& full_path, const t_string& prefix, int older_than_days);
 
             /// Get a full path for app_name based on the current time.
             /** @param app_name Name of the application that wants to log.

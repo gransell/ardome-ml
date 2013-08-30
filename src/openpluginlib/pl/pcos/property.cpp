@@ -282,6 +282,7 @@ template OPENPLUGINLIB_DECLSPEC double_list property::value< double_list >() con
 template OPENPLUGINLIB_DECLSPEC bool property::value< bool >() const;
 template OPENPLUGINLIB_DECLSPEC std::string property::value< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC void* property::value< void* >() const;
+template OPENPLUGINLIB_DECLSPEC byte_vec property::value< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int_vec property::value< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC double_vec property::value< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int64_vec property::value< int64_vec >() const;
@@ -315,6 +316,7 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< bool >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void* >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_vec >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int64_vec >() const;
@@ -356,12 +358,6 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::audio_type_ptr >() cons
 template OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr property::value< ml::stream_type_ptr >() const;
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::stream_type_ptr >( const ml::stream_type_ptr& );
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::stream_type_ptr >() const;
-
-typedef std::vector< boost::uint8_t > unsigned_chars;
-
-template OPENPLUGINLIB_DECLSPEC unsigned_chars property::value< unsigned_chars >() const;
-template OPENPLUGINLIB_DECLSPEC bool property::is_a< unsigned_chars >() const;
-
 
 // implementation of parsing code for pcos::any
 

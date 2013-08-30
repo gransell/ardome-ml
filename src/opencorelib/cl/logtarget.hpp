@@ -71,6 +71,9 @@ namespace olib
             /// Output to standard error if this is set to true.
             virtual void set_use_std_error( bool v ) = 0;
 
+            /// Logs older than this will be removed
+            virtual void set_days_to_keep_logs( int days_to_keep_logs ) = 0;
+
         };
 	}
 }

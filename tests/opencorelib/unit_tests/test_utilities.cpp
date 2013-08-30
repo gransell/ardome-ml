@@ -40,5 +40,12 @@ BOOST_AUTO_TEST_CASE( test_utilities )
     BOOST_CHECK( !wp.empty() );
 
 	std::vector< olib::opencorelib::library_info_ptr > infos = olib::opencorelib::utilities::get_loaded_libraries();
-}
 
+	t_string regex_chars_escaped = utilities::regex_escape(_CT("{}^.$|()[]*+?/\\"));
+	T_CHECK_EQUAL(_CT("\\{\\}\\^\\.\\$\\|\\(\\)\\[\\]\\*\\+\\?\\/\\\\"), regex_chars_escaped);
+
+	/*for(size_t i = 0; i < infos.size(); ++i  )
+	{
+		T_COUT << *(infos[i]) << std::endl;
+	}*/
+}
