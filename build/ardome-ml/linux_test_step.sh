@@ -9,9 +9,9 @@ export AMF_PREFIX_PATH=`pwd`/build/release/$BAGTARGET/
 build/release/$BAGTARGET/bin/opencore_unit_tests
 build/release/$BAGTARGET/bin/openmedialib_unit_tests
 
-if [ -n "$TEST_REPORT_PATH" ]; then
-  cp tests/test_output/opencore/opencore_test_results.xml $TEST_REPORT_PATH/
-  cp tests/test_output/openmedialib/unit_test_results.xml $TEST_REPORT_PATH/
+if [ -n "$WORKSPACE" ]; then
+  cp -v tests/test_output/opencore/opencore_test_results.xml $WORKSPACE/
+  cp -v tests/test_output/openmedialib/unit_test_results.xml $WORKSPACE/
 fi
 
 if [ "$BAGTARGET" == "gcov" ]; then
