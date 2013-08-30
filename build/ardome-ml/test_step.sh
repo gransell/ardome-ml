@@ -1,13 +1,14 @@
 #!/bin/bash
 
-set -e
-
 export LD_LIBRARY_PATH=`pwd`/build/release/$BAGTARGET/lib/
 export AML_PATH=`pwd`/build/release/$BAGTARGET/lib/ardome-ml/openmedialib/plugins/
 export AMF_PREFIX_PATH=`pwd`/build/release/$BAGTARGET/
 
 build/release/$BAGTARGET/bin/opencore_unit_tests
+ret1=$?
 build/release/$BAGTARGET/bin/openmedialib_unit_tests
+ret2=$?
+
 
 if [ -n "$WORKSPACE" ]; then
   cp -v tests/test_output/opencore/opencore_test_results.xml $WORKSPACE/
@@ -26,4 +27,10 @@ if [ "$BAGTARGET" == "gcov" ]; then
     rm gcovr.py
   fi
 fi
+
+if [ $ret1 -ne 0 -o $ret2 -ne 0 ]; then
+	exit 1
+fi
+
+exit 0
 
