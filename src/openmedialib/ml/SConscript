@@ -16,7 +16,6 @@ src = [
 		'analyse_dv.cpp',
 		'analyse_mpeg2.cpp',
 		'audio_block.cpp',
-		'audio_channel_convert.cpp',
         'audio_sample_calcs.cpp',
         'audio_utilities.cpp',
         'awi.cpp',
