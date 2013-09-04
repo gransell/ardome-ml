@@ -48,6 +48,8 @@ namespace olib
 
 				if( str_util::env_var_exists(_CT("AML_USE_ASSERT_ARENFORCE")) )
 				{
+					// For easy viewing of message in a debugger.
+					// cppcheck-suppress unreadVariable
 					std::string enforce_msg = excep.what();
 
 					//Don't throw an exception, just assert to break into the debugger
