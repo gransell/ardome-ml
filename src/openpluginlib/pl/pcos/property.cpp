@@ -452,6 +452,11 @@ template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const std::wstring& )
 	return int64_vec( );
 }
 
+template <> OPENPLUGINLIB_DECLSPEC byte_vec parse_string( const std::wstring& )
+{
+	return byte_vec( );
+}
+
 template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const std::wstring& str)
 {
 	return split_list< int_vec >( str );
