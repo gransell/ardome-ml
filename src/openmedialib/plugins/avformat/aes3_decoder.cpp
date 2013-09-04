@@ -66,9 +66,14 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 		return AVERROR_INVALIDDATA;
 	}
 	
+	//We need to over-allocate 16 bytes since we write to the destination
+	//via 16-byte wide SSE registers.
+	const int overallocated_samples = ( avctx->bits_per_raw_sample == 16 ? 8 : 4 );
+	s->frame.nb_samples += overallocated_samples;
 	if( ( ret = avctx->get_buffer2( avctx, &s->frame, 0 ) ) < 0 ) {
 		return ret;
     }
+	s->frame.nb_samples -= overallocated_samples;
 	
 	unsigned char * dst = s->frame.data[ 0 ];
 	
