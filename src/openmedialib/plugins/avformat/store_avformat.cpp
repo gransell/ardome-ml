@@ -1299,8 +1299,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			AVPacket pkt;
 			av_init_packet( &pkt );
-			pkt.data = 0;
-			pkt.size = 0;
+			pkt.data = video_outbuf_;
+			pkt.size = video_outbuf_size_;
 
 			int got_packet = 0;
 
@@ -1315,19 +1315,16 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				{
 					pkt.pts = av_rescale_q( pkt.pts, c->time_base, video_stream_->time_base );
 					pkt.dts = av_rescale_q( pkt.dts, c->time_base, video_stream_->time_base );
-					std::cerr << "0 ts: " << pkt.pts << " " << pkt.dts << " " << ( c->codec->capabilities & CODEC_CAP_DELAY ) << std::endl;
 				}
 				else if ( c->coded_frame && boost::uint64_t( c->coded_frame->pts ) != AV_NOPTS_VALUE )
 				{
 					pkt.pts = av_rescale_q( c->coded_frame->pts, c->time_base, video_stream_->time_base );
 					pkt.dts = av_rescale_q( encoded_images_ - 1, c->time_base, video_stream_->time_base );
-					std::cerr << "1 ts: " << pkt.pts << " " << pkt.dts << std::endl;
 				}
 				else
 				{
 					pkt.pts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
 					pkt.dts = av_rescale_q( encoded_images_, c->time_base, video_stream_->time_base );
-					std::cerr << "2 ts: " << pkt.pts << " " << pkt.dts << std::endl;
 				}
 
 				if( oc_->pb && c->coded_frame && ( c->coded_frame->key_frame || c->coded_frame->pict_type == AV_PICTURE_TYPE_I ) && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) )
@@ -1531,7 +1528,6 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				av_image_.quality = int( video_stream_->codec->global_quality );
 				av_image_.pict_type = AVPictureType( 0 );
 				av_image_.pts = presented_images_ ++;
-				std::cerr << "image pts = " << frame->get_position( ) << std::endl;
 
 				//Set properties for interlaced encoding
 				if ( image->field_order( ) != il::progressive )
