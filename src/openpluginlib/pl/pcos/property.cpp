@@ -512,6 +512,11 @@ template <> OPENPLUGINLIB_DECLSPEC void_vec parse_string( const std::wstring& )
 	return void_vec( );
 }
 
+template <> OPENPLUGINLIB_DECLSPEC std::vector< boost::uint8_t > parse_string( const std::wstring& )
+{
+    return std::vector< boost::uint8_t >( );
+}
+
 std::ostream& operator<<( std::ostream& os , const property& p )
 {
 	os << p.get_key() << ": ";
