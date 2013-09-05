@@ -1158,8 +1158,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			}
 
 			// Corrections for file formats
-			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
-				 resource.find( L".mpeg" ) == resource.length( ) - 5 )
+			if ( prop_format_.value< std::wstring >( ) != L"" )
+			{
+				// Do nothing if the format property has already been specified
+			}
+			else if ( resource.find( L".mpg" ) == resource.length( ) - 4 || resource.find( L".mpeg" ) == resource.length( ) - 5 )
 			{
 				prop_format_ = std::wstring( L"mpeg" );
 				key_search_ = true;
@@ -1172,14 +1175,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				prop_format_ = std::wstring( L"mpeg" );
 			}
-			else if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
+			else if ( resource.find( L".jpg" ) == resource.length( ) - 4 || resource.find( L".png" ) == resource.length( ) - 4 )
+			{
+				prop_format_ = std::wstring( L"image2" );
+			}
+
+			// MP3 files with embedded images can be problematic - avoid trying to decode image
+			if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
 			{
 				prop_video_index_ = -1;
-				if ( prop_fps_num_.value< int >( ) == -1 || prop_fps_den_.value< int >( ) == -1 )
-				{
-					prop_fps_num_ = 25;
-					prop_fps_den_ = 1;
-				}
 			}
 
 			// Obtain format
