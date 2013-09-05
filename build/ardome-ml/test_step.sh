@@ -1,8 +1,16 @@
 #!/bin/bash
 
-export LD_LIBRARY_PATH=`pwd`/build/release/$BAGTARGET/lib/
-export AML_PATH=`pwd`/build/release/$BAGTARGET/lib/ardome-ml/openmedialib/plugins/
-export AMF_PREFIX_PATH=`pwd`/build/release/$BAGTARGET/
+if [ -z "$BAGTARGET" ]; then
+	echo "Error: BAGTARGET must be set before running this script."
+	exit 1
+fi
+
+#Only set for linux platforms. Not needed for win or osx.
+if [[ "$BAGTARGET" =~ ^linux|^ubuntu|^gcov ]]; then
+	export LD_LIBRARY_PATH=`pwd`/build/release/$BAGTARGET/lib/
+	export AML_PATH=`pwd`/build/release/$BAGTARGET/lib/ardome-ml/openmedialib/plugins/
+	export AMF_PREFIX_PATH=`pwd`/build/release/$BAGTARGET/
+fi
 
 build/release/$BAGTARGET/bin/opencore_unit_tests
 ret1=$?
