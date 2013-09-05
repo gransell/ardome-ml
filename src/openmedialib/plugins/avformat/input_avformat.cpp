@@ -2189,7 +2189,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				
 				if ( position < 0 ) position = 0;
 
-				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ) + context_->start_time;
+				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ); // + context_->start_time;
 				int stream = -1;
 				boost::int64_t byte = -1;
 
