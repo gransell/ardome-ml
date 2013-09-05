@@ -6,7 +6,7 @@ if [ -z "$BAGTARGET" ]; then
 fi
 
 #Only set for linux platforms. Not needed for win or osx.
-if [[ "$BAGTARGET" =~ ^linux|^ubuntu|^gcov ]]; then
+if [[ "$BAGTARGET" =~ ^linux || "$BAGTARGET" =~ ^ubuntu || "$BAGTARGET" =~ ^gcov ]]; then
 	export LD_LIBRARY_PATH=`pwd`/build/release/$BAGTARGET/lib/
 	export AML_PATH=`pwd`/build/release/$BAGTARGET/lib/ardome-ml/openmedialib/plugins/
 	export AMF_PREFIX_PATH=`pwd`/build/release/$BAGTARGET/
