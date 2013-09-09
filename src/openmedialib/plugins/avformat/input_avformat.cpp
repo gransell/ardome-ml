@@ -1184,6 +1184,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
 			{
 				prop_video_index_ = -1;
+				if ( prop_fps_num_.value< int >( ) == -1 || prop_fps_den_.value< int >( ) == -1 )
+				{
+					prop_fps_num_ = 25;
+					prop_fps_den_ = 1;
+				}
 			}
 
 			// Obtain format
@@ -2168,7 +2173,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				// result, we discard the audio obtained from the 3 packets immediately 
 				// after a seek.
 				if ( discard_audio_after_seek_ )
-					discard_audio_packet_count_ = 1;
+					discard_audio_packet_count_ = 3;
 
 				int position = get_position( );
 
@@ -2556,7 +2561,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				//ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
 				
 				// If we need to discard packets, do that now
-				if( discard_audio_packet_count_ )
+				if( discard_audio_packet_count_ ) // && found <= get_position( ) - 1 )
 				{
 					discard_audio_packet_count_ --;
 					ret = 0;
@@ -2564,6 +2569,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					audio_buf_used_ = 0;
 					if ( !has_video( ) ) expected_packet_ ++;
 					break;
+				}
+				else
+				{
+					discard_audio_packet_count_  = 0;
 				}
 
 				// If no samples are returned, then break now
