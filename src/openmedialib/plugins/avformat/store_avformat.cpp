@@ -194,6 +194,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, presented_images_( 0 )
 			, first_had_image_( false )
 			, first_had_audio_( false )
+			, audio_frames_( 0 )
+			, audio_packets_( 0 )
 		{
 			ARENFORCE_MSG( frame, "No frame passed in construction of %s" )( resource );
 
@@ -530,13 +532,22 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			// Finalize encode for video
 			if ( audio_stream_.size( ) )
 			{
+				// Submit any partial audio block to the queue now
 				if( audio_block_used_ != 0 )
-				{
 					audio_queue_.push_back( audio_block_ );
-				}
 
+				// Keep processing audio until the queue is empty
 				while( audio_queue_.size( ) && process_audio( ) ) ;
-				process_audio( true );
+
+				// Keep flushing the codec until no more is returned
+				int flush_count = audio_frames_ - audio_packets_;
+				while( flush_count -- && process_audio( true ) ) ;
+
+				// Report if audio codec didn't flush correctly
+				if ( flush_count >= 0 )
+				{
+					ARLOG_NOTICE( "Wasn't able to extract all the audio from the codec %d %d/%d" )( flush_count )( audio_frames_ )( audio_packets_ );
+				}
 			}
 
 			// Write the trailer, if any
@@ -1590,6 +1601,11 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					boost::shared_ptr< AVFrame > temp;
 
+					// Here we keep track of the number of audio packets which are delivered to the 
+					// codec contexts - note that in the split case, we only count this once.
+					if ( audio && iter == audio_stream_.begin( ) )
+						audio_frames_ ++;
+
 					if ( prop_audio_split_.value< int >( ) && audio )
 					{
 						int samples = audio->samples( );
@@ -1640,6 +1656,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					if ( pkt.size > 0 )
 					{
+						// Here we keep track of the number of audio packets which have been received
+						audio_packets_ ++;
+
 						if( stream == 0)
 						{
 							if( !first_audio_ || ec == encode_tries -1 )
@@ -1818,6 +1837,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 		ml::audio_type_ptr first_audio_object_;
 		bool first_had_image_;
 		bool first_had_audio_;
+
+		int audio_frames_;
+		int audio_packets_;
 };
 
 store_type_ptr ML_PLUGIN_DECLSPEC create_store_avformat( const std::wstring &resource, const frame_type_ptr &frame )
