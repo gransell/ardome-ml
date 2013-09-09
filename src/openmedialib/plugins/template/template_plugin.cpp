@@ -132,9 +132,16 @@ class ML_PLUGIN_DECLSPEC packets_store : public store_type
 			{
 				if ( name_.find( L"packets:" ) == 0 )
 					name_ = name_.substr( 8 );
-				output_ = fopen( olib::opencorelib::str_util::to_string( name_ ).c_str( ), "wb" );
-				if ( frame->get_stream( ) )
-					index_ = fopen( olib::opencorelib::str_util::to_string( name_ + L".awi" ).c_str( ), "wb" );
+				if ( name_ != L"pipe:" )
+				{
+					output_ = fopen( olib::opencorelib::str_util::to_string( name_ ).c_str( ), "wb" );
+					if ( frame->get_stream( ) )
+						index_ = fopen( olib::opencorelib::str_util::to_string( name_ + L".awi" ).c_str( ), "wb" );
+				}
+				else
+				{
+					output_ = stdout;
+				}
 			}
 		}
 
