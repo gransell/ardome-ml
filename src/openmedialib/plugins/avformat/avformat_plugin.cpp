@@ -64,8 +64,6 @@ const std::wstring avformat_to_oil( int fmt )
 		return L"yuv411p";
 	else if ( fmt == PIX_FMT_UYVY422 )
 		return L"uyv422";
-	else if ( fmt == PIX_FMT_YUV422P10LE )
-		return L"yuv422p10le";
 	else if ( fmt == PIX_FMT_YUYV422 )
 		return L"yuv422";
 	else if ( fmt == PIX_FMT_YUV422P )
@@ -199,8 +197,6 @@ const PixelFormat oil_to_avformat( const std::wstring &fmt )
 		return PIX_FMT_YUYV422;
 	else if ( fmt == L"uyv422" )
 		return PIX_FMT_UYVY422;
-	else if ( fmt == L"yuv422p10le" )
-		return PIX_FMT_YUV422P10LE;
 	else if ( fmt == L"yuv422p" )
 		return PIX_FMT_YUV422P;
 	else if ( fmt == L"yuv444p" )
@@ -233,6 +229,12 @@ il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 	{
 		format = L"yuv422p";
 		dst_fmt = PIX_FMT_YUV422P;
+	}
+	else if ( pix_fmt == PIX_FMT_YUV422P10LE )
+	{
+		// force decode to a 8-bit format
+		format = L"uyv422";
+		dst_fmt = PIX_FMT_UYVY422;
 	}
 	else if ( format == L"" )
 	{
