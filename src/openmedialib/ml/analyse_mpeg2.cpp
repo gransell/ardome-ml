@@ -4,6 +4,7 @@
 // Released under the LGPL.
 
 #include "analyse_mpeg2.hpp"
+#include "keys.hpp"
 
 namespace pl = olib::openpluginlib;
 
@@ -27,6 +28,7 @@ bool analyse_mpeg2::valid( const std::string &codec )
 
 bool analyse_mpeg2::analysis( boost::uint8_t *data, const size_t size )
 {
+	boost::uint8_t *start = data;
 	boost::uint8_t *end = data + size;
 
 	bool done = false;
@@ -69,6 +71,7 @@ bool analyse_mpeg2::analysis( boost::uint8_t *data, const size_t size )
 				break;
 				
 			case mpeg_start_code::group_start:
+				gop_hdr_.offset = int( data - start );
 				parse_gop_header( data );
 				break;
 				
@@ -118,6 +121,8 @@ bool analyse_mpeg2::collect( pl::pcos::property_container &properties )
 
 	properties.append( pl::pcos::property( key_broken_link_ ) = gop_hdr_.broken_link );
 	properties.append( pl::pcos::property( key_closed_gop_ ) = gop_hdr_.closed_gop );
+	if ( pict_hdr_.picture_coding_type == 1 )
+		properties.append( pl::pcos::property( ml::keys::gop_hdr_offset ) = gop_hdr_.offset );
 
 	if ( seq_ext_.found )
 	{
