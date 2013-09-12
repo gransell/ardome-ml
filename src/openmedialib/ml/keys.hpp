@@ -86,6 +86,8 @@ ML_KEY( offset );
 
 ML_KEY( serialise_as );
 
+ML_KEY( stream_collection );
+
 } } } }
 
 #endif
