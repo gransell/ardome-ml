@@ -121,6 +121,7 @@ bool analyse_mpeg2::collect( pl::pcos::property_container &properties )
 
 	properties.append( pl::pcos::property( key_broken_link_ ) = gop_hdr_.broken_link );
 	properties.append( pl::pcos::property( key_closed_gop_ ) = gop_hdr_.closed_gop );
+
 	if ( pict_hdr_.picture_coding_type == 1 )
 		properties.append( pl::pcos::property( ml::keys::gop_hdr_offset ) = gop_hdr_.offset );
 
@@ -128,6 +129,7 @@ bool analyse_mpeg2::collect( pl::pcos::property_container &properties )
 	{
 		properties.append( pl::pcos::property( key_chroma_format_ ) = seq_ext_.chroma_format );
 		properties.append( pl::pcos::property( key_profile_and_level_ ) = seq_ext_.profile_and_level_indication );
+		properties.get_property_with_key( key_vbv_buffer_size_ ) = seq_hdr_.vbv_buffer_size_value | ( seq_ext_.vbv_buffer_size_extension << 10 );
 	}
 	
 	if ( pict_ext_.found )
