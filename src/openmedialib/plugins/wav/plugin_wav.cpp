@@ -67,6 +67,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			, size_( 0 )
 			, frames_( 0 )
 			, expected_( 0 )
+			, fmt_ ( 0 )
 		{
 			properties( ).append( prop_fps_num_ = 25 );
 			properties( ).append( prop_fps_den_ = 1 );
@@ -153,18 +154,31 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					}
 					else if ( memcmp( &chunk_id[ 0 ], "fmt ", 4 ) == 0 )
 					{
-						boost::uint16_t fmt = get_ule16( buffer, 0 );
-						if ( fmt == 0xfffe && n == 40 )
+						fmt_ = get_ule16( buffer, 0 );
+						if ( fmt_ == WAVE_FORMAT_EXTENSIBLE && n == 40 )
 						{
 							//WAVE_FORMAT_EXTENSIBLE
-							fmt = get_ule16( buffer, 24 );
+							fmt_ = get_ule16( buffer, 24 );
 						}
-						if ( fmt != 1 ) break;
+
+						switch ( fmt_ )
+						{
+							case WAVE_FORMAT_PCM:
+							case WAVE_FORMAT_IEEE_FLOAT:
+							{
+								found_fmt = true;
+							}
+							break;
+							default:
+								found_fmt = false;
+						}
+
+						if ( found_fmt != true ) break;
+
 						channels_ = get_le16( buffer, 2 );
 						frequency_ = get_le32( buffer, 4 );
 						store_bytes_ = get_le16( buffer, 12 );
 						bits_ = get_le16( buffer, 14 );
-						found_fmt = true;
 					}
 					else if ( memcmp( &chunk_id[ 0 ], "data", 4) == 0 ) 
 					{
@@ -266,7 +280,11 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					break;
 
 				case 32:
-					result = ml::audio::allocate( ml::audio::pcm32_id, frequency_, channels_, samples, false );
+					result = ml::audio::allocate
+					(
+						fmt_ == WAVE_FORMAT_IEEE_FLOAT ? ml::audio::float_id : ml::audio::pcm32_id,
+						frequency_, channels_, samples, false
+					);
 					memcpy( result->pointer( ), &buffer[ 0 ], result->size( ) );
 					break;
 
@@ -342,6 +360,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		boost::int64_t size_;
 		int frames_;
 		int expected_;
+		boost::uint16_t fmt_;
 };
 
 //
