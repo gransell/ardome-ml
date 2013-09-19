@@ -122,6 +122,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 				while( !error )
 				{
+					// Read Chunk ID and Chunk Data Size
 					error = avio_read_complete( context_, &buffer[ 0 ], 8 ) != 8;
 					offset_ += 8;
 
@@ -136,6 +137,19 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 					
 					//The next 4 bytes after the chunk ID is the size of the chunk
 					boost::uint32_t n = get_ule32( buffer, 4 );
+
+					if ( memcmp( &chunk_id[ 0 ], "data", 4) == 0 ) 
+					{
+						//If we have an RF64 WAV, we should already have set the number of bytes from the ds64 chunk
+						if ( !rf64_mode )
+						{
+							bytes_ = get_ule32( buffer, 4 );
+						}
+
+						break;
+					}
+
+					// Read the rest of the chunk if buffer holds sufficient space
 					if ( n > boost::uint32_t( buffer.size( ) ) || avio_read_complete( context_, &buffer[ 0 ], n ) != (int)n ) break;
 					offset_ += n;
 
@@ -179,16 +193,6 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 						frequency_ = get_le32( buffer, 4 );
 						store_bytes_ = get_le16( buffer, 12 );
 						bits_ = get_le16( buffer, 14 );
-					}
-					else if ( memcmp( &chunk_id[ 0 ], "data", 4) == 0 ) 
-					{
-						//If we have an RF64 WAV, we should already have set the number of bytes from the ds64 chunk
-						if ( !rf64_mode )
-						{
-							bytes_ = get_ule32( buffer, 4 );
-						}
-
-						break;
 					}
 					else
 					{

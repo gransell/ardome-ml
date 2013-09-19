@@ -320,4 +320,16 @@ BOOST_FIXTURE_TEST_CASE( Test_WAVE_IEEE_FLOAT_1KHz_32Ch, TestEnv )
 	BOOST_CHECK_EQUAL (audio->samples(), 40);	
 }
 
+BOOST_FIXTURE_TEST_CASE( Test_NumberOfFramesIsOneWhenSamplesNotFillFrame, TestEnv )
+{
+	Init ("WAVE_PCM16_1KHz_1Ch.wav", WAVE_PCM16_1KHz_1Ch, sizeof (WAVE_PCM16_1KHz_1Ch));
+
+	ml::input_type_ptr wav_input = ml::create_input( "WAVE_PCM16_1KHz_1Ch.wav");
+	BOOST_REQUIRE (wav_input != NULL);
+	
+	ml::frame_type_ptr frame = wav_input->fetch ();
+	BOOST_REQUIRE (frame != NULL);
+	BOOST_CHECK_EQUAL (wav_input->get_frames (), 1);	
+}
+
 BOOST_AUTO_TEST_SUITE_END()
