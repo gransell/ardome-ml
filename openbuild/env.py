@@ -182,7 +182,7 @@ class Environment( BaseEnvironment ):
 
 			OSX_SDK_dir += 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk'
 			if not os.path.isdir( OSX_SDK_dir ):
-				raise Exception( "System include path: '" + OSX_SDK_dir + "' does not exist" )
+				raise Exception( "System include path: '" + OSX_SDK_dir + "' does not exist. Try changing 'min_osx_ver' to an SDK which is installed." )
 
 			self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir, '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
 			self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir, '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
