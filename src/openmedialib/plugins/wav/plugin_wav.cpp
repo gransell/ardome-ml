@@ -253,7 +253,7 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 				bytes_ = file_size - offset_;
 			else
 				bytes_ = std::min< boost::int64_t >( bytes_, file_size - offset_ );
-			frames_ = int( 0.5f + double( bytes_ * prop_fps_num_.value< int >( ) ) / ( bits_ / 8 * channels_ * frequency_ * prop_fps_den_.value< int >( ) ) );
+			frames_ = int( ceil( double( bytes_ * prop_fps_num_.value< int >( ) ) / ( bits_ / 8 * channels_ * frequency_ * prop_fps_den_.value< int >( ) ) ) );
 			prop_file_size_ = file_size;
 		}
 
