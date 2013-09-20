@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	BOOST_REQUIRE( stream );
 
 	//Standard IMX50 video frame size
-	BOOST_REQUIRE_EQUAL( stream->length(), 250000 );
+	BOOST_REQUIRE_EQUAL( stream->length(), 250000u );
 
 	//Check that the mpeg2 picture coding extension looks like we expect. Specifically, we want
 	//to check that:

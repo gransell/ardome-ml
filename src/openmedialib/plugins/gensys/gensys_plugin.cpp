@@ -1991,7 +1991,6 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 
 		inline int get_out( const int &frames ) const
 		{
-			int in = get_in( frames );
 			int out = prop_out_.value< int >( );
 			if ( out >= frames )
 				out = frames;
@@ -1999,8 +1998,6 @@ class ML_PLUGIN_DECLSPEC clip_filter : public filter_type
 				out = frames + out + 1;
 			if ( out < 0 )
 				out = 0;
-			if ( out < in )
-				out --;
 			return out;
 		}
 
