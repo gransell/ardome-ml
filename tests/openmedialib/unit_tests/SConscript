@@ -16,6 +16,7 @@ test_sources = [
 	'src/test_compositor_filter.cpp',
 	'src/test_frame_list_filter.cpp',
 	'src/test_utilities.cpp',
+	'src/test_filter_store.cpp',
 	]
 
 if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
@@ -23,5 +24,8 @@ if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
 
 object = local_env.console_program( 'openmedialib_unit_tests', test_sources )
 local_env.release( object )
+
+mock = local_env.plugin( 'openmedialib_mock', 'mocks/plugin_mock.cpp' )
+local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], mock + [ 'mocks/plugin_mock.opl' ] )
 
 Return( 'object' )
