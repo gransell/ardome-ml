@@ -23,7 +23,7 @@ public:
 		m_filter_store->properties( ).get_property_with_string( "store" ).set_from_string( L"mock:" );
 		m_input = boost::shared_ptr< mock_input >(new mock_input);
 		m_frame = ml::frame_type_ptr (new ml::frame_type);
-		m_store = boost::dynamic_pointer_cast <mock_store> (ml::create_store( L"mock:", m_frame));
+		m_store = boost::static_pointer_cast <mock_store> (ml::create_store( L"mock:", m_frame));
 		m_store->reset ();
 	}
 
