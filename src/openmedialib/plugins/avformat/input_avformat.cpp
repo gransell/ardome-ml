@@ -988,7 +988,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			, is_streaming_( false )
 			, audio_filter_( 0 )
 		{
-			audio_buf_size_ = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
+			audio_buf_size_ = ( 192000 * 3) / 2;
 			audio_buf_ = ( uint8_t * )av_malloc( 2 * audio_buf_size_ );
 
 			// Allow property control of video and audio index
@@ -1158,8 +1158,11 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			}
 
 			// Corrections for file formats
-			if ( resource.find( L".mpg" ) == resource.length( ) - 4 ||
-				 resource.find( L".mpeg" ) == resource.length( ) - 5 )
+			if ( prop_format_.value< std::wstring >( ) != L"" )
+			{
+				// Do nothing if the format property has already been specified
+			}
+			else if ( resource.find( L".mpg" ) == resource.length( ) - 4 || resource.find( L".mpeg" ) == resource.length( ) - 5 )
 			{
 				prop_format_ = std::wstring( L"mpeg" );
 				key_search_ = true;
@@ -1172,7 +1175,13 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				prop_format_ = std::wstring( L"mpeg" );
 			}
-			else if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
+			else if ( resource.find( L".jpg" ) == resource.length( ) - 4 || resource.find( L".png" ) == resource.length( ) - 4 )
+			{
+				prop_format_ = std::wstring( L"image2" );
+			}
+
+			// MP3 files with embedded images can be problematic - avoid trying to decode image
+			if ( resource.find( L".mp3" ) == resource.length( ) - 4 )
 			{
 				prop_video_index_ = -1;
 				if ( prop_fps_num_.value< int >( ) == -1 || prop_fps_den_.value< int >( ) == -1 )
@@ -2164,7 +2173,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				// result, we discard the audio obtained from the 3 packets immediately 
 				// after a seek.
 				if ( discard_audio_after_seek_ )
-					discard_audio_packet_count_ = 1;
+					discard_audio_packet_count_ = 3;
 
 				int position = get_position( );
 
@@ -2189,7 +2198,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				
 				if ( position < 0 ) position = 0;
 
-				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ) + context_->start_time;
+				boost::int64_t offset = int64_t( ( ( double )position / avformat_input::fps( ) ) * AV_TIME_BASE ); // + context_->start_time;
 				int stream = -1;
 				boost::int64_t byte = -1;
 
@@ -2379,7 +2388,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				int last = images_[ images_.size( ) - 1 ]->position( );
 				if ( position < first && position < last )
 					images_.clear( );
-				else if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || images_.size( ) > prop_gop_cache_.value< int >( ) )
+				else if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || int( images_.size( ) ) > prop_gop_cache_.value< int >( ) )
 					if ( ( *images_.begin( ) )->position( ) < get_position( ) )
 						images_.erase( images_.begin( ) );
 			}
@@ -2552,7 +2561,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				//ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
 				
 				// If we need to discard packets, do that now
-				if( discard_audio_packet_count_ )
+				if( discard_audio_packet_count_ ) // && found <= get_position( ) - 1 )
 				{
 					discard_audio_packet_count_ --;
 					ret = 0;
@@ -2560,6 +2569,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					audio_buf_used_ = 0;
 					if ( !has_video( ) ) expected_packet_ ++;
 					break;
+				}
+				else
+				{
+					discard_audio_packet_count_  = 0;
 				}
 
 				// If no samples are returned, then break now
@@ -2656,7 +2669,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( audio_.size( ) > 0 )
 			{
 				int first = audio_[ 0 ]->position( );
-				if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || audio_.size( ) > prop_gop_cache_.value< int >( ) )
+				if ( first < get_position( ) - prop_gop_cache_.value< int >( ) || int( audio_.size( ) ) > prop_gop_cache_.value< int >( ) )
 					if ( ( *audio_.begin( ) )->position( ) < get_position( ) )
 						audio_.erase( audio_.begin( ) );
 			}

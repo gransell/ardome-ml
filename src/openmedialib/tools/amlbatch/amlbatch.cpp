@@ -80,7 +80,7 @@ int wmain( int argc, const wchar_t *argv[ ] )
 		converted_args_raw.push_back( converted_args[ i ].c_str() );
 	}
 
-	AMLBATCH_MAIN( argc, &converted_args_raw[ 0 ] );
+	return AMLBATCH_MAIN( argc, &converted_args_raw[ 0 ] );
 }
 
 #endif

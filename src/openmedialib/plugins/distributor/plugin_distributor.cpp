@@ -496,7 +496,7 @@ class ML_PLUGIN_DECLSPEC filter_fork : public filter_type
 
 			int solo = prop_solo_.value< int >( );
 
-			if ( solo <= 0 || solo >= slot_count( ) )
+			if ( solo <= 0 || solo >= int( slot_count( ) ) )
 			{
 				lock_->seek( get_position( ) );
 				frame = lock_->fetch( );

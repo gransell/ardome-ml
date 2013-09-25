@@ -237,8 +237,6 @@ IL_DECLSPEC image_type_ptr allocate( const std::wstring &pf, int width, int heig
 		dst_img = image_type_ptr( new image_type( yuv422_image_type( width, height, 1 ) ) );
 	else if ( pf == L"uyv422" )
 		dst_img = image_type_ptr( new image_type( uyv422_image_type( width, height, 1 ) ) );
-	else if ( pf == L"yuv422p10le" )
-		dst_img = image_type_ptr( new image_type( uyv422_image_type( width, height, 1 ) ) );
 	else if ( pf == L"yuv422p" )
 		dst_img = image_type_ptr( new image_type( yuv422p_image_type( width, height, 1 ) ) );
 	else if ( pf == L"yuv420p" )

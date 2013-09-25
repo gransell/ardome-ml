@@ -19,8 +19,8 @@ extern "C" {
 __declspec( dllimport ) AVCodec ff_libx264_encoder;
 __declspec( dllimport ) AVCodec ff_libx264rgb_encoder;
 #else
-AVCodec ff_libx264_encoder;
-AVCodec ff_libx264rgb_encoder;
+extern AVCodec ff_libx264_encoder;
+extern AVCodec ff_libx264rgb_encoder;
 #endif
 }
 

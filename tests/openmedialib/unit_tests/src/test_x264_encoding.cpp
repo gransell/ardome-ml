@@ -74,7 +74,6 @@ namespace
 		cl::uuid_16b unique_filename;
 		const olib::t_path temp_output_path = cl::special_folder::get( 
 			cl::special_folder::temp ) / ( unique_filename.to_hex_string() + _CT(".mp4") );
-		T_CERR << temp_output_path.native() << std::endl;
 		BOOST_REQUIRE( !boost::filesystem::exists( temp_output_path ) );
 		//Exception-safe cleanup in the event of test failure
 		ARGUARD( boost::bind( &boost::filesystem::remove, temp_output_path ) );

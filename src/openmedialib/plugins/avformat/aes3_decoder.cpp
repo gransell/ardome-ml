@@ -66,9 +66,14 @@ static int aml_AES3_decode_frame(AVCodecContext *avctx, void *data,
 		return AVERROR_INVALIDDATA;
 	}
 	
-	if( ( ret = avctx->get_buffer( avctx, &s->frame ) ) < 0 ) {
+	//We need to over-allocate 16 bytes since we write to the destination
+	//via 16-byte wide SSE registers.
+	const int overallocated_samples = ( avctx->bits_per_raw_sample == 16 ? 8 : 4 );
+	s->frame.nb_samples += overallocated_samples;
+	if( ( ret = avctx->get_buffer2( avctx, &s->frame, 0 ) ) < 0 ) {
 		return ret;
     }
+	s->frame.nb_samples -= overallocated_samples;
 	
 	unsigned char * dst = s->frame.data[ 0 ];
 	
@@ -233,6 +238,9 @@ static int aml_AES3_decode_init(AVCodecContext *avctx)
 	aml_AES3DecodeContext *s = reinterpret_cast< aml_AES3DecodeContext * >( avctx->priv_data );
 	
 	avcodec_get_frame_defaults(&s->frame);
+	s->frame.channels = avctx->channels;
+	s->frame.channel_layout = avctx->channel_layout;
+	s->frame.format = avctx->sample_fmt;
 	avctx->coded_frame = &s->frame;
 	
 	return 0;
@@ -252,7 +260,7 @@ void register_aml_aes3( )
 	
 	aml_AES3_decoder.name           = "aml-aes3",
 	aml_AES3_decoder.type           = AVMEDIA_TYPE_AUDIO,
-	aml_AES3_decoder.id             = static_cast< enum CodecID >( AML_AES3_CODEC_ID ),
+	aml_AES3_decoder.id             = static_cast< enum AVCodecID >( AML_AES3_CODEC_ID ),
 	aml_AES3_decoder.priv_data_size = sizeof(aml_AES3DecodeContext),
 	aml_AES3_decoder.init           = aml_AES3_decode_init,
 	aml_AES3_decoder.decode         = aml_AES3_decode_frame,

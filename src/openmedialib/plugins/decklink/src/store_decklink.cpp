@@ -140,13 +140,13 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 				// Now block until we need to push more frame into the queue
 				boost::mutex::scoped_lock lck( mutex_image_ );
 	
-				if ( !aud && downloaded_image_.size() >= prop_preroll_.value< int >( ) && !started_ )
+				if ( !aud && int( downloaded_image_.size() ) >= prop_preroll_.value< int >( ) && !started_ )
 				{
 					device_->StartScheduledPlayback( 0, 100, 1.0 );
 					started_ = true;
 				}
 				
-				while( downloaded_image_.size() >= prop_preroll_.value< int >( ) )
+				while( int( downloaded_image_.size() ) >= prop_preroll_.value< int >( ) )
 					cond_image_.wait( lck );
 				
 				IDeckLinkMutableVideoFrame *new_frame = NULL;
@@ -176,7 +176,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 					started_ = true;
 				}
 	
-				while( downloaded_audio_.size() >= prop_preroll_.value< int >( ) )
+				while( int( downloaded_audio_.size() ) >= prop_preroll_.value< int >( ) )
 					cond_audio_.wait( lck );
 				
 				downloaded_audio_.push_back( std::make_pair( frames_, aud ) );
@@ -220,7 +220,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 				ml::audio_type_ptr audio = downloaded_audio_.front( ).second;
 				BM_UINT32 samples;
 				device_->ScheduleAudioSamples( audio->pointer( ), audio->samples( ), 0, 0, &samples );
-				if ( samples != audio->samples( ) )
+				if ( int( samples ) != audio->samples( ) )
 					std::cerr << "offered " << audio->samples( ) << " took " << samples << std::endl;
 				downloaded_audio_.pop_front( );
 				cond_audio_.notify_all( );
