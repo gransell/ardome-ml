@@ -1,10 +1,11 @@
 #!/bin/bash
+ROOT_DIR=`pwd`
 cd bcomp
 
 function die
 {
 	echo $*
-	exit
+	exit 1
 }
 
 if [ ! -d vs2010 ]; then
@@ -165,11 +166,14 @@ fi
 
 if [ ! -d decklink_sdk ]; then
 
-	echo "Extracting decklink.."
-	tar xvfj black_magic_decklink_sdk.tbz2 &&
+	echo "Extracting BlackMagic DeckLink SDK..."
+	tar xfj black_magic_decklink_sdk.tbz2 &&
 	mv "Blackmagic DeckLink SDK 8.6" decklink_sdk &&
-	( cd decklink_sdk/Win/include && midl /header DeckLinkAPI.h DeckLinkAPI.idl && mv DeckLinkAPI_i.c DeckLinkAPIDispatch.cpp ) ||
-	die "Failed to tar xvfj black_magic_decklink_sdk.tbz2. Terminating."
+	(
+		cd decklink_sdk/Win/include &&
+		$ROOT_DIR/build/ardome-ml/run_vs_command.sh vs2010 midl /header DeckLinkAPI.h DeckLinkAPI.idl &&
+		mv DeckLinkAPI_i.c DeckLinkAPIDispatch.cpp
+	) || die "Failed to extract/process the BlackMagic DeckLink SDK. Terminating."
 fi
 
 echo "Postgrab succeeded!"
