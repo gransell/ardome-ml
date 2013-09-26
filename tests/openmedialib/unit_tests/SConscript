@@ -18,6 +18,7 @@ test_sources = [
 	'src/test_utilities.cpp',
 	'src/test_lock_filter.cpp',
 	'src/test_filter_store.cpp',
+	'src/test_aml_stack_input.cpp',
 	]
 
 if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
