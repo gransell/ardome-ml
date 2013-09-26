@@ -13,7 +13,7 @@ using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib;
 using namespace olib::opencorelib::str_util;
 using boost::shared_ptr;
-typedef shared_ptr< olib::opencorelib::worker > worker_ptr;
+typedef shared_ptr< worker > worker_ptr;
 
 //Helper class for running a boost::function as a job in a worker
 template< typename T >
@@ -116,23 +116,23 @@ BOOST_FIXTURE_TEST_CASE( test_that_seeking_is_thread_specific, F )
 	input->m_get_frames = 100;
 	lock_filter->sync();
 
-	worker_ptr worker( new worker() );
-	worker->start();
+	worker_ptr w( new worker() );
+	w->start();
 
 	lock_filter->seek( 10 );
-	seek_in_thread( worker, lock_filter, 20 );
+	seek_in_thread( w, lock_filter, 20 );
 
 	//Check that the filter reports its position correctly to
 	//each thread
 	BOOST_REQUIRE_EQUAL( lock_filter->get_position(), 10 );
-	BOOST_REQUIRE_EQUAL( get_filter_position_in_thread( worker, lock_filter ), 20 );
+	BOOST_REQUIRE_EQUAL( get_filter_position_in_thread( w, lock_filter ), 20 );
 
 	//Check that each thread gets the frame it seeked to
 	frame_type_ptr my_frame = lock_filter->fetch();
 	BOOST_REQUIRE( my_frame );
 	BOOST_REQUIRE_EQUAL( my_frame->get_position(), 10 );
 
-	frame_type_ptr other_frame = fetch_in_thread( worker, lock_filter );
+	frame_type_ptr other_frame = fetch_in_thread( w, lock_filter );
 	BOOST_REQUIRE( other_frame );
 	BOOST_REQUIRE_EQUAL( other_frame->get_position(), 20 );
 }
