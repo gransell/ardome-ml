@@ -1,6 +1,6 @@
 #pragma once
-
-#include <openmedialib/ml/frame.hpp>
+#include "mock_frame.hpp"
+#include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/input.hpp>
 
 namespace ml = olib::openmedialib::ml;
@@ -18,7 +18,8 @@ public:
 		m_get_frames = 0;
 		m_seekable = false;
 		m_requires_image = false;
-		m_frame = olib::openmedialib::ml::frame_type_ptr( new olib::openmedialib::ml::frame_type( ) );
+		m_get_position = 0;
+		m_num_fetch_calls = 0;
 	}	
 	virtual const std::wstring get_uri( ) const
 	{
@@ -40,13 +41,23 @@ public:
 	{
 		return m_requires_image;
 	}	
+	virtual void seek( const int pos, const bool relative )
+	{
+		//Relative seek not implemented
+		BOOST_REQUIRE( !relative );
+		m_get_position = pos;
+	}
 	virtual void do_fetch( olib::openmedialib::ml::frame_type_ptr & frame)
 	{
-		frame = m_frame;
+		++m_num_fetch_calls;
+		mock_frame *mf = new mock_frame();
+		mf->m_ret_get_position = m_get_position;
+		frame = olib::openmedialib::ml::frame_type_ptr( mf );
 	}
 	std::wstring m_mime_type;
 	int m_get_frames;
 	bool m_seekable;
 	bool m_requires_image;
-	olib::openmedialib::ml::frame_type_ptr m_frame;
+	int m_get_position;
+	int m_num_fetch_calls;
 };

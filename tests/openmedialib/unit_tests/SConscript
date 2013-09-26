@@ -16,6 +16,7 @@ test_sources = [
 	'src/test_compositor_filter.cpp',
 	'src/test_frame_list_filter.cpp',
 	'src/test_utilities.cpp',
+	'src/test_lock_filter.cpp',
 	'src/test_filter_store.cpp',
 	]
 
