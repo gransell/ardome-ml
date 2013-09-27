@@ -10,6 +10,7 @@
 #include "mocks/mock_input.hpp"
 
 using namespace olib::openmedialib::ml;
+using namespace olib::openmedialib::ml::unittest;
 using namespace olib::opencorelib;
 using namespace olib::opencorelib::str_util;
 using boost::shared_ptr;

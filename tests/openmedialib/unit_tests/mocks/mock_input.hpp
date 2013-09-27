@@ -3,9 +3,9 @@
 #include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/input.hpp>
 
-namespace ml = olib::openmedialib::ml;
+namespace olib { namespace openmedialib { namespace ml { namespace unittest {
 
-class mock_input : public olib::openmedialib::ml::input_type
+class mock_input : public input_type
 {
 public:
 	mock_input ()
@@ -47,12 +47,11 @@ public:
 		BOOST_REQUIRE( !relative );
 		m_get_position = pos;
 	}
-	virtual void do_fetch( olib::openmedialib::ml::frame_type_ptr & frame)
+	virtual void do_fetch( frame_type_ptr & frame )
 	{
 		++m_num_fetch_calls;
-		mock_frame *mf = new mock_frame();
-		mf->m_ret_get_position = m_get_position;
-		frame = olib::openmedialib::ml::frame_type_ptr( mf );
+		m_frame.m_ret_get_position = m_get_position;
+		frame = m_frame.shallow();
 	}
 	std::wstring m_mime_type;
 	int m_get_frames;
@@ -60,4 +59,7 @@ public:
 	bool m_requires_image;
 	int m_get_position;
 	int m_num_fetch_calls;
+	mock_frame m_frame;
 };
+
+} } } }

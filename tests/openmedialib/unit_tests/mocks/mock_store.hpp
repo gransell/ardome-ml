@@ -3,10 +3,9 @@
 #include <openmedialib/ml/store.hpp>
 #include <openmedialib/ml/frame.hpp>
 
-namespace ml = olib::openmedialib::ml;
-namespace pcos = olib::openpluginlib::pcos;
+namespace olib { namespace openmedialib { namespace ml { namespace unittest {
 
-class mock_store : public olib::openmedialib::ml::store_type
+class mock_store : public store_type
 {
 public:
 	mock_store ()
@@ -19,7 +18,7 @@ public:
 		m_create_count = 0;
 		m_complete = false;
 	}
-	virtual bool push( olib::openmedialib::ml::frame_type_ptr frame)
+	virtual bool push( frame_type_ptr frame )
 	{
 		m_frame = frame;
 		return m_push_return;
@@ -30,6 +29,8 @@ public:
 	}
 	bool m_push_return;
 	int m_create_count;
-	olib::openmedialib::ml::frame_type_ptr m_frame;
+	frame_type_ptr m_frame;
 	bool m_complete;
 };
+
+} } } }

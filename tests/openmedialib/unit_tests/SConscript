@@ -1,3 +1,5 @@
+import os
+
 Import(['local_env'])
 
 local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat' )
@@ -29,5 +31,7 @@ local_env.release( object )
 
 mock = local_env.plugin( 'openmedialib_mock', 'mocks/plugin_mock.cpp' )
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], mock + [ 'mocks/plugin_mock.opl' ] )
+local_env.copy_project_files( os.path.join( local_env[ 'ml_include' ], 'unittest', 'mocks'),
+	['mocks/mock_filter.hpp', 'mocks/mock_frame.hpp', 'mocks/mock_input.hpp', 'mocks/mock_store.hpp'])
 
 Return( 'object' )

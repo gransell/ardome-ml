@@ -1,6 +1,10 @@
+#pragma once
+
 #include <openmedialib/ml/frame.hpp>
 
-class mock_frame : public olib::openmedialib::ml::frame_type
+namespace olib { namespace openmedialib { namespace ml { namespace unittest {
+
+class mock_frame : public frame_type
 {
 public:
 	mock_frame()
@@ -11,8 +15,8 @@ public:
 	void reset()
 	{
 		m_ret_get_position = 0;
-
 		m_state_num_get_image_calls = 0;
+		image_.reset();
 	}
 
 	virtual olib::openimagelib::il::image_type_ptr get_image()
@@ -21,19 +25,30 @@ public:
 		return frame_type::get_image();
 	}
 
+	virtual void set_position( int position )
+	{
+		m_ret_get_position = position;
+	}
+
 	virtual int get_position() const
 	{
 		return m_ret_get_position;
 	}
 
-	virtual olib::openmedialib::ml::frame_type_ptr shallow( ) const
+	virtual frame_type_ptr shallow( ) const
 	{
-		mock_frame *copy = new mock_frame();
-		copy->m_ret_get_position = this->m_ret_get_position;
-		copy->m_state_num_get_image_calls = this->m_state_num_get_image_calls;
-		return olib::openmedialib::ml::frame_type_ptr( copy );
+		mock_frame *copy = new mock_frame(this);
+		return frame_type_ptr( copy );
 	}
 
 	int m_ret_get_position;
 	int m_state_num_get_image_calls;
+protected:
+	mock_frame( const mock_frame *other ) : frame_type (other)
+	{
+		m_ret_get_position = other->m_ret_get_position;
+		m_state_num_get_image_calls = other->m_state_num_get_image_calls;
+	}
 };
+
+} } } }
