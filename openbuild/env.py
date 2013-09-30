@@ -1128,13 +1128,14 @@ class Environment( BaseEnvironment ):
 						if perms is not None:
 							os.chmod( dst_file, perms )
 			for dir, file, link in all_links:
-                                if not os.path.exists( dir ):
-                                        if execute: os.makedirs( dir )
-				full = os.path.join( dir, file )
-				if not os.path.exists( full ):
+				if not os.path.exists( dir ):
+					if execute: os.makedirs( dir )
+				target_path = os.path.join( dir, file )
+				target_is_symlink = os.path.islink( target_path )
+				if target_is_symlink or not os.path.exists( target_path ):
 					link_count += 1
 					if execute: 
-						if os.path.islink( full ): os.remove( full )
+						if target_is_symlink: os.remove( target_path )
 						os.chdir( dir )
 						os.symlink( link, file )
 						os.chdir( self.root )
