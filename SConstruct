@@ -211,6 +211,7 @@ if env.check_externals( ):
 
 	#Openmedialib tests
 	ml_unit_tests = env.build('tests/openmedialib/unit_tests/', [ cl, pl, il, ml ] )
+	ml_unit_tests = env.build('tests/openmedialib/unit_tests/mocks', [ cl, pl, il, ml ] )
 
 	cairo = None
 	if env['PLATFORM'] != 'darwin':

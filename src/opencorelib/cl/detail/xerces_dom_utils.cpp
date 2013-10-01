@@ -1,11 +1,11 @@
 #include "precompiled_headers.hpp"
-#include "./xerces_utilities.hpp"
+#include "../xerces_utilities.hpp"
 
 #if defined (XERCES_CPP_NAMESPACE)
 	using namespace XERCES_CPP_NAMESPACE;
 #endif
 
-#include "detail/xerces_dom_utils.hpp"
+#include "xerces_dom_utils.hpp"
 
 namespace olib { namespace opencorelib { namespace xml { namespace dom {
 
