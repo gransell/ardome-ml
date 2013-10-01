@@ -331,7 +331,6 @@ namespace
 		// Crop the output if the shape is cropped
 		if ( shape.cropped )
 		{
-			border( output, shape );
 			output->crop( shape.x, shape.y, shape.w, shape.h );
 		}
 
@@ -356,6 +355,7 @@ namespace
 		{
 			input->crop_clear( );
 			output->crop_clear( );
+			border( output, shape );
 		}
 
 		return output;
