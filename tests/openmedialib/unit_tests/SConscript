@@ -18,6 +18,7 @@ test_sources = [
 	'src/test_frame_rate_filter.cpp',
 	'src/test_utilities.cpp',
 	'src/test_clip_filter.cpp',
+	'src/test_swscale_filter.cpp',	
 	'src/test_filter_store.cpp',
 	]
 
