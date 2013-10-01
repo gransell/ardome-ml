@@ -55,10 +55,10 @@ namespace
 		result[ std::wstring( L"r8g8b8a8" ) ] = boost::bind( correct, 1, 1, _1, _2 );
 		result[ std::wstring( L"yuv411p" ) ] = boost::bind( correct, 4, 1, _1, _2 );
 		result[ std::wstring( L"yuv420p" ) ] = boost::bind( correct, 2, 2, _1, _2 );
-		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 1, 2, _1, _2 );
+		result[ std::wstring( L"yuv422p" ) ] = boost::bind( correct, 2, 1, _1, _2 );
 		result[ std::wstring( L"yuv444p" ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ std::wstring( L"yuv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ std::wstring( L"uyv422" ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ std::wstring( L"yuv422" ) ] = boost::bind( correct, 2, 1, _1, _2 );
+		result[ std::wstring( L"uyv422" ) ] = boost::bind( correct, 2, 1, _1, _2 );
 
 		return result;
 	}
