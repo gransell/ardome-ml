@@ -42,6 +42,7 @@ class ML_PLUGIN_DECLSPEC filter_store : public ml::filter_simple
 			if ( !last_frame_ || last_frame_->get_position( ) != get_position( ) )
 			{
 				result = fetch_from_slot( );
+				ARENFORCE_MSG( result, "Unable to obtain frame from input" );
 
 				if ( prop_enable_.value< int >( ) )
 				{

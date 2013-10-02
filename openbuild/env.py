@@ -162,6 +162,10 @@ class Environment( BaseEnvironment ):
 			else :
 				raise Exception( "Invalid arch flag " + str(self['arch']) )
 			
+			supported_osx_min_vers = [ '10.5', '10.6', '10.7', '10.8' ]
+			if not self[ 'min_osx_ver' ] in supported_osx_min_vers:
+				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
+
 			# Check version of Xcode installed to determine root OSX SDK directory (root SDK dir changed in Xcode 4.3)
 			proc = subprocess.Popen(["xcode-select", "--print-path"], stdout=subprocess.PIPE)
 			OSX_SDK_dir = proc.stdout.read()
@@ -175,13 +179,13 @@ class Environment( BaseEnvironment ):
 			else:
 				OSX_SDK_dir += '/Platforms/MacOSX.platform/Developer/SDKs/'
 
-			supported_osx_min_vers = [ '10.5', '10.6', '10.7', '10.8' ]
 
-			if self[ 'min_osx_ver' ] in supported_osx_min_vers:
-				self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir + 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk', '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
-				self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir + 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk', '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
-			else :
-				raise Exception( "Invalid OSX version flag " + str(self['min_osx_ver']) )
+			OSX_SDK_dir += 'MacOSX' + self[ 'min_osx_ver' ] + '.sdk'
+			if not os.path.isdir( OSX_SDK_dir ):
+				raise Exception( "System include path: '" + OSX_SDK_dir + "' does not exist. Try changing 'min_osx_ver' to an SDK which is installed." )
+
+			self.Append( CCFLAGS = [ '-isysroot', OSX_SDK_dir, '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
+			self.Append( LINKFLAGS = [ '-isysroot', OSX_SDK_dir, '-mmacosx-version-min=' + self[ 'min_osx_ver' ] ] )
                        
 
 		if os.name == 'posix':
@@ -1124,13 +1128,14 @@ class Environment( BaseEnvironment ):
 						if perms is not None:
 							os.chmod( dst_file, perms )
 			for dir, file, link in all_links:
-                                if not os.path.exists( dir ):
-                                        if execute: os.makedirs( dir )
-				full = os.path.join( dir, file )
-				if not os.path.exists( full ):
+				if not os.path.exists( dir ):
+					if execute: os.makedirs( dir )
+				target_path = os.path.join( dir, file )
+				target_is_symlink = os.path.islink( target_path )
+				if target_is_symlink or not os.path.exists( target_path ):
 					link_count += 1
 					if execute: 
-						if os.path.islink( full ): os.remove( full )
+						if target_is_symlink: os.remove( target_path )
 						os.chdir( dir )
 						os.symlink( link, file )
 						os.chdir( self.root )

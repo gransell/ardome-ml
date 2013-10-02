@@ -83,6 +83,7 @@ typedef struct sequence_extension {
 typedef struct gop_header
 {
 	bool found;
+	int offset;			// Offset of the start of the gop header in the packet
 	int time_code;		// 25 bits
 	int closed_gop;		// 1 bit
 	int broken_link;	// 1 bit

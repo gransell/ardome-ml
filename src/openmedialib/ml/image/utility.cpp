@@ -159,7 +159,8 @@ ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 			int linesize = im->linesize( i );
 			int src_pitch = im->pitch( i ) - linesize;
 			int height = im->height( i ) - 1;
-			while( height -- )
+			
+			for (int h = height - 1; h >= 0; h--)
 			{
 				for ( int w = 0; w < linesize; w ++ )
 				{

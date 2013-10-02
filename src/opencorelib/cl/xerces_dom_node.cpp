@@ -1,14 +1,15 @@
-
 #include "precompiled_headers.hpp"
 #include "./xerces_utilities.hpp"
 #include "./xerces_dom_node.hpp"
 #include "./str_util.hpp"
 
-namespace olib { namespace opencorelib { namespace xml {
-
 #if defined (XERCES_CPP_NAMESPACE)
 	using namespace XERCES_CPP_NAMESPACE;
 #endif
+
+#include "detail/xerces_dom_utils.hpp"
+
+namespace olib { namespace opencorelib { namespace xml {
 
 exception::exception(const std::string& msg) throw()
 : msg(msg)
@@ -276,11 +277,43 @@ std::string node::getName() const {
 	return i == std::string::npos ? s : s.substr(i + 1);
 }
 
-std::string node::getValue() const {
+std::string node::getValueRecursively() const {
 	if ( !n_ )
 		return "";
 	const XMLCh* name = n_->getTextContent( );
 	return xml::to_string(name);
+}
+
+std::string node::getValue() const {
+	if ( !n_ )
+		return "";
+	DOMNodeList* children = n_->getChildNodes();
+
+	//Attributes and the text content itself count as nodes, so
+	//we must check the node list for actual element nodes.
+	bool foundElementNode = false;
+	for ( XMLSize_t i = 0; i < children->getLength(); ++i )
+	{
+		if ( children->item( i )->getNodeType() == DOMNode::ELEMENT_NODE )
+		{
+			foundElementNode = true;
+			break;
+		}
+	}
+
+	if ( foundElementNode )
+	{
+		//There are actual child nodes, so don't return
+		//anything here (if you want all the inner values,
+		//use the getValueRecursively() method instead).
+		return "";
+	}
+	else
+	{
+		//No child nodes, so return the text content.
+		const XMLCh* name = n_->getTextContent( );
+		return xml::to_string(name);
+	}
 }
 
 node node::createChild(const std::string& _name)
@@ -445,6 +478,17 @@ node& node::removeAttribute(const std::string& name) {
 	dnnm->removeNamedItem(xml::from_string(name).c_str());
 
 	return *this;
+}
+
+int node::getSourceLineNumber() const {
+	if (!n_)
+		return -1;
+
+	cl_dom_parser::source_location *sloc = static_cast< cl_dom_parser::source_location * >(
+		n_->getUserData( source_location_key().c_str() ) );
+	ARENFORCE( sloc != NULL );
+
+	return sloc->line_;
 }
 
 node::node(const node* parent, DOMNode* nodeptr)

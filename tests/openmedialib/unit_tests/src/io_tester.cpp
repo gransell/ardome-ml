@@ -67,11 +67,11 @@ int io_tester_read( void *private_data, unsigned char *buf, int size )
 	io_tester *instance = static_cast< io_tester* >( private_data );
 
 	int bytes_to_read = size;
-	if( instance->current_position > io_tester::buffer_size )
+	if( instance->current_position > int( io_tester::buffer_size ) )
 	{
 		bytes_to_read = 0;
 	}
-	else if( instance->current_position + size > io_tester::buffer_size )
+	else if( instance->current_position + size > int( io_tester::buffer_size ) )
 	{
 		bytes_to_read = static_cast< int >( io_tester::buffer_size - instance->current_position );
 	}
@@ -94,11 +94,11 @@ int io_tester_write( void *private_data, const unsigned char *buf, int size )
 	io_tester *instance = static_cast< io_tester* >( private_data );
 
 	int bytes_to_write = size;
-	if( instance->current_position > io_tester::buffer_size )
+	if( instance->current_position > int( io_tester::buffer_size ) )
 	{
 		bytes_to_write = 0;
 	}
-	else if( instance->current_position + size > io_tester::buffer_size )
+	else if( instance->current_position + size > int( io_tester::buffer_size ) )
 	{
 		bytes_to_write = static_cast< int >( io_tester::buffer_size - instance->current_position );
 	}
@@ -136,7 +136,7 @@ boost::int64_t io_tester_seek( void *private_data, boost::int64_t offset, int wh
 
 	if( result_offset < 0 )
 		result_offset = 0;
-	else if( result_offset > io_tester::buffer_size )
+	else if( result_offset > int( io_tester::buffer_size ) )
 		result_offset = io_tester::buffer_size;
 
 	if( whence != AVSEEK_SIZE )

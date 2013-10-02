@@ -1,16 +1,23 @@
-
 #include "precompiled_headers.hpp"
 #include "./xerces_utilities.hpp"
 #include "./xerces_dom_document.hpp"
-
-namespace olib { namespace opencorelib { namespace xml {
 
 #if defined (XERCES_CPP_NAMESPACE)
 	using namespace XERCES_CPP_NAMESPACE;
 #endif
 
+#include "detail/xerces_dom_utils.hpp"
 
-namespace dom {
+namespace
+{
+	void delete_doc_ptr( XERCES_CPP_NAMESPACE::DOMDocument *doc_ptr )
+	{
+		if( doc_ptr )
+			doc_ptr->release();
+	}
+}
+
+namespace olib { namespace opencorelib { namespace xml { namespace dom {
 
 fragment_filter::fragment_filter()
 : what_to_show_(~DOMNodeFilter::SHOW_ENTITY)
@@ -41,32 +48,32 @@ document::document()
 {
 	DOMImplementation* di = DOMImplementation::getImplementation();
 
-	doc = DocPtr(di->createDocument());
+	doc_ = DocPtr(di->createDocument(), &delete_doc_ptr);
 
 	// Set these in the node superclass
-	n_ = &*doc;
+	n_ = doc_.get();
 	parent_ = NULL;
-	owner_ = &*doc;
+	owner_ = doc_.get();
 }
 
 document::document(const char* qn, const char* ns)
 {
 	DOMImplementation* di = DOMImplementation::getImplementation();
 
-	doc = DocPtr(di->createDocument(
+	doc_ = DocPtr(di->createDocument(
 		to_x_string(ns).c_str(),
 		to_x_string(qn).c_str(),
-		NULL));
+		NULL), &delete_doc_ptr);
 
 	// Set these in the node superclass
-	n_ = &*doc;
+	n_ = doc_.get();
 	parent_ = NULL;
-	owner_ = &*doc;
+	owner_ = doc_.get();
 }
 
 document::document(document& ref)
 : node(ref)
-, doc(ref.doc)
+, doc_(ref.doc_)
 {
 }
 
@@ -76,11 +83,11 @@ document::~document()
 
 document::operator XERCES_CPP_NAMESPACE::DOMDocument&()
 {
-	return *doc;
+	return *doc_;
 }
 document::operator const XERCES_CPP_NAMESPACE::DOMDocument&() const
 {
-	return *doc;
+	return *doc_;
 }
 
 bool document::serializeIntoString(std::string& s, bool asFragment) const
@@ -103,7 +110,7 @@ bool document::serializeToFile(std::string& s, bool asFragment) const
 
 bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 {
-	if (!doc)
+	if (!doc_)
 		return false;
 
 	DOMImplementation* di = DOMImplementation::getImplementation();
@@ -121,7 +128,7 @@ bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 	dw->setNewLine(to_x_string("\n").c_str());
 	error_handler e;
 	dw->setErrorHandler(&e);
-	bool ret = dw->writeNode(ft, *doc);
+	bool ret = dw->writeNode(ft, *doc_);
 
 	delete dw;
 	return ret;
@@ -130,39 +137,39 @@ bool document::writeNode(XMLFormatTarget* ft, bool asFragment) const
 
 fragment::fragment(const std::string& xmltext)
 {
-	parser_ = DomParserPtr(new XercesDOMParser);
+	cl_dom_parser parser;
 	MemBufInputSource membuf((const XMLByte*)xmltext.c_str(), xmltext.size(), (const XMLCh*)NULL);
 
-	parser_->parse(membuf);
+	parser.parse(membuf);
 
-	doc = DocPtr(parser_->getDocument(), DocPtrNullDeleter());
-	n_ = &*doc;
+	doc_ = DocPtr(parser.adoptDocument(), &delete_doc_ptr);
+	n_ = doc_.get();
 }
 
 
 file_document::file_document(const std::string& filename)
 {
-	XercesDOMParser parser;
+	cl_dom_parser parser;
 
 	xerces_string x_filename = xml::from_string(filename);
-	LocalFileInputSource filebuf( x_filename.c_str( ) );
+	LocalFileInputSource filebuf(x_filename.c_str());
 
 	parser.parse(filebuf);
 
-	doc = DocPtr(parser.adoptDocument());
-	n_ = &*doc;
+	doc_ = DocPtr(parser.adoptDocument(), &delete_doc_ptr);
+	n_ = doc_.get();
 }
 
 file_document::file_document(std::istream &xml_input_stream)
 {
-	XercesDOMParser parser;
+	cl_dom_parser parser;
 
 	olib::opencorelib::std_input_source stream_buf(xml_input_stream);
 
 	parser.parse(stream_buf);
 
-	doc = DocPtr(parser.adoptDocument());
-	n_ = &*doc;
+	doc_ = DocPtr(parser.adoptDocument(), &delete_doc_ptr);
+	n_ = doc_.get();
 }
 
 

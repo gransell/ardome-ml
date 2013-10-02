@@ -1,9 +1,20 @@
 #ifndef UTILS_ML_TESTS_H_INCLUDED_
 #define UTILS_ML_TESTS_H_INCLUDED_
 
-#include<openmedialib/ml/stream.hpp>
-#include<openmedialib/ml/types.hpp>
-#include<opencorelib/cl/minimal_string_defines.hpp>
+#include <openmedialib/ml/stream.hpp>
+#include <openmedialib/ml/types.hpp>
+#include <opencorelib/cl/str_util.hpp>
+
+#define MEDIA_REPO_PREFIX L"http://releases.ardendo.se/media-repository/"
+#define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
+
+//Required in order to use wstrings with BOOST_CHECK_EQUAL
+namespace std {
+	inline std::ostream &operator<<(std::ostream& output_stream, const std::wstring &the_string)
+	{
+		return output_stream << olib::opencorelib::str_util::to_string(the_string);
+	}
+}
 
 // default implementation of ml::stream_type to be used in testing. Reimplement as necessary
 class stream_mock : public olib::openmedialib::ml::stream_type

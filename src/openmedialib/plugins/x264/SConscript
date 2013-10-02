@@ -1,0 +1,12 @@
+Import(['local_env'])
+
+options = local_env.optional( 'x264', 'ffmpeg_x264_adapter' )
+
+if options[ 'have_x264' ] and options [ 'have_ffmpeg_x264_adapter' ] :
+	local_env.packages( 'boost', 'libavformat', 'boost_system' )
+	local_env.optional( 'libavcodec' )
+	srcs = [ 'x264_plugin.cpp' ]
+	bin = local_env.plugin( 'openmedialib_aml_x264', srcs )
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], bin + [ 'x264.opl' ])
+	Return( 'bin' )
+

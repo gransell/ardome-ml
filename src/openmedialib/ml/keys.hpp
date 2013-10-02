@@ -48,6 +48,7 @@ ML_KEY( top_field_first );
 ML_KEY( frame_pred_frame_dct );
 ML_KEY( progressive_frame );
 ML_KEY( aspect_ratio_information );
+ML_KEY( gop_hdr_offset );
 
 ML_KEY( is_background );
 ML_KEY( use_last_image );
@@ -84,6 +85,8 @@ ML_KEY( source_format );
 ML_KEY( offset );
 
 ML_KEY( serialise_as );
+
+ML_KEY( stream_collection );
 
 } } } }
 

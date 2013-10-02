@@ -1551,7 +1551,7 @@ class aml_stack
 					std::string sub;
 					iss >> std::skipws >> sub;
 
-					if ( token == "" && sub[ 0 ] == '#' )
+					if ( token == "" && sub.size() > 0 && sub[ 0 ] == '#' )
 						break;
 
 					if ( token != "" )

@@ -119,6 +119,9 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 	
 	ARENFORCE_MSG( false, "Could not convert frame to decklink display mode" )
 		( fps_num )( fps_den )( frame->height() )( img->field_order() );
+
+	//Never reached
+	return bmdModePAL;
 }
 	
 	
@@ -170,6 +173,8 @@ BMDAudioSampleType frame_to_audio_sample_type( const ml::frame_type_ptr& frame )
 	}
 	
 	ARENFORCE_MSG( false, "Unsupported audio sample width" )( aud->af() );
+	//Never reached
+	return bmdAudioSampleType16bitInteger;
 }
 	
 } } } }

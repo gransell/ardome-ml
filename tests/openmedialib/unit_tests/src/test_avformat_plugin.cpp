@@ -12,9 +12,6 @@
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
 
-#define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/"
-#define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
-
 BOOST_AUTO_TEST_SUITE( avformat_plugin )
 
 BOOST_AUTO_TEST_CASE( amf_1864_wrong_mp4_duration )
@@ -68,7 +65,7 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	BOOST_REQUIRE( stream );
 
 	//Standard IMX50 video frame size
-	BOOST_REQUIRE_EQUAL( stream->length(), 250000 );
+	BOOST_REQUIRE_EQUAL( stream->length(), 250000u );
 
 	//Check that the mpeg2 picture coding extension looks like we expect. Specifically, we want
 	//to check that:
@@ -77,6 +74,22 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	//* Byte 3-4 of the 7th byte is 10b, which corresponds to an intra_dc_precision value of 10.
 	boost::uint8_t picture_coding_ext[] = { 0x00, 0x00, 0x01, 0xB5, 0x8F, 0xFF, 0xFB, 0x98 };
 	BOOST_CHECK_EQUAL( memcmp( stream->bytes() + 38, picture_coding_ext, sizeof( picture_coding_ext ) ), 0 );
+}
+
+//J#AMF-2123: avformat plugin fails when loading partial ts file with .awi index and packet_stream=1
+BOOST_AUTO_TEST_CASE( amf_2123_failed_to_read_partial_ts )
+{
+	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-2123/DemoFromArtBeats_first6MB.ts" ) );
+	BOOST_REQUIRE( inp );
+	inp->property( "ts_index" ) = to_wstring( MEDIA_REPO_REGRESSION_TESTS_PREFIX "/AMF-2123/DemoFromArtBeats.awi" );
+	inp->property( "packet_stream" ) = 1;
+
+	BOOST_REQUIRE( inp->init() );
+
+	//Before the fix, an exception was thrown here due to a failed sanity check
+	inp->sync();
+
+	BOOST_CHECK_EQUAL( inp->get_frames(), 1200 );
 }
 
 
@@ -202,17 +215,17 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
 {
-	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_720p50_6ch_24bit.mov" ) );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_720p50_6ch_24bit.mov" );
 }
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_25p )
 {
-	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_1080p25_6ch_24bit.mov" ) );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_1080p25_6ch_24bit.mov" );
 }
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_30p )
 {
-	test_24pcm_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX "/MOV/XDCamHD/XDCAMHD_1080p30_6ch_24bit.mov" ) );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_1080p29.97_6ch_24bit.mov" );
 }
 
 #define abs( a ) a < 0 ? -1 * a : a

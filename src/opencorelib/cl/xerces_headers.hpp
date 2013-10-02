@@ -19,8 +19,6 @@
 #include <xercesc/dom/DOMWriter.hpp>
 #include <xercesc/dom/DOMNodeFilter.hpp>
 
-#include <xercesc/dom/DOMErrorHandler.hpp>
-
 #include <xercesc/parsers/XercesDOMParser.hpp>
 
 #include <xercesc/framework/XMLFormatter.hpp>

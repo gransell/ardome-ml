@@ -55,10 +55,10 @@ namespace
 		result[ olib::t_string( _CT("r8g8b8a8") ) ] = boost::bind( correct, 1, 1, _1, _2 );
 		result[ olib::t_string( _CT("yuv411p") ) ] = boost::bind( correct, 4, 1, _1, _2 );
 		result[ olib::t_string( _CT("yuv420p") ) ] = boost::bind( correct, 2, 2, _1, _2 );
-		result[ olib::t_string( _CT("yuv422p") ) ] = boost::bind( correct, 1, 2, _1, _2 );
+		result[ olib::t_string( _CT("yuv422p") ) ] = boost::bind( correct, 2, 1, _1, _2 );
 		result[ olib::t_string( _CT("yuv444p") ) ] = boost::bind( correct, 1, 1, _1, _2 );
-		result[ olib::t_string( _CT("yuv422") ) ] = boost::bind( correct, 4, 1, _1, _2 );
-		result[ olib::t_string( _CT("uyv422") ) ] = boost::bind( correct, 4, 1, _1, _2 );
+		result[ olib::t_string( _CT("yuv422") ) ] = boost::bind( correct, 2, 1, _1, _2 );
+		result[ olib::t_string( _CT("uyv422") ) ] = boost::bind( correct, 2, 1, _1, _2 );
 
 		return result;
 	}
@@ -331,7 +331,6 @@ namespace
 		// Crop the output if the shape is cropped
 		if ( shape.cropped )
 		{
-			border( output, shape );
 			output->crop( shape.x, shape.y, shape.w, shape.h );
 		}
 
@@ -356,6 +355,7 @@ namespace
 		{
 			input->crop_clear( );
 			output->crop_clear( );
+			border( output, shape );
 		}
 
 		return output;

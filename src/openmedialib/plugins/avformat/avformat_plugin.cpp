@@ -95,7 +95,7 @@ const olib::t_string avformat_to_oil( int fmt )
 	return _CT("");
 }
 
-std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
+std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
 {
 	switch( codec_id )
 	{
@@ -126,7 +126,7 @@ std::string avformat_codec_id_to_apf_codec( CodecID codec_id )
 	return "";
 }
 
-CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
+AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 {
 	std::string apf_codec_id = stream->codec( );
 	const std::string prefix = "http://www.ardendo.com/apf/codec/";
@@ -158,7 +158,7 @@ CodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 	else if( apf_codec_id == "prores/prores" )
 		return AV_CODEC_ID_PRORES;
 	else if( apf_codec_id == "aes" )
-		return static_cast< enum CodecID >( AML_AES3_CODEC_ID );
+		return static_cast< enum AVCodecID >( AML_AES3_CODEC_ID );
 	else if( apf_codec_id == "pcm" )
 	{
 		int sample_size = stream->sample_size( );
@@ -233,6 +233,12 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 	{
 		format = _CT("yuv422p");
 		dst_fmt = PIX_FMT_YUV422P;
+	}
+	else if ( pix_fmt == PIX_FMT_YUV422P10LE )
+	{
+		// force decode to a 8-bit format
+		format = _CT("uyv422");
+		dst_fmt = PIX_FMT_UYVY422;
 	}
 	else if ( format == _CT("") )
 	{

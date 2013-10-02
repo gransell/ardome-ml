@@ -103,14 +103,15 @@ void create_audio_codec( const stream_type_ptr &stream, AVCodecContext **context
 	// We need to set these for avformat to know how to attach the codec
 	(*context)->sample_rate = sample_rate;
 	(*context)->channels = channels;
-	avcodec_open2( *context, *codec, 0 );
 	
-	if( (*context)->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) )
+	if( (*context)->codec_id == static_cast< enum AVCodecID >( AML_AES3_CODEC_ID ) )
 	{
 		(*context)->bits_per_raw_sample = stream->sample_size( ) * 8;
 		(*context)->sample_fmt = stream->sample_size( ) == 2 ? AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_S32;
 	}
 	
+	avcodec_open2( *context, *codec, 0 );
+
 	ARENFORCE_MSG( (*context)->codec, "Could not open code for format %1% mapped to avcodec id %2%" )( stream->codec( ) )( (*codec)->id );
 }
 	
@@ -681,7 +682,7 @@ private:
 			audio::identity aml_format_out = AVSampleFormat_to_aml_id( AV_fmt_in );
 
 			// check if "encoded" audio is 32bit AES or pcm24, in which case we should configure the converter to output pcm24
-			if( c->sample_fmt == AV_SAMPLE_FMT_S32 && c->codec_id == static_cast< enum CodecID >( AML_AES3_CODEC_ID ) ||
+			if( ( c->sample_fmt == AV_SAMPLE_FMT_S32 && c->codec_id == static_cast< enum AVCodecID >( AML_AES3_CODEC_ID ) ) ||
 				( c->codec_id == CODEC_ID_PCM_S24LE ) ||
 				( c->codec_id == CODEC_ID_PCM_S24BE ) )
 			{
@@ -726,7 +727,7 @@ private:
 		for ( ;!track_reseater->has( wanted_samples ) && packets_it != track_packets.end( ); ++packets_it )
 		{
 			stream_type_ptr strm = packets_it->second;
-			ARENFORCE_MSG( strm, "No stream available on packet %1%" )( packets_it->first );
+			ARENFORCE_MSG( strm && strm->bytes( ), "No stream available on packet %1%" )( packets_it->first );
 	
 			avcodec_get_frame_defaults( decoded_frame_ );
 			

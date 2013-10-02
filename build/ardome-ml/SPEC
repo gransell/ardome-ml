@@ -17,8 +17,7 @@ vs2010_PREBAG: build/ardome-ml/update-rc.sh
 vs2010_TARGET: ardome-ml-vs2010.zip
 vs2010_BUILDSCRIPT: build/ardome-ml/vs_build_step.sh vs2010
 vs2010_BUILDSCRIPT2: build/ardome-ml/vs_build_zip.sh vs2010
-vs2010_TESTSCRIPT: build/ardome-ml/vs_test_step.sh vs2010
-vs2010_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+vs2010_TESTSCRIPT: build/ardome-ml/test_step.sh
 
 ### Buildsteps related to the Visual Studio 2008 compiler:
 vs2008_POSTGRAB: build/ardome-ml/vs2008_postgrab.sh
@@ -26,67 +25,65 @@ vs2008_PREBAG: build/ardome-ml/update-rc.sh
 vs2008_TARGET: ardome-ml-vs2008.zip
 vs2008_BUILDSCRIPT: build/ardome-ml/vs_build_step.sh vs2008
 vs2008_BUILDSCRIPT2: build/ardome-ml/vs_build_zip.sh vs2008
-vs2008_TESTSCRIPT: build/ardome-ml/vs_test_step.sh vs2008
-vs2008_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+vs2008_TESTSCRIPT: build/ardome-ml/test_step.sh
 
 ### Buildsteps related to the Visual Studio 2003 compiler:
 vs2003_POSTGRAB: build/ardome-ml/vs2003_postgrab.sh
 vs2003_TARGET: ardome-ml-vs2003.zip
 vs2003_BUILDSCRIPT: build/ardome-ml/vs2003_build_step.sh
-vs2003_BUILDSCRIPT2: build/ardome-ml/vs2003_test_step.sh
+vs2003_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 vs2003_BUILDSCRIPT3: build/ardome-ml/vs2003_build_zip.sh
 
 ### Build using with install_name set to @executable_path/../lib/ 
 osx_TARGET: ardome-ml-osx-10.5.tbz2 
 osx_POSTGRAB: build/ardome-ml/osx_postgrab.sh
 osx_BUILDSCRIPT: build/ardome-ml/osx_build_step.sh
-osx_BUILDSCRIPT2: build/release/osx/bin/opencore_unit_tests all_tests
-osx_BUILDSCRIPT3: build/release/osx/bin/openmedialib_unit_tests
-osx_BUILDSCRIPT4: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-10.5
-osx_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
-osx_TESTTARGET2: tests/test_output/openmedialib/unit_test_results.xml
+osx_BUILDSCRIPT2: build/ardome-ml/test_step.sh
+osx_BUILDSCRIPT3: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-10.5
 
 ### Build using with install_name set to @loader_path/../lib/ 
 osx_loader_TARGET: ardome-ml-osx-loader-path-10.5.tbz2 
 osx_loader_POSTGRAB: build/ardome-ml/osx_postgrab.sh
 osx_loader_BUILDSCRIPT: build/ardome-ml/osx_build_step_loader.sh
-osx_loader_BUILDSCRIPT2: build/release/osx/bin/opencore_unit_tests all_tests
+osx_loader_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 osx_loader_BUILDSCRIPT3: build/ardome-ml/osx_build_zip.sh ardome-ml-osx-loader-path-10.5
-osx_loader_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 64 bit LSB 3.1 system
 linux64_TARGET: ardome-ml-linux64.tbz2
 linux64_POSTGRAB: build/ardome-ml/linux_postgrab.sh
 linux64_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
-linux64_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
+linux64_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 linux64_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
-linux64_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 32 bit LSB 3.1 system
 linux32_TARGET: ardome-ml-linux32.tbz2
 linux32_POSTGRAB: build/ardome-ml/linux_postgrab.sh
 linux32_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
-linux32_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
+linux32_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 linux32_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
-linux32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
+
+### Build for 32 bit LSB 3.1 system with gcov 3.4
+gcov_TARGET: ardome-ml-gcov.tbz2
+gcov_POSTGRAB: build/ardome-ml/linux_postgrab.sh
+gcov_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
+gcov_BUILDSCRIPT2: build/ardome-ml/test_step.sh
+gcov_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
 
 ### Build for 64 bit system, using standard Makefile on Ubuntu Linux
 ubuntu64_TARGET: ardome-ml-ubuntu64.tbz2
 ubuntu64_PREGRAB: build/ardome-ml/ubuntu_check_deps.sh
 ubuntu64_POSTGRAB: build/ardome-ml/linux_postgrab.sh
 ubuntu64_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
-ubuntu64_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
+ubuntu64_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 ubuntu64_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
-ubuntu64_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Build for 32 bit system, using standard Makefile on Linux
 ubuntu32_TARGET: ardome-ml-ubuntu32.tbz2
 ubuntu32_PREGRAB: build/ardome-ml/ubuntu_check_deps.sh
 ubuntu32_POSTGRAB: build/ardome-ml/linux_postgrab.sh
 ubuntu32_BUILDSCRIPT: build/ardome-ml/linux_build_step.sh
-ubuntu32_BUILDSCRIPT2: build/ardome-ml/linux_test_step.sh
+ubuntu32_BUILDSCRIPT2: build/ardome-ml/test_step.sh
 ubuntu32_BUILDSCRIPT3: build/ardome-ml/linux_build_zip.sh
-ubuntu32_TESTTARGET: tests/test_output/opencore/opencore_test_results.xml
 
 ### Buildsteps related to the Visual Studio 2008 compiler:
 vs2008sb_TARGET: ardome-ml-vs2008.zip

@@ -55,6 +55,8 @@ namespace olib
 namespace ml = olib::openmedialib::ml;
 namespace cl = olib::opencorelib;
 
+typedef std::vector< ml::stream_type_ptr > stream_vec;
+
 namespace olib { namespace openpluginlib { namespace pcos {
 
 class property::property_impl
@@ -282,16 +284,19 @@ template OPENPLUGINLIB_DECLSPEC double_list property::value< double_list >() con
 template OPENPLUGINLIB_DECLSPEC bool property::value< bool >() const;
 template OPENPLUGINLIB_DECLSPEC std::string property::value< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC void* property::value< void* >() const;
+template OPENPLUGINLIB_DECLSPEC byte_vec property::value< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int_vec property::value< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC double_vec property::value< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC int64_vec property::value< int64_vec >() const;
 template OPENPLUGINLIB_DECLSPEC string_vec property::value< string_vec >() const;
 template OPENPLUGINLIB_DECLSPEC void_vec property::value< void_vec >() const;
+template OPENPLUGINLIB_DECLSPEC stream_vec property::value< stream_vec >() const;
 
 template OPENPLUGINLIB_DECLSPEC std::wstring* property::pointer< std::wstring >() const;
 template OPENPLUGINLIB_DECLSPEC std::string* property::pointer< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC wstring_vec* property::pointer< wstring_vec >() const;
 template OPENPLUGINLIB_DECLSPEC string_vec* property::pointer< string_vec >() const;
+template OPENPLUGINLIB_DECLSPEC stream_vec* property::pointer< stream_vec >() const;
 
 template OPENPLUGINLIB_DECLSPEC void property::set< int >( const int& );
 template OPENPLUGINLIB_DECLSPEC void property::set< unsigned int >( const unsigned int& );
@@ -315,6 +320,8 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< bool >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::string >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< void* >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_vec >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< stream_vec >() const;
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< byte_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< double_vec >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< int64_vec >() const;
@@ -356,7 +363,6 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::audio_type_ptr >() cons
 template OPENPLUGINLIB_DECLSPEC ml::stream_type_ptr property::value< ml::stream_type_ptr >() const;
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::stream_type_ptr >( const ml::stream_type_ptr& );
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::stream_type_ptr >() const;
-
 
 // implementation of parsing code for pcos::any
 
@@ -451,6 +457,11 @@ template <> OPENPLUGINLIB_DECLSPEC int64_vec parse_string( const std::wstring& )
 	return int64_vec( );
 }
 
+template <> OPENPLUGINLIB_DECLSPEC byte_vec parse_string( const std::wstring& )
+{
+	return byte_vec( );
+}
+
 template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const std::wstring& str)
 {
 	return split_list< int_vec >( str );
@@ -459,6 +470,11 @@ template <> OPENPLUGINLIB_DECLSPEC int_vec parse_string( const std::wstring& str
 template <> OPENPLUGINLIB_DECLSPEC string_vec parse_string( const std::wstring& str )
 {
 	return string_vec( 1, cl::str_util::to_string( str ) );
+}
+
+template <> OPENPLUGINLIB_DECLSPEC stream_vec parse_string( const std::wstring& str )
+{
+	return stream_vec( );
 }
 
 template <> OPENPLUGINLIB_DECLSPEC wstring_vec parse_string( const std::wstring& str )

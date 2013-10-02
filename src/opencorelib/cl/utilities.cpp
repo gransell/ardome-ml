@@ -418,6 +418,14 @@ namespace olib
 #endif
 				
 			}
+			
+			t_string regex_escape( const t_string& string_to_escape )
+			{
+				const t_regex regex_chars_to_escape( _CT("[\\^\\.\\$\\|\\(\\)\\[\\]\\*\\+\\?\\/\\\\\\{\\}]") );
+				const t_string replacement_pattern( _CT("\\\\\\1&") );
+				t_string result = regex_replace(string_to_escape, regex_chars_to_escape, replacement_pattern, boost::match_default | boost::format_sed );
+				return result;
+			}
 		}
 	}
 }
