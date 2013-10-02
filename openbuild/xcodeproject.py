@@ -272,6 +272,7 @@ projectTemplate = """
 			11783808101EE833007279AC /* Debug */ = {
 				isa = XCBuildConfiguration;
 				buildSettings = {
+					ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 					COPY_PHASE_STRIP = NO;
 					PRODUCT_NAME = All;
 				};
@@ -280,6 +281,7 @@ projectTemplate = """
 			11783809101EE833007279AC /* Release */ = {
 				isa = XCBuildConfiguration;
 				buildSettings = {
+					ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 					COPY_PHASE_STRIP = YES;
 					PRODUCT_NAME = All;
 				};
@@ -289,6 +291,7 @@ projectTemplate = """
 			11E6AD320FCFAB1F00E29B64 /* Debug */ = {
 				isa = XCBuildConfiguration;
 				buildSettings = {
+					ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 					COPY_PHASE_STRIP = NO;
 				};
 				name = Debug;
@@ -296,6 +299,7 @@ projectTemplate = """
 			11E6AD330FCFAB1F00E29B64 /* Release */ = {
 				isa = XCBuildConfiguration;
 				buildSettings = {
+					ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 					COPY_PHASE_STRIP = YES;
 				};
 				name = Release;
