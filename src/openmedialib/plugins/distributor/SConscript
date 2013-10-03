@@ -6,7 +6,13 @@ Import(['local_env'])
 
 local_env.packages( 'loki', 'boost_regex', 'boost_thread', 'boost_date_time', 'boost_system', 'boost_thread' )
 
-src = [ 'plugin_distributor.cpp' ]
+src = [ 'plugin_distributor.cpp',
+		'filter_distributor.cpp',
+		'filter_fork.cpp',
+		'filter_lock.cpp',
+		'filter_voodoo.cpp',
+		'input_nudger.cpp',
+		]
 
 #if local_env[ 'PLATFORM' ] == 'win32' :
 #	src.append( 'msw/decodeplugin.rc' )
