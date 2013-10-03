@@ -845,7 +845,7 @@ class aml_stack
 			std::string name = olib::opencorelib::str_util::to_string( pair.substr( 0, pos ) );
 			std::wstring value = pair.substr( pos + 1 );
 		
-			if ( value[ 0 ] == L'"' && value[ value.size( ) - 1 ] == L'"' )
+			if ( !value.empty() && value[ 0 ] == L'"' && value[ value.size( ) - 1 ] == L'"' )
 				value = value.substr( 1, value.size( ) - 2 );
 
 			if ( value.find( L"%s" ) != std::wstring::npos )

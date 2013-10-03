@@ -57,6 +57,8 @@ echo "Adding include files"
 cp -r src/opencorelib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openmedialib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openpluginlib  TMPZIP/aml/include/ardome-ml/
+mkdir TMPZIP/aml/include/ardome-ml/openmedialib/ml/unittest
+cp -r tests/openmedialib/unit_tests/mocks TMPZIP/aml/include/ardome-ml/openmedialib/ml/unittest/
 
 cp -r bcomp/$TARGET/ffmpeg/include/* TMPZIP/aml/include/
 

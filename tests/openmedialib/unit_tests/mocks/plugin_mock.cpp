@@ -9,30 +9,31 @@
 #include "mock_filter.hpp"
 #include "mock_input.hpp"
 
-namespace ml  = olib::openmedialib::ml;
 namespace opl = olib::openpluginlib;
 
-class ML_PLUGIN_DECLSPEC mock_plugin : public ml::openmedialib_plugin
+namespace olib { namespace openmedialib { namespace ml { namespace unittest {
+
+class ML_PLUGIN_DECLSPEC mock_plugin : public openmedialib_plugin
 {
 public:
 
-	virtual ml::input_type_ptr input( const std::wstring &resource )
+	virtual input_type_ptr input( const std::wstring &resource )
 	{
 		static ml::input_type_ptr f = ml::input_type_ptr( new mock_input );
 		return f;		
 	}
 
-	virtual ml::store_type_ptr store( const std::wstring &resource, const ml::frame_type_ptr &frame )
+	virtual store_type_ptr store( const std::wstring &resource, const frame_type_ptr &frame )
 	{
-		static ml::store_type_ptr s = ml::store_type_ptr( new mock_store );
+		static store_type_ptr s = store_type_ptr( new mock_store );
 		mock_store* m = static_cast <mock_store*> (s.get());
 		m->m_create_count ++;
 		return s;
 	}
 	
-	virtual ml::filter_type_ptr filter( const std::wstring& resource )
+	virtual filter_type_ptr filter( const std::wstring& resource )
 	{
-		static ml::filter_type_ptr f = ml::filter_type_ptr( new mock_filter );
+		static filter_type_ptr f = filter_type_ptr( new mock_filter );
 		return f;
 	}
 };
@@ -60,3 +61,5 @@ extern "C"
 		delete static_cast< mock_plugin * >( plug ); 
 	}
 }
+
+} } } }

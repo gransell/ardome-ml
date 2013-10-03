@@ -1,3 +1,5 @@
+import os
+
 Import(['local_env'])
 
 local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat', 'libswscale' )
@@ -20,8 +22,10 @@ test_sources = [
 	'src/test_utilities.cpp',
 	'src/test_clip_filter.cpp',
 	'src/test_swscale_filter.cpp',	
+	'src/test_lock_filter.cpp',
 	'src/test_filter_store.cpp',
 	'src/test_deinterlace_filter.cpp',
+	'src/test_aml_stack_input.cpp',
 	]
 
 if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
@@ -29,5 +33,8 @@ if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:
 
 object = local_env.console_program( 'openmedialib_unit_tests', test_sources )
 local_env.release( object )
+
+local_env.copy_project_files( os.path.join( local_env[ 'ml_include' ], 'unittest', 'mocks'),
+	['mocks/mock_filter.hpp', 'mocks/mock_frame.hpp', 'mocks/mock_input.hpp', 'mocks/mock_store.hpp'])
 
 Return( 'object' )
