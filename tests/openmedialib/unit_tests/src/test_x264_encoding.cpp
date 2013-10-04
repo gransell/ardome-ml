@@ -29,7 +29,7 @@ namespace
 		colour_input->property( "fps_num" ) = fps_num;
 		colour_input->property( "fps_den" ) = fps_den;
 		colour_input->property( "interlace" ) = 0;
-		colour_input->property( "colourspace" ) = std::wstring( L"yuv420p" );
+		colour_input->property( "colourspace" ) = olib::t_string( _CT("yuv420p") );
 		colour_input->property( "r" ) = 128;
 
 		const int ten_seconds_worth_of_frames = 10 * fps_num / fps_den;

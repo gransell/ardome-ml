@@ -76,6 +76,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUV420P16;
 	else if (pixfmt == ML_PIX_FMT_YUVA420P )
 		return (int)AV_PIX_FMT_YUVA420P;
+	else if (pixfmt == ML_PIX_FMT_YUV411P )
+		return (int)AV_PIX_FMT_YUV411P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P )
 		return (int)AV_PIX_FMT_YUV422P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P10LE )
@@ -106,6 +108,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_BGR24;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8A8 )
 		return (int)AV_PIX_FMT_RGBA;
+	else if (pixfmt == ML_PIX_FMT_B8G8R8A8 )
+		return (int)AV_PIX_FMT_BGRA;
 	else if (pixfmt == ML_PIX_FMT_R10G10B10 )
 		return (int)AV_PIX_FMT_RGB48;
 

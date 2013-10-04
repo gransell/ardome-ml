@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( amf_1948_invalid_imx_produced )
 	color_input->property( "width" ) = 720;
 	color_input->property( "height" ) = 608;
 	color_input->property( "interlace" ) = 1;
-	color_input->property( "colourspace" ) = std::wstring( L"yuv422p" );
+	color_input->property( "colourspace" ) = olib::t_string( _CT("yuv422p") );
 	color_input->property( "r" ) = 128;
 
 	BOOST_REQUIRE( color_input->init() );
