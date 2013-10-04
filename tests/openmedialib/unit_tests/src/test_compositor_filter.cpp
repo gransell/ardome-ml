@@ -20,7 +20,7 @@ input_type_ptr create_color_background()
 	result->property( "sar_num" ) = 16;
 	result->property( "sar_den" ) = 15;
 	result->property( "interlace" ) = 2;
-	result->property( "colourspace" ) = std::wstring( L"yuv411p" );
+	result->property( "colourspace" ) = olib::t_string( _CT("yuv411p") );
 
 	return result;
 }

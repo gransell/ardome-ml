@@ -78,11 +78,11 @@ void test_image_yuv422p10le( ml::image_type_ptr img )
 	BOOST_CHECK( img->plane_count( ) == 3 );
 	BOOST_CHECK( img->block_size( ) == 3 );
 	BOOST_CHECK( img->linesize( 0 ) == 1920 );	
-	BOOST_CHECK( img->linesize( 1 ) == 1920 );	
-	BOOST_CHECK( img->linesize( 2 ) == 1920 );	
+	BOOST_CHECK( img->linesize( 1 ) == 960 );	
+	BOOST_CHECK( img->linesize( 2 ) == 960 );	
 	BOOST_CHECK( img->pitch( 0 ) == 1920 );	
-	BOOST_CHECK( img->pitch( 1 ) == 1920 );	
-	BOOST_CHECK( img->pitch( 2 ) == 1920 );	
+	BOOST_CHECK( img->pitch( 1 ) == 960 );	
+	BOOST_CHECK( img->pitch( 2 ) == 960 );	
 	BOOST_CHECK( img->offset( 0 ) == 0 );
 	BOOST_CHECK( img->offset( 1 ) == 2073600 );
 	BOOST_CHECK( img->offset( 2 ) == 3110400 );
