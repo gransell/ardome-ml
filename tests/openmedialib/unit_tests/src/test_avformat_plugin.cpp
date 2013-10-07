@@ -665,6 +665,11 @@ BOOST_AUTO_TEST_CASE( aml_store_mp2_movie )
 	store_test( L"avformat:/tmp/mp2.mp2", 24000, 1001, 240, store_defaults, check_audio );
 }
 
+#ifndef WIN32
+
+// The following tests are not executed on Windows because the ffmpeg build currently lacks
+// the required dependencies
+
 BOOST_AUTO_TEST_CASE( aml_store_mp3_pal )
 {
 	store_test( L"avformat:/tmp/mp3.mp3", 25, 1, 250, store_defaults, check_audio );
@@ -679,6 +684,8 @@ BOOST_AUTO_TEST_CASE( aml_store_mp3_movie )
 {
 	store_test( L"avformat:/tmp/mp3.mp3", 24000, 1001, 240, store_defaults, check_audio );
 }
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
