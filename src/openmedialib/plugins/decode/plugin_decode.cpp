@@ -469,7 +469,7 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			, precharged_frames_( 0 )
 			, estimated_gop_size_( 0 )
 		{
-			properties( ).append( prop_inner_threads_ = 1 );
+			properties( ).append( prop_inner_threads_ = -1 ); // -N resolves to #cores/(-1*N), e.g. -2 will resolve to 4 on an 8 core machine
 			properties( ).append( prop_filter_ = std::wstring( L"mcdecode" ) );
 			properties( ).append( prop_audio_filter_ = std::wstring( L"" ) );
 			properties( ).append( prop_scope_ = std::wstring( cl::str_util::to_wstring( cl::uuid_16b().to_hex_string( ) ) ) );
@@ -598,6 +598,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		
 				if( !initialized_ )
 				{
+					this->resolve_inner_threads_prop( );
+
 					if( frame->get_stream( ) )
 						initialize_video( frame );
 					
@@ -755,6 +757,15 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 			}
 
 			return estimated_gop_size_;
+		}
+
+		void resolve_inner_threads_prop( )
+		{
+			if ( prop_inner_threads_.value< int >( ) < 0 )
+			{
+				prop_inner_threads_ = std::max( int(boost::thread::hardware_concurrency()) / ( -1 * prop_inner_threads_.value< int >( ) ) , 1 );
+			}
+
 		}
 };
 

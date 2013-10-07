@@ -20,6 +20,7 @@ test_sources = [
 	'src/test_utilities.cpp',
 	'src/test_lock_filter.cpp',
 	'src/test_filter_store.cpp',
+	'src/test_filter_decode.cpp',
 	'src/test_aml_stack_input.cpp',
 	]
 
