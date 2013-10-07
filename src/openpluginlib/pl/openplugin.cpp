@@ -66,19 +66,6 @@ namespace
 #endif
 	}
 
-#ifdef WIN32
-	bool dlclose_( HMODULE shared )
-#else
-	bool dlclose_( void* shared )
-#endif
-	{
-#ifdef WIN32
-		return FreeLibrary( shared ) == TRUE;
-#else
-		return dlclose( shared ) == 0;
-#endif
-	}
-	
 	bool resolve_plugin_symbols( plugin_resolver& resolver )
 	{
 		resolver.init			= ( openplugin_init )			dlsym_( resolver.dl_handle, "openplugin_init" );
