@@ -95,7 +95,7 @@ namespace
 		BOOST_REQUIRE( result_image );
 		BOOST_CHECK_EQUAL( result_image->width(), width );
 		BOOST_CHECK_EQUAL( result_image->height(), height );
-		BOOST_CHECK_EQUAL( to_string( result_image->pf() ), _CT("yuv420p") );
+		BOOST_CHECK_EQUAL( result_image->pf(), _CT("yuv420p") );
 	}
 }
 
