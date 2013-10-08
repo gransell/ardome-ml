@@ -41,17 +41,7 @@ void utility_av_free( void *buf )
 
 int utility_plane_count( int pixfmt )
 {
-    //return av_pix_fmt_count_planes( AVpixfmt_ );
-    const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) ); 
-    int i, planes[4] = { 0 }, ret = 0;
-
-    for (i = 0; i < desc->nb_components; i++) {
-        planes[desc->comp[i].plane] = 1;
-    }
-    for (i = 0; i < FF_ARRAY_ELEMS(planes); i++) {
-        ret += planes[i];
-    }
-    return ret;
+    return av_pix_fmt_count_planes( static_cast<AVPixelFormat>(pixfmt) );
 }
 
 int utility_bitdepth( int pixfmt, int index )

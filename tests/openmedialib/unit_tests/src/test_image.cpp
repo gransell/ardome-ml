@@ -6,95 +6,60 @@ namespace ml = olib::openmedialib::ml;
 
 BOOST_AUTO_TEST_SUITE( image_class )
 
-void test_image_r8g8b8( ml::image_type_ptr img )
+struct image_properties
 {
-	BOOST_REQUIRE( img );
-	BOOST_CHECK( img->width( ) == 1920 );
-	BOOST_CHECK( img->height( ) == 1080 );
-	BOOST_CHECK( img->bitdepth( ) == 8 );
-	BOOST_CHECK( img->plane_count( ) == 1 );
-	BOOST_CHECK( img->block_size( ) == 3 );
-	BOOST_CHECK( img->linesize( 0 ) == 5760 );	
-	BOOST_CHECK( img->pitch( 0 ) == 5760 );	
-	BOOST_CHECK( img->offset( 0 ) == 0 );	
-}
+	int width;
+	int height;
+	int bitdepth;
+	int plane_count;
+	int block_size;
+	int linesize[4];
+	int pitch[4];
+	int offset[4];
+};
 
-void test_image_yuv420p( ml::image_type_ptr img )
+void test_image_properties( ml::image_type_ptr img, image_properties *p )
 {
-	BOOST_REQUIRE( img );
-
-	BOOST_CHECK( img->width( ) == 1920 );
-	BOOST_CHECK( img->height( ) == 1080 );
-	BOOST_CHECK( img->bitdepth( ) == 8 );
-	BOOST_CHECK( img->plane_count( ) == 3 );
-	BOOST_CHECK( img->block_size( ) == 3 );
-	BOOST_CHECK( img->linesize( 0 ) == 1920 );	
-	BOOST_CHECK( img->linesize( 1 ) == 960 );	
-	BOOST_CHECK( img->linesize( 2 ) == 960 );	
-	BOOST_CHECK( img->pitch( 0 ) == 1920 );	
-	BOOST_CHECK( img->pitch( 1 ) == 960 );	
-	BOOST_CHECK( img->pitch( 2 ) == 960 );	
-	BOOST_CHECK( img->offset( 0 ) == 0 );	
-	BOOST_CHECK( img->offset( 1 ) == 2073600 );	
-	BOOST_CHECK( img->offset( 2 ) == 2592000 );	
-}
-
-void test_image_yuva420p( ml::image_type_ptr img )
-{
-	BOOST_REQUIRE( img );
-	BOOST_CHECK( img->width( ) == 1920 );
-	BOOST_CHECK( img->height( ) == 1080 );
-	BOOST_CHECK( img->bitdepth( ) == 8 );
-	BOOST_CHECK( img->plane_count( ) == 4 );
-}
-
-void test_image_yuv422p( ml::image_type_ptr img )
-{
-
-	BOOST_REQUIRE( img );
-	BOOST_CHECK( img->width( ) == 1920 );
-	BOOST_CHECK( img->height( ) == 1080 );
-	BOOST_CHECK( img->bitdepth( ) == 8 );
-	BOOST_CHECK( img->plane_count( ) == 3 );
-	BOOST_CHECK( img->block_size( ) == 3 );
-	BOOST_CHECK( img->linesize( 0 ) == 1920 );	
-	BOOST_CHECK( img->linesize( 1 ) == 960 );	
-	BOOST_CHECK( img->linesize( 2 ) == 960 );	
-	BOOST_CHECK( img->pitch( 0 ) == 1920 );	
-	BOOST_CHECK( img->pitch( 1 ) == 960 );	
-	BOOST_CHECK( img->pitch( 2 ) == 960 );	
-	BOOST_CHECK( img->offset( 0 ) == 0 );
-	BOOST_CHECK( img->offset( 1 ) == 2073600 );
-	BOOST_CHECK( img->offset( 2 ) == 3110400 );
-}
-
-void test_image_yuv422p10le( ml::image_type_ptr img )
-{
-
-	BOOST_REQUIRE( img );
-	BOOST_CHECK( img->width( ) == 1920 );
-	BOOST_CHECK( img->height( ) == 1080 );
-	BOOST_CHECK( img->bitdepth( ) == 10 );
-	BOOST_CHECK( img->plane_count( ) == 3 );
-	BOOST_CHECK( img->block_size( ) == 3 );
-	BOOST_CHECK( img->linesize( 0 ) == 1920 );	
-	BOOST_CHECK( img->linesize( 1 ) == 960 );	
-	BOOST_CHECK( img->linesize( 2 ) == 960 );	
-	BOOST_CHECK( img->pitch( 0 ) == 1920 );	
-	BOOST_CHECK( img->pitch( 1 ) == 960 );	
-	BOOST_CHECK( img->pitch( 2 ) == 960 );	
-	BOOST_CHECK( img->offset( 0 ) == 0 );
-	BOOST_CHECK( img->offset( 1 ) == 2073600 );
-	BOOST_CHECK( img->offset( 2 ) == 3110400 );
+    BOOST_REQUIRE( img );
+    BOOST_CHECK( img->width( ) == p->width );
+    BOOST_CHECK( img->height( ) == p->height );
+    BOOST_CHECK( img->bitdepth( ) == p->bitdepth );
+    BOOST_CHECK( img->plane_count( ) == p->plane_count );
+    BOOST_CHECK( img->block_size( ) == p->block_size );	
+    for ( int i = 0; i < p->plane_count; i++ ) {
+        BOOST_CHECK( img->linesize( i ) == p->linesize[i] );
+        BOOST_CHECK( img->pitch( i ) == p->pitch[i] );
+        BOOST_CHECK( img->offset( i ) == p->offset[i] );
+    }
 }
 
 BOOST_AUTO_TEST_CASE( allocate )
 {
-	test_image_r8g8b8( ml::image::allocate( ml::image::ML_PIX_FMT_R8G8B8, 1920, 1080 ) );
-	test_image_yuv420p( ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1920, 1080 ) );
-	test_image_yuva420p( ml::image::allocate( ml::image::ML_PIX_FMT_YUVA420P, 1920, 1080) );
-	test_image_yuv422p( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P, 1920, 1080 ) );
-	test_image_yuv422p10le( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P10LE, 1920, 1080 ) );
+	/*
+	image properties: WIDTH, HEIGHT, BITDEPTH, PLANE_COUNT, BLOCK_SIZE, [ LINESIZE ] , [ PITCH ], [ OFFSET ]
+	*/
+	image_properties r8g8b8_137_791 = { 137, 791, 8, 1, 3, { 411 }, { 411 }, { 0 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_R8G8B8, 137, 791 ), &r8g8b8_137_791 );
+
+	// RGB
+	image_properties r8g8b8_1920_1080 = { 1920, 1080, 8, 1, 3, { 5760 }, { 5760 }, { 0 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_R8G8B8, 1920, 1080 ), &r8g8b8_1920_1080 );
+	
+	// YUV420P
+	image_properties yuv420p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 2592000 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1920, 1080 ), &yuv420p_1920_1080 );
+
+	// YUVA420P
+	image_properties yuva420p_1920_1080 = { 1920, 1080, 8, 4, 4, { 1920, 960, 960, 1920 }, { 1920, 960, 960, 1920 }, { 0, 2073600, 2592000, 3110400 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUVA420P, 1920, 1080 ), &yuva420p_1920_1080 );
+	
+	// YUV422P
+	image_properties yuv422p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 3110400 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P, 1920, 1080 ), &yuv422p_1920_1080 );
+
+	// YUV422P10LE
+	image_properties yuv422p10le_1920_1080 = { 1920, 1080, 10, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 3110400 } };
+	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P10LE, 1920, 1080 ), &yuv422p10le_1920_1080 );
 }
 
 void convert_yuv420p_to_yuv422p( )
@@ -104,8 +69,6 @@ void convert_yuv420p_to_yuv422p( )
 	ml::image_type_ptr dst = ml::image::convert( src, ml::image::ML_PIX_FMT_YUV422P );
 
 	BOOST_CHECK( dst->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV422P );
-
-    test_image_yuv422p( dst );
 }
 
 void convert_yuv422p_to_yuv420p( )
@@ -115,8 +78,6 @@ void convert_yuv422p_to_yuv420p( )
 	ml::image_type_ptr dst = ml::image::convert( src, ml::image::ML_PIX_FMT_YUV420P );
 
 	BOOST_CHECK( dst->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV420P );
-
-    test_image_yuv420p( dst );
 }
 
 BOOST_AUTO_TEST_CASE( convert )
@@ -130,11 +91,7 @@ BOOST_AUTO_TEST_CASE( convert )
 void rescale_yuv420p()
 {
     ml::image_type_ptr src = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1280, 720 );
-
     ml::image_type_ptr dst = ml::image::rescale( src, 1920, 1080, 1, ml::image::BICUBIC_SAMPLING );
-
-
-    test_image_yuv420p( dst );
 }
 
 BOOST_AUTO_TEST_CASE( rescale )

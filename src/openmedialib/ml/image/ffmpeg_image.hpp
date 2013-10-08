@@ -496,9 +496,9 @@ protected:
     void alloc_rgb_planes( )
     {
         if ( plane_count( ) == 1 ) {
-            plane plane = { 0, ( ( width_ * block_size( ) + 3 ) & -4 ) * storage_bytes( ), width_, height_, width_ * block_size( ) * storage_bytes( ) };
+            int linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
+            plane plane = { 0, linesize / storage_bytes( ), width_, height_, linesize / storage_bytes( ) };
             planes_.push_back( plane );
-
             return;
         }
 
