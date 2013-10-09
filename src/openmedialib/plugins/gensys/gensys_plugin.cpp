@@ -1284,8 +1284,12 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				half_src_alpha = ml::image::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
 
 			// Determine the x and y factors for the chroma plane sizes
-			int plane_x_factor = background->get_image( )->width( ) / background->get_image( )->width( 1 );
-			int plane_y_factor = background->get_image( )->height( ) / background->get_image( )->height( 1 );
+			int plane_x_factor = 1;
+			int plane_y_factor = 1;
+			if ( background->get_image( )->is_yuv_planar( ) ) {
+				plane_x_factor = background->get_image( )->width( ) / background->get_image( )->width( 1 );
+				plane_y_factor = background->get_image( )->height( ) / background->get_image( )->height( 1 );
+			}
 
 			// Composite the image if we have any image left...
 			for ( size_t p = 0; p < size_t( dst->plane_count( ) ); p ++ )
