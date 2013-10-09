@@ -86,16 +86,20 @@ boost::int32_t check_inner_threads_resolving( boost::int32_t a_threads )
 
 BOOST_AUTO_TEST_CASE( test_inner_threads_property_resolving )
 {
-	// check that sending in a negative number resolves into something non negative ( should be related to #cores )
-	BOOST_REQUIRE( 0 <= check_inner_threads_resolving( -1 ) );
-	BOOST_REQUIRE( 0 <= check_inner_threads_resolving( boost::integer_traits< boost::int32_t >::const_min ) );
+	int num_threads = boost::thread::hardware_concurrency();
+
+	// check that sending in -1 resolves into number of threads
+	BOOST_CHECK_EQUAL( num_threads, check_inner_threads_resolving( -1 ) );
+
+	// check that sending in -BIG_NUMBER resolves into 1 (and not e.g. 0)
+	BOOST_CHECK_EQUAL( 1, check_inner_threads_resolving( boost::integer_traits< boost::int32_t >::const_min ) );
 
 	// check that 0 is preserved
-	BOOST_REQUIRE( 0 == check_inner_threads_resolving( 0 ) );
+	BOOST_CHECK_EQUAL( 0, check_inner_threads_resolving( 0 ) );
 
 	// check that positive thread counts are preserved
-	BOOST_REQUIRE( 1 == check_inner_threads_resolving( 1 ) );
-	BOOST_REQUIRE( boost::integer_traits< boost::int32_t >::const_max <= check_inner_threads_resolving( boost::integer_traits< boost::int32_t >::const_max ) );
+	BOOST_CHECK_EQUAL( 1, check_inner_threads_resolving( 1 ) );
+	BOOST_CHECK_EQUAL( boost::integer_traits< boost::int32_t >::const_max, check_inner_threads_resolving( boost::integer_traits< boost::int32_t >::const_max ) );
 }
 
 
@@ -156,7 +160,7 @@ BOOST_AUTO_TEST_CASE( test_inner_threads_performance_improvement )
 
 	// expect at least 50% improvement when running threaded
 	// N.B. This is very dependent on the machine running the test!
-	BOOST_REQUIRE( 1.5 < ( ( 1.0f * time_1 ) / time_auto ) );
+	BOOST_CHECK( 1.5 < ( ( 1.0f * time_1 ) / time_auto ) );
 
 }
 
