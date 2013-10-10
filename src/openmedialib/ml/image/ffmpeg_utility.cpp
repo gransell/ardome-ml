@@ -86,6 +86,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUV444P;
 	else if (pixfmt == ML_PIX_FMT_UYYVYY411 )
 		return (int)AV_PIX_FMT_UYYVYY411;
+	else if (pixfmt == ML_PIX_FMT_YUV444P16LE)
+		return (int)AV_PIX_FMT_YUV444P16LE;
 	else if (pixfmt == ML_PIX_FMT_L8 )
 		return (int)AV_PIX_FMT_GRAY8;
 	else if (pixfmt == ML_PIX_FMT_L8A8 )

@@ -30,6 +30,8 @@ ML_DECLSPEC int image_depth ( MLPixelFormat pf )
 		return 10;
     else if ( pf == ML_PIX_FMT_YUVA444P10 )
 		return 10;
+	else if ( pf == ML_PIX_FMT_YUV444P16LE )
+		return 10;
     else if ( pf == ML_PIX_FMT_YUV422P10 )
 		return 10;
     else if ( pf == ML_PIX_FMT_YUV422P16 )
