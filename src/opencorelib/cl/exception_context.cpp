@@ -69,7 +69,7 @@ namespace olib
             ec.add_value_to_message( str_util::to_t_string(obj));
         }
 
-		exception_context::exception_context() : m_hr(0)
+		exception_context::exception_context() : m_hr(0), m_line_nr(0)
 		{
 
 		}
