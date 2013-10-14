@@ -76,7 +76,7 @@ echo "Adding documentation: AMF.chm "
 mv doc/html TMPZIP/aml/doc/html
 
 echo "Adding licensing information"
-mv build/release/$TARGET/license TMPZIP/aml/license/
+cp -r build/release/$TARGET/license/* TMPZIP/aml/license/
 
 echo "Purging .svn folders"
 find TMPZIP -name \.svn -type d -prune -print0 | xargs -0 rm -rf

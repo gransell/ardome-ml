@@ -7,8 +7,7 @@ mv build/debug/osx/bin build/debug/osx/include build/debug/osx/lib build/debug/o
 mkdir -p aml/release
 mv build/release/osx/bin build/release/osx/include build/release/osx/lib build/release/osx/Resources build/release/osx/share aml/release
 
-mkdir -p aml/license
-mv build/release/osx/license aml/license
+mv build/release/osx/license aml
 
 echo Compressing result...
 tar -cjf $1.tbz2 aml/ > /dev/null
