@@ -9,6 +9,7 @@
 
 #include <openmedialib/ml/config.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/integer_traits.hpp>
 #include <boost/cstdint.hpp>
 #include <deque>
 #include <string>
@@ -55,9 +56,9 @@ class ML_DECLSPEC base;
 template< typename T, identity B, int min_val, int max_val > class ML_DECLSPEC template_;
 
 // Forward declarations of the specific types
-typedef ML_DECLSPEC template_ < boost::int16_t, pcm16_id, -32767, 32767 > pcm16;
-typedef ML_DECLSPEC template_ < boost::int32_t, pcm24_id, -2147483647, 2147483647 > pcm24;
-typedef ML_DECLSPEC template_ < boost::int32_t, pcm32_id, -2147483647, 2147483647 > pcm32;
+typedef ML_DECLSPEC template_ < boost::int16_t, pcm16_id, boost::integer_traits<short int>::const_min, boost::integer_traits<short int>::const_max > pcm16;
+typedef ML_DECLSPEC template_ < boost::int32_t, pcm24_id, boost::integer_traits<int>::const_min, boost::integer_traits<int>::const_max > pcm24;
+typedef ML_DECLSPEC template_ < boost::int32_t, pcm32_id, boost::integer_traits<int>::const_min, boost::integer_traits<int>::const_max > pcm32;
 typedef ML_DECLSPEC template_ < float, float_id, -1, 1 > floats;
 
 // Declarations of the shared_ptr variants of the specific types

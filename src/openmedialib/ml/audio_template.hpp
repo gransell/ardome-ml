@@ -17,6 +17,9 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
+template <typename D, typename S>
+void convert(D &dst, const S &src);
+
 // The template which provides all the types
 template< typename T, identity B, int min_val, int max_val >
 class ML_DECLSPEC template_ : public base

@@ -26,6 +26,7 @@ test_sources = [
 	'src/test_filter_decode.cpp',
 	'src/test_deinterlace_filter.cpp',
 	'src/test_aml_stack_input.cpp',
+	'src/test_audio_convert_filter.cpp',
 	]
 
 if options[ 'have_x264' ] and options[ 'have_ffmpeg_x264_adapter' ]:

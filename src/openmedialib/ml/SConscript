@@ -16,19 +16,20 @@ src = [
 		'analyse_dv.cpp',
 		'analyse_mpeg2.cpp',
 		'audio_block.cpp',
-        'audio_sample_calcs.cpp',
-        'audio_utilities.cpp',
-        'awi.cpp',
-        'filter.cpp',
-        'fix_stream.cpp',
-        'frame.cpp',
-        'indexer.cpp',
-        'io.cpp',
-        'keys.cpp',
-        'ml.cpp',
-        'openmedialib_plugin.cpp',
-        'scope_handler.cpp',
-        'utilities.cpp' ]
+		'audio_convert.cpp',
+		'audio_sample_calcs.cpp',
+		'audio_utilities.cpp',
+		'awi.cpp',
+		'filter.cpp',
+		'fix_stream.cpp',
+		'frame.cpp',
+		'indexer.cpp',
+		'io.cpp',
+		'keys.cpp',
+		'ml.cpp',
+		'openmedialib_plugin.cpp',
+		'scope_handler.cpp',
+		'utilities.cpp' ]
 
 if local_env[ 'PLATFORM' ] == 'win32':
 	src.append( 'msw/medialib.rc' )
