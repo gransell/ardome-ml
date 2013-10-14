@@ -84,3 +84,4 @@ void convert_shift(D &dst, const S &src);
 } } } }
 
 #endif
+
