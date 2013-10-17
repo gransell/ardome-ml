@@ -274,10 +274,9 @@ il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 
 std::string AVError_to_string( int errnum )
 {
-	boost::scoped_array< char > char_array;
-	char_array.reset( new char[AV_ERROR_MAX_STRING_SIZE] );
-	av_strerror(errnum, char_array.get( ), AV_ERROR_MAX_STRING_SIZE);
-	return std::string( char_array.get( ), AV_ERROR_MAX_STRING_SIZE );
+	boost::scoped_array< char > char_array( new char[AV_ERROR_MAX_STRING_SIZE] );
+	av_strerror( errnum, char_array.get( ), AV_ERROR_MAX_STRING_SIZE );
+	return std::string( char_array.get( ) );
 }
 
 // Lock manager

@@ -356,12 +356,13 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				}
 
 				// Close the container
-				close_container( );
+				if( oc_->pb )
+					close_container( );
 			}
 			else if ( oc_ && prop_flush_.value< int >( ) == 0 )
 			{
 				// Close the output file
-				if ( !( fmt_->flags & AVFMT_NOFILE ) )
+				if ( !( fmt_->flags & AVFMT_NOFILE ) && oc_->pb )
 					io::close_file( oc_->pb );
 
 				// Clean up the log
@@ -509,7 +510,15 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 			// We'll allow encoding to stdout
 			if ( !( fmt_->flags & AVFMT_NOFILE ) ) 
-				ret = io::open_file( &oc_->pb, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE ) >= 0;
+			{
+				const int error_code = io::open_file( &oc_->pb, olib::opencorelib::str_util::to_string( resource( ) ).c_str( ), AVIO_FLAG_WRITE );
+				ret = ( error_code == 0 );
+				if( !ret )
+				{
+					ARLOG_ERR( "Failed to open file for writing: %1%.\nError code: %2% (%3%)" )
+						( resource( ) )( error_code )( AVError_to_string( error_code ) );
+				}
+			}
 			else
 				ret = true;
 

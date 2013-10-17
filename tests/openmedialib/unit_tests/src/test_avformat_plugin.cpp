@@ -1,4 +1,7 @@
 #include <boost/test/unit_test.hpp>
+#include <opencorelib/cl/core.hpp>
+#include <opencorelib/cl/guard_define.hpp>
+#include <opencorelib/cl/special_folders.hpp>
 #include <openmedialib/ml/utilities.hpp>
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/frame.hpp>
@@ -9,9 +12,12 @@
 #include <openmedialib/plugins/avformat/avformat_stream.hpp>
 #include "utils.hpp"
 #include <cmath>
+#include <boost/filesystem.hpp>
 
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
+namespace cl = olib::opencorelib;
+namespace fs = boost::filesystem;
 
 BOOST_AUTO_TEST_SUITE( avformat_plugin )
 
@@ -598,71 +604,92 @@ void store_defaults( std::wstring filename, input_type_ptr input )
 typedef void ( *builder_type )( std::wstring, input_type_ptr );
 typedef void ( *checker_type )( std::wstring, int, int, int );
 
-void store_test( std::wstring filename, int fps_num, int fps_den, int count, builder_type write_output, checker_type checker = check_output )
+void cleanup( const fs::path &p )
 {
+	boost::system::error_code ec;
+	const bool path_existed = fs::remove( p, ec );
+	if( path_existed )
+	{
+		//Fail the test on error, but don't throw since we're getting called from a destructor
+		BOOST_CHECK_MESSAGE( !ec, "Failed to remove temp file " << to_string( p.native() ) << ": " << ec );
+	}
+}
+
+void store_test( const olib::t_string &filename, int fps_num, int fps_den, int count, builder_type write_output, checker_type checker = check_output )
+{
+	BOOST_REQUIRE_EQUAL( filename.find( _CT('/') ), olib::t_string::npos );
+	BOOST_REQUIRE_EQUAL( filename.find( _CT(':') ), olib::t_string::npos );
+
+	const fs::path unique_path = 
+		cl::special_folder::get( cl::special_folder::temp ) /
+		fs::unique_path( _CT("%%%%-%%%%-%%%%-%%%%-") + filename );
+	BOOST_REQUIRE( !fs::exists( unique_path ) );
+	ARGUARD( boost::bind( &cleanup, unique_path ) );
+	const std::wstring decorated_path = L"avformat:" + to_wstring( unique_path.native() );
+	
 	input_type_ptr input = create_test_graph( fps_num, fps_den, count );
-	write_output( filename, input );
-	checker( filename, fps_num, fps_den, count );
+	write_output( decorated_path, input );
+	checker( decorated_path, fps_num, fps_den, count );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg1_pal )
 {
-	store_test( L"avformat:/tmp/mpeg1.mpg", 25, 1, 250, store_mpeg1 );
+	store_test( _CT("mpeg1.mpg"), 25, 1, 250, store_mpeg1 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg1_ntsc )
 {
-	store_test( L"avformat:/tmp/mpeg1.mpg", 30000, 1001, 300, store_mpeg1 );
+	store_test( _CT("mpeg1.mpg"), 30000, 1001, 300, store_mpeg1 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg1_movie )
 {
-	store_test( L"avformat:/tmp/mpeg1.mpg", 24000, 1001, 240, store_mpeg1 );
+	store_test( _CT("mpeg1.mpg"), 24000, 1001, 240, store_mpeg1 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg2_pal )
 {
-	store_test( L"avformat:/tmp/mpeg2.mpg", 25, 1, 250, store_mpeg2 );
+	store_test( _CT("mpeg2.mpg"), 25, 1, 250, store_mpeg2 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg2_ntsc )
 {
-	store_test( L"avformat:/tmp/mpeg2.mpg", 30000, 1001, 300, store_mpeg2 );
+	store_test( _CT("mpeg2.mpg"), 30000, 1001, 300, store_mpeg2 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mpeg2_movie )
 {
-	store_test( L"avformat:/tmp/mpeg2.mpg", 24000, 1001, 240, store_mpeg2 );
+	store_test( _CT("mpeg2.mpg"), 24000, 1001, 240, store_mpeg2 );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_qtrle_pal )
 {
-	store_test( L"avformat:/tmp/qtrle.mov", 25, 1, 250, store_qtrle );
+	store_test( _CT("qtrle.mov"), 25, 1, 250, store_qtrle );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_qtrle_ntsc )
 {
-	store_test( L"avformat:/tmp/qtrle.mov", 30000, 1001, 300, store_qtrle );
+	store_test( _CT("qtrle.mov"), 30000, 1001, 300, store_qtrle );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_qtrle_movie )
 {
-	store_test( L"avformat:/tmp/qtrle.mov", 24000, 1001, 240, store_qtrle );
+	store_test( _CT("qtrle.mov"), 24000, 1001, 240, store_qtrle );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mp2_pal )
 {
-	store_test( L"avformat:/tmp/mp2.mp2", 25, 1, 250, store_defaults, check_audio );
+	store_test( _CT("mp2.mp2"), 25, 1, 250, store_defaults, check_audio );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mp2_ntsc )
 {
-	store_test( L"avformat:/tmp/mp2.mp2", 30000, 1001, 300, store_defaults, check_audio );
+	store_test( _CT("mp2.mp2"), 30000, 1001, 300, store_defaults, check_audio );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mp2_movie )
 {
-	store_test( L"avformat:/tmp/mp2.mp2", 24000, 1001, 240, store_defaults, check_audio );
+	store_test( _CT("mp2.mp2"), 24000, 1001, 240, store_defaults, check_audio );
 }
 
 #ifndef WIN32
@@ -672,17 +699,17 @@ BOOST_AUTO_TEST_CASE( aml_store_mp2_movie )
 
 BOOST_AUTO_TEST_CASE( aml_store_mp3_pal )
 {
-	store_test( L"avformat:/tmp/mp3.mp3", 25, 1, 250, store_defaults, check_audio );
+	store_test( _CT("mp3.mp3"), 25, 1, 250, store_defaults, check_audio );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mp3_ntsc )
 {
-	store_test( L"avformat:/tmp/mp3.mp3", 30000, 1001, 300, store_defaults, check_audio );
+	store_test( _CT("mp3.mp3"), 30000, 1001, 300, store_defaults, check_audio );
 }
 
 BOOST_AUTO_TEST_CASE( aml_store_mp3_movie )
 {
-	store_test( L"avformat:/tmp/mp3.mp3", 24000, 1001, 240, store_defaults, check_audio );
+	store_test( _CT("mp3.mp3"), 24000, 1001, 240, store_defaults, check_audio );
 }
 
 #endif
