@@ -4,6 +4,7 @@
 #include <openmedialib/ml/frame.hpp>
 #include <opencorelib/cl/str_util.hpp>
 #include <openmedialib/ml/filter.hpp>
+#include <openmedialib/ml/store.hpp>
 #include <openmedialib/ml/audio_block.hpp>
 #include <openmedialib/plugins/avformat/avformat_stream.hpp>
 #include "utils.hpp"
@@ -461,6 +462,230 @@ BOOST_AUTO_TEST_CASE( avformat_filter_resampler )
 
 }
 
+
+input_type_ptr create_test_graph( int fps_num, int fps_den, int count )
+{
+	input_type_ptr test = create_input( L"test:" );
+	BOOST_REQUIRE( test );
+	BOOST_REQUIRE_EQUAL( test->get_frames( ), 250 );
+
+	input_type_ptr tone = create_input( L"tone:" );
+	BOOST_REQUIRE( tone );
+	BOOST_REQUIRE_EQUAL( tone->get_frames( ), 250 );
+
+	filter_type_ptr muxer = create_filter( L"muxer" );
+	BOOST_REQUIRE( muxer );
+
+	muxer->connect( test, 0 );
+	muxer->connect( tone, 1 );
+
+	filter_type_ptr fps = create_filter( L"frame_rate" );
+	fps->property( "fps_num" ) = fps_num;
+	fps->property( "fps_den" ) = fps_den;
+
+	fps->connect( muxer );
+	fps->sync( );
+
+	BOOST_REQUIRE_EQUAL( fps->get_frames( ), count );
+
+	frame_type_ptr frame = fps->fetch( );
+
+	BOOST_REQUIRE( frame );
+	BOOST_REQUIRE( frame->get_image( ) );
+	BOOST_REQUIRE( frame->get_audio( ) );
+
+	return fps;
+}
+
+void write_to_store( store_type_ptr store, input_type_ptr input )
+{
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		BOOST_REQUIRE_EQUAL( frame->get_position( ), i );
+		BOOST_REQUIRE( store->push( frame ) );
+	}
+
+	store->complete( );
+}
+
+void check_output( std::wstring filename, int fps_num, int fps_den, int count )
+{
+	input_type_ptr input = create_input( filename );
+
+	BOOST_REQUIRE( input );
+	BOOST_REQUIRE_EQUAL( input->get_frames( ), count );
+
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		BOOST_REQUIRE_EQUAL( frame->get_position( ), i );
+		BOOST_REQUIRE_EQUAL( frame->get_fps_num( ), fps_num );
+		BOOST_REQUIRE_EQUAL( frame->get_fps_den( ), fps_den );
+		BOOST_REQUIRE( frame->get_image( ) );
+		BOOST_REQUIRE_EQUAL( frame->get_image( )->position( ), i );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_REQUIRE_EQUAL( frame->get_audio( )->position( ), i );
+	}
+}
+
+void check_audio( std::wstring filename, int fps_num, int fps_den, int count )
+{
+	input_type_ptr input = create_delayed_input( filename );
+	BOOST_REQUIRE( input );
+
+	input->property( "fps_num" ) = fps_num;
+	input->property( "fps_den" ) = fps_den;
+
+	BOOST_REQUIRE( input->init( ) );
+
+	// NB: Because of padding at the end of encode, there should always be 1 more frame 
+	BOOST_REQUIRE_EQUAL( input->get_frames( ), count + 1 );
+
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		BOOST_REQUIRE_EQUAL( frame->get_position( ), i );
+		BOOST_REQUIRE_EQUAL( frame->get_fps_num( ), fps_num );
+		BOOST_REQUIRE_EQUAL( frame->get_fps_den( ), fps_den );
+		BOOST_REQUIRE( !frame->get_image( ) );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_REQUIRE_EQUAL( frame->get_audio( )->position( ), i );
+	}
+}
+
+void store_mpeg1( std::wstring filename, input_type_ptr input )
+{
+	store_type_ptr store = create_store( filename, input->fetch( ) );
+	BOOST_REQUIRE( store );
+	store->property( "vcodec" ) = std::wstring( L"mpeg1video" );
+	store->property( "b_frames" ) = 2;
+	BOOST_REQUIRE( store->init( ) );
+	write_to_store( store, input );
+}
+
+void store_mpeg2( std::wstring filename, input_type_ptr input )
+{
+	store_type_ptr store = create_store( filename, input->fetch( ) );
+	BOOST_REQUIRE( store );
+	store->property( "vcodec" ) = std::wstring( L"mpeg2video" );
+	store->property( "b_frames" ) = 2;
+	BOOST_REQUIRE( store->init( ) );
+	write_to_store( store, input );
+}
+
+void store_qtrle( std::wstring filename, input_type_ptr input )
+{
+	store_type_ptr store = create_store( filename, input->fetch( ) );
+	BOOST_REQUIRE( store );
+	store->property( "vcodec" ) = std::wstring( L"qtrle" );
+	store->property( "acodec" ) = std::wstring( L"pcm_s16le" );
+	BOOST_REQUIRE( store->init( ) );
+	write_to_store( store, input );
+}
+
+void store_defaults( std::wstring filename, input_type_ptr input )
+{
+	store_type_ptr store = create_store( filename, input->fetch( ) );
+	BOOST_REQUIRE( store );
+	BOOST_REQUIRE( store->init( ) );
+	write_to_store( store, input );
+}
+
+typedef void ( *builder_type )( std::wstring, input_type_ptr );
+typedef void ( *checker_type )( std::wstring, int, int, int );
+
+void store_test( std::wstring filename, int fps_num, int fps_den, int count, builder_type write_output, checker_type checker = check_output )
+{
+	input_type_ptr input = create_test_graph( fps_num, fps_den, count );
+	write_output( filename, input );
+	checker( filename, fps_num, fps_den, count );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg1_pal )
+{
+	store_test( L"avformat:/tmp/mpeg1.mpg", 25, 1, 250, store_mpeg1 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg1_ntsc )
+{
+	store_test( L"avformat:/tmp/mpeg1.mpg", 30000, 1001, 300, store_mpeg1 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg1_movie )
+{
+	store_test( L"avformat:/tmp/mpeg1.mpg", 24000, 1001, 240, store_mpeg1 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg2_pal )
+{
+	store_test( L"avformat:/tmp/mpeg2.mpg", 25, 1, 250, store_mpeg2 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg2_ntsc )
+{
+	store_test( L"avformat:/tmp/mpeg2.mpg", 30000, 1001, 300, store_mpeg2 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mpeg2_movie )
+{
+	store_test( L"avformat:/tmp/mpeg2.mpg", 24000, 1001, 240, store_mpeg2 );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_qtrle_pal )
+{
+	store_test( L"avformat:/tmp/qtrle.mov", 25, 1, 250, store_qtrle );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_qtrle_ntsc )
+{
+	store_test( L"avformat:/tmp/qtrle.mov", 30000, 1001, 300, store_qtrle );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_qtrle_movie )
+{
+	store_test( L"avformat:/tmp/qtrle.mov", 24000, 1001, 240, store_qtrle );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mp2_pal )
+{
+	store_test( L"avformat:/tmp/mp2.mp2", 25, 1, 250, store_defaults, check_audio );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mp2_ntsc )
+{
+	store_test( L"avformat:/tmp/mp2.mp2", 30000, 1001, 300, store_defaults, check_audio );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mp2_movie )
+{
+	store_test( L"avformat:/tmp/mp2.mp2", 24000, 1001, 240, store_defaults, check_audio );
+}
+
+#ifndef WIN32
+
+// The following tests are not executed on Windows because the ffmpeg build currently lacks
+// the required dependencies
+
+BOOST_AUTO_TEST_CASE( aml_store_mp3_pal )
+{
+	store_test( L"avformat:/tmp/mp3.mp3", 25, 1, 250, store_defaults, check_audio );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mp3_ntsc )
+{
+	store_test( L"avformat:/tmp/mp3.mp3", 30000, 1001, 300, store_defaults, check_audio );
+}
+
+BOOST_AUTO_TEST_CASE( aml_store_mp3_movie )
+{
+	store_test( L"avformat:/tmp/mp3.mp3", 24000, 1001, 240, store_defaults, check_audio );
+}
+
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
 
