@@ -2,6 +2,7 @@
 #include <opencorelib/cl/core.hpp>
 #include <opencorelib/cl/guard_define.hpp>
 #include <opencorelib/cl/special_folders.hpp>
+#include <opencorelib/cl/uuid_16b.hpp>
 #include <openmedialib/ml/utilities.hpp>
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/frame.hpp>
@@ -620,9 +621,10 @@ void store_test( const olib::t_string &filename, int fps_num, int fps_den, int c
 	BOOST_REQUIRE_EQUAL( filename.find( _CT('/') ), olib::t_string::npos );
 	BOOST_REQUIRE_EQUAL( filename.find( _CT(':') ), olib::t_string::npos );
 
+	cl::uuid_16b unique_id;
 	const fs::path unique_path = 
 		cl::special_folder::get( cl::special_folder::temp ) /
-		fs::unique_path( _CT("%%%%-%%%%-%%%%-%%%%-") + filename );
+		( unique_id.to_hex_string() + filename );
 	BOOST_REQUIRE( !fs::exists( unique_path ) );
 	ARGUARD( boost::bind( &cleanup, unique_path ) );
 	const std::wstring decorated_path = L"avformat:" + to_wstring( unique_path.native() );
