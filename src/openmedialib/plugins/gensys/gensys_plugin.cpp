@@ -1598,8 +1598,10 @@ static pl::pcos::key key_audio_reversed_( pcos::key::from_string( "audio_reverse
 
 class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 {
+	typedef cl::lru< int, ml::frame_type_ptr > frame_cache;
+	typedef boost::rational< boost::int64_t > rational;
+
 	public:
-		typedef cl::lru< int, ml::frame_type_ptr > frame_cache;
 
 		frame_rate_filter( )
 			: filter_type( )
@@ -1632,12 +1634,18 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 
 		virtual int get_frames( ) const
 		{
+			using cl::utilities::clamp;
 			const int fps_num = prop_fps_num_.value< int >( );
 			const int fps_den = prop_fps_den_.value< int >( );
 			if ( fps_num > 0 && fps_den > 0 && src_frames_ != INT_MAX )
-				return int( cl::utilities::clamp< boost::int64_t >( boost::int64_t( ceil( map_source_to_dest( src_frames_ ) ) ), 0, std::numeric_limits< int >::max( ) ) );
+			{
+				const boost::int64_t dst_frames = round_up( map_source_to_dest( src_frames_ ) );
+				return int( clamp< boost::int64_t >( dst_frames, 0, boost::integer_traits< int >::const_max ) );
+			}
 			else
+			{
 				return src_frames_;
+			}
 		}
 
 		virtual const std::wstring get_uri( ) const { return L"frame_rate"; }
@@ -1733,7 +1741,7 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 				}
 				else if ( src_frequency_ == 0 )
 				{
-					input->seek( int( map_dest_to_source( position_ ) ) );
+					input->seek( round_down( map_dest_to_source( position_ ) ) );
 					result = input->fetch( );
 					ARENFORCE( result );
 					result = result->shallow( );
@@ -1770,18 +1778,32 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 		}
 
 	private:
-		inline double map_source_to_dest( int position ) const
+		rational map_source_to_dest( int position ) const
 		{
-			double t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
-			double t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
-			return position * ( t2 / t1 );
+			const rational src_fps( src_fps_num_, src_fps_den_ );
+			const rational dst_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
+			return position * dst_fps / src_fps;
 		}
 
-		inline double map_dest_to_source( int position ) const
+		rational map_dest_to_source( int position ) const
 		{
-			double t1 = boost::int64_t( src_fps_num_ ) * prop_fps_den_.value< int >( );
-			double t2 = boost::int64_t( src_fps_den_  ) * prop_fps_num_.value< int >( );
-			return position * ( t1 / t2 );
+			const rational src_fps( src_fps_num_, src_fps_den_ );
+			const rational dst_fps( prop_fps_num_.value< int >( ), prop_fps_den_.value< int >( ) );
+			return position * src_fps / dst_fps;
+		}
+
+		static boost::int64_t round_down( rational r )
+		{
+			return boost::rational_cast< boost::int64_t >( r );
+		}
+
+		static boost::int64_t round_up( rational r )
+		{
+			const boost::int64_t i = boost::rational_cast< boost::int64_t >( r );
+			if( r.denominator() == 1 )
+				return i;
+			else
+				return i + 1;
 		}
 
 		ml::frame_type_ptr time_shift( ml::input_type_ptr &input, const int fps_num, const int fps_den )
@@ -1800,7 +1822,9 @@ class ML_PLUGIN_DECLSPEC frame_rate_filter : public filter_type
 			ml::frame_type_ptr result;
 
 			// Determine frame position in input and number of samples that we require
-			const int target = ( current_dir_ > 0 ) ? map_dest_to_source( position_ ) : ceil( map_dest_to_source( position_ + 1 ) ) - 1;
+			const int target = ( current_dir_ > 0 )
+				? round_down( map_dest_to_source( position_ ) )
+				: round_up( map_dest_to_source( position_ + 1 ) ) - 1;
 			const int samples = audio::samples_for_frame( position_, src_frequency_, fps_num, fps_den );
 
 			// After a seek, we need to know how many samples to discard from the first audio packet we extract

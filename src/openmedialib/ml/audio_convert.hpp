@@ -8,44 +8,80 @@
 #define AML_AUDIO_CONVERT_H_
 
 #include <openmedialib/ml/types.hpp>
+#include <openmedialib/ml/audio.hpp>
 #include <string.h>
 
 namespace olib { namespace openmedialib { namespace ml { namespace audio {
 
-template < typename T, typename U >
-void convert( T &dst, const U &src )
-{
-	int count = dst.samples( ) * dst.channels( );
-	typename T::sample_type *dst_p = dst.data( );
-	typename U::sample_type *src_p = src.data( );
+template <typename D, typename S>
+void convert(D &dst, const S &src);
 
-	if ( dst.id( ) == src.id( ) ||
-		 ( pcm24_id == dst.id( ) && pcm32_id == src.id( ) ) ||
-		 ( pcm32_id == dst.id( ) && pcm24_id == src.id( ) ) ) // special case for pcm24 <--> pcm32
-	{
-		memcpy( dst_p, src_p, count * dst.sample_storage_size( ) );
-	}
-	else if ( src.id( ) == float_id )
-	{
-		typename T::sample_type dst_max = dst.max_sample( );
-		while( count -- )
-			*dst_p ++ = ( typename T::sample_type )( *src_p ++ * dst_max );
-	}
-	else if ( dst.id( ) == float_id )
-	{
-		typename U::sample_type src_max = src.max_sample( );
-		while( count -- )
-			*dst_p ++ = ( typename T::sample_type )( float( *src_p ++ ) / src_max );
-	}
-	else
-	{
-		typename T::sample_type dst_max = dst.max_sample( );
-		typename U::sample_type src_max = src.max_sample( );
-		while( count -- )
-			*dst_p ++ = ( typename T::sample_type )( ( float( *src_p ++ ) / src_max ) * dst_max );
-	}
-}
+template <>
+void convert(pcm16 &dst, const pcm16 &src);
+    
+template <>
+void convert(pcm24 &dst, const pcm24 &src);
+    
+template <>
+void convert(pcm32 &dst, const pcm32 &src);
+    
+template <>
+void convert(floats &dst, const floats &src);
+
+
+template <>
+void convert(pcm32 &dst, const pcm24 &src);
+    
+template <>
+void convert(pcm24 &dst, const pcm32 &src);
+
+template <>
+void convert(pcm24 &dst, const pcm16 &src);
+
+template <>
+void convert(pcm32 &dst, const pcm16 &src);
+
+template <>
+void convert(pcm16 &dst, const pcm24 &src);
+
+template <>
+void convert(pcm16 &dst, const pcm32 &src);
+
+
+template<>
+void convert(floats &dst, const pcm16 &src);
+	
+template<>
+void convert(floats &dst, const pcm24 &src);
+	
+template<>
+void convert(floats &dst, const pcm32 &src);
+
+
+template<>
+void convert(pcm16 &dst, const floats &src);
+
+template<>
+void convert(pcm24 &dst, const floats &src);
+
+template<>
+void convert(pcm24 &dst, const floats &src);
+
+
+template <typename D>
+void convert_src_is_float(D &dst, const floats &src);
+
+template <typename S>
+void convert_dst_is_float(floats &dst, const S &src);
+
+
+template <typename D, typename S>
+void convert_memcopy(D &dst, const S &src);
+
+template <typename D, typename S>
+void convert_shift(D &dst, const S &src);
 
 } } } }
 
 #endif
+

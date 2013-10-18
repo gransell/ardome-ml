@@ -8,6 +8,9 @@ echo "Moving content from release"
 mkdir -p aml/release || exit 1
 mv build/release/$BAGTARGET/bin build/release/$BAGTARGET/include build/release/$BAGTARGET/lib build/release/$BAGTARGET/share aml/release || exit 1
 
+echo "Moving license information"
+mv build/release/$BAGTARGET/license aml
+
 echo "Copying AML source"
 cp -r src aml || exit 1
 

@@ -68,7 +68,7 @@ public:
 			remove( iter->second );
 		}
 
-		propertyMap.insert( std::make_pair( p.get_key(), p ) ).second;
+		propertyMap.insert( std::make_pair( p.get_key(), p ) );
         p.attach( propertyObserver );
     }
 

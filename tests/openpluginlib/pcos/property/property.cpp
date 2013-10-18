@@ -20,7 +20,7 @@
 
 namespace opl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace fs = boost::filesystem;
 
 class counting_observer : public pcos::observer

@@ -55,6 +55,8 @@ def install( env, prefix ):
 			'libxml2-2.dll',
 			'libcairo-2.dll',
 			'zlib1.dll',
+			'ffmpeg_x264_adapter.dll',
+			'libx264-129.dll',
 		]
 
 	for dll in dlls :

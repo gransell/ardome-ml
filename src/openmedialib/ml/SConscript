@@ -8,7 +8,7 @@ local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_m
 
 #Workaround until J#AMF-2014 is resolved
 if local_env['PLATFORM'] != 'win32':
-	local_env.packages( 'libavutil' )
+	local_env.packages( 'libavutil', 'libavcodec' )
 
 src = [ 
 		'analyse.cpp',
@@ -16,21 +16,22 @@ src = [
 		'analyse_dv.cpp',
 		'analyse_mpeg2.cpp',
 		'audio_block.cpp',
-        'audio_sample_calcs.cpp',
-        'audio_utilities.cpp',
-        'awi.cpp',
-        'filter.cpp',
-        'fix_stream.cpp',
-        'frame.cpp',
+		'audio_convert.cpp',
+		'audio_sample_calcs.cpp',
+		'audio_utilities.cpp',
+		'awi.cpp',
+		'filter.cpp',
+		'fix_stream.cpp',
+		'frame.cpp',
 		'image/utility.cpp',
 		'image/ffmpeg_utility.cpp',
-        'indexer.cpp',
-        'io.cpp',
-        'keys.cpp',
-        'ml.cpp',
-        'openmedialib_plugin.cpp',
-        'scope_handler.cpp',
-        'utilities.cpp' ]
+		'indexer.cpp',
+		'io.cpp',
+		'keys.cpp',
+		'ml.cpp',
+		'openmedialib_plugin.cpp',
+		'scope_handler.cpp',
+		'utilities.cpp' ]
 
 if local_env[ 'PLATFORM' ] == 'win32':
 	src.append( 'msw/medialib.rc' )

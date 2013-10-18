@@ -28,6 +28,7 @@ mkdir TMPZIP/aml/lib/winconfig || exit 1
 mkdir TMPZIP/aml/asts || exit 1
 mkdir TMPZIP/aml/py || exit 1
 mkdir TMPZIP/aml/doc/ || exit 1
+mkdir TMPZIP/aml/license || exit 1
 
 echo "Adding release files..."
 cp -r build/release/$TARGET/bin/* TMPZIP/aml/bin/release/
@@ -72,6 +73,9 @@ cp -r openbuild TMPZIP/
 echo "Adding documentation: AMF.chm "
 #mv doc/html/AML.chm TMPZIP/aml/doc/
 mv doc/html TMPZIP/aml/doc/html
+
+echo "Adding licensing information"
+cp -r build/release/$TARGET/license/* TMPZIP/aml/license/
 
 echo "Purging .svn folders"
 find TMPZIP -name \.svn -type d -prune -print0 | xargs -0 rm -rf
