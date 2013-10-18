@@ -54,6 +54,34 @@ extern void ML_PLUGIN_DECLSPEC register_protocol( void );
 	
 extern void register_aml_aes3( );
 
+/*http://wiki.multimedia.cx/index.php?title=Apple_ProRes*/
+void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec )
+{
+	const uint8_t *buf = pkt->data;
+	buf += 8; /* Move to frame header */
+
+	int chroma_factor = (buf[12] >> 6) & 3;
+	int alpha_info = buf[17] & 0xf;
+
+	if ( alpha_info > 2 ) {
+		ARENFORCE_MSG( false, "Invalid alpha mode" )( alpha_info );
+	}
+	
+	switch (chroma_factor) {
+		case 2: //422
+			if ( alpha_info ) {
+				ARENFORCE_MSG( false, "Alpha not supported with chroma factor 422" )( alpha_info );
+			} 
+			codec->pix_fmt = AV_PIX_FMT_YUV422P10LE; 
+			break;
+		case 3: //444
+			codec->pix_fmt = alpha_info ? AV_PIX_FMT_YUVA444P16LE : AV_PIX_FMT_YUV444P16LE;
+			break;
+		default:
+			ARENFORCE_MSG( false, "Unsupported picture format" )( chroma_factor );
+	}
+}
+
 const olib::t_string avformat_to_oil( int fmt )
 {
 	if ( fmt == PIX_FMT_YUV420P )
@@ -72,6 +100,10 @@ const olib::t_string avformat_to_oil( int fmt )
 		return _CT("yuv422p");
 	else if ( fmt == PIX_FMT_YUV444P )
 		return _CT("yuv444p");
+	else if ( fmt == AV_PIX_FMT_YUVA444P16LE )
+		return _CT("yuva444p16le");
+	else if ( fmt == AV_PIX_FMT_YUV444P16LE )
+		return _CT("yuv444p16le");
 	else if ( fmt == PIX_FMT_RGB24 )
 		return _CT("r8g8b8");
 	else if ( fmt == PIX_FMT_BGR24 )

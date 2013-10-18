@@ -648,6 +648,12 @@ class avformat_demux
 					{
 						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
 						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
+
+						/* Analyze prores stream */
+						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) {
+							prores_stream_analyze(&pkt_, codec);
+						}
+
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
 																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
 																		   avformat_to_oil( codec->pix_fmt ), ml::image::top_field_first, estimated_gop_size ) );
