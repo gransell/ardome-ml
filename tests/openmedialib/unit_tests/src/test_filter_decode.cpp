@@ -19,7 +19,8 @@ void create_encoded_frames( boost::uint32_t a_num_frames, frames_type& a_out_fra
 	color_input->property( "width" ) = 1920;
 	color_input->property( "height" ) = 1080;
 	color_input->property( "interlace" ) = 0;
-	color_input->property( "colourspace" ) = std::wstring( L"yuv422p" );
+	olib::t_string cs = _CT( "yuv422p" );
+	color_input->property( "colourspace" ) =  cs;
 	color_input->property( "r" ) = 128;
 
 	BOOST_REQUIRE( color_input->init() );
