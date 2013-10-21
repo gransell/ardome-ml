@@ -392,9 +392,9 @@ ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, ml::im
 	return ml::frame_rescale( frame, w, h, filter );
 }
 
-ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, int d, ml::image::rescale_filter filter )
+ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, ml::image::rescale_filter filter )
 {
-	return ml::image::rescale( img, w, h, d, filter );
+	return ml::image::rescale( img, w, h, filter );
 }
 
 #define const_compositor const_cast< filter_compositor * >

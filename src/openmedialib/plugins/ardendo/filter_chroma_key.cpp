@@ -113,7 +113,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				}
 
 				// Update the alpha on the frame accordingly
-				alpha = ml::image::rescale( alpha, w, h, 1, ml::image::BICUBIC_SAMPLING );
+				alpha = ml::image::rescale( alpha, w, h, ml::image::BICUBIC_SAMPLING );
 				result->set_alpha( alpha );
 			}
 		}

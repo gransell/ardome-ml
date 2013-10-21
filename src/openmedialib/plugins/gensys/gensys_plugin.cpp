@@ -1279,9 +1279,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			ml::image_type_ptr half_dst_alpha;
 
 			if ( background->get_alpha( ) )
-				half_dst_alpha = ml::image::rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), 1, filter );
+				half_dst_alpha = ml::image::rescale( background->get_alpha( ), background->get_image( )->width( 1 ), background->get_image( )->height( 1 ), filter );
 			if ( foreground->get_alpha( ) )
-				half_src_alpha = ml::image::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), 1, filter );
+				half_src_alpha = ml::image::rescale( foreground->get_alpha( ), foreground->get_image( )->width( 1 ), foreground->get_image( )->height( 1 ), filter );
 
 			// Determine the x and y factors for the chroma plane sizes
 			int plane_x_factor = 1;

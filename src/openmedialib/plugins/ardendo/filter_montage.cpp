@@ -48,7 +48,7 @@ static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
 
 // These are defined in filter_compositor.cpp - they are defined using mc booster when available
-extern ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, int d, ml::image::rescale_filter filter );
+extern ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, ml::image::rescale_filter filter );
 extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, ml::image::rescale_filter filter );
 
 static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, int cw, int lines )

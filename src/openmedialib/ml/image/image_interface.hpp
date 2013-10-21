@@ -15,8 +15,6 @@ struct default_plane
 typedef enum
 {
 	cropped = 0x1,
-	flipped = 0x2,
-	flopped = 0x4,
 	writable = 0x8
 }
 clone_flags;
@@ -49,11 +47,8 @@ public:
 	virtual int get_crop_y( ) const = 0;
 	virtual int get_crop_w( ) const = 0;
 	virtual int get_crop_h( ) const = 0;
-	virtual int depth( ) = 0;
 	virtual bool is_writable( ) const = 0;
 	virtual void set_writable( bool writable ) = 0;
-	virtual double pts( ) const = 0;
-	virtual void set_pts( double pts ) = 0;
 	virtual int position( ) const = 0;
 	virtual void set_position( int position ) = 0;
 	virtual int get_sar_num( ) const = 0;
@@ -62,7 +57,6 @@ public:
 	virtual void set_sar_den( int sar_den ) = 0;
 	virtual field_order_flags field_order( ) const = 0;
 	virtual void set_field_order( field_order_flags flags ) = 0;
-	virtual int count( ) const = 0;
 	virtual bool empty( ) const = 0;
 	virtual bool matching( int flags ) const = 0;
 	virtual t_string pf( ) const = 0;
@@ -72,8 +66,6 @@ public:
 	// Crop an image
 	virtual bool crop( int x, int y, int w, int h, bool crop = true ) = 0;
 	virtual void crop_clear( ) = 0;
-	virtual void set_flipped( bool flipped ) = 0;
-	virtual void set_flopped( bool flopped ) = 0;
 	virtual void *ptr( size_t index = 0, bool cropped = true ) = 0;
 };
 

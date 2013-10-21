@@ -111,13 +111,13 @@ int ML_to_AV( MLPixelFormat pixfmt )
 bool is_pixfmt_rgb( int pixfmt )
 {
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) );
-    return desc->flags & PIX_FMT_RGB ? true : false;
+    return desc->flags & AV_PIX_FMT_FLAG_RGB ? true : false;
 }
 
 bool is_pixfmt_planar( int pixfmt )
 {
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) );
-    return desc->flags & PIX_FMT_PLANAR ? true : false;
+    return desc->flags & AV_PIX_FMT_FLAG_PLANAR ? true : false;
 }
 
 template<typename T>

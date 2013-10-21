@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE( convert )
 void rescale_yuv420p()
 {
     ml::image_type_ptr src = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1280, 720 );
-    ml::image_type_ptr dst = ml::image::rescale( src, 1920, 1080, 1, ml::image::BICUBIC_SAMPLING );
+    ml::image_type_ptr dst = ml::image::rescale( src, 1920, 1080, ml::image::BICUBIC_SAMPLING );
 }
 
 BOOST_AUTO_TEST_CASE( rescale )

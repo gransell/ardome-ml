@@ -69,9 +69,9 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_str
 	return convert( src,  MLPixelFormatMap[ pf ] );
 }
 
-image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, int new_d, rescale_filter filter )
+image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
 {
-    if( im->width( ) == new_w && im->height( ) == new_h && im->depth( ) == new_d )
+    if( im->width( ) == new_w && im->height( ) == new_h )
         return im;
 
     image_type_ptr new_im = allocate( im->ml_pixel_format( ), new_w, new_h );

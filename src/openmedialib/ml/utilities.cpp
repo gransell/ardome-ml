@@ -296,9 +296,9 @@ ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int n
 	if ( result )
 	{
 		if ( result->get_alpha( ) )
-			result->set_alpha( ml::image::rescale( result->get_alpha( ), new_w, new_h, 1, filter ) );
+			result->set_alpha( ml::image::rescale( result->get_alpha( ), new_w, new_h, filter ) );
 		if ( result->get_image( ) )
-			result->set_image( ml::image::rescale( result->get_image( ), new_w, new_h, 1, filter ) );
+			result->set_image( ml::image::rescale( result->get_image( ), new_w, new_h, filter ) );
 	}
 
 	return result;

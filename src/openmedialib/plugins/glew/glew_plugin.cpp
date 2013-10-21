@@ -259,7 +259,7 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 				GLenum target;
 				if ( texture_target( phy_w, phy_h, target, tex_w, tex_h ) )
 				{
-					// Conform to cropped and not flipped or flopped (optimal for video playout)
+					// Conform to cropped (optimal for video playout)
 					new_im = ml::image::conform( new_im, ml::image::cropped );
 					frame->set_image( new_im );
 
@@ -322,8 +322,8 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 				}
 				else
 				{
-					// Since we don't have a texture, crop, flip and don't flop
-					new_im = ml::image::conform( new_im, ml::image::cropped | ml::image::flipped );
+					// Since we don't have a texture, crop
+					new_im = ml::image::conform( new_im, ml::image::cropped );
 					frame->set_image( new_im );
 
 					glDisable( GL_TEXTURE_2D );
