@@ -120,6 +120,12 @@ bool is_pixfmt_planar( int pixfmt )
     return desc->flags & AV_PIX_FMT_FLAG_PLANAR ? true : false;
 }
 
+bool is_pixfmt_alpha( int pixfmt )
+{
+    const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) );
+    return desc->flags & AV_PIX_FMT_FLAG_ALPHA ? true : false;
+}
+
 template<typename T>
 AVPicture fill_picture( ml::image_type_ptr image )
 {
@@ -144,57 +150,23 @@ AVPicture fill_picture( ml::image_type_ptr image )
     return picture;
 }
 
-ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst)
+int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags = SWS_BICUBIC )
 {
     AVPicture input;
     AVPicture output;
 
-    if (src->bitdepth( ) > 8 ) 
-	    input = fill_picture< ml::image::image_type_16 >( src );	
-    else
-	    input = fill_picture< ml::image::image_type_8 >( src );	
- 
-    if (dst->bitdepth( ) > 8 ) 
-	    output = fill_picture< ml::image::image_type_16 >( dst );	
-    else
-	    output = fill_picture< ml::image::image_type_8 >( dst );	
-	
-	ARENFORCE( sws_isSupportedInput( static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ) ) );
-	ARENFORCE( sws_isSupportedOutput( static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ) ) );
-	
-	struct SwsContext *img_convert;
-	img_convert = sws_getContext( src->width( ), 
-			src->height( ), 
-			static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ),
-			dst->width( ),
-			dst->height( ),
-			static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ),
-			SWS_BICUBIC,
-			NULL,
-			NULL,
-			NULL);
-				
-	ARENFORCE( img_convert != NULL );
+	if (src->bitdepth( ) > 8 )
+		input = fill_picture< ml::image::image_type_16 >( src );
+	else
+		input = fill_picture< ml::image::image_type_8 >( src );
 
-	int dst_height = sws_scale( img_convert, 
-		input.data, 
-		input.linesize, 
-		0, 
-		src->height( ), 
-		output.data, 
-		output.linesize);
-	
-	ARENFORCE ( dst_height == src->height( ) );
-}
-
-ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst )
-{
-    AVPicture input = fill_picture< ml::image::image_type_8 >( src );
-    AVPicture output = fill_picture< ml::image::image_type_8 >( dst );
+	if (dst->bitdepth( ) > 8 )
+		output = fill_picture< ml::image::image_type_16 >( dst );
+	else
+		output = fill_picture< ml::image::image_type_8 >( dst );
 
     ARENFORCE( sws_isSupportedInput( static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ) ) );
     ARENFORCE( sws_isSupportedOutput( static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ) ) );
-
 
     struct SwsContext *img_convert;
     img_convert = sws_getContext( src->width( ),
@@ -203,21 +175,30 @@ ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_pt
             dst->width( ),
             dst->height( ),
             static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ),
-            SWS_BICUBIC,
+            flags,
             NULL,
             NULL,
             NULL);
 
-
     ARENFORCE( img_convert != NULL );
 
-    int dst_height = sws_scale( img_convert,
+    return sws_scale( img_convert,
         input.data,
         input.linesize,
         0,
         src->height( ),
         output.data,
         output.linesize );
+}
+
+ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst )
+{
+	ARENFORCE (  sws_scale_ffmpeg_image( src, dst, SWS_BICUBIC ) == src->height( ) );
+}
+
+ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags )
+{
+	sws_scale_ffmpeg_image( src, dst, flags );
 }
 
 } } } }

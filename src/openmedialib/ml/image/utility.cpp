@@ -22,19 +22,8 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 ML_DECLSPEC int image_depth ( MLPixelFormat pf ) 
 {
-	if ( pf == ML_PIX_FMT_YUV420P10 )
-		return 10;
-    else if ( pf == ML_PIX_FMT_YUV420P16 )
-		return 16;
-    else if ( pf == ML_PIX_FMT_YUV422P10LE )
-		return 10;
-	else if ( pf == ML_PIX_FMT_YUV444P16LE )
-		return 16;
-    else if ( pf == ML_PIX_FMT_YUV422P10 )
-		return 10;
-    else if ( pf == ML_PIX_FMT_YUV422P16 )
-		return 16;
-	return 8;
+	//XXX Pixfmts with different bitdepth for dirrerent components do exist
+	return utility_bitdepth( ML_to_AV( pf ), 0 ); 
 }
 
 ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
@@ -60,13 +49,14 @@ ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf )
 {
 	image_type_ptr dst = allocate( pf, src->width( ), src->height( ) );
+	dst->set_field_order( src->field_order( ) );
 	ml::image::convert_ffmpeg_image( src, dst );
 	return dst;
 }
 
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string pf )
 {
-	return convert( src,  MLPixelFormatMap[ pf ] );
+	return convert( src, MLPixelFormatMap[ pf ] );
 }
 
 image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
@@ -75,7 +65,7 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
         return im;
 
     image_type_ptr new_im = allocate( im->ml_pixel_format( ), new_w, new_h );
-    ml::image::rescale_ffmpeg_image( im, new_im ); 
+    ml::image::rescale_ffmpeg_image( im, new_im, filter ); 
     return new_im;
 }
 
@@ -147,6 +137,8 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 template< typename T >
 ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 {
+	ARENFORCE_MSG( !is_pixfmt_alpha( ML_to_AV( im->ml_pixel_format( ) ) ), "Image with alpha not supported to deinterlace" )( im->pf( ) );
+
 	if ( im->field_order( ) != progressive )
 	{
 		im->set_field_order( progressive );

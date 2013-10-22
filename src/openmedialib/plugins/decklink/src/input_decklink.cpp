@@ -226,7 +226,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, decklink_iter_( 0 )
 		, decklink_delegate_( 0 )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( "uyv422" ) );
+			properties( ).append( prop_pf_ = olib::t_string( _CT("uyv422") ) );
 			properties( ).append( prop_af_ = std::wstring( L"pcm16" ) );
 			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );

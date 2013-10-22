@@ -27,7 +27,7 @@ extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPi
 extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string pf );
 
 
-enum ML_DECLSPEC rescale_filter { POINT_SAMPLING, BILINEAR_SAMPLING, BICUBIC_SAMPLING };
+enum ML_DECLSPEC rescale_filter { POINT_SAMPLING = 0x10, BILINEAR_SAMPLING = 2, BICUBIC_SAMPLING = 4 };
 
 ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im );
 ML_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter = POINT_SAMPLING );
