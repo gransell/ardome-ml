@@ -125,17 +125,17 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 }
 	
 	
-BMDPixelFormat frame_to_pixel_format( const olib::t_string pf )
+BMDPixelFormat frame_to_pixel_format( const std::wstring &pf )
 {
-	if( pf == _CT("uyv422") )
+	if( pf == L"uyv422" )
 	{
 		return bmdFormat8BitYUV;
 	}
-	else if( pf == _CT("a8r8g8b8") )
+	else if( pf == L"a8r8g8b8" )
 	{
 		return bmdFormat8BitARGB;
 	}
-	else if( pf == _CT("b8g8r8a8") )
+	else if( pf == L"b8g8r8a8" )
 	{
 		return bmdFormat8BitBGRA;
 	}

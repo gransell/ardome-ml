@@ -500,19 +500,19 @@ void test_prores422_stream_analyze( std::wstring input )
 BOOST_AUTO_TEST_CASE( avformat_prores_stream_analyze )
 {
 	//444
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i50_0ch.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i59.94-DF_0ch.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p24_6ch_24bit.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p25_0ch.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p30_0ch.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p50_0ch.mov" ), true );
-	test_prores444_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p60_0ch.mov" ), true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i50_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i59.94-DF_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p24_6ch_24bit.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p25_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p30_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p50_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p60_0ch.mov", true );
 
 	//422
-	test_prores422_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_Proxy_1080p24_6ch_24bit.mov" ));
-	test_prores422_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_LT_1080p24_6ch_24bit.mov" )); 
-	test_prores422_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_1080p24_6ch_24bit.mov" )); 
-	test_prores422_stream_analyze( to_wstring( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_HQ_1080p24_6ch_24bit.mov" )); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_Proxy_1080p24_6ch_24bit.mov");
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_LT_1080p24_6ch_24bit.mov"); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_1080p24_6ch_24bit.mov"); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_HQ_1080p24_6ch_24bit.mov"); 
 }
 
 input_type_ptr create_test_graph( int fps_num, int fps_den, int count )

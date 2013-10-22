@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 		{
 			properties().append( prop_preroll_ = 5 );
 			properties().append( prop_card_ = 0 );
-			properties().append( prop_pf_ = olib::t_string( _CT("uyv422") ) );
+			properties().append( prop_pf_ = std::wstring( L"uyv422" ) );
 		}
 		
 		virtual ~store_decklink( )
@@ -64,7 +64,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 		{
 			// Determine information about display setup from frame information
 			BMDDisplayMode d_mode = du::frame_to_display_mode( last_frame_ );
-			decklink_pf_ = du::frame_to_pixel_format( prop_pf_.value< olib::t_string >( ) );
+			decklink_pf_ = du::frame_to_pixel_format( prop_pf_.value< std::wstring >( ) );
 			BMDVideoOutputFlags output_flags = du::frame_to_output_flags( last_frame_ );
 
 			// Attempt to obtain the decklink iterator
@@ -133,7 +133,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			aud = ml::audio::coerce( ml::audio::pcm32_id, aud );
 
 			if ( img )
-				img = ml::image::convert( img, prop_pf_.value< olib::t_string >( ) );
+				img = ml::image::convert( img, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
 	
 			if ( img )
 			{

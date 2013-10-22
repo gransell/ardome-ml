@@ -80,9 +80,9 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			channels_ = channels;
 		}
 
-		void set_image( const olib::t_string pf, int width, int height )
+		void set_image( const std::wstring &pf, int width, int height )
 		{
-			pf_ = pf;
+			pf_ = cl::str_util::to_t_string( pf );
 			width_ = width;
 			height_ = height;
 		}
@@ -226,7 +226,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 		, decklink_iter_( 0 )
 		, decklink_delegate_( 0 )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( _CT("uyv422") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"uyv422" ) );
 			properties( ).append( prop_af_ = std::wstring( L"pcm16" ) );
 			properties( ).append( prop_mode_ = -1 );
 			properties( ).append( prop_frequency_ = 48000 );
@@ -325,7 +325,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			}
 
 			// Check that the picture format is valid
-			if ( error == S_OK && prop_pf_.value< olib::t_string >( ) != "uyv422" )
+			if ( error == S_OK && prop_pf_.value< std::wstring >( ) != L"uyv422" )
 			{
 				error = S_FALSE;
 				ARLOG( "The AML decklink plugin currently only supports a picture format of uyv422." ).level( cl::log_level::error );
@@ -474,8 +474,8 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 			{
 				decklink_delegate_->reset( prop_queue_.value< int >( ) );
 				decklink_delegate_->set_fps( fps_num, fps_den );
-				decklink_delegate_->set_image( prop_pf_.value< olib::t_string >( ), width, height );
-				decklink_delegate_->set_audio( ml::audio::af_to_id( olib::opencorelib::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
+				decklink_delegate_->set_image( prop_pf_.value< std::wstring >( ), width, height );
+				decklink_delegate_->set_audio( ml::audio::af_to_id( cl::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
 			}
 
 			// Attempt to enable the video feed
