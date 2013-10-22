@@ -46,7 +46,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 		{
 			properties().append( prop_preroll_ = 5 );
 			properties().append( prop_card_ = 0 );
-			properties().append( prop_pf_ = olib::t_string( "uyv422" ) );
+			properties().append( prop_pf_ = olib::t_string( _CT("uyv422") ) );
 		}
 		
 		virtual ~store_decklink( )
