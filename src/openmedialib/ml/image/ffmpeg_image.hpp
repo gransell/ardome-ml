@@ -78,7 +78,7 @@ private:
 			// Now copy each scan line in the plane
 			while( dst_height -- )
 			{
-				memcpy( dst, src, dst_scan );
+				memcpy( dst, src, dst_scan * sizeof( data_type ) );
 				dst += dst_pitch;
 				src += src_pitch;
 			}

@@ -142,7 +142,7 @@ void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
 	typename T::data_type *ptr = img_type->data( plane );
 	int w = img->width( plane );
 	int h = img->height( plane );
-	int diff = img->pitch( plane ) - w;
+	int diff = img->pitch( plane ) / sizeof( typename T::data_type ) - w;
 
 	typename T::data_type val_shifted = static_cast< typename T::data_type >( sample << ( img->bitdepth( ) - 8 ) );
 
