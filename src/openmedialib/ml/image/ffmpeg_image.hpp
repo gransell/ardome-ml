@@ -2,6 +2,7 @@
 #define FFMPEG_IMAGE_H_
 
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/assert_defines.hpp>
 
 #include <openmedialib/ml/image/image_interface.hpp>
 #include <openmedialib/ml/image/ffmpeg_utility.hpp>
@@ -61,8 +62,6 @@ private:
 		// Obtain the number of planes and iterate through each
 		size_t count = plane_count( );
 
-		int bytes_per_sample = storage_bytes( );
-
 		for ( size_t i = 0; i < count; i ++ )
 		{
 			// We need the src and pitch of the cropped source plane
@@ -72,14 +71,14 @@ private:
 			// The destination plane, pitch and height
             data_type *dst = data( i );
 			int dst_width = width( i );
-			int dst_pitch = pitch( i );
-			int dst_scan = linesize( i );
+			int dst_pitch = pitch( i ) / sizeof( data_type );
+			int dst_scan = linesize( i ) / sizeof( data_type );
 			int dst_height = height( i );
 
 			// Now copy each scan line in the plane
 			while( dst_height -- )
 			{
-				memcpy( dst, src, dst_scan * bytes_per_sample );
+				memcpy( dst, src, dst_scan );
 				dst += dst_pitch;
 				src += src_pitch;
 			}
@@ -148,7 +147,7 @@ public:
         return p ? p->offset : 0;
     }
 
-    int block_size( ) const
+    int num_components( ) const
     {
         return utility_nb_components( AVpixfmt_ );
     }
@@ -166,7 +165,9 @@ public:
 	
     data_type *data( size_t index = 0, bool crop = true )
     {
-        return data_ + offset( index, crop );
+		const int plane_offset = offset( index, crop );
+		ARASSERT_MSG( plane_offset % storage_bytes( ) == 0, "Plane offset would cause unaligned pointer!" );
+        return data_ + plane_offset / storage_bytes( );
     }
 
 	void *ptr( size_t index = 0, bool crop = true )
@@ -330,8 +331,8 @@ private:
 		plane &p = crop[ 0 ];
 		p.width = w;
 		p.height = h;
-		p.linesize = w * block_size( );
-		p.offset = p.pitch * y + x * block_size( );
+		p.linesize = w * sizeof( data_type );
+		p.offset = p.pitch * y + x * sizeof( data_type );
 	}
 	
 	virtual void crop_planes_yuv( planes &crop, int &x, int &y, int &w, int &h, int flags )
@@ -390,8 +391,8 @@ protected:
     void alloc_rgb_planes( )
     {
         if ( plane_count( ) == 1 ) {
-            int linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
-            plane plane = { 0, linesize / storage_bytes( ), width_, height_, linesize / storage_bytes( ) };
+            int pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
+            plane plane = { 0, pitch, width_, height_, width_ * num_components() * storage_bytes( ) };
             planes_.push_back( plane );
             return;
         }
@@ -405,15 +406,16 @@ protected:
         planes_.push_back( plane );
         if ( plane_count( ) <= 1 ) { return; }
 
-        plane.offset += plane.pitch * storage_bytes( ) * height_;
+		const int plane_size = plane.pitch * plane.height;
+        plane.offset += plane_size;
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
-        plane.offset *= 2;
+        plane.offset += plane_size;
         planes_.push_back( plane );
         if ( plane_count( ) <= 3 ) { return; }
 
-        plane.offset *= 2;
+        plane.offset += plane_size;
         planes_.push_back( plane );
     }
 
@@ -421,35 +423,41 @@ protected:
     {
         plane plane;
 
-		int bytes_per_sample = storage_bytes( );
+		const int bytes_per_sample = storage_bytes( );
 
         // PLANE 1
         plane.offset = 0;
         plane.width = width_;
         plane.height = height_;
-        plane.pitch = plane.linesize = utility_av_image_get_linesize( AVpixfmt_, width_, 0 ) / bytes_per_sample;
+        plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 0 );
+		plane.linesize = plane.width * bytes_per_sample;
         planes_.push_back( plane );
         if ( plane_count( ) <= 1 ) { return; }
 
         // PLANE 2
         plane.offset += plane.pitch * height_;
-        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 1 ) / bytes_per_sample;
 		plane.width = width_ / ( chroma_w_ + 1 );
 		plane.height = height_ / ( chroma_h_ + 1 );
+        plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 1 );
+		plane.linesize = plane.width * bytes_per_sample;
         planes_.push_back( plane );
         if ( plane_count( ) <= 2 ) { return; }
 
         // PLANE 3
-        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 2 ) / bytes_per_sample;
 		plane.offset += plane.pitch * plane.height;
+		plane.width = width_ / ( chroma_w_ + 1 );
+		plane.height = height_ / ( chroma_h_ + 1 );
+        plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 2 );
+		plane.linesize = plane.width * bytes_per_sample;
         planes_.push_back( plane );
 		if ( plane_count( ) <= 3 ) { return; }
 
 		// PLANE 4
 		plane.offset += plane.pitch * plane.height;
-        plane.linesize = plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 3 ) / bytes_per_sample;
 		plane.width = width_;
 		plane.height = height_;
+        plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 3 );
+		plane.linesize = plane.width * bytes_per_sample;
 		planes_.push_back( plane );
     }
 

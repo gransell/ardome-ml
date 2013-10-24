@@ -106,14 +106,15 @@ void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input )
 	}
 }
 
+template< typename T >
 void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
 {
-    boost::shared_ptr< ml::image::image_type_8 > output_type_8 = ml::image::coerce< ml::image::image_type_8 >( output );
-    boost::shared_ptr< ml::image::image_type_8 > input_type_8 = ml::image::coerce< ml::image::image_type_8 >( input );
+    boost::shared_ptr< T > output_type = ml::image::coerce< T >( output );
+    boost::shared_ptr< T > input_type = ml::image::coerce< T >( input );
 
-	boost::uint8_t *dst = output_type_8->data( plane );
-	boost::uint8_t *src = input_type_8->data( plane );
-	int w = output->width( plane );
+	typename T::data_type *dst = output_type->data( plane );
+	typename T::data_type *src = input_type->data( plane );
+	int w = output->width( plane ) * sizeof( typename T::data_type );
 	int h = output->height( plane );
 	int dst_p = output->pitch( plane );
 	int src_p = input->pitch( plane );
@@ -126,19 +127,39 @@ void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t pla
 	}
 }
 
+void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
+{
+    if ( ml::image::coerce< ml::image::image_type_8 >( input ) )
+		copy_plane< ml::image::image_type_8 >( output, input, plane );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( input ) )
+		copy_plane< ml::image::image_type_16 >( output, input, plane );
+}
+
+template< typename T >
 void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
 {
-    boost::shared_ptr< ml::image::image_type_8 > img_type_8 = ml::image::coerce< ml::image::image_type_8 >( img );
-	boost::uint8_t *ptr = img_type_8->data( plane );
+    boost::shared_ptr< T > img_type = ml::image::coerce< T >( img );
+	typename T::data_type *ptr = img_type->data( plane );
 	int w = img->width( plane );
 	int h = img->height( plane );
-	int p = img->pitch( plane );
+	int diff = img->pitch( plane ) - w;
+
+	typename T::data_type val_shifted = static_cast< typename T::data_type >( sample << ( img->bitdepth( ) - 8 ) );
 
 	while( h -- )
 	{
-		memset( ptr, sample, w );
-		ptr += p;
+		for ( int i = 0; i < w; i++ )
+			*ptr ++ = val_shifted;
+		ptr += diff;
 	}
+}
+
+void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
+{
+    if ( ml::image::coerce< ml::image::image_type_8 >( img ) )
+		fill_plane< ml::image::image_type_8 >( img, plane, sample );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( img ) )
+		fill_plane< ml::image::image_type_16 >( img, plane, sample );
 }
 
 std::string print_track_packets( const ml::audio::track_type::map& track_packets )

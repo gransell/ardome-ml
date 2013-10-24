@@ -166,9 +166,9 @@ inline void fill( ml::image_type_ptr img, size_t plane, unsigned char val )
 {
     typename T::data_type *ptr = ml::image::coerce< T >( img )->data( plane );
 
-	int width = img->linesize( plane );
+	int width = img->linesize( plane ) / sizeof( typename T::data_type );
 	int height = img->height( plane );
-	int diff = img->pitch( plane ) - width;
+	int diff = img->pitch( plane ) / sizeof( typename T::data_type ) - width;
 
 	typename T::data_type val_shifted = static_cast< typename T::data_type >( val << ( img->bitdepth( ) - 8 ) );
 
@@ -1297,12 +1297,12 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				if ( src_width > 0 && src_height > 0 )
 				{
 					// Calculate the byte offsets
-					typename P::data_type *src_ptr = ml::image::coerce< P >( src )->data( p ) + src_y * src->pitch( p ) + src_x;
-					typename P::data_type *dst_ptr = ml::image::coerce< P >( dst )->data( p ) + dst_y * dst->pitch( p ) + dst_x;
+					typename P::data_type *src_ptr = ml::image::coerce< P >( src )->data( p ) + src_y * src->pitch( p ) / sizeof( typename P::data_type ) + src_x;
+					typename P::data_type *dst_ptr = ml::image::coerce< P >( dst )->data( p ) + dst_y * dst->pitch( p ) / sizeof( typename P::data_type ) + dst_x;
 
 					// Obtain the pitches of both images and reduce by the distance travelled on each row
-					int src_remainder = src->pitch( p ) - src_width;
-					int dst_remainder = dst->pitch( p ) - src_width;
+					int src_remainder = src->pitch( p ) / sizeof( typename P::data_type ) - src_width;
+					int dst_remainder = dst->pitch( p ) / sizeof( typename P::data_type ) - src_width;
 					int temp_h = src_height;
 					int mix = int( max_sample * prop_mix_.value< double >( ) );
 					int xim = max_sample - mix;

@@ -577,7 +577,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				{
 					for ( int p = 0; success && p < image->plane_count( ); p ++ )
 					{
-						const boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
+						const boost::uint8_t *dst =  ( boost::uint8_t * )image->ptr( p );
 						int pitch = image->pitch( p );
 						int width = image->linesize( p );
 						int height = image->height( p );
@@ -590,7 +590,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 				}
 				else
 				{
-					avio_write( context_, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), image->size( ) );
+					avio_write( context_, ( boost::uint8_t * ) image->ptr( ), image->size( ) );
 				}
 
 				if ( pad )

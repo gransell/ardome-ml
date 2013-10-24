@@ -85,7 +85,7 @@ static int locate_alpha_offset( const MLPixelFormat pf )
     return result;
 }
 
-template< typename T >
+template< typename T, enum MLPixelFormat alpha >
 ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 {
     image_type_ptr result;
@@ -96,16 +96,19 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
         int offset = locate_alpha_offset( im->ml_pixel_format( ) );
         if ( offset >= 0 )
         {
-            result = allocate( ML_PIX_FMT_L8, im->width( ), im->height( ) );
+            result = allocate( alpha, im->width( ), im->height( ) );
             boost::shared_ptr< T > result_type = ml::image::coerce< T >( result );
 
-            const boost::uint8_t *src = im_type->data( );
-            boost::uint8_t *dst = result_type->data( );
+            const typename T::data_type *src = im_type->data( );
+            typename T::data_type *dst = result_type->data( );
 
             int h = im->height( );
 
             int src_rem = im->pitch( ) - im->linesize( );
             int dst_rem = result->pitch( ) - result->linesize( );
+
+			const int max_input = ( 1 << im->bitdepth( ) ) - 1;
+			const int max_output = ( 1 << result->bitdepth( ) ) - 1;
 
             while( h -- )
             {
@@ -113,7 +116,7 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 
                 while ( w -- )
                 {
-                    *dst ++ = src[ offset ];
+                    *dst ++ = ( typename T::data_type )( float( src[ offset ] / max_input ) * max_output );
                     src += 4;
                 }
 
@@ -130,7 +133,9 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 {
     image_type_ptr result;
     if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
-        result = extract_alpha< ml::image::image_type_8 >( im );
+        result = extract_alpha< ml::image::image_type_8, ML_PIX_FMT_L8 >( im );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
+        result = extract_alpha< ml::image::image_type_16, ML_PIX_FMT_L16 >( im );
 	return result;
 }
 
@@ -147,12 +152,12 @@ ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 		for ( int i = 0; i < im->plane_count( ); i ++ )
 		{
 			typename T::data_type *dst = im_type->data( i );
-			typename T::data_type *src = im_type->data( i ) + im->pitch( i );
-			int linesize = im->linesize( i );
-			int src_pitch = im->pitch( i ) - linesize;
+			typename T::data_type *src = im_type->data( i ) + im->pitch( i ) / sizeof( typename T::data_type );
+			int linesize = im->linesize( i ) / sizeof( typename T::data_type );
+			int src_pitch = ( im->pitch( i ) / sizeof( typename T::data_type ) ) - linesize;
 			int height = im->height( i ) - 1;
 			
-			for (int h = height - 1; h >= 0; h--)
+			for (int h = height - 1; h >= 0; h -- )
 			{
 				for ( int w = 0; w < linesize; w ++ )
 				{
@@ -218,11 +223,11 @@ ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field )
 		{
 			boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
 			boost::shared_ptr< T > new_im_type = ml::image::coerce< T >( new_im );
-			typename T::data_type *src = im_type->data( i ) + field * im->pitch( i );
+			typename T::data_type *src = im_type->data( i ) + field * im->pitch( i ) / sizeof( typename T::data_type );
 			typename T::data_type *dst = new_im_type->data( i );
-			int src_pitch = 2 * im->pitch( i );
-			int dst_pitch = new_im->pitch( i );
-			int linesize = new_im->linesize( i ) * new_im->storage_bytes( );
+			int src_pitch = 2 * im->pitch( i ) / sizeof( typename T::data_type );
+			int dst_pitch = new_im->pitch( i ) / sizeof( typename T::data_type );
+			int linesize = new_im->linesize( i );
 			int height = new_im->height( i );
 			while( height -- )
 			{

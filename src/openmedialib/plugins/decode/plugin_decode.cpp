@@ -15,7 +15,6 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
-
 //
 // Plugin object
 //

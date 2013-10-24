@@ -78,17 +78,21 @@ void filter_field_order::do_fetch( frame_type_ptr &frame )
 			}
 		}
 
-		ml::image_type_ptr filter_field_order::merge( ml::image_type_ptr image1, int scan1, ml::image_type_ptr image2, int scan2 )
+		template< typename T >
+		ml::image_type_ptr merge( ml::image_type_ptr image1, int scan1, ml::image_type_ptr image2, int scan2 )
 		{
 			// Create a new image which has the same dimensions
 			// NOTE: we assume that image dimensions are consistent (should we?)
 			ml::image_type_ptr result = ml::image::allocate( image1 );
 
+			boost::shared_ptr< T > result_type = ml::image::coerce< T >( result );
+			boost::shared_ptr< T > image1_type = ml::image::coerce< T >( image1 );
+			boost::shared_ptr< T > image2_type = ml::image::coerce< T >( image2 );
 			for ( int i = 0; i < result->plane_count( ); i ++ )
 			{
-				boost::uint8_t *dst_row = static_cast<boost::uint8_t*> ( result->ptr( i ) );
-				boost::uint8_t *src1_row = static_cast<boost::uint8_t*> ( image1->ptr( i ) ) + image1->pitch( i ) * scan1;
-				boost::uint8_t *src2_row = static_cast<boost::uint8_t*> ( image2->ptr( i ) ) + image2->pitch( i ) * scan2;
+				typename T::data_type *dst_row = result_type->data( i );
+				typename T::data_type *src1_row = image1_type->data( i ) + image1->pitch( i ) * scan1;
+				typename T::data_type *src2_row = image2_type->data( i ) + image2->pitch( i ) * scan2;
 				int dst_linesize = result->linesize( i );
 				int dst_stride = result->pitch( i );
 				int src_stride = image1->pitch( i ) * 2;
@@ -97,17 +101,27 @@ void filter_field_order::do_fetch( frame_type_ptr &frame )
 				while( height -- )
 				{
 					memcpy( dst_row, src1_row, dst_linesize );
-					dst_row += dst_stride;
-					src1_row += src_stride;
+					dst_row += dst_stride / sizeof( typename T::data_type );
+					src1_row += src_stride / sizeof( typename T::data_type );
 
 					memcpy( dst_row, src2_row, dst_linesize );
-					dst_row += dst_stride;
-					src2_row += src_stride;
+					dst_row += dst_stride / sizeof( typename T::data_type );
+					src2_row += src_stride / sizeof( typename T::data_type );
 				}
 			}
 
 			return result;
 		}
+
+        ml::image_type_ptr merge( ml::image_type_ptr image1, int scan1, ml::image_type_ptr image2, int scan2 )
+        {  
+            image_type_ptr result;
+            if ( ml::image::coerce< ml::image::image_type_8 >( image1 ) )
+                result = merge< ml::image::image_type_8 >( image1, scan1, image2, scan2 );
+            else if ( ml::image::coerce< ml::image::image_type_16 >( image1 ) )
+                result = merge< ml::image::image_type_16 >( image1, scan1, image2, scan2 );
+            return result;
+        }
 
 
 } } } }

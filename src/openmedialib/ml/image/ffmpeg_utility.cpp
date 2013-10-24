@@ -131,14 +131,13 @@ AVPicture fill_picture( ml::image_type_ptr image )
 {
     AVPicture picture;
     boost::shared_ptr< T > image_type = ml::image::coerce< T >( image );
-	int bps = image->bitdepth( ) > 8 ? 2 : 1;
 
     for ( int i = 0; i < AV_NUM_DATA_POINTERS; i ++ )
     {
         if ( i < image->plane_count( ) )
         {
             picture.data[ i ] = (boost::uint8_t*)image_type->data( i );
-            picture.linesize[ i ] = image->linesize( i ) * bps;
+            picture.linesize[ i ] = image->linesize( i );
         }
         else
         {

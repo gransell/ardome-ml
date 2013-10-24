@@ -6,9 +6,18 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 struct default_plane
 {
 	int offset;
+	//The number of bytes from the start of one line
+	//in the plane to the next one. This is not
+	//necessarily the same as linesize, since it may
+	//include extra padding bytes at the end of each
+	//line.
 	int pitch;
+	//The number of samples per line in the plane.
 	int width;
+	//The number of lines in the plane.
 	int height;
+	//The combined byte size of all samples in a line
+	//in the plane.
 	int linesize;
 };
 
@@ -42,7 +51,7 @@ public:
 	virtual int linesize( size_t index = 0, bool crop = true ) = 0;
 	virtual int pitch( size_t index = 0, bool crop = true ) = 0;
 	virtual int offset( size_t index = 0, bool crop = true ) = 0;
-	virtual int block_size( ) const = 0;
+	virtual int num_components( ) const = 0;
 	virtual int get_crop_x( ) const = 0;
 	virtual int get_crop_y( ) const = 0;
 	virtual int get_crop_w( ) const = 0;
