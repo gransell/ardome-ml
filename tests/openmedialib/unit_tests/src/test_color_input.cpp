@@ -72,7 +72,7 @@ void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
 
 			if (order_a == 0) data++;
 
-			for( std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
+			for( typename std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
 			{
 				if ( *data ++ != (*ii).second ) {
 					BOOST_REQUIRE_MESSAGE( false, "Failed on component " << (*ii).first << " for pixfmt " << cl::str_util::to_string( image->pf( ) ));

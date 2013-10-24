@@ -230,7 +230,7 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 					ptr++;
 
 				// Fill in RGB values
-				for( std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
+				for( typename std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
 				{
 					*ptr ++ = (*ii).second;
 				}
