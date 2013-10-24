@@ -16,6 +16,7 @@ test_sources = [
 	'src/test_wav_input.cpp',
 	'src/test_wav_store.cpp',
 	'src/test_compositor_filter.cpp',
+	'src/test_color_input.cpp',
 	'src/test_frame_list_filter.cpp',
 	'src/test_image.cpp',
 	'src/test_frame_rate_filter.cpp',

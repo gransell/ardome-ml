@@ -15,10 +15,19 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
-
+/*
+ * Adding new pixel format:
+ * Total three places needs to be modified, two in this file and one in ffmpeg_utility.cpp
+ * 
+ * In this file you add it to the enum MLPixelFormat and the map MLPixelFormatMap.
+ *
+ * Make sure you also add the mapping to ffmpegs pixel format
+ * in function ML_to_AV (ffmpeg_utility.cpp)
+ *
+ * */
 
 enum MLPixelFormat {
-    ML_PIX_FMT_NONE,
+    ML_PIX_FMT_NONE = -1,
     ML_PIX_FMT_YUV420P,
     ML_PIX_FMT_YUV420P10,
     ML_PIX_FMT_YUV420P16,
@@ -29,7 +38,6 @@ enum MLPixelFormat {
     ML_PIX_FMT_YUV422P10,
     ML_PIX_FMT_YUV422P10LE,
     ML_PIX_FMT_YUV422P16,
-	ML_PIX_FMT_YUV444,
 	ML_PIX_FMT_YUV444P,
 	ML_PIX_FMT_YUVA444P,
 	ML_PIX_FMT_YUV444P16LE,
@@ -47,6 +55,7 @@ enum MLPixelFormat {
     ML_PIX_FMT_A8R8G8B8,
     ML_PIX_FMT_A8B8G8R8,
     ML_PIX_FMT_R10G10B10,
+    ML_PIX_FMT_NB, // number of pixel formats
 };
 
 
@@ -59,7 +68,6 @@ std::map<t_string, MLPixelFormat> MLPixelFormatMap = boost::assign::map_list_of
 (_CT("yuv422p"),    ML_PIX_FMT_YUV422P)
 (_CT("yuv422"),     ML_PIX_FMT_YUV422)
 (_CT("uyv422"),     ML_PIX_FMT_UYV422)
-(_CT("yuv444"),     ML_PIX_FMT_YUV444)
 (_CT("yuv444p"),    ML_PIX_FMT_YUV444P)
 (_CT("yuva444p"),   ML_PIX_FMT_YUVA444P)
 (_CT("yuv444p16le"),ML_PIX_FMT_YUV444P16LE)

@@ -28,7 +28,7 @@ ML_DECLSPEC int image_depth ( MLPixelFormat pf )
 
 ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 {
-    ARENFORCE_MSG( pf != ML_PIX_FMT_NONE, "Invalid picture format");
+    ARENFORCE_MSG( pf > ML_PIX_FMT_NONE && pf < ML_PIX_FMT_NB, "Invalid picture format")( pf );
 	if ( image_depth( pf ) == 8 )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
 	else if ( image_depth( pf ) > 8 )
@@ -71,18 +71,9 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
 
 static int locate_alpha_offset( const MLPixelFormat pf )
 {
-    int result = -1;
-    
-    if ( pf == ML_PIX_FMT_R8G8B8A8 )
-        result = 3;
-    else if ( pf == ML_PIX_FMT_B8G8R8A8 )
-        result = 3;
-    else if ( pf == ML_PIX_FMT_A8R8G8B8 )
-        result = 0;
-    else if ( pf == ML_PIX_FMT_A8B8G8R8 )
-        result = 0;
+    if ( !is_pixfmt_alpha( pf ) || is_pixfmt_planar( pf ) ) return -1; // Only RGB with alpha supported
 
-    return result;
+    return utility_offset( ML_to_AV( pf ), utility_nb_components( ML_to_AV( pf ) ) - 1 ); //Alpha is always last component
 }
 
 template< typename T, enum MLPixelFormat alpha >
@@ -249,6 +240,26 @@ ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int f )
 	else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
 		result = field< ml::image::image_type_16 >( im, f );
 	return result;
+}
+
+ML_DECLSPEC bool is_pixfmt_planar(  MLPixelFormat pf ) 
+{
+	return is_pixfmt_planar( ML_to_AV( pf ) );
+}
+
+ML_DECLSPEC bool is_pixfmt_rgb(  MLPixelFormat pf ) 
+{
+	return is_pixfmt_rgb( ML_to_AV( pf ) );
+}
+
+ML_DECLSPEC bool is_pixfmt_alpha(  MLPixelFormat pf ) 
+{
+	return is_pixfmt_alpha( ML_to_AV( pf ) );
+}
+
+ML_DECLSPEC int order_of_component( MLPixelFormat pf, int index ) 
+{
+	return utility_offset( ML_to_AV( pf ), index );
 }
 
 } } } }

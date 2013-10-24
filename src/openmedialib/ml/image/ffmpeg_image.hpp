@@ -289,7 +289,6 @@ private:
     int sar_den_;
 
     field_order_flags field_order_;
-    UtilityAVPixFmtDescriptor *desc_;
     int AVpixfmt_;
     planes planes_;
 	planes crop_;
@@ -377,8 +376,6 @@ protected:
         numBytes=utility_avpicture_get_size(AVpixfmt_, width_,height_);
         data_=(data_type *)utility_av_malloc(numBytes);
 
-        desc_ = utility_av_pix_fmt_desc_get(AVpixfmt_);
-        
         utility_av_pix_fmt_get_chroma_sub_sample( AVpixfmt_, &chroma_w_, &chroma_h_ );
 
         if ( is_pixfmt_rgb( AVpixfmt_ ) ) {
@@ -436,8 +433,8 @@ protected:
 
         // PLANE 2
         plane.offset += plane.pitch * height_;
-		plane.width = width_ / ( chroma_w_ + 1 );
-		plane.height = height_ / ( chroma_h_ + 1 );
+		plane.width = width_ >> chroma_w_;
+		plane.height = height_ >> chroma_h_;
         plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 1 );
 		plane.linesize = plane.width * bytes_per_sample;
         planes_.push_back( plane );
@@ -445,8 +442,8 @@ protected:
 
         // PLANE 3
 		plane.offset += plane.pitch * plane.height;
-		plane.width = width_ / ( chroma_w_ + 1 );
-		plane.height = height_ / ( chroma_h_ + 1 );
+		plane.width = width_ >> chroma_w_;
+		plane.height = height_ >> chroma_h_;
         plane.pitch = utility_av_image_get_linesize( AVpixfmt_, width_, 2 );
 		plane.linesize = plane.width * bytes_per_sample;
         planes_.push_back( plane );

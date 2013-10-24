@@ -17,7 +17,6 @@ extern "C" {
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 UtilityAVPixFmtDescriptor *utility_av_pix_fmt_desc_get( int pixfmt )
-    
 {   
     AVPixelFormat AVpf = static_cast<AVPixelFormat>(pixfmt);
     return (UtilityAVPixFmtDescriptor*)av_pix_fmt_desc_get( AVpf ); 
@@ -56,6 +55,12 @@ int utility_nb_components( int pixfmt )
     return desc->nb_components;
 }
 
+int utility_offset( int pixfmt, int index )
+{
+    const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) );
+    return desc->comp[index].offset_plus1 - 1;
+}
+
 int ML_to_AV( MLPixelFormat pixfmt )
 {
 	if (pixfmt == ML_PIX_FMT_YUV420P )
@@ -66,6 +71,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUV420P16;
 	else if (pixfmt == ML_PIX_FMT_YUVA420P )
 		return (int)AV_PIX_FMT_YUVA420P;
+	else if (pixfmt == ML_PIX_FMT_YUV411 )
+		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_YUV411P )
 		return (int)AV_PIX_FMT_YUV411P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P )
@@ -86,6 +93,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_YUV444P16LE)
 		return (int)AV_PIX_FMT_YUV444P16LE;
+	else if (pixfmt == ML_PIX_FMT_YUVA444P)
+		return (int)AV_PIX_FMT_YUVA444P;
 	else if (pixfmt == ML_PIX_FMT_YUVA444P16LE)
 		return (int)AV_PIX_FMT_YUVA444P16LE;
 	else if (pixfmt == ML_PIX_FMT_L8 )
@@ -102,6 +111,10 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_RGBA;
 	else if (pixfmt == ML_PIX_FMT_B8G8R8A8 )
 		return (int)AV_PIX_FMT_BGRA;
+	else if (pixfmt == ML_PIX_FMT_A8B8G8R8 )
+		return (int)AV_PIX_FMT_ABGR;
+	else if (pixfmt == ML_PIX_FMT_A8R8G8B8 )
+		return (int)AV_PIX_FMT_ARGB;
 	else if (pixfmt == ML_PIX_FMT_R10G10B10 )
 		return (int)AV_PIX_FMT_RGB48;
 

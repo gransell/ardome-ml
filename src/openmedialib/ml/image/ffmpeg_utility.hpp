@@ -18,6 +18,7 @@ void utility_av_free( void *buf );
 int utility_plane_count( int pixfmt );
 int utility_bitdepth( int pixfmt, int index );
 int utility_nb_components( int pixfmt );
+int utility_offset( int pixfmt, int index );
 
 bool is_pixfmt_rgb( int pixfmt );
 bool is_pixfmt_planar( int pixfmt );

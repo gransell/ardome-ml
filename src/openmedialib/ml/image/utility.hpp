@@ -53,6 +53,11 @@ inline void rgb24_to_yuv444( int &y, int &u, int &v, unsigned char r, unsigned c
 
 ML_DECLSPEC image_type_ptr field( const image_type_ptr &im, int field );
 
+ML_DECLSPEC bool is_pixfmt_planar( MLPixelFormat pf );
+ML_DECLSPEC bool is_pixfmt_rgb( MLPixelFormat pf );
+ML_DECLSPEC bool is_pixfmt_alpha( MLPixelFormat pf );
+ML_DECLSPEC int order_of_component( MLPixelFormat pf, int index );
+
 } } } }
 
 #endif

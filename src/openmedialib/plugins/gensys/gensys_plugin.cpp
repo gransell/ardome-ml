@@ -200,6 +200,24 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 	typename T::data_type rs = static_cast< typename T::data_type >( r << ( img->bitdepth( ) - 8 ) );
 	typename T::data_type gs = static_cast< typename T::data_type >( g << ( img->bitdepth( ) - 8 ) );
 	typename T::data_type bs = static_cast< typename T::data_type >( b << ( img->bitdepth( ) - 8 ) );
+
+	std::map< int, typename T::data_type > vals;
+
+	// Determine order or R, G and B (RGB or BGR)
+	int order_r = ml::image::order_of_component( img->ml_pixel_format( ), 0 ); // R
+	int order_g = ml::image::order_of_component( img->ml_pixel_format( ), 1 ); // G
+	int order_b = ml::image::order_of_component( img->ml_pixel_format( ), 2 ); // B
+
+	// Check if pixfmt contains alpha channel
+	int order_a = -1;
+	if ( is_pixfmt_alpha( img->ml_pixel_format( ) ) ) {
+		order_a = ml::image::order_of_component( img->ml_pixel_format( ), 3 ); // A
+	}
+
+	vals[order_r] = rs;
+	vals[order_g] = gs;
+	vals[order_b] = bs;
+
 	if ( ptr )
 	{
 		while( height -- )
@@ -207,9 +225,19 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 			int x = width;
 			while ( x -- )
 			{
-				*ptr ++ = rs;
-				*ptr ++ = gs;
-				*ptr ++ = bs;
+				// Skip one if alpha is before RGB
+				if (order_a == 0) 
+					ptr++;
+
+				// Fill in RGB values
+				for( std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
+				{
+					*ptr ++ = (*ii).second;
+				}
+
+				// Add one if alpha is after RGB
+				if (order_a == 3)
+					ptr++;
 			}
 		}
 	}
@@ -415,8 +443,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 				fill( image, 1, ( boost::uint8_t )u );
 				fill( image, 2, ( boost::uint8_t )v );
 			}
-			
-			else if ( image->pf( ).length( ) == 6 && image->pf( ).substr( 0, 6 ) == _CT("r8g8b8") )
+			else if ( ml::image::is_pixfmt_rgb( image->ml_pixel_format( ) ) )
 			{
 				fillRGB( image, ( unsigned char )prop_r_.value< int >( ), ( unsigned char )prop_g_.value< int >( ), ( unsigned char )prop_b_.value< int >( ) );
 			}
