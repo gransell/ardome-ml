@@ -5,6 +5,8 @@
 
 #include "opencorelib/cl/logtarget.hpp"
 
+#include "../../utils.hpp"
+
 std::ofstream log_file;
 
 class test_fixture
@@ -18,15 +20,10 @@ public:
 		// NOTE: The unit testing is verbose by design.  It is stored to a temporary
 		// and only dumped to the build log / terminal if there is an error!
 		the_log_handler::instance().set_global_log_level(olib::opencorelib::log_level::debug9);
-		
-		olib::t_path log_dir( _CT("tests/test_output/opencore") );
-		olib::opencorelib::utilities::make_sure_path_exists( log_dir );
 
-		log_file.open( ( log_dir / olib::t_path( _CT("opencore_test_results.xml") ) ).string().c_str() );
+		const olib::t_string log_path = olib::configure_test_runner( _CT("opencorelib") );
+		log_file.open( log_path.c_str() );
 		ARENFORCE( log_file.good() );
-
-		unit_test_log.set_format( XML );
-		unit_test_log.set_threshold_level( log_successful_tests );
 		unit_test_log.set_stream( log_file );
 	}
 };
