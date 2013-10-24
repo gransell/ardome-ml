@@ -76,17 +76,19 @@ namespace olib
             return ss.str();
         }
 
-		void log_utilities::delete_old_log_files(const olib::t_path& full_path, const t_string& prefix, int older_than_days)
+        void log_utilities::delete_old_log_files(const olib::t_path& full_path, const t_string& prefix, int older_than_days)
         {
-			if ( older_than_days <= 0 )
-				return;
-
             using namespace boost::posix_time;
-            ARENFORCE_MSG( fs::is_directory(full_path), full_path.external_directory_string() ); 
+
+            if ( older_than_days <= 0 )
+                return;
+            if( !fs::is_directory( full_path ) )
+                return;
+
             // Match all files with the pattern:  
             // Prefix.YYYY-MM-DD-DAY.log
             olib::t_format wildcard_fmt(_CT("%s\\..*\\.log"));
-			t_string escaped_prefix = olib::opencorelib::utilities::regex_escape(prefix);
+            t_string escaped_prefix = olib::opencorelib::utilities::regex_escape(prefix);
             olib::t_regex wildcard( (wildcard_fmt % escaped_prefix ).str());
 
             ptime time_t_epoch(boost::gregorian::date(1970,1,1)); 
