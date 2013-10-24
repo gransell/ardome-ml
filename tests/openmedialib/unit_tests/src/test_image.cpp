@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE( allocate )
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P, 1920, 1080 ), &yuv422p_1920_1080 );
 
 	// YUV422P10LE
-	image_properties yuv422p10le_1920_1080 = { 1920, 1080, 10, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 3110400 } };
+	image_properties yuv422p10le_1920_1080 = { 1920, 1080, 10, 3, 3, { 3840, 1920, 1920 }, { 3840, 1920, 1920 }, { 0, 4147200, 6220800 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P10LE, 1920, 1080 ), &yuv422p10le_1920_1080 );
 }
 
