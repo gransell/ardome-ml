@@ -40,10 +40,10 @@ class DataCheckTest
         
         for (int i = 0; i < plane_count; i++) {
 			typename T::data_type *img = image->data(i);
-            int src_pitch = image->pitch(i) - image->linesize(i);
+            int src_pitch = (image->pitch(i) - image->linesize(i)) / sizeof( typename T::data_type );
             
             for (int h = image->height(i) - 1; h >= 0; h--) {
-                for (int w = 0; w < image->linesize(i); w++) {
+                for (int w = 0; w < ( image->linesize(i) / sizeof( typename T::data_type ) ); w++) {
                     if (h % 2 == 0) {
                         *img = data_even[i];
                     } else {
@@ -67,10 +67,10 @@ class DataCheckTest
 
         for (int i = 0; i < plane_count; i++) {
 			typename T::data_type *dst = dest->data(i);
-            int dst_pitch = dest->pitch(i) - dest->linesize(i);
+            int dst_pitch = (dest->pitch(i) - dest->linesize(i)) / sizeof( typename T::data_type );
             
             for (int h = dest->height(i) - 1; h >= 0; h--) {
-                for (int w = 0; w < dest->linesize(i); w++) {
+                for (int w = 0; w < ( dest->linesize(i) / sizeof( typename T::data_type ) ); w++) {
                     if (h == 0) {
                         if (*dst != data_even[i]) {
                             BOOST_REQUIRE_EQUAL(*dst, data_even[i]);
