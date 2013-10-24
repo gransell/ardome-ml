@@ -12,7 +12,7 @@ struct image_properties
 	int height;
 	int bitdepth;
 	int plane_count;
-	int block_size;
+	int num_components;
 	int linesize[4];
 	int pitch[4];
 	int offset[4];
@@ -25,7 +25,7 @@ void test_image_properties( ml::image_type_ptr img, image_properties *p )
     BOOST_CHECK( img->height( ) == p->height );
     BOOST_CHECK( img->bitdepth( ) == p->bitdepth );
     BOOST_CHECK( img->plane_count( ) == p->plane_count );
-    BOOST_CHECK( img->block_size( ) == p->block_size );	
+    BOOST_CHECK( img->num_components( ) == p->num_components );	
     for ( int i = 0; i < p->plane_count; i++ ) {
         BOOST_CHECK( img->linesize( i ) == p->linesize[i] );
         BOOST_CHECK( img->pitch( i ) == p->pitch[i] );

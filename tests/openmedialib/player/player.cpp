@@ -315,7 +315,7 @@ void play( ml::input_type_ptr input )
 
 	printf("depth: %d\n", image->depth());
 	printf("count: %d\n", image->count());
-	printf("block_size: %d\n", image->block_size());
+	printf("block_size: %d\n", image->num_components());
 	printf("bitdepth: %d\n", image->bitdepth());
 
 	printf("is_cubemap: %s\n", image->is_flipped() ? "TRUE" : "FALSE");
