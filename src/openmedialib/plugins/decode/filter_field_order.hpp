@@ -31,8 +31,6 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame );
 
-		ml::image_type_ptr merge( ml::image_type_ptr image1, int scan1, ml::image_type_ptr image2, int scan2 );
-
 	private:
 		pl::pcos::property prop_order_;
 		ml::image_type_ptr previous_;
