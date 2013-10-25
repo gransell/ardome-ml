@@ -201,7 +201,7 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 	typename T::data_type gs = static_cast< typename T::data_type >( g << ( img->bitdepth( ) - 8 ) );
 	typename T::data_type bs = static_cast< typename T::data_type >( b << ( img->bitdepth( ) - 8 ) );
 
-	std::map< int, typename T::data_type > vals;
+	typename T::data_type vals[4];
 
 	// Determine order or R, G and B (RGB or BGR)
 	int order_r = ml::image::order_of_component( img->ml_pixel_format( ), 0 ); // R
@@ -226,14 +226,15 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 			while ( x -- )
 			{
 				// Skip one if alpha is before RGB
-				if (order_a == 0) 
+				int pos = 0;
+				if (order_a == 0) {
 					ptr++;
-
-				// Fill in RGB values
-				for( typename std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
-				{
-					*ptr ++ = (*ii).second;
+					pos++;
 				}
+
+				*ptr ++ = vals[ pos++ ];
+				*ptr ++ = vals[ pos++ ];
+				*ptr ++ = vals[ pos++ ];
 
 				// Add one if alpha is after RGB
 				if (order_a == 3)

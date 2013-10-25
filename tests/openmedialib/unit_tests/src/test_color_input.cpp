@@ -49,7 +49,7 @@ void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
     typename T::data_type gs = static_cast< typename T::data_type >( g << ( image->bitdepth( ) - 8 ) );
     typename T::data_type bs = static_cast< typename T::data_type >( b << ( image->bitdepth( ) - 8 ) );
 
-	std::map< int, typename T::data_type > vals;
+	typename T::data_type vals[4];
 
     // Determine order or R, G and B (RGB or BGR)
     int order_r = ml::image::order_of_component( image->ml_pixel_format( ), 0 ); // R
@@ -70,12 +70,15 @@ void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
 	for (int height = image->height( ); height > 0; height--) {
 		for (int width = image->width( ); width > 0; width--) {
 
-			if (order_a == 0) data++;
+			int pos = 0;
+			if (order_a == 0) {
+				data++;
+				pos++;
+			}
 
-			for( typename std::map<int,typename T::data_type>::iterator ii=vals.begin(); ii!=vals.end(); ++ii)
-			{
-				if ( *data ++ != (*ii).second ) {
-					BOOST_REQUIRE_MESSAGE( false, "Failed on component " << (*ii).first << " for pixfmt " << cl::str_util::to_string( image->pf( ) ));
+			for (int i = pos; i < pos + 3; i++) {
+				if ( *data ++ != vals[ i ] ) {
+					BOOST_REQUIRE_MESSAGE( false, "Failed on component " << i << " for pixfmt " << cl::str_util::to_string( image->pf( ) ));
 				}
 			}
 

@@ -38,6 +38,7 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 
 ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height )
 {
+	ARENFORCE_MSG( MLPixelFormatMap.find( pf ) != MLPixelFormatMap.end( ), "Invalid picture format");
 	return ml::image::allocate( MLPixelFormatMap[ pf ], width, height );
 }
 
