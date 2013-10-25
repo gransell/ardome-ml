@@ -649,7 +649,11 @@ class avformat_demux
 						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
 						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
 
-						/* Analyze prores stream */
+						/*  
+						 * The prores stream got incorrect pixelformat set.
+						 * The stream analyze function will look at the AVPacket
+						 * and correct the pixelformat ( codec->pix_fmt )
+						 *  */
 						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) {
 							prores_stream_analyze(&pkt_, codec);
 						}

@@ -27,6 +27,7 @@
 #include <boost/algorithm/string.hpp>
 
 extern "C" {
+#include <libavutil/intreadwrite.h>
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
@@ -58,6 +59,13 @@ extern void register_aml_aes3( );
 void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec )
 {
 	const uint8_t *buf = pkt->data;
+
+	int buf_size = pkt->size;
+
+	if( buf_size < 28 || buf_size < AV_RB32(buf) ) {
+		ARENFORCE_MSG( false, "Invalid size of frame" )( buf_size );
+	}
+
 	buf += 8; /* Move to frame header */
 
 	int chroma_factor = (buf[12] >> 6) & 3;
