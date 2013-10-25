@@ -260,7 +260,8 @@ ML_DECLSPEC bool is_pixfmt_alpha(  MLPixelFormat pf )
 
 ML_DECLSPEC int order_of_component( MLPixelFormat pf, int index ) 
 {
-	return utility_offset( ML_to_AV( pf ), index );
+	//utility_offset returns bytes, but we want the order as an index
+	return utility_offset( ML_to_AV( pf ), index ) / ( ( image_depth( pf ) + 7 ) / 8 );
 }
 
 } } } }
