@@ -19,7 +19,7 @@ filter_rescale::filter_rescale( )
 {
 	properties( ).append( prop_enable_ = 1 );
 	properties( ).append( prop_progressive_ = 1 );
-	properties( ).append( prop_interp_ = 0x10 ); //point sampling
+	properties( ).append( prop_interp_ = 2 ); //BILINEAR_SAMPLING
 	properties( ).append( prop_width_ = 640 );
 	properties( ).append( prop_height_ = 360 );
 	properties( ).append( prop_sar_num_ = 1 );
