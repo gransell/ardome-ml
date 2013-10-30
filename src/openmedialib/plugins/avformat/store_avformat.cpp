@@ -1523,7 +1523,21 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPicture input;
 				int width = image->width( );
 				int height = image->height( );
-				avpicture_fill( &input, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), oil_to_avformat( image->pf( ) ), width, height );
+
+				for( int i = 0; i < 4; i ++ )
+				{
+					if ( i < image->plane_count( ) )
+					{
+						input.data[ i ] = static_cast< boost::uint8_t * >( image->ptr( i ) );
+						input.linesize[ i ] = image->pitch( i );
+					}
+					else
+					{
+						input.data[ i ] = 0;
+						input.linesize[ i ] = 0;
+					}
+				}
+
 				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, oil_to_avformat( image->pf( ) ), SWS_BICUBIC, NULL, NULL, NULL );
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
