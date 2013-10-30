@@ -288,14 +288,23 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 
 	AVPicture output;
 	image = ml::image::allocate( format, width + even, height + even_h );
-    if ( image->bitdepth( ) == 8 ) {
-        boost::shared_ptr< ml::image::image_type_8 > image_type = ml::image::coerce< ml::image::image_type_8 >( image );
-        avpicture_fill( &output, image_type->data( ), dst_fmt, width + even, height + even_h );
-    } else if ( image->bitdepth( ) > 8 ) {
-        boost::shared_ptr< ml::image::image_type_16 > image_type = ml::image::coerce< ml::image::image_type_16 >( image );
-        avpicture_fill( &output, (uint8_t*)image_type->data( ), dst_fmt, width + even, height + even_h );
-    }
+
+	for( int i = 0; i < 4; i ++ )
+	{
+		if ( i < image->plane_count( ) )
+		{
+			output.data[ i ] = static_cast< boost::uint8_t * >( image->ptr( i ) );
+			output.linesize[ i ] = image->pitch( i );
+		}
+		else
+		{
+			output.data[ i ] = 0;
+			output.linesize[ i ] = 0;
+		}
+	}
+
 	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+
 	if ( img_convert_ != NULL )
 		sws_scale( img_convert_, frame->data, frame->linesize, 0, height + even_h, output.data, output.linesize );
 
