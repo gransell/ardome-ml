@@ -61,12 +61,15 @@ void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec )
 	const uint8_t *buf = pkt->data;
 
 	int buf_size = pkt->size;
-
-	if( buf_size < 28 || buf_size < AV_RB32(buf) ) {
-		ARENFORCE_MSG( false, "Invalid size of frame" )( buf_size );
-	}
+	int frame_size = AV_RB32(buf);
 
 	buf += 8; /* Move to frame header */
+
+	int hdr_size = AV_RB16( buf );
+
+	if( hdr_size < 28 || buf_size < frame_size ) {
+		ARENFORCE_MSG( false, "Invalid size of frame" )( buf_size )( hdr_size )( frame_size );
+	}
 
 	int chroma_factor = (buf[12] >> 6) & 3;
 	int alpha_info = buf[17] & 0xf;
