@@ -100,8 +100,8 @@ public:
         deinterlace_data_check(_CT("yuv422p16"), 1920, 1080);
         deinterlace_data_check(_CT("yuv444p16le"), 1920, 1080);
         
-        for (int width = 0; width <= 16; width++) {
-            for (int height = 0; height <= 16; height++) {
+        for (int width = 4; width <= 64; width += 4) {
+            for (int height = 2; height <= 32; height += 2 ) {
                 deinterlace_data_check(_CT("yuv444p"), width, height);
                 deinterlace_data_check(_CT("yuv422p"), width, height);
                 deinterlace_data_check(_CT("yuv420p"), width, height);

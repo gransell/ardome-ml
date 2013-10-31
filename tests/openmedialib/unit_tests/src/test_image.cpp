@@ -1,6 +1,7 @@
 #include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/image/image.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <set>
 
 namespace ml = olib::openmedialib::ml;
 
@@ -14,8 +15,8 @@ struct image_properties
 	int plane_count;
 	int num_components;
 	int linesize[4];
-	int pitch[4];
-	int offset[4];
+	int widths[4];
+	int heights[4];
 };
 
 void test_image_properties( ml::image_type_ptr img, image_properties *p )
@@ -25,40 +26,49 @@ void test_image_properties( ml::image_type_ptr img, image_properties *p )
     BOOST_CHECK( img->height( ) == p->height );
     BOOST_CHECK( img->bitdepth( ) == p->bitdepth );
     BOOST_CHECK( img->plane_count( ) == p->plane_count );
-    BOOST_CHECK( img->num_components( ) == p->num_components );	
+    BOOST_CHECK( img->num_components( ) == p->num_components );    
+    std::set< int > offsets;
     for ( int i = 0; i < p->plane_count; i++ ) {
         BOOST_CHECK( img->linesize( i ) == p->linesize[i] );
-        BOOST_CHECK( img->pitch( i ) == p->pitch[i] );
-        BOOST_CHECK( img->offset( i ) == p->offset[i] );
+        BOOST_CHECK( img->width( i ) == p->widths[i] );
+        BOOST_CHECK( img->height( i ) == p->heights[i] );
+        BOOST_CHECK( img->pitch( i ) >= img->linesize( i ) );
+        BOOST_CHECK( img->pitch( i ) % ml::image::alignment( ) == 0 );
+        offsets.insert( img->offset( i ) );
+        int offset_min = img->offset( i );
+        int offset_max = offset_min + img->height( i ) * img->pitch( i );
+        BOOST_CHECK( offset_min >= 0 );
+        BOOST_CHECK( offset_max <= img->size( ) );
     }
+    BOOST_CHECK( int( offsets.size( ) ) == p->plane_count );
 }
 
 BOOST_AUTO_TEST_CASE( allocate )
 {
 	/*
-	image properties: WIDTH, HEIGHT, BITDEPTH, PLANE_COUNT, BLOCK_SIZE, [ LINESIZE ] , [ PITCH ], [ OFFSET ]
+	image properties: WIDTH, HEIGHT, BITDEPTH, PLANE_COUNT, BLOCK_SIZE, [ LINESIZE ] , [ WIDTHS ], [ HEIGHTS ]
 	*/
-	image_properties r8g8b8_137_791 = { 137, 791, 8, 1, 3, { 411 }, { 411 }, { 0 } };
+	image_properties r8g8b8_137_791 = { 137, 791, 8, 1, 3, { 411 }, { 137 }, { 791 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_R8G8B8, 137, 791 ), &r8g8b8_137_791 );
 
 	// RGB
-	image_properties r8g8b8_1920_1080 = { 1920, 1080, 8, 1, 3, { 5760 }, { 5760 }, { 0 } };
+	image_properties r8g8b8_1920_1080 = { 1920, 1080, 8, 1, 3, { 5760 }, { 1920 }, { 1080 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_R8G8B8, 1920, 1080 ), &r8g8b8_1920_1080 );
 	
 	// YUV420P
-	image_properties yuv420p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 2592000 } };
+	image_properties yuv420p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 1080, 540, 540 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 1920, 1080 ), &yuv420p_1920_1080 );
 
 	// YUVA420P
-	image_properties yuva420p_1920_1080 = { 1920, 1080, 8, 4, 4, { 1920, 960, 960, 1920 }, { 1920, 960, 960, 1920 }, { 0, 2073600, 2592000, 3110400 } };
+	image_properties yuva420p_1920_1080 = { 1920, 1080, 8, 4, 4, { 1920, 960, 960, 1920 }, { 1920, 960, 960, 1920 }, { 1080, 540, 540, 1080 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUVA420P, 1920, 1080 ), &yuva420p_1920_1080 );
 	
 	// YUV422P
-	image_properties yuv422p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 0, 2073600, 3110400 } };
+	image_properties yuv422p_1920_1080 = { 1920, 1080, 8, 3, 3, { 1920, 960, 960 }, { 1920, 960, 960 }, { 1080, 1080, 1080 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P, 1920, 1080 ), &yuv422p_1920_1080 );
 
 	// YUV422P10LE
-	image_properties yuv422p10le_1920_1080 = { 1920, 1080, 10, 3, 3, { 3840, 1920, 1920 }, { 3840, 1920, 1920 }, { 0, 4147200, 6220800 } };
+	image_properties yuv422p10le_1920_1080 = { 1920, 1080, 10, 3, 3, { 3840, 1920, 1920 }, { 1920, 960, 960 }, { 1080, 1080, 1080 } };
 	test_image_properties( ml::image::allocate( ml::image::ML_PIX_FMT_YUV422P10LE, 1920, 1080 ), &yuv422p10le_1920_1080 );
 }
 

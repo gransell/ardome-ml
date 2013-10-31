@@ -144,17 +144,15 @@ bool is_pixfmt_alpha( int pixfmt )
     return desc->flags & AV_PIX_FMT_FLAG_ALPHA ? true : false;
 }
 
-template<typename T>
 AVPicture fill_picture( ml::image_type_ptr image )
 {
     AVPicture picture;
-    boost::shared_ptr< T > image_type = ml::image::coerce< T >( image );
 
     for ( int i = 0; i < AV_NUM_DATA_POINTERS; i ++ )
     {
         if ( i < image->plane_count( ) )
         {
-            picture.data[ i ] = (boost::uint8_t*)image_type->data( i );
+            picture.data[ i ] = ( boost::uint8_t * )image->ptr( i );
             picture.linesize[ i ] = image->pitch( i );
         }
         else
@@ -169,18 +167,8 @@ AVPicture fill_picture( ml::image_type_ptr image )
 
 int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags = SWS_BICUBIC )
 {
-    AVPicture input;
-    AVPicture output;
-
-	if (src->bitdepth( ) > 8 )
-		input = fill_picture< ml::image::image_type_16 >( src );
-	else
-		input = fill_picture< ml::image::image_type_8 >( src );
-
-	if (dst->bitdepth( ) > 8 )
-		output = fill_picture< ml::image::image_type_16 >( dst );
-	else
-		output = fill_picture< ml::image::image_type_8 >( dst );
+    AVPicture input = fill_picture( src );
+    AVPicture output = fill_picture( dst );
 
     ARENFORCE( sws_isSupportedInput( static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ) ) );
     ARENFORCE( sws_isSupportedOutput( static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ) ) );

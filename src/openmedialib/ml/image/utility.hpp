@@ -10,6 +10,10 @@
 #include <openmedialib/ml/image/image_interface.hpp>
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
+inline int alignment( )
+{
+	return 32;
+}
 
 inline image_type_ptr conform( image_type_ptr image, int flags )
 {

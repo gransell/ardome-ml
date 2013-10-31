@@ -34,6 +34,7 @@ public:
 	, sar_num_( -1 )
 	, sar_den_( 1 )
 	, field_order_( progressive )
+	, size_( 0 )
 	{
 		AVpixfmt_ = ML_to_AV(MLpixfmt_);
 		ARENFORCE(AVpixfmt_ != -1);
@@ -53,6 +54,7 @@ private:
 	, sar_den_ ( 1 )
 	, field_order_( other.field_order( ) )
 	, AVpixfmt_ ( other.av_pixel_format( ) )
+	, size_( 0 )
 	{
 		allocate( );
 
@@ -202,7 +204,7 @@ public:
 		return is_pixfmt_planar( AVpixfmt_ );
 	}
 
-	int size( ) const { return utility_avpicture_get_size(AVpixfmt_, width_,height_); }
+	int size( ) const { return size_; }
 
 	// Crop an image
 	bool crop( int x, int y, int w, int h, bool crop = true )
@@ -285,6 +287,7 @@ private:
 	int AVpixfmt_;
 	planes planes_;
 	planes crop_;
+	int size_;
 
 	 // Get the requested plane
 	inline const plane *get_plane( size_t index, bool crop ) const
@@ -356,18 +359,13 @@ private:
 
 protected:
 
-	int alignment( ) const
-	{
-		return 32;
-	}
-
 	void allocate( )
 	{
 		int pic_linesize[ 4 ];
 
-		int error = utility_av_image_alloc( pic_data_, pic_linesize, width_, height_, AVpixfmt_, alignment( ) );
+		size_ = utility_av_image_alloc( pic_data_, pic_linesize, width_, height_, AVpixfmt_, alignment( ) );
 
-		ARENFORCE_MSG( error >= 0, "Unable to alloctate %1% at %2% x %3%" )( AVpixfmt_ )( width_ )( height_ );
+		ARENFORCE_MSG( size_ >= 0, "Unable to alloctate %1% at %2% x %3%" )( AVpixfmt_ )( width_ )( height_ );
 
 		utility_av_pix_fmt_get_chroma_sub_sample( AVpixfmt_, &chroma_w_, &chroma_h_ );
 
