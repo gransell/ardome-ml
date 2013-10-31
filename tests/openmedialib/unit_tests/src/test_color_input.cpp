@@ -20,10 +20,6 @@ void check_yuv_image_data( ml::image_type_ptr image, int r, int g, int b )
 	typename T::data_type u_shifted = static_cast< typename T::data_type >( u << ( image->bitdepth( ) - 8 ) );
 	typename T::data_type v_shifted = static_cast< typename T::data_type >( v << ( image->bitdepth( ) - 8 ) );
 
-	typename T::data_type *y_plane = (typename T::data_type*)image->ptr( 0 );
-	typename T::data_type *u_plane = (typename T::data_type*)image->ptr( 1 );
-	typename T::data_type *v_plane = (typename T::data_type*)image->ptr( 2 );
-
 	typename T::data_type planedata[3] = { y_shifted, u_shifted, v_shifted };
 
 	for( int i = 0; i < 3; i++)

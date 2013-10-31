@@ -7,7 +7,7 @@
 #include <opencorelib/cl/str_util.hpp>
 #include <opencorelib/cl/jobbase.hpp>
 #include <opencorelib/cl/worker.hpp>
-#include "mocks/mock_input.hpp"
+#include "../mocks/mock_input.hpp"
 
 using namespace olib::openmedialib::ml;
 using namespace olib::openmedialib::ml::unittest;

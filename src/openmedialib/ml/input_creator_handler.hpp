@@ -81,7 +81,7 @@ public:
 		creators_.erase( identifier );
 	}
     
-    template <typename T> friend class Loki::CreateUsingNew;
+    template <typename T> friend struct Loki::CreateUsingNew;
     
 private:
     input_creator_handler( )

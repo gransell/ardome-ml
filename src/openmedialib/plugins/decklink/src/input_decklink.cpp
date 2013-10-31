@@ -45,8 +45,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 {
 	public:
 		DeckLinkCaptureDelegate( )
-		: ref_count_( 0 )
-		, frame_count_( 0 )
+		: frame_count_( 0 )
 		, fps_num_( 0 )
 		, fps_den_( 0 )
 		, width_( 0 )
@@ -193,7 +192,6 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 	private:
 		ml::lru_frame_type lru_;
 		ml::image_type_ptr last_image_;
-		ULONG ref_count_;
 		int frame_count_;
 		int fps_num_;
 		int fps_den_;
