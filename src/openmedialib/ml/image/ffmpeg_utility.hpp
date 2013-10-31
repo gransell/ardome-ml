@@ -18,7 +18,7 @@ void utility_av_free( void *buf );
 int utility_plane_count( int pixfmt );
 int utility_bitdepth( int pixfmt, int index );
 int utility_nb_components( int pixfmt );
-int utility_av_image_alloc( uint8_t *pointers[4], int linesizes[4], int w, int h, int pix_fmt, int align );
+int utility_av_image_alloc( boost::uint8_t *pointers[4], int linesizes[4], int w, int h, int pix_fmt, int align );
 int utility_offset( int pixfmt, int index );
 
 bool is_pixfmt_rgb( int pixfmt );

@@ -55,7 +55,7 @@ int utility_nb_components( int pixfmt )
     return desc->nb_components;
 }
 
-int utility_av_image_alloc( uint8_t *pointers[4], int linesizes[4], int w, int h, int pix_fmt, int align )
+int utility_av_image_alloc( boost::uint8_t *pointers[4], int linesizes[4], int w, int h, int pix_fmt, int align )
 {
 	return av_image_alloc( pointers, linesizes, w, h, AVPixelFormat( pix_fmt ), align );
 }
