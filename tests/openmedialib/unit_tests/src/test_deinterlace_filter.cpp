@@ -96,9 +96,7 @@ public:
         deinterlace_data_check(_CT("yuv411p"), 1920, 1080);
         deinterlace_data_check(_CT("yuv420p10"), 1920, 1080);
         deinterlace_data_check(_CT("yuv420p16"), 1920, 1080);
-        deinterlace_data_check(_CT("yuv422p10le"), 1920, 1080);
         deinterlace_data_check(_CT("yuv422p16"), 1920, 1080);
-        deinterlace_data_check(_CT("yuv444p16le"), 1920, 1080);
         
         for (int width = 4; width <= 64; width += 4) {
             for (int height = 2; height <= 32; height += 2 ) {
@@ -108,9 +106,7 @@ public:
                 deinterlace_data_check(_CT("yuv411p"), width, height);
                 deinterlace_data_check(_CT("yuv420p10"), width, height);
                 deinterlace_data_check(_CT("yuv420p16"), width, height);
-                deinterlace_data_check(_CT("yuv422p10le"), width, height);
                 deinterlace_data_check(_CT("yuv422p16"), width, height);
-                deinterlace_data_check(_CT("yuv444p16le"), width, height);
             }
         }
         
