@@ -22,7 +22,7 @@ namespace olib { namespace openmedialib { namespace ml { namespace image {
 
 ML_DECLSPEC int image_depth ( MLPixelFormat pf ) 
 {
-	//XXX Pixfmts with different bitdepth for dirrerent components do exist
+	//XXX Pixfmts with different bitdepth for different components do exist
 	return utility_bitdepth( ML_to_AV( pf ), 0 ); 
 }
 
@@ -38,8 +38,10 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 
 ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height )
 {
-	ARENFORCE_MSG( MLPixelFormatMap.find( pf ) != MLPixelFormatMap.end( ), "Invalid picture format");
-	return ml::image::allocate( MLPixelFormatMap[ pf ], width, height );
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
+	if ( i == MLPixelFormatMap.end() )
+		ARENFORCE_MSG( false, "Invalid picture format");
+	return ml::image::allocate( i->second, width, height );
 }
 
 ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
@@ -55,9 +57,12 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelForm
 	return dst;
 }
 
-ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string pf )
+ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf )
 {
-	return convert( src, MLPixelFormatMap[ pf ] );
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
+	if ( i == MLPixelFormatMap.end() )
+		return image_type_ptr( );
+	return convert( src,  i->second );
 }
 
 image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
@@ -127,7 +132,7 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
     if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
         result = extract_alpha< ml::image::image_type_8, ML_PIX_FMT_L8 >( im );
     else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
-        result = extract_alpha< ml::image::image_type_16, ML_PIX_FMT_L16 >( im );
+        result = extract_alpha< ml::image::image_type_16, ML_PIX_FMT_L16LE >( im );
 	return result;
 }
 

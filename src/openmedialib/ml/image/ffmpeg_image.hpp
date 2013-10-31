@@ -23,6 +23,7 @@ public:
 
 	ffmpeg_image ( MLPixelFormat MLpixfmt, int w, int h )
 	: MLpixfmt_ ( MLpixfmt )
+	, AVpixfmt_( ML_to_AV( MLpixfmt ) )
 	, cx_( 0 )
 	, cy_( 0 )
 	, cw_( w )
@@ -36,7 +37,6 @@ public:
 	, field_order_( progressive )
 	, size_( 0 )
 	{
-		AVpixfmt_ = ML_to_AV(MLpixfmt_);
 		ARENFORCE(AVpixfmt_ != -1);
 		allocate( );
 		crop_clear( );
@@ -46,6 +46,7 @@ public:
 private:
 	ffmpeg_image( ffmpeg_image& other, int flags )
 	: MLpixfmt_ ( other.ml_pixel_format( ) )
+	, AVpixfmt_ ( other.av_pixel_format( ) )
 	, width_ ( other.width( 0, flags & cropped ) )
 	, height_ ( other.height( 0, flags & cropped ) )
 	, writable_ ( true )
@@ -53,7 +54,6 @@ private:
 	, sar_num_ ( -1 )
 	, sar_den_ ( 1 )
 	, field_order_( other.field_order( ) )
-	, AVpixfmt_ ( other.av_pixel_format( ) )
 	, size_( 0 )
 	{
 		allocate( );
@@ -265,6 +265,7 @@ public:
 
 private:
 	MLPixelFormat MLpixfmt_;
+	int AVpixfmt_;
 
 	uint8_t *pic_data_[ 4 ];
 
@@ -284,7 +285,6 @@ private:
 	int sar_den_;
 
 	field_order_flags field_order_;
-	int AVpixfmt_;
 	planes planes_;
 	planes crop_;
 	int size_;
@@ -314,8 +314,6 @@ private:
 	{
 		if ( is_pixfmt_rgb( AVpixfmt_ ) )
 			crop_planes_rgb( crop, x, y, w, h, flags );
-		else if (MLpixfmt_ == ML_PIX_FMT_UYYVYY411)
-			crop_planes_411_packed( crop, x, y, w, h, flags );
 		else
 			crop_planes_yuv( crop, x, y, w, h, flags );
 
@@ -344,17 +342,6 @@ private:
 			p.offset += ( x >> shift_x );
 			p.offset = offset( i, false ) + p.offset;
 		}
-	}
-
-	virtual void crop_planes_411_packed( planes &crop, int &x, int &y, int &w, int &h, int flags )
-	{
-		plane &p = crop[ 0 ];
-		p.width = w;
-		p.height = h;
-		p.linesize = w * 3 / 2;
-
-		p.offset = p.pitch * y;
-		p.offset += x * 3 / 2;
 	}
 
 protected:

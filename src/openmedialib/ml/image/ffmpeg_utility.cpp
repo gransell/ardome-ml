@@ -70,32 +70,26 @@ int ML_to_AV( MLPixelFormat pixfmt )
 {
 	if (pixfmt == ML_PIX_FMT_YUV420P )
 		return (int)AV_PIX_FMT_YUV420P;
-    else if (pixfmt == ML_PIX_FMT_YUV420P10 )
-		return (int)AV_PIX_FMT_YUV420P10;
-    else if (pixfmt == ML_PIX_FMT_YUV420P16 )
-		return (int)AV_PIX_FMT_YUV420P16;
+    else if (pixfmt == ML_PIX_FMT_YUV420P10LE )
+		return (int)AV_PIX_FMT_YUV420P10LE;
+    else if (pixfmt == ML_PIX_FMT_YUV420P16LE )
+		return (int)AV_PIX_FMT_YUV420P16LE;
 	else if (pixfmt == ML_PIX_FMT_YUVA420P )
 		return (int)AV_PIX_FMT_YUVA420P;
-	else if (pixfmt == ML_PIX_FMT_YUV411 )
-		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_YUV411P )
 		return (int)AV_PIX_FMT_YUV411P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P )
 		return (int)AV_PIX_FMT_YUV422P;
 	else if (pixfmt == ML_PIX_FMT_YUV422P10LE )
 		return (int)AV_PIX_FMT_YUV422P10LE;
-	else if (pixfmt == ML_PIX_FMT_YUV422P10 )
-		return (int)AV_PIX_FMT_YUV422P10;
-	else if (pixfmt == ML_PIX_FMT_YUV422P16 )
-		return (int)AV_PIX_FMT_YUV422P16;
+	else if (pixfmt == ML_PIX_FMT_YUV422P16LE )
+		return (int)AV_PIX_FMT_YUV422P16LE;
 	else if (pixfmt == ML_PIX_FMT_YUV422 )
 		return (int)AV_PIX_FMT_YUYV422;
 	else if (pixfmt == ML_PIX_FMT_UYV422 )
 		return (int)AV_PIX_FMT_UYVY422;
 	else if (pixfmt == ML_PIX_FMT_YUV444P )
 		return (int)AV_PIX_FMT_YUV444P;
-	else if (pixfmt == ML_PIX_FMT_UYYVYY411 )
-		return (int)AV_PIX_FMT_UYYVYY411;
 	else if (pixfmt == ML_PIX_FMT_YUV444P16LE)
 		return (int)AV_PIX_FMT_YUV444P16LE;
 	else if (pixfmt == ML_PIX_FMT_YUVA444P)
@@ -104,10 +98,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_YUVA444P16LE;
 	else if (pixfmt == ML_PIX_FMT_L8 )
 		return (int)AV_PIX_FMT_GRAY8;
-	else if (pixfmt == ML_PIX_FMT_L8A8 )
-		return (int)AV_PIX_FMT_GRAY8A;
-	else if (pixfmt == ML_PIX_FMT_L16 )
-		return (int)AV_PIX_FMT_GRAY16;
+	else if (pixfmt == ML_PIX_FMT_L16LE )
+		return (int)AV_PIX_FMT_GRAY16LE;
 	else if (pixfmt == ML_PIX_FMT_R8G8B8 )
 		return (int)AV_PIX_FMT_RGB24;
 	else if (pixfmt == ML_PIX_FMT_B8G8R8 )
@@ -120,8 +112,8 @@ int ML_to_AV( MLPixelFormat pixfmt )
 		return (int)AV_PIX_FMT_ABGR;
 	else if (pixfmt == ML_PIX_FMT_A8R8G8B8 )
 		return (int)AV_PIX_FMT_ARGB;
-	else if (pixfmt == ML_PIX_FMT_R10G10B10 )
-		return (int)AV_PIX_FMT_RGB48;
+	else if (pixfmt == ML_PIX_FMT_R16G16B16LE )
+		return (int)AV_PIX_FMT_RGB48LE;
 
 	return (int)AV_PIX_FMT_NONE;
 }
@@ -167,6 +159,26 @@ AVPicture fill_picture( ml::image_type_ptr image )
 
 int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags = SWS_BICUBIC )
 {
+    
+	// sws_scale segfaults on ML_PIX_FMT_YUV422P10 -> RGB conversions.
+	// Do an intermediate conversion first if this conversion is requested
+	if ( ( src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV422P10LE  ||
+		   src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV420P10LE ) &&
+		 is_pixfmt_rgb( ML_to_AV( dst->ml_pixel_format( ) ) ) )
+	{
+		ml::image::MLPixelFormat new_src_pf = ml::image::ML_PIX_FMT_YUV422P16LE;
+
+		if (src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV420P10LE )
+		{
+			new_src_pf = ml::image::ML_PIX_FMT_YUV420P16LE;
+		}
+
+		ml::image_type_ptr new_src( new ffmpeg_image<boost::uint16_t>(new_src_pf, src->width( ), src->height( ) ) );
+
+		sws_scale_ffmpeg_image( src, new_src, flags );
+		src = new_src;
+	}
+	
     AVPicture input = fill_picture( src );
     AVPicture output = fill_picture( dst );
 
@@ -187,13 +199,16 @@ int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int 
 
     ARENFORCE( img_convert != NULL );
 
-    return sws_scale( img_convert,
+    int retval = sws_scale( img_convert,
         input.data,
         input.linesize,
         0,
         src->height( ),
         output.data,
         output.linesize );
+    
+    sws_freeContext( img_convert );
+    return retval;
 }
 
 ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst )

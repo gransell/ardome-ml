@@ -28,7 +28,7 @@ extern ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width,
 extern ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img );
 
 extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf );
-extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string pf );
+extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf );
 
 
 enum ML_DECLSPEC rescale_filter { POINT_SAMPLING = 0x10, BILINEAR_SAMPLING = 2, BICUBIC_SAMPLING = 4 };
