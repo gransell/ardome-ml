@@ -92,10 +92,8 @@ template< typename T > class ML_DECLSPEC ffmpeg_image;
 
 typedef ML_DECLSPEC ffmpeg_image<boost::uint8_t>		image_type_8;
 typedef ML_DECLSPEC ffmpeg_image<boost::uint16_t>		image_type_16;
-typedef ML_DECLSPEC ffmpeg_image<boost::uint32_t>		image_type_float;
 typedef ML_DECLSPEC boost::shared_ptr<image_type_8>		image_type_8_ptr;
 typedef ML_DECLSPEC boost::shared_ptr<image_type_16>	image_type_16_ptr;
-typedef ML_DECLSPEC boost::shared_ptr<image_type_float>	image_type_float_ptr;
 
 } } } }
 

@@ -159,26 +159,6 @@ AVPicture fill_picture( ml::image_type_ptr image )
 
 int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags = SWS_BICUBIC )
 {
-    
-	// sws_scale segfaults on ML_PIX_FMT_YUV422P10 -> RGB conversions.
-	// Do an intermediate conversion first if this conversion is requested
-	if ( ( src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV422P10LE  ||
-		   src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV420P10LE ) &&
-		 is_pixfmt_rgb( ML_to_AV( dst->ml_pixel_format( ) ) ) )
-	{
-		ml::image::MLPixelFormat new_src_pf = ml::image::ML_PIX_FMT_YUV422P16LE;
-
-		if (src->ml_pixel_format( ) == ml::image::ML_PIX_FMT_YUV420P10LE )
-		{
-			new_src_pf = ml::image::ML_PIX_FMT_YUV420P16LE;
-		}
-
-		ml::image_type_ptr new_src( new ffmpeg_image<boost::uint16_t>(new_src_pf, src->width( ), src->height( ) ) );
-
-		sws_scale_ffmpeg_image( src, new_src, flags );
-		src = new_src;
-	}
-	
     AVPicture input = fill_picture( src );
     AVPicture output = fill_picture( dst );
 

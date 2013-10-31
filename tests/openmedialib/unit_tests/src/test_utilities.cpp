@@ -183,11 +183,8 @@ ml::image_type_ptr allocate_image( ml::image::MLPixelFormat pf, int width, int h
 	ml::image_type_ptr return_image = ml::image::allocate( pf, width, height );
 	BOOST_REQUIRE( return_image );
     
-    for (int i = 0; i < return_image->plane_count(); ++i)
-    {
-        std::memset( static_cast<boost::uint8_t*>(return_image->ptr()) + return_image->offset( i ), 0xCC, return_image->pitch( i ) );
-    }
-
+	std::memset( static_cast<boost::uint8_t*>(return_image->ptr()), 0x0, return_image->size( ) );
+	
 	test_image( return_image, pf, width, height );
 	
 	return return_image;
