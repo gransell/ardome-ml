@@ -25,7 +25,7 @@ bool is_pixfmt_rgb( int pixfmt );
 bool is_pixfmt_planar( int pixfmt );
 bool is_pixfmt_alpha( int pixfmt );
 
-int ML_to_AV( MLPixelFormat pixfmt );
+ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt );
 
 // Fill an AVPicture with a potentially cropped aml image
 ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst );

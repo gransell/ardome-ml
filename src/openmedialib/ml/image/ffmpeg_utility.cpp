@@ -66,7 +66,7 @@ int utility_offset( int pixfmt, int index )
     return desc->comp[index].offset_plus1 - 1;
 }
 
-int ML_to_AV( MLPixelFormat pixfmt )
+ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt )
 {
 	if (pixfmt == ML_PIX_FMT_YUV420P )
 		return (int)AV_PIX_FMT_YUV420P;

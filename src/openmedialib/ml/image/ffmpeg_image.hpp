@@ -267,7 +267,7 @@ private:
 	MLPixelFormat MLpixfmt_;
 	int AVpixfmt_;
 
-	uint8_t *pic_data_[ 4 ];
+	boost::uint8_t *pic_data_[ 4 ];
 
 	int cx_;
 	int cy_;
