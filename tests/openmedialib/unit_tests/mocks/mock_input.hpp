@@ -44,7 +44,7 @@ public:
 	virtual void seek( const int pos, const bool relative )
 	{
 		//Relative seek not implemented
-		BOOST_REQUIRE( !relative );
+		ARENFORCE( !relative );
 		m_get_position = pos;
 	}
 	virtual void do_fetch( frame_type_ptr & frame )
