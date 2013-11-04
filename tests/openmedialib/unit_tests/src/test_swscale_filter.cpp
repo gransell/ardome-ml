@@ -13,7 +13,7 @@ using namespace olib::opencorelib::str_util;
 
 BOOST_AUTO_TEST_SUITE( test_swscale_filter )
 
-static std::vector< olib::t_string > pixel_formats;
+static std::vector< std::wstring > pixel_formats;
 
 enum image_side
 {
@@ -26,19 +26,19 @@ enum image_side
 void intialize_test_environment()
 {
 	// these are taken from create_corrections() function in filter_swscale.cpp. 
-	pixel_formats.push_back( _CT("r8g8b8") );
-	pixel_formats.push_back( _CT("r8g8b8a8") );
-	pixel_formats.push_back( _CT("b8g8r8") );
-	pixel_formats.push_back( _CT("b8g8r8a8") );
-	pixel_formats.push_back( _CT("yuv444p") );
-	pixel_formats.push_back( _CT("yuv422p") );
-	pixel_formats.push_back( _CT("yuv422") );
-	pixel_formats.push_back( _CT("yuv411p") );
-	pixel_formats.push_back( _CT("yuv420p") );
-	pixel_formats.push_back( _CT("uyv422") );
+	pixel_formats.push_back( L"r8g8b8" );
+	pixel_formats.push_back( L"r8g8b8a8" );
+	pixel_formats.push_back( L"b8g8r8" );
+	pixel_formats.push_back( L"b8g8r8a8" );
+	pixel_formats.push_back( L"yuv444p" );
+	pixel_formats.push_back( L"yuv422p" );
+	pixel_formats.push_back( L"yuv422" );
+	pixel_formats.push_back( L"yuv411p" );
+	pixel_formats.push_back( L"yuv420p" );
+	pixel_formats.push_back( L"uyv422" );
 }
 
-input_type_ptr create_input_with_params( olib::t_string format )
+input_type_ptr create_input_with_params( std::wstring format )
 {
 	input_type_ptr colour = create_input( L"colour:" );
 	BOOST_REQUIRE( colour );

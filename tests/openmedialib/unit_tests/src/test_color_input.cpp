@@ -83,7 +83,7 @@ void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
 	}
 }
 
-void test_colourspace( olib::t_string colourspace ) 
+void test_colourspace( std::wstring colourspace ) 
 {
 
 	int r, g, b;
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE( create_colour_input_for_all_supported_pixelformats )
 	{
 		if ( ml::image::is_pixfmt_planar( it->second ) || ml::image::is_pixfmt_rgb( it->second ) ) 
 		{
-			test_colourspace( it->first );
+			test_colourspace( cl::str_util::to_wstring( it->first ) );
 		}
 	}
 }

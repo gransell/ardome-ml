@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( frame_list_filter )
 
 		BOOST_REQUIRE(color_input );
 
-		color_input->property( "colourspace" ) = olib::t_string( _CT("r8g8b8") );
+		color_input->property( "colourspace" ) = std::wstring( L"r8g8b8" );
 		color_input->property( "out" ) = 1;
 
 		color_input->property( "r" ) = internal_create_redvalue_from_int( i );

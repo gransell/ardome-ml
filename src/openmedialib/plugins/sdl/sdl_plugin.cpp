@@ -52,6 +52,7 @@
 namespace pl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ml = olib::openmedialib::ml;
+namespace cl = olib::opencorelib;
 
 
 namespace olib { namespace openmedialib { namespace ml { 
@@ -141,9 +142,9 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv422") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv422") );
 #else
-			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv420p") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv420p") );
 #endif
 		}
 
@@ -242,7 +243,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			}
 
 			// Convert to requested colour space
-			img = ml::image::convert( img, prop_pf_.value< olib::t_string >( ).c_str( ) );
+			img = ml::image::convert( img, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
 			last_image_ = img;
 			frame->get_sar( last_sar_num_, last_sar_den_ );
 
@@ -503,8 +504,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		Uint32 get_format( )
 		{
-			olib::t_string pf = prop_pf_.value< olib::t_string >( ).c_str( );
-			if ( pf == _CT("yuv422") )
+			std::wstring pf = prop_pf_.value< std::wstring >( );
+			if ( pf == L"yuv422" )
 				return SDL_YUY2_OVERLAY;
 			return SDL_YV12_OVERLAY;
 		}

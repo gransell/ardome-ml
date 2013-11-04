@@ -83,7 +83,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			, offset_( 0 )
 			, parsed_( false )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( _CT("yuv422") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv422" ) );
 			properties( ).append( prop_width_ = 1920 );
 			properties( ).append( prop_height_ = 1080 );
 			properties( ).append( prop_fps_num_ = 25 );
@@ -139,7 +139,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 				while( !str.eof( ) )
 				{
 					str >> token;
-					if ( token.find( "pf=" ) == 0 ) prop_pf_ = cl::str_util::to_t_string( token.substr( 3 ) );
+					if ( token.find( "pf=" ) == 0 ) prop_pf_ = cl::str_util::to_wstring( token.substr( 3 ) );
 					else if ( token.find( "width=" ) == 0 ) prop_width_ = boost::lexical_cast< int >( token.substr( 6 ) );
 					else if ( token.find( "height=" ) == 0 ) prop_height_ = boost::lexical_cast< int >( token.substr( 7 ) );
 					else if ( token.find( "sar_num=" ) == 0 ) prop_sar_num_ = boost::lexical_cast< int >( token.substr( 8 ) );
@@ -156,8 +156,8 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
 
-			ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< olib::t_string >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
-			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< olib::t_string >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
+			ml::image_type_ptr image = ml::image::allocate( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
+			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< std::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
 			int pad = prop_pad_.value< int >( );
@@ -207,7 +207,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			// Generate an image
 			int width = prop_width_.value< int >( );
 			int height = prop_height_.value< int >( );
-			ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< olib::t_string >( ), width, height );
+			ml::image_type_ptr image = ml::image::allocate( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ), width, height );
 			image->set_field_order( static_cast< ml::image::field_order_flags >( prop_field_order_.value < int >( ) ) );
 			bool error = false;
 

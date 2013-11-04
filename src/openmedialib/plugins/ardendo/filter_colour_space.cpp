@@ -31,7 +31,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 			, ro_ ( ml::rescale_object_ptr( new ml::image::rescale_object( ) ) )
 		{
-			properties( ).append( prop_pf_ = olib::t_string( _CT("r8g8b8a8") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"r8g8b8a8") );
 			
 		}
 
@@ -49,7 +49,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			result = fetch_from_slot( );
 
 			// Handle the frame with image case
-			if ( result && result->get_image( ) && ( olib::t_string( result->get_image( )->pf( ) ) != prop_pf_.value< olib::t_string >( ) ) )
+			if ( result && result->get_image( ) && ( result->get_image( )->pf( ) != cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) ) )
 				change_colour_space( result );
 		}
 
@@ -58,7 +58,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 		// Change the colour space to the requested
 		void change_colour_space( ml::frame_type_ptr & result )
 		{
-			result = frame_convert( ro_, result, prop_pf_.value< olib::t_string >( ).c_str( ) );
+			result = frame_convert( ro_, result, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
 		}
 
 		pcos::property prop_pf_;

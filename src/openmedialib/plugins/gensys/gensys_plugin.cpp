@@ -293,7 +293,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			, prop_background_( pcos::key::from_string( "background" ) )
 		{
 			// Default to a black PAL video
-			properties( ).append( prop_colourspace_ = t_string( _CT("yuv420p") ) );
+			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
 			properties( ).append( prop_r_ = 0x00 );
 			properties( ).append( prop_g_ = 0x00 );
 			properties( ).append( prop_b_ = 0x00 );
@@ -362,7 +362,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			// Create and populate the image
 			if ( prop_deferred_.value< int >( ) == 0 )
 			{
-				image = ml::image::allocate( prop_colourspace_.value< t_string >( ).c_str(), get_width( ), get_height( ) );
+				image = ml::image::allocate( cl::str_util::to_t_string( prop_colourspace_.value< std::wstring >( ) ), get_width( ), get_height( ) );
 				if ( image )
 				{
 					image->set_writable( true );
@@ -385,7 +385,7 @@ class ML_PLUGIN_DECLSPEC colour_input : public input_type
 			{
 				if ( deferred_image_ == 0 || deferred_image_->width( ) != get_width( ) || deferred_image_->height( ) != get_height( ) )
 				{
-					deferred_image_ = ml::image::allocate( prop_colourspace_.value< t_string >( ).c_str(), get_width( ), get_height( ) );
+					deferred_image_ = ml::image::allocate( cl::str_util::to_t_string( prop_colourspace_.value< std::wstring >( ) ), get_width( ), get_height( ) );
 					if ( deferred_image_ )
 					{
 						deferred_image_->set_writable( false );
@@ -670,7 +670,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 			properties( ).append( prop_audio_ = 1 );
 			properties( ).append( prop_frequency_ = 48000 );
 			properties( ).append( prop_channels_ = 2 );
-			properties( ).append( prop_pf_ = t_string( _CT("yuv420p") ) );
+			properties( ).append( prop_pf_ = std::wstring( L"yuv420p" ) );
 			properties( ).append( prop_default_ = std::wstring( L"" ) );
 		}
 
@@ -796,7 +796,7 @@ class ML_PLUGIN_DECLSPEC conform_filter : public filter_simple
 
 			if ( !result->has_image( ) )
 			{
-				ml::image_type_ptr image = ml::image::allocate( prop_pf_.value< t_string >( ).c_str( ), 720, 576 );
+				ml::image_type_ptr image = ml::image::allocate( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ), 720, 576 );
 				fill( image, 0, ( unsigned char )16 );
 				fill( image, 1, ( unsigned char )128 );
 				fill( image, 2, ( unsigned char )128 );
@@ -2497,7 +2497,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			properties( ).append( prop_sar_den_ = 1 );
 			properties( ).append( prop_type_ = 0 );
 			properties( ).append( prop_hold_ = 1 );
-			properties( ).append( prop_colourspace_ = olib::t_string( _CT("yuv420p") ) );
+			properties( ).append( prop_colourspace_ = std::wstring( L"yuv420p" ) );
 			properties( ).append( prop_scattered_ = 0 );
 			properties( ).append( prop_reverse_ = 0 );
 		}
@@ -2544,7 +2544,7 @@ class ML_PLUGIN_DECLSPEC visualise_filter : public filter_simple
 			if ( frame->get_audio( ) != 0 )
 			{
 				int type = prop_type_.value< int >( );
-				olib::t_string colourspace = prop_colourspace_.value< olib::t_string >( );
+				olib::t_string colourspace = cl::str_util::to_t_string( prop_colourspace_.value< std::wstring >( ) );
 				int width = prop_width_.value< int >( );
 				int height = prop_height_.value< int >( );
 				ml::image_type_ptr image = frame->get_image( );
