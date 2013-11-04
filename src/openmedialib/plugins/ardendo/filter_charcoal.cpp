@@ -61,13 +61,14 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		// Invert the region and planes requested
 		void charcoal( ml::frame_type_ptr &result )
 		{
-			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, _CT("yuv420p") );
-
 			if ( result && result->get_image( ) )
 			{
+				if ( !ml::is_yuv_planar( result ) || result->get_image( )->bitdepth( ) != 8 )
+					result = frame_convert( result, _CT("yuv420p") );
 				ml::image_type_ptr input = result->get_image( );
+				ARENFORCE_MSG( input, "Unable to acquire a valid image" );
 				ml::image_type_ptr output = ml::image::allocate( input );
+				ARENFORCE_MSG( output, "Unable to allocate an output image" );
 				charcoal_plane( output, input, 0 );
 				copy_plane( output, input, 1 );
 				copy_plane( output, input, 2 );
@@ -93,7 +94,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 			int mix = int( 256 * prop_mix_.value< double >( ) );
 
 			memset( dst, 16, w );
-			dst += dst_rem;
+			dst += output->pitch( plane );
 
 			if ( mix == 0 )
 			{
