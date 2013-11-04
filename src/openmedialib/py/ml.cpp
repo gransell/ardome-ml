@@ -25,76 +25,6 @@ namespace olib { namespace openmedialib { namespace ml {
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( input_fetch_overloads, fetch, 0, 1 );
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( input_seek_overloads, seek, 1, 2 );
 
-class stream_handler_delegate : public ml::stream_handler, public py::wrapper< ml::stream_handler >
-{
-	public:
-		stream_handler_delegate( ) : stream_handler( ) { }
-		virtual ~stream_handler_delegate( ) { }
-
-		virtual bool open( const std::wstring url, int flags )
-		{
-			bool result = false;
-			py::override method = get_override( "open" );
-			if ( method )
-				result = py::call<bool>( method.ptr( ), url, flags );
-			return result;
-		}
-
-		virtual std::string read( int size )
-		{
-			std::string result( "" );
-			py::override method = get_override( "read" );
-			if ( method )
-				result = py::call< std::string >( method.ptr( ), size );
-			return result;
-		}
-
-		virtual int write( const std::string &data )
-		{
-			int result = -1;
-			py::override method = get_override( "write" );
-			if ( method )
-				result = py::call<int>( method.ptr( ), data );
-			return result;
-		}
-
-		virtual long seek( long position, int whence )
-		{
-			long result = -1;
-			py::override method = get_override( "seek" );
-			if ( method )
-				result = py::call<long>( method.ptr( ), position, whence );
-			return result;
-		}
-
-		virtual int close( )
-		{
-			int result = -1;
-			py::override method = get_override( "close" );
-			if ( method )
-				result = py::call<int>( method.ptr( ) );
-			return result;
-		}
-
-		virtual bool is_stream( ) 
-		{
-			bool result = true;
-			py::override method = get_override( "is_stream" );
-			if ( method )
-				result = py::call<bool>( method.ptr( ) );
-			return result;
-		}
-
-		virtual bool is_thread_safe( ) 
-		{ 
-			bool result = true;
-			py::override method = get_override( "is_thread_safe" );
-			if ( method )
-				result = py::call<bool>( method.ptr( ) ); 
-			return result;
-		}
-};
-
 namespace detail {
 
 static std::string stream_to_string( ml::stream_type_ptr stream )
@@ -132,7 +62,7 @@ void py_audio( )
 	py::def( "to_string", &audio_to_string );
 }
 
-void py_stream_type( )
+void py_stream( )
 {
 	py::class_<ml::stream_type, boost::noncopyable, ml::stream_type_ptr>( "stream", py::no_init )
 		.def( "length", &ml::stream_type::length )
@@ -140,6 +70,124 @@ void py_stream_type( )
 		.def( "bytes", &ml::stream_type::bytes, py::return_value_policy< py::return_by_value >( ) )
 	;
 	py::def( "to_string", &stream_to_string );
+}
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( image_width_overloads, width, 0, 2 );
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( image_height_overloads, height, 0, 2 );
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( image_pitch_overloads, pitch, 0, 2 );
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( image_offset_overloads, offset, 0, 2 );
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS( image_linesize_overloads, linesize, 0, 2 );
+
+static std::string image_to_string( ml::image_type_ptr image )
+{
+	std::string result;
+
+	if ( image )
+	{
+		int used = 0;
+
+		// Calculate byte size for the full image (all planes)
+		for ( int p = 0; p < image->plane_count( ); p ++ )
+			used += image->linesize( p ) * image->height( p );
+
+		// Allocate the raster
+		boost::uint8_t *dst = new boost::uint8_t[ used ];
+		boost::uint8_t *data = dst;
+
+		if ( dst )
+		{
+			// Copy each plane into the raster
+			for ( int p = 0; p < image->plane_count( ); p ++ )
+			{
+				boost::uint8_t *src = static_cast< boost::uint8_t * >( image->ptr( p ) );
+				int height = image->height( p );
+
+				while( height -- )
+				{
+					memcpy( dst, src, image->linesize( p ) );
+					dst += image->linesize( p );
+					src += image->pitch( p );
+				}
+			}
+
+			// Construct the result
+			result = std::string( ( char * )data, used );
+		}
+
+		delete [] data;
+	}
+
+	return result;
+}
+
+int field_order( ml::image_type_ptr image )
+{   
+	return int( image->field_order( ) );
+}
+
+void set_field_order( ml::image_type_ptr image, int order )
+{   
+	image->set_field_order( ml::image::field_order_flags( order ) );
+}
+
+void py_image( )
+{
+	py::class_<ml::image::image, boost::noncopyable, ml::image_type_ptr>( "image", py::no_init )
+		.def( "matching", &ml::image::image::matching )
+		.def( "plane_count", &ml::image::image::plane_count )
+		.def( "width", &ml::image::image::width, image_width_overloads( py::args( "index", "crop" ), "width" ) )
+		.def( "height", &ml::image::image::height, image_height_overloads( py::args( "index", "crop" ), "height" ) )
+		.def( "pitch", &ml::image::image::pitch, image_pitch_overloads( py::args( "index", "crop" ), "pitch" ) )
+		.def( "offset", &ml::image::image::offset, image_offset_overloads( py::args( "index", "crop" ), "offset" ) )
+		.def( "linesize", &ml::image::image::linesize, image_linesize_overloads( py::args( "index", "crop" ), "linesize" ) )
+		.def( "get_crop_x", &ml::image::image::get_crop_x )
+		.def( "get_crop_y", &ml::image::image::get_crop_y )
+		.def( "get_crop_w", &ml::image::image::get_crop_w )
+		.def( "get_crop_h", &ml::image::image::get_crop_h )
+		.def( "is_writable", &ml::image::image::is_writable )
+		.def( "set_writable", &ml::image::image::set_writable )
+		.def( "position", &ml::image::image::position )
+		.def( "set_position", &ml::image::image::set_position )
+		.def( "field_order", &field_order )
+		.def( "set_field_order", &set_field_order )
+		.def( "pf", &ml::image::image::pf )
+		.def( "size", &ml::image::image::size )
+		.def( "crop", &ml::image::image::crop )
+		.def( "crop_clear", &ml::image::image::crop_clear )
+		;
+
+	py::def( "to_string", &image_to_string );
+}
+
+ml::image_type_ptr rescale( ml::image_type_ptr image, int width, int height )
+{
+	return ml::image::rescale( image, width, height, ml::image::BILINEAR_SAMPLING );
+}
+
+ml::image_type_ptr null_image( )
+{
+	return ml::image_type_ptr( );
+}
+
+ml::image_type_ptr allocate( const olib::t_string pf, int width, int height )
+{
+	return ml::image::allocate( pf, width, height );
+}
+
+ml::image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf )
+{
+	return ml::image::convert( src, pf );
+}
+
+void py_utility( )
+{
+	py::def( "conform", &ml::image::conform );
+	py::def( "convert", &convert );
+	py::def( "allocate", &allocate );
+	py::def( "field", &ml::image::field );
+	py::def( "deinterlace", &ml::image::deinterlace );
+	py::def( "rescale", &rescale );
+	py::def( "null_image", &null_image );
 }
 
 void py_frame( )
@@ -337,39 +385,6 @@ void py_plugin( )
 	py::def( "frame_crop", &ml::frame_crop );
 	py::def( "frame_volume", &ml::frame_volume );
 	py::def( "equals", &detail::is );
-}
-
-PyObject *stream_handler_object = 0;
-
-static stream_handler_ptr stream_handler_callback( const std::wstring url, int flags )
-{
-	if ( stream_handler_object )
-		return py::call< stream_handler_ptr >( stream_handler_object, url, flags );
-	return stream_handler_ptr( );
-}
-
-static void stream_handler_register( PyObject *object )
-{
-	stream_handler_object = boost::ref( object );
-}
-
-void py_stream( )
-{
-	py::class_<ml::stream_handler_delegate, boost::noncopyable>( "stream_handler_delegate" )
-		.def( "open", &ml::stream_handler_delegate::open )
-		.def( "read", &ml::stream_handler_delegate::read )
-		.def( "write", &ml::stream_handler_delegate::write )
-		.def( "seek", &ml::stream_handler_delegate::seek )
-		.def( "close", &ml::stream_handler_delegate::close )
-		.def( "is_stream", &ml::stream_handler_delegate::is_stream )
-		.def( "is_thread_safe", &ml::stream_handler_delegate::is_thread_safe )
-	;
-
-	py::register_ptr_to_python< boost::shared_ptr< stream_handler_delegate > >( );
-
-	py::def( "stream_handler_register", &detail::stream_handler_register );
-
-	ml::stream_handler_register( stream_handler_callback );
 }
 
 void py_stack( )
