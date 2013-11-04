@@ -161,7 +161,7 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
 {
 	struct SwsContext *context = 0;
 	if (ro) {
-		context = (struct SwsContext *)ro->getContext();
+		context = (struct SwsContext *)ro->get_context();
 	}
 	
     AVPicture input = fill_picture( src );
@@ -195,6 +195,8 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
 	// Free the temporary allocated context, not the rescale_objects context
 	if (!ro) {
 		sws_freeContext( context );
+	} else {
+		ro->set_context( context );
 	}
 	
 	return retval;

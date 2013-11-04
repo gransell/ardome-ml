@@ -13,7 +13,8 @@ class ML_DECLSPEC rescale_object
 	public:
 		rescale_object( );
 		~rescale_object( );
-		void *getContext( ) { return scaler_; }
+		void *get_context( ) { return scaler_; }
+		void set_context( void *context ) { scaler_ = context; }
 	private:
 		void *scaler_;
 };

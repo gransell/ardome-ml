@@ -7,7 +7,7 @@ extern "C" {
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 	
 	rescale_object::rescale_object( ) 
-		: scaler_ ( (void*)sws_alloc_context() )
+		: scaler_ ( 0 )
 	{
 	}
 
