@@ -205,7 +205,6 @@ BOOST_AUTO_TEST_CASE( ML_pix_fmt_to_AV_pix_fmt )
 	for(ml::image::MLPixelFormatMap_type::const_iterator i = ml::image::MLPixelFormatMap.begin(), 
 		e = ml::image::MLPixelFormatMap.end(); i != e; ++i)
 	{
-		ml::image::MLPixelFormat mlpf = i->second;
 		BOOST_REQUIRE( -1 != ml::image::ML_to_AV( i->second ) );
 	}
 }
