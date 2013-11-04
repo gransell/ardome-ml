@@ -656,6 +656,7 @@ class avformat_demux
 						 *  */
 						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) {
 							prores_stream_analyze(&pkt_, codec);
+							estimated_gop_size = 1;
 						}
 
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
