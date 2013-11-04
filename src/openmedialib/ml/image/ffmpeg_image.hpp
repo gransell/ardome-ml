@@ -33,7 +33,7 @@ public:
 	, writable_( true )
 	, position_( 0 )
 	, sar_num_( -1 )
-	, sar_den_( 1 )
+	, sar_den_( -1 )
 	, field_order_( progressive )
 	, size_( 0 )
 	{
@@ -52,7 +52,7 @@ private:
 	, writable_ ( true )
 	, position_ ( other.position( ) )
 	, sar_num_ ( -1 )
-	, sar_den_ ( 1 )
+	, sar_den_ ( -1 )
 	, field_order_( other.field_order( ) )
 	, size_( 0 )
 	{
@@ -192,6 +192,14 @@ public:
 
 	int get_sar_num( )		  const { return sar_num_; }
 	int get_sar_den( )		  const { return sar_den_; }
+
+	double aspect_ratio( ) const
+	{
+		if ( sar_num_ == 0 )
+			return ( double )width( ) / height( );
+		else
+			return ( ( double ) sar_num_ / sar_den_ ) * ( ( double )width( ) / height( ) );
+	}
 
 	void set_sar_num( int sar_num )   { sar_num_ = sar_num; }
 	void set_sar_den( int sar_den )   { sar_den_ = sar_den; }

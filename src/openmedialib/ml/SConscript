@@ -25,6 +25,7 @@ src = [
 		'frame.cpp',
 		'image/utility.cpp',
 		'image/ffmpeg_utility.cpp',
+		'image/rescale_object.cpp',
 		'indexer.cpp',
 		'io.cpp',
 		'keys.cpp',
@@ -98,6 +99,7 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'image/image.hpp',
 			'image/ffmpeg_image.hpp',
 			'image/ffmpeg_utility.hpp',
+			'image/rescale_object.hpp',
 	] )
 
 

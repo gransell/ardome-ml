@@ -54,7 +54,7 @@ void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
 
     // Check if pixfmt contains alpha channel
     int order_a = -1;
-    if ( is_pixfmt_alpha( image->ml_pixel_format( ) ) ) {
+    if ( pixfmt_has_alpha( image->ml_pixel_format( ) ) ) {
         order_a = ml::image::order_of_component( image->ml_pixel_format( ), 3 ); // A
     }
 

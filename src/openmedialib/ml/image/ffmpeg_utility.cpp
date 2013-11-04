@@ -130,7 +130,7 @@ bool is_pixfmt_planar( int pixfmt )
     return desc->flags & AV_PIX_FMT_FLAG_PLANAR ? true : false;
 }
 
-bool is_pixfmt_alpha( int pixfmt )
+bool pixfmt_has_alpha( int pixfmt )
 {
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get( static_cast<AVPixelFormat>(pixfmt) );
     return desc->flags & AV_PIX_FMT_FLAG_ALPHA ? true : false;
@@ -157,16 +157,21 @@ AVPicture fill_picture( ml::image_type_ptr image )
     return picture;
 }
 
-int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags = SWS_BICUBIC )
+int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags )
 {
+	struct SwsContext *context = 0;
+	if (ro) {
+		context = (struct SwsContext *)ro->getContext();
+	}
+	
     AVPicture input = fill_picture( src );
     AVPicture output = fill_picture( dst );
 
     ARENFORCE( sws_isSupportedInput( static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ) ) );
     ARENFORCE( sws_isSupportedOutput( static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ) ) );
-
-    struct SwsContext *img_convert;
-    img_convert = sws_getContext( src->width( ),
+	
+    context = sws_getCachedContext( context, 
+			src->width( ),
             src->height( ),
             static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ),
             dst->width( ),
@@ -177,28 +182,22 @@ int sws_scale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int 
             NULL,
             NULL);
 
-    ARENFORCE( img_convert != NULL );
-
-    int retval = sws_scale( img_convert,
+    ARENFORCE( context != NULL );
+	
+    int retval = sws_scale( context,
         input.data,
         input.linesize,
         0,
         src->height( ),
         output.data,
         output.linesize );
-    
-    sws_freeContext( img_convert );
-    return retval;
-}
 
-ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst )
-{
-	ARENFORCE (  sws_scale_ffmpeg_image( src, dst, SWS_BICUBIC ) == src->height( ) );
-}
-
-ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags )
-{
-	sws_scale_ffmpeg_image( src, dst, flags );
+	// Free the temporary allocated context, not the rescale_objects context
+	if (!ro) {
+		sws_freeContext( context );
+	}
+	
+	return retval;
 }
 
 } } } }

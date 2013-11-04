@@ -31,6 +31,7 @@ ML_DECLSPEC filter_type_ptr create_filter( const std::wstring & );
 
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );
 
+ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr, frame_type_ptr, const olib::t_string & );
 ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const olib::t_string & );
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, olib::openmedialib::ml::image::rescale_filter filter );
 ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr );

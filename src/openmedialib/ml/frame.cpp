@@ -146,7 +146,15 @@ void frame_type::set_position( int position ) { position_ = position; }
 int frame_type::get_position( ) const { return position_; }
 void frame_type::set_duration( double duration ) { duration_ = duration; }
 double frame_type::get_duration( ) const { return duration_; }
-void frame_type::set_sar( int num, int den ) { sar_num_ = num; sar_den_ = den; }
+void frame_type::set_sar( int num, int den ) { 
+	sar_num_ = num; 
+	sar_den_ = den; 
+	if ( image_ ) 
+	{
+		image_->set_sar_num( num );
+		image_->set_sar_den( den );
+	}
+}
 
 void frame_type::get_sar( int &num, int &den ) const 
 { 

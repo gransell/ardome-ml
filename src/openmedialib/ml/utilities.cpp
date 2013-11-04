@@ -269,7 +269,7 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	return output_audio;
 }
 
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &pf )
+ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr ro, frame_type_ptr frame, const t_string &pf )
 {
 	frame_type_ptr result = frame;
 
@@ -282,11 +282,16 @@ ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &
 			ml::image_type_ptr alpha = ml::image::extract_alpha( src );
 			if ( alpha )
 				result->set_alpha( alpha );
-			result->set_image( ml::image::convert( src, pf ) );
+			result->set_image( ml::image::convert( ro, src, pf ) );
 		}
 	}
 
 	return result;
+}
+
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &pf )
+{
+	return frame_convert( ml::rescale_object_ptr(), frame, pf );
 }
 
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, ml::image::rescale_filter filter )

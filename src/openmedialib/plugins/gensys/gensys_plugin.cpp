@@ -210,7 +210,7 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 
 	// Check if pixfmt contains alpha channel
 	int order_a = -1;
-	if ( is_pixfmt_alpha( img->ml_pixel_format( ) ) ) {
+	if ( pixfmt_has_alpha( img->ml_pixel_format( ) ) ) {
 		order_a = ml::image::order_of_component( img->ml_pixel_format( ), 3 ); // A
 	}
 

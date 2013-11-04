@@ -13,7 +13,6 @@
 #include <boost/assign/list_of.hpp>
 #include <map>
 
-
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace image = olib::openmedialib::ml::image;
@@ -51,10 +50,9 @@ ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
 
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf )
 {
-	image_type_ptr dst = allocate( pf, src->width( ), src->height( ) );
-	dst->set_field_order( src->field_order( ) );
-	ml::image::convert_ffmpeg_image( src, dst );
-	return dst;
+	geometry shape( src );
+	shape.pf = pf;
+	return rescale_and_convert( ml::rescale_object_ptr( ), src, shape );
 }
 
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf )
@@ -62,7 +60,17 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_str
 	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
 	if ( i == MLPixelFormatMap.end() )
 		return image_type_ptr( );
-	return convert( src,  i->second );
+	return convert( src, i->second );
+}
+
+ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_ptr &src, const olib::t_string pf )
+{
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
+	if ( i == MLPixelFormatMap.end() )
+		return image_type_ptr( );
+	geometry shape( src );
+	shape.pf = i->second;
+	return rescale_and_convert( ro, src, shape );
 }
 
 image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
@@ -70,14 +78,317 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
     if( im->width( ) == new_w && im->height( ) == new_h )
         return im;
 
-    image_type_ptr new_im = allocate( im->ml_pixel_format( ), new_w, new_h );
-    ml::image::rescale_ffmpeg_image( im, new_im, filter ); 
+	geometry shape( im );
+	shape.width = new_w;
+	shape.height = new_h;
+	shape.interp = filter;
+	return rescale_and_convert( ml::rescale_object_ptr( ), im, shape );
+}
+
+void colour_rectangle( boost::uint8_t *ptr, boost::uint8_t value, int width, int pitch, int height )
+{
+	while( height -- > 0 )
+	{
+		memset( ptr, value, width );
+		ptr += pitch;
+	}
+}
+
+// Draw the necessary border around the cropped image
+// TODO: Correctly support border colour in all colour spaces
+void border( ml::image_type_ptr image, geometry &shape )
+{
+	int yuv[ 3 ];
+	ml::image::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], shape.r, shape.g, shape.b );
+
+	const int iwidth = image->width( );
+	const int iheight = image->height( );
+
+	for ( int i = 0; i < image->plane_count( ); i ++ )
+	{
+		const float wps = float( image->linesize( i ) ) / iwidth;
+		const float hps = float( image->height( i ) ) / iheight;
+
+		boost::uint8_t *ptr = ml::image::coerce< ml::image::image_type_8 >( image )->data( i );
+		const boost::uint8_t value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
+
+		const int width = int( iwidth * wps );
+		const int pitch = image->pitch( i );
+		const int top_lines = int( shape.y * hps );
+		const int bottom_lines = int( ( iheight - shape.y - shape.h ) * hps );
+		const int bottom_offset = int( pitch * ( shape.y + shape.h ) * hps );
+		const int side_lines = int( shape.h * hps );
+		const int left_offset = int( pitch * shape.y * hps );
+		const int right_offset = left_offset + int( ( shape.x + shape.w ) * wps );
+		const int left_width = int( shape.x * wps );
+		const int right_width = int( ( iwidth - shape.x - shape.w ) * wps );
+
+		colour_rectangle( ptr, value, width, pitch, top_lines );
+		colour_rectangle( ptr + left_offset, value, left_width, pitch, side_lines );
+		colour_rectangle( ptr + right_offset, value, right_width, pitch, side_lines );
+		colour_rectangle( ptr + bottom_offset, value, width, pitch, bottom_lines );
+	}
+}
+
+image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_type_ptr &im, geometry &shape )
+{
+	int sar_num = im->get_sar_num( );
+	int sar_den = im->get_sar_den( );
+	
+	double aspect_ratio = im->aspect_ratio( );
+	
+	ml::image_type_ptr image;
+
+	// Convert to progressive if required
+	if ( shape.field_order == ml::image::progressive && im->field_order( ) != ml::image::progressive ) {
+		image = ml::image::deinterlace( im );
+	} else {
+		image = im;
+	}
+
+	// If no conversion is specified, retain that of the input
+	if ( shape.pf == ML_PIX_FMT_NONE )
+		shape.pf = image->ml_pixel_format( );
+
+	// Deal with the properties specified
+	if ( shape.width == -1 && shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+	{
+		// If width and height are -1, then retain the dimensions of the source
+		shape.width = image->width( );
+		shape.height = image->height( );
+		shape.sar_num = 1;
+		shape.sar_den = 1;
+	}
+	else if ( shape.width == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+	{
+		// Maintain the aspect ratio of the input, and calculate width from height
+		shape.width = int( shape.height * aspect_ratio );
+		shape.sar_num = 1;
+		shape.sar_den = 1;
+	}
+	else if ( shape.height == -1 && std::abs( shape.sar_num ) == 1 && std::abs( shape.sar_den ) == 1 )
+	{
+		// Maintain the aspect ratio of the input, and calculate height from width
+		shape.height = int( shape.width / aspect_ratio );
+		shape.sar_num = 1;
+		shape.sar_den = 1;
+	}
+	else if ( shape.width != -1 && shape.height != -1 && shape.sar_num == -1 && shape.sar_den == -1 )
+	{
+		shape.sar_num = 1;
+		shape.sar_den = 1;
+	}
+	else if ( shape.width != -1 && shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+	{
+		ml::image::calculate( shape, image );
+	}
+	else if ( shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+	{
+		shape.width = int( shape.height * aspect_ratio * shape.sar_den / shape.sar_num );
+	}
+	else if ( shape.width != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+	{
+		shape.height = int( shape.width / aspect_ratio * shape.sar_num / shape.sar_den );
+	}
+	else if ( shape.width == -1 && shape.height == -1 && shape.sar_num != -1 && shape.sar_den != -1 )
+	{
+		shape.width = image->width( );
+		shape.height = image->height( );
+	}
+	else
+	{
+		ARENFORCE_MSG( false, "Unsupported options" );
+	}
+
+	// Ensure that the requested/computed dimensions are valid for the pf requested
+	ml::image::correct( shape.pf, shape.width, shape.height );
+	
+	image_type_ptr new_im = allocate( shape.pf, shape.width, shape.height );
+	
+	// Crop the input and output if the shape is cropped
+	if ( shape.cropped )
+	{
+		image->crop( shape.cx, shape.cy, shape.cw, shape.ch );
+		new_im->crop( shape.x, shape.y, shape.w, shape.h );
+	}
+	
+	rescale_and_convert_ffmpeg_image( ro, image, new_im, shape.interp );
+
+	// Clear crop information on both images if shape is cropped
+	if ( shape.cropped )
+	{
+		image->crop_clear( );
+		new_im->crop_clear( );
+		border( new_im, shape );
+	}
+
+	new_im->set_field_order( shape.field_order );
+	
     return new_im;
+}
+
+// Ensure the width/height conform to the rules of the colourspace
+static void correct( int mw, int mh, int &w, int &h )
+{
+	int wd = w % mw;
+	int hd = h % mh;
+	if ( wd != 0 )
+		w += mw - wd;
+	if ( hd != 0 )
+		h += mh - hd;
+}
+
+// Typedef for correction function
+typedef boost::function< void ( int &w, int &h ) > correct_function;
+
+// Typedef to hold the pf -> corrections function
+typedef std::map< MLPixelFormat, correct_function > corrections_map;
+
+// Create the corrections map
+static corrections_map create_corrections( )
+{
+	corrections_map result;
+
+	result[ ML_PIX_FMT_B8G8R8 ] = boost::bind( correct, 1, 1, _1, _2 );
+	result[ ML_PIX_FMT_B8G8R8A8 ] = boost::bind( correct, 1, 1, _1, _2 );
+	result[ ML_PIX_FMT_R8G8B8 ] = boost::bind( correct, 1, 1, _1, _2 );
+	result[ ML_PIX_FMT_B8G8R8A8 ] = boost::bind( correct, 1, 1, _1, _2 );
+	result[ ML_PIX_FMT_YUV411P ] = boost::bind( correct, 4, 1, _1, _2 );
+	result[ ML_PIX_FMT_YUV420P ] = boost::bind( correct, 2, 2, _1, _2 );
+	result[ ML_PIX_FMT_YUV422P ] = boost::bind( correct, 2, 1, _1, _2 );
+	result[ ML_PIX_FMT_YUV444P ] = boost::bind( correct, 1, 1, _1, _2 );
+	result[ ML_PIX_FMT_YUV422 ] = boost::bind( correct, 2, 1, _1, _2 );
+	result[ ML_PIX_FMT_UYV422 ] = boost::bind( correct, 2, 1, _1, _2 );
+
+	return result;
+}
+
+// Creates the instance of the corrections map
+static const corrections_map corrections = create_corrections( );
+
+// Corrects the width/height to match the colourspace rules
+void correct( const MLPixelFormat pf, int &w, int &h )
+{
+	corrections_map::const_iterator iter = corrections.find( pf );
+	if ( iter != corrections.end( ) )
+		iter->second( w, h );
+}
+
+// Calculate the geometry for the aspect ratio mode selected
+void calculate( geometry &shape, image_type_ptr src )
+{
+	shape.cropped = true;
+
+	double src_sar_num = double( src->get_sar_num( ) ); 
+	double src_sar_den = double( src->get_sar_den( ) );
+	double dst_sar_num = double( shape.sar_num );
+	double dst_sar_den = double( shape.sar_den );
+
+	int src_w = src->width( );
+	int src_h = src->height( );
+	int dst_w = shape.width;
+	int dst_h = shape.height;
+
+	if ( src_sar_num <= 0 ) src_sar_num = 1;
+	if ( src_sar_den <= 0 ) src_sar_den = 1;
+	if ( dst_sar_num <= 0 ) dst_sar_num = 1;
+	if ( dst_sar_den <= 0 ) dst_sar_den = 1;
+
+	// Distort image to fill
+	shape.x = 0;
+	shape.y = 0;
+	shape.w = dst_w;
+	shape.h = dst_h;
+
+	// Specify the initial crop area
+	shape.cx = 0;
+	shape.cy = 0;
+	shape.cw = src_w;
+	shape.ch = src_h;
+
+	// Target destination area
+	dst_w = shape.w;
+	dst_h = shape.h;
+
+	// Letter and pillar box calculations
+	int letter_h = int( ( shape.w * src_h * src_sar_den * dst_sar_num ) / ( src_w * src_sar_num * dst_sar_den ) );
+	int pillar_w = int( ( shape.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
+
+	correct( shape.pf, pillar_w, letter_h );
+
+	// Handle the requested mode
+	if ( shape.mode == MODE_FILL )
+	{
+		shape.h = dst_h;
+		shape.w = pillar_w;
+
+		if ( shape.w > dst_w )
+		{
+			shape.w = dst_w;
+			shape.h = letter_h;
+		}
+	}
+	else if ( shape.mode == MODE_SMART )
+	{
+		shape.h = dst_h;
+		shape.w = pillar_w;
+
+		if ( shape.w < dst_w )
+		{
+			shape.w = dst_w;
+			shape.h = letter_h;
+		}
+	}
+	else if ( shape.mode == MODE_LETTER )
+	{
+		shape.w = dst_w;
+		shape.h = letter_h;
+	}
+	else if ( shape.mode == MODE_PILLAR )
+	{
+		shape.h = dst_h;
+		shape.w = pillar_w;
+	}
+	else if ( shape.mode == MODE_NATIVE )
+	{
+		shape.w = src_w;
+		shape.h = src_h;
+	}
+
+	// Correct the cropping as required
+	if ( dst_w >= shape.w )
+	{
+		shape.x += ( int( dst_w ) - shape.w ) / 2;
+	}
+	else
+	{
+		double diff = double( shape.w - dst_w ) / shape.w;
+		shape.cx = int( shape.cw * ( diff / 2.0 ) );
+		shape.cw = int( shape.cw * ( 1.0 - diff ) );
+		shape.w = dst_w;
+	}
+
+	if ( dst_h >= shape.h )
+	{
+		shape.y += ( int( dst_h ) - shape.h ) / 2;
+	}
+	else
+	{
+		double diff = double( shape.h - dst_h ) / shape.h;
+		shape.cy = int( shape.ch * ( diff / 2.0 ) );
+		shape.ch = int( shape.ch * ( 1.0 - diff ) );
+		shape.h = dst_h;
+	}
+
+	correct( src->ml_pixel_format( ), shape.cx, shape.cy );
+	correct( src->ml_pixel_format( ), shape.cw, shape.ch );
+	correct( shape.pf, shape.x, shape.y );
+	correct( shape.pf, shape.w, shape.h );
 }
 
 static int locate_alpha_offset( const MLPixelFormat pf )
 {
-    if ( !is_pixfmt_alpha( pf ) || is_pixfmt_planar( pf ) ) return -1; // Only RGB with alpha supported
+    if ( !pixfmt_has_alpha( pf ) || is_pixfmt_planar( pf ) ) return -1; // Only RGB with alpha supported
 
     return utility_offset( ML_to_AV( pf ), utility_nb_components( ML_to_AV( pf ) ) - 1 ); //Alpha is always last component
 }
@@ -139,7 +450,7 @@ ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
 template< typename T >
 ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 {
-	ARENFORCE_MSG( !is_pixfmt_alpha( ML_to_AV( im->ml_pixel_format( ) ) ), "Image with alpha not supported to deinterlace" )( im->pf( ) );
+	ARENFORCE_MSG( !pixfmt_has_alpha( ML_to_AV( im->ml_pixel_format( ) ) ), "Image with alpha not supported to deinterlace" )( im->pf( ) );
 
 	if ( im->field_order( ) != progressive )
 	{
@@ -258,9 +569,9 @@ ML_DECLSPEC bool is_pixfmt_rgb(  MLPixelFormat pf )
 	return is_pixfmt_rgb( ML_to_AV( pf ) );
 }
 
-ML_DECLSPEC bool is_pixfmt_alpha(  MLPixelFormat pf ) 
+ML_DECLSPEC bool pixfmt_has_alpha(  MLPixelFormat pf ) 
 {
-	return is_pixfmt_alpha( ML_to_AV( pf ) );
+	return pixfmt_has_alpha( ML_to_AV( pf ) );
 }
 
 ML_DECLSPEC int order_of_component( MLPixelFormat pf, int index ) 

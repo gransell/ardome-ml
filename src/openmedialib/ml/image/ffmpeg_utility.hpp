@@ -23,13 +23,11 @@ int utility_offset( int pixfmt, int index );
 
 bool is_pixfmt_rgb( int pixfmt );
 bool is_pixfmt_planar( int pixfmt );
-bool is_pixfmt_alpha( int pixfmt );
+bool pixfmt_has_alpha( int pixfmt );
 
 ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt );
 
-// Fill an AVPicture with a potentially cropped aml image
-ML_DECLSPEC void convert_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst );
-ML_DECLSPEC void rescale_ffmpeg_image( ml::image_type_ptr src, ml::image_type_ptr dst, int flags );
+int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags );
 
 } } } }
 

@@ -62,6 +62,7 @@ public:
 	virtual void set_position( int position ) = 0;
 	virtual int get_sar_num( ) const = 0;
 	virtual int get_sar_den( ) const = 0;
+	virtual double aspect_ratio( ) const = 0;
 	virtual void set_sar_num( int sar_num ) = 0;
 	virtual void set_sar_den( int sar_den ) = 0;
 	virtual field_order_flags field_order( ) const = 0;
