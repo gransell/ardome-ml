@@ -11,6 +11,14 @@
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
+enum ML_DECLSPEC correction { nearest, floor, ceil };
+
+extern ML_DECLSPEC void correct( MLPixelFormat pf, int &width, int &height, enum correction type = nearest );
+extern ML_DECLSPEC void correct( const olib::t_string pf, int &width, int &height, enum correction type = nearest );
+
+extern ML_DECLSPEC bool verify( MLPixelFormat pf, int width, int height );
+extern ML_DECLSPEC bool verify( const olib::t_string pf, int width, int height );
+
 inline int alignment( )
 {
 	return 32;
@@ -129,7 +137,6 @@ ML_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new
 ML_DECLSPEC image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_type_ptr &im, geometry &shape );
 
 ML_DECLSPEC void calculate( geometry &shape, image_type_ptr src );
-ML_DECLSPEC void correct( const MLPixelFormat pf, int &w, int &h );
 
 ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im );
 

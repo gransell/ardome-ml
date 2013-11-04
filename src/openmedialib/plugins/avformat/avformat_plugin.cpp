@@ -275,8 +275,6 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 	ml::image_type_ptr image;
 	PixelFormat dst_fmt = pix_fmt;
 	olib::t_string format = avformat_to_oil( pix_fmt );
-	int even = width % 4 != 0 ? 4 - ( width % 4 ) : 0;
-	int even_h = height % 2;
 
 	if ( pix_fmt == PIX_FMT_YUVJ420P )
 	{
@@ -300,8 +298,13 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 		dst_fmt = PIX_FMT_BGRA;
 	}
 
+	int dst_w = width;
+	int dst_h = height;
+
+	ml::image::correct( format, dst_w, dst_h );
+
 	AVPicture output;
-	image = ml::image::allocate( format, width + even, height + even_h );
+	image = ml::image::allocate( format, dst_w, dst_h );
 
 	for( int i = 0; i < 4; i ++ )
 	{
@@ -317,10 +320,10 @@ ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *fr
 		}
 	}
 
-	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, dst_w, dst_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
 
 	if ( img_convert_ != NULL )
-		sws_scale( img_convert_, frame->data, frame->linesize, 0, height + even_h, output.data, output.linesize );
+		sws_scale( img_convert_, frame->data, frame->linesize, 0, dst_h, output.data, output.linesize );
 
 	if ( frame->interlaced_frame )
     {

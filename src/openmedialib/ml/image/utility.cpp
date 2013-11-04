@@ -19,6 +19,86 @@ namespace image = olib::openmedialib::ml::image;
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
 
+typedef std::pair< int, int > pair;
+
+static std::map< MLPixelFormat, pair > dimensions = boost::assign::map_list_of
+	( ML_PIX_FMT_YUV420P, pair( 2, 2 ) )
+	( ML_PIX_FMT_YUV420P10LE, pair( 2, 2 ) )
+	( ML_PIX_FMT_YUV420P16LE, pair( 2, 2 ) )
+	( ML_PIX_FMT_YUVA420P, pair( 2, 2 ) )
+	( ML_PIX_FMT_UYV422, pair( 1, 2 ) )
+	( ML_PIX_FMT_YUV422P, pair( 1, 2 ) )
+	( ML_PIX_FMT_YUV422, pair( 1, 2 ) )
+	( ML_PIX_FMT_YUV422P10LE, pair( 1, 2 ) )
+	( ML_PIX_FMT_YUV422P16LE, pair( 1, 2 ) )
+	( ML_PIX_FMT_YUV444P, pair( 1, 1 ) )
+	( ML_PIX_FMT_YUVA444P, pair( 1, 1 ) )
+	( ML_PIX_FMT_YUV444P16LE, pair( 1, 1 ) )
+	( ML_PIX_FMT_YUVA444P16LE, pair( 1, 1 ) )
+	( ML_PIX_FMT_YUV411P, pair( 4, 1 ) )
+	( ML_PIX_FMT_L8, pair( 1, 1 ) )
+	( ML_PIX_FMT_L16LE, pair( 1, 1 ) )
+	( ML_PIX_FMT_R8G8B8, pair( 1, 1 ) )
+	( ML_PIX_FMT_B8G8R8, pair( 1, 1 ) )
+	( ML_PIX_FMT_R8G8B8A8, pair( 1, 1 ) )
+	( ML_PIX_FMT_B8G8R8A8, pair( 1, 1 ) )
+	( ML_PIX_FMT_A8R8G8B8, pair( 1, 1 ) )
+	( ML_PIX_FMT_A8B8G8R8, pair( 1, 1 ) )
+	( ML_PIX_FMT_R16G16B16LE, pair( 1, 1 ) );
+
+inline void correct( int &value, const int multiple, enum correction type )
+{
+	int discrepancy = value % multiple;
+	if ( discrepancy )
+	{
+		switch( type )
+		{
+			case nearest:
+				if ( discrepancy >= ( multiple >> 1 ) )
+					value += multiple - discrepancy;
+				else
+					value -= discrepancy;
+				break;
+			case floor:
+				value -= discrepancy;
+				break;
+			case ceil:
+				value += multiple - discrepancy;
+				break;
+		}
+	}
+}
+
+ML_DECLSPEC void correct( MLPixelFormat pf, int &width, int &height, enum correction type )
+{
+	std::map< MLPixelFormat, pair >::const_iterator iter = dimensions.find( pf );
+	ARENFORCE_MSG( iter != dimensions.end( ), "Unable to find the requested pf %1%" )( pf );
+	pair p = iter->second;
+	correct( width, p.first, type );
+	correct( height, p.second, type );
+}
+
+ML_DECLSPEC void correct( const olib::t_string pf, int &width, int &height, enum correction type )
+{
+    MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
+    ARENFORCE_MSG( i != MLPixelFormatMap.end(), "Invalid picture format");
+    return correct( i->second, width, height, type );
+}
+
+ML_DECLSPEC bool verify( MLPixelFormat pf, int width, int height )
+{
+	int tw = width, th = height;
+	correct( pf, tw, th );
+	return tw == width && th == height;
+}
+
+ML_DECLSPEC bool verify( const olib::t_string pf, int width, int height )
+{
+	int tw = width, th = height;
+	correct( pf, tw, th );
+	return tw == width && th == height;
+}
+ 
 ML_DECLSPEC int image_depth ( MLPixelFormat pf ) 
 {
 	//XXX Pixfmts with different bitdepth for different components do exist
@@ -28,6 +108,7 @@ ML_DECLSPEC int image_depth ( MLPixelFormat pf )
 ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 {
     ARENFORCE_MSG( pf > ML_PIX_FMT_NONE && pf < ML_PIX_FMT_NB, "Invalid picture format")( pf );
+	ARENFORCE_MSG( verify( pf, width, height ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( width )( height );
 	if ( image_depth( pf ) == 8 )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
 	else if ( image_depth( pf ) > 8 )
@@ -38,8 +119,7 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height )
 {
 	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
-	if ( i == MLPixelFormatMap.end() )
-		ARENFORCE_MSG( false, "Invalid picture format");
+	ARENFORCE_MSG( i != MLPixelFormatMap.end(), "Invalid picture format");
 	return ml::image::allocate( i->second, width, height );
 }
 
@@ -50,6 +130,7 @@ ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
 
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf )
 {
+	ARENFORCE_MSG( verify( pf, src->width( ), src->height( ) ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( src->width( ) )( src->height( ) );
 	geometry shape( src );
 	shape.pf = pf;
 	return rescale_and_convert( ml::rescale_object_ptr( ), src, shape );
@@ -68,6 +149,7 @@ ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_
 	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
 	if ( i == MLPixelFormatMap.end() )
 		return image_type_ptr( );
+	ARENFORCE_MSG( verify( pf, src->width( ), src->height( ) ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( src->width( ) )( src->height( ) );
 	geometry shape( src );
 	shape.pf = i->second;
 	return rescale_and_convert( ro, src, shape );
@@ -78,6 +160,7 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
     if( im->width( ) == new_w && im->height( ) == new_h )
         return im;
 
+	ARENFORCE_MSG( verify( im->pf( ), new_w, new_h ), "Unable to allocate an image of type %1% at %2%x%3%" )( im->pf( ) )( new_w )( new_h );
 	geometry shape( im );
 	shape.width = new_w;
 	shape.height = new_h;
@@ -201,7 +284,7 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 	}
 
 	// Ensure that the requested/computed dimensions are valid for the pf requested
-	ml::image::correct( shape.pf, shape.width, shape.height );
+	ml::image::correct( shape.pf, shape.width, shape.height, floor );
 	
 	image_type_ptr new_im = allocate( shape.pf, shape.width, shape.height );
 	
@@ -225,53 +308,6 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 	new_im->set_field_order( shape.field_order );
 	
     return new_im;
-}
-
-// Ensure the width/height conform to the rules of the colourspace
-static void correct( int mw, int mh, int &w, int &h )
-{
-	int wd = w % mw;
-	int hd = h % mh;
-	if ( wd != 0 )
-		w += mw - wd;
-	if ( hd != 0 )
-		h += mh - hd;
-}
-
-// Typedef for correction function
-typedef boost::function< void ( int &w, int &h ) > correct_function;
-
-// Typedef to hold the pf -> corrections function
-typedef std::map< MLPixelFormat, correct_function > corrections_map;
-
-// Create the corrections map
-static corrections_map create_corrections( )
-{
-	corrections_map result;
-
-	result[ ML_PIX_FMT_B8G8R8 ] = boost::bind( correct, 1, 1, _1, _2 );
-	result[ ML_PIX_FMT_B8G8R8A8 ] = boost::bind( correct, 1, 1, _1, _2 );
-	result[ ML_PIX_FMT_R8G8B8 ] = boost::bind( correct, 1, 1, _1, _2 );
-	result[ ML_PIX_FMT_B8G8R8A8 ] = boost::bind( correct, 1, 1, _1, _2 );
-	result[ ML_PIX_FMT_YUV411P ] = boost::bind( correct, 4, 1, _1, _2 );
-	result[ ML_PIX_FMT_YUV420P ] = boost::bind( correct, 2, 2, _1, _2 );
-	result[ ML_PIX_FMT_YUV422P ] = boost::bind( correct, 2, 1, _1, _2 );
-	result[ ML_PIX_FMT_YUV444P ] = boost::bind( correct, 1, 1, _1, _2 );
-	result[ ML_PIX_FMT_YUV422 ] = boost::bind( correct, 2, 1, _1, _2 );
-	result[ ML_PIX_FMT_UYV422 ] = boost::bind( correct, 2, 1, _1, _2 );
-
-	return result;
-}
-
-// Creates the instance of the corrections map
-static const corrections_map corrections = create_corrections( );
-
-// Corrects the width/height to match the colourspace rules
-void correct( const MLPixelFormat pf, int &w, int &h )
-{
-	corrections_map::const_iterator iter = corrections.find( pf );
-	if ( iter != corrections.end( ) )
-		iter->second( w, h );
 }
 
 // Calculate the geometry for the aspect ratio mode selected
@@ -314,7 +350,7 @@ void calculate( geometry &shape, image_type_ptr src )
 	int letter_h = int( ( shape.w * src_h * src_sar_den * dst_sar_num ) / ( src_w * src_sar_num * dst_sar_den ) );
 	int pillar_w = int( ( shape.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
 
-	correct( shape.pf, pillar_w, letter_h );
+	correct( shape.pf, pillar_w, letter_h, floor );
 
 	// Handle the requested mode
 	if ( shape.mode == MODE_FILL )
@@ -380,10 +416,10 @@ void calculate( geometry &shape, image_type_ptr src )
 		shape.h = dst_h;
 	}
 
-	correct( src->ml_pixel_format( ), shape.cx, shape.cy );
-	correct( src->ml_pixel_format( ), shape.cw, shape.ch );
-	correct( shape.pf, shape.x, shape.y );
-	correct( shape.pf, shape.w, shape.h );
+	correct( src->ml_pixel_format( ), shape.cx, shape.cy, floor );
+	correct( src->ml_pixel_format( ), shape.cw, shape.ch, floor );
+	correct( shape.pf, shape.x, shape.y, floor );
+	correct( shape.pf, shape.w, shape.h, floor );
 }
 
 static int locate_alpha_offset( const MLPixelFormat pf )

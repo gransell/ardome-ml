@@ -919,6 +919,9 @@ class ML_PLUGIN_DECLSPEC crop_filter : public filter_simple
 						ph = img->height( ) - py;
 					}
 
+					ml::image::correct( result->pf( ), px, py, ml::image::floor );
+					ml::image::correct( result->pf( ), pw, ph, ml::image::ceil );
+
 					result = frame_crop( result, px, py, pw, ph );
 					result->set_image( ml::image_type_ptr( static_cast<ml::image::image*>( result->get_image( )->clone( ml::image::cropped ) ) ) );
 				}
@@ -1248,6 +1251,9 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 			foreground->set_alpha( ml::image::conform( foreground->get_alpha( ), ml::image::writable ) );
 
 			// Crop to computed geometry
+			ml::image::correct( foreground->pf( ), geom.cx, geom.cy, ml::image::floor );
+			ml::image::correct( foreground->pf( ), geom.cw, geom.ch, ml::image::ceil );
+
 			foreground = frame_crop( foreground, geom.cx, geom.cy, geom.cw, geom.ch );
 
 			// Aquire requested rescaling algorithm
@@ -1258,6 +1264,8 @@ class ML_PLUGIN_DECLSPEC composite_filter : public filter_type
 				filter = ml::image::BICUBIC_SAMPLING;
 			if ( background->get_image( )->field_order( ) == ml::image::progressive ) 
 			    foreground->set_image( ml::image::deinterlace( foreground->get_image( ) ) );
+
+			ml::image::correct( foreground->pf( ), geom.w, geom.h );
 			
 			foreground = ml::frame_rescale( foreground, geom.w, geom.h, filter );
 

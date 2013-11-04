@@ -239,9 +239,9 @@ public:
 			// Return to the storage planes
 			crop_clear( );
 
-			// Invoke the virtual method for cropping the planes - note that the 
-			// geometry may change to meet the requirements of a colour space (for 
-			// example, ensuring that x falls on an even pixel)
+			ARENFORCE_MSG( verify( MLpixfmt_, x, y ) && verify( MLpixfmt_, w, h ), "Invalid crop of %d,%d @ %dx%d for %d requested" )( x )( y )( w )( h )( MLpixfmt_ );
+
+			// Invoke the virtual method for cropping the planes
 			crop_planes( crop_, x, y, w, h, flags );
 
 			// Store the new geometry of the crop
@@ -319,24 +319,6 @@ private:
 	}
 	
 	virtual void crop_planes( planes &crop, int &x, int &y, int &w, int &h, int flags )
-	{
-		if ( is_pixfmt_rgb( AVpixfmt_ ) )
-			crop_planes_rgb( crop, x, y, w, h, flags );
-		else
-			crop_planes_yuv( crop, x, y, w, h, flags );
-
-	}
-	
-	virtual void crop_planes_rgb( planes &crop, int &x, int &y, int &w, int &h, int flags )
-	{
-		plane &p = crop[ 0 ];
-		p.width = w;
-		p.height = h;
-		p.linesize = w * sizeof( data_type );
-		p.offset = p.pitch * y + x * sizeof( data_type );
-	}
-	
-	virtual void crop_planes_yuv( planes &crop, int &x, int &y, int &w, int &h, int flags )
 	{
 		for ( int i = 0; i < plane_count( ); i++ )
 		{
