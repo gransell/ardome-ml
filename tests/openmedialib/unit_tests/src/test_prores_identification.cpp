@@ -26,6 +26,8 @@ namespace
 
 		BOOST_CHECK_EQUAL( stream->codec(), "http://www.ardendo.com/apf/codec/" + expected_codec_suffix );
 		BOOST_CHECK_EQUAL( to_string( stream->pf() ), expected_pixel_format );
+
+		BOOST_CHECK_EQUAL( stream->estimated_gop_size( ), 1 );
 	}
 }
 
