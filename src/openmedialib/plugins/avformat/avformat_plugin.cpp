@@ -149,7 +149,7 @@ const olib::t_string avformat_to_oil( int fmt )
 	return _CT("");
 }
 
-std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
+std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id, unsigned int codec_tag )
 {
 	switch( codec_id )
 	{
@@ -173,7 +173,18 @@ std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
 		case CODEC_ID_PCM_U24BE: return "http://www.ardendo.com/apf/codec/aiff";
 		case CODEC_ID_DVVIDEO: return "http://www.ardendo.com/apf/codec/dv/dvcpro";
 		case CODEC_ID_DNXHD: return "http://www.ardendo.com/apf/codec/vc3/vc3";
-		case AV_CODEC_ID_PRORES: return "http://www.ardendo.com/apf/codec/prores/prores";
+		case AV_CODEC_ID_PRORES:
+		{
+			switch( codec_tag )
+			{
+				case 'ncpa': return "http://www.ardendo.com/apf/codec/prores/422";
+				case 'hcpa': return "http://www.ardendo.com/apf/codec/prores/422_hq";
+				case 'scpa': return "http://www.ardendo.com/apf/codec/prores/422_lt";
+				case 'ocpa': return "http://www.ardendo.com/apf/codec/prores/422_proxy";
+				case 'h4pa': return "http://www.ardendo.com/apf/codec/prores/4444";
+			}
+			break;
+		}
 		default: return "";
 	}
 

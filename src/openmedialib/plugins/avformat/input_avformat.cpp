@@ -659,11 +659,20 @@ class avformat_demux
 							estimated_gop_size = 1;
 						}
 
-						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
-																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
-																		   avformat_to_oil( codec->pix_fmt ), ml::image::top_field_first, estimated_gop_size ) );
+						packet = stream_avformat_ptr( new stream_avformat(
+							stream->codec->codec_id,
+							stream->codec->codec_tag,
+							pkt_.size,
+							position,
+							source->key_last_,
+							codec->bit_rate, 
+							ml::dimensions( source->width_, source->height_ ),
+							ml::fraction( source->sar_num_, source->sar_den_ ),
+							avformat_to_oil( codec->pix_fmt ),
+							ml::image::top_field_first,
+							estimated_gop_size ) );
 					}
-						break;
+					break;
 
 					case ml::stream_audio:
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,

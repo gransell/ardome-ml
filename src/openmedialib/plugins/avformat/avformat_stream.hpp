@@ -17,7 +17,7 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( AVCodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
+		stream_avformat( AVCodecID codec, unsigned int codec_tag, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
 			const dimensions &size, const fraction &sar, const olib::t_string& pf,
 			olib::openmedialib::ml::image::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
@@ -38,7 +38,7 @@ class stream_avformat : public ml::stream_type
 			, estimated_gop_size_( estimated_gop_size )
 			, index_( 0 )
 		{
-			codec_ = avformat_codec_id_to_apf_codec( codec );
+			codec_ = avformat_codec_id_to_apf_codec( codec, codec_tag );
 		}
 
 		// Constructor with known codec name
@@ -87,7 +87,7 @@ class stream_avformat : public ml::stream_type
 			, estimated_gop_size_( 0 )
 			, index_( 0 )
 		{
-			codec_ = avformat_codec_id_to_apf_codec( codec );
+			codec_ = avformat_codec_id_to_apf_codec( codec, 0 );
 		}
 
 		/// Virtual destructor

@@ -12,7 +12,7 @@ extern "C" {
 namespace olib { namespace openmedialib { namespace ml {
 
 extern void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec );
-extern std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id );
+extern std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id, unsigned int codec_tag );
 extern AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream );
 extern olib::openmedialib::ml::image_type_ptr convert_to_oil( struct SwsContext *&, AVFrame *, PixelFormat, int, int );
 extern const olib::t_string avformat_to_oil( int );
