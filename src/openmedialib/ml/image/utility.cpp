@@ -26,11 +26,11 @@ static std::map< MLPixelFormat, pair > dimensions = boost::assign::map_list_of
 	( ML_PIX_FMT_YUV420P10LE, pair( 2, 2 ) )
 	( ML_PIX_FMT_YUV420P16LE, pair( 2, 2 ) )
 	( ML_PIX_FMT_YUVA420P, pair( 2, 2 ) )
-	( ML_PIX_FMT_UYV422, pair( 1, 2 ) )
-	( ML_PIX_FMT_YUV422P, pair( 1, 2 ) )
-	( ML_PIX_FMT_YUV422, pair( 1, 2 ) )
-	( ML_PIX_FMT_YUV422P10LE, pair( 1, 2 ) )
-	( ML_PIX_FMT_YUV422P16LE, pair( 1, 2 ) )
+	( ML_PIX_FMT_UYV422, pair( 2, 1 ) )
+	( ML_PIX_FMT_YUV422P, pair( 2, 1 ) )
+	( ML_PIX_FMT_YUV422, pair( 2, 1 ) )
+	( ML_PIX_FMT_YUV422P10LE, pair( 2, 1 ) )
+	( ML_PIX_FMT_YUV422P16LE, pair( 2, 1 ) )
 	( ML_PIX_FMT_YUV444P, pair( 1, 1 ) )
 	( ML_PIX_FMT_YUVA444P, pair( 1, 1 ) )
 	( ML_PIX_FMT_YUV444P16LE, pair( 1, 1 ) )
@@ -49,6 +49,7 @@ static std::map< MLPixelFormat, pair > dimensions = boost::assign::map_list_of
 inline void correct( int &value, const int multiple, enum correction type )
 {
 	int discrepancy = value % multiple;
+
 	if ( discrepancy )
 	{
 		switch( type )
@@ -284,7 +285,7 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 	}
 
 	// Ensure that the requested/computed dimensions are valid for the pf requested
-	ml::image::correct( shape.pf, shape.width, shape.height, floor );
+	ml::image::correct( shape.pf, shape.width, shape.height, ceil );
 	
 	image_type_ptr new_im = allocate( shape.pf, shape.width, shape.height );
 	
@@ -350,7 +351,7 @@ void calculate( geometry &shape, image_type_ptr src )
 	int letter_h = int( ( shape.w * src_h * src_sar_den * dst_sar_num ) / ( src_w * src_sar_num * dst_sar_den ) );
 	int pillar_w = int( ( shape.h * src_w * src_sar_num * dst_sar_den ) / ( src_h * src_sar_den * dst_sar_num ) );
 
-	correct( shape.pf, pillar_w, letter_h, floor );
+	correct( shape.pf, pillar_w, letter_h, ceil );
 
 	// Handle the requested mode
 	if ( shape.mode == MODE_FILL )
@@ -416,10 +417,10 @@ void calculate( geometry &shape, image_type_ptr src )
 		shape.h = dst_h;
 	}
 
-	correct( src->ml_pixel_format( ), shape.cx, shape.cy, floor );
-	correct( src->ml_pixel_format( ), shape.cw, shape.ch, floor );
-	correct( shape.pf, shape.x, shape.y, floor );
-	correct( shape.pf, shape.w, shape.h, floor );
+	correct( src->ml_pixel_format( ), shape.cx, shape.cy, ceil );
+	correct( src->ml_pixel_format( ), shape.cw, shape.ch, ceil );
+	correct( shape.pf, shape.x, shape.y, ceil );
+	correct( shape.pf, shape.w, shape.h, ceil );
 }
 
 static int locate_alpha_offset( const MLPixelFormat pf )
