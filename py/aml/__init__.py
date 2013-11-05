@@ -37,7 +37,11 @@ from player import player
 from server import server
 from thread_player import thread_player
 from thread_stack import thread_stack
-from thread_shell import thread_shell
+try:
+    from thread_shell import thread_shell
+except:
+    print "Thread shell failed to load - continuing"
+    pass
 
 pl.init( )
 pl.init_log( )
