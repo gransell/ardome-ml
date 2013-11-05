@@ -215,24 +215,17 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			{
 				int pad = prop_pad_.value< int >( );
 
-				if ( image->pitch( ) != image->linesize( ) )
+				for ( int p = 0; p < image->plane_count( ); p ++ )
 				{
-					for ( int p = 0; p < image->plane_count( ); p ++ )
+					boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
+					int pitch = image->pitch( p );
+					int width = image->linesize( p );
+					int height = image->height( p );
+					while( height -- )
 					{
-						boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
-						int pitch = image->pitch( p );
-						int width = image->linesize( p );
-						int height = image->height( p );
-						while( height -- )
-						{
-							error |= avio_read( context_, dst, width ) != width;
-							dst += pitch;
-						}
+						error |= avio_read( context_, dst, width ) != width;
+						dst += pitch;
 					}
-				}
-				else
-				{
-					error |= avio_read( context_, ml::image::coerce< ml::image::image_type_8 >( image )->data( ), image->size( ) ) != image->size( );
 				}
 
 				if ( pad )
@@ -573,24 +566,17 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 				start( );
 
-				if ( image->pitch( ) != image->linesize( ) )
+				for ( int p = 0; success && p < image->plane_count( ); p ++ )
 				{
-					for ( int p = 0; success && p < image->plane_count( ); p ++ )
+					const boost::uint8_t *dst =  ( boost::uint8_t * )image->ptr( p );
+					int pitch = image->pitch( p );
+					int width = image->linesize( p );
+					int height = image->height( p );
+					while( success && height -- )
 					{
-						const boost::uint8_t *dst =  ( boost::uint8_t * )image->ptr( p );
-						int pitch = image->pitch( p );
-						int width = image->linesize( p );
-						int height = image->height( p );
-						while( success && height -- )
-						{
-							avio_write( context_, dst, width );
-							dst += pitch;
-						}
+						avio_write( context_, dst, width );
+						dst += pitch;
 					}
-				}
-				else
-				{
-					avio_write( context_, ( boost::uint8_t * ) image->ptr( ), image->size( ) );
 				}
 
 				if ( pad )
