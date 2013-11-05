@@ -1,6 +1,6 @@
 Import(['local_env'])
 
-local_env.packages( 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat' )
+local_env.packages( 'boost_unit_test_framework', 'boost_regex', 'boost_filesystem', 'boost_date_time', 'boost_thread', 'boost_system', 'xerces', 'libavformat' )
 
 mock = local_env.plugin( 'openmedialib_mock', [ 'plugin_mock.cpp' ] )
 local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], mock + [ 'plugin_mock.opl' ] )

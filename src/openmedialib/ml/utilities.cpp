@@ -280,11 +280,9 @@ ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr ro, frame_type_
 		if ( src && src->pf( ) != pf )
 		{
 			// Only extract alpha if we are converting from a format with alpha to a format without alpha
-			ml::image::MLPixelFormatMap_type::const_iterator i_dst_pixfmt = 
-				ml::image::MLPixelFormatMap.find( pf );
-
+			ml::image::MLPixelFormat dst_pixfmt = ml::image::string_to_MLPF( pf );
 			if ( ml::image::pixfmt_has_alpha( src->ml_pixel_format( ) ) &&
-				i_dst_pixfmt != ml::image::MLPixelFormatMap.end() && !ml::image::pixfmt_has_alpha( i_dst_pixfmt->second ) )
+				dst_pixfmt != ml::image::ML_PIX_FMT_NONE && !ml::image::pixfmt_has_alpha( dst_pixfmt ) )
 			{
 				ml::image_type_ptr alpha = ml::image::extract_alpha( src );
 				if ( alpha )

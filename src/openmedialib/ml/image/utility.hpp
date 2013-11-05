@@ -31,12 +31,14 @@ inline image_type_ptr conform( image_type_ptr image, int flags )
 	return image;
 }
 
+extern ML_DECLSPEC const olib::t_string& MLPF_to_string( MLPixelFormat pf ) ;
+extern ML_DECLSPEC MLPixelFormat string_to_MLPF( const olib::t_string& pf ) ;
 extern ML_DECLSPEC int image_depth ( MLPixelFormat pf );
 extern ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height );
-extern ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height );
+extern ML_DECLSPEC image_type_ptr allocate ( const olib::t_string& pf, int width, int height );
 extern ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img );
 
-extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf );
+extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, MLPixelFormat pf );
 extern ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf );
 extern ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_ptr &src, const olib::t_string pf );
 

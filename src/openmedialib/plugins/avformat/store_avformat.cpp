@@ -817,8 +817,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.den = prop_fps_num_.value< int >( );
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
-				std::string pixfmt = olib::opencorelib::str_util::to_string( prop_pix_fmt_.value< olib::t_string >( ) );
-				c->pix_fmt = oil_to_avformat( prop_pix_fmt_.value< olib::t_string >( ) );
+				c->pix_fmt = AVPixelFormat(ml::image::ML_to_AV( ml::image::string_to_MLPF( prop_pix_fmt_.value< olib::t_string >( ) ) ));
 
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
@@ -1125,7 +1124,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					video_enc->time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
 					av_reduce(&video_enc->time_base.num, &video_enc->time_base.den, stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( ), stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( ), INT_MAX);
 
-					video_enc->pix_fmt = oil_to_avformat( stream->pf( ) );
+					video_enc->pix_fmt = AVPixelFormat( ml::image::ML_to_AV( ml::image::string_to_MLPF( stream->pf( ) ) ) );
 					video_enc->width = stream->size( ).width;
 					video_enc->height = stream->size( ).height;
 
@@ -1248,10 +1247,10 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			if ( video_stream_ && frame->has_image( ) )
 			{
 				AVCodecContext *c = video_stream_->codec;
-				const t_string pf = avformat_to_oil( c->pix_fmt );
-				if ( pf != _CT("") && !video_copy_ )
+				ml::image::MLPixelFormat pf = ml::image::AV_to_ML( c->pix_fmt );
+				if ( pf != ml::image::ML_PIX_FMT_NONE && !video_copy_ )
 				{
-					frame = ml::frame_convert( frame, pf );
+					frame = ml::frame_convert( frame, ml::image::MLPF_to_string( pf ) );
 					video_queue_.push_back( frame );
 				}
 				else
@@ -1492,9 +1491,9 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			AVCodecContext *c = video_stream_->codec;
 
 			// Convert the image to the colour space required
-			const t_string pf = avformat_to_oil( c->pix_fmt );
+			ml::image::MLPixelFormat pf = ml::image::AV_to_ML( c->pix_fmt );
 
-			if ( pf != _CT("") )
+			if ( pf != ml::image::ML_PIX_FMT_NONE )
 			{
 				image = ml::image::convert( image, pf );
 				// Need an ffmpeg fallback here...
@@ -1538,7 +1537,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}
 
-				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, oil_to_avformat( image->pf( ) ), SWS_BICUBIC, NULL, NULL, NULL );
+				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, AVPixelFormat( ml::image::ML_to_AV( image->ml_pixel_format() ) ), SWS_BICUBIC, NULL, NULL, NULL );
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
 			}

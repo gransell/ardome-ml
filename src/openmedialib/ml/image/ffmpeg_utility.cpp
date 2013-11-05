@@ -68,54 +68,120 @@ int utility_offset( int pixfmt, int index )
 
 ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt )
 {
-	if (pixfmt == ML_PIX_FMT_YUV420P )
-		return (int)AV_PIX_FMT_YUV420P;
-    else if (pixfmt == ML_PIX_FMT_YUV420P10LE )
-		return (int)AV_PIX_FMT_YUV420P10LE;
-    else if (pixfmt == ML_PIX_FMT_YUV420P16LE )
-		return (int)AV_PIX_FMT_YUV420P16LE;
-	else if (pixfmt == ML_PIX_FMT_YUVA420P )
-		return (int)AV_PIX_FMT_YUVA420P;
-	else if (pixfmt == ML_PIX_FMT_YUV411P )
-		return (int)AV_PIX_FMT_YUV411P;
-	else if (pixfmt == ML_PIX_FMT_YUV422P )
-		return (int)AV_PIX_FMT_YUV422P;
-	else if (pixfmt == ML_PIX_FMT_YUV422P10LE )
-		return (int)AV_PIX_FMT_YUV422P10LE;
-	else if (pixfmt == ML_PIX_FMT_YUV422P16LE )
-		return (int)AV_PIX_FMT_YUV422P16LE;
-	else if (pixfmt == ML_PIX_FMT_YUV422 )
-		return (int)AV_PIX_FMT_YUYV422;
-	else if (pixfmt == ML_PIX_FMT_UYV422 )
-		return (int)AV_PIX_FMT_UYVY422;
-	else if (pixfmt == ML_PIX_FMT_YUV444P )
-		return (int)AV_PIX_FMT_YUV444P;
-	else if (pixfmt == ML_PIX_FMT_YUV444P16LE)
-		return (int)AV_PIX_FMT_YUV444P16LE;
-	else if (pixfmt == ML_PIX_FMT_YUVA444P)
-		return (int)AV_PIX_FMT_YUVA444P;
-	else if (pixfmt == ML_PIX_FMT_YUVA444P16LE)
-		return (int)AV_PIX_FMT_YUVA444P16LE;
-	else if (pixfmt == ML_PIX_FMT_L8 )
-		return (int)AV_PIX_FMT_GRAY8;
-	else if (pixfmt == ML_PIX_FMT_L16LE )
-		return (int)AV_PIX_FMT_GRAY16LE;
-	else if (pixfmt == ML_PIX_FMT_R8G8B8 )
-		return (int)AV_PIX_FMT_RGB24;
-	else if (pixfmt == ML_PIX_FMT_B8G8R8 )
-		return (int)AV_PIX_FMT_BGR24;
-	else if (pixfmt == ML_PIX_FMT_R8G8B8A8 )
-		return (int)AV_PIX_FMT_RGBA;
-	else if (pixfmt == ML_PIX_FMT_B8G8R8A8 )
-		return (int)AV_PIX_FMT_BGRA;
-	else if (pixfmt == ML_PIX_FMT_A8B8G8R8 )
-		return (int)AV_PIX_FMT_ABGR;
-	else if (pixfmt == ML_PIX_FMT_A8R8G8B8 )
-		return (int)AV_PIX_FMT_ARGB;
-	else if (pixfmt == ML_PIX_FMT_R16G16B16LE )
-		return (int)AV_PIX_FMT_RGB48LE;
+	switch ( pixfmt )
+	{
+		case ML_PIX_FMT_NONE:
+			return (int)AV_PIX_FMT_NONE;
+		case ML_PIX_FMT_YUV420P:
+			return (int)AV_PIX_FMT_YUV420P;
+		case ML_PIX_FMT_YUV420P10LE:
+			return (int)AV_PIX_FMT_YUV420P10LE;
+		case ML_PIX_FMT_YUV420P16LE:
+			return (int)AV_PIX_FMT_YUV420P16LE;
+		case ML_PIX_FMT_YUVA420P:
+			return (int)AV_PIX_FMT_YUVA420P;
+		case ML_PIX_FMT_YUV411P:
+			return (int)AV_PIX_FMT_YUV411P;
+		case ML_PIX_FMT_YUV422P:
+			return (int)AV_PIX_FMT_YUV422P;
+		case ML_PIX_FMT_YUV422P10LE:
+			return (int)AV_PIX_FMT_YUV422P10LE;
+		case ML_PIX_FMT_YUV422P16LE:
+			return (int)AV_PIX_FMT_YUV422P16LE;
+		case ML_PIX_FMT_YUV422:
+			return (int)AV_PIX_FMT_YUYV422;
+		case ML_PIX_FMT_UYV422:
+			return (int)AV_PIX_FMT_UYVY422;
+		case ML_PIX_FMT_YUV444P:
+			return (int)AV_PIX_FMT_YUV444P;
+		case ML_PIX_FMT_YUV444P16LE:
+			return (int)AV_PIX_FMT_YUV444P16LE;
+		case ML_PIX_FMT_YUVA444P:
+			return (int)AV_PIX_FMT_YUVA444P;
+		case ML_PIX_FMT_YUVA444P16LE:
+			return (int)AV_PIX_FMT_YUVA444P16LE;
+		case ML_PIX_FMT_L8:
+			return (int)AV_PIX_FMT_GRAY8;
+		case ML_PIX_FMT_L16LE:
+			return (int)AV_PIX_FMT_GRAY16LE;
+		case ML_PIX_FMT_R8G8B8:
+			return (int)AV_PIX_FMT_RGB24;
+		case ML_PIX_FMT_B8G8R8:
+			return (int)AV_PIX_FMT_BGR24;
+		case ML_PIX_FMT_R8G8B8A8:
+			return (int)AV_PIX_FMT_RGBA;
+		case ML_PIX_FMT_B8G8R8A8:
+			return (int)AV_PIX_FMT_BGRA;
+		case ML_PIX_FMT_A8B8G8R8:
+			return (int)AV_PIX_FMT_ABGR;
+		case ML_PIX_FMT_A8R8G8B8:
+			return (int)AV_PIX_FMT_ARGB;
+		case ML_PIX_FMT_R16G16B16LE:
+			return (int)AV_PIX_FMT_RGB48LE;
+		case ML_PIX_FMT_NB: // primarily here to generate compiler warnings on missing case:s
+			ARENFORCE_MSG( false, "ML_PIX_FMT_NB passed to ML_to_AV");
+
+	}
 
 	return (int)AV_PIX_FMT_NONE;
+}
+
+ML_DECLSPEC MLPixelFormat AV_to_ML( int av_pixfmt )
+{
+	switch ( av_pixfmt )
+	{
+		case AV_PIX_FMT_YUV420P:
+			return ML_PIX_FMT_YUV420P;
+		case AV_PIX_FMT_YUV420P10LE:
+			return ML_PIX_FMT_YUV420P10LE;
+		case AV_PIX_FMT_YUV420P16LE:
+			return ML_PIX_FMT_YUV420P16LE;
+		case AV_PIX_FMT_YUVA420P:
+			return ML_PIX_FMT_YUVA420P;
+		case AV_PIX_FMT_YUV411P:
+			return ML_PIX_FMT_YUV411P;
+		case AV_PIX_FMT_YUV422P:
+			return ML_PIX_FMT_YUV422P;
+		case AV_PIX_FMT_YUV422P10LE:
+			return ML_PIX_FMT_YUV422P10LE;
+		case AV_PIX_FMT_YUV422P16LE:
+			return ML_PIX_FMT_YUV422P16LE;
+		case AV_PIX_FMT_YUYV422:
+			return ML_PIX_FMT_YUV422;
+		case AV_PIX_FMT_UYVY422:
+			return ML_PIX_FMT_UYV422;
+		case AV_PIX_FMT_YUV444P:
+			return ML_PIX_FMT_YUV444P;
+		case AV_PIX_FMT_YUV444P16LE:
+			return ML_PIX_FMT_YUV444P16LE;
+		case AV_PIX_FMT_YUVA444P:
+			return ML_PIX_FMT_YUVA444P;
+		case AV_PIX_FMT_YUVA444P16LE:
+			return ML_PIX_FMT_YUVA444P16LE;
+		case AV_PIX_FMT_GRAY8:
+			return ML_PIX_FMT_L8;
+		case AV_PIX_FMT_GRAY16LE:
+			return ML_PIX_FMT_L16LE;
+		case AV_PIX_FMT_RGB24:
+			return ML_PIX_FMT_R8G8B8;
+		case AV_PIX_FMT_BGR24:
+			return ML_PIX_FMT_B8G8R8;
+		case AV_PIX_FMT_RGBA:
+			return ML_PIX_FMT_R8G8B8A8;
+		case AV_PIX_FMT_BGRA:
+			return ML_PIX_FMT_B8G8R8A8;
+		case AV_PIX_FMT_ABGR:
+			return ML_PIX_FMT_A8B8G8R8;
+		case AV_PIX_FMT_ARGB:
+			return ML_PIX_FMT_A8R8G8B8;
+		case AV_PIX_FMT_RGB48LE:
+			return ML_PIX_FMT_R16G16B16LE;
+		default:
+			return ML_PIX_FMT_NONE;
+
+	}
+
+	return ML_PIX_FMT_NONE;
 }
 
 bool is_pixfmt_rgb( int pixfmt )

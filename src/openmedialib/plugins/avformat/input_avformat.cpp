@@ -668,7 +668,7 @@ class avformat_demux
 							codec->bit_rate, 
 							ml::dimensions( source->width_, source->height_ ),
 							ml::fraction( source->sar_num_, source->sar_den_ ),
-							avformat_to_oil( codec->pix_fmt ),
+							ml::image::MLPF_to_string( ml::image::AV_to_ML( ( codec->pix_fmt ) ) ),
 							ml::image::top_field_first,
 							estimated_gop_size ) );
 					}

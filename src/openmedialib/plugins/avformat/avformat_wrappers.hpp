@@ -22,7 +22,6 @@ namespace pl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-extern const PixelFormat oil_to_avformat( const olib::t_string & );
 extern ml::image_type_ptr convert_to_oil( AVFrame *, PixelFormat, int, int );
 
 #define OPT_PREFIX "video_"
@@ -197,7 +196,7 @@ class avformat_video : public cl::profile_wrapper, public cl::profile_property
 				ARENFORCE_MSG( ret == 0, "avcodec_get_context_defaults3 call failed with code %1% for codec %2%" )
 					( ret )( video_codec_ );
 
-				context_->pix_fmt = oil_to_avformat( pf_ );
+				context_->pix_fmt = AVPixelFormat( ml::image::ML_to_AV( ml::image::string_to_MLPF( pf_ ) ) );
 				context_->width = dim_.width;
 				context_->height = dim_.height;
 				AVRational avr = { fps_.den, fps_.num };

@@ -26,6 +26,7 @@ bool is_pixfmt_planar( int pixfmt );
 bool pixfmt_has_alpha( int pixfmt );
 
 ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt );
+ML_DECLSPEC MLPixelFormat AV_to_ML( int pixfmt );
 
 int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags );
 

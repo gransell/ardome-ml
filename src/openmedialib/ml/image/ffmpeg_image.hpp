@@ -168,20 +168,9 @@ public:
 		return static_cast< void * >( data( index, crop ) );
 	}
 
-	t_string pf( ) const 
+	const t_string& pf( ) const
 	{
-		std::map<t_string, MLPixelFormat>::const_iterator it;
-		t_string key = _CT("");
-		for (it = MLPixelFormatMap.begin(); it != MLPixelFormatMap.end(); ++it)
-		{
-			if (it->second == MLpixfmt_)
-			{
-				key = it->first;
-				break;
-			}
-		}
-
-		return key;
+        return MLPF_to_string(MLpixfmt_);
 	}
 
 	bool is_writable( )		 const { return writable_; }

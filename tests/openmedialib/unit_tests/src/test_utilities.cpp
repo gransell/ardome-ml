@@ -1,5 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/utilities.hpp>
+#include <openmedialib/ml/image/utility.hpp>
 #include <opencorelib/cl/utilities.hpp>
 
 using boost::uint8_t;
@@ -192,9 +193,6 @@ ml::image_type_ptr allocate_image( ml::image::MLPixelFormat pf, int width, int h
 
 BOOST_AUTO_TEST_CASE( image_pixel_formats_mappings_exist )
 {	
-	// check that there exists mappings to t_string for all MLPixelFormat:s 
-	BOOST_CHECK_EQUAL( ml::image::MLPixelFormatMap.size(), ml::image::ML_PIX_FMT_NB );
-
 	// check that the test tests all pixel formats (i.e. this should fail if someone adds a pixel format 
 	// and doesn't add it to the maps above)
 	BOOST_CHECK_EQUAL( pf_infos.size(), ml::image::ML_PIX_FMT_NB );
@@ -202,10 +200,11 @@ BOOST_AUTO_TEST_CASE( image_pixel_formats_mappings_exist )
 
 BOOST_AUTO_TEST_CASE( ML_pix_fmt_to_AV_pix_fmt )
 {
-	for(ml::image::MLPixelFormatMap_type::const_iterator i = ml::image::MLPixelFormatMap.begin(), 
-		e = ml::image::MLPixelFormatMap.end(); i != e; ++i)
+	BOOST_REQUIRE_EQUAL( static_cast<int>( ml::image::ML_PIX_FMT_NONE ), -1 );
+
+	for( int pf = 0; pf < ml::image::ML_PIX_FMT_NB; ++pf )
 	{
-		BOOST_REQUIRE( -1 != ml::image::ML_to_AV( i->second ) );
+		BOOST_CHECK( -1 != ml::image::ML_to_AV( static_cast<ml::image::MLPixelFormat>( pf ) ) );
 	}
 }
 

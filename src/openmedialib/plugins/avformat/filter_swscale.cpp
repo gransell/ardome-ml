@@ -88,10 +88,9 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 					
 					shape.interp = prop_interp_.value< int >( );
 					
-					ml::image::MLPixelFormatMap_type::const_iterator i_pixfmt = 
-						ml::image::MLPixelFormatMap.find( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
-					if ( i_pixfmt != ml::image::MLPixelFormatMap.end() )
-						shape.pf = i_pixfmt->second;
+					ml::image::MLPixelFormat mlpf = ml::image::string_to_MLPF( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
+					if ( ml::image::ML_PIX_FMT_NONE != mlpf )
+						shape.pf = mlpf;
 					
 					shape.width = prop_width_.value< int >( );
 					shape.height = prop_height_.value< int >( );

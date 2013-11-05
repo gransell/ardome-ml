@@ -56,34 +56,6 @@ enum MLPixelFormat {
 };
 
 
-namespace {
-typedef std::map<t_string, MLPixelFormat> MLPixelFormatMap_type; 
-MLPixelFormatMap_type MLPixelFormatMap = boost::assign::map_list_of
-(_CT("yuv420p"),	ML_PIX_FMT_YUV420P)
-(_CT("yuv420p10"),	ML_PIX_FMT_YUV420P10LE)
-(_CT("yuv420p16"),	ML_PIX_FMT_YUV420P16LE)
-(_CT("yuva420p"),	ML_PIX_FMT_YUVA420P)
-(_CT("yuv422p"),	ML_PIX_FMT_YUV422P)
-(_CT("yuv422"),		ML_PIX_FMT_YUV422)
-(_CT("uyv422"),		ML_PIX_FMT_UYV422)
-(_CT("yuv444p"),	ML_PIX_FMT_YUV444P)
-(_CT("yuva444p"),	ML_PIX_FMT_YUVA444P)
-(_CT("yuv444p16"),	ML_PIX_FMT_YUV444P16LE)
-(_CT("yuva444p16"), ML_PIX_FMT_YUVA444P16LE)
-(_CT("yuv411p"),	ML_PIX_FMT_YUV411P)
-(_CT("yuv422p10"),	ML_PIX_FMT_YUV422P10LE)
-(_CT("yuv422p16"),	ML_PIX_FMT_YUV422P16LE)
-(_CT("l8"),			ML_PIX_FMT_L8)
-(_CT("l16"),		ML_PIX_FMT_L16LE)
-(_CT("r8g8b8"),		ML_PIX_FMT_R8G8B8)
-(_CT("b8g8r8"),		ML_PIX_FMT_B8G8R8)
-(_CT("r8g8b8a8"),	ML_PIX_FMT_R8G8B8A8)
-(_CT("b8g8r8a8"),	ML_PIX_FMT_B8G8R8A8)
-(_CT("a8r8g8b8"),	ML_PIX_FMT_A8R8G8B8)
-(_CT("a8b8g8r8"),	ML_PIX_FMT_A8B8G8R8)
-(_CT("r16g16b16"),	ML_PIX_FMT_R16G16B16LE);
-}
-
 // Forward declaration to the base image interface which all formats share
 class ML_DECLSPEC image;
 

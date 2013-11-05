@@ -6,6 +6,7 @@
 
 namespace ml = olib::openmedialib::ml;
 namespace cl = olib::opencorelib;
+using ml::image::MLPixelFormat;
 
 BOOST_AUTO_TEST_SUITE( color_input )
 
@@ -127,11 +128,12 @@ BOOST_AUTO_TEST_CASE( create_colour_input_for_all_supported_pixelformats )
 {
 	std::map<olib::t_string, ml::image::MLPixelFormat>::const_iterator it;
 
-	for (it = ml::image::MLPixelFormatMap.begin(); it != ml::image::MLPixelFormatMap.end(); ++it)
+	for( int i = 0; i < ml::image::ML_PIX_FMT_NB; ++i )
 	{
-		if ( ml::image::is_pixfmt_planar( it->second ) || ml::image::is_pixfmt_rgb( it->second ) ) 
+		const MLPixelFormat pf = static_cast<MLPixelFormat>( i );
+		if ( ml::image::is_pixfmt_planar( pf ) || ml::image::is_pixfmt_rgb( pf ) ) 
 		{
-			test_colourspace( cl::str_util::to_wstring( it->first ) );
+			test_colourspace( cl::str_util::to_wstring( MLPF_to_string( pf ) ) );
 		}
 	}
 }

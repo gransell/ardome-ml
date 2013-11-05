@@ -17,7 +17,62 @@ namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
 namespace image = olib::openmedialib::ml::image;
 
+namespace {
+	const olib::t_string empty_string;
+	typedef std::map<olib::t_string, image::MLPixelFormat> MLPixelFormatMap_type;
+	const MLPixelFormatMap_type MLPixelFormatMap_ = boost::assign::map_list_of
+		(_CT("yuv420p"),      image::ML_PIX_FMT_YUV420P)
+		(_CT("yuv420p10le"),  image::ML_PIX_FMT_YUV420P10LE)
+		(_CT("yuv420p16le"),  image::ML_PIX_FMT_YUV420P16LE)
+		(_CT("yuva420p"),     image::ML_PIX_FMT_YUVA420P)
+		(_CT("yuv422p"),      image::ML_PIX_FMT_YUV422P)
+		(_CT("yuv422"),       image::ML_PIX_FMT_YUV422)
+		(_CT("uyv422"),       image::ML_PIX_FMT_UYV422)
+		(_CT("yuv444p"),      image::ML_PIX_FMT_YUV444P)
+		(_CT("yuva444p"),     image::ML_PIX_FMT_YUVA444P)
+		(_CT("yuv444p16le"),  image::ML_PIX_FMT_YUV444P16LE)
+		(_CT("yuva444p16le"), image::ML_PIX_FMT_YUVA444P16LE)
+		(_CT("yuv411p"),      image::ML_PIX_FMT_YUV411P)
+		(_CT("yuv422p10le"),  image::ML_PIX_FMT_YUV422P10LE)
+		(_CT("yuv422p16le"),  image::ML_PIX_FMT_YUV422P16LE)
+		(_CT("l8"),           image::ML_PIX_FMT_L8)
+		(_CT("l16le"),        image::ML_PIX_FMT_L16LE)
+		(_CT("r8g8b8"),       image::ML_PIX_FMT_R8G8B8)
+		(_CT("b8g8r8"),       image::ML_PIX_FMT_B8G8R8)
+		(_CT("r8g8b8a8"),     image::ML_PIX_FMT_R8G8B8A8)
+		(_CT("b8g8r8a8"),     image::ML_PIX_FMT_B8G8R8A8)
+		(_CT("a8r8g8b8"),     image::ML_PIX_FMT_A8R8G8B8)
+		(_CT("a8b8g8r8"),     image::ML_PIX_FMT_A8B8G8R8)
+		(_CT("r16g16b16le"),  image::ML_PIX_FMT_R16G16B16LE);
+}
+
 namespace olib { namespace openmedialib { namespace ml { namespace image {
+
+ML_DECLSPEC MLPixelFormat string_to_MLPF( const olib::t_string& pf )
+{
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
+	if ( MLPixelFormatMap_.end() == i )
+	{
+		return ML_PIX_FMT_NONE;
+	}
+
+	return i->second;
+}
+
+ML_DECLSPEC const olib::t_string& MLPF_to_string( MLPixelFormat pf ) 
+{
+	for(MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.begin(),
+		e = MLPixelFormatMap_.end(); i != e; ++i)
+	{
+		if ( i->second == pf )
+		{
+			return i->first;
+		}
+	}
+
+	return empty_string;
+
+}
 
 typedef std::pair< int, int > pair;
 
@@ -81,8 +136,8 @@ ML_DECLSPEC void correct( MLPixelFormat pf, int &width, int &height, enum correc
 
 ML_DECLSPEC void correct( const olib::t_string pf, int &width, int &height, enum correction type )
 {
-    MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
-    ARENFORCE_MSG( i != MLPixelFormatMap.end(), "Invalid picture format");
+    MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
+    ARENFORCE_MSG( i != MLPixelFormatMap_.end(), "Invalid picture format");
     return correct( i->second, width, height, type );
 }
 
@@ -117,10 +172,10 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 	return image_type_ptr( );	
 }
 
-ML_DECLSPEC image_type_ptr allocate ( const olib::t_string pf, int width, int height )
+ML_DECLSPEC image_type_ptr allocate ( const olib::t_string& pf, int width, int height )
 {
-	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
-	ARENFORCE_MSG( i != MLPixelFormatMap.end(), "Invalid picture format");
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
+	ARENFORCE_MSG( i != MLPixelFormatMap_.end(), "Invalid picture format: \"%1%\"" )( pf );
 	return ml::image::allocate( i->second, width, height );
 }
 
@@ -129,7 +184,7 @@ ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
 	return ml::image::allocate( img->ml_pixel_format( ), img->width( ), img->height( ) );
 }
 
-ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelFormat pf )
+ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, MLPixelFormat pf )
 {
 	ARENFORCE_MSG( verify( pf, src->width( ), src->height( ) ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( src->width( ) )( src->height( ) );
 	geometry shape( src );
@@ -139,16 +194,16 @@ ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const MLPixelForm
 
 ML_DECLSPEC image_type_ptr convert( const image_type_ptr &src, const olib::t_string& pf )
 {
-	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
-	if ( i == MLPixelFormatMap.end() )
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
+	if ( i == MLPixelFormatMap_.end() )
 		return image_type_ptr( );
 	return convert( src, i->second );
 }
 
 ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_ptr &src, const olib::t_string pf )
 {
-	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap.find( pf );
-	if ( i == MLPixelFormatMap.end() )
+	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
+	if ( i == MLPixelFormatMap_.end() )
 		return image_type_ptr( );
 	ARENFORCE_MSG( verify( pf, src->width( ), src->height( ) ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( src->width( ) )( src->height( ) );
 	geometry shape( src );

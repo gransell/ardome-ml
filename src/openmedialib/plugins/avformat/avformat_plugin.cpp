@@ -104,50 +104,6 @@ void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec )
 	}
 }
 
-const olib::t_string avformat_to_oil( int fmt )
-{
-	if ( fmt == PIX_FMT_YUV420P )
-		return _CT("yuv420p");
-	else if ( fmt == PIX_FMT_UYYVYY411 )
-		return _CT("yuv411");
-	else if ( fmt == PIX_FMT_YUV411P )
-		return _CT("yuv411p");
-	else if ( fmt == PIX_FMT_UYVY422 )
-		return _CT("uyv422");
-	else if ( fmt == PIX_FMT_YUV422P10LE )
-		return _CT("yuv422p10le");
-	else if ( fmt == PIX_FMT_YUYV422 )
-		return _CT("yuv422");
-	else if ( fmt == PIX_FMT_YUV422P )
-		return _CT("yuv422p");
-	else if ( fmt == PIX_FMT_YUV444P )
-		return _CT("yuv444p");
-	else if ( fmt == AV_PIX_FMT_YUVA444P16LE )
-		return _CT("yuva444p16le");
-	else if ( fmt == AV_PIX_FMT_YUV444P16LE )
-		return _CT("yuv444p16le");
-	else if ( fmt == PIX_FMT_RGB24 )
-		return _CT("r8g8b8");
-	else if ( fmt == PIX_FMT_BGR24 )
-		return _CT("b8g8r8");
-	else if ( fmt == PIX_FMT_ARGB )
-		return _CT("a8r8g8b8");
-	else if ( fmt == PIX_FMT_ABGR )
-		return _CT("a8b8g8r8");
-	else if ( fmt == PIX_FMT_BGRA )
-		return _CT("b8g8r8a8");
-	else if ( fmt == PIX_FMT_RGBA )
-		return _CT("b8g8r8a8");
-	else if ( fmt == PIX_FMT_RGB32 )
-		return _CT("r8g8b8a8");
-	else if ( fmt == PIX_FMT_BGR32 )
-		return _CT("b8g8r8a8");
-	else if ( fmt == PIX_FMT_RGB32_1 )
-		return _CT("r8g8b8a8");
-	else if ( fmt == PIX_FMT_BGR32_1 )
-		return _CT("b8g8r8a8");
-	return _CT("");
-}
 
 std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id, unsigned int codec_tag )
 {
@@ -252,70 +208,34 @@ AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 	return CODEC_ID_NONE;
 }
 
-const PixelFormat oil_to_avformat( const t_string &fmt )
-{
-	if ( fmt == _CT("yuv420p") )
-		return PIX_FMT_YUV420P;
-	else if ( fmt == _CT("yuv411") )
-		return PIX_FMT_UYYVYY411;
-	else if ( fmt == _CT("yuv411p") )
-		return PIX_FMT_YUV411P;
-	else if ( fmt == _CT("yuv422") )
-		return PIX_FMT_YUYV422;
-	else if ( fmt == _CT("uyv422") )
-		return PIX_FMT_UYVY422;
-	else if ( fmt == _CT("yuv422p10le") )
-		return PIX_FMT_YUV422P10LE;
-	else if ( fmt == _CT("yuv422p") )
-		return PIX_FMT_YUV422P;
-	else if ( fmt == _CT("yuv444p") )
-		return PIX_FMT_YUV444P;
-	else if ( fmt == _CT("r8g8b8") )
-		return PIX_FMT_RGB24;
-	else if ( fmt == _CT("b8g8r8") )
-		return PIX_FMT_BGR24;
-	else if ( fmt == _CT("b8g8r8a8") )
-		return PIX_FMT_BGR32;
-	else if ( fmt == _CT("r8g8b8a8") )
-		return PIX_FMT_RGB32;
-	return PIX_FMT_NONE;
-}
-
 ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
 {
 	ml::image_type_ptr image;
 	PixelFormat dst_fmt = pix_fmt;
-	olib::t_string format = avformat_to_oil( pix_fmt );
 
 	if ( pix_fmt == PIX_FMT_YUVJ420P )
 	{
-		format = _CT("yuv420p");
 		dst_fmt = PIX_FMT_YUV420P;
 	}
 	else if ( pix_fmt == PIX_FMT_YUVJ422P )
 	{
-		format = _CT("yuv422p");
 		dst_fmt = PIX_FMT_YUV422P;
 	}
-	else if ( pix_fmt == PIX_FMT_YUV422P10LE )
+
+	ml::image::MLPixelFormat ml_pf = ml::image::AV_to_ML( dst_fmt );
+	if ( ml_pf == ml::image::ML_PIX_FMT_NONE )
 	{
-		// force decode to a 8-bit format
-		format = _CT("uyv422");
-		dst_fmt = PIX_FMT_UYVY422;
-	}
-	else if ( format == _CT("") )
-	{
-		format = _CT("b8g8r8a8");
 		dst_fmt = PIX_FMT_BGRA;
+		ml_pf = ml::image::AV_to_ML( dst_fmt );
 	}
 
 	int dst_w = width;
 	int dst_h = height;
 
-	ml::image::correct( format, dst_w, dst_h );
+	ml::image::correct( ml_pf, dst_w, dst_h );
 
 	AVPicture output;
-	image = ml::image::allocate( format, dst_w, dst_h );
+	image = ml::image::allocate( ml_pf, dst_w, dst_h );
 
 	for( int i = 0; i < 4; i ++ )
 	{

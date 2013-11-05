@@ -69,7 +69,7 @@ public:
 	virtual void set_field_order( field_order_flags flags ) = 0;
 	virtual bool empty( ) const = 0;
 	virtual bool matching( int flags ) const = 0;
-	virtual t_string pf( ) const = 0;
+	virtual const t_string& pf( ) const = 0;
 	virtual bool is_yuv_planar( ) = 0;
 	// The size of the full image
 	virtual int size( ) const = 0;
