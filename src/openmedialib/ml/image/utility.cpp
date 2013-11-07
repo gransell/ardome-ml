@@ -224,17 +224,22 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
 	return rescale_and_convert( ml::rescale_object_ptr( ), im, shape );
 }
 
-void colour_rectangle( boost::uint8_t *ptr, boost::uint8_t value, int width, int pitch, int height )
+template< typename T >
+void colour_rectangle( T *ptr, boost::uint8_t value, int width, int pitch, int height, int bitdepth )
 {
+	typename T val_shifted = static_cast< typename T >( value << ( bitdepth - 8 ) );
+
 	while( height -- > 0 )
 	{
-		memset( ptr, value, width );
+		//memset( ptr, value, width );
+		std::fill_n( ptr, width, val_shifted );
 		ptr += pitch;
 	}
 }
 
 // Draw the necessary border around the cropped image
 // TODO: Correctly support border colour in all colour spaces
+template< typename T >
 void border( ml::image_type_ptr image, geometry &shape )
 {
 	int yuv[ 3 ];
@@ -247,9 +252,9 @@ void border( ml::image_type_ptr image, geometry &shape )
 	{
 		const float wps = float( image->linesize( i ) ) / iwidth;
 		const float hps = float( image->height( i ) ) / iheight;
-
-		boost::uint8_t *ptr = ml::image::coerce< ml::image::image_type_8 >( image )->data( i );
-		const boost::uint8_t value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
+        
+        typename T::data_type *ptr = ml::image::coerce< T >( image )->data( i );
+		const typename T::data_type value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
 
 		const int width = int( iwidth * wps );
 		const int pitch = image->pitch( i );
@@ -262,11 +267,20 @@ void border( ml::image_type_ptr image, geometry &shape )
 		const int left_width = int( shape.x * wps );
 		const int right_width = int( ( iwidth - shape.x - shape.w ) * wps );
 
-		colour_rectangle( ptr, value, width, pitch, top_lines );
-		colour_rectangle( ptr + left_offset, value, left_width, pitch, side_lines );
-		colour_rectangle( ptr + right_offset, value, right_width, pitch, side_lines );
-		colour_rectangle( ptr + bottom_offset, value, width, pitch, bottom_lines );
+		colour_rectangle< typename T::data_type >( ptr, value, width, pitch, top_lines, image->bitdepth() );
+		colour_rectangle< typename T::data_type >( ptr + left_offset, value, left_width, pitch, side_lines, image->bitdepth() );
+		colour_rectangle< typename T::data_type >( ptr + right_offset, value, right_width, pitch, side_lines, image->bitdepth() );
+		colour_rectangle< typename T::data_type >( ptr + bottom_offset, value, width, pitch, bottom_lines, image->bitdepth() );
 	}
+}
+
+void border( ml::image_type_ptr im, geometry &shape )
+{
+    image_type_ptr result;
+    if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
+		border< ml::image::image_type_8 >( im, shape );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
+        border< ml::image::image_type_16 >( im, shape );
 }
 
 image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_type_ptr &im, geometry &shape )
