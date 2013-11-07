@@ -228,9 +228,65 @@ BOOST_AUTO_TEST_CASE( image_convert )
 			}
 		}
 	}
+}
+
+struct dim
+{
+	int w;
+	int h;
+};
+
+struct correction_info
+{
+	ml::image::MLPixelFormat pf;
+	struct dim input;
+	bool valid;
+	struct dim nearest;
+	struct dim floor;
+	struct dim ceil;
+};
 
 
+const correction_info correction_tests[] = {
+	// PF                                 input		valid 	nearest		floor	  ceil
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 0 }, false, 	{ 2, 0 }, { 0, 0 }, { 2, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 1 }, false, 	{ 2, 2 }, { 0, 0 }, { 2, 2 } },
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 2, 1 }, false, 	{ 2, 2 }, { 2, 0 }, { 2, 2 } },
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 2, 2 }, true, 	{ 2, 2 }, { 2, 2 }, { 2, 2 } },
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 3, 2 }, false, 	{ 4, 2 }, { 2, 2 }, { 4, 2 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 0 }, true, 	{ 1, 0 }, { 1, 0 }, { 1, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 1 }, true, 	{ 1, 1 }, { 1, 1 }, { 1, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 2, 1 }, true, 	{ 2, 1 }, { 2, 1 }, { 2, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 1 }, false, 	{ 0, 1 }, { 0, 1 }, { 4, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 2, 1 }, false, 	{ 4, 1 }, { 0, 1 }, { 4, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 3, 1 }, false, 	{ 4, 1 }, { 0, 1 }, { 4, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 4, 1 }, true, 	{ 4, 1 }, { 4, 1 }, { 4, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 4, 2 }, true, 	{ 4, 2 }, { 4, 2 }, { 4, 2 } },
+};
 
+void check_correct( ml::image::MLPixelFormat pf, const struct dim &input, const struct dim &output, enum ml::image::correction type )
+{
+	int tw = input.w, th = input.h;
+	ml::image::correct( pf, tw, th, type );
+	if ( tw != output.w || th != output.h ) std::cerr << pf << " " << type << " " << input.w << "x" << input.h << " wants " << output.w << "x" << output.h << " got " << tw << "x" << th << std::endl;
+	BOOST_CHECK( tw == output.w );
+	BOOST_CHECK( th == output.h );
+}
+
+BOOST_AUTO_TEST_CASE( image_correct )
+{
+	for( size_t i = 0; i < sizeof( correction_tests ) / sizeof( correction_info ); i ++ )
+	{
+		//std::cerr << "row " << i << std::endl;
+		const struct correction_info &t = correction_tests[ i ];
+		BOOST_CHECK( ml::image::verify( t.pf, t.input.w, t.input.h ) == t.valid );
+		check_correct( t.pf, t.input, t.nearest, ml::image::nearest );
+		check_correct( t.pf, t.input, t.floor, ml::image::floor );
+		check_correct( t.pf, t.input, t.ceil, ml::image::ceil );
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END( )
