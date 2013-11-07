@@ -225,9 +225,9 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
 }
 
 template< typename T >
-void colour_rectangle( T *ptr, boost::uint8_t value, int width, int pitch, int height, int bitdepth )
+void colour_rectangle( typename T::data_type *ptr, boost::uint8_t value, int width, int pitch, int height, int bitdepth )
 {
-	typename T val_shifted = static_cast< typename T >( value << ( bitdepth - 8 ) );
+	typename T::data_type val_shifted = static_cast< typename T::data_type >( value << ( bitdepth - 8 ) );
 
 	while( height -- > 0 )
 	{
@@ -267,10 +267,10 @@ void border( ml::image_type_ptr image, geometry &shape )
 		const int left_width = int( shape.x * wps );
 		const int right_width = int( ( iwidth - shape.x - shape.w ) * wps );
 
-		colour_rectangle< typename T::data_type >( ptr, value, width, pitch, top_lines, image->bitdepth() );
-		colour_rectangle< typename T::data_type >( ptr + left_offset, value, left_width, pitch, side_lines, image->bitdepth() );
-		colour_rectangle< typename T::data_type >( ptr + right_offset, value, right_width, pitch, side_lines, image->bitdepth() );
-		colour_rectangle< typename T::data_type >( ptr + bottom_offset, value, width, pitch, bottom_lines, image->bitdepth() );
+		colour_rectangle< T >( ptr, value, width, pitch, top_lines, image->bitdepth() );
+		colour_rectangle< T >( ptr + left_offset, value, left_width, pitch, side_lines, image->bitdepth() );
+		colour_rectangle< T >( ptr + right_offset, value, right_width, pitch, side_lines, image->bitdepth() );
+		colour_rectangle< T >( ptr + bottom_offset, value, width, pitch, bottom_lines, image->bitdepth() );
 	}
 }
 
