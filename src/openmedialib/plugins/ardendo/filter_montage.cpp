@@ -28,8 +28,6 @@ namespace aml { namespace openmedialib {
 static pl::pcos::key key_r_( pl::pcos::key::from_string( "r" ) );
 static pl::pcos::key key_g_( pl::pcos::key::from_string( "g" ) );
 static pl::pcos::key key_b_( pl::pcos::key::from_string( "b" ) );
-static pl::pcos::key key_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) );
-static pl::pcos::key key_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) );
 static pl::pcos::key key_width_( pcos::key::from_string( "width" ) );
 static pl::pcos::key key_height_( pcos::key::from_string( "height" ) );
 static pl::pcos::key key_sar_num_( pcos::key::from_string( "sar_num" ) );
@@ -46,10 +44,6 @@ static pl::pcos::key key_mix_( pcos::key::from_string( "mix" ) );
 static pl::pcos::key key_mode_( pcos::key::from_string( "mode" ) );
 static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
-
-// These are defined in filter_compositor.cpp - they are defined using mc booster when available
-extern ml::image_type_ptr image_rescale( const ml::image_type_ptr &img, int w, int h, ml::image::rescale_filter filter );
-extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, ml::image::rescale_filter filter );
 
 static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, int cw, int lines )
 {
@@ -201,9 +195,6 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 
 				composite->connect( pusher_bg, 0 );
 				composite->connect( pusher_fg, 1 );
-
-				composite->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( frame_rescale );
-				composite->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
 
 				ml::input_type_ptr bg = ml::create_input( L"colour:" );
 				bg->properties( ).get_property_with_key( key_width_ ) = width;
