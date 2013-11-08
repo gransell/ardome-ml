@@ -330,5 +330,50 @@ BOOST_AUTO_TEST_CASE( image_correct )
 	}
 }
 
+
+BOOST_AUTO_TEST_CASE( image_rescale_object )
+{
+	ml::rescale_object_ptr ro( new ml::image::rescale_object );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) == 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_L8 ) == 0 );
+	ml::image_type_ptr image = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 720, 576 );
+	BOOST_REQUIRE( image );
+	ml::image_type_ptr alpha = ml::image::allocate( ml::image::ML_PIX_FMT_L8, 720, 576 );
+	BOOST_REQUIRE( alpha );
+	ml::image_type_ptr image2 = ml::image::rescale( ro, image, 1920, 1080 );
+	BOOST_REQUIRE( image2 );
+	ml::image_type_ptr alpha2 = ml::image::rescale( ro, alpha, 1920, 1080 );
+	BOOST_REQUIRE( alpha2 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_L8 ) != 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != ro->get_context( ml::image::ML_PIX_FMT_L8 ) );
+	BOOST_CHECK( image2->width( ) == 1920 );
+	BOOST_CHECK( image2->height( ) == 1080 );
+	BOOST_CHECK( alpha2->width( ) == 1920 );
+	BOOST_CHECK( alpha2->height( ) == 1080 );
+}
+
+BOOST_AUTO_TEST_CASE( frame_rescale_object )
+{
+	ml::rescale_object_ptr ro( new ml::image::rescale_object );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) == 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_L8 ) == 0 );
+	ml::image_type_ptr image = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 720, 576 );
+	BOOST_REQUIRE( image );
+	ml::image_type_ptr alpha = ml::image::allocate( ml::image::ML_PIX_FMT_L8, 720, 576 );
+	BOOST_REQUIRE( alpha );
+	ml::frame_type_ptr frame( new ml::frame_type );
+	frame->set_position( 0 );
+	frame->set_image( image );
+	frame->set_alpha( alpha );
+	ml::frame_type_ptr frame2 = ml::frame_rescale( ro, frame, 1920, 1080 );
+	BOOST_REQUIRE( frame2 );
+	BOOST_CHECK( frame2->get_image( ) );
+	BOOST_CHECK( frame2->get_alpha( ) );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_L8 ) != 0 );
+	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != ro->get_context( ml::image::ML_PIX_FMT_L8 ) );
+}
+
 BOOST_AUTO_TEST_SUITE_END( )
 

@@ -211,7 +211,7 @@ ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_
 	return rescale_and_convert( ro, src, shape );
 }
 
-image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
+image_type_ptr rescale( ml::rescale_object_ptr ro, const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
 {
     if( im->width( ) == new_w && im->height( ) == new_h )
         return im;
@@ -221,7 +221,12 @@ image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_
 	shape.width = new_w;
 	shape.height = new_h;
 	shape.interp = filter;
-	return rescale_and_convert( ml::rescale_object_ptr( ), im, shape );
+	return rescale_and_convert( ro, im, shape );
+}
+
+image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
+{
+	return rescale( ml::rescale_object_ptr( ), im, new_w, new_h, filter );
 }
 
 template< typename T >
@@ -231,7 +236,6 @@ void colour_rectangle( typename T::data_type *ptr, boost::uint8_t value, int wid
 
 	while( height -- > 0 )
 	{
-		//memset( ptr, value, width );
 		std::fill_n( ptr, width, val_shifted );
 		ptr += pitch;
 	}

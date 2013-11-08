@@ -135,6 +135,7 @@ struct geometry
 	int cx, cy, cw, ch; 
 };
 
+ML_DECLSPEC image_type_ptr rescale( ml::rescale_object_ptr ro, const image_type_ptr &im, int new_w, int new_h, rescale_filter filter = POINT_SAMPLING );
 ML_DECLSPEC image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter = POINT_SAMPLING );
 ML_DECLSPEC image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_type_ptr &im, geometry &shape );
 

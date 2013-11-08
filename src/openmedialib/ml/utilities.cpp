@@ -300,19 +300,24 @@ ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &
 	return frame_convert( ml::rescale_object_ptr(), frame, pf );
 }
 
-ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, ml::image::rescale_filter filter )
+ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr frame, int new_w, int new_h, ml::image::rescale_filter filter )
 {
 	frame_type_ptr result = frame;
 
 	if ( result )
 	{
 		if ( result->get_alpha( ) )
-			result->set_alpha( ml::image::rescale( result->get_alpha( ), new_w, new_h, filter ) );
+			result->set_alpha( image::rescale( ro, result->get_alpha( ), new_w, new_h, filter ) );
 		if ( result->get_image( ) )
-			result->set_image( ml::image::rescale( result->get_image( ), new_w, new_h, filter ) );
+			result->set_image( image::rescale( ro, result->get_image( ), new_w, new_h, filter ) );
 	}
 
 	return result;
+}
+
+ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, image::rescale_filter filter )
+{
+	return frame_rescale( rescale_object_ptr( ), frame, new_w, new_h, filter );
 }
 
 ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr frame )

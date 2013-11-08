@@ -355,6 +355,11 @@ frame_type_ptr frame_convert1( ml::rescale_object_ptr ro, frame_type_ptr frame, 
 	return ml::frame_convert( ro, frame, pf );
 }
 
+frame_type_ptr frame_rescale( frame_type_ptr frame, int width, int height, ml::image::rescale_filter filter = ml::image::BICUBIC_SAMPLING )
+{
+	return ml::frame_rescale( frame, width, height, filter );
+}
+
 void py_plugin( )
 {
 	py::def( "init", &ml::init );
@@ -380,7 +385,7 @@ void py_plugin( )
 	py::def( "audio_channel_convert", &ml::audio::channel_convert );
 	py::def( "frame_convert", &detail::frame_convert0 );
 	py::def( "frame_convert", &detail::frame_convert1 );
-	py::def( "frame_rescale", &ml::frame_rescale );
+	py::def( "frame_rescale", &frame_rescale );
 	py::def( "frame_crop_clear", &ml::frame_crop_clear );
 	py::def( "frame_crop", &ml::frame_crop );
 	py::def( "frame_volume", &ml::frame_volume );

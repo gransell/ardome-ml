@@ -227,7 +227,7 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
 {
 	struct SwsContext *context = 0;
 	if (ro) {
-		context = (struct SwsContext *)ro->get_context();
+		context = (struct SwsContext *)ro->get_context( dst->ml_pixel_format( ) );
 	}
 	
     AVPicture input = fill_picture( src );
@@ -262,7 +262,7 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
 	if (!ro) {
 		sws_freeContext( context );
 	} else {
-		ro->set_context( context );
+		ro->set_context( dst->ml_pixel_format( ), context );
 	}
 	
 	return retval;
