@@ -176,7 +176,11 @@ AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 		return CODEC_ID_DVVIDEO;
 	else if( apf_codec_id == "vc3/vc3" )
 		return CODEC_ID_DNXHD;
-	else if( apf_codec_id == "prores/prores" )
+	else if( apf_codec_id == "prores/422_proxy" ||
+			apf_codec_id == "prores/422_lt" ||
+			apf_codec_id == "prores/422" ||
+			apf_codec_id == "prores/422_hq" ||
+			apf_codec_id == "prores/4444" )
 		return AV_CODEC_ID_PRORES;
 	else if( apf_codec_id == "aes" )
 		return static_cast< enum AVCodecID >( AML_AES3_CODEC_ID );
