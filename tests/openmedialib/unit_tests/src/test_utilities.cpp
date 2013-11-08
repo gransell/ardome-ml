@@ -81,15 +81,17 @@ namespace {
 
 typedef std::map< ml::image::MLPixelFormat, int > MLPixelFormat_int_map_type;
 typedef std::map< ml::image::MLPixelFormat, std::vector< int > > MLPixelFormat_vector_int_map_type;
+typedef boost::rational< int > ratio;
 
 struct pixel_format_info
 {
 	int storage_bytes;
 	int plane_count;
-	int bitdepth[4];		// the bitdepth of each plane
-	int linesize_factor[4]; // the amount to divide the width*storage_bytes by to get the linesize of each plane, negative values mean to multiply
-	int width_factor[4];	// the amount to divide the width by to get the width of each plane
-	int height_factor[4];	// the amount to divide the height by to get the height of each plane
+	int bitdepth[4];			// the bitdepth of each plane
+	ratio linesize_factor[4];	// the ratio to multiply the width*storage_bytes by to get the linesize of each plane
+	int width_factor[4];		// the amount to divide the width by to get the width of each plane
+	int height_factor[4];		// the amount to divide the height by to get the height of each plane
+	int multiple[2];			// the number of pixels which represent the factor of the acceptable widths and heights
 };
 
 struct pixel_format_pair
@@ -98,32 +100,40 @@ struct pixel_format_pair
 	pixel_format_info pfi;
 };
 
+const ratio M0( 0 );
+const ratio M1( 1 );
+const ratio M2( 2 );
+const ratio M3( 3 );
+const ratio M4( 4 );
+const ratio D2( 1, 2 );
+const ratio D4( 1, 4 );
+
 // Add new pixel-formats here:
 const pixel_format_pair pf_pairs[] = {
-	// PF, storage_bytes, planes,				  [bitdepths],		[linesizes],	[widths],	[heights]
-	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 3, {8,  8,  8,  0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 2, 2, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV420P10LE,  { 2, 3, {10, 10, 10, 0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 2, 2, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV420P16LE,  { 2, 3, {16, 16, 16, 0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 2, 2, 0} } },
-	{ ml::image::ML_PIX_FMT_YUVA420P,     { 1, 4, {8,  8,  8,  8},  {1,  2, 2, 1}, {1, 2, 2, 1}, {1, 2, 2, 1} } },
-	{ ml::image::ML_PIX_FMT_UYV422,       { 1, 1, {8,  0,  0,  0},  {-2, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 3, {8,  8,  8,  0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV422,       { 1, 1, {8,  0,  0,  0},  {-2, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV422P10LE,  { 2, 3, {10, 10, 10, 0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV422P16LE,  { 2, 3, {16, 16, 16, 0},  {1,  2, 2, 0}, {1, 2, 2, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 3, {8,  8,  8,  0},  {1,  1, 1, 0}, {1, 1, 1, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_YUVA444P,     { 1, 4, {8,  8,  8,  8},  {1,  1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV444P16LE,  { 2, 3, {16, 16, 16, 0},  {1,  1, 1, 0}, {1, 1, 1, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_YUVA444P16LE, { 2, 4, {16, 16, 16, 16}, {1,  1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 3, {8,  8,  8,  0},  {1,  4, 4, 0}, {1, 4, 4, 0}, {1, 1, 1, 0} } },
-	{ ml::image::ML_PIX_FMT_L8,           { 1, 1, {8,  0,  0,  0},  {1,  0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_L16LE,        { 2, 1, {16, 0,  0,  0},  {1,  0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_R8G8B8,       { 1, 1, {8,  0,  0,  0},  {-3, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_B8G8R8,       { 1, 1, {8,  0,  0,  0},  {-3, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_R8G8B8A8,     { 1, 1, {8,  0,  0,  0},  {-4, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_B8G8R8A8,     { 1, 1, {8,  0,  0,  0},  {-4, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_A8R8G8B8,     { 1, 1, {8,  0,  0,  0},  {-4, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_A8B8G8R8,     { 1, 1, {8,  0,  0,  0},  {-4, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } },
-	{ ml::image::ML_PIX_FMT_R16G16B16LE,  { 2, 1, {16, 0,  0,  0},  {-3, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0} } }
+	// PF, storage_bytes, planes,				  [bitdepths],		[linesizes],		[widths],	[heights],	 [multiple]
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
+	{ ml::image::ML_PIX_FMT_YUV420P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
+	{ ml::image::ML_PIX_FMT_YUV420P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
+	{ ml::image::ML_PIX_FMT_YUVA420P,     { 1, 4, {8,  8,  8,  8},  {M1, D2, D2, M1}, {1, 2, 2, 1}, {1, 2, 2, 1}, {2, 2} } },
+	{ ml::image::ML_PIX_FMT_UYV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV422P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV422P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 3, {8,  8,  8,  0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_YUVA444P,     { 1, 4, {8,  8,  8,  8},  {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV444P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_YUVA444P16LE, { 2, 4, {16, 16, 16, 16}, {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 3, {8,  8,  8,  0},  {M1, D4, D4, M0}, {1, 4, 4, 0}, {1, 1, 1, 0}, {4, 1} } },
+	{ ml::image::ML_PIX_FMT_L8,           { 1, 1, {8,  0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_L16LE,        { 2, 1, {16, 0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_R8G8B8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_B8G8R8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_R8G8B8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_B8G8R8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_A8R8G8B8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_A8B8G8R8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
+	{ ml::image::ML_PIX_FMT_R16G16B16LE,  { 2, 1, {16, 0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } }
 };
 
 typedef std::map< ml::image::MLPixelFormat, pixel_format_info > MLPixelFormat_info_map_type;
@@ -155,7 +165,6 @@ pf_info_initializer initializer_object;
 
 }
 
-
 void test_image( ml::image_type_ptr image, ml::image::MLPixelFormat pf, int width, int height )
 {
 	BOOST_CHECK_EQUAL( image->ml_pixel_format( ), pf );
@@ -167,10 +176,7 @@ void test_image( ml::image_type_ptr image, ml::image::MLPixelFormat pf, int widt
 
 	for (int i=0; i < image->plane_count( ); ++i )
 	{
-		int linesize = pf_infos[ pf ].linesize_factor[ i ] < 0 ? image->width() * -1 * pf_infos[ pf ].linesize_factor[ i ] 
-																: image->width() / pf_infos[ pf ].linesize_factor[ i ];
-		linesize *= pf_infos[ pf ].storage_bytes;
-
+		int linesize = boost::rational_cast< int >( image->width() * pf_infos[ pf ].linesize_factor[ i ] ) * pf_infos[ pf ].storage_bytes;
 		BOOST_CHECK_EQUAL( image->linesize( i ), linesize );
 		BOOST_CHECK_EQUAL( image->width( i ), image->width( ) / pf_infos[ pf ].width_factor[ i ] );
 		BOOST_CHECK_EQUAL( image->height( i ), image->height( ) / pf_infos[ pf ].height_factor[ i ] );
@@ -207,6 +213,19 @@ BOOST_AUTO_TEST_CASE( ML_pix_fmt_to_AV_pix_fmt )
 		BOOST_CHECK( -1 != ml::image::ML_to_AV( static_cast<ml::image::MLPixelFormat>( pf ) ) );
 	}
 }
+
+BOOST_AUTO_TEST_CASE( image_multiples )
+{
+	size_t tests = sizeof( pf_pairs ) / sizeof( pixel_format_pair );
+	for( size_t i = 0; i < tests; i ++ )
+	{
+		const struct pixel_format_pair &t = pf_pairs[ i ];
+		int tw = 1, th = 1;
+		ml::image::correct( t.pf, tw, th, ml::image::ceil );
+		BOOST_CHECK( tw == t.pfi.multiple[ 0 ] );
+		BOOST_CHECK( th == t.pfi.multiple[ 1 ] );
+	}
+};
 
 BOOST_AUTO_TEST_CASE( image_convert )
 {	
@@ -246,19 +265,41 @@ struct correction_info
 	struct dim ceil;
 };
 
+// We only need to test one of each of the pixel multiple combinations since the results of
+// each with the same values are identical (see image_multiples above). 
+//
+// Hence:
+//
+// * yuv444p is selected to test those with 1,1
+// * yuv422p is selected to test those with 2,1
+// * yuv420p is selected to test those with 2,2
+// * yuv411p is selected to test those with 4,1
+//
+// Note that the ml::image::correct and ml::image::verify functions correct and validate 
+// coordinates - this means they include a subset of values which are not valid image 
+// dimensions - namely, values of w * h == 0 are seen as valid.
 
 const correction_info correction_tests[] = {
 	// PF                                 input		valid 	nearest		floor	  ceil
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 0 }, true, 	{ 1, 0 }, { 1, 0 }, { 1, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 1 }, true, 	{ 1, 1 }, { 1, 1 }, { 1, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 2, 1 }, true, 	{ 2, 1 }, { 2, 1 }, { 2, 1 } },
+
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 0 }, false, 	{ 2, 0 }, { 0, 0 }, { 2, 0 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 1 }, false, 	{ 2, 1 }, { 0, 1 }, { 2, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 2, 1 }, true, 	{ 2, 1 }, { 2, 1 }, { 2, 1 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 2, 2 }, true, 	{ 2, 2 }, { 2, 2 }, { 2, 2 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 3, 2 }, false, 	{ 4, 2 }, { 2, 2 }, { 4, 2 } },
+
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 0 }, false, 	{ 2, 0 }, { 0, 0 }, { 2, 0 } },
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 1 }, false, 	{ 2, 2 }, { 0, 0 }, { 2, 2 } },
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 2, 1 }, false, 	{ 2, 2 }, { 2, 0 }, { 2, 2 } },
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 2, 2 }, true, 	{ 2, 2 }, { 2, 2 }, { 2, 2 } },
 	{ ml::image::ML_PIX_FMT_YUV420P,      { 3, 2 }, false, 	{ 4, 2 }, { 2, 2 }, { 4, 2 } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 0 }, true, 	{ 1, 0 }, { 1, 0 }, { 1, 0 } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 1 }, true, 	{ 1, 1 }, { 1, 1 }, { 1, 1 } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 2, 1 }, true, 	{ 2, 1 }, { 2, 1 }, { 2, 1 } },
+
 	{ ml::image::ML_PIX_FMT_YUV411P,      { 0, 0 }, true, 	{ 0, 0 }, { 0, 0 }, { 0, 0 } },
 	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 1 }, false, 	{ 0, 1 }, { 0, 1 }, { 4, 1 } },
 	{ ml::image::ML_PIX_FMT_YUV411P,      { 2, 1 }, false, 	{ 4, 1 }, { 0, 1 }, { 4, 1 } },
