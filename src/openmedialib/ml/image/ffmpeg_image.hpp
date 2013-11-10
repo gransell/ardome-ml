@@ -311,14 +311,15 @@ private:
 	{
 		for ( int i = 0; i < plane_count( ); i++ )
 		{
-			int shift_x = ( i > 0 ? chroma_w_: 0 );
-			int shift_y = ( i > 0 ? chroma_h_: 0 );
+			int shift_x = i == 1 || i == 2 ? chroma_w_ : 0;
+			int shift_y = i == 1 || i == 2 ? chroma_h_ : 0;
+			int bytes = linesize( i, false ) / width( i, false );
 			plane &p = crop[ i ];
 			p.width = w >> shift_x;
 			p.height = h >> shift_y;
-			p.linesize = p.width;
+			p.linesize = p.width * bytes;
 			p.offset = ( p.pitch * ( y >> shift_y ) ) ;
-			p.offset += ( x >> shift_x );
+			p.offset += ( ( x >> shift_x ) * bytes );
 			p.offset = offset( i, false ) + p.offset;
 		}
 	}
