@@ -197,6 +197,7 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 	typename T::data_type *ptr = ml::image::coerce< T >( img )->data( );
 	int width = img->width( );
 	int height = img->height( );
+	int diff = ( img->pitch( ) - img->linesize( ) ) / sizeof( typename T::data_type );
 	typename T::data_type rs = static_cast< typename T::data_type >( r << ( img->bitdepth( ) - 8 ) );
 	typename T::data_type gs = static_cast< typename T::data_type >( g << ( img->bitdepth( ) - 8 ) );
 	typename T::data_type bs = static_cast< typename T::data_type >( b << ( img->bitdepth( ) - 8 ) );
@@ -240,6 +241,7 @@ inline void fillRGB( ml::image_type_ptr img, unsigned char r, unsigned char g, u
 				if (order_a == 3)
 					ptr++;
 			}
+			ptr += diff;
 		}
 	}
 }
