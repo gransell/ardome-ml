@@ -756,8 +756,11 @@ int real_main( int argc, const char *argv[ ] )
 
 	if ( input->get_frames( ) <= 0 )
 	{
-		if ( input->fetch_slot( 0 ) )
+		if ( input->fetch_slot( 0 ) ) {
 			std::cerr << cl::str_util::to_string( input->fetch_slot( 0 )->get_uri( ) ) << std::endl;
+		} else {
+			std::cerr << "No input specified" << std::endl;
+		}
 		return 1;
 	}
 

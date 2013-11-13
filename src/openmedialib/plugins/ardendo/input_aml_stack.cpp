@@ -816,6 +816,15 @@ class aml_stack
 			variables_.pop_back( );
 		}
 
+		template< typename T >
+		bool wstring_to_number( const std::wstring &value, T number )
+		{
+			std::wstringstream ss( value );
+			if( !( ss >> number ) )
+				return false;
+			return true;
+		}
+		
 		void assign( pl::pcos::property_container &props, const std::string &name, const std::wstring &value )
 		{
 			pl::pcos::key key = pl::pcos::key::from_string( name.c_str( ) );
@@ -823,7 +832,37 @@ class aml_stack
 
 			if ( property.valid( ) )
 			{
-				property.set_from_string( value );
+				if ( property.is_a< int >( ) ) {
+					int v = 0;
+					if( !wstring_to_number< int >( value, v ) ) {
+						throw ( std::string( "Failed to assign '" + 
+								cl::str_util::to_string( value ) + "' to property '" + name + "' with type 'int'" ) );
+					}
+					property = v;
+				} else if ( property.is_a< double >( ) ) {
+					double v = 0;
+					if( !wstring_to_number< double >( value, v ) ) {
+						throw ( std::string( "Failed to assign '" + 
+								cl::str_util::to_string( value ) + "' to property '" + name + "' with type 'double'" ) );
+					}
+					property = v;
+				} else if ( property.is_a< boost::int64_t >( ) ) {
+					boost::int64_t v = 0;
+					if( !wstring_to_number< boost::int64_t >( value, v ) ) {
+						throw ( std::string( "Failed to assign '" + 
+								cl::str_util::to_string( value ) + "' to property '" + name + "' with type 'int64'" ) );
+					}
+					property = v;
+				} else if ( property.is_a< boost::uint64_t >( ) ) {
+					boost::uint64_t v = 0;
+					if( !wstring_to_number< boost::uint64_t >( value, v ) ) {
+						throw ( std::string( "Failed to assign '" + 
+								cl::str_util::to_string( value ) + "' to property '" + name + "' with type 'uint64'" ) );
+					}
+					property = v;
+				} else {
+					property.set_from_string( value );
+				}
 				property.update( );
 			}
 			else if ( name[ 0 ] == '@' )
