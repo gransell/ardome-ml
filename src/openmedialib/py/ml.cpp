@@ -364,6 +364,7 @@ void py_plugin( )
 {
 	py::def( "init", &ml::init );
 	py::def( "uninit", &ml::uninit );
+	py::def( "create_delayed_input", &ml::create_delayed_input );
 	py::def( "create_input", &detail::create_input0 );
 	py::def( "create_input", &detail::create_input );
 	py::def( "create_store", &detail::create_store );
