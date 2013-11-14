@@ -225,12 +225,14 @@ std::vector<ml::store_type_ptr> fetch_store( int &index, int argc, const char *a
 	std::vector< ml::store_type_ptr > result;
 	pl::pcos::property_container properties;
 
-	if ( index + 1 < argc && std::string( argv[ index ++ ] ) == "--" )
+	if ( index < argc && std::string( argv[ index ] ) == "--" )
 	{
+		++index;
 		while( index < argc )
 		{
-			std::wstring arg = cl::str_util::to_wstring( argv[ index ++ ] );
+			std::wstring arg = cl::str_util::to_wstring( argv[ index ] );
 			handle_token( result, properties, arg, frame );
+			++index;
 		}
 	}
 	else if ( cl::str_util::env_var_exists( olib::t_string( _CT( "AML_STORE" ) ) ) )
@@ -816,16 +818,19 @@ int real_main( int argc, const char *argv[ ] )
 		if ( frame == 0 )
 			return 2;
 
-		if ( index == argc || strcmp( argv[ index + 1 ], "env:" ) )
+		if ( index + 1 < argc && strcmp( argv[ index + 1 ], "env:" ) == 0 )
 		{
-			std::vector< ml::store_type_ptr > store = fetch_store( index, argc, argv, frame );
-			if ( store.empty( ) )
-				return 3;
-				play( pitch, store, interactive, should_seek ? 0 : 1, stats, show_source_tc );
+			env_report( argc, argv, pitch, frame );
 		}
 		else
 		{
-			env_report( argc, argv, pitch, frame );
+			std::vector< ml::store_type_ptr > stores = fetch_store( index, argc, argv, frame );
+			if ( stores.empty( ) )
+			{
+				std::cerr << "One or more stores must be specified after the \"--\" token" << std::endl;
+				return 3;
+			}
+			play( pitch, stores, interactive, should_seek ? 0 : 1, stats, show_source_tc );
 		}
 	}
 	return 0;
