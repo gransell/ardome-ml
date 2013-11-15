@@ -1141,8 +1141,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					video_enc->bits_per_coded_sample = stream->properties( ).get_property_with_key( key_bits_per_coded_sample_ ).value< int >( );
 					video_enc->ticks_per_frame = stream->properties( ).get_property_with_key( key_ticks_per_frame_ ).value< int >( );
 
-					video_stream_->avg_frame_rate.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
-					video_stream_->avg_frame_rate.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
+					video_stream_->time_base.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
+					video_stream_->time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
+					video_stream_->avg_frame_rate.num = stream->properties( ).get_property_with_key( key_avg_fps_num_ ).value< int >( );
+					video_stream_->avg_frame_rate.den = stream->properties( ).get_property_with_key( key_avg_fps_den_ ).value< int >( );
+					video_stream_->r_frame_rate.num = first_frame_->get_fps_num( );
+					video_stream_->r_frame_rate.den = first_frame_->get_fps_den( );
 
 					if ( !video_enc->sample_aspect_ratio.num ) 
 					{
