@@ -817,7 +817,7 @@ class aml_stack
 		}
 
 		template< typename T >
-		bool wstring_to_number( const std::wstring &value, T number )
+		bool wstring_to_number( const std::wstring &value, T &number )
 		{
 			std::wstringstream ss( value );
 			if( !( ss >> number ) )
