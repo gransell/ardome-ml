@@ -718,7 +718,7 @@ class avformat_demux
 
 					// Absolute byte offset derived from packet and location in stream before a read
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_byte_offset, handler.offset( ) );
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::codec_tag, boost::int64_t( codec->codec_tag ) );
+					pl::pcos::assign< unsigned int >( properties, ml::keys::codec_tag, codec->codec_tag );
 					pl::pcos::assign< int >( properties, ml::keys::codec_id, int( codec->codec_id ) );
 					pl::pcos::assign< int >( properties, ml::keys::codec_type, int( codec->codec_type ) );
 

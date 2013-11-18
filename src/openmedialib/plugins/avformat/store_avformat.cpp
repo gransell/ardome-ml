@@ -1133,7 +1133,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 
 					video_enc->codec_id = AVCodecID( stream->properties( ).get_property_with_key( key_codec_id_ ).value< int >( ) );
 					video_enc->codec_type = AVMediaType( stream->properties( ).get_property_with_key( key_codec_type_ ).value< int >( ) );
-					video_enc->codec_tag = stream->properties( ).get_property_with_key( key_codec_tag_ ).value< int >( );
+					video_enc->codec_tag = stream->properties( ).get_property_with_key( key_codec_tag_ ).value< unsigned int >( );
 					video_enc->rc_max_rate = stream->properties( ).get_property_with_key( key_max_rate_ ).value< int >( );
 					video_enc->rc_buffer_size = stream->properties( ).get_property_with_key( key_buffer_size_ ).value< int >( );
 					video_enc->bit_rate = stream->properties( ).get_property_with_key( key_bit_rate_ ).value< int >( );
