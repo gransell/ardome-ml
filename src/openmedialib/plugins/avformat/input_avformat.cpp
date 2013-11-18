@@ -711,7 +711,12 @@ class avformat_demux
 					else
 						pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, 0 );
 
-					// Packet related properties
+					// Calculate the difference between the pts and the dts in frame positions
+					typedef boost::rational< boost::int64_t > timebase;
+					timebase pts_dts_diff = timebase( pkt_.pts - pkt_.dts ) * timebase( stream->time_base.num, stream->time_base.den ) * timebase( source->fps_num_, source->fps_den_ );
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts_dts_diff, boost::rational_cast< boost::int64_t >( pts_dts_diff ) );
+
+					// Packet related properties (pts and dts are used internally only)
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts, pkt_.pts );
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::dts, pkt_.dts );
 					pl::pcos::assign< int >( properties, ml::keys::duration, pkt_.duration );

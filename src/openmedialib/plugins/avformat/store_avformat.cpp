@@ -15,6 +15,7 @@
 #include <openmedialib/ml/stream.hpp>
 #include <openmedialib/ml/awi.hpp>
 #include <openmedialib/ml/io.hpp>
+#include <openmedialib/ml/keys.hpp>
 #include <openpluginlib/pl/pcos/isubject.hpp>
 #include <openpluginlib/pl/pcos/observer.hpp>
 
@@ -743,6 +744,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				
 				codec_id = stream_to_avformat_codec_id( stream );
 				ARENFORCE( codec_id != CODEC_ID_NONE );
+
+				video_copy_ = true;
 			}
 			else if ( prop_vcodec_.value< std::wstring >( ) != L"" )
 			{
@@ -1396,24 +1399,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPacket pkt;
 				av_init_packet( &pkt );
 
-				AVRational time_base;
-
-				time_base.num = stream->properties( ).get_property_with_key( key_timebase_num_ ).value< int >( );
-				time_base.den = stream->properties( ).get_property_with_key( key_timebase_den_ ).value< int >( );
-
 				pkt.stream_index = video_stream_->index;
 				pkt.data = stream->bytes( );
 				pkt.size = stream->length( );
-				pkt.pts = av_rescale_q( stream->properties( ).get_property_with_key( key_pts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
-				pkt.dts = av_rescale_q( stream->properties( ).get_property_with_key( key_dts_ ).value< boost::int64_t >( ), c->time_base, video_stream_->time_base );
 				pkt.duration = stream->properties( ).get_property_with_key( key_duration_ ).value< int >( );
 
-				boost::int64_t ost_tb_start_time = av_rescale_q( 0, ml_av_time_base_q, video_stream_->time_base );
-				pkt.pts = av_rescale_q(pkt.pts, time_base, video_stream_->time_base) - ost_tb_start_time;
-				pkt.dts = av_rescale_q(pkt.dts, time_base, video_stream_->time_base);
+				// Use a timebase of the reciprocal of the frame rate to convert the position to time base of the stream
+				AVRational time_base;
+				time_base.num = frame->get_fps_den( );
+				time_base.den = frame->get_fps_num( );
 
-				//opkt.duration = av_rescale_q(pkt->duration, ist->st->time_base, ost->st->time_base);
-				//std::cerr << "ts: " << pkt.pts << " " << pkt.dts << std::endl;
+				// Convert the frame position and the difference of the source pts to generate the pts/dts values in the output
+				pkt.pts = av_rescale_q( frame->get_position( ), time_base, video_stream_->time_base );
+				pkt.dts = av_rescale_q( frame->get_position( ) - stream->properties( ).get_property_with_key( ml::keys::pts_dts_diff ).value< boost::int64_t >( ), time_base, video_stream_->time_base );
 
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{       
