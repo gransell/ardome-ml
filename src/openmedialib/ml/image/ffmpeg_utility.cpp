@@ -226,9 +226,7 @@ AVPicture fill_picture( ml::image_type_ptr image )
 int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags )
 {
 	struct SwsContext *context = 0;
-	if (ro) {
-		context = (struct SwsContext *)ro->get_context( dst->ml_pixel_format( ) );
-	}
+	if (ro) context = (struct SwsContext *)ro->get_context( dst->ml_pixel_format( ) );
 	
     AVPicture input = fill_picture( src );
     AVPicture output = fill_picture( dst );
@@ -248,7 +246,14 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
             NULL,
             NULL);
 
-    ARENFORCE( context != NULL );
+	// We need to refresh the ro before the enforce is invoked - if we're going from a 
+	// valid context to an invalid one, the original context will be invalid, so we should
+	// not attempt to reuse it again
+	if (ro) ro->set_context( dst->ml_pixel_format( ), context );
+	
+    ARENFORCE_MSG( context != NULL, "Can't create a context from %dx%d %s to %dx%d %s" )
+				   ( src->width( ) )( src->height( ) )( src->pf( ) )
+				   ( dst->width( ) )( dst->height( ) )( dst->pf( ) );
 	
     int retval = sws_scale( context,
         input.data,
@@ -258,13 +263,9 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
         output.data,
         output.linesize );
 
-	// Free the temporary allocated context, not the rescale_objects context
-	if (!ro) {
-		sws_freeContext( context );
-	} else {
-		ro->set_context( dst->ml_pixel_format( ), context );
-	}
-	
+	// Free the temporary allocated context if we have no ro to store it on
+	if (!ro) sws_freeContext( context );
+
 	return retval;
 }
 
