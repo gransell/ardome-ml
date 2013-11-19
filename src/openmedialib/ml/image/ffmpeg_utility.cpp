@@ -246,6 +246,25 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
             NULL,
             NULL);
 
+    // If that fails, it could be down to the combination of dimensions and 'flags' (sampling type) - 
+    // for example, sws can't handle a bicubic rescale to a low resolution - to avoid treating
+    // this as an error, we'll attempt a simpler sampling type.
+    // FIXME: Dropping straight down to point sampling is a bit aggressive - should we extend the
+    // supported sampling types, then this might need to be more intelligently handled to avoid 
+    // easily identified quality drops.
+    if ( context == 0 && flags != POINT_SAMPLING )
+    	context = sws_getCachedContext( context, 
+            src->width( ),
+            src->height( ),
+            static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ),
+            dst->width( ),
+            dst->height( ),
+            static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ),
+            POINT_SAMPLING,
+            NULL,
+            NULL,
+            NULL);
+
 	// We need to refresh the ro before the enforce is invoked - if we're going from a 
 	// valid context to an invalid one, the original context will be invalid, so we should
 	// not attempt to reuse it again
