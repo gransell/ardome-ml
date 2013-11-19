@@ -71,11 +71,9 @@ extern ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const std::wstring, 
 extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const std::wstring, int ) );
 
 // Determine if the image associated to the frame is yuv planar
-
 inline bool is_yuv_planar( const frame_type_ptr &frame )
 {
-	//FIXME
-	return frame ? true : false;
+	return frame && frame->is_yuv_planar( );
 }
 
 namespace audio

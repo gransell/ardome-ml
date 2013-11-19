@@ -321,6 +321,21 @@ int frame_type::height( ) const
 	return 0;
 }
 
+image::MLPixelFormat frame_type::ml_pixel_format( ) const
+{
+	image::MLPixelFormat result = image::ML_PIX_FMT_NONE;
+	if ( image_ )
+		result = image_->ml_pixel_format( );
+	else if ( stream_ )
+		result = stream_->ml_pixel_format( );
+	return result;
+}
+
+bool frame_type::is_yuv_planar( ) const
+{
+	return ml::image::is_pixfmt_planar( ml_pixel_format( ) );
+}
+
 t_string frame_type::pf( ) const
 {
 	if ( image_ )

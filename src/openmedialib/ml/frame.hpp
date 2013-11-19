@@ -207,6 +207,12 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Get the image associated to the frame. Just return the member variable without triggering the decoding from stream.
 		const olib::openmedialib::ml::image_type_ptr get_evaluated_image( ) const { return image_; }
 
+		/// Returns the enumerated form of the picture format
+		image::MLPixelFormat ml_pixel_format( ) const;
+
+		/// Indicates if the image associated to the frame is yuv planar image
+		bool is_yuv_planar( ) const;
+
 	protected:
 	
 		/// Copy constructor from a frame_type_ptr

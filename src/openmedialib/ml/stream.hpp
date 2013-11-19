@@ -7,6 +7,7 @@
 #define OPENMEDIALIB_PACKET_H_
 
 #include <openmedialib/ml/image/image.hpp>
+#include <openmedialib/ml/image/utility.hpp>
 #include <openmedialib/ml/types.hpp>
 #include <openpluginlib/pl/pcos/property_container.hpp>
 
@@ -88,6 +89,9 @@ class ML_DECLSPEC stream_type
 
 		/// Indicates if there is more data to be retrieved from this packet
 		virtual bool more( ) { return false; }
+
+		/// Returns the enumerated form of the pixel format
+		image::MLPixelFormat ml_pixel_format( ) const { return image::string_to_MLPF( pf( ) ); }
 };
 
 } } }
