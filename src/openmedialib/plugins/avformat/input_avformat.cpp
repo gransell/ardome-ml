@@ -516,7 +516,9 @@ class avformat_demux
 			bool result = false;
 
 			pl::pcos::property_container properties = packet->properties( );
-			boost::int64_t dts = pl::pcos::value< boost::int64_t >( properties, ml::keys::dts, 0 );
+			const boost::int64_t dts =
+				pl::pcos::value< boost::int64_t >( properties, ml::keys::source_pts, 0 ) -
+				pl::pcos::value< boost::int64_t >( properties, ml::keys::pts_dts_diff, 0 );
 			int duration = pl::pcos::value< int >( properties, ml::keys::duration, 0 );
 			int key_frame = pl::pcos::value< int >( properties, ml::keys::picture_coding_type, 0 );
 
@@ -532,7 +534,9 @@ class avformat_demux
 			{
 				stream_avformat_ptr previous = ( -- block.end( ) )->second;
 				pl::pcos::property_container prev_properties = previous->properties( );
-				boost::int64_t prev_dts = pl::pcos::value< boost::int64_t >( prev_properties, ml::keys::dts, 0 );
+				const boost::int64_t prev_dts =
+					pl::pcos::value< boost::int64_t >( prev_properties, ml::keys::source_pts, 0 ) -
+					pl::pcos::value< boost::int64_t >( prev_properties, ml::keys::pts_dts_diff, 0 );
 				int prev_duration = pl::pcos::value< int >( prev_properties, ml::keys::duration, 0 );
 
 				if ( prev_duration == 0 ) prev_duration = duration;
@@ -560,7 +564,9 @@ class avformat_demux
 			{
 				stream_avformat_ptr packet = iter->second;
 				pl::pcos::property_container properties = packet->properties( );
-				boost::int64_t dts = pl::pcos::value< boost::int64_t >( properties, ml::keys::dts, 0 );
+				const boost::int64_t dts = 
+					pl::pcos::value< boost::int64_t >( properties, ml::keys::source_pts, 0 ) -
+					pl::pcos::value< boost::int64_t >( properties, ml::keys::pts_dts_diff, 0 );
 				int key_frame = pl::pcos::value< int >( properties, ml::keys::picture_coding_type, 0 );
 				int pkt_duration = pl::pcos::value< int >( properties, ml::keys::duration, 0 );
 				if ( iter == block.begin( ) )
@@ -711,29 +717,24 @@ class avformat_demux
 					else
 						pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_position, 0 );
 
-					// Calculate the difference between the pts and the dts in frame positions
-					typedef boost::rational< boost::int64_t > timebase;
-					timebase pts_dts_diff = timebase( pkt_.pts - pkt_.dts ) * timebase( stream->time_base.num, stream->time_base.den ) * timebase( source->fps_num_, source->fps_den_ );
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts_dts_diff, boost::rational_cast< boost::int64_t >( pts_dts_diff ) );
-
-					// Packet related properties (pts and dts are used internally only)
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts, pkt_.pts );
-					pl::pcos::assign< boost::int64_t >( properties, ml::keys::dts, pkt_.dts );
+					// Packet related properties
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_pts, pkt_.pts );
+					pl::pcos::assign< boost::int64_t >( properties, ml::keys::pts_dts_diff, pkt_.pts - pkt_.dts );
+					pl::pcos::assign< int >( properties, ml::keys::timebase_num, stream->time_base.num );
+					pl::pcos::assign< int >( properties, ml::keys::timebase_den, stream->time_base.den );
 					pl::pcos::assign< int >( properties, ml::keys::duration, pkt_.duration );
 
 					// Absolute byte offset derived from packet and location in stream before a read
 					pl::pcos::assign< boost::int64_t >( properties, ml::keys::source_byte_offset, handler.offset( ) );
+
+					// Codec related properties
 					pl::pcos::assign< unsigned int >( properties, ml::keys::codec_tag, codec->codec_tag );
 					pl::pcos::assign< int >( properties, ml::keys::codec_id, int( codec->codec_id ) );
 					pl::pcos::assign< int >( properties, ml::keys::codec_type, int( codec->codec_type ) );
-
-					// Codec related properties
 					pl::pcos::assign< int >( properties, ml::keys::has_b_frames, codec->has_b_frames );
 
 					// Stream related properties
 					pl::pcos::assign< int >( properties, ml::keys::pid, stream->id );
-					pl::pcos::assign< int >( properties, ml::keys::timebase_num, stream->time_base.num );
-					pl::pcos::assign< int >( properties, ml::keys::timebase_den, stream->time_base.den );
 
 					pl::pcos::property max_rate( ml::keys::max_rate );
 					packet->properties( ).append( max_rate = codec->rc_max_rate );

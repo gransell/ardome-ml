@@ -58,8 +58,7 @@ ML_KEY( audio_reversed );
 ML_KEY( enable );
 ML_KEY( uri );
 
-ML_KEY( pts );
-ML_KEY( dts );
+ML_KEY( source_pts );
 ML_KEY( pts_dts_diff );
 ML_KEY( has_b_frames );
 ML_KEY( timebase_num );

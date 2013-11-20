@@ -57,8 +57,6 @@ namespace pcos = olib::openpluginlib::pcos;
 
 namespace olib { namespace openmedialib { namespace ml {
 
-static const pl::pcos::key key_pts_ = pl::pcos::key::from_string( "pts" );
-static const pl::pcos::key key_dts_ = pl::pcos::key::from_string( "dts" );
 static const pl::pcos::key key_has_b_frames_ = pl::pcos::key::from_string( "has_b_frames" );
 static const pl::pcos::key key_timebase_num_ = pl::pcos::key::from_string( "timebase_num" );
 static const pl::pcos::key key_timebase_den_ = pl::pcos::key::from_string( "timebase_den" );
@@ -1405,13 +1403,19 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				pkt.duration = stream->properties( ).get_property_with_key( key_duration_ ).value< int >( );
 
 				// Use a timebase of the reciprocal of the frame rate to convert the position to time base of the stream
-				AVRational time_base;
-				time_base.num = frame->get_fps_den( );
-				time_base.den = frame->get_fps_num( );
+				AVRational frame_time_base;
+				frame_time_base.num = frame->get_fps_den( );
+				frame_time_base.den = frame->get_fps_num( );
+
+				//This is the time base of the incoming stream, which is not necessarily the same as that of the output stream
+				AVRational input_time_base;
+				input_time_base.num = stream->properties( ).get_property_with_key( ml::keys::timebase_num ).value< int >( );
+				input_time_base.den = stream->properties( ).get_property_with_key( ml::keys::timebase_den ).value< int >( );
 
 				// Convert the frame position and the difference of the source pts to generate the pts/dts values in the output
-				pkt.pts = av_rescale_q( frame->get_position( ), time_base, video_stream_->time_base );
-				pkt.dts = av_rescale_q( frame->get_position( ) - stream->properties( ).get_property_with_key( ml::keys::pts_dts_diff ).value< boost::int64_t >( ), time_base, video_stream_->time_base );
+				pkt.pts = av_rescale_q( frame->get_position( ), frame_time_base, video_stream_->time_base );
+				const boost::int64_t input_pts_dts_diff = stream->properties( ).get_property_with_key( ml::keys::pts_dts_diff ).value< boost::int64_t >( );
+				pkt.dts = pkt.pts - av_rescale_q( input_pts_dts_diff, input_time_base, video_stream_->time_base );
 
 				if( oc_->pb && stream->position( ) == stream->key( ) && ( ( push_count_ - 1 ) != ts_last_position_ && ( oc_->pb->pos != ts_last_offset_ || ts_last_offset_ == 0 ) ) )
 				{       
