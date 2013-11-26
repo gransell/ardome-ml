@@ -83,13 +83,17 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			if ( error == S_OK )
 			{
 				IDeckLink *link = NULL;
-				while( dli->Next( &link ) == S_OK )
+				for ( int card = 0; ( error = dli->Next( &link ) ) == S_OK; )
+					//while( dli->Next( &link ) == S_OK )
 				{
 					IDeckLinkOutput *output = NULL;
 					if( link->QueryInterface( IID_IDeckLinkOutput, reinterpret_cast< void** >( &output ) ) == S_OK )
 					{
-						device_ = du::decklink_output_ptr( output );
-						break;
+						if ( card ++ == prop_card_.value< int >( ) )
+						{
+							device_ = du::decklink_output_ptr( output );
+							break;
+						}
 					}
 				}
 	
