@@ -29,10 +29,10 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 			{
 				return bmdModeHD1080i5994;
 			}
-			//else if( fps_num == 30 && fps_den == 1 )
-			//{
-				//return bmdModeHD1080i60;
-			//}
+			else if( fps_num == 30 && fps_den == 1 )
+			{
+				return bmdModeHD1080i6000;
+			}
 		}
 		else
 		{
