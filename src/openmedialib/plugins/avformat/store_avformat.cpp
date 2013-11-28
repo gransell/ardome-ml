@@ -175,8 +175,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			, prop_audio_split_( pcos::key::from_string( "audio_split" ) )
 			, prop_frag_key_frame_( pcos::key::from_string( "frag_key_frame" ) )
 			, prop_flush_( pcos::key::from_string( "flush" ) )
-			, ts_generator_video_( 1 )
-			, ts_generator_audio_( 2, false ) //Will not write index header/footer
+			, ts_generator_video_( AWI_V4_TYPE_VIDEO )
+			, ts_generator_audio_( AWI_V4_TYPE_AUDIO_FIRST, false ) //Will not write index header/footer
 			, ts_context_( 0 )
 			, ts_last_position_( -1 )
 			, ts_last_offset_( 0 )

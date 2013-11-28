@@ -21,8 +21,6 @@
 #define awi_footer_size_v3 20
 
 #define awi_entry_size_v4 20
-#define type_index_header_v4 0
-#define type_index_footer_v4 65535
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -1641,7 +1639,7 @@ bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 		switch( state_ )
 		{
 			case awi_state::header:
-				if ( entry_is_type( type_index_header_v4 ) )
+				if ( entry_is_type( AWI_V4_TYPE_HEADER ) )
 				{
 					result = parse_header( );
 					state_ = result ? awi_state::item : awi_state::error;
@@ -1654,7 +1652,7 @@ bool awi_parser_v4::parse( const boost::uint8_t *data, const size_t length )
 				break;
 
 			case awi_state::item:
-				if ( entry_is_type( type_index_footer_v4 ) )
+				if ( entry_is_type( AWI_V4_TYPE_FOOTER ) )
 				{
 					result = parse_footer( );
 					state_ = result ? awi_state::footer : awi_state::error;
@@ -1843,7 +1841,7 @@ awi_generator_v4::awi_generator_v4( boost::uint16_t type_to_write, bool complete
 {
 	awi_header_v4 header;
 
-	header.type = type_index_header_v4;
+	header.type = AWI_V4_TYPE_HEADER;
 	memcpy( header.id, "AWI", 3 );
 	memcpy( header.ver, "4", 1 );
 	header.created = 0;
@@ -1932,7 +1930,7 @@ bool awi_generator_v4::close( boost::int32_t position, boost::int64_t offset )
 		{
 			awi_footer_v4 footer;
 
-			footer.type = type_index_footer_v4;
+			footer.type = AWI_V4_TYPE_FOOTER;
 			footer.closed = 0;
 			memcpy( footer.id, "AWI", 3 );
 			memcpy( footer.ver, "4", 1 );

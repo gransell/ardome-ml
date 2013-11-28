@@ -132,6 +132,13 @@ struct awi_footer_v4
 	char reserved[ 10 ]; //Pad out to match the item size
 };
 
+const uint16_t AWI_V4_TYPE_HEADER = 0;
+const uint16_t AWI_V4_TYPE_FOOTER = 65535;
+const uint16_t AWI_V4_TYPE_VIDEO = 1;
+//Audio streams are numbered from 2 and up
+const uint16_t AWI_V4_TYPE_AUDIO_FIRST = 2;
+const uint16_t AWI_V4_TYPE_AUDIO_LAST = AWI_V4_TYPE_AUDIO_FIRST + 15;
+
 /// Parsing state enumeration
 namespace  awi_state
 {
