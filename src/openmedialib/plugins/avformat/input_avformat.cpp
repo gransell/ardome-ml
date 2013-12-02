@@ -1084,8 +1084,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		virtual void get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
 		virtual void get_sar( int &num, int &den ) const { num = sar_num_; den = sar_den_; }
 		virtual int get_video_streams( ) const { return video_indexes_.size( ); }
-		virtual int get_width( ) const { return width_; }
-		virtual int get_height( ) const { return height_; }
+		virtual int get_width( ) 
+		{ 
+			return get_video_stream( ) && get_video_stream( )->codec ? get_video_stream( )->codec->width : 0; 
+		}
+		virtual int get_height( ) 
+		{
+			return get_video_stream( ) && get_video_stream( )->codec ? get_video_stream( )->codec->height : 0; 
+		}
 
 		// Audio
 		virtual int get_audio_streams( ) const { return audio_indexes_.size( ); }
