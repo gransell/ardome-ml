@@ -6,10 +6,12 @@
 #include "utils.hpp"
 #include <deque>
 
+using namespace olib::openimagelib::il;
 using namespace olib::openmedialib::ml;
 
 BOOST_AUTO_TEST_SUITE( decode_filter )
 
+typedef boost::weak_ptr< filter_type > filter_type_weak_ptr;
 typedef std::deque< frame_type_ptr > frames_type;
 
 void create_encoded_frames( boost::uint32_t a_num_frames, frames_type& a_out_frames, const std::wstring& a_profile )
@@ -164,5 +166,133 @@ BOOST_AUTO_TEST_CASE( test_inner_threads_performance_improvement )
 
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_decode_alive )
+{
+	//First, create a frame with a stream on it that the decode
+	//filter will get to decode.
+	frame_type_ptr frame_with_stream;
 
+	{
+		input_type_ptr color_input = create_delayed_input( L"colour:" );
+		BOOST_REQUIRE( color_input );
+		color_input->property( "width" ) = 1920;
+		color_input->property( "height" ) = 1080;
+		color_input->property( "interlace" ) = 0;
+		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "r" ) = 128;
+
+		BOOST_REQUIRE( color_input->init() );
+
+		filter_type_ptr encode_filter = create_filter( L"encode" );
+		BOOST_REQUIRE( encode_filter );
+		encode_filter->property( "profile" ) = std::wstring( L"vcodecs/mpeg2_iframe50" );
+		encode_filter->connect( color_input );
+
+		encode_filter->sync();
+		frame_with_stream = encode_filter->fetch();
+		BOOST_REQUIRE( frame_with_stream );
+		BOOST_REQUIRE( frame_with_stream->get_stream() );
+		frame_with_stream->set_image( image_type_ptr() );
+	}
+
+	filter_type_weak_ptr decoder_weak_ref;
+
+	{
+		//Now that we have an image with an encoded stream on it,
+		//create a graph for decoding it.
+		input_type_ptr pusher = create_input( L"pusher:" );
+		BOOST_REQUIRE( pusher );
+		BOOST_REQUIRE( pusher->push( frame_with_stream ) );
+
+		filter_type_ptr decode_filter = create_filter( L"decode" );
+		BOOST_REQUIRE( decode_filter );
+		decode_filter->connect( pusher );
+		decode_filter->sync();
+
+		frame_type_ptr decoder_frame = decode_filter->fetch();
+		BOOST_REQUIRE( decoder_frame );
+		decoder_weak_ref = decode_filter;
+		decode_filter.reset();
+
+		//decode filter should still be alive
+		BOOST_CHECK( !decoder_weak_ref.expired() );
+		BOOST_CHECK( decoder_frame->get_image() );
+	}
+
+	//The decoder filter should now have gone out of scope
+	BOOST_CHECK( decoder_weak_ref.expired() );
+}
+
+BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_encode_alive )
+{
+	filter_type_weak_ptr encoder_weak_ref;
+
+	{
+		input_type_ptr color_input = create_delayed_input( L"colour:" );
+		BOOST_REQUIRE( color_input );
+		color_input->property( "width" ) = 1920;
+		color_input->property( "height" ) = 1080;
+		color_input->property( "interlace" ) = 0;
+		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "r" ) = 128;
+		BOOST_REQUIRE( color_input->init() );
+
+		filter_type_ptr encode_filter = create_filter( L"encode" );
+		BOOST_REQUIRE( encode_filter );
+		encode_filter->property( "profile" ) = std::wstring( L"vcodecs/mpeg2_iframe50" );
+		encode_filter->connect( color_input );
+		encode_filter->sync();
+
+		frame_type_ptr encoder_frame = encode_filter->fetch();
+		BOOST_REQUIRE( encoder_frame );
+		encoder_weak_ref = encode_filter;
+		encode_filter.reset();
+		
+		//Encode filter should still be alive
+		BOOST_CHECK( !encoder_weak_ref.expired() );
+		BOOST_CHECK( encoder_frame->get_stream() );
+	}
+
+	//The encoder filter should now have gone out of scope
+	BOOST_CHECK( encoder_weak_ref.expired() );
+}
+
+BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_lazy_alive )
+{
+	filter_type_weak_ptr lazy_weak_ref;
+	
+	{
+		input_type_ptr color_input = create_delayed_input( L"colour:" );
+		BOOST_REQUIRE( color_input );
+		color_input->property( "width" ) = 1920;
+		color_input->property( "height" ) = 1080;
+		color_input->property( "interlace" ) = 0;
+		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "r" ) = 128;
+		BOOST_REQUIRE( color_input->init() );
+
+		filter_type_ptr lazy_rescale = create_filter( L"lazy:rescale" );
+		BOOST_REQUIRE( lazy_rescale );
+		lazy_rescale->property( "width" ) = 50;
+		lazy_rescale->property( "height" ) = 40;
+		lazy_rescale->connect( color_input );
+		lazy_rescale->sync();
+
+		frame_type_ptr frame = lazy_rescale->fetch();
+		BOOST_REQUIRE( frame );
+		lazy_weak_ref = lazy_rescale;
+		lazy_rescale.reset();
+
+		//Encode filter should still be alive
+		BOOST_CHECK( !lazy_weak_ref.expired() );
+		image_type_ptr img = frame->get_image();
+		BOOST_REQUIRE( img );
+		BOOST_CHECK_EQUAL( img->width(), 50 );
+		BOOST_CHECK_EQUAL( img->height(), 40 );
+	}
+
+	//The lazy filter should now have gone out of scope
+	BOOST_CHECK( lazy_weak_ref.expired() );
+}
+
+BOOST_AUTO_TEST_SUITE_END()

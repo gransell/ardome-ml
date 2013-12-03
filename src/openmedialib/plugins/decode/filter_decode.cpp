@@ -30,7 +30,6 @@ filter_decode::filter_decode( )
 	, codec_to_decoder_( )
 	, initialized_( false )
 	, total_frames_( 0 )
-	, prefetched_frame_( )
 	, precharged_frames_( 0 )
 	, estimated_gop_size_( 0 )
 {
@@ -42,13 +41,10 @@ filter_decode::filter_decode( )
 	
 	// Load the profile that contains the mappings between codec string and codec filter name
 	codec_to_decoder_ = cl::profile_load( "codec_mappings" );
-	
-	the_shared_filter_pool::Instance( ).add_pool( this );
 }
 
 filter_decode::~filter_decode( )
 {
-	the_shared_filter_pool::Instance( ).remove_pool( this );
 }
 
 		// Indicates if the input will enforce a packet decode
@@ -161,13 +157,15 @@ bool filter_decode::determine_decode_use( ml::frame_type_ptr &frame )
 
 void filter_decode::do_fetch( frame_type_ptr &frame )
 {
-	if ( last_frame_ == 0 )
+	if ( !initialized_ )
 	{
 		frame = fetch_from_slot( );
 		
 		// If there is nothing to decode just return frame
 		if( !frame->get_stream( ) && !frame->audio_block( ) )
 			return;
+
+		estimated_gop_size_ = calculate_estimated_gop_size( frame );
 
 		if( !initialized_ )
 		{
@@ -182,10 +180,6 @@ void filter_decode::do_fetch( frame_type_ptr &frame )
 		}
 		
 		determine_decode_use( frame );
-
-		//Set last_frame_ here, since get_frames() below needs it to be able
-		//to estimate the GOP size.
-		last_frame_ = frame->shallow();
 	}
 
 	int frameno = get_position( );
@@ -198,9 +192,15 @@ void filter_decode::do_fetch( frame_type_ptr &frame )
 	}
 	else 
 	{
-		if ( !frame ) frame = fetch_from_slot( );
+		if ( !frame )
+			frame = fetch_from_slot( );
+
 		if ( frame && frame->get_stream( ) )
-			frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this ) );
+		{
+			boost::shared_ptr< filter_decode > shared_self = 
+				boost::dynamic_pointer_cast< filter_decode >( shared_from_this( ) );
+			frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), shared_self ) );
+		}
 	}
 	
 	// If the frame has an audio block we need to decode that so pass it to the
@@ -212,8 +212,6 @@ void filter_decode::do_fetch( frame_type_ptr &frame )
 	}
 
 	frame->set_position( get_position() );
-
-	last_frame_ = frame->shallow();
 }
 
 int filter_decode::get_frames( ) const 
@@ -243,8 +241,6 @@ void filter_decode::initialize_video( ml::frame_type_ptr &first_frame )
 {
 	ARENFORCE_MSG( codec_to_decoder_, "Need mappings from codec string to name of decoder" );
 	ARENFORCE_MSG( first_frame && first_frame->get_stream( ), "No frame or no stream on frame" );
-
-	last_frame_ = first_frame->shallow();
 
 	precharged_frames_ = 0;
 	input_type_ptr slot = fetch_slot( 0 );
@@ -299,34 +295,34 @@ frame_type_ptr filter_decode::perform_audio_decode( const frame_type_ptr& frame 
 	return audio_decoder_->fetch( );
 }
 
+int filter_decode::calculate_estimated_gop_size( const frame_type_ptr &frame )
+{
+	int gop_size = 0;
+	stream_type_ptr &stream = frame->get_stream();
+	if ( stream )
+		gop_size = stream->estimated_gop_size( );
+
+	if ( gop_size <= 0 )
+	{
+		// Guess gop size = framerate / 2
+		const int fps = ::ceil( frame->fps() );
+		gop_size = fps / 2;
+	}
+	ARENFORCE( gop_size > 0 );
+	return gop_size;
+}
+
 int filter_decode::estimated_gop_size( ) const
 {
 	if ( estimated_gop_size_ <= 0 )
 	{
-		frame_type_ptr frame = last_frame_;
-		if ( !frame )
-		{
-			//We need a frame to be able to draw any conclusions
-			//about gop size.
-			input_type_ptr input = fetch_slot(0);
-			ARENFORCE( input );
-			ARENFORCE( frame = input->fetch() );
-		}
-
-		stream_type_ptr stream = frame->get_stream( );
-		int gop = 0;
-
-		if ( stream )
-			gop = stream->estimated_gop_size( );
-
-		if ( gop <= 0 )
-		{
-			// Guess gop size = framerate / 2
-			int fps = ::ceil( frame->fps() );
-			gop = fps / 2;
-		}
-
-		estimated_gop_size_ = gop;
+		//We need a frame to be able to draw any conclusions
+		//about gop size.
+		input_type_ptr input = fetch_slot(0);
+		ARENFORCE( input );
+		frame_type_ptr frame = input->fetch();
+		ARENFORCE( frame );
+		estimated_gop_size_ = calculate_estimated_gop_size( frame );
 	}
 
 	return estimated_gop_size_;

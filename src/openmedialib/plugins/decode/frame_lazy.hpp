@@ -15,6 +15,8 @@ namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
+//If you add members here, make sure to update component_to_string() in
+//frame_lazy.cpp as well.
 typedef enum
 {
 	eval_image = 1,
@@ -24,30 +26,9 @@ component;
 
 class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type 
 {
-	private:
-
-		//Helper class that will make sure that the filter is returned to the
-		//filter pool, once all users of it are gone.
-		class filter_pool_holder
-		{
-		public:
-			filter_pool_holder( filter_pool *pool );
-
-			virtual ~filter_pool_holder();
-
-			ml::filter_type_ptr filter();
-
-			void release( );
-
-		private:
-			ml::filter_type_ptr filter_;
-			filter_pool *pool_;
-		};
-
-
 	public:
 		/// Constructor
-		frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, bool validated = true );
+		frame_lazy( const frame_type_ptr &other, int frames, const filter_pool_ptr &filter_pool, bool validated = true );
 
 		/// Destructor
 		virtual ~frame_lazy( );
@@ -91,9 +72,17 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 	private:
 		ml::frame_type_ptr parent_;
 		int frames_;
-		boost::shared_ptr< filter_pool_holder > pool_holder_;
 		bool validated_;
 		int evaluated_;
+		//Note: this is a shared pointer in order to keep the decoder/encoder
+		//filter alive for the lifetime of this frame.
+		//Otherwise, calling get_image() or get_stream() on the frame would
+		//fail if the decode/encode filter that created it has gone out of
+		//scope.
+		//This also means that the decode/encode filters may not keep
+		//shared pointers to frame_lazy instances as members, as that would
+		//create a cyclic reference chain.
+		filter_pool_ptr filter_pool_;
 };
 
 } } } }

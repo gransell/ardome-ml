@@ -14,9 +14,12 @@ namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
-class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool, public boost::enable_shared_from_this< filter_decode >
+class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool
 {
 	private:
+		//Note: storing any shared_ptr:s to frames here (such as
+		//a last-frame cache) will cause a cyclic reference chain
+		//due to the shared_ptr that's in frame_lazy, so don't do that.
 		boost::recursive_mutex mutex_;
 		pl::pcos::property prop_inner_threads_;
 		pl::pcos::property prop_filter_;
@@ -26,12 +29,10 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 		std::deque< ml::filter_type_ptr > decoder_;
 		ml::filter_type_ptr gop_decoder_;
 		ml::filter_type_ptr audio_decoder_;
-		ml::frame_type_ptr last_frame_;
 		cl::profile_ptr codec_to_decoder_;
 		bool initialized_;
 		std::string video_codec_;
 		int total_frames_;
-		ml::frame_type_ptr prefetched_frame_;
 		boost::int64_t precharged_frames_;
 		mutable int estimated_gop_size_;
 
@@ -70,6 +71,8 @@ class ML_PLUGIN_DECLSPEC filter_decode : public filter_type, public filter_pool,
 	private:
 	
 		frame_type_ptr perform_audio_decode( const frame_type_ptr& frame ) ;
+
+		static int calculate_estimated_gop_size( const frame_type_ptr &frame ) ;
 	
 		int estimated_gop_size( ) const ;
 
