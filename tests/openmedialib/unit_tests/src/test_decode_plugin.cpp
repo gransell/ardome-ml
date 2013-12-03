@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_lazy_alive )
 		lazy_weak_ref = lazy_rescale;
 		lazy_rescale.reset();
 
-		//Encode filter should still be alive
+		//Filter should still be alive
 		BOOST_CHECK( !lazy_weak_ref.expired() );
 		image_type_ptr img = frame->get_image();
 		BOOST_REQUIRE( img );
