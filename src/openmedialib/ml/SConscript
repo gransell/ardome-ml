@@ -24,6 +24,7 @@ src = [
         'fix_stream.cpp',
         'frame.cpp',
         'indexer.cpp',
+        'input_creator_handler.cpp',
         'io.cpp',
         'keys.cpp',
         'ml.cpp',
