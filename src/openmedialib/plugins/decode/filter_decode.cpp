@@ -306,7 +306,7 @@ frame_type_ptr filter_decode::perform_audio_decode( const frame_type_ptr& frame 
 int filter_decode::calculate_estimated_gop_size( const frame_type_ptr &frame )
 {
 	int gop_size = 0;
-	stream_type_ptr &stream = frame->get_stream();
+	stream_type_ptr stream = frame->get_stream();
 	if ( stream )
 		gop_size = stream->estimated_gop_size( );
 
