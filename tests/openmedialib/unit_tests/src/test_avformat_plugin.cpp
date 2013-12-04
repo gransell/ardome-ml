@@ -642,16 +642,22 @@ void cleanup( const fs::path &p )
 	}
 }
 
+fs::path generate_unique_tmp_path( const olib::t_string &base_name )
+{
+	cl::uuid_16b unique_id;
+	const fs::path unique_path = 
+		cl::special_folder::get( cl::special_folder::temp ) /
+		( unique_id.to_hex_string() + base_name );
+	BOOST_REQUIRE( !fs::exists( unique_path ) );
+	return unique_path;
+}
+
 void store_test( const olib::t_string &filename, int fps_num, int fps_den, int count, builder_type write_output, checker_type checker = check_output )
 {
 	BOOST_REQUIRE_EQUAL( filename.find( _CT('/') ), olib::t_string::npos );
 	BOOST_REQUIRE_EQUAL( filename.find( _CT(':') ), olib::t_string::npos );
 
-	cl::uuid_16b unique_id;
-	const fs::path unique_path = 
-		cl::special_folder::get( cl::special_folder::temp ) /
-		( unique_id.to_hex_string() + filename );
-	BOOST_REQUIRE( !fs::exists( unique_path ) );
+	const fs::path unique_path = generate_unique_tmp_path( filename );
 	ARGUARD( boost::bind( &cleanup, unique_path ) );
 	const std::wstring decorated_path = L"avformat:" + to_wstring( unique_path.native() );
 	
@@ -741,6 +747,30 @@ BOOST_AUTO_TEST_CASE( aml_store_mp3_movie )
 }
 
 #endif
+
+BOOST_AUTO_TEST_CASE( amf_2332_segfault_when_generating_jpeg_from_yuv411p )
+{
+	input_type_ptr color_input = create_delayed_input( L"colour:" );
+	BOOST_REQUIRE( color_input );
+	color_input->property( "width" ) = 720;
+	color_input->property( "height" ) = 576;
+	color_input->property( "colourspace" ) = std::wstring( L"yuv411p" );
+	color_input->property( "r" ) = 128;
+
+	BOOST_REQUIRE( color_input->init() );
+	frame_type_ptr frame = color_input->fetch();
+	BOOST_REQUIRE( frame );
+
+	const fs::path unique_path = generate_unique_tmp_path( _CT("amf_2332.jpg") );
+	ARGUARD( boost::bind( &cleanup, unique_path ) );
+	const std::wstring store_uri = L"avformat:" + to_wstring( unique_path.native() );
+
+	store_type_ptr jpg_store = create_store( store_uri, frame );
+	BOOST_REQUIRE( jpg_store );
+	BOOST_REQUIRE( jpg_store->init() );
+	BOOST_REQUIRE( jpg_store->push( frame ) );
+	jpg_store->complete();
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
