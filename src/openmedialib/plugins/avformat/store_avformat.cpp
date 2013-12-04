@@ -1523,10 +1523,12 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				AVPicture input;
 				int width = image->width( );
 				int height = image->height( );
-				avpicture_fill( &input, image->data( ), oil_to_avformat( image->pf( ) ), width, height );
-				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, oil_to_avformat( image->pf( ) ), SWS_BICUBIC, NULL, NULL, NULL );
-				if ( img_convert_ != NULL )
-					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
+				const PixelFormat av_pf = oil_to_avformat( image->pf() );
+				avpicture_fill( &input, image->data( ), av_pf, width, height );
+				img_convert_ = sws_getCachedContext( img_convert_, width, height, av_pf, width, height, c->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+				ARENFORCE_MSG( img_convert_ != NULL, "Unsupported image conversion (pf: %1% to avformat pf %2% at resolution %3%x%4%)" )
+					( image->pf() )( av_pf )( width )( height );
+				sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
 			}
 
 			if ( oc_->oformat->flags & AVFMT_RAWPICTURE )  
