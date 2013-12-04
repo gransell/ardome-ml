@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_decode_alive )
 		color_input->property( "width" ) = 1920;
 		color_input->property( "height" ) = 1080;
 		color_input->property( "interlace" ) = 0;
-		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "colourspace" ) = std::wstring( L"yuv422p" );
 		color_input->property( "r" ) = 128;
 
 		BOOST_REQUIRE( color_input->init() );
@@ -275,7 +275,7 @@ BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_encode_alive )
 		color_input->property( "width" ) = 1920;
 		color_input->property( "height" ) = 1080;
 		color_input->property( "interlace" ) = 0;
-		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "colourspace" ) = std::wstring( L"yuv422p" );
 		color_input->property( "r" ) = 128;
 		BOOST_REQUIRE( color_input->init() );
 
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_lazy_alive )
 		color_input->property( "width" ) = 1920;
 		color_input->property( "height" ) = 1080;
 		color_input->property( "interlace" ) = 0;
-		color_input->property( "colourspace" ) = std::wstring( _CT( "yuv422p" ) );
+		color_input->property( "colourspace" ) = std::wstring( L"yuv422p" );
 		color_input->property( "r" ) = 128;
 		BOOST_REQUIRE( color_input->init() );
 
