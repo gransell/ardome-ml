@@ -76,6 +76,7 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	ml::audio::identity ident = audio->id();
 
 	bytes_per_sample_ = audio->sample_storage_size();
+
 	frequency_ = audio->frequency();
 	channels_ = audio->channels();
 	real_bytes_per_sample_ = bytes_per_sample_;
@@ -91,7 +92,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	};
 
 	// Allocate headers, we'll write them down to file as they are
-
 	fmt_block_.format_type      = ident == ml::audio::float_id
 		? WAVE_FORMAT_IEEE_FLOAT
 		: WAVE_FORMAT_PCM;
@@ -118,47 +118,6 @@ void store_wav::initializeFirstFrame(ml::frame_type_ptr frame)
 	ARENFORCE(file_->error == 0)(file_->error);
 }
 
-// Creates one large array of endian::little<T>'s which are filled with the
-// values from p and then stored as is down to file in one chunk.
-template<typename T>
-inline void saveRangeFast(AVIOContext* file, T* p, size_t nblocks) {
-	boost::scoped_array< le<T> > blocks(new le<T>[nblocks]);
-	size_t i = 0;
-	while (i < nblocks)
-		blocks[i++] = *p++;
-
-	avio_write(file, (unsigned char *) blocks.get(), sizeof(T) * nblocks);
-}
-
-// Goes through p sample by sample and saves them. This is necessary when the
-// sample is isn't a power of 2.
-template<typename T, size_t realsizeofT>
-inline void saveRangeNormal(AVIOContext* file, T* p, size_t nblocks, std::vector<unsigned char> &conversion_buffer) {
-	const size_t conversion_buffer_size = nblocks * realsizeofT;
-	if (conversion_buffer.size() < conversion_buffer_size)
-		conversion_buffer.resize(conversion_buffer_size);
-
-	unsigned char *dst = &conversion_buffer[0];
-	le<T> sample;
-	for (size_t i = 0; i < nblocks; ++i) {
-		sample = *p++;
-		memcpy(dst, &sample, realsizeofT);
-		dst += realsizeofT;
-	}
-	avio_write(file, &conversion_buffer[0], nblocks * realsizeofT);
-}
-
-template<typename T, size_t realsizeofT>
-inline void saveRange(AVIOContext* file, void* array, size_t nbytes, std::vector<unsigned char> &conversion_buffer) {
-	size_t nblocks = nbytes / sizeof(T);
-	T* p = (T*)array;
-
-	if (realsizeofT == sizeof(T))
-		saveRangeFast<T>(file, p, nblocks);
-	else
-		saveRangeNormal<T, realsizeofT>(file, p, nblocks, conversion_buffer);
-}
-
 bool store_wav::push(ml::frame_type_ptr frame)
 {
 	ARLOG_DEBUG5("store_wav::push()");
@@ -169,11 +128,12 @@ bool store_wav::push(ml::frame_type_ptr frame)
 
 	// These are the values from the audio object
 	int samples = audio->samples();
+	int channels = audio->channels();
 	int orig_samples = audio->original_samples();
 	int size = audio->original_size();
 
 	// Add total number of parsed samples
-	accumulated_samples_ += orig_samples;
+	accumulated_samples_ += samples;
 
 	ARLOG_DEBUG6("store_wav::push(): %d audio samples in this frame (%d valid ones)")(samples)(orig_samples);
 
@@ -182,26 +142,41 @@ bool store_wav::push(ml::frame_type_ptr frame)
 	{
 		// This is no doubt the fastest, just write the memory
 		// chunk down to file in one go.
-		avio_write(file_, (unsigned char *)audio->pointer(), size);
+		avio_write(file_, static_cast< const unsigned char *>( audio->pointer( ) ), size);
 
 	}
 	else
 #endif // BYTE_ORDER == LITTLE_ENDIAN
-	if (real_bytes_per_sample_ == 1)
+	switch( audio->id( ) )
 	{
-		saveRange<uint8_t,  1>(file_, audio->pointer(), size, conversion_buffer_);
-	}
-	else if (real_bytes_per_sample_ == 2)
-	{
-		saveRange<uint16_t, 2>(file_, audio->pointer(), size, conversion_buffer_);
-	}
-	else if (real_bytes_per_sample_ == 3)
-	{
-		saveRange<uint32_t, 3>(file_, audio->pointer(), size, conversion_buffer_);
-	}
-	else if (real_bytes_per_sample_ == 4)
-	{
-		saveRange<uint32_t, 4>(file_, audio->pointer(), size, conversion_buffer_);
+		case ml::audio::pcm16_id:
+		case ml::audio::pcm32_id:
+		case ml::audio::float_id:
+			avio_write(file_, static_cast< const unsigned char* >( audio->pointer( ) ), size);
+			break;
+		case ml::audio::pcm24_id:
+			
+			// pack_pcm24_from_pcm32 will return a 3/4th size buffer
+			// Generated audio will have original_samples same as samples, correction will be made here
+			if( audio->samples( ) == audio->original_samples( ) )
+			{
+				size *= 0.75;
+			}
+
+			ARENFORCE_MSG( size <= ( 0.75 * audio->size( ) ), "The number of original samples is higher than 3/4th of samples" );
+
+			if (conversion_buffer_.size() < size)
+				conversion_buffer_.resize(size);
+			
+			ml::audio::pack_pcm24_from_pcm32( &conversion_buffer_[0], 
+					static_cast< boost::uint8_t* >( audio->pointer( ) ), 
+					samples, 
+					channels );
+
+			avio_write(file_, static_cast< const unsigned char * >( &conversion_buffer_[0] ), size);
+			break;
+		default:
+			ARENFORCE_MSG( false, "Unknown audio id")( audio->id( ) );
 	}
 
 	avio_flush(file_);
