@@ -185,16 +185,19 @@ void filter_decode::do_fetch( frame_type_ptr &frame )
 	int frameno = get_position( );
 	frameno += (int)precharged_frames_;
 
+	frame_type_ptr inner_frame;
 	if ( gop_decoder_ )
 	{
 		gop_decoder_->seek( frameno );
 		frame = gop_decoder_->fetch( );
+		inner_frame = frame;
 	}
 	else 
 	{
 		if ( !frame )
 			frame = fetch_from_slot( );
 
+		inner_frame = frame;
 		if ( frame && frame->get_stream( ) )
 		{
 			boost::shared_ptr< filter_decode > shared_self = 
@@ -207,7 +210,12 @@ void filter_decode::do_fetch( frame_type_ptr &frame )
 	// audio decoder
 	if( audio_decoder_ )
 	{
-		frame_type_ptr audio_frame = perform_audio_decode( frame );
+		//Note: it's important that we pass the inner frame here, and not the
+		//frame_lazy instance. This is because the frame_lazy contains a shared
+		//pointer to this filter, so if anything in the audio decode graph caches
+		//that frame, there is a cyclic reference chain created:
+		//lazy_frame -> filter_decode -> audio decoder graph -> lazy_frame
+		frame_type_ptr audio_frame = perform_audio_decode( inner_frame );
 		frame->set_audio( audio_frame->get_audio( ), true );
 	}
 

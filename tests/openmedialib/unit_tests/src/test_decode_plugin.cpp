@@ -223,6 +223,48 @@ BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_decode_alive )
 	BOOST_CHECK( decoder_weak_ref.expired() );
 }
 
+BOOST_AUTO_TEST_CASE( test_filter_decode_does_not_leak_with_audio )
+{
+	filter_type_weak_ptr decoder_weak_ref;
+
+	{
+		input_type_ptr mov_input = create_delayed_input( L"avformat:" MEDIA_REPO_PREFIX_W L"DV/DVCPro100_1080i50_4ch_16.dif" );
+		BOOST_REQUIRE( mov_input );
+		mov_input->property( "packet_stream" ) = 1;
+		BOOST_REQUIRE( mov_input->init() );
+		mov_input->sync();
+
+		//Sanity check on the frame returned from the input
+		frame_type_ptr raw_frame = mov_input->fetch();
+		BOOST_REQUIRE( raw_frame );
+		BOOST_REQUIRE( !raw_frame->get_audio() );
+		BOOST_REQUIRE( raw_frame->audio_block() );
+		BOOST_REQUIRE( !raw_frame->get_image() );
+		BOOST_REQUIRE( raw_frame->get_stream() );
+		//The leak only happened with i-frame only material together with sound,
+		//so this check is important to make sure that we're still testing the
+		//right thing.
+		BOOST_REQUIRE_EQUAL( raw_frame->get_stream()->estimated_gop_size(), 1 );
+		
+
+		filter_type_ptr decode_filter = create_filter( L"decode" );
+		BOOST_REQUIRE( decode_filter );
+		decode_filter->connect( mov_input );
+		decode_filter->sync();
+
+		frame_type_ptr decoder_frame = decode_filter->fetch();
+		BOOST_REQUIRE( decoder_frame );
+		decoder_weak_ref = decode_filter;
+		decode_filter.reset();
+
+		BOOST_CHECK( !decoder_weak_ref.expired() );
+		BOOST_CHECK( decoder_frame->get_audio() );
+	}
+
+	//The decoder filter should now have gone out of scope
+	BOOST_CHECK( decoder_weak_ref.expired() );
+}
+
 BOOST_AUTO_TEST_CASE( test_frame_keeps_filter_encode_alive )
 {
 	filter_type_weak_ptr encoder_weak_ref;
