@@ -100,6 +100,32 @@ BOOST_AUTO_TEST_CASE( amf_2123_failed_to_read_partial_ts )
 	BOOST_CHECK_EQUAL( inp->get_frames(), 1200 );
 }
 
+void test_gop_size_estimation( const char *file_path, int expected_gop_size )
+{
+	BOOST_MESSAGE( "Checking gop size estimation for file: " << file_path );
+	input_type_ptr inp = create_delayed_input( to_wstring( "avformat:" MEDIA_REPO_PREFIX ) + to_wstring( file_path ) );
+	BOOST_REQUIRE( inp );
+	inp->property( "packet_stream" ) = 1;
+	BOOST_REQUIRE( inp->init() );
+
+	frame_type_ptr frame = inp->fetch();
+	BOOST_REQUIRE( frame );
+	stream_type_ptr stream = frame->get_stream();
+	BOOST_REQUIRE( stream );
+
+	const int gop_size = stream->estimated_gop_size();
+	BOOST_CHECK_EQUAL( gop_size, expected_gop_size );
+}
+
+BOOST_AUTO_TEST_CASE( gop_size_estimation )
+{
+	test_gop_size_estimation( "DV/DVCPro100_1080i50_4ch_16.dif", 1 );
+	test_gop_size_estimation( "MOV/DVCPro25/DVCPro25_PAL_4ch_16bit.mov", 1 );
+	test_gop_size_estimation( "MOV/DVCPro100/DVCPro100_1080i50_2ch_16bit.mov", 1 );
+	test_gop_size_estimation( "MOV/XDCamHD/XDCamHD_1080i50_6ch_24bit.mov", 12 );
+	test_gop_size_estimation( "MOV/XDCamHD/XDCamHD_1080i60_16ch_24bit.mov", 15 );
+	test_gop_size_estimation( "XDCamEX/AircraftFlyby-720P50FPS/XDZ10003_01.MP4", 25 );
+}
 
 BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 {
