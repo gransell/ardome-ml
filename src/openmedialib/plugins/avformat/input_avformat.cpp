@@ -648,11 +648,19 @@ class avformat_demux
 					{
 						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
 						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
+
+						//If the intra only flag is set, then we can reliably assume gop size 1
+						const AVCodecDescriptor *codec_desc = avcodec_descriptor_get( stream->codec->codec_id );
+						if( codec_desc != NULL && bool( codec_desc->props & AV_CODEC_PROP_INTRA_ONLY ) )
+						{
+							estimated_gop_size = 1;
+						}
+						
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, source->key_last_, codec->bit_rate, 
 																		   ml::dimensions( source->width_, source->height_ ), ml::fraction( source->sar_num_, source->sar_den_ ), 
 																		   avformat_to_oil( codec->pix_fmt ), il::top_field_first, estimated_gop_size ) );
-					}
 						break;
+					}
 
 					case ml::stream_audio:
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
