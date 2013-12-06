@@ -5,6 +5,7 @@
 #include<openmedialib/ml/types.hpp>
 
 #define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/"
+#define MEDIA_REPO_PREFIX_W L"http://releases.ardendo.se/media-repository/"
 #define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
 
 // default implementation of ml::stream_type to be used in testing. Reimplement as necessary
