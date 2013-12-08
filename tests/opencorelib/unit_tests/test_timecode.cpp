@@ -7,8 +7,8 @@ using std::ifstream;
 
 void test_timecode()
 {
-    using namespace olib;
-    using namespace olib::opencorelib;
+	using namespace olib;
+	using namespace olib::opencorelib;
 
 	//Loop through all the frame numbers in a 24 hour span, and test that
 	//NTSC drop and non-drop frame timecode conversion is correct.
@@ -94,30 +94,30 @@ void test_timecode()
 		}
 	}
 
-    media_time mt1( rational_time(20) );
-    media_time mt2( rational_time(400, 7) );
-    time_code tc1 = mt1.to_time_code( frame_rate::pal, false );
-    time_code tc2 = mt2.to_time_code( frame_rate::pal, false );
-    time_code tc1_ntsc_drop = mt1.to_time_code( frame_rate::ntsc, true );
-    time_code tc1_ntsc_no_drop = mt1.to_time_code( frame_rate::ntsc, false );
-    
-    t_stringstream ss;
-    ss << tc1;
-    t_string s = ss.str();
+	media_time mt1( rational_time(20) );
+	media_time mt2( rational_time(400, 7) );
+	time_code tc1 = mt1.to_time_code( frame_rate::pal, false );
+	time_code tc2 = mt2.to_time_code( frame_rate::pal, false );
+	time_code tc1_ntsc_drop = mt1.to_time_code( frame_rate::ntsc, true );
+	time_code tc1_ntsc_no_drop = mt1.to_time_code( frame_rate::ntsc, false );
+	
+	t_stringstream ss;
+	ss << tc1;
+	t_string s = ss.str();
 
-    BOOST_CHECK( ss.str().compare(_CT("00:00:20:00")) == 0 );
-    BOOST_CHECK( tc2 == time_code(0,0,57,3,false));
+	BOOST_CHECK( ss.str().compare(_CT("00:00:20:00")) == 0 );
+	BOOST_CHECK( tc2 == time_code(0,0,57,3,false));
 
-    //Make sure that we get a semicolon for NTSC drop frame timecodes
+	//Make sure that we get a semicolon for NTSC drop frame timecodes
 	//N.B. we will not have 00:00:20:00, since 20 seconds don't evenly
 	//divide into NTSC frames.
-    BOOST_CHECK( tc1_ntsc_drop.to_string() == _CT("00:00:19;29") );
-    BOOST_CHECK( tc1_ntsc_no_drop.to_string() == _CT("00:00:19:29") );
+	BOOST_CHECK( tc1_ntsc_drop.to_string() == _CT("00:00:19;29") );
+	BOOST_CHECK( tc1_ntsc_no_drop.to_string() == _CT("00:00:19:29") );
 
-    // Convert back to media time
-    BOOST_CHECK( from_time_code( frame_rate::pal, tc2).to_time_code( frame_rate::pal, false ) == tc2 );
-    BOOST_CHECK( mt1.to_frame_nr( frame_rate::pal ) == 500 );
-    BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc ) == 599 );
+	// Convert back to media time
+	BOOST_CHECK( from_time_code( frame_rate::pal, tc2).to_time_code( frame_rate::pal, false ) == tc2 );
+	BOOST_CHECK( mt1.to_frame_nr( frame_rate::pal ) == 500 );
+	BOOST_CHECK( mt1.to_frame_nr( frame_rate::ntsc ) == 599 );
 
 	//Test timecode string conversions
 	time_code str1_tc(_CT("12:33:44;29"));		//Internally testing from_string()
@@ -145,11 +145,11 @@ void test_timecode()
 	
 	mt4 = media_time::zero() - media_time( 5 );
 	BOOST_CHECK( mt4 == media_time(-5) );
-    
-    BOOST_CHECK_THROW(mt4.to_time_code( frame_rate::pal, false ), olib::opencorelib::base_exception);
+	
+	BOOST_CHECK_THROW(mt4.to_time_code( frame_rate::pal, false ), olib::opencorelib::base_exception);
 
-    media_time mt6 = from_frame_number( frame_rate::ntsc, 45 );
-    olib::t_string mt6_str = mt6.to_time_code(frame_rate::ntsc, false).to_string();
+	media_time mt6 = from_frame_number( frame_rate::ntsc, 45 );
+	olib::t_string mt6_str = mt6.to_time_code(frame_rate::ntsc, false).to_string();
 
 
 	//Check midnight wrap-around
