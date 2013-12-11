@@ -119,7 +119,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			, prop_height_( pcos::key::from_string( "height" ) )
 			, prop_keydown_( pcos::key::from_string( "keydown" ) )
 			, prop_keymod_( pcos::key::from_string( "keymod" ) )
-			, prop_pf_( pcos::key::from_string( "pf" ) )
 			, prop_full_( pcos::key::from_string( "fullscreen" ) )
 			, prop_native_( pcos::key::from_string( "native" ) )
 			, mutex_( )
@@ -140,9 +139,9 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// 422 is best for os/x
 #ifdef __APPLE__
-			properties( ).append( prop_pf_ = std::wstring( L"yuv422") );
+			pf_ = _CT( "yuv422" );
 #else
-			properties( ).append( prop_pf_ = std::wstring( L"yuv420p") );
+			pf_ = _CT( "yuv420p" );
 #endif
 		}
 
@@ -238,7 +237,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				return false;
 
 			// Convert to requested colour space
-			frame = ml::frame_convert( frame, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
+			frame = ml::frame_convert( frame, pf_ );
 			img = frame->get_image( );
 			last_image_ = img;
 			frame->get_sar( last_sar_num_, last_sar_den_ );
@@ -404,8 +403,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		Uint32 get_format( )
 		{
-			std::wstring pf = prop_pf_.value< std::wstring >( );
-			if ( pf == L"yuv422" )
+			if ( pf_ == _CT( "yuv422" ) )
 				return SDL_YUY2_OVERLAY;
 			return SDL_IYUV_OVERLAY;
 		}
@@ -420,10 +418,10 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 		pcos::property prop_height_;
 		pcos::property prop_keydown_;
 		pcos::property prop_keymod_;
-		pcos::property prop_pf_;
 		pcos::property prop_full_;
 		pcos::property prop_native_;
 		boost::recursive_mutex mutex_;
+		olib::t_string pf_;
 };
 
 class chunk_type 
