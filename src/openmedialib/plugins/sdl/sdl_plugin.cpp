@@ -119,7 +119,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			, prop_height_( pcos::key::from_string( "height" ) )
 			, prop_keydown_( pcos::key::from_string( "keydown" ) )
 			, prop_keymod_( pcos::key::from_string( "keymod" ) )
-			, prop_box_( pcos::key::from_string( "box" ) )
 			, prop_pf_( pcos::key::from_string( "pf" ) )
 			, prop_full_( pcos::key::from_string( "fullscreen" ) )
 			, prop_native_( pcos::key::from_string( "native" ) )
@@ -136,7 +135,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			properties( ).append( prop_height_ = default_height_ );
 			properties( ).append( prop_keydown_ = 0 );
 			properties( ).append( prop_keymod_ = 0 );
-			properties( ).append( prop_box_ = std::wstring( L"fill" ) );
 			properties( ).append( prop_full_ = 0 );
 			properties( ).append( prop_native_ = 0.0 );
 
@@ -237,13 +235,11 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 			// Check that we have something in the image...
  			if ( img->width( ) * img->height( ) == 0 || img->width( ) < 4 )
-			{
-				wipe_overlay( sdl_overlay_ );
 				return false;
-			}
 
 			// Convert to requested colour space
-			img = ml::image::convert( img, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
+			frame = ml::frame_convert( frame, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
+			img = frame->get_image( );
 			last_image_ = img;
 			frame->get_sar( last_sar_num_, last_sar_den_ );
 
@@ -296,7 +292,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			lock_display( );
 
 			SDL_Surface *screen = SDL_GetVideoSurface( );
-			SDL_Overlay *overlay = fetch_overlay( frame, img );
+			SDL_Overlay *overlay = fetch_overlay( screen, frame, img );
 
 			if ( overlay != NULL && screen != NULL )
 			{
@@ -311,12 +307,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 						uint8_t *src = ml::image::coerce< ml::image::image_type_8 >( img )->data( plane );
 						int src_pitch = img->pitch( plane );
 
-						// TODO: Fix this work around to correct chroma order 
-						if ( plane == 1 )
-							dst = overlay->pixels[ 2 ];
-						else if ( plane == 2 )
-							dst = overlay->pixels[ 1 ];
-
 						while( h -- )
 						{
 							memcpy( dst, src, w );
@@ -326,10 +316,8 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 					}
 
 					SDL_UnlockYUVOverlay( overlay );
-					SDL_DisplayYUVOverlay( overlay, &screen->clip_rect );
+					SDL_DisplayYUVOverlay( overlay, &sdl_rect_ );
 				}
-
-				img->crop_clear( );
 			}
 
 			unlock_display( );
@@ -371,135 +359,47 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 
 		// Fetch a configured overlay for the the image 
 		// TODO: Paramerise colour space
-		SDL_Overlay *fetch_overlay( frame_type_ptr frame, ml::image_type_ptr &img )
+		SDL_Overlay *fetch_overlay( SDL_Surface *screen, frame_type_ptr frame, ml::image_type_ptr &img )
 		{
 			double this_aspect = double( prop_width_.value< int >( ) ) / double( prop_height_.value< int >( ) );
-			int cx = 0;
-			int cy = 0;
-			int cw = img->width( );
-			int ch = img->height( );
-			int sn = frame->get_sar_num( );
-			int sd = frame->get_sar_den( );
-			sn = sn == 0 ? 1 : sn;
-			sd = sd == 0 ? 1 : sd;
-
-			if ( prop_box_.value< std::wstring >( ) == L"letter" )
-			{
-				ch = int( double( ( cw * sn ) / sd ) / this_aspect );
-
-				if ( ch > img->height( ) )
-				{
-					cy = ( ch - img->height( ) ) / 2;
-					ch = img->height( );
-				}
-				else if ( ch < img->height( ) )
-				{
-					cy = ( img->height( ) - ch ) / 2;
-				}
-			}
-			else if ( prop_box_.value< std::wstring >( ) == L"pillar" )
-			{
-				cw = int( double( ( ch * sd ) / sn ) * this_aspect );
-				if ( cw > img->width( ) )
-				{
-					cx = ( cw - img->width( ) ) / 2;
-					cw = img->width( );
-				}
-				else if ( cw < img->width( ) )
-				{
-					cx = ( img->width( ) - cw ) / 2;
-				}
-			}
-
-			ch += ch % 2;
-
-			img->crop( cx, cy, cw, ch );
-			frame->set_image( img );
 			double frame_aspect = frame->aspect_ratio( );
+			bool changed = false;
 
-			sdl_rect_.w = int( frame_aspect / this_aspect * prop_width_.value< int >( ) );
-			sdl_rect_.h = prop_height_.value< int >( );
-			if ( sdl_rect_.w > prop_width_.value< int >( ) )
+			int dw = int( frame_aspect / this_aspect * prop_width_.value< int >( ) );
+			int dh = prop_height_.value< int >( );
+			if ( dw > prop_width_.value< int >( ) )
 			{
-				sdl_rect_.w = prop_width_.value< int >( );
-				sdl_rect_.h = int( this_aspect / frame_aspect * prop_height_.value< int >( ) );
+				dw = prop_width_.value< int >( );
+				dh = int( this_aspect / frame_aspect * prop_height_.value< int >( ) );
 			}
 
-			sdl_rect_.x = ( prop_width_.value< int >( ) - sdl_rect_.w ) / 2;
-			sdl_rect_.y = ( prop_height_.value< int >( ) - sdl_rect_.h ) / 2;
+			int dx = ( prop_width_.value< int >( ) - dw ) / 2;
+			int dy = ( prop_height_.value< int >( ) - dh ) / 2;
 
-			int overlay_width = ( img->width( ) / 8 ) * 8;
+			changed = dx != sdl_rect_.x || dy != sdl_rect_.y || dw != sdl_rect_.w || dh != sdl_rect_.h;
 
-			if ( sdl_overlay_ != NULL && ( overlay_width != sdl_overlay_->w || img->height( ) != sdl_overlay_->h ) )
+			sdl_rect_.x = dx;
+			sdl_rect_.y = dy;
+			sdl_rect_.w = dw;
+			sdl_rect_.h = dh;
+
+			if ( sdl_overlay_ == 0 || changed )
 			{
 				SDL_FreeYUVOverlay( sdl_overlay_ );
-				sdl_overlay_ = SDL_CreateYUVOverlay( prop_width_.value< int >( ), prop_height_.value< int >( ), get_format( ), SDL_GetVideoSurface( ) );
-				wipe_overlay( sdl_overlay_ );
-				SDL_FreeYUVOverlay( sdl_overlay_ );
-				SDL_Flip( SDL_GetVideoSurface( ) );
-				sdl_overlay_ = NULL;
+				SDL_FillRect( screen, NULL, 0x000000 );
+				SDL_Flip( screen );
+				SDL_FillRect( screen, NULL, 0x000000 );
+				SDL_Flip( screen );
+				sdl_overlay_ = 0;
 			}
 
-			if ( sdl_overlay_ == NULL )
+			if ( sdl_overlay_ == 0 )
 			{
-				sdl_overlay_ = SDL_CreateYUVOverlay( overlay_width, img->height( ), get_format( ), SDL_GetVideoSurface( ) );
+				int overlay_width = ( img->width( ) / 8 ) * 8;
+				sdl_overlay_ = SDL_CreateYUVOverlay( overlay_width, img->height( ), get_format( ), screen );
 			}
-
-			SDL_SetClipRect( SDL_GetVideoSurface( ), &sdl_rect_ );
 
 			return sdl_overlay_;
-		}
-
-		void wipe_overlay( SDL_Overlay *overlay )
-		{
-			if ( overlay != NULL )
-			{
-				if ( SDL_LockYUVOverlay( overlay ) >= 0 )
-				{
-					if ( get_format( ) == SDL_YV12_OVERLAY )
-					{
-						for ( int plane = 0; plane < overlay->planes; plane ++ )
-						{
-							uint8_t *dst = overlay->pixels[ plane ];
-							int dst_pitch = overlay->pitches[ plane ];
-							int w = plane == 0 ? overlay->w : overlay->w / 2;
-							int h = plane == 0 ? overlay->h : overlay->h / 2;
-							unsigned char v = plane == 0 ? 16 : 128;
-
-							while( h -- )
-							{
-								memset( dst, v, w );
-								dst += dst_pitch;
-							}
-						}
-					}
-					else if ( get_format( ) == SDL_YUY2_OVERLAY )
-					{
-						uint8_t *dst = overlay->pixels[ 0 ];
-						uint8_t *ptr;
-						int t;
-						int dst_pitch = overlay->pitches[ 0 ];
-						int w = overlay->w;
-						int h = overlay->h;
-
-						while( h -- )
-						{
-							ptr = dst;
-							t = w;
-							while( t -- )
-							{
-								*ptr ++ = 16;
-								*ptr ++ = 128;
-							}
-							dst += dst_pitch;
-						}
-					}
-
-					SDL_Rect rect = { 0, 0, overlay->w, overlay->h };
-					SDL_UnlockYUVOverlay( overlay );
-					SDL_DisplayYUVOverlay( overlay, &rect );
-				}
-			}
 		}
 
 		Uint32 get_format( )
@@ -507,7 +407,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 			std::wstring pf = prop_pf_.value< std::wstring >( );
 			if ( pf == L"yuv422" )
 				return SDL_YUY2_OVERLAY;
-			return SDL_YV12_OVERLAY;
+			return SDL_IYUV_OVERLAY;
 		}
 
 		frame_type_ptr last_frame_;
@@ -520,7 +420,6 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 		pcos::property prop_height_;
 		pcos::property prop_keydown_;
 		pcos::property prop_keymod_;
-		pcos::property prop_box_;
 		pcos::property prop_pf_;
 		pcos::property prop_full_;
 		pcos::property prop_native_;
