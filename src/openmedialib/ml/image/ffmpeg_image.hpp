@@ -259,6 +259,17 @@ public:
 		return cx_ != 0 || cy_ != 0 || cw_ != width( 0, false ) || ch_ != height( 0, false );
 	}
 
+	int alpha_offset( ) const
+	{
+		int result = locate_alpha_offset( MLpixfmt_ );
+		if ( result == -1 && alpha_plane( ) > 0 ) result = 0;
+		return result >= 0 ? result / sizeof( data_type ) : -1;
+	}
+
+	int alpha_plane( ) const
+	{
+		return locate_alpha_plane( MLpixfmt_ );
+	}
 
 private:
 	MLPixelFormat MLpixfmt_;

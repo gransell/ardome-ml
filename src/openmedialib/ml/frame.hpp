@@ -213,6 +213,9 @@ namespace olib { namespace openmedialib { namespace ml {
 		/// Indicates if the image associated to the frame is yuv planar image
 		bool is_yuv_planar( ) const;
 
+		/// Indicates if the frame has an alpha component
+		bool has_alpha( ) const;
+
 	protected:
 	
 		/// Copy constructor from a frame_type_ptr

@@ -71,6 +71,10 @@ public:
 	virtual bool matching( int flags ) const = 0;
 	virtual const t_string& pf( ) const = 0;
 	virtual bool is_yuv_planar( ) = 0;
+	// Returns the component offset of the alpha within its plane (or -1 if no alpha is present)
+	virtual int alpha_offset( ) const = 0;
+	// Returns the plane containing the alpha component (or -1 if no alpha is present)
+	virtual int alpha_plane( ) const = 0;
 	// The size of the full image
 	virtual int size( ) const = 0;
 	// Crop an image

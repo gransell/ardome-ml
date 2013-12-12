@@ -72,41 +72,46 @@ class ML_PLUGIN_DECLSPEC filter_swscale : public filter_simple
 				// Check if we're enabled and the frame has an image
 				if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 				{
-					// Immediately shallow copy the frame
-					frame = frame->shallow( );
+					// Obtain image/alpha from the frame
+					ml::image_type_ptr image = frame->get_image( );
+					ml::image_type_ptr alpha = frame->get_alpha( );
 
 					// For aspect ratio conversions
 					ml::image::geometry shape;
 
-					// Deal with the properties now
-					shape.field_order = prop_progressive_.value< int >( ) ? ml::image::progressive : frame->get_image( )->field_order( );
-					
-					ml::image::rescale_mode_map_type::const_iterator i_mode = 
-						ml::image::rescale_mode_map.find( prop_mode_.value< std::wstring >( ) );
-					if( i_mode != ml::image::rescale_mode_map.end( ) )
-						shape.mode = i_mode->second;
-					
+					// Determines if the image should be deinterlaced
+					shape.field_order = prop_progressive_.value< int >( ) ? ml::image::progressive : image->field_order( );
+
+					// Determines which fill mode is required
+					ml::image::rescale_mode_map_type::const_iterator i_mode = ml::image::rescale_mode_map.find( prop_mode_.value< std::wstring >( ) );
+					ARENFORCE_MSG( i_mode != ml::image::rescale_mode_map.end( ) || prop_mode_.value< std::wstring >( ) == L"", "Invalid fill mode requested %s" )( prop_mode_.value< std::wstring >( ) );
+					if( i_mode != ml::image::rescale_mode_map.end( ) ) shape.mode = i_mode->second;
+
+					// Obtain the interpolation type for rescaling
 					shape.interp = prop_interp_.value< int >( );
-					
+
+					// Determine if an image conversion is necessary
 					ml::image::MLPixelFormat mlpf = ml::image::string_to_MLPF( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
-					if ( ml::image::ML_PIX_FMT_NONE != mlpf )
-						shape.pf = mlpf;
-					
+					ARENFORCE_MSG( mlpf != ml::image::ML_PIX_FMT_NONE || prop_pf_.value< std::wstring >( ) == L"", "Invalid picture format requested %s" )( prop_pf_.value< std::wstring >( ) );
+					shape.pf = ml::image::ML_PIX_FMT_NONE != mlpf ? mlpf : image->ml_pixel_format( );
+
+					// Custom width and height 
 					shape.width = prop_width_.value< int >( );
 					shape.height = prop_height_.value< int >( );
+
+					// SAR values for output
 					shape.sar_num = prop_sar_num_.value< int >( );
 					shape.sar_den = prop_sar_den_.value< int >( );
 
-					ml::image_type_ptr image = frame->get_image( );
+					// SAR values for source
+					if ( ml::image::valid_sar( shape.sar_num, shape.sar_den ) )
+					{
+						shape.src_sar_num = frame->get_sar_num( );
+						shape.src_sar_den = frame->get_sar_den( );
+					}
 
-					// Rescale the image
-					image = ml::image::rescale_and_convert( ro_, image, shape );
-
-					// Set the image on the frame
-					frame->set_image( image );
-
-					// Set the sar on the frame
-					frame->set_sar( shape.sar_num, shape.sar_den );
+					// Rescale the frame
+					frame = frame_rescale( ro_, frame, shape );
 				}
 			}
 

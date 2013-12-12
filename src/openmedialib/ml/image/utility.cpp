@@ -44,6 +44,34 @@ namespace {
 		(_CT("a8r8g8b8"),     image::ML_PIX_FMT_A8R8G8B8)
 		(_CT("a8b8g8r8"),     image::ML_PIX_FMT_A8B8G8R8)
 		(_CT("r16g16b16le"),  image::ML_PIX_FMT_R16G16B16LE);
+
+	typedef std::map< image::MLPixelFormat, image::MLPixelFormat > pf_map_type;
+
+	const pf_map_type pf_map = boost::assign::map_list_of
+		( image::ML_PIX_FMT_YUV420P, image::ML_PIX_FMT_YUV420P )
+		( image::ML_PIX_FMT_YUV420P10LE, image::ML_PIX_FMT_YUV420P10LE )
+		( image::ML_PIX_FMT_YUV420P16LE, image::ML_PIX_FMT_YUV420P16LE )
+		( image::ML_PIX_FMT_YUVA420P, image::ML_PIX_FMT_YUV420P )
+		( image::ML_PIX_FMT_UYV422, image::ML_PIX_FMT_YUV422P )
+		( image::ML_PIX_FMT_YUV422P, image::ML_PIX_FMT_YUV422P )
+		( image::ML_PIX_FMT_YUV422, image::ML_PIX_FMT_YUV422P )
+		( image::ML_PIX_FMT_YUV422P10LE, image::ML_PIX_FMT_YUV422P10LE )
+		( image::ML_PIX_FMT_YUV422P16LE, image::ML_PIX_FMT_YUV422P16LE )
+		( image::ML_PIX_FMT_YUV444P, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_YUVA444P, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_YUV444P16LE, image::ML_PIX_FMT_YUV444P16LE )
+		( image::ML_PIX_FMT_YUVA444P16LE, image::ML_PIX_FMT_YUV444P16LE )
+		( image::ML_PIX_FMT_YUV411P, image::ML_PIX_FMT_YUV411P )
+		( image::ML_PIX_FMT_L8, image::ML_PIX_FMT_L8 )
+		( image::ML_PIX_FMT_L16LE, image::ML_PIX_FMT_L16LE )
+		( image::ML_PIX_FMT_R8G8B8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_B8G8R8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_R8G8B8A8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_B8G8R8A8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_A8R8G8B8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_A8B8G8R8, image::ML_PIX_FMT_YUV444P )
+		( image::ML_PIX_FMT_R16G16B16LE, image::ML_PIX_FMT_YUV444P16LE );
+
 }
 
 namespace olib { namespace openmedialib { namespace ml { namespace image {
@@ -161,10 +189,10 @@ ML_DECLSPEC int image_depth ( MLPixelFormat pf )
 	return utility_bitdepth( ML_to_AV( pf ), 0 ); 
 }
 
-ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
+ML_DECLSPEC image_type_ptr allocate( MLPixelFormat pf, int width, int height )
 {
     ARENFORCE_MSG( pf > ML_PIX_FMT_NONE && pf < ML_PIX_FMT_NB, "Invalid picture format")( pf );
-	ARENFORCE_MSG( verify( pf, width, height ), "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( width )( height );
+	ARENFORCE_MSG( verify( pf, width, height ) && width > 0 && height > 0, "Unable to allocate an image of type %1% at %2%x%3%" )( pf )( width )( height );
 	if ( image_depth( pf ) == 8 )
 		return ml::image::image_type_8_ptr( new ml::image::image_type_8( pf, width, height ) );
 	else if ( image_depth( pf ) > 8 )
@@ -172,14 +200,14 @@ ML_DECLSPEC image_type_ptr allocate ( MLPixelFormat pf, int width, int height )
 	return image_type_ptr( );	
 }
 
-ML_DECLSPEC image_type_ptr allocate ( const olib::t_string& pf, int width, int height )
+ML_DECLSPEC image_type_ptr allocate( const olib::t_string& pf, int width, int height )
 {
 	MLPixelFormatMap_type::const_iterator i = MLPixelFormatMap_.find( pf );
 	ARENFORCE_MSG( i != MLPixelFormatMap_.end(), "Invalid picture format: \"%1%\"" )( pf );
 	return ml::image::allocate( i->second, width, height );
 }
 
-ML_DECLSPEC image_type_ptr allocate ( const image_type_ptr &img )
+ML_DECLSPEC image_type_ptr allocate( const image_type_ptr &img )
 {
 	return ml::image::allocate( img->ml_pixel_format( ), img->width( ), img->height( ) );
 }
@@ -211,7 +239,7 @@ ML_DECLSPEC image_type_ptr convert( ml::rescale_object_ptr ro, const image_type_
 	return rescale_and_convert( ro, src, shape );
 }
 
-image_type_ptr rescale( ml::rescale_object_ptr ro, const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
+image_type_ptr rescale( ml::rescale_object_ptr ro, const image_type_ptr &im, int new_w, int new_h, rescale_filter filter, int sar_num, int sar_den )
 {
     if( im->width( ) == new_w && im->height( ) == new_h )
         return im;
@@ -221,12 +249,30 @@ image_type_ptr rescale( ml::rescale_object_ptr ro, const image_type_ptr &im, int
 	shape.width = new_w;
 	shape.height = new_h;
 	shape.interp = filter;
+	shape.src_sar_num = sar_num;
+	shape.src_sar_den = sar_den;
 	return rescale_and_convert( ro, im, shape );
 }
 
-image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
+image_type_ptr rescale( const image_type_ptr &im, int new_w, int new_h, rescale_filter filter, int sar_num, int sar_den )
 {
-	return rescale( ml::rescale_object_ptr( ), im, new_w, new_h, filter );
+	return rescale( ml::rescale_object_ptr( ), im, new_w, new_h, filter, sar_num, sar_den );
+}
+
+ML_DECLSPEC image_type_ptr distort( ml::rescale_object_ptr ro, const image_type_ptr &im, int new_w, int new_h, rescale_filter filter )
+{
+    if( im->width( ) == new_w && im->height( ) == new_h ) return im;
+    ARENFORCE_MSG( verify( im->pf( ), new_w, new_h ), "Unable to allocate an image of type %1% at %2%x%3%" )( im->pf( ) )( new_w )( new_h );
+    image_type_ptr new_im = allocate( im->pf( ), new_w, new_h );
+    rescale_and_convert_ffmpeg_image( ro, im, new_im, filter );
+    return new_im;
+}
+
+ML_DECLSPEC MLPixelFormat composite_pf( MLPixelFormat pf )
+{
+	pf_map_type::const_iterator iter = pf_map.find( pf );
+	ARENFORCE_MSG( iter != pf_map.end( ), "Picture format not support for compositing %d" )( pf );
+	return iter->second;
 }
 
 template< typename T >
@@ -289,19 +335,28 @@ void border( ml::image_type_ptr im, geometry &shape )
 
 image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_type_ptr &im, geometry &shape )
 {
-	int sar_num = im->get_sar_num( );
-	int sar_den = im->get_sar_den( );
-	
-	double aspect_ratio = im->aspect_ratio( );
-	
+	bool src_sar_valid = valid_sar( shape.src_sar_num, shape.src_sar_den );
+	bool dst_sar_valid = valid_sar( shape.sar_num, shape.sar_den );
+
+	int src_sar_num = src_sar_valid ? shape.src_sar_num : im->get_sar_num( );
+	int src_sar_den = src_sar_valid ? shape.src_sar_den : im->get_sar_den( );
+	int dst_sar_num = dst_sar_valid ? shape.sar_num : src_sar_num;
+	int dst_sar_den = dst_sar_valid ? shape.sar_den : src_sar_den;
+
+	shape.sar_num = dst_sar_num;
+	shape.sar_den = dst_sar_den;
+	shape.src_sar_num = src_sar_num;
+	shape.src_sar_den = src_sar_den;
+
+	double aspect_ratio = ( double( im->width( ) * src_sar_num ) / src_sar_den ) / im->height( );
+
 	ml::image_type_ptr image;
 
 	// Convert to progressive if required
-	if ( shape.field_order == ml::image::progressive && im->field_order( ) != ml::image::progressive ) {
+	if ( shape.field_order == ml::image::progressive && im->field_order( ) != ml::image::progressive )
 		image = ml::image::deinterlace( im );
-	} else {
+	else
 		image = im;
-	}
 
 	// If no conversion is specified, retain that of the input
 	if ( shape.pf == ML_PIX_FMT_NONE )
@@ -337,6 +392,10 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 	}
 	else if ( shape.width != -1 && shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
 	{
+		shape.sar_num = dst_sar_num;
+		shape.sar_den = dst_sar_den;
+		shape.src_sar_num = src_sar_num;
+		shape.src_sar_den = src_sar_den;
 		ml::image::calculate( shape, image );
 	}
 	else if ( shape.height != -1 && shape.sar_num != -1 && shape.sar_den != -1 )
@@ -369,7 +428,7 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 		new_im->crop( shape.x, shape.y, shape.w, shape.h );
 	}
 	
-	rescale_and_convert_ffmpeg_image( ro, image, new_im, shape.interp );
+	rescale_and_convert_ffmpeg_image( ro, image, new_im, shape.interp, shape.safe );
 
 	// Clear crop information on both images if shape is cropped
 	if ( shape.cropped )
@@ -380,6 +439,8 @@ image_type_ptr rescale_and_convert( ml::rescale_object_ptr ro, const ml::image_t
 	}
 
 	new_im->set_field_order( shape.field_order );
+	new_im->set_sar_num( dst_sar_num );
+	new_im->set_sar_den( dst_sar_den );
 	
     return new_im;
 }
@@ -389,8 +450,8 @@ void calculate( geometry &shape, image_type_ptr src )
 {
 	shape.cropped = true;
 
-	double src_sar_num = double( src->get_sar_num( ) ); 
-	double src_sar_den = double( src->get_sar_den( ) );
+	double src_sar_num = double( shape.src_sar_num );
+	double src_sar_den = double( shape.src_sar_den );
 	double dst_sar_num = double( shape.sar_num );
 	double dst_sar_den = double( shape.sar_den );
 
@@ -496,72 +557,138 @@ void calculate( geometry &shape, image_type_ptr src )
 	correct( shape.pf, shape.w, shape.h, ceil );
 }
 
-static int locate_alpha_offset( const MLPixelFormat pf )
+ML_DECLSPEC int locate_alpha_offset( const MLPixelFormat pf )
 {
-    if ( !pixfmt_has_alpha( pf ) || is_pixfmt_planar( pf ) ) return -1; // Only RGB with alpha supported
+	if ( !pixfmt_has_alpha( pf ) || is_pixfmt_planar( pf ) ) return -1; // Only RGB with alpha supported
+	return utility_offset( ML_to_AV( pf ), utility_nb_components( ML_to_AV( pf ) ) - 1 ); //Alpha is always last component
+}
 
-    return utility_offset( ML_to_AV( pf ), utility_nb_components( ML_to_AV( pf ) ) - 1 ); //Alpha is always last component
+ML_DECLSPEC int locate_alpha_plane( const MLPixelFormat pf )
+{
+	if ( !pixfmt_has_alpha( pf ) ) return -1; 
+	int plane = utility_nb_components( ML_to_AV( pf ) ) - 1; //Alpha is always last component
+	return is_pixfmt_planar( pf ) && utility_alpha( ML_to_AV( pf ), plane ) >= 0 ? plane : 0; 
 }
 
 template< typename T, enum MLPixelFormat alpha >
-ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
+ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im, int requested_width, int requested_height )
 {
-    image_type_ptr result;
+	image_type_ptr result;
 
-    if ( im )
-    {
-        boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
-        int offset = locate_alpha_offset( im->ml_pixel_format( ) );
-        if ( offset >= 0 )
-        {
-            result = allocate( alpha, im->width( ), im->height( ) );
-            boost::shared_ptr< T > result_type = ml::image::coerce< T >( result );
+	if ( im )
+	{
+		boost::shared_ptr< T > im_type = ml::image::coerce< T >( im );
 
-            const typename T::data_type *src = im_type->data( );
-            typename T::data_type *dst = result_type->data( );
+		int offset = im_type->alpha_offset( );
+		int plane = im_type->alpha_plane( );
 
-            int h = im->height( );
+		if ( offset >= 0 && plane >= 0 )
+		{
+			int width = requested_width == -1 ? im->width( ) : requested_width;
+			int height = requested_height == -1 ? im->height( ) : requested_height;
 
-            int src_rem = im->pitch( ) - im->linesize( );
-            int dst_rem = result->pitch( ) - result->linesize( );
+			ARENFORCE_MSG( width > 0 && height > 0 && width <= im->width( ) && height <= im->height( ), 
+						   "Invalid dimensions for alpha extraction %dx%d from %dx%d" )( width )( height )( im->width( ) )( im->height( ) );
+
+			result = allocate( alpha, width, height );
+			boost::shared_ptr< T > result_type = ml::image::coerce< T >( result );
+
+			const int components = plane > 0 ? 1 : im_type->num_components( );
+			const typename T::data_type *src = im_type->data( plane ) + offset;
+			typename T::data_type *dst = result_type->data( );
+
+			int src_rem = ( im->pitch( plane ) / sizeof( typename T::data_type ) ) - width * components;
+			int dst_rem = ( result->pitch( ) - result->linesize( ) ) / sizeof( typename T::data_type );
 
 			const int max_input = ( 1 << im->bitdepth( ) ) - 1;
 			const int max_output = ( 1 << result->bitdepth( ) ) - 1;
 
-            while( h -- )
-            {
-                int w = im->width( );
+			while( height -- )
+			{
+				int w = width;
 
-                while ( w -- )
-                {
-                    *dst ++ = ( typename T::data_type )( float( src[ offset ] / max_input ) * max_output );
-                    src += 4;
-                }
+				while ( w -- )
+				{
+					*dst ++ = ( typename T::data_type )( boost::uint32_t( max_output ) * *src / max_input );
+					src += components;
+				}
 
-                src += src_rem;
-                dst += dst_rem;
-            }
-        }
-    }
+				src += src_rem;
+				dst += dst_rem;
+			}
+		}
+	}
 
-    return result;
+	return result;
 }
 
-ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im )
+ML_DECLSPEC image_type_ptr extract_alpha( const image_type_ptr &im, int width, int height )
 {
     image_type_ptr result;
     if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
-        result = extract_alpha< ml::image::image_type_8, ML_PIX_FMT_L8 >( im );
+        result = extract_alpha< ml::image::image_type_8, ML_PIX_FMT_L8 >( im, width, height );
     else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
-        result = extract_alpha< ml::image::image_type_16, ML_PIX_FMT_L16LE >( im );
+        result = extract_alpha< ml::image::image_type_16, ML_PIX_FMT_L16LE >( im, width, height );
+	return result;
+}
+
+template< typename T, enum MLPixelFormat alpha >
+ML_DECLSPEC image_type_ptr merge_alpha( image_type_ptr &im, ml::image_type_ptr channel )
+{
+	image_type_ptr result = im;
+
+	if ( im && channel )
+	{  
+		image_type_ptr al_image = ml::image::convert( channel, alpha );
+
+		int offset = im->alpha_offset( );
+		int plane = im->alpha_plane( );
+
+		if ( offset >= 0 || plane >= 0 )
+		{  
+			boost::shared_ptr< T > dst_type = ml::image::coerce< T >( im );
+			boost::shared_ptr< T > src_type = ml::image::coerce< T >( al_image );
+
+			const int components = plane > 0 ? 1 : dst_type->num_components( );
+			typename T::data_type *dst = dst_type->data( plane ) + offset;
+			const typename T::data_type *src = src_type->data( );
+
+			int h = im->height( );
+
+			int dst_rem = ( dst_type->pitch( ) - dst_type->linesize( ) ) / sizeof( typename T::data_type );
+			int src_rem = ( src_type->pitch( ) - src_type->linesize( ) ) / sizeof( typename T::data_type );
+
+			while( h -- )
+			{	
+				int w = im->width( );
+
+				while ( w -- )
+				{  
+					*dst = *src ++;
+					dst += components;
+				}
+				src += src_rem;
+				dst += dst_rem;
+			}
+		}
+	}
+
+	return result;
+}
+
+image_type_ptr merge_alpha( image_type_ptr im, image_type_ptr alpha )
+{
+	image_type_ptr result;
+	if ( ml::image::coerce< ml::image::image_type_8 >( im ) )
+		result = merge_alpha< image_type_8, ML_PIX_FMT_L8 >( im, alpha );
+	else if ( ml::image::coerce< ml::image::image_type_16 >( im ) )
+		result = merge_alpha< image_type_16, ML_PIX_FMT_L16LE >( im, alpha );
 	return result;
 }
 
 template< typename T >
 ML_DECLSPEC image_type_ptr deinterlace( const image_type_ptr &im )
 {
-	ARENFORCE_MSG( !pixfmt_has_alpha( ML_to_AV( im->ml_pixel_format( ) ) ), "Image with alpha not supported to deinterlace" )( im->pf( ) );
-
 	if ( im->field_order( ) != progressive )
 	{
 		im->set_field_order( progressive );
@@ -688,6 +815,21 @@ ML_DECLSPEC int order_of_component( MLPixelFormat pf, int index )
 {
 	//utility_offset returns bytes, but we want the order as an index
 	return utility_offset( ML_to_AV( pf ), index ) / ( ( image_depth( pf ) + 7 ) / 8 );
+}
+
+ML_DECLSPEC int arrange_rgb( MLPixelFormat pf, int samples[ 4 ], int r, int g, int b, int a, int ibits )
+{
+	const int av = ML_to_AV( pf );
+	const int bits = utility_bitdepth( av, 0 );
+	const int m = ML_MAX_BIT_VALUE( bits );
+	const int d = ML_MAX_BIT_VALUE( ibits );
+	const int components = utility_nb_components( av );
+	samples[ order_of_component( pf, 0 ) ] = ML_SCALE_SAMPLE( r, m, d );
+	samples[ order_of_component( pf, 1 ) ] = ML_SCALE_SAMPLE( g, m, d );
+	samples[ order_of_component( pf, 2 ) ] = ML_SCALE_SAMPLE( b, m, d );
+	if ( components == 4 )
+		samples[ order_of_component( pf, 3 ) ] = ML_SCALE_SAMPLE( a, m, d );
+	return components;
 }
 
 } } } }

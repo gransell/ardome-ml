@@ -17,9 +17,10 @@ void check_yuv_image_data( ml::image_type_ptr image, int r, int g, int b )
 	int y, u, v;
 	ml::image::rgb24_to_yuv444( y, u, v, r, g, b );
 
-	typename T::data_type y_shifted = static_cast< typename T::data_type >( y << ( image->bitdepth( ) - 8 ) );
-	typename T::data_type u_shifted = static_cast< typename T::data_type >( u << ( image->bitdepth( ) - 8 ) );
-	typename T::data_type v_shifted = static_cast< typename T::data_type >( v << ( image->bitdepth( ) - 8 ) );
+	int max_value = ( 1 << image->bitdepth( ) ) - 1;
+	typename T::data_type y_shifted = static_cast< typename T::data_type >( y * max_value / 255 );
+	typename T::data_type u_shifted = static_cast< typename T::data_type >( u * max_value / 255 );
+	typename T::data_type v_shifted = static_cast< typename T::data_type >( v * max_value / 255 );
 
 	typename T::data_type planedata[3] = { y_shifted, u_shifted, v_shifted };
 
@@ -42,9 +43,10 @@ void check_yuv_image_data( ml::image_type_ptr image, int r, int g, int b )
 template< typename T >
 void check_rgb_image_data( ml::image_type_ptr image, int r, int g, int b )
 {
-	typename T::data_type rs = static_cast< typename T::data_type >( r << ( image->bitdepth( ) - 8 ) );
-    typename T::data_type gs = static_cast< typename T::data_type >( g << ( image->bitdepth( ) - 8 ) );
-    typename T::data_type bs = static_cast< typename T::data_type >( b << ( image->bitdepth( ) - 8 ) );
+	int max_value = ( 1 << image->bitdepth( ) ) - 1;
+	typename T::data_type rs = static_cast< typename T::data_type >( r * max_value / 255 );
+    typename T::data_type gs = static_cast< typename T::data_type >( g * max_value / 255 );
+    typename T::data_type bs = static_cast< typename T::data_type >( b * max_value / 255 );
 
 	typename T::data_type vals[4];
 

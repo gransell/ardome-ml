@@ -417,7 +417,8 @@ template < typename RESULT_T > RESULT_T split_list( const std::wstring& str )
 		last_pos = ++current_pos;
 		current_pos = str.find( SEPARATOR, last_pos );
 	}
-	result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos ) ) );
+	if ( std::wstring( str, last_pos, current_pos ) != L"" ) 
+		result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos ) ) );
 
 	return result;
 }

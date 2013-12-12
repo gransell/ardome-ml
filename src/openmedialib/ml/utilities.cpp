@@ -269,35 +269,58 @@ ML_DECLSPEC audio_type_ptr audio_resample(const audio_type_ptr& input_audio, int
 	return output_audio;
 }
 
-ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr ro, frame_type_ptr frame, const t_string &pf )
+ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr frame, image::geometry &shape )
 {
 	frame_type_ptr result = frame;
 
-	if ( result && result->get_image( ) )
+	if ( result && result->has_image( ) )
 	{
-		ml::image_type_ptr src = result->get_image( );
+		// Create a shallow copy here
+		result = result->shallow( );
 
-		if ( src && src->pf( ) != pf )
+		// Check that the requested dimensions are valid
+		if ( shape.safe && shape.width > 0 && shape.height > 0 )
+			ml::image::correct( shape.pf, shape.width, shape.height, image::floor );
+
+		// Obtain image/alpha from the frame
+		ml::image_type_ptr image = result->get_image( );
+		ml::image_type_ptr alpha = result->get_alpha( );
+
+		// Rescale the image
+		image = ml::image::rescale_and_convert( ro, image, shape );
+
+		// We need to extract the alpha from the image if the source has one inline and the dest doesn't
+		ARENFORCE_MSG( !( alpha && ml::image::pixfmt_has_alpha( result->get_image( )->ml_pixel_format( ) ) ), "Frame has an image which carries an alpha channel and has an alpha mask" );
+		if ( !alpha && ml::image::pixfmt_has_alpha( result->get_image( )->ml_pixel_format( ) ) && !ml::image::pixfmt_has_alpha( shape.pf ) )
+			alpha = shape.safe ? image::extract_alpha( result->get_image( ), shape.width, shape.height ) : image::extract_alpha( result->get_image( ) );
+
+		// Rescale the alpha - note that the shape.pf is currently setup for the image component, so it needs to be changed here
+		if ( alpha )
 		{
-			// Only extract alpha if we are converting from a format with alpha to a format without alpha
-			ml::image::MLPixelFormat dst_pixfmt = ml::image::string_to_MLPF( pf );
-			if ( ml::image::pixfmt_has_alpha( src->ml_pixel_format( ) ) &&
-				dst_pixfmt != ml::image::ML_PIX_FMT_NONE && !ml::image::pixfmt_has_alpha( dst_pixfmt ) )
-			{
-				ml::image_type_ptr alpha = ml::image::extract_alpha( src );
-				if ( alpha )
-					result->set_alpha( alpha );
-			}
-			result->set_image( ml::image::convert( ro, src, pf ) );
+			// Backup the current shape for alpha handling
+			image::geometry alpha_shape( shape );
+			alpha_shape.pf = image->bitdepth( ) == 8 ? ml::image::ML_PIX_FMT_L8 : ml::image::ML_PIX_FMT_L16LE;
+			alpha = ml::image::rescale_and_convert( ro, alpha, alpha_shape );
 		}
+
+		// We need to merge the alpha mask if the dest has alpha inline
+		if ( alpha && ml::image::pixfmt_has_alpha( shape.pf ) )
+		{
+			image = ml::image::merge_alpha( image, alpha );
+			alpha = ml::image_type_ptr( );
+		}
+
+		// Set the image on the frame
+		result->set_image( image );
+		result->set_alpha( alpha );
+
+		// Set the sar on the frame
+		result->set_sar( shape.sar_num, shape.sar_den );
+
+		ARENFORCE_MSG( image && ( !alpha || ( alpha->width( ) == image->width( ) && alpha->height( ) == image->height( ) ) ), "Mismatch in image and alpha dimensions" );
 	}
 
 	return result;
-}
-
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &pf )
-{
-	return frame_convert( ml::rescale_object_ptr(), frame, pf );
 }
 
 ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr frame, int new_w, int new_h, ml::image::rescale_filter filter )
@@ -306,10 +329,15 @@ ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr 
 
 	if ( result )
 	{
-		if ( result->get_alpha( ) )
-			result->set_alpha( image::rescale( ro, result->get_alpha( ), new_w, new_h, filter ) );
-		if ( result->get_image( ) )
-			result->set_image( image::rescale( ro, result->get_image( ), new_w, new_h, filter ) );
+		image::geometry shape( result->get_image( ) );
+		shape.interp = filter;
+		shape.width = new_w;
+		shape.height = new_h;
+		shape.src_sar_num = result->get_sar_num( );
+		shape.src_sar_den = result->get_sar_den( );
+		shape.sar_num = result->get_sar_num( );
+		shape.sar_den = result->get_sar_den( );
+		result = frame_rescale( ro, frame, shape );
 	}
 
 	return result;
@@ -318,6 +346,37 @@ ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr 
 ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr frame, int new_w, int new_h, image::rescale_filter filter )
 {
 	return frame_rescale( rescale_object_ptr( ), frame, new_w, new_h, filter );
+}
+
+ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr ro, frame_type_ptr frame, image::MLPixelFormat pf )
+{
+	frame_type_ptr result = frame;
+
+	if ( result && result->get_image( ) )
+	{
+		image::geometry shape( result->get_image( ) );
+		shape.pf = pf;
+		shape.width = result->width( );
+		shape.height = result->height( );
+		shape.src_sar_num = result->get_sar_num( );
+		shape.src_sar_den = result->get_sar_den( );
+		shape.sar_num = result->get_sar_num( );
+		shape.sar_den = result->get_sar_den( );
+		shape.safe = true;
+		result = frame_rescale( ro, frame, shape );
+	}
+
+	return result;
+}
+
+ML_DECLSPEC frame_type_ptr frame_convert( ml::rescale_object_ptr ro, frame_type_ptr frame, const t_string &pf )
+{
+	return frame_convert( ro, frame, image::string_to_MLPF( pf ) );
+}
+
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr frame, const t_string &pf )
+{
+	return frame_convert( ml::rescale_object_ptr( ), frame, pf );
 }
 
 ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr frame )

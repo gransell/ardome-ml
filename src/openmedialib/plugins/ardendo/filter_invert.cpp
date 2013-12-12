@@ -64,7 +64,7 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		// Invert the region and planes requested
 		void invert( ml::frame_type_ptr &result )
 		{
-			if ( !ml::is_yuv_planar( result ) )
+			if ( !ml::is_yuv_planar( result ) || result->get_image( )->bitdepth( ) != 8 )
 				result = frame_convert( result, _CT("yuv420p") );
 
 			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );

@@ -66,6 +66,11 @@ int utility_offset( int pixfmt, int index )
     return desc->comp[index].offset_plus1 - 1;
 }
 
+int utility_alpha( int pixfmt, int index )
+{
+	return pixfmt_has_alpha( pixfmt ) ? av_pix_fmt_desc_get( static_cast< AVPixelFormat >( pixfmt ) )->comp[ index ].offset_plus1 - 1 : -1;
+}
+
 ML_DECLSPEC int ML_to_AV( MLPixelFormat pixfmt )
 {
 	switch ( pixfmt )
@@ -223,11 +228,17 @@ AVPicture fill_picture( ml::image_type_ptr image )
     return picture;
 }
 
-int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags )
+int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_ptr src, ml::image_type_ptr dst, int flags, bool safe )
 {
 	struct SwsContext *context = 0;
 	if (ro) context = (struct SwsContext *)ro->get_context( dst->ml_pixel_format( ) );
-	
+
+	int src_width = src->width( );
+	int src_height = src->height( );
+
+	if ( safe )
+		ml::image::correct( src->ml_pixel_format( ), src_width, src_height, ml::image::floor );
+
     AVPicture input = fill_picture( src );
     AVPicture output = fill_picture( dst );
 
@@ -235,8 +246,8 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
     ARENFORCE( sws_isSupportedOutput( static_cast<AVPixelFormat>( ML_to_AV( dst->ml_pixel_format( ) ) ) ) );
 	
     context = sws_getCachedContext( context, 
-			src->width( ),
-            src->height( ),
+            src_width,
+            src_height,
             static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ),
             dst->width( ),
             dst->height( ),
@@ -254,8 +265,8 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
     // we can identify their cause.
     if ( context == 0 && flags != POINT_SAMPLING && ( dst->width( ) < 6 || dst->height( ) < 6 ) )
     	context = sws_getCachedContext( context, 
-            src->width( ),
-            src->height( ),
+            src_width,
+            src_height,
             static_cast<AVPixelFormat>( ML_to_AV( src->ml_pixel_format( ) ) ),
             dst->width( ),
             dst->height( ),
@@ -278,7 +289,7 @@ int rescale_and_convert_ffmpeg_image( ml::rescale_object_ptr ro, ml::image_type_
         input.data,
         input.linesize,
         0,
-        src->height( ),
+        src_height,
         output.data,
         output.linesize );
 

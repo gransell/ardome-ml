@@ -542,7 +542,10 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 						audio = ( *iter )->get_audio( );
 				}
 
-				if ( result && result->properties( ).get_property_with_key( key_is_background_ ).valid( ) )
+				// Indicates if background can actually be removed
+				bool is_background = get_prop< int >( result, key_is_background_, 0 ) == 1;
+
+				if ( result && is_background )
 				{
 					//Go through the frames from top to bottom z order and see if one of them
 					//completely obscures everything under it by matching the background
@@ -555,12 +558,18 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 					{
 						const ml::frame_type_ptr &frame = *rev_it;
 
+						// We need to check if the next frame is the background and whether it has has alpha
+						frame_vec_rev_it check = rev_it;
+
+						// Determine if the next frame is the background and check if it has alpha
+						bool next_frame_bg_alpha = false;
+						if ( ( ++ check ) == frames.rend( ) )
+							next_frame_bg_alpha = result->has_alpha( );
+
 						//If we didn't explicitly set a sar value for the background,
 						//we'll inherit the one from the first input source
 						if ( result->get_sar_num() == -1 && frame->get_sar_num() != -1 )
-						{
 							result->set_sar(frame->get_sar_num(), frame->get_sar_den());
-						}
 
 						if ( frame->width( ) == result->width( ) &&
 							 frame->height( ) == result->height( ) &&
@@ -572,7 +581,7 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							 get_prop< double >( frame, key_h_, 1.0 ) == 1.0 &&
 							 get_prop< double >( frame, key_mix_, 1.0 ) == 1.0 &&
 							 matching_modes( frame, result ) &&
-							 !frame->get_alpha( ) )
+							 ( !frame->has_alpha( ) || next_frame_bg_alpha ) )
 						{
 							//This frame completely obscures everything below it.
 							//We make this the new background frame and remove all the frames
@@ -597,6 +606,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				// Ignore deferred when running in muxer mode
 				bool deferred = prop_deferred_.value< int >( ) != 0 && resource_ == L"compositor";
 				pl::pcos::property vitc( key_vitc_image_ );
+
+				// If we're not in deferred mode, we need to convert to a format which is supported now
+				ml::image::MLPixelFormat original_pf = result->ml_pixel_format( );
+
+				if ( !deferred && original_pf != ml::image::composite_pf( original_pf ) )
+					result = ml::frame_convert( ml::rescale_object_ptr( ), result, ml::image::composite_pf( original_pf ) );
 
 				// Composite in bottom to top z order
 				for( frame_vec_it iter = frames.begin( ); iter != frames.end( ); ++iter )
@@ -678,6 +693,10 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 							result->properties( ).get_property_with_key( key_slots_ ).value< int >( ) + int( frames.size( ) );
 					}
 				}
+
+				// Convert it back to the original pf if it's changed
+				if ( !deferred && original_pf != result->ml_pixel_format( ) )
+					result = ml::frame_convert( ml::rescale_object_ptr( ), result, original_pf );
 			}
 			else
 			{

@@ -80,6 +80,11 @@ bool frame_type::has_image( )
 	return image_ != ml::image_type_ptr( );
 }
 
+bool frame_type::has_alpha( ) const
+{
+	return alpha_ || image::pixfmt_has_alpha( ml_pixel_format( ) );
+}
+
 bool frame_type::has_audio( )
 {
 	return audio_ != audio_type_ptr( );

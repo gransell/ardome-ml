@@ -92,6 +92,8 @@ struct pixel_format_info
 	int width_factor[4];		// the amount to divide the width by to get the width of each plane
 	int height_factor[4];		// the amount to divide the height by to get the height of each plane
 	int multiple[2];			// the number of pixels which represent the factor of the acceptable widths and heights
+	int alpha_offset;			// The offset from plane 0 of the alpha sample (-1 indicates no alpha channel), units are in samples
+	int alpha_plane;			// The index of the alpha plane (-1 indicates no alpha plane)
 };
 
 struct pixel_format_pair
@@ -110,30 +112,30 @@ const ratio D4( 1, 4 );
 
 // Add new pixel-formats here:
 const pixel_format_pair pf_pairs[] = {
-	// PF, storage_bytes, planes,				  [bitdepths],		[linesizes],		[widths],	[heights],	 [multiple]
-	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
-	{ ml::image::ML_PIX_FMT_YUV420P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
-	{ ml::image::ML_PIX_FMT_YUV420P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2} } },
-	{ ml::image::ML_PIX_FMT_YUVA420P,     { 1, 4, {8,  8,  8,  8},  {M1, D2, D2, M1}, {1, 2, 2, 1}, {1, 2, 2, 1}, {2, 2} } },
-	{ ml::image::ML_PIX_FMT_UYV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV422P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV422P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 3, {8,  8,  8,  0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUVA444P,     { 1, 4, {8,  8,  8,  8},  {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV444P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUVA444P16LE, { 2, 4, {16, 16, 16, 16}, {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 3, {8,  8,  8,  0},  {M1, D4, D4, M0}, {1, 4, 4, 0}, {1, 1, 1, 0}, {4, 1} } },
-	{ ml::image::ML_PIX_FMT_L8,           { 1, 1, {8,  0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_L16LE,        { 2, 1, {16, 0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_R8G8B8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_B8G8R8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_R8G8B8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_B8G8R8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_A8R8G8B8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_A8B8G8R8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } },
-	{ ml::image::ML_PIX_FMT_R16G16B16LE,  { 2, 1, {16, 0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1} } }
+	// PF, storage_bytes, planes,				  [bitdepths],		[linesizes],		[widths],	[heights], [multiple], ao, ap
+	{ ml::image::ML_PIX_FMT_YUV420P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV420P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV420P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 2, 2, 0}, {2, 2}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUVA420P,     { 1, 4, {8,  8,  8,  8},  {M1, D2, D2, M1}, {1, 2, 2, 1}, {1, 2, 2, 1}, {2, 2},  0,  3 } },
+	{ ml::image::ML_PIX_FMT_UYV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV422P,      { 1, 3, {8,  8,  8,  0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV422,       { 1, 1, {8,  0,  0,  0},  {M2, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {2, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV422P10LE,  { 2, 3, {10, 10, 10, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV422P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, D2, D2, M0}, {1, 2, 2, 0}, {1, 1, 1, 0}, {2, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUV444P,      { 1, 3, {8,  8,  8,  0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUVA444P,     { 1, 4, {8,  8,  8,  8},  {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1},  0,  3 } },
+	{ ml::image::ML_PIX_FMT_YUV444P16LE,  { 2, 3, {16, 16, 16, 0},  {M1, M1, M1, M0}, {1, 1, 1, 0}, {1, 1, 1, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_YUVA444P16LE, { 2, 4, {16, 16, 16, 16}, {M1, M1, M1, M1}, {1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1},  0,  3 } },
+	{ ml::image::ML_PIX_FMT_YUV411P,      { 1, 3, {8,  8,  8,  0},  {M1, D4, D4, M0}, {1, 4, 4, 0}, {1, 1, 1, 0}, {4, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_L8,           { 1, 1, {8,  0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_L16LE,        { 2, 1, {16, 0,  0,  0},  {M1, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_R8G8B8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_B8G8R8,       { 1, 1, {8,  0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1}, -1, -1 } },
+	{ ml::image::ML_PIX_FMT_R8G8B8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1},  3,  0 } },
+	{ ml::image::ML_PIX_FMT_B8G8R8A8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1},  3,  0 } },
+	{ ml::image::ML_PIX_FMT_A8R8G8B8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1},  0,  0 } },
+	{ ml::image::ML_PIX_FMT_A8B8G8R8,     { 1, 1, {8,  0,  0,  0},  {M4, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1},  0,  0 } },
+	{ ml::image::ML_PIX_FMT_R16G16B16LE,  { 2, 1, {16, 0,  0,  0},  {M3, M0, M0, M0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 1}, -1, -1 } }
 };
 
 typedef std::map< ml::image::MLPixelFormat, pixel_format_info > MLPixelFormat_info_map_type;
@@ -172,7 +174,8 @@ void test_image( ml::image_type_ptr image, ml::image::MLPixelFormat pf, int widt
 	BOOST_CHECK_EQUAL( image->width( ), width);
 	BOOST_CHECK_EQUAL( image->storage_bytes( ), pf_infos[ pf ].storage_bytes );
 	BOOST_CHECK_EQUAL( image->plane_count( ), pf_infos[ pf ].plane_count );
-
+	BOOST_CHECK_EQUAL( image->alpha_offset( ), pf_infos[ pf ].alpha_offset );
+	BOOST_CHECK_EQUAL( image->alpha_plane( ), pf_infos[ pf ].alpha_plane );
 
 	for (int i=0; i < image->plane_count( ); ++i )
 	{
@@ -246,6 +249,16 @@ BOOST_AUTO_TEST_CASE( image_convert )
 				}
 			}
 		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE( compositing_pixfmts )
+{
+	size_t tests = sizeof( pf_pairs ) / sizeof( pixel_format_pair );
+	for( size_t i = 0; i < tests; i ++ )
+	{
+		const struct pixel_format_pair &t = pf_pairs[ i ];
+		BOOST_CHECK_NO_THROW( ml::image::composite_pf( t.pf ) );
 	}
 }
 
@@ -366,6 +379,7 @@ BOOST_AUTO_TEST_CASE( frame_rescale_object )
 	frame->set_position( 0 );
 	frame->set_image( image );
 	frame->set_alpha( alpha );
+	frame->set_sar( 1, 1);
 	ml::frame_type_ptr frame2 = ml::frame_rescale( ro, frame, 1920, 1080 );
 	BOOST_REQUIRE( frame2 );
 	BOOST_CHECK( frame2->get_image( ) );
@@ -373,6 +387,41 @@ BOOST_AUTO_TEST_CASE( frame_rescale_object )
 	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != 0 );
 	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_L8 ) != 0 );
 	BOOST_CHECK( ro->get_context( ml::image::ML_PIX_FMT_YUV420P ) != ro->get_context( ml::image::ML_PIX_FMT_L8 ) );
+	BOOST_CHECK( frame2->width( ) == 1920 );
+	BOOST_CHECK( frame2->height( ) == 1080 );
+	BOOST_CHECK( frame2->get_sar_num( ) == 1 );
+	BOOST_CHECK( frame2->get_sar_den( ) == 1 );
+	BOOST_CHECK( frame2->get_image( )->width( ) == 1920 );
+	BOOST_CHECK( frame2->get_image( )->height( ) == 1080 );
+	BOOST_CHECK( frame2->get_image( )->get_sar_num( ) == 1 );
+	BOOST_CHECK( frame2->get_image( )->get_sar_den( ) == 1 );
+	BOOST_CHECK( frame2->get_alpha( )->width( ) == 1920 );
+	BOOST_CHECK( frame2->get_alpha( )->height( ) == 1080 );
+	BOOST_CHECK( frame2->get_alpha( )->get_sar_num( ) == 1 );
+	BOOST_CHECK( frame2->get_alpha( )->get_sar_den( ) == 1 );
+}
+
+BOOST_AUTO_TEST_CASE( frame_convert_object )
+{
+	ml::rescale_object_ptr ro( new ml::image::rescale_object );
+	ml::image_type_ptr image = ml::image::allocate( ml::image::ML_PIX_FMT_YUV420P, 720, 576 );
+	BOOST_REQUIRE( image );
+	ml::image_type_ptr alpha = ml::image::allocate( ml::image::ML_PIX_FMT_L8, 720, 576 );
+	BOOST_REQUIRE( alpha );
+	ml::frame_type_ptr frame( new ml::frame_type );
+	frame->set_position( 0 );
+	frame->set_image( image );
+	frame->set_alpha( alpha );
+	frame->set_sar( 16, 15 );
+	ml::frame_type_ptr frame2 = ml::frame_convert( ro, frame, _CT( "yuva444p" ) );
+	BOOST_REQUIRE( frame2 );
+	BOOST_CHECK( frame2->get_image( ) );
+	BOOST_CHECK( !frame2->get_alpha( ) );
+	BOOST_CHECK( frame2->pf( ) == _CT( "yuva444p" ) );
+	BOOST_CHECK( frame2->width( ) == 720 );
+	BOOST_CHECK( frame2->height( ) == 576 );
+	BOOST_CHECK( frame2->get_sar_num( ) == 16 );
+	BOOST_CHECK( frame2->get_sar_den( ) == 15 );
 }
 
 BOOST_AUTO_TEST_SUITE_END( )
