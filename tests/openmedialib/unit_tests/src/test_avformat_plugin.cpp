@@ -827,6 +827,7 @@ BOOST_AUTO_TEST_CASE( aml_change_audio_spec )
 	std::ofstream of( to_string( full.native( ) ).c_str( ), std::ios_base::binary );
 
 	of << if1.rdbuf( ) << if2.rdbuf( ) << if3.rdbuf( );
+	of.close();
 
 	input = create_input( full.native( ) );
 
