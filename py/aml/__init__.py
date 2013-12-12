@@ -29,7 +29,6 @@ full_path = os.path.join( os.getcwd( ), __file__ )
 
 # Initialisate openpluginlib
 import openpluginlib as pl
-import openimagelib as il
 import openmedialib as ml
 
 from stack import stack

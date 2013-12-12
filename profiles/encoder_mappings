@@ -50,3 +50,4 @@ vcodecs/prores_422_Proxy = proresencode
 vcodecs/prores_422_LT = proresencode
 vcodecs/prores_422 = proresencode
 vcodecs/prores_422_HQ = proresencode
+vcodecs/prores_4444 = proresencode

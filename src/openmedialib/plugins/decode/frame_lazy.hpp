@@ -9,7 +9,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -67,10 +67,10 @@ class ML_PLUGIN_DECLSPEC frame_lazy : public ml::frame_type
 		virtual bool has_audio( );
 
 		/// Set the image associated to the frame.
-		virtual void set_image( olib::openimagelib::il::image_type_ptr image, bool decoded );
+		virtual void set_image( olib::openmedialib::ml::image_type_ptr image, bool decoded );
 
 		/// Get the image associated to the frame.
-		virtual olib::openimagelib::il::image_type_ptr get_image( );
+		virtual olib::openmedialib::ml::image_type_ptr get_image( );
 
 		/// Set the audio associated to the frame.
 		virtual void set_audio( audio_type_ptr audio, bool decoded );

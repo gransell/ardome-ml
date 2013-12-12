@@ -21,14 +21,13 @@
 #include <opencorelib/cl/minimal_string_defines.hpp>
 #include <opencorelib/cl/str_util.hpp>
 
-#include <openimagelib/il/basic_image.hpp>
-
 #include <boost/cstdint.hpp>
 
 typedef std::list< std::string > string_list;
 typedef std::list< std::wstring > wstring_list;
 typedef std::vector< std::string > string_vec;
 typedef std::vector< std::wstring > wstring_vec;
+
 
 namespace olib
 {
@@ -47,11 +46,12 @@ namespace olib
             typedef boost::shared_ptr< input_type > input_type_ptr;
             typedef boost::shared_ptr< audio_type > audio_type_ptr;
             typedef boost::shared_ptr< stream_type > stream_type_ptr;
+            namespace image { class image; }
+            typedef boost::shared_ptr < image::image > image_type_ptr;
         }
     }
 }
 
-namespace il = olib::openimagelib::il;
 namespace ml = olib::openmedialib::ml;
 namespace cl = olib::opencorelib;
 
@@ -340,9 +340,9 @@ template OPENPLUGINLIB_DECLSPEC bool property::is_a< std::wstring >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< wstring_list >() const;
 template OPENPLUGINLIB_DECLSPEC bool property::is_a< string_list >() const;
 
-template OPENPLUGINLIB_DECLSPEC il::image_type_ptr property::value< il::image_type_ptr >() const;
-template OPENPLUGINLIB_DECLSPEC void property::set< il::image_type_ptr >( const il::image_type_ptr& );
-template OPENPLUGINLIB_DECLSPEC bool property::is_a< il::image_type_ptr >() const;
+template OPENPLUGINLIB_DECLSPEC ml::image_type_ptr property::value< ml::image_type_ptr >() const;
+template OPENPLUGINLIB_DECLSPEC void property::set< ml::image_type_ptr >( const ml::image_type_ptr& );
+template OPENPLUGINLIB_DECLSPEC bool property::is_a< ml::image_type_ptr >() const;
 
 template OPENPLUGINLIB_DECLSPEC ml::store_type_ptr property::value< ml::store_type_ptr >() const;
 template OPENPLUGINLIB_DECLSPEC void property::set< ml::store_type_ptr >( const ml::store_type_ptr& );
@@ -417,7 +417,8 @@ template < typename RESULT_T > RESULT_T split_list( const std::wstring& str )
 		last_pos = ++current_pos;
 		current_pos = str.find( SEPARATOR, last_pos );
 	}
-	result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos ) ) );
+	if ( std::wstring( str, last_pos, current_pos ) != L"" ) 
+		result.push_back( parse_string< typename RESULT_T::value_type >( std::wstring( str, last_pos, current_pos ) ) );
 
 	return result;
 }
@@ -487,9 +488,9 @@ template <> OPENPLUGINLIB_DECLSPEC void* parse_string( const std::wstring& )
 	return 0;
 }
 
-template <> OPENPLUGINLIB_DECLSPEC il::image_type_ptr parse_string( const std::wstring& )
+template <> OPENPLUGINLIB_DECLSPEC ml::image_type_ptr parse_string( const std::wstring& )
 {
-	return il::image_type_ptr();
+	return ml::image_type_ptr();
 }
 
 template <> OPENPLUGINLIB_DECLSPEC ml::frame_type_ptr parse_string( const std::wstring& )

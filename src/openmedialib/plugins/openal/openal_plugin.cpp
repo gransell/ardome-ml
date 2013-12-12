@@ -65,7 +65,7 @@ namespace cl = olib::opencorelib;
 namespace pl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 
 #if !defined( GCC_VERSION ) && defined( __GNUC__ )
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)

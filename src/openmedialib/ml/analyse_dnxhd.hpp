@@ -34,7 +34,7 @@ class ML_DECLSPEC analyse_dnxhd : public analyse_type
 
 	private:
 		int id_;
-		olib::openimagelib::il::field_order_flags field_;
+		olib::openmedialib::ml::image::field_order_flags field_;
 };
 
 } } }

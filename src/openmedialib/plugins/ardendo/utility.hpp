@@ -49,13 +49,13 @@ extern void join_peaks( ml::frame_type_ptr &result, std::vector< double > & );
 extern void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input );
 
 // Image utilities
-extern void copy_plane( il::image_type_ptr output, il::image_type_ptr input, size_t plane );
-extern void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample );
+extern void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane );
+extern void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample );
 
 // Report to stream
 extern void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool evaluate = true );
-extern void report_image( std::ostream &stream, const il::image_type_ptr &img, int num = 1, int den = 1 );
-extern void report_alpha( std::ostream &stream, const il::image_type_ptr img );
+extern void report_image( std::ostream &stream, const ml::image_type_ptr &img, int num = 1, int den = 1 );
+extern void report_alpha( std::ostream &stream, const ml::image_type_ptr img );
 extern void report_audio( std::ostream &stream, const ml::audio_type_ptr &audio );
 extern void report_props( std::ostream &stream, const pl::pcos::property_container &props );
 

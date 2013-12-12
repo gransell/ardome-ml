@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openimagelib name="oil" version="0.2.0">
-		<plugin name="OpenLibraries QIM plugin" type="input" in_filter="*.bmp *.png *.jpg *.gif" extension='".*\.bmp", ".*\.png", ".*\.jpg", ".*\.gif"' merit="70" filename='"libopenimagelib_qim.so", "libopenimagelib_qim.dylib", "openimagelib_qim-vc71-d-0_4_1.dll", "openimagelib_qim-vc71-r-0_4_1.dll", "openimagelib_qim-vc80-d-0_4_1.dll", "openimagelib_qim-vc80-r-0_4_1.dll"'/>
-	</openimagelib>
-</openlibraries>

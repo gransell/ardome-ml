@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-  <openimagelib name="oil" version="0.2.0">
-    <plugin name="OpenLibraries QuickTime plugin" type="input" in_filter="*.sgi *.rgb *.rgba *.la *.bw *.pict *.text *.gif *.png *.pics *.tiff *.psd *.tif *.bmp *.jpg *.jif *.jpeg *.tga *.qtif *.jp2" extension='".*\.sgi", ".*\.rgb", ".*\.rgba", ".*\.la", ".*\.bw", ".*\.pict", ".*\.text", ".*\.gif", ".*\.png", ".*\.pics", ".*\.tiff", ".*\.psd", ".*\.tif", ".*\.bmp", ".*\.jpg", ".*\.jif", ".*\.jpeg", ".*\.tga", ".*\.qtif", ".*\.jp2"' merit="100" filename='"libopenimagelib_quicktime.so", "libopenimagelib_quicktime.dylib", "openimagelib_quicktime-vc71-d-0_4_1.dll", "openimagelib_quicktime-vc71-r-0_4_1.dll", "openimagelib_quicktime-vc80-d-0_4_1.dll", "openimagelib_quicktime-vc80-r-0_4_1.dll"'/>
-  </openimagelib>
-</openlibraries>

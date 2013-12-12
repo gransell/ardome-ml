@@ -9,8 +9,7 @@
 #define OPENMEDIALIB_UTILITIES_INC_
 
 #include <deque>
-#include <openimagelib/il/basic_image.hpp>
-#include <openimagelib/il/utility.hpp>
+#include <openmedialib/ml/types.hpp>
 #include <boost/cstdint.hpp>
 #include <openmedialib/ml/frame.hpp>
 #include <openmedialib/ml/audio_utilities.hpp>
@@ -32,10 +31,16 @@ ML_DECLSPEC filter_type_ptr create_filter( const std::wstring & );
 
 ML_DECLSPEC audio_type_ptr audio_resample( const audio_type_ptr &, int frequency );
 
-ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const std::wstring & );
-ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, olib::openimagelib::il::rescale_filter filter );
-ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr );
+ML_DECLSPEC frame_type_ptr frame_convert( rescale_object_ptr, frame_type_ptr, image::MLPixelFormat );
+ML_DECLSPEC frame_type_ptr frame_convert( rescale_object_ptr, frame_type_ptr, const olib::t_string & );
+ML_DECLSPEC frame_type_ptr frame_convert( frame_type_ptr, const olib::t_string & );
+
+ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr ro, frame_type_ptr frame, image::geometry &shape );
+ML_DECLSPEC frame_type_ptr frame_rescale( frame_type_ptr, int, int, image::rescale_filter filter = image::BICUBIC_SAMPLING );
+ML_DECLSPEC frame_type_ptr frame_rescale( rescale_object_ptr, frame_type_ptr, int, int, image::rescale_filter filter = image::BICUBIC_SAMPLING );
+
 ML_DECLSPEC frame_type_ptr frame_crop( frame_type_ptr, int, int, int, int );
+ML_DECLSPEC frame_type_ptr frame_crop_clear( frame_type_ptr );
 
 // Convenience function to change volume on a frame
 extern ML_DECLSPEC frame_type_ptr frame_volume( frame_type_ptr, float );
@@ -70,10 +75,9 @@ extern ML_DECLSPEC stream_handler_ptr stream_handler_fetch( const std::wstring, 
 extern ML_DECLSPEC void stream_handler_register( stream_handler_ptr ( * )( const std::wstring, int ) );
 
 // Determine if the image associated to the frame is yuv planar
-
 inline bool is_yuv_planar( const frame_type_ptr &frame )
 {
-	return frame ? olib::openimagelib::il::is_yuv_planar( frame->get_image( ) ) : false;
+	return frame && frame->is_yuv_planar( );
 }
 
 namespace audio

@@ -19,7 +19,7 @@ public:
 		image_.reset();
 	}
 
-	virtual olib::openimagelib::il::image_type_ptr get_image()
+	virtual olib::openmedialib::ml::image_type_ptr get_image()
 	{
 		m_state_num_get_image_calls++;
 		return frame_type::get_image();

@@ -64,14 +64,14 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		// Invert the region and planes requested
 		void invert( ml::frame_type_ptr &result )
 		{
-			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
+			if ( !ml::is_yuv_planar( result ) || result->get_image( )->bitdepth( ) != 8 )
+				result = frame_convert( result, _CT("yuv420p") );
 
-			result->set_image( il::conform( result->get_image( ), il::writable ) );
+			result->set_image( ml::image::conform( result->get_image( ), ml::image::writable ) );
 
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr image = result->get_image( );
+				ml::image_type_ptr image = result->get_image( );
 				int planes = prop_planes_.value< int >( );
 
 				// Assumes sane cropping values
@@ -82,11 +82,11 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 
 				// Invert each plane
 				if ( planes & 1 )
-					invert_plane( image, 0, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 0, 255 );
 				if ( planes & 2 )
-					invert_plane( image, 1, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 1, 255 );
 				if ( planes & 4 )
-					invert_plane( image, 2, 255 );
+					invert_plane( ml::image::coerce< ml::image::image_type_8 >( image ), 2, 255 );
 
 				// Restore to full image
 				image->crop_clear( );
@@ -94,9 +94,9 @@ class ML_PLUGIN_DECLSPEC filter_invert : public ml::filter_simple
 		}
 
 		// Invert the plane requested
-		void invert_plane( il::image_type_ptr image, int plane, int negate )
+		void invert_plane( boost::shared_ptr< ml::image::image_type_8 > image, int plane, int negate )
 		{
-			unsigned char *ptr = image->data( plane );
+            boost::uint8_t *ptr = image->data( plane );
 			int w = image->width( plane );
 			int h = image->height( plane );
 			int remainder = image->pitch( plane ) - w;

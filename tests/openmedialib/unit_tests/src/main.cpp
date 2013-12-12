@@ -7,6 +7,7 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openmedialib/ml/indexer.hpp>
 
+#include "../../../utils.hpp"
 #include "io_tester.hpp"
 
 namespace pl = olib::openpluginlib;
@@ -48,21 +49,13 @@ public:
 	init_fixture( )
 	{
 		using namespace boost::unit_test;
-		using namespace olib;
-		using namespace olib::opencorelib;
 
-		unit_test_log.set_format( XML );
-		unit_test_log.set_threshold_level( log_successful_tests );
-
-		//Create log file
-		t_path log_dir( _CT("tests/test_output/openmedialib") );
-		utilities::make_sure_path_exists( log_dir );
-		log_file_.open( ( log_dir / t_path( _CT("unit_test_results.xml") ) ).string().c_str() );
+		const olib::t_string log_path = olib::configure_test_runner( _CT("openmedialib") );
+		log_file_.open( log_path.c_str() );
 		ARENFORCE( log_file_.good() );
 		unit_test_log.set_stream( log_file_ );
 
 		init_pl( );
-
 		register_io_tester_protocol();
 	}
 

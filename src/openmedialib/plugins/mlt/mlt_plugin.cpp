@@ -14,7 +14,7 @@
 
 namespace opl = olib::openpluginlib;
 namespace plugin = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml { 
 

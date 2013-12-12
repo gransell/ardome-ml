@@ -28,8 +28,6 @@ namespace aml { namespace openmedialib {
 static pl::pcos::key key_r_( pl::pcos::key::from_string( "r" ) );
 static pl::pcos::key key_g_( pl::pcos::key::from_string( "g" ) );
 static pl::pcos::key key_b_( pl::pcos::key::from_string( "b" ) );
-static pl::pcos::key key_frame_rescale_cb_( pcos::key::from_string( "frame_rescale_cb" ) );
-static pl::pcos::key key_image_rescale_cb_( pcos::key::from_string( "image_rescale_cb" ) );
 static pl::pcos::key key_width_( pcos::key::from_string( "width" ) );
 static pl::pcos::key key_height_( pcos::key::from_string( "height" ) );
 static pl::pcos::key key_sar_num_( pcos::key::from_string( "sar_num" ) );
@@ -47,28 +45,26 @@ static pl::pcos::key key_mode_( pcos::key::from_string( "mode" ) );
 static pl::pcos::key key_background_( pcos::key::from_string( "background" ) );
 static pl::pcos::key key_slots_( pcos::key::from_string( "slots" ) );
 
-// These are defined in filter_compositor.cpp - they are defined using mc booster when available
-extern il::image_type_ptr image_rescale( const il::image_type_ptr &img, int w, int h, int d, il::rescale_filter filter );
-extern ml::frame_type_ptr frame_rescale( ml::frame_type_ptr frame, int w, int h, il::rescale_filter filter );
-
 static ml::frame_type_ptr decorate( ml::frame_type_ptr frame, int cx, int cy, int cw, int lines )
 {
-	if ( frame->get_image( ) && frame->get_image( )->pf( ) == L"yuv420p" )
+	if ( frame->get_image( ) && frame->get_image( )->pf( ) == _CT("yuv420p") )
 	{
 		unsigned char R = ( unsigned char )frame->properties( ).get_property_with_key( key_r_ ).value< int >( );
 		unsigned char G = ( unsigned char )frame->properties( ).get_property_with_key( key_g_ ).value< int >( );
 		unsigned char B = ( unsigned char )frame->properties( ).get_property_with_key( key_b_ ).value< int >( );
 
 		int Y, U, V;
-		il::rgb24_to_yuv444( Y, U, V, R, G, B );
+		ml::image::rgb24_to_yuv444( Y, U, V, R, G, B );
 
 		int pitch_y = frame->get_image( )->pitch( 0 );
 		int pitch_u = frame->get_image( )->pitch( 1 );
 		int pitch_v = frame->get_image( )->pitch( 2 );
 
-		boost::uint8_t *py = frame->get_image( )->data( 0 ) + pitch_y * cy + cx;
-		boost::uint8_t *pu = frame->get_image( )->data( 1 ) + pitch_u * ( cy / 2 ) + ( cx / 2 );
-		boost::uint8_t *pv = frame->get_image( )->data( 2 ) + pitch_v * ( cy / 2 ) + ( cx / 2 );
+        boost::shared_ptr< ml::image::image_type_8 > image = ml::image::coerce< ml::image::image_type_8 >( frame->get_image( ) );
+
+		boost::uint8_t *py = image->data( 0 ) + pitch_y * cy + cx;
+		boost::uint8_t *pu = image->data( 1 ) + pitch_u * ( cy / 2 ) + ( cx / 2 );
+		boost::uint8_t *pv = image->data( 2 ) + pitch_v * ( cy / 2 ) + ( cx / 2 );
 
 		while( lines -- )
 		{
@@ -199,9 +195,6 @@ class ML_PLUGIN_DECLSPEC filter_montage : public ml::filter_type
 
 				composite->connect( pusher_bg, 0 );
 				composite->connect( pusher_fg, 1 );
-
-				composite->properties( ).get_property_with_key( key_frame_rescale_cb_ ) = boost::uint64_t( frame_rescale );
-				composite->properties( ).get_property_with_key( key_image_rescale_cb_ ) = boost::uint64_t( image_rescale );
 
 				ml::input_type_ptr bg = ml::create_input( L"colour:" );
 				bg->properties( ).get_property_with_key( key_width_ ) = width;

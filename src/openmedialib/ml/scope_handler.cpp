@@ -1,7 +1,7 @@
 
 #include "scope_handler.hpp"
 
-namespace il = olib::openimagelib::il;
+
 
 using std::list;
 using std::map;
@@ -70,12 +70,12 @@ namespace olib { namespace openmedialib { namespace ml {
         insert_resource( pos, a, audios_ );
     }
     
-    openimagelib::il::image_type_ptr lru_cache_type::image_for_position( const key_type &pos )
+    openmedialib::ml::image_type_ptr lru_cache_type::image_for_position( const key_type &pos )
     {
         return get_resource( pos, images_ );
     }
     
-    void lru_cache_type::insert_image_for_position( const key_type &pos, const il::image_type_ptr& i )
+    void lru_cache_type::insert_image_for_position( const key_type &pos, const ml::image_type_ptr& i )
     {
         insert_resource( pos, i, images_ );
     }

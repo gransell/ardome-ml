@@ -142,7 +142,10 @@ bool filter_decode::determine_decode_use( ml::frame_type_ptr &frame )
 	{
 		ml::filter_type_ptr analyse = ml::filter_type_ptr( new filter_analyse( ) );
 		analyse->connect( fetch_slot( 0 ) );
-		gop_decoder_ = ml::create_filter( prop_filter_.value< std::wstring >( ) );
+		const std::wstring decoder_filter_name = prop_filter_.value< std::wstring >( );
+		gop_decoder_ = ml::create_filter( decoder_filter_name );
+		ARENFORCE_MSG( gop_decoder_, "Failed to create decoder filter \"%1%\"" )
+			( decoder_filter_name );
 		if ( gop_decoder_->property( "threads" ).valid( ) ) 
 			gop_decoder_->property( "threads" ) = prop_inner_threads_.value< int >( );
 		if ( gop_decoder_->property( "scope" ).valid( ) ) 

@@ -20,7 +20,7 @@
 
 namespace opl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace fs = boost::filesystem;
 
 class counting_observer : public pcos::observer
@@ -246,12 +246,12 @@ int main( int argc, char* argv[] )
 	discovery::const_iterator it = plugins.begin( );
 	plug_ = boost::shared_dynamic_cast<il::openimagelib_plugin>( it->create_plugin( "" ) );
 
-	il::image_type_ptr im = plug_->load( fs::path( argv[1], fs::native ) );
+	ml::image_type_ptr im = plug_->load( fs::path( argv[1], fs::native ) );
 
 	pcos::property p_image_type( pcos::key::from_string( "image" ) );
 	p_image_type = im;
-	assert( p_image_type.is_a< il::image_type_ptr >() );
-	assert( p_image_type.value< il::image_type_ptr >() == im );
+	assert( p_image_type.is_a< ml::image_type_ptr >() );
+	assert( p_image_type.value< ml::image_type_ptr >() == im );
     }
 
     return 0;

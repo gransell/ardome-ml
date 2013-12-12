@@ -8,7 +8,6 @@
 #include <openmedialib/ml/store.hpp>
 
 using namespace olib::openmedialib::ml;
-using namespace olib::openimagelib::il;
 using namespace olib::opencorelib::str_util;
 
 
@@ -39,7 +38,7 @@ void intialize_test_environment()
 	pixel_formats.push_back( L"uyv422" );
 }
 
-input_type_ptr create_input_with_params( const wchar_t *format )
+input_type_ptr create_input_with_params( std::wstring format )
 {
 	input_type_ptr colour = create_input( L"colour:" );
 	BOOST_REQUIRE( colour );
@@ -49,7 +48,7 @@ input_type_ptr create_input_with_params( const wchar_t *format )
 	colour->property( "sar_num" ) = 1;
 	colour->property( "sar_den" ) = 1;	
 	colour->property( "out" ) = 150;
-	colour->property( "colourspace" ) = std::wstring( format );
+	colour->property( "colourspace" ) = format;
 
 	return colour;
 }
@@ -85,7 +84,7 @@ void test_black_region( image_type_ptr image, image_side side, int region_breadt
 {
 	// copied the looping logic from the border() function in filter_swscale.cpp. not so convinced that it is correct for the non-planar yuv formats though.
 	int yuv[ 3 ];
-	rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], 0, 0, 0 );
+	image::rgb24_to_yuv444( yuv[ 0 ], yuv[ 1 ], yuv[ 2 ], 0, 0, 0 );
 
 	const int iwidth = image->width( );
 	const int iheight = image->height( );
@@ -95,8 +94,8 @@ void test_black_region( image_type_ptr image, image_side side, int region_breadt
 		const float wps = float( image->linesize( i ) ) / iwidth;
 		const float hps = float( image->height( i ) ) / iheight;
 
-		boost::uint8_t *ptr = image->data( i );
-		const boost::uint8_t value = is_yuv_planar( image ) ?  yuv[ i ] : 0;
+		boost::uint8_t *ptr = static_cast< boost::uint8_t * >(image->ptr( i ));
+		const boost::uint8_t value = image->is_yuv_planar( ) ?  yuv[ i ] : 0;
 
 		const int pitch = image->pitch( i );
 
@@ -129,7 +128,7 @@ void test_dimensions()
 {
 	for ( int i = 0; i < pixel_formats.size(); i++ )
 	{
-		input_type_ptr in = create_input_with_params( pixel_formats[i].c_str() );
+		input_type_ptr in = create_input_with_params( pixel_formats[i] );
 		BOOST_REQUIRE( in );
 		
 		int in_width = 137;
@@ -156,20 +155,20 @@ void test_dimensions()
 		int height = image->height();
 		int sar_num = 0, sar_den = 0;
 		frame->get_sar( sar_num, sar_den );	
-		std::wstring pf = image->pf();
+		olib::t_string pf = image->pf();
 
 		int expected_width_increase = 0;
 		int expected_height_increase = 0;
 
 		if ( pf.length( ) > 4 )
 		{
-			if ( ( pf.substr( 0, 3 ) == L"yuv" || pf.substr( 0, 3 ) == L"uyv" ) && pf.substr( 3, 3 ) != L"444" )
+			if ( ( pf.substr( 0, 3 ) == _CT("yuv") || pf.substr( 0, 3 ) == _CT("uyv") ) && pf.substr( 3, 3 ) != _CT("444") )
 			{
 				expected_width_increase = in_width % 2 != 0 ? 2 - ( in_width % 2 ) : 0;
 
-				if ( pf.substr( 3, 3 ) == L"411" )
+				if ( pf.substr( 3, 3 ) == _CT("411") )
 					expected_width_increase = in_width % 4 != 0 ? 4 - ( in_width % 4 ) : 0;
-				if ( pf.substr( 3, 3 ) == L"420" )
+				if ( pf.substr( 3, 3 ) == _CT("420") )
 					expected_height_increase = in_height % 2; 
 			}
 		}
@@ -192,7 +191,7 @@ void test_pillarboxing()
 {
 	for ( int i = 0; i < pixel_formats.size(); i++ )
 	{
-		input_type_ptr in = create_input_with_params( pixel_formats[i].c_str() );
+		input_type_ptr in = create_input_with_params( pixel_formats[i] );
 		BOOST_REQUIRE( in );
 
 		// connect to the filter
@@ -219,7 +218,7 @@ void test_letterboxing()
 {	
 	for ( int i = 0; i < pixel_formats.size(); i++ )
 	{
-		input_type_ptr in = create_input_with_params( pixel_formats[i].c_str() );
+		input_type_ptr in = create_input_with_params( pixel_formats[i] );
 		BOOST_REQUIRE( in );
 
 		// connect to the filter

@@ -45,11 +45,12 @@ class ML_PLUGIN_DECLSPEC filter_mono : public ml::filter_simple
 		void mono( ml::frame_type_ptr &frame, boost::uint8_t cut_off )
 		{
 			if ( !ml::is_yuv_planar( frame ) )
-				frame = ml::frame_convert( frame, L"yuv420p" );
+				frame = ml::frame_convert( frame, _CT("yuv420p") );
 
-			frame->set_image( il::conform( frame->get_image( ), il::writable ) );
+			frame->set_image( ml::image::conform( frame->get_image( ), ml::image::writable ) );
 
-			il::image_type_ptr result = frame->get_image( );
+            boost::shared_ptr< ml::image::image_type_8 > result = 
+                ml::image::coerce< ml::image::image_type_8 >( frame->get_image( ) );
 
 			if ( result )
 			{

@@ -11,11 +11,12 @@
 #include <openpluginlib/py/py.hpp>
 
 #include <openpluginlib/pl/pcos/any.hpp>
-#include <openimagelib/il/basic_image.hpp>
+#include <openmedialib/ml/types.hpp>
+#include <openmedialib/ml/image/image_interface.hpp>
 
 namespace opl	= olib::openpluginlib;
 namespace pcos	= olib::openpluginlib::pcos;
-namespace il	= olib::openimagelib::il;
+namespace ml	= olib::openmedialib::ml;
 namespace py	= boost::python;
 
 typedef std::list< std::string > string_list;
@@ -34,7 +35,7 @@ pcos::int_list	   (*int_list_cast)( const pcos::any& )	   	  = &pcos::any_cast< 
 pcos::uint_list	   (*uint_list_cast)( const pcos::any& )	  = &pcos::any_cast< pcos::uint_list >;
 pcos::double_list  (*double_list_cast)( const pcos::any& )    = &pcos::any_cast< pcos::double_list >;
 bool			   (*bool_cast)( const pcos::any& )		   	  = &pcos::any_cast< bool >;
-il::image_type_ptr (*image_type_ptr_cast)( const pcos::any& ) = &pcos::any_cast< il::image_type_ptr >;
+ml::image_type_ptr (*image_type_ptr_cast)( const pcos::any& ) = &pcos::any_cast< ml::image_type_ptr >;
 
 // injected constructor
 pcos::any* make_any( py::back_reference<int> x )
@@ -58,7 +59,7 @@ void py_pcos_any()
 		.def( py::init< pcos::int_list >() )
 		.def( py::init< pcos::uint_list >() )
 		.def( py::init< pcos::double_list >() )
-		.def( py::init< il::image_type_ptr >() )
+		.def( py::init< ml::image_type_ptr >() )
 		.def("__init__", py::make_constructor(make_any))	
 		.def( "as_double", double_cast )
 		.def( "as_int", int_cast )

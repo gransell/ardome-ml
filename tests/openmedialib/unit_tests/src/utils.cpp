@@ -18,8 +18,7 @@ stream_mock::stream_mock( std::string codec, size_t length, boost::int64_t posit
 	, channels_( channels )
 	, samples_( samples )
 	, sample_size_( sample_size )
-	, pf_( L"" )
-	, field_order_( olib::openimagelib::il::top_field_first )
+	, field_order_( olib::openmedialib::ml::image::top_field_first )
 	, estimated_gop_size_( 0 )
 	, index_( 0 )
 {
@@ -128,12 +127,12 @@ const int stream_mock::sample_size( ) const
 	return sample_size_;
 }
 
-const std::wstring stream_mock::pf( ) const 
+const olib::t_string stream_mock::pf( ) const 
 { 
 	return pf_; 
 }
 
-olib::openimagelib::il::field_order_flags stream_mock::field_order( ) const
+olib::openmedialib::ml::image::field_order_flags stream_mock::field_order( ) const
 {
 	return field_order_;
 }

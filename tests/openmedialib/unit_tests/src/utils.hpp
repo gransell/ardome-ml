@@ -83,9 +83,9 @@ class stream_mock : public olib::openmedialib::ml::stream_type
 		/// Returns the sample size of the audio in the packet (0 if n/a)
 		virtual const int sample_size( ) const;
 	
-		virtual const std::wstring pf( ) const ;
+		virtual const olib::t_string pf( ) const ;
 
-		virtual olib::openimagelib::il::field_order_flags field_order( ) const;
+		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const;
 
 	public:
 		std::string codec_;
@@ -103,8 +103,8 @@ class stream_mock : public olib::openmedialib::ml::stream_type
 		int channels_;
 		int samples_;
 		int sample_size_;
-		std::wstring pf_;
-		olib::openimagelib::il::field_order_flags field_order_;
+		olib::t_string pf_;
+		olib::openmedialib::ml::image::field_order_flags field_order_;
 		int estimated_gop_size_;
 		size_t index_;
 };

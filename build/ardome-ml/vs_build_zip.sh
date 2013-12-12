@@ -56,7 +56,6 @@ cp -r build/debug/$TARGET/py/* TMPZIP/aml/py/
 
 echo "Adding include files"
 cp -r src/opencorelib  TMPZIP/aml/include/ardome-ml/
-cp -r src/openimagelib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openmedialib  TMPZIP/aml/include/ardome-ml/
 cp -r src/openpluginlib  TMPZIP/aml/include/ardome-ml/
 mkdir TMPZIP/aml/include/ardome-ml/openmedialib/ml/unittest

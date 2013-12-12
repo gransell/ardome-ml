@@ -25,7 +25,6 @@
 #include <opencorelib/cl/media_definitions.hpp>
 #include <opencorelib/cl/media_time.hpp>
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/indexer.hpp>
 #include <openmedialib/ml/audio_channel_extract.hpp>
@@ -36,7 +35,6 @@
 #include <opencorelib/cl/special_folders.hpp>
 
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 

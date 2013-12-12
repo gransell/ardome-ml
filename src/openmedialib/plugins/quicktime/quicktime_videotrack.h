@@ -12,7 +12,6 @@
 #include <map>
 
 // OL INCLUDES
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/frame.hpp>
 #include <openpluginlib/pl/string.hpp>	
 
@@ -20,7 +19,6 @@
 #include <openmedialib/plugins/quicktime/quicktime_track.h>
 
 
-namespace il = olib::openimagelib::il;
 namespace opl = olib::openpluginlib;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -157,7 +155,7 @@ namespace olib { namespace openmedialib { namespace ml {
 		* Image buffer. This image is used inside the QT gworld object to receive the image data.
 		* The image data is then copied into separate images for each new frame num ber
 		*/
-		il::image_type_ptr image_buffer_;
+		ml::image_type_ptr image_buffer_;
 
 
 	private:

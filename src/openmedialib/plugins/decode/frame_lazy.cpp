@@ -8,7 +8,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -148,7 +148,7 @@ bool frame_lazy::has_audio( )
 }
 
 /// Set the image associated to the frame.
-void frame_lazy::set_image( olib::openimagelib::il::image_type_ptr image, bool decoded )
+void frame_lazy::set_image( olib::openmedialib::ml::image_type_ptr image, bool decoded )
 {
 	frame_type::set_image( image, decoded );
 	evaluated_ = eval_image | eval_stream;
@@ -158,7 +158,7 @@ void frame_lazy::set_image( olib::openimagelib::il::image_type_ptr image, bool d
 }
 
 /// Get the image associated to the frame.
-olib::openimagelib::il::image_type_ptr frame_lazy::get_image( )
+olib::openmedialib::ml::image_type_ptr frame_lazy::get_image( )
 {
 	if( !( evaluated_ & eval_image ) ) evaluate( eval_image );
 	return image_;

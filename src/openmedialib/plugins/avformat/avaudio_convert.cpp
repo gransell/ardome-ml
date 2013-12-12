@@ -72,31 +72,55 @@ avaudio_resampler::avaudio_resampler(	int frequency_in,
 	, frequency_in_( frequency_in )
 	, channels_in_( channels_in )
 	, format_in_( format_in )
+	, layout_in_( layout_in )
 	, frequency_out_( frequency_out )
 	, channels_out_( channels_out )
 	, format_out_( format_out )
+	, layout_out_( layout_out )
+{
+	init( );
+}
+
+avaudio_resampler::avaudio_resampler(	avaudio_resampler &resampler,
+										int frequency_out, 
+										int channels_out, 
+										boost::uint64_t layout_out,
+										AVSampleFormat format_out )
+	: resampler_( swr_alloc( ), avaudio_resampler::destroy )
+	, frequency_in_( resampler.frequency_out_ )
+	, channels_in_( resampler.channels_out_ )
+	, format_in_( resampler.format_out_ )
+	, layout_in_( resampler.layout_out_ )
+	, frequency_out_( frequency_out )
+	, channels_out_( channels_out )
+	, format_out_( format_out )
+	, layout_out_( layout_out )
+{
+	init( );
+}
+
+void avaudio_resampler::init( )
 {
 	int err;
 
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_channel_count", channels_in, 0 ) ), 
-				   "Error (%1%) setting in_channel_count to %2%" ) ( err ) ( channels_in );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_channel_count", channels_out, 0 ) ), 
-				   "Error (%1%) setting out_channel_count to %2%" ) ( err ) ( channels_out );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_channel_layout", layout_in, 0 ) ), 
-				   "Error (%1%) setting in_channel_layout to %2%" ) ( err ) ( layout_in );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_channel_layout", layout_out, 0 ) ), 
-				   "Error (%1%) setting out_channel_layout to %2%" ) ( err ) ( layout_out );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_sample_rate", frequency_in, 0 ) ), 
-				   "Error (%1%) setting in_sample_rate to %2%" ) ( err ) ( frequency_in );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_sample_rate", frequency_out, 0 ) ), 
-				   "Error (%1%) setting out_sample_rate to %2%" ) ( err ) ( frequency_out );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_sample_fmt( resampler_.get(), "in_sample_fmt", format_in, 0 ) ), 
-				   "Error (%1%) setting in_sample_fmt to %2%" ) ( err ) ( format_in );
-	ARENFORCE_MSG( 0 == ( err = av_opt_set_sample_fmt( resampler_.get(), "out_sample_fmt", format_out, 0 ) ), 
-				   "Error (%1%) setting out_sample_fmt to %2%" ) ( err ) ( format_out );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_channel_count", channels_in_, 0 ) ), 
+				   "Error (%1%) setting in_channel_count to %2%" ) ( err ) ( channels_in_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_channel_count", channels_out_, 0 ) ), 
+				   "Error (%1%) setting out_channel_count to %2%" ) ( err ) ( channels_out_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_channel_layout", layout_in_, 0 ) ), 
+				   "Error (%1%) setting in_channel_layout to %2%" ) ( err ) ( layout_in_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_channel_layout", layout_out_, 0 ) ), 
+				   "Error (%1%) setting out_channel_layout to %2%" ) ( err ) ( layout_out_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "in_sample_rate", frequency_in_, 0 ) ), 
+				   "Error (%1%) setting in_sample_rate to %2%" ) ( err ) ( frequency_in_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_int( resampler_.get(), "out_sample_rate", frequency_out_, 0 ) ), 
+				   "Error (%1%) setting out_sample_rate to %2%" ) ( err ) ( frequency_out_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_sample_fmt( resampler_.get(), "in_sample_fmt", format_in_, 0 ) ), 
+				   "Error (%1%) setting in_sample_fmt to %2%" ) ( err ) ( format_in_ );
+	ARENFORCE_MSG( 0 == ( err = av_opt_set_sample_fmt( resampler_.get(), "out_sample_fmt", format_out_, 0 ) ), 
+				   "Error (%1%) setting out_sample_fmt to %2%" ) ( err ) ( format_out_ );
 
 	ARENFORCE_MSG( 0 == ( err = swr_init( resampler_.get() ) ), "Error initializing swresample (%1%)" ) ( err );
-
 }
 
 avaudio_resampler::~avaudio_resampler()
@@ -231,20 +255,23 @@ boost::uint64_t avaudio_resampler::channels_to_layout( int channels, bool point_
 }
 
 
+bool avaudio_resampler::has_input_changed( int frequency, int channels, AVSampleFormat format ) const
+{
+	return frequency != frequency_in_ || channels != channels_in_ || format != format_in_;
+}
 
 
 // ########################################################################################
 // ########################################################################################
 
-avaudio_convert_to_aml::avaudio_convert_to_aml(	int frequency_in, 
-												int frequency_out, 
+avaudio_convert_to_aml::avaudio_convert_to_aml(	int frequency_io, 
 												int channels_in, 
 												int channels_out, 
 												AVSampleFormat format_in,
 												audio::identity format_out )
 	: format_out_( format_out )
-	, resampler_ ( frequency_in, 
-				   frequency_out, 
+	, resampler_ ( frequency_io, 
+				   frequency_io, 
 				   channels_in, 
 				   channels_out, 
 				   avaudio_resampler::channels_to_layout( channels_in ), 
@@ -254,12 +281,16 @@ avaudio_convert_to_aml::avaudio_convert_to_aml(	int frequency_in,
 {
 }
 
-
 avaudio_convert_to_aml::~avaudio_convert_to_aml( )
 {
 }
 
 // ########################################################################################
+
+bool avaudio_convert_to_aml::has_input_changed( int frequency, int channels, AVSampleFormat format ) const
+{
+	return resampler_.has_input_changed( frequency, channels, format );
+}
 
 audio_type_ptr avaudio_convert_to_aml::convert( const boost::uint8_t **src, int samples )
 {
@@ -318,9 +349,41 @@ audio_type_ptr avaudio_convert_to_aml::convert( const audio_type_ptr& audio )
 	return this->convert( &buf, audio->samples( ) );
 }
 
+audio_type_ptr avaudio_convert_to_aml::resample( const boost::uint8_t **src, int samples, int frequency, int channels, AVSampleFormat fmt )
+{
+	avaudio_resampler temp( resampler_, frequency, channels, avaudio_resampler::channels_to_layout( channels ), fmt );
+
+	int out_samples = temp.output_samples( samples );
+
+	ml::audio_type_ptr result = ml::audio::allocate( format_out_ , frequency, channels, out_samples, out_samples < 16 );
+
+	if ( out_samples >= 16 )
+	{
+		boost::uint8_t *output = ( boost::uint8_t * )result->pointer( );
+
+		int got = temp.resample( &output, out_samples, src, samples );
+		int bps = channels * av_get_bytes_per_sample( fmt );
+
+		if ( got != out_samples )
+			temp.drain( output + got * bps, out_samples - got );
+	}
+
+	return result;
+}
+
 audio::identity avaudio_convert_to_aml::get_out_format() const
 {
 	return format_out_;
+}
+
+int avaudio_convert_to_aml::get_out_frequency(  ) const
+{
+	return resampler_.get_frequency_out( );
+}
+
+int avaudio_convert_to_aml::get_out_channels(  ) const
+{
+	return resampler_.get_channels_out( );
 }
 
 // ########################################################################################

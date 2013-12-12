@@ -27,7 +27,6 @@ extern "C" {
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace io = ml::io;
-namespace il = olib::openimagelib::il;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -47,7 +46,7 @@ std::string avio_gets( AVIOContext *s )
 	return result;
 }
 
-int bytes_per_image( const il::image_type_ptr &image )
+int bytes_per_image( const ml::image_type_ptr &image )
 {
 	int result = 0;
 	if ( image )
@@ -157,7 +156,7 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 
 			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
 
-			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
+			ml::image_type_ptr image = ml::image::allocate( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ), prop_width_.value< int >( ), prop_height_.value< int >( ) );
 			ARENFORCE_MSG( image, "Failed to allocate image.")( prop_pf_.value< std::wstring >( ) )( prop_width_.value< int >( ) )( prop_height_.value< int >( ) );
 			size_ = avio_size( context_ );
 			bytes_ = bytes_per_image( image );
@@ -208,32 +207,25 @@ class ML_PLUGIN_DECLSPEC input_raw : public input_type
 			// Generate an image
 			int width = prop_width_.value< int >( );
 			int height = prop_height_.value< int >( );
-			il::image_type_ptr image = il::allocate( prop_pf_.value< std::wstring >( ), width, height );
-			image->set_field_order( static_cast< il::field_order_flags >( prop_field_order_.value < int >( ) ) );
+			ml::image_type_ptr image = ml::image::allocate( cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ), width, height );
+			image->set_field_order( static_cast< ml::image::field_order_flags >( prop_field_order_.value < int >( ) ) );
 			bool error = false;
 
 			if ( image )
 			{
 				int pad = prop_pad_.value< int >( );
 
-				if ( image->pitch( ) != image->linesize( ) )
+				for ( int p = 0; p < image->plane_count( ); p ++ )
 				{
-					for ( int p = 0; p < image->plane_count( ); p ++ )
+					boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( p );
+					int pitch = image->pitch( p );
+					int width = image->linesize( p );
+					int height = image->height( p );
+					while( height -- )
 					{
-						boost::uint8_t *dst = image->data( p );
-						int pitch = image->pitch( p );
-						int width = image->linesize( p );
-						int height = image->height( p );
-						while( height -- )
-						{
-							error |= avio_read( context_, dst, width ) != width;
-							dst += pitch;
-						}
+						error |= avio_read( context_, dst, width ) != width;
+						dst += pitch;
 					}
-				}
-				else
-				{
-					error |= avio_read( context_, image->data( ), image->size( ) ) != image->size( );
 				}
 
 				if ( pad )
@@ -477,7 +469,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 			if ( frame->has_image( ) )
 			{
 				valid_ = true;
-				il::image_type_ptr image = frame->get_image( );
+				ml::image_type_ptr image = frame->get_image( );
 				pf_ = image->pf( );
 				width_ = image->width( );
 				height_ = image->height( );
@@ -566,7 +558,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		{
 			ARENFORCE_MSG( !( prop_pad_.value< int >( ) && prop_header_.value< int >( ) ), "Can't specify both pad and header" );
 
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			bool success = true;
 			if ( image != 0 )
 			{
@@ -574,24 +566,17 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 
 				start( );
 
-				if ( image->pitch( ) != image->linesize( ) )
+				for ( int p = 0; success && p < image->plane_count( ); p ++ )
 				{
-					for ( int p = 0; success && p < image->plane_count( ); p ++ )
+					const boost::uint8_t *dst =  ( boost::uint8_t * )image->ptr( p );
+					int pitch = image->pitch( p );
+					int width = image->linesize( p );
+					int height = image->height( p );
+					while( success && height -- )
 					{
-						const boost::uint8_t *dst = image->data( p );
-						int pitch = image->pitch( p );
-						int width = image->linesize( p );
-						int height = image->height( p );
-						while( success && height -- )
-						{
-							avio_write( context_, dst, width );
-							dst += pitch;
-						}
+						avio_write( context_, dst, width );
+						dst += pitch;
 					}
-				}
-				else
-				{
-					avio_write( context_, image->data( ), image->size( ) );
 				}
 
 				if ( pad )
@@ -618,7 +603,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		pl::pcos::property prop_pad_;
 		std::wstring spec_;
 		AVIOContext *context_;
-		std::wstring pf_;
+		olib::t_string pf_;
 		int valid_;
 		int width_;
 		int height_;
@@ -627,7 +612,7 @@ class ML_PLUGIN_DECLSPEC store_raw : public store_type
 		int sar_num_;
 		int sar_den_;
 		int bytes_;
-		il::field_order_flags field_order_;
+		ml::image::field_order_flags field_order_;
 		bool started_;
 		std::vector< boost::uint8_t > padding_;
 };

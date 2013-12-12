@@ -3,7 +3,7 @@
 #include <opencorelib/cl/lru.hpp>
 #include <opencorelib/cl/enforce_defines.hpp>
 
-#include <openimagelib/il/basic_image.hpp>
+#include <openmedialib/ml/image/image.hpp>
 
 #include <openmedialib/ml/ml.hpp>
 
@@ -15,7 +15,7 @@
 
 namespace cl = olib::opencorelib;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 namespace du = amf::openmedialib::decklink::utilities;
 
@@ -131,13 +131,13 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 		virtual bool push( ml::frame_type_ptr frame )
 		{
 			// Make sure that we decode on this thread so that its not done on the display thread
-			il::image_type_ptr img = frame->get_image( );
+			ml::image_type_ptr img = frame->get_image( );
 			ml::audio_type_ptr aud = frame->get_audio( );
 
 			aud = ml::audio::coerce( ml::audio::pcm32_id, aud );
 
 			if ( img )
-				img = il::convert( img, prop_pf_.value< std::wstring >( ) );
+				img = ml::image::convert( img, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
 	
 			if ( img )
 			{
@@ -162,7 +162,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 				
 				char *data = 0;
 				ARENFORCE_MSG( temp->GetBytes( (void **)&data ) == S_OK, "Failed to get data pointer to downloaded frame" );
-				memcpy( data, img->data(), img->size() );
+				memcpy( data, img->ptr(), img->size() );
 				
 				downloaded_image_.push_back( std::make_pair( frames_, img ) );
 	
@@ -256,7 +256,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 	private:
 		du::decklink_output_ptr device_;
 		ml::frame_type_ptr last_frame_;
-		std::deque< std::pair< int, il::image_type_ptr > > downloaded_image_;
+		std::deque< std::pair< int, ml::image_type_ptr > > downloaded_image_;
 		std::deque< std::pair< int, ml::audio_type_ptr > > downloaded_audio_;
 		boost::mutex mutex_image_;
 		boost::mutex mutex_audio_;

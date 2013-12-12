@@ -13,7 +13,6 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace distributor {

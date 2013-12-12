@@ -4,11 +4,11 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'loki' )
+local_env.packages( 'boost_thread', 'boost_filesystem', 'boost_system', 'build_ml', 'boost_date_time', 'libavformat', 'libswscale', 'loki' )
 
 #Workaround until J#AMF-2014 is resolved
 if local_env['PLATFORM'] != 'win32':
-	local_env.packages( 'libavutil' )
+	local_env.packages( 'libavutil', 'libavcodec' )
 
 src = [ 
 		'analyse.cpp',
@@ -23,6 +23,9 @@ src = [
 		'filter.cpp',
 		'fix_stream.cpp',
 		'frame.cpp',
+		'image/utility.cpp',
+		'image/ffmpeg_utility.cpp',
+		'image/rescale_object.cpp',
 		'indexer.cpp',
 		'io.cpp',
 		'keys.cpp',
@@ -76,8 +79,8 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'frame.hpp', 
 			'input_creator_handler.hpp', 
 			'input.hpp', 
-			'io.hpp', 
 			'indexer.hpp', 
+			'io.hpp', 
 			'keys.hpp', 
 			'ml.hpp', 
 			'openmedialib_plugin.hpp', 
@@ -87,5 +90,17 @@ if local_env[ 'PLATFORM' ] != 'win32' :
 			'store.hpp', 
 			'types.hpp', 
 			'utilities.hpp' ] )
+
+	local_env.copy_project_files( local_env[ 'ml_include' ] + '/image', [
+   			'image/image_interface.hpp',
+			'image/utility.hpp',
+			'image/image_types.hpp',
+			'image/image_cast.hpp',
+			'image/image.hpp',
+			'image/ffmpeg_image.hpp',
+			'image/ffmpeg_utility.hpp',
+			'image/rescale_object.hpp',
+	] )
+
 
 Return( 'object' )

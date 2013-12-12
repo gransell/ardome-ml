@@ -8,7 +8,7 @@
 
 namespace cl = olib::opencorelib;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -98,10 +98,10 @@ namespace fixers
 			virtual const int samples( ) const { return samples_; }
 
 			/// Returns the picture format
-			virtual const std::wstring pf( ) const { return pf_; }
+			virtual const t_string pf( ) const { return pf_; }
 
 			/// Returns the picture field order
-			virtual olib::openimagelib::il::field_order_flags field_order( ) const { return field_order_; }
+			virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const { return field_order_; }
 	
 		private:
 			enum ml::stream_id id_;
@@ -118,8 +118,8 @@ namespace fixers
 			int frequency_;
 			int channels_;
 			int samples_;
-			std::wstring pf_;
-			olib::openimagelib::il::field_order_flags field_order_;
+			t_string pf_;
+			olib::openmedialib::ml::image::field_order_flags field_order_;
 			int estimated_gop_size_;
 	};
 
@@ -219,7 +219,7 @@ namespace fixers
 				int h = frame->height( );
 				int b = stream->bitrate( );
 
-				bool p = ( stream->field_order( ) == il::progressive );
+				bool p = ( stream->field_order( ) == ml::image::progressive );
 
 				// TODO: Confirm that this is accurate enough
 				bool is50 = b <= 75000000;

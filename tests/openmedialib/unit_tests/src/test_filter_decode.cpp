@@ -44,7 +44,7 @@ void create_encoded_frames( boost::uint32_t a_num_frames, frames_type& a_out_fra
 		frame->get_stream( );
 
 		// remove the image
-		frame->set_image( olib::openimagelib::il::image_type_ptr( ), true );
+		frame->set_image( olib::openmedialib::ml::image_type_ptr( ), true );
 
 		a_out_frames.push_back( frame );
 
@@ -126,7 +126,7 @@ boost::uint32_t time_decode( frames_type& a_frames, boost::int32_t a_num_threads
 	for ( frames_type::iterator i = a_frames.begin( ), e = a_frames.end( ); i != e; ++i )
 	{
 		// make sure the frame doesn't have an image on it ( who knows what the decoder decides to do then... )
-		(*i)->set_image( olib::openimagelib::il::image_type_ptr( ), true ); // decoded = true to prevent frame class from removing the stream
+		(*i)->set_image( olib::openmedialib::ml::image_type_ptr( ), true ); // decoded = true to prevent frame class from removing the stream
 		inp->push( *i );
 	}
 

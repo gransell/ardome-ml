@@ -71,7 +71,7 @@ class filter_encode_type : public filter_simple
 
 		virtual bool valid( ml::frame_type_ptr &frame )
 		{
-			olib::openimagelib::il::image_type_ptr image = frame->get_image( );
+			olib::openmedialib::ml::image_type_ptr image = frame->get_image( );
 
 			if ( !image ) 
 			{

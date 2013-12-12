@@ -20,7 +20,7 @@ extern "C" {
 
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 

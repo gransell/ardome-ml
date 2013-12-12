@@ -19,11 +19,9 @@
 #include <openpluginlib/pl/openpluginlib.hpp>
 #include <openpluginlib/pl/utf8_utils.hpp>
 
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 
 namespace ml  = olib::openmedialib::ml;
-namespace il  = olib::openimagelib::il;
 namespace opl = olib::openpluginlib;
 
 #ifdef WIN32

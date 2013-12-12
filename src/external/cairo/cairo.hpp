@@ -6,10 +6,12 @@
 //
 
 #include "cairo_types.hpp"
+#include <openmedialib/ml/openmedialib_plugin.hpp>
+#include <opencorelib/cl/utilities.hpp>
+
 #include <string>
 
-#include <openimagelib/il/basic_image.hpp>
-
+namespace ml = olib::openmedialib::ml;
 namespace aml { namespace external { namespace cairo {
 
 
@@ -83,7 +85,7 @@ public:
 
 	static surface_ptr make( size_t width, size_t height );
 
-	olib::openimagelib::il::image_type_ptr to_image( ) const;
+    ml::image_type_ptr to_image( ) const;
 
 	cairo_surface_t* native( );
 

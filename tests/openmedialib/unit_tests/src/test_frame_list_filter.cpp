@@ -7,7 +7,6 @@
 #include <openmedialib/ml/filter.hpp>
 
 using namespace olib::openmedialib::ml;
-using namespace olib::openimagelib::il;
 using namespace olib::opencorelib::str_util;
 
 
@@ -75,9 +74,9 @@ BOOST_AUTO_TEST_CASE( frame_list_filter )
 		frame_type_ptr frame =frame_list_filter->fetch();
 		BOOST_REQUIRE(frame );
 
-		image_type_ptr image =frame->get_image();
+		olib::openmedialib::ml::image_type_ptr image =frame->get_image();
 		BOOST_REQUIRE( image );
-		BOOST_CHECK_EQUAL( *(image->data( 0 ) ), internal_create_redvalue_from_int( *i ) );
+		BOOST_CHECK_EQUAL( *(image::coerce< image::image_type_8 >( image )->data( 0 ) ), internal_create_redvalue_from_int( *i ) );
 
 		frame_list_filter->seek(1, true);
 

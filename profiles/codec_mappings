@@ -9,7 +9,11 @@ http://www.ardendo.com/apf/codec/mpeg/mpeg2 = avdecode
 http://www.ardendo.com/apf/codec/mpeg/mpeg4 = avdecode
 http://www.ardendo.com/apf/codec/vc3/vc3 = aviddecode
 
-http://www.ardendo.com/apf/codec/prores/prores = proresdecode
+http://www.ardendo.com/apf/codec/prores/422 = proresdecode
+http://www.ardendo.com/apf/codec/prores/422_hq = proresdecode
+http://www.ardendo.com/apf/codec/prores/422_lt = proresdecode
+http://www.ardendo.com/apf/codec/prores/422_proxy = proresdecode
+http://www.ardendo.com/apf/codec/prores/4444 = proresdecode
 
 http://www.ardendo.com/apf/codec/avc/avc = mcdecode
 

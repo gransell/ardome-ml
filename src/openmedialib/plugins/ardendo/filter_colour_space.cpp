@@ -17,6 +17,8 @@
 
 #include "precompiled_headers.hpp"
 #include "amf_filter_plugin.hpp"
+#include <openmedialib/ml/image/rescale_object.hpp>
+#include <openmedialib/ml/types.hpp>
 
 namespace aml { namespace openmedialib {
 
@@ -27,8 +29,10 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 		explicit filter_colour_space( const std::wstring & )
 			: ml::filter_simple()
 			, prop_pf_( pcos::key::from_string( "pf" ) )
+			, ro_ ( ml::rescale_object_ptr( new ml::image::rescale_object( ) ) )
 		{
-			properties( ).append( prop_pf_ = std::wstring( L"r8g8b8a8" ) );
+			properties( ).append( prop_pf_ = std::wstring( L"r8g8b8a8") );
+			
 		}
 
 		// Indicates if the input will enforce a packet decode
@@ -45,7 +49,7 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 			result = fetch_from_slot( );
 
 			// Handle the frame with image case
-			if ( result && result->get_image( ) && ( std::wstring( result->get_image( )->pf( ) ) != prop_pf_.value< std::wstring >( ) ) )
+			if ( result && result->get_image( ) && ( result->get_image( )->pf( ) != cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) ) )
 				change_colour_space( result );
 		}
 
@@ -54,29 +58,13 @@ class ML_PLUGIN_DECLSPEC filter_colour_space : public ml::filter_simple
 		// Change the colour space to the requested
 		void change_colour_space( ml::frame_type_ptr & result )
 		{
-			// Take a back up just in case
-			il::image_type_ptr image = result->get_image( );
-
-			// Try a straight convert
-			result = frame_convert( result, prop_pf_.value< std::wstring >( ).c_str( ) );
-
-			// If that failed, the convert is missing, so go through a proxy format first
-			if ( !result->get_image( ) )
-			{
-				// Inefficient back up plan
-				il::image_type_ptr alternative = il::convert( image, L"b8g8r8a8" );
-				alternative = il::convert( alternative, std::wstring( prop_pf_.value< std::wstring >( ).c_str( ) ) );
-
-				// If we now have an image, assign to the frame, otherwise leave the original 
-				// colourspace in place
-				if ( alternative )
-					result->set_image( alternative );
-				else
-					result->set_image( image );
-			}
+			result = frame_convert( ro_, result, cl::str_util::to_t_string( prop_pf_.value< std::wstring >( ) ) );
 		}
 
 		pcos::property prop_pf_;
+
+	private:
+		ml::rescale_object_ptr ro_;
 };
 
 ml::filter_type_ptr ML_PLUGIN_DECLSPEC create_colour_space( const std::wstring &resource )

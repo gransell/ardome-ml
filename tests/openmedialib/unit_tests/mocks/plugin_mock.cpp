@@ -9,6 +9,8 @@
 #include "mock_filter.hpp"
 #include "mock_input.hpp"
 
+namespace opl = olib::openpluginlib;
+
 namespace olib { namespace openmedialib { namespace ml { namespace unittest {
 
 class ML_PLUGIN_DECLSPEC mock_plugin : public openmedialib_plugin

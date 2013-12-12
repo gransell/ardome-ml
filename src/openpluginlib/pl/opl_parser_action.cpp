@@ -84,7 +84,6 @@ opl_parser_action::opl_parser_action( )
 	dispatch_.insert( opl_dispatcher_container::value_type( L"meta",				default_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openassetlib",		olib_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openeffectslib",		olib_opl_parser_action ) );
-	dispatch_.insert( opl_dispatcher_container::value_type( L"openimagelib",		olib_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openmedialib",		olib_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"opennetworklib",		olib_opl_parser_action ) );
 	dispatch_.insert( opl_dispatcher_container::value_type( L"openobjectlib",		olib_opl_parser_action ) );

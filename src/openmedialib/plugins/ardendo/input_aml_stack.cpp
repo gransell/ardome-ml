@@ -73,7 +73,6 @@
 #include <cmath>
 
 #include <openpluginlib/pl/openpluginlib.hpp>
-#include <openimagelib/il/openimagelib_plugin.hpp>
 #include <openmedialib/ml/openmedialib_plugin.hpp>
 #include <openmedialib/ml/stream.hpp>
 
@@ -82,7 +81,6 @@
 #include <boost/regex.hpp>
 
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace pl = olib::openpluginlib;
 namespace cl = olib::opencorelib;
 namespace fs = boost::filesystem;
@@ -329,7 +327,7 @@ class frame_value : public ml::input_type
 
 				if ( value_->has_image( ) )
 				{
-					il::image_type_ptr image = value_->get_image( );
+					ml::image_type_ptr image = value_->get_image( );
 					properties( ).append( prop_image_pf_ = image->pf( ) );
 					properties( ).append( prop_image_width_ = image->width( ) );
 					properties( ).append( prop_image_height_ = image->height( ) );

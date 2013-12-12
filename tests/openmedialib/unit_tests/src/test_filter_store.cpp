@@ -6,8 +6,8 @@
 #include <openmedialib/ml/input.hpp>
 #include <openmedialib/ml/filter.hpp>
 
-#include <mocks/mock_store.hpp>
-#include <mocks/mock_input.hpp>
+#include "../mocks/mock_store.hpp"
+#include "../mocks/mock_input.hpp"
 
 namespace ml = olib::openmedialib::ml;
 namespace pcos = olib::openpluginlib::pcos;

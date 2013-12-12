@@ -114,11 +114,11 @@ class ML_PLUGIN_DECLSPEC filter_repeat : public ml::filter_type
 			ml::frame_type_ptr sample = input->fetch( );
 			ARENFORCE_MSG( sample, "Unable to obtain a sample frame from the connected input" );
 
-			if ( sample->has_image( ) && sample->get_image( )->field_order( ) != il::progressive )
+			if ( sample->has_image( ) && sample->get_image( )->field_order( ) != ml::image::progressive )
 			{
-				il::field_order_flags order = sample->get_image( )->field_order( );
+				ml::image::field_order_flags order = sample->get_image( )->field_order( );
 				ml::filter_type_ptr field_order = ml::create_filter( L"field_order" );
-				field_order->property( "order" ) = int( order == il::top_field_first ? il::bottom_field_first : il::top_field_first );
+				field_order->property( "order" ) = int( order == ml::image::top_field_first ? ml::image::bottom_field_first : ml::image::top_field_first );
 				field_order->connect( input );
 				input = field_order;
 			}

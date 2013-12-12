@@ -6,7 +6,7 @@
 #include <boost/rational.hpp>
 
 namespace pcos = olib::openpluginlib::pcos;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -63,9 +63,9 @@ frame_type_ptr frame_type::deep( )
 	std::auto_ptr< pcos::property_container > clone( properties_.clone() );
 	copy->properties_ = *clone.get( );
 	if ( image_ )
-		copy->image_ = il::image_type_ptr( image_->clone( ) );
+		copy->image_ = ml::image_type_ptr( image_->clone( ) );
 	if ( alpha_ )
-		copy->alpha_ = il::image_type_ptr( alpha_->clone( ) );
+		copy->alpha_ = ml::image_type_ptr( alpha_->clone( ) );
 	if ( audio_ )
 		copy->audio_ = audio_->clone( );
 	result = frame_type_ptr( copy );
@@ -77,7 +77,12 @@ pcos::property frame_type::property( const char *name ) const { return propertie
 
 bool frame_type::has_image( )
 {
-	return image_ != il::image_type_ptr( );
+	return image_ != ml::image_type_ptr( );
+}
+
+bool frame_type::has_alpha( ) const
+{
+	return alpha_ || image::pixfmt_has_alpha( ml_pixel_format( ) );
 }
 
 bool frame_type::has_audio( )
@@ -99,7 +104,7 @@ void frame_type::set_stream( stream_type_ptr stream )
 
 stream_type_ptr frame_type::get_stream( ) { return stream_; }
 
-void frame_type::set_image( il::image_type_ptr image, bool decoded )
+void frame_type::set_image( ml::image_type_ptr image, bool decoded )
 {
 	image_ = image;
 
@@ -118,13 +123,13 @@ void frame_type::set_image( il::image_type_ptr image, bool decoded )
 	}
 }
 
-il::image_type_ptr frame_type::get_image( ) 
+ml::image_type_ptr frame_type::get_image( ) 
 { 
 	return image_; 
 }
 
-void frame_type::set_alpha( il::image_type_ptr image ) { alpha_ = image; }
-il::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
+void frame_type::set_alpha( ml::image_type_ptr image ) { alpha_ = image; }
+ml::image_type_ptr frame_type::get_alpha( ) { return alpha_; }
 
 void frame_type::set_audio( audio_type_ptr audio, bool decoded )
 {
@@ -146,7 +151,15 @@ void frame_type::set_position( int position ) { position_ = position; }
 int frame_type::get_position( ) const { return position_; }
 void frame_type::set_duration( double duration ) { duration_ = duration; }
 double frame_type::get_duration( ) const { return duration_; }
-void frame_type::set_sar( int num, int den ) { sar_num_ = num; sar_den_ = den; }
+void frame_type::set_sar( int num, int den ) { 
+	sar_num_ = num; 
+	sar_den_ = den; 
+	if ( image_ ) 
+	{
+		image_->set_sar_num( num );
+		image_->set_sar_den( den );
+	}
+}
 
 void frame_type::get_sar( int &num, int &den ) const 
 { 
@@ -313,22 +326,37 @@ int frame_type::height( ) const
 	return 0;
 }
 
-std::wstring frame_type::pf( ) const
+image::MLPixelFormat frame_type::ml_pixel_format( ) const
+{
+	image::MLPixelFormat result = image::ML_PIX_FMT_NONE;
+	if ( image_ )
+		result = image_->ml_pixel_format( );
+	else if ( stream_ )
+		result = stream_->ml_pixel_format( );
+	return result;
+}
+
+bool frame_type::is_yuv_planar( ) const
+{
+	return ml::image::is_pixfmt_planar( ml_pixel_format( ) );
+}
+
+t_string frame_type::pf( ) const
 {
 	if ( image_ )
 		return image_->pf( );
 	else if ( stream_ )
 		return stream_->pf( );
-	return L"";
+	return _CT("");
 }
 
-il::field_order_flags frame_type::field_order( ) const
+ml::image::field_order_flags frame_type::field_order( ) const
 {
 	if ( image_ )
 		return image_->field_order( );
 	else if ( stream_ )
 		return stream_->field_order( );
-	return il::top_field_first;
+	return ml::image::top_field_first;
 }
 
 /// Indicates the input's audio codec if known ("" if unknown or n/a)
@@ -370,3 +398,4 @@ int frame_type::samples( ) const
 }
 
 } } }
+

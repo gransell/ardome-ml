@@ -36,7 +36,7 @@
 
 namespace opl = olib::openpluginlib;
 namespace plugin = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+
 
 namespace olib { namespace openmedialib { namespace ml { 
 
@@ -137,13 +137,13 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 			gluLookAt( 0.0f, 0.0f, -3.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f );
 		}
 
-		GLenum pixelformat_to_gl( ostd::wstring pf )
+		GLenum pixelformat_to_gl( olib::t_string pf )
 		{
-			if( pf == L"r8g8b8" )
+			if( pf == _CT("r8g8b8") )
 				return GL_RGB;
-			else if( pf == L"b8g8r8" )
+			else if( pf == _CT("b8g8r8") )
 				return GL_BGR;
-			else if( pf == L"r8g8b8a8" )
+			else if( pf == _CT("r8g8b8a8") )
 				return GL_RGBA;
 			else
 				return 0;
@@ -253,14 +253,14 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 				calculate_dimensions( frame, phy_w, phy_h, req_w, req_h );
 
 				// Convert to a format which the GPU knows
-				image_type_ptr new_im = il::convert( image, L"b8g8r8" );
+				image_type_ptr new_im = ml::image::convert( image, _CT("b8g8r8") );
 
 				float tex_w, tex_h;
 				GLenum target;
 				if ( texture_target( phy_w, phy_h, target, tex_w, tex_h ) )
 				{
-					// Conform to cropped and not flipped or flopped (optimal for video playout)
-					new_im = il::conform( new_im, il::cropped );
+					// Conform to cropped (optimal for video playout)
+					new_im = ml::image::conform( new_im, ml::image::cropped );
 					frame->set_image( new_im );
 
    					glClear( GL_COLOR_BUFFER_BIT );
@@ -322,8 +322,8 @@ class ML_PLUGIN_DECLSPEC glew_store : public store_type, public store_keyboard_f
 				}
 				else
 				{
-					// Since we don't have a texture, crop, flip and don't flop
-					new_im = il::conform( new_im, il::cropped | il::flipped );
+					// Since we don't have a texture, crop
+					new_im = ml::image::conform( new_im, ml::image::cropped );
 					frame->set_image( new_im );
 
 					glDisable( GL_TEXTURE_2D );

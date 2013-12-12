@@ -58,7 +58,7 @@ def _evaluate_paths_for_key( env, key ):
 		for val in env[key]:
 			if isinstance(val, list):
 				val = '='.join(val)
-			dirs.append( str(val).replace('#/', env.root + '/') )
+			dirs.append( str(val).replace('#', env.root + '/') )
 	return dirs
 
 

@@ -27,6 +27,7 @@
 #include <boost/algorithm/string.hpp>
 
 extern "C" {
+#include <libavutil/intreadwrite.h>
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
@@ -34,7 +35,7 @@ extern "C" {
 
 namespace plugin = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace ml = olib::openmedialib::ml;
 
 namespace olib { namespace openmedialib { namespace ml {
@@ -54,46 +55,57 @@ extern void ML_PLUGIN_DECLSPEC register_protocol( void );
 	
 extern void register_aml_aes3( );
 
-const std::wstring avformat_to_oil( int fmt )
+/*http://wiki.multimedia.cx/index.php?title=Apple_ProRes*/
+void prores_stream_analyze( const AVPacket *pkt, AVCodecContext *codec )
 {
-	if ( fmt == PIX_FMT_YUV420P )
-		return L"yuv420p";
-	else if ( fmt == PIX_FMT_UYYVYY411 )
-		return L"yuv411";
-	else if ( fmt == PIX_FMT_YUV411P )
-		return L"yuv411p";
-	else if ( fmt == PIX_FMT_UYVY422 )
-		return L"uyv422";
-	else if ( fmt == PIX_FMT_YUYV422 )
-		return L"yuv422";
-	else if ( fmt == PIX_FMT_YUV422P )
-		return L"yuv422p";
-	else if ( fmt == PIX_FMT_YUV444P )
-		return L"yuv444p";
-	else if ( fmt == PIX_FMT_RGB24 )
-		return L"r8g8b8";
-	else if ( fmt == PIX_FMT_BGR24 )
-		return L"b8g8r8";
-	else if ( fmt == PIX_FMT_ARGB )
-		return L"a8r8g8b8";
-	else if ( fmt == PIX_FMT_ABGR )
-		return L"a8b8g8r8";
-	else if ( fmt == PIX_FMT_BGRA )
-		return L"b8g8r8a8";
-	else if ( fmt == PIX_FMT_RGBA )
-		return L"b8g8r8a8";
-	else if ( fmt == PIX_FMT_RGB32 )
-		return L"r8g8b8a8";
-	else if ( fmt == PIX_FMT_BGR32 )
-		return L"b8g8r8a8";
-	else if ( fmt == PIX_FMT_RGB32_1 )
-		return L"r8g8b8a8";
-	else if ( fmt == PIX_FMT_BGR32_1 )
-		return L"b8g8r8a8";
-	return L"";
+	const uint8_t *buf = pkt->data;
+
+	int buf_size = pkt->size;
+
+	// Atleast 10 bytes in size so we can read the frame header size and frame size
+	if( buf_size < 10 ) 
+	{
+		ARENFORCE_MSG( false, "Invalid size of frame, should be atleast 10 bytes" )( buf_size );
+	}
+
+	int frame_size = AV_RB32(buf);
+
+	if( buf_size < frame_size ) {
+		ARENFORCE_MSG( false, "Invalid size of frame" )( buf_size )( frame_size );
+	}
+
+	buf += 8; /* Move to frame header */
+
+	int hdr_size = AV_RB16( buf );
+
+	if( hdr_size < 28 ) {
+		ARENFORCE_MSG( false, "Invalid size of frame header, should be atleast 28 bytes" )( hdr_size );
+	}
+
+	int chroma_factor = (buf[12] >> 6) & 3;
+	int alpha_info = buf[17] & 0xf;
+
+	if ( alpha_info > 2 ) {
+		ARENFORCE_MSG( false, "Invalid alpha mode" )( alpha_info );
+	}
+	
+	switch (chroma_factor) {
+		case 2: //422
+			if ( alpha_info ) {
+				ARENFORCE_MSG( false, "Alpha not supported with chroma factor 422" )( alpha_info );
+			} 
+			codec->pix_fmt = AV_PIX_FMT_YUV422P10LE; 
+			break;
+		case 3: //444
+			codec->pix_fmt = alpha_info ? AV_PIX_FMT_YUVA444P16LE : AV_PIX_FMT_YUV444P16LE;
+			break;
+		default:
+			ARENFORCE_MSG( false, "Unsupported picture format" )( chroma_factor );
+	}
 }
 
-std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
+
+std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id, unsigned int codec_tag )
 {
 	switch( codec_id )
 	{
@@ -117,7 +129,18 @@ std::string avformat_codec_id_to_apf_codec( AVCodecID codec_id )
 		case CODEC_ID_PCM_U24BE: return "http://www.ardendo.com/apf/codec/aiff";
 		case CODEC_ID_DVVIDEO: return "http://www.ardendo.com/apf/codec/dv/dvcpro";
 		case CODEC_ID_DNXHD: return "http://www.ardendo.com/apf/codec/vc3/vc3";
-		case AV_CODEC_ID_PRORES: return "http://www.ardendo.com/apf/codec/prores/prores";
+		case AV_CODEC_ID_PRORES:
+		{
+			switch( codec_tag )
+			{
+				case 'ncpa': return "http://www.ardendo.com/apf/codec/prores/422";
+				case 'hcpa': return "http://www.ardendo.com/apf/codec/prores/422_hq";
+				case 'scpa': return "http://www.ardendo.com/apf/codec/prores/422_lt";
+				case 'ocpa': return "http://www.ardendo.com/apf/codec/prores/422_proxy";
+				case 'h4pa': return "http://www.ardendo.com/apf/codec/prores/4444";
+			}
+			break;
+		}
 		default: return "";
 	}
 
@@ -153,7 +176,11 @@ AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 		return CODEC_ID_DVVIDEO;
 	else if( apf_codec_id == "vc3/vc3" )
 		return CODEC_ID_DNXHD;
-	else if( apf_codec_id == "prores/prores" )
+	else if( apf_codec_id == "prores/422_proxy" ||
+			apf_codec_id == "prores/422_lt" ||
+			apf_codec_id == "prores/422" ||
+			apf_codec_id == "prores/422_hq" ||
+			apf_codec_id == "prores/4444" )
 		return AV_CODEC_ID_PRORES;
 	else if( apf_codec_id == "aes" )
 		return static_cast< enum AVCodecID >( AML_AES3_CODEC_ID );
@@ -185,85 +212,69 @@ AVCodecID stream_to_avformat_codec_id( const stream_type_ptr &stream )
 	return CODEC_ID_NONE;
 }
 
-const PixelFormat oil_to_avformat( const std::wstring &fmt )
+ml::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
 {
-	if ( fmt == L"yuv420p" )
-		return PIX_FMT_YUV420P;
-	else if ( fmt == L"yuv411" )
-		return PIX_FMT_UYYVYY411;
-	else if ( fmt == L"yuv411p" )
-		return PIX_FMT_YUV411P;
-	else if ( fmt == L"yuv422" )
-		return PIX_FMT_YUYV422;
-	else if ( fmt == L"uyv422" )
-		return PIX_FMT_UYVY422;
-	else if ( fmt == L"yuv422p" )
-		return PIX_FMT_YUV422P;
-	else if ( fmt == L"yuv444p" )
-		return PIX_FMT_YUV444P;
-	else if ( fmt == L"r8g8b8" )
-		return PIX_FMT_RGB24;
-	else if ( fmt == L"b8g8r8" )
-		return PIX_FMT_BGR24;
-	else if ( fmt == L"b8g8r8a8" )
-		return PIX_FMT_BGR32;
-	else if ( fmt == L"r8g8b8a8" )
-		return PIX_FMT_RGB32;
-	return PIX_FMT_NONE;
-}
-
-il::image_type_ptr convert_to_oil( struct SwsContext *&img_convert_, AVFrame *frame, PixelFormat pix_fmt, int width, int height )
-{
-	il::image_type_ptr image;
+	ml::image_type_ptr image;
 	PixelFormat dst_fmt = pix_fmt;
-	std::wstring format = avformat_to_oil( pix_fmt );
-	int even = width % 4 != 0 ? 4 - ( width % 4 ) : 0;
-	int even_h = height % 2;
 
 	if ( pix_fmt == PIX_FMT_YUVJ420P )
 	{
-		format = L"yuv420p";
 		dst_fmt = PIX_FMT_YUV420P;
 	}
 	else if ( pix_fmt == PIX_FMT_YUVJ422P )
 	{
-		format = L"yuv422p";
 		dst_fmt = PIX_FMT_YUV422P;
 	}
-	else if ( pix_fmt == PIX_FMT_YUV422P10LE )
+
+	ml::image::MLPixelFormat ml_pf = ml::image::AV_to_ML( dst_fmt );
+	if ( ml_pf == ml::image::ML_PIX_FMT_NONE )
 	{
-		// force decode to a 8-bit format
-		format = L"uyv422";
-		dst_fmt = PIX_FMT_UYVY422;
-	}
-	else if ( format == L"" )
-	{
-		format = L"b8g8r8a8";
 		dst_fmt = PIX_FMT_BGRA;
+		ml_pf = ml::image::AV_to_ML( dst_fmt );
 	}
 
+	int dst_w = width;
+	int dst_h = height;
+
+	ml::image::correct( ml_pf, dst_w, dst_h );
+
 	AVPicture output;
-	image = il::allocate( format, width + even, height + even_h );
-	avpicture_fill( &output, image->data( ), dst_fmt, width + even, height + even_h );
-	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, width + even, height + even_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+	image = ml::image::allocate( ml_pf, dst_w, dst_h );
+
+	for( int i = 0; i < 4; i ++ )
+	{
+		if ( i < image->plane_count( ) )
+		{
+			output.data[ i ] = static_cast< boost::uint8_t * >( image->ptr( i ) );
+			output.linesize[ i ] = image->pitch( i );
+		}
+		else
+		{
+			output.data[ i ] = 0;
+			output.linesize[ i ] = 0;
+		}
+	}
+
+	img_convert_ = sws_getCachedContext( img_convert_, width, height, pix_fmt, dst_w, dst_h, dst_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+
 	if ( img_convert_ != NULL )
-		sws_scale( img_convert_, frame->data, frame->linesize, 0, height + even_h, output.data, output.linesize );
+		sws_scale( img_convert_, frame->data, frame->linesize, 0, dst_h, output.data, output.linesize );
 
 	if ( frame->interlaced_frame )
     {
         if( height == 720 )
         {
             //HD 720 progressive
-            image->set_field_order( il::progressive );
+            image->set_field_order( ml::image::progressive );
         }
         else if( height > 720 )
         {
             //HD material, set top field first
-            image->set_field_order( il::top_field_first );
+            image->set_field_order( ml::image::top_field_first );
         }
         else
         {
-            image->set_field_order( frame->top_field_first ? il::top_field_first : il::bottom_field_first );
+            image->set_field_order( frame->top_field_first ? ml::image::top_field_first : ml::image::bottom_field_first );
         }
     }
 

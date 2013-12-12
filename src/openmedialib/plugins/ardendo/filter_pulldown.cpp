@@ -81,17 +81,17 @@ class filter_pulldown : public ml::filter_type
 
 		ml::frame_type_ptr merge( ml::frame_type_ptr frame1, ml::frame_type_ptr frame2 )
 		{
-			il::image_type_ptr image1 = frame1->get_image( );
-			il::image_type_ptr image2 = frame2->get_image( );
+			ml::image_type_ptr image1 = frame1->get_image( );
+			ml::image_type_ptr image2 = frame2->get_image( );
 
-			if ( image1->field_order( ) == il::progressive || image2->field_order( ) == il::progressive )
+			if ( image1->field_order( ) == ml::image::progressive || image2->field_order( ) == ml::image::progressive )
 			{
-				image1->set_field_order( il::top_field_first );
-				image2->set_field_order( il::top_field_first );
+				image1->set_field_order( ml::image::top_field_first );
+				image2->set_field_order( ml::image::top_field_first );
 			}
 
-			il::image_type_ptr field1 = il::field( image1, 1 );
-			il::image_type_ptr field2 = il::field( image2, 0 );
+			ml::image_type_ptr field1 = ml::image::field( image1, 1 );
+			ml::image_type_ptr field2 = ml::image::field( image2, 0 );
 
 			ml::frame_type_ptr result = frame1->shallow( );
 			result->set_image( merge_fields( field1, field2 ) );
@@ -99,21 +99,36 @@ class filter_pulldown : public ml::filter_type
 			return result;
 		}
 
-		il::image_type_ptr merge_fields( il::image_type_ptr field0, il::image_type_ptr field1 )
+		ml::image_type_ptr merge_fields( ml::image_type_ptr field0, ml::image_type_ptr field1 )
 		{
-			il::image_type_ptr image;
+            if ( ml::image::coerce< ml::image::image_type_8 >( field0 ) )
+				return merge_fields< ml::image::image_type_8 >( field0, field1 );
+            else if ( ml::image::coerce< ml::image::image_type_16 >( field0 ) )
+				return merge_fields< ml::image::image_type_16 >( field0, field1 );
+			return ml::image_type_ptr( );
+		}
+
+		template< typename T >
+		ml::image_type_ptr merge_fields( ml::image_type_ptr field0, ml::image_type_ptr field1 )
+		{
+			ml::image_type_ptr image;
 			if ( field0 && field1 )
 			{
-				image = il::allocate( field0->pf( ), field0->width( ), field0->height( ) * 2 );
+				image = ml::image::allocate( field0->pf( ), field0->width( ), field0->height( ) * 2 );
+                
+                boost::shared_ptr< T > image_type = ml::image::coerce< T >( image );
+               
+                boost::shared_ptr< T > field0_type = ml::image::coerce< T >( field0 );
+                boost::shared_ptr< T > field1_type = ml::image::coerce< T >( field1 );
 
 				for ( int p = 0; p < image->plane_count( ); p ++ )
 				{
-					boost::uint8_t *dest_ptr = image->data( p );
-					boost::uint8_t *field0_ptr = field0->data( p );
-					boost::uint8_t *field1_ptr = field1->data( p );
+					typename T::data_type *dest_ptr = image_type->data( p );
+					typename T::data_type *field0_ptr = field0_type->data( p );
+					typename T::data_type *field1_ptr = field1_type->data( p );
 					int field0_pitch = field0->pitch( p );
 					int field1_pitch = field1->pitch( p );
-					int linesize = image->linesize( p );
+					int linesize = image->linesize( p ) * sizeof( typename T::data_type );
 					int pitch = image->pitch( p );
 					int height = field0->height( p );
 	

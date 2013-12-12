@@ -8,7 +8,6 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-OPENIMAGELIB_PLUGINS=@OPENIMAGELIB_PLUGINPATH@
 OPENMEDIALIB_PLUGINS=@OPENMEDIALIB_PLUGINPATH@
 
 Name: Ardome Media Library
@@ -17,7 +16,6 @@ Version: @OL_MAJOR@.@OL_MINOR@.@OL_SUB@
 
 Libs: @OPENCORELIB_LDFLAGS@ \
 	  @OPENPLUGINLIB_LDFLAGS@ \
-	  @OPENIMAGELIB_LDFLAGS@ \
 	  @OPENMEDIALIB_LDFLAGS@ \
 	  @OLIB_LDFLAGS@
 

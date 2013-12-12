@@ -17,9 +17,9 @@ class stream_avformat : public ml::stream_type
 {
 	public:
 		/// Constructor for a video packet
-		stream_avformat( AVCodecID codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
-			const dimensions &size, const fraction &sar, const std::wstring& pf,
-			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
+		stream_avformat( AVCodecID codec, unsigned int codec_tag, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
+			const dimensions &size, const fraction &sar, const olib::t_string& pf,
+			olib::openmedialib::ml::image::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, length_( length )
@@ -38,13 +38,13 @@ class stream_avformat : public ml::stream_type
 			, estimated_gop_size_( estimated_gop_size )
 			, index_( 0 )
 		{
-			codec_ = avformat_codec_id_to_apf_codec( codec );
+			codec_ = avformat_codec_id_to_apf_codec( codec, codec_tag );
 		}
 
 		// Constructor with known codec name
 		stream_avformat( std::string codec, size_t length, boost::int64_t position, boost::int64_t key, int bitrate,
-			const dimensions &size, const fraction &sar, const std::wstring& pf,
-			olib::openimagelib::il::field_order_flags field_order, int estimated_gop_size )
+			const dimensions &size, const fraction &sar, const olib::t_string& pf,
+			olib::openmedialib::ml::image::field_order_flags field_order, int estimated_gop_size )
 			: ml::stream_type( )
 			, id_( ml::stream_video )
 			, codec_( codec )
@@ -82,12 +82,12 @@ class stream_avformat : public ml::stream_type
 			, channels_( channels )
 			, samples_( samples )
 			, sample_size_( sample_size )
-			, pf_( L"" )
-			, field_order_( olib::openimagelib::il::top_field_first )
+			, pf_( _CT("") )
+			, field_order_( olib::openmedialib::ml::image::top_field_first )
 			, estimated_gop_size_( 0 )
 			, index_( 0 )
 		{
-			codec_ = avformat_codec_id_to_apf_codec( codec );
+			codec_ = avformat_codec_id_to_apf_codec( codec, 0 );
 		}
 
 		/// Virtual destructor
@@ -210,12 +210,12 @@ class stream_avformat : public ml::stream_type
 			return sample_size_;
 		}
 	
-		virtual const std::wstring pf( ) const 
+		virtual const t_string pf( ) const 
 		{ 
 			return pf_; 
 		}
 
-		virtual olib::openimagelib::il::field_order_flags field_order( ) const
+		virtual olib::openmedialib::ml::image::field_order_flags field_order( ) const
 		{
 			return field_order_;
 		}
@@ -236,8 +236,8 @@ class stream_avformat : public ml::stream_type
 		int channels_;
 		int samples_;
 		int sample_size_;
-		std::wstring pf_;
-		olib::openimagelib::il::field_order_flags field_order_;
+		t_string pf_;
+		olib::openmedialib::ml::image::field_order_flags field_order_;
 		int estimated_gop_size_;
 		size_t index_;
 };

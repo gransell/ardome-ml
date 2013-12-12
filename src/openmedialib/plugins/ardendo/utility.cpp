@@ -106,11 +106,15 @@ void join_peaks( ml::frame_type_ptr &result, ml::frame_type_ptr &input )
 	}
 }
 
-void copy_plane( il::image_type_ptr output, il::image_type_ptr input, size_t plane )
+template< typename T >
+void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
 {
-	boost::uint8_t *dst = output->data( plane );
-	boost::uint8_t *src = input->data( plane );
-	int w = output->width( plane );
+    boost::shared_ptr< T > output_type = ml::image::coerce< T >( output );
+    boost::shared_ptr< T > input_type = ml::image::coerce< T >( input );
+
+	typename T::data_type *dst = output_type->data( plane );
+	typename T::data_type *src = input_type->data( plane );
+	int w = output->width( plane ) * sizeof( typename T::data_type );
 	int h = output->height( plane );
 	int dst_p = output->pitch( plane );
 	int src_p = input->pitch( plane );
@@ -123,18 +127,39 @@ void copy_plane( il::image_type_ptr output, il::image_type_ptr input, size_t pla
 	}
 }
 
-void fill_plane( il::image_type_ptr img, size_t plane, boost::uint8_t sample )
+void copy_plane( ml::image_type_ptr output, ml::image_type_ptr input, size_t plane )
 {
-	boost::uint8_t *ptr = img->data( plane );
+    if ( ml::image::coerce< ml::image::image_type_8 >( input ) )
+		copy_plane< ml::image::image_type_8 >( output, input, plane );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( input ) )
+		copy_plane< ml::image::image_type_16 >( output, input, plane );
+}
+
+template< typename T >
+void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
+{
+    boost::shared_ptr< T > img_type = ml::image::coerce< T >( img );
+	typename T::data_type *ptr = img_type->data( plane );
 	int w = img->width( plane );
 	int h = img->height( plane );
-	int p = img->pitch( plane );
+	int diff = img->pitch( plane ) / sizeof( typename T::data_type ) - w;
+
+	typename T::data_type val_shifted = static_cast< typename T::data_type >( sample << ( img->bitdepth( ) - 8 ) );
 
 	while( h -- )
 	{
-		memset( ptr, sample, w );
-		ptr += p;
+		for ( int i = 0; i < w; i++ )
+			*ptr ++ = val_shifted;
+		ptr += diff;
 	}
+}
+
+void fill_plane( ml::image_type_ptr img, size_t plane, boost::uint8_t sample )
+{
+    if ( ml::image::coerce< ml::image::image_type_8 >( img ) )
+		fill_plane< ml::image::image_type_8 >( img, plane, sample );
+    else if ( ml::image::coerce< ml::image::image_type_16 >( img ) )
+		fill_plane< ml::image::image_type_16 >( img, plane, sample );
 }
 
 std::string print_track_packets( const ml::audio::track_type::map& track_packets )
@@ -186,7 +211,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool e
 		stream << "Audio Stream : No" << endl;
 	}
 
-	il::image_type_ptr image = evaluate ? frame->get_image( ) : frame->get_evaluated_image( );
+	ml::image_type_ptr image = evaluate ? frame->get_image( ) : frame->get_evaluated_image( );
 	if ( image )
 		stream << "Has Image    : Yes, position = " << image->position( ) << endl;
 	else
@@ -202,7 +227,7 @@ void report_frame( std::ostream &stream, const ml::frame_type_ptr &frame, bool e
 	stream << endl;
 }
 
-void report_image( std::ostream &stream, const il::image_type_ptr &img, int num, int den )
+void report_image( std::ostream &stream, const ml::image_type_ptr &img, int num, int den )
 {
 	stream << "Image Report" << endl << endl;
 
@@ -211,9 +236,9 @@ void report_image( std::ostream &stream, const il::image_type_ptr &img, int num,
 		double ar = double( img->width( ) * num ) / ( img->height( ) * den );
 
 		const char *type = "Progressive";
-		if ( img->field_order( ) == il::top_field_first )
+		if ( img->field_order( ) == ml::image::top_field_first )
 			type = "Interlaced (top field first)";
-		else if ( img->field_order( ) == il::bottom_field_first )
+		else if ( img->field_order( ) == ml::image::bottom_field_first )
 			type = "Interlaced (bottom field first)";
 
 		stream << "Colour Space: " << olib::opencorelib::str_util::to_string( img->pf( ) ) << endl;
@@ -237,7 +262,7 @@ void report_image( std::ostream &stream, const il::image_type_ptr &img, int num,
 	stream << endl;
 }
 
-void report_alpha( std::ostream &stream, const il::image_type_ptr img )
+void report_alpha( std::ostream &stream, const ml::image_type_ptr img )
 {
 	stream << "Alpha Report" << endl << endl;
 

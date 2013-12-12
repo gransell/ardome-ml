@@ -13,7 +13,6 @@
 
 namespace cl = olib::opencorelib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 using cl::str_util::to_wstring;
 using cl::str_util::to_string;
 
@@ -92,11 +91,11 @@ namespace
 		BOOST_CHECK_EQUAL( result_frame->get_fps_num(), fps_num );
 		BOOST_CHECK_EQUAL( result_frame->get_fps_den(), fps_den );
 
-		il::image_type_ptr result_image = result_frame->get_image();
+		ml::image_type_ptr result_image = result_frame->get_image();
 		BOOST_REQUIRE( result_image );
 		BOOST_CHECK_EQUAL( result_image->width(), width );
 		BOOST_CHECK_EQUAL( result_image->height(), height );
-		BOOST_CHECK_EQUAL( to_string( result_image->pf() ), "yuv420p" );
+		BOOST_CHECK_EQUAL( result_image->pf(), _CT("yuv420p") );
 	}
 }
 

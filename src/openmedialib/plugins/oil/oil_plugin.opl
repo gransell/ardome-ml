@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<openlibraries version="1.0">
-	<!-- plugins go here -->
-	<openmedialib name="oml" version="0.1.0">
-		<plugin name="OpenLibraries oil plugin" type="input" extension='".*\.jpg/sequence:.*", ".*\.png/sequence:.*", ".*\.bmp/sequence:.*", ".*\.gif/sequence:.*", ".*\.tga/sequence:.*", ".*\.exr/sequence:.*", ".*\.sgi/sequence:.*", ".*\.rgb/sequence:.*", ".*\.rgba/sequence:.*", ".*\.la/sequence:.*", ".*\.bw/sequence:.*", ".*\.tif/sequence:.*", ".*\.tiff/sequence:.*", ".*\.dpx/sequence:.*", ".*\.hdr/sequence:.*"' merit="0" filename='"libopenmedialib_oil.so", "libopenmedialib_oil.dylib", "openmedialib_oil-vc80-d-0_4_1.dll", "openmedialib_oil-vc80-r-0_4_1.dll", "openmedialib_oil-vc71-d-0_4_1.dll", "openmedialib_oil-vc71-r-0_4_1.dll"'/>
-		<plugin name="OpenLibraries oil plugin" type="output" extension='".*\.jpg/sequence:.*", ".*\.png/sequence:.*", ".*\.bmp/sequence:.*", ".*\.gif/sequence:.*", ".*\.tga/sequence:.*", ".*\.exr/sequence:.*", ".*\.sgi/sequence:.*", ".*\.rgb/sequence:.*", ".*\.rgba/sequence:.*", ".*\.la/sequence:.*", ".*\.bw/sequence:.*", ".*\.tif/sequence:.*", ".*\.tiff/sequence:.*", ".*\.dpx/sequence:.*"' merit="0" filename='"libopenmedialib_oil.so", "libopenmedialib_oil.dylib", "openmedialib_oil-vc80-d-0_4_1.dll", "openmedialib_oil-vc80-r-0_4_1.dll", "openmedialib_oil-vc71-d-0_4_1.dll", "openmedialib_oil-vc71-r-0_4_1.dll"'/>
-	</openmedialib>
-</openlibraries>

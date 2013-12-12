@@ -59,13 +59,13 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 		{
 			// Convert frame if necessary
 			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
+				result = frame_convert( result, _CT("yuv420p") );
 
 			// If frame (after convert) is still valid
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr alpha = result->get_alpha( );
-				il::image_type_ptr input = result->get_image( );
+                ml::image_type_ptr alpha = result->get_alpha( );
+                boost::shared_ptr< ml::image::image_type_8 > input = ml::image::coerce< ml::image::image_type_8 >( result->get_image( ) );
 
 				// Get the size of the image
 				size_t w = input->width( );
@@ -78,22 +78,23 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				// Make sure that we have an alpha mask which is the same size as the chroma
 				if ( !alpha )
 				{
-					alpha = il::allocate( L"l8", cw, ch );
+					alpha = ml::image::allocate( _CT("l8"), cw, ch );
 					fill_plane( alpha, 0, 255 );
 				}
 				else
 				{
-					alpha = il::rescale( alpha, cw, ch );
-				}
+					alpha = ml::image::rescale( alpha, cw, ch );
+                }
 
+                boost::shared_ptr< ml::image::image_type_8 > alpha_type_8 = ml::image::coerce< ml::image::image_type_8 >( alpha );
 				// Process chroma
 				boost::uint8_t *pu = input->data( 1 );
 				boost::uint8_t *pv = input->data( 2 );
-				boost::uint8_t *pa = alpha->data( );
+				boost::uint8_t *pa = alpha_type_8->data( );
 
 				size_t ru = input->pitch( 1 ) - cw;
 				size_t rv = input->pitch( 2 ) - cw;
-				size_t ra = alpha->pitch( ) - cw;
+				size_t ra = alpha_type_8->pitch( ) - cw;
 
 				while( ch -- )
 				{
@@ -112,7 +113,7 @@ class ML_PLUGIN_DECLSPEC filter_chroma_key : public ml::filter_simple
 				}
 
 				// Update the alpha on the frame accordingly
-				alpha = il::rescale( alpha, w, h, 1, il::BICUBIC_SAMPLING );
+				alpha = ml::image::rescale( alpha, w, h, ml::image::BICUBIC_SAMPLING );
 				result->set_alpha( alpha );
 			}
 		}

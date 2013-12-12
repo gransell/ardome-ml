@@ -1,16 +1,25 @@
 #include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/utilities.hpp>
 
-using namespace olib::openimagelib::il;
+using namespace olib::openmedialib::ml;
 
 BOOST_AUTO_TEST_SUITE(deinterlace_filter)
 
 class DataCheckTest
 {
-    void deinterlace_data_check(const std::wstring &image_type, int width, int height) const
+    void deinterlace_data_check(const olib::t_string &image_type, int width, int height) const
     {
-        image_type_ptr image = allocate(image_type, width, height);
-        
+        image_type_ptr image = image::allocate(image_type, width, height);
+        if ( image::coerce< image::image_type_8 >( image ) )
+             deinterlace_data_check< image::image_type_8 >( image );
+        else if ( image::coerce< image::image_type_16 >( image ) )
+            deinterlace_data_check< image::image_type_16 >( image );
+    }
+
+	template< typename T >
+    void deinterlace_data_check( const image_type_ptr im ) const
+    {
+		boost::shared_ptr< T > image = image::coerce< T >( im );
         if (!image) {
             BOOST_REQUIRE(image);
         }
@@ -30,11 +39,11 @@ class DataCheckTest
         }
         
         for (int i = 0; i < plane_count; i++) {
-            unsigned char *img      = image->data(i);
-            int           src_pitch = image->pitch(i) - image->linesize(i);
+			typename T::data_type *img = image->data(i);
+            int src_pitch = (image->pitch(i) - image->linesize(i)) / sizeof( typename T::data_type );
             
             for (int h = image->height(i) - 1; h >= 0; h--) {
-                for (int w = 0; w < image->linesize(i); w++) {
+                for (int w = 0; w < ( image->linesize(i) / sizeof( typename T::data_type ) ); w++) {
                     if (h % 2 == 0) {
                         *img = data_even[i];
                     } else {
@@ -46,9 +55,9 @@ class DataCheckTest
             }
         }
 
-        image->set_field_order(top_field_first);
+        image->set_field_order(image::top_field_first);
         
-        image_type_ptr dest = deinterlace(image);
+        boost::shared_ptr< T > dest = image::coerce< T >( image::deinterlace( image ) );
         
         if (!dest) {
             BOOST_REQUIRE(dest); 
@@ -57,11 +66,11 @@ class DataCheckTest
         plane_count = dest->plane_count();
 
         for (int i = 0; i < plane_count; i++) {
-            unsigned char *dst      = dest->data(i);
-            int           dst_pitch = dest->pitch(i) - dest->linesize(i);
+			typename T::data_type *dst = dest->data(i);
+            int dst_pitch = (dest->pitch(i) - dest->linesize(i)) / sizeof( typename T::data_type );
             
             for (int h = dest->height(i) - 1; h >= 0; h--) {
-                for (int w = 0; w < dest->linesize(i); w++) {
+                for (int w = 0; w < ( dest->linesize(i) / sizeof( typename T::data_type ) ); w++) {
                     if (h == 0) {
                         if (*dst != data_even[i]) {
                             BOOST_REQUIRE_EQUAL(*dst, data_even[i]);
@@ -81,17 +90,23 @@ class DataCheckTest
 public:
     void verify() const
     {
-        deinterlace_data_check(L"yuv444p", 1920, 1080);
-        deinterlace_data_check(L"yuv422p", 1920, 1080);
-        deinterlace_data_check(L"yuv420p", 1920, 1080);
-        deinterlace_data_check(L"yuv411p", 1920, 1080);
+        deinterlace_data_check(_CT("yuv444p"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv422p"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv420p"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv411p"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv420p10le"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv420p16le"), 1920, 1080);
+        deinterlace_data_check(_CT("yuv422p16le"), 1920, 1080);
         
-        for (int width = 0; width <= 16; width++) {
-            for (int height = 0; height <= 16; height++) {
-                deinterlace_data_check(L"yuv444p", width, height);
-                deinterlace_data_check(L"yuv422p", width, height);
-                deinterlace_data_check(L"yuv420p", width, height);
-                deinterlace_data_check(L"yuv411p", width, height);
+        for (int width = 4; width <= 64; width += 4) {
+            for (int height = 2; height <= 32; height += 2 ) {
+                deinterlace_data_check(_CT("yuv444p"), width, height);
+                deinterlace_data_check(_CT("yuv422p"), width, height);
+                deinterlace_data_check(_CT("yuv420p"), width, height);
+                deinterlace_data_check(_CT("yuv411p"), width, height);
+                deinterlace_data_check(_CT("yuv420p10le"), width, height);
+                deinterlace_data_check(_CT("yuv420p16le"), width, height);
+                deinterlace_data_check(_CT("yuv422p16le"), width, height);
             }
         }
         

@@ -8,7 +8,6 @@
 #include <openmedialib/ml/store.hpp>
 
 using namespace olib::openmedialib::ml;
-using namespace olib::openimagelib::il;
 using namespace olib::opencorelib::str_util;
 
 

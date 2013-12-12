@@ -24,7 +24,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
-namespace ml = olib::openmedialib;
 namespace pl = olib::openpluginlib;
 namespace pcos = olib::openpluginlib::pcos;
 

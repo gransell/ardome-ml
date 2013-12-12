@@ -67,15 +67,17 @@ class ML_PLUGIN_DECLSPEC store_ppm : public ml::store_type
 					frame = render_->fetch( );
 				}
 
-				il::image_type_ptr img = frame->get_image( );
+				ml::image_type_ptr img = frame->get_image( );
 				if ( file_ != 0 )
 				{
-					img = il::convert( img, L"r8g8b8" );
+					img = ml::image::convert( img, _CT("r8g8b8") );
 					int p = img->pitch( );
 					int w = img->width( );
 					int h = img->height( );
 					int l = img->linesize( );
-					boost::uint8_t *ptr = img->data( );
+
+                    boost::shared_ptr< ml::image::image_type_8 > image_type_8 = ml::image::coerce< ml::image::image_type_8 >( img );
+					boost::uint8_t *ptr = image_type_8->data( );
 					
 					fprintf( file_, "P6\n%d %d\n255\n", w, h );
 					while( h -- )

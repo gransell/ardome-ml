@@ -19,6 +19,8 @@
 #include "amf_filter_plugin.hpp"
 #include "utility.hpp"
 
+namespace ml = olib::openmedialib::ml;
+
 namespace aml { namespace openmedialib {
 
 class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
@@ -59,13 +61,14 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 		// Invert the region and planes requested
 		void charcoal( ml::frame_type_ptr &result )
 		{
-			if ( !ml::is_yuv_planar( result ) )
-				result = frame_convert( result, L"yuv420p" );
-
 			if ( result && result->get_image( ) )
 			{
-				il::image_type_ptr input = result->get_image( );
-				il::image_type_ptr output = il::allocate( input );
+				if ( !ml::is_yuv_planar( result ) || result->get_image( )->bitdepth( ) != 8 )
+					result = frame_convert( result, _CT("yuv420p") );
+				ml::image_type_ptr input = result->get_image( );
+				ARENFORCE_MSG( input, "Unable to acquire a valid image" );
+				ml::image_type_ptr output = ml::image::allocate( input );
+				ARENFORCE_MSG( output, "Unable to allocate an output image" );
 				charcoal_plane( output, input, 0 );
 				copy_plane( output, input, 1 );
 				copy_plane( output, input, 2 );
@@ -73,13 +76,15 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 			}
 		}
 
-		void charcoal_plane( il::image_type_ptr output, il::image_type_ptr input, int plane )
+		void charcoal_plane( ml::image_type_ptr o, ml::image_type_ptr i, int plane )
 		{
-			unsigned char *dst = output->data( plane );
+            boost::shared_ptr< ml::image::image_type_8 > output = ml::image::coerce< ml::image::image_type_8 >( o );
+            boost::shared_ptr< ml::image::image_type_8 > input = ml::image::coerce< ml::image::image_type_8 >( i );
+            boost::uint8_t *dst = output->data( plane );
 			int w = output->width( plane );
 			int h = output->height( plane ) - 2;
 			int p = input->pitch( plane );
-			unsigned char *src = input->data( plane ) + p + 1;
+            boost::uint8_t *src = input->data( plane ) + p + 1;
 			int dst_rem = output->pitch( plane ) - w;
 			int src_rem = input->pitch( plane ) - w + 2;
 			int t;
@@ -89,7 +94,7 @@ class ML_PLUGIN_DECLSPEC filter_charcoal : public ml::filter_simple
 			int mix = int( 256 * prop_mix_.value< double >( ) );
 
 			memset( dst, 16, w );
-			dst += dst_rem;
+			dst += output->pitch( plane );
 
 			if ( mix == 0 )
 			{

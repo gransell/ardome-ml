@@ -19,7 +19,7 @@ filter_rescale::filter_rescale( )
 {
 	properties( ).append( prop_enable_ = 1 );
 	properties( ).append( prop_progressive_ = 1 );
-	properties( ).append( prop_interp_ = 1 );
+	properties( ).append( prop_interp_ = 2 ); //BILINEAR_SAMPLING
 	properties( ).append( prop_width_ = 640 );
 	properties( ).append( prop_height_ = 360 );
 	properties( ).append( prop_sar_num_ = 1 );
@@ -48,12 +48,12 @@ void filter_rescale::do_fetch( frame_type_ptr &frame )
 		frame = fetch_from_slot( );
 		if ( prop_enable_.value< int >( ) && frame && frame->has_image( ) )
 		{
-			il::image_type_ptr image = frame->get_image( );
+			ml::image_type_ptr image = frame->get_image( );
 			if ( prop_progressive_.value< int >( ) == 1 )
-				image = il::deinterlace( image );
+				image = ml::image::deinterlace( image );
 			else if ( prop_progressive_.value< int >( ) == -1 )
-				image->set_field_order( il::progressive );
-			image = il::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), il::rescale_filter( prop_interp_.value< int >( ) ) );
+				image->set_field_order( ml::image::progressive );
+			image = ml::image::rescale( image, prop_width_.value< int >( ), prop_height_.value< int >( ), ml::image::rescale_filter( prop_interp_.value< int >( ) ) );
 			frame->set_image( image );
 			frame->set_sar( prop_sar_num_.value< int >( ), prop_sar_den_.value< int >( ) );
 		}

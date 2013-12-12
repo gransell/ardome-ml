@@ -6,7 +6,6 @@
 #define TEST_FILE L"MOV/DVCPro25/DVCPro25_PAL_4ch_16bit.mov"
 
 using namespace olib::openmedialib::ml;
-using namespace olib::openimagelib::il;
 using namespace olib::opencorelib::str_util;
 
 

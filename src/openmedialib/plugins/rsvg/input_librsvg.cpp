@@ -53,7 +53,7 @@
 
 namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
-namespace il = olib::openimagelib::il;
+
 namespace cl = olib::opencorelib;
 namespace pcos = olib::openpluginlib::pcos;
 
@@ -285,23 +285,23 @@ class ML_PLUGIN_DECLSPEC input_librsvg : public ml::input_type
 				w -= w % 2;
 				h -= h % 2;
 
-				il::image_type_ptr image;
+				ml::image_type_ptr image;
 
 				if ( w > 0 && h > 0 )
 				{
 					int bytes = 0;
 					if ( gdk_pixbuf_get_has_alpha( pixbuf ) )
 					{
-						image = il::allocate( L"r8g8b8a8", w, h );
+						image = ml::image::allocate( _CT("r8g8b8a8"), w, h );
 						bytes = w * 4;
 					}
 					else
 					{
-						image = il::allocate( L"r8g8b8", w, h );
+						image = ml::image::allocate( _CT("r8g8b8"), w, h );
 						bytes = w * 3;
 					}
 	
-					boost::uint8_t *dst = image->data( );
+					boost::uint8_t *dst = ml::image::coerce< ml::image::image_type_8 >( image )->data( );
 					int dst_pitch = image->pitch( );
 	
 					while( h -- )

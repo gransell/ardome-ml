@@ -4,17 +4,22 @@
 
 Import(['local_env'])
 
-local_env.packages( 'boost_thread', 'boost_system', 'boost_date_time', 'sdl' )
+options = local_env.optional( 'sdl' )
 
-local_env[ 'win_target_path' ] = '$stage_ml_plugin'
+if options[ 'have_sdl' ]:
+	local_env.packages( 'boost_thread', 'boost_system', 'boost_date_time' )
 
-src = [ 'sdl_plugin.cpp' ]
+	local_env[ 'win_target_path' ] = '$stage_ml_plugin'
 
-if local_env[ 'PLATFORM' ] == 'win32' :
-	src.append( 'msw/sdlplugin.rc' )
+	src = [ 'sdl_plugin.cpp' ]
 
-object = local_env.plugin( 'openmedialib_sdl', src )
+	if local_env[ 'PLATFORM' ] == 'win32' :
+		src.append( 'msw/sdlplugin.rc' )
 
-local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'sdl_plugin.opl' ] )
+	object = local_env.plugin( 'openmedialib_sdl', src )
 
-Return( 'object' )
+	local_env.copy_project_files( local_env[ 'stage_ml_plugin' ], object + [ 'sdl_plugin.opl' ] )
+
+	Return( 'object' )
+else:
+	print "WARNING: SDL library not found - disabling plugin"

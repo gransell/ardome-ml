@@ -82,13 +82,13 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			{
 				frame0->set_image( merge_fields( frame1->get_image( ), frame0->get_image( ) ) );
 				frame0->set_alpha( merge_fields( frame1->get_alpha( ), frame0->get_alpha( ) ) );
-				frame0->get_image( )->set_field_order( il::bottom_field_first );
+				frame0->get_image( )->set_field_order( ml::image::bottom_field_first );
 			}
 			else
 			{
 				frame0->set_image( merge_fields( frame0->get_image( ), frame1->get_image( ) ) );
 				frame0->set_alpha( merge_fields( frame0->get_alpha( ), frame1->get_alpha( ) ) );
-				frame0->get_image( )->set_field_order( il::top_field_first );
+				frame0->get_image( )->set_field_order( ml::image::top_field_first );
 			}
 
 			frame0->get_image( )->set_position( get_position( ) );
@@ -112,19 +112,22 @@ class ML_PLUGIN_DECLSPEC filter_interlace : public ml::filter_type
 			return frame0;
 		}
 
-		il::image_type_ptr merge_fields( il::image_type_ptr frame0, il::image_type_ptr frame1 )
+		ml::image_type_ptr merge_fields( ml::image_type_ptr frame0, ml::image_type_ptr frame1 )
 		{
-			il::image_type_ptr image;
+			ml::image_type_ptr image;
 
 			if ( !frame0 || !frame1 ) return image;
 
-			image = il::allocate( frame0->pf( ), frame0->width( ), frame0->height( ) );
+			image = ml::image::allocate( frame0->pf( ), frame0->width( ), frame0->height( ) );
+            boost::shared_ptr< ml::image::image_type_8 > image_type_8 = ml::image::coerce< ml::image::image_type_8 >( image );
 
+            boost::shared_ptr< ml::image::image_type_8 > frame0_type_8 = ml::image::coerce< ml::image::image_type_8 >( frame0 );
+            boost::shared_ptr< ml::image::image_type_8 > frame1_type_8 = ml::image::coerce< ml::image::image_type_8 >( frame1 );
 			for ( int p = 0; p < image->plane_count( ); p ++ )
 			{
-				boost::uint8_t *dest_ptr = image->data( p );
-				boost::uint8_t *frame0_ptr = frame0->data( p );
-				boost::uint8_t *frame1_ptr = frame1->data( p ) + frame1->pitch( p );
+				boost::uint8_t *dest_ptr = image_type_8->data( p );
+				boost::uint8_t *frame0_ptr = frame0_type_8->data( p );
+				boost::uint8_t *frame1_ptr = frame1_type_8->data( p ) + frame1_type_8->pitch( p );
 				int frame0_pitch = frame0->pitch( p ) * 2;
 				int frame1_pitch = frame1->pitch( p ) * 2;
 				int linesize = image->linesize( p );

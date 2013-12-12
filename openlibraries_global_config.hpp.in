@@ -48,9 +48,6 @@
 /* Define this if you have ILM OpenEXR */
 #undef HAVE_OPENEXR
 
-/* Define this for OpenImageLib support */
-#undef HAVE_OPENIMAGELIB
-
 /* Define this if you want memory pooling */
 #undef HAVE_POOLING
 

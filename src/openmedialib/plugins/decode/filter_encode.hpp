@@ -9,7 +9,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 

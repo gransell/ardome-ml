@@ -7,7 +7,7 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
+namespace il = olib::openmedialib::ml;
 namespace pcos = olib::openpluginlib::pcos;
 namespace cl = olib::opencorelib;
 
@@ -31,11 +31,9 @@ class ML_PLUGIN_DECLSPEC filter_field_order : public filter_simple
 
 		void do_fetch( frame_type_ptr &frame );
 
-		il::image_type_ptr merge( il::image_type_ptr image1, int scan1, il::image_type_ptr image2, int scan2 );
-
 	private:
 		pl::pcos::property prop_order_;
-		il::image_type_ptr previous_;
+		ml::image_type_ptr previous_;
 };
 
 } } } }

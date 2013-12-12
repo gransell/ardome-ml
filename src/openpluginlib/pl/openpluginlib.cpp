@@ -191,8 +191,8 @@ namespace
 #ifndef WIN32
 				else
 				{
-					el_reg.insert_std( OPENIMAGELIB_PLUGINS );
-					el_reg.insert_std( OPENMEDIALIB_PLUGINS );
+//					el_reg.insert_std( OPENIMAGELIB_PLUGINS );
+					//el_reg.insert_std( OPENMEDIALIB_PLUGINS );
 				}
 #endif
 

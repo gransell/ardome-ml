@@ -15,7 +15,6 @@
 
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
-namespace il = olib::openimagelib::il;
 namespace cl = olib::opencorelib;
 
 namespace olib { namespace openmedialib { namespace ml { namespace distributor {
@@ -128,8 +127,8 @@ class ML_PLUGIN_DECLSPEC filter_lock : public filter_simple
 			// Clone image if required
 			if ( prop_image_.value< int >( ) == 1 )
 			{
-				il::image_type_ptr image = frame->get_image( );
-				frame->set_image( image ? il::image_type_ptr( static_cast< il::image_type * >( image->clone( il::writable ) ) ) : image );
+				ml::image_type_ptr image = frame->get_image( );
+				frame->set_image( image ? ml::image_type_ptr( static_cast<ml::image::image*>( image->clone( ml::image::writable ) ) ) : image );
 			}
 
 			return frame;
