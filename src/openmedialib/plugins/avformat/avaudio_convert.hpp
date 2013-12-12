@@ -37,6 +37,12 @@ class avaudio_resampler
 							AVSampleFormat format_in,
 							AVSampleFormat format_out );
 
+		avaudio_resampler(	avaudio_resampler &resampler,
+							int frequency_out, 
+							int channels_out, 
+							boost::uint64_t layout_out,
+							AVSampleFormat format_out );
+
 		~avaudio_resampler();
 
 	private:
@@ -87,16 +93,23 @@ class avaudio_resampler
 
 		static boost::uint64_t channels_to_layout( int channels, bool point_0 = false );
 
+		// returns true if the args differ from what's currently held in the resampler context
+		bool has_input_changed( int frequency, int channels, AVSampleFormat format ) const;
+
 	private:
+
+		void init( );
 
 		boost::shared_ptr< SwrContext > resampler_;
 
 		int frequency_in_; 
 		int channels_in_; 
 		AVSampleFormat format_in_;
+		boost::uint64_t layout_in_;
 		int frequency_out_; 
 		int channels_out_; 
 		AVSampleFormat format_out_;
+		boost::uint64_t layout_out_;
 };
 
 
@@ -106,8 +119,7 @@ class avaudio_convert_to_aml
 {
 	public:
 
-		avaudio_convert_to_aml(	int frequency_in, 
-								int frequency_out, 
+		avaudio_convert_to_aml(	int frequency_io, 
 								int channels_in, 
 								int channels_out, 
 								AVSampleFormat format_in,
@@ -122,14 +134,27 @@ class avaudio_convert_to_aml
 
 	public:
 
+		// returns true if the args differ from what's currently held in the resampler context
+		bool has_input_changed( int frequency, int channels, AVSampleFormat format ) const;
+
+		// general conversion functions
 		audio_type_ptr convert( const boost::uint8_t **src, int samples );
 		audio_type_ptr convert_with_offset( const boost::uint8_t **src, int samples, int offset_samples );
 		audio_type_ptr convert( const audio_type_ptr& audio );
 
+		// used for one off conversions of small buffers from the classes output format to another format
+		audio_type_ptr resample( const boost::uint8_t **src, int samples, int frequency, int channels, AVSampleFormat fmt );
+
+		// obtain output identity format
 		audio::identity get_out_format( ) const;
 
-	private:
+		// obtain output frequency
+		int get_out_frequency(  ) const;
 
+		// obtain output channels
+		int get_out_channels(  ) const;
+
+	private:
 		audio::identity format_out_;
 
 		avaudio_resampler resampler_;

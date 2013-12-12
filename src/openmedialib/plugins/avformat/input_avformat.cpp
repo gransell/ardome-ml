@@ -2504,20 +2504,17 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 			got_audio = 0;
 
-			// Ignore packets before 0
-			//if ( found < 0 )
-				//return 0;
-
+			// Create the audio filter object if we don't have one
 			if ( audio_filter_ == 0 )
-			{
-				// should we check if it's pcm24 here, and if so, send that as last parameter instead?
-				audio_filter_ = new avaudio_convert_to_aml( codec_context->sample_rate, codec_context->sample_rate, codec_context->channels, codec_context->channels, codec_context->sample_fmt, AVSampleFormat_to_aml_id(codec_context->sample_fmt) );
-			}
+				audio_filter_ = new avaudio_convert_to_aml( codec_context->sample_rate, codec_context->channels, codec_context->channels, codec_context->sample_fmt, AVSampleFormat_to_aml_id(codec_context->sample_fmt) );
 
-			// Get the audio info from the codec context
-			int channels = codec_context->channels;
-			int frequency = codec_context->sample_rate;
-			int bps = id_to_storage_bytes_per_sample( audio_filter_->get_out_format( ) );
+			// Get the audio info from the audio filter (contents of codec_context are unreliable when changes occur)
+			int frequency = audio_filter_->get_out_frequency( );
+			int channels = audio_filter_->get_out_channels( );
+			audio::identity id = audio_filter_->get_out_format( );
+
+			// Set up variables for sync and buffer logic
+			int bps = id_to_storage_bytes_per_sample( id );
 			int skip = 0;
 			bool ignore = false;
 
@@ -2584,10 +2581,34 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				int got_frame = 0;
 				ret = avcodec_decode_audio4( codec_context, av_frame_, &got_frame, &pkt_ );
 
-				//ARENFORCE_MSG( ret >= 0, "Failed to decode audio" );
-				
+				// We need to check here if the audio format has changed
+				AVSampleFormat fmt = AVSampleFormat( av_frame_->format );
+
+				// Only accept change when the audio format is known
+				if ( fmt != -1 && audio_filter_->has_input_changed( av_frame_->sample_rate, av_frame_->channels, fmt ) )
+				{
+					// Update the variables which were obtained earlier
+					channels = av_frame_->channels;
+					frequency = av_frame_->sample_rate;
+					id = AVSampleFormat_to_aml_id( fmt );
+					bps = id_to_storage_bytes_per_sample( id );
+
+					// If there is any audio in the buffer, we need to resample that now to allow the newly decoded
+					// samples to be appended
+					if ( audio_buf_used_ )
+					{
+						ml::audio_type_ptr buffer = audio_filter_->resample( ( const boost::uint8_t ** )&audio_buf_, audio_buf_used_ / bps, frequency, channels, fmt );
+						memcpy( audio_buf_, buffer->pointer( ), buffer->size( ) );
+						audio_buf_used_ = buffer->size( );
+					}
+
+					// Destroy the old audio filter and create a new one
+					delete audio_filter_;
+					audio_filter_ = new avaudio_convert_to_aml( frequency, channels, channels, fmt, id );
+				}
+
 				// If we need to discard packets, do that now
-				if( discard_audio_packet_count_ ) // && found <= get_position( ) - 1 )
+				if( discard_audio_packet_count_ )
 				{
 					discard_audio_packet_count_ --;
 					ret = 0;
@@ -2596,20 +2617,16 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					if ( !has_video( ) ) expected_packet_ ++;
 					break;
 				}
-				else
-				{
-					discard_audio_packet_count_  = 0;
-				}
 
 				// If no samples are returned, then break now
 				if ( !got_frame )
 				{
 					ret = 0;
-					//got_audio = true;
 					audio_buf_used_ = 0;
 					break;
 				}
 
+				// Convert the audio in the avframe now
 				audio_type_ptr temp = audio_filter_->convert( ( const boost::uint8_t ** )av_frame_->data, av_frame_->nb_samples );
 
 				// Copy the new samples to the main buffer

@@ -9,11 +9,13 @@
 #include <opencorelib/cl/str_util.hpp>
 #include <openmedialib/ml/filter.hpp>
 #include <openmedialib/ml/store.hpp>
+#include <openmedialib/ml/stack.hpp>
 #include <openmedialib/ml/audio_block.hpp>
 #include <openmedialib/plugins/avformat/avformat_stream.hpp>
 #include "utils.hpp"
 #include <cmath>
 #include <boost/filesystem.hpp>
+#include <fstream>
 
 using namespace olib::openmedialib::ml;
 using namespace olib::opencorelib::str_util;
@@ -760,6 +762,135 @@ BOOST_AUTO_TEST_CASE( aml_store_mp3_movie )
 }
 
 #endif
+
+const fs::path unique( const olib::t_string &filename )
+{
+	BOOST_REQUIRE_EQUAL( filename.find( _CT('/') ), olib::t_string::npos );
+	BOOST_REQUIRE_EQUAL( filename.find( _CT(':') ), olib::t_string::npos );
+	cl::uuid_16b unique_id;
+	const fs::path unique_path = cl::special_folder::get( cl::special_folder::temp ) / ( unique_id.to_hex_string() + filename );
+	return unique_path;
+}
+
+BOOST_AUTO_TEST_CASE( aml_change_audio_spec )
+{
+	// Creates 3 mp2 files with differing audio specs, checks that audio spec matches expected for each frame while
+	// creating them, concatenates all files together, decodes resultant file and checks that things match as expected.
+	// They don't of course. The concatenated output is 1 frame longer (FUDGE1), the third section comes in 1 frame 
+	// later (FUDGE2). In packet streaming mode, the mono comes in 1 frame earlier (due to the differences in decode
+	// order). None of these are all that surprising given the nature of audio packets being of a different size
+	// to frame audio (with frame audio being the manner in which they're created and read back).
+	//
+	// Two additional tests are made on the resampler here to ensure that 1) it will conform the varying input to the
+	// audio spec of the first frame and 2) it will conform the varying input to a specific form.
+
+	const fs::path file1 = unique( "file1.mp2" );
+	const fs::path file2 = unique( "file2.mp2" );
+	const fs::path file3 = unique( "file3.mp2" );
+	const fs::path full = unique( "full.mp2" );
+
+	BOOST_REQUIRE( !fs::exists( file1 ) && !fs::exists( file2 ) && !fs::exists( file3 ) && !fs::exists( full ) );
+
+	ARGUARD( boost::bind( &cleanup, file1 ) );
+	ARGUARD( boost::bind( &cleanup, file2 ) );
+	ARGUARD( boost::bind( &cleanup, file3 ) );
+	ARGUARD( boost::bind( &cleanup, full ) );
+
+	input_type_ptr input = stack( )
+	.push( L"tone: out=25 frequency=48000 channels=2 filter:store store=" + to_wstring( file1.native( ) ) )
+	.push( L"tone: out=25 frequency=48000 channels=1 filter:store store=" + to_wstring( file2.native( ) ) )
+	.push( L"tone: out=25 frequency=44100 channels=1 filter:store store=" + to_wstring( file3.native( ) ) )
+	.push( L"filter:playlist slots=3" )
+	.pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 75 );
+
+	int channel_pattern[ ] = { 2, 1, 1 };
+	int frequency_pattern[ ] = { 48000, 48000, 44100 };
+
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		audio_type_ptr audio = frame->get_audio( );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_CHECK( audio->channels( ) == channel_pattern[ i / 25 ] );
+		BOOST_CHECK( audio->frequency( ) == frequency_pattern[ i / 25 ] );
+	}
+
+	input = input_type_ptr( );
+
+	std::ifstream if1( to_string( file1.native( ) ).c_str( ), std::ios_base::binary );
+	std::ifstream if2( to_string( file2.native( ) ).c_str( ), std::ios_base::binary );
+	std::ifstream if3( to_string( file3.native( ) ).c_str( ), std::ios_base::binary );
+	std::ofstream of( to_string( full.native( ) ).c_str( ), std::ios_base::binary );
+
+	of << if1.rdbuf( ) << if2.rdbuf( ) << if3.rdbuf( );
+
+	input = create_input( full.native( ) );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 76 ); // FUDGE1
+
+	for ( int i = 0; i < 75; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		audio_type_ptr audio = frame->get_audio( );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_CHECK( audio->channels( ) == channel_pattern[ i / 25 ] );
+		if ( i == 50 ) continue; // FUDGE2
+		BOOST_CHECK( audio->frequency( ) == frequency_pattern[ i / 25 ] );
+	}
+
+	input = stack( ).push( to_wstring( full.native( ) ) + L" packet_stream=1 filter:decode" ).pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 76 ); // FUDGE1
+
+	for ( int i = 0; i < 75; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		audio_type_ptr audio = frame->get_audio( );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		if ( i == 24 ) continue; // FUDGE3
+		BOOST_CHECK( audio->channels( ) == channel_pattern[ i / 25 ] );
+		if ( i == 50 ) continue; // FUDGE2
+		BOOST_CHECK( audio->frequency( ) == frequency_pattern[ i / 25 ] );
+	}
+
+	input = stack( ).push( to_wstring( full.native( ) ) + L" filter:resampler" ).pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 76 ); // FUDGE1
+
+	for ( int i = 0; i < 75; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		audio_type_ptr audio = frame->get_audio( );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_CHECK( audio->channels( ) == channel_pattern[ 0 ] );
+		BOOST_CHECK( audio->frequency( ) == frequency_pattern[ 0 ] );
+	}
+
+	input = stack( ).push( to_wstring( full.native( ) ) + L" filter:resampler channels=6 frequency=96000" ).pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 76 ); // FUDGE1
+
+	for ( int i = 0; i < 75; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		audio_type_ptr audio = frame->get_audio( );
+		BOOST_REQUIRE( frame->get_audio( ) );
+		BOOST_CHECK( audio->channels( ) == 6 );
+		BOOST_CHECK( audio->frequency( ) == 96000 );
+	}
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

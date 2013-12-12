@@ -689,7 +689,7 @@ private:
 				aml_format_out = audio::pcm24_id;
 			}
 
-			audio_filters_[ tracks_to_decode_[ i ] ] = new avaudio_convert_to_aml( freq_in_out, freq_in_out, chan_in_out, chan_in_out, AV_fmt_in, aml_format_out );
+			audio_filters_[ tracks_to_decode_[ i ] ] = new avaudio_convert_to_aml( freq_in_out, chan_in_out, chan_in_out, AV_fmt_in, aml_format_out );
 		}
 		
 		ARENFORCE_MSG( decoded_frame_ = avcodec_alloc_frame( ) , "Failed to allocate AVFrame for decoding. Out of memory?" ); 
@@ -743,9 +743,26 @@ private:
 
 			if( got_frame )
 			{
-				int channels = track_context->channels;
-				int frequency = track_context->sample_rate;
+				int channels = decoded_frame_->channels;
+				int frequency = decoded_frame_->sample_rate;
+				AVSampleFormat fmt = AVSampleFormat( decoded_frame_->format );
+				ml::audio::identity id = AVSampleFormat_to_aml_id( fmt );
 				int samples = decoded_frame_->nb_samples;
+				bool changed = audio_filters_[ track ]->has_input_changed( frequency, channels, fmt );
+
+				if ( changed && track_reseater->size( ) )
+				{
+					ml::audio_type_ptr buffered = track_reseater->retrieve( track_reseater->size( ) );
+					const boost::uint8_t *ptr = static_cast< const boost::uint8_t * >( buffered->pointer( ) );
+					ml::audio_type_ptr converted = audio_filters_[ track ]->resample( &ptr, buffered->samples( ), frequency, channels, fmt );
+					track_reseater->append( converted );
+				}
+
+				if ( changed )
+				{
+					delete audio_filters_[ track ];
+					audio_filters_[ track ] = new avaudio_convert_to_aml( frequency, channels, channels, fmt, id );
+				}
 
 				ARLOG_DEBUG7( "Managed to decode packet %1% on track %2%. Channels = %3%, frequency = %4%, samples = %5%, discard = %6%" )
 				( strm->position() )( track )( channels )( frequency )( samples )( left_to_discard );
