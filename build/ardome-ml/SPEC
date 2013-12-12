@@ -1,6 +1,6 @@
 PRODUCT: ardome-ml
 MAJORVER: 1
-MINORVER: 12.0_ffmpeg_image_class
+MINORVER: 12.0
 # PRODGROUP: amf
 
 # Replaces the string $ARDENDO$ with a version string based on the major and minor version 
