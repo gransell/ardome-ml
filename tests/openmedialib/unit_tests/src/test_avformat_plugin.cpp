@@ -784,10 +784,10 @@ BOOST_AUTO_TEST_CASE( aml_change_audio_spec )
 	// Two additional tests are made on the resampler here to ensure that 1) it will conform the varying input to the
 	// audio spec of the first frame and 2) it will conform the varying input to a specific form.
 
-	const fs::path file1 = unique( "file1.mp2" );
-	const fs::path file2 = unique( "file2.mp2" );
-	const fs::path file3 = unique( "file3.mp2" );
-	const fs::path full = unique( "full.mp2" );
+	const fs::path file1 = unique( _CT("file1.mp2") );
+	const fs::path file2 = unique( _CT("file2.mp2") );
+	const fs::path file3 = unique( _CT("file3.mp2") );
+	const fs::path full = unique( _CT("full.mp2") );
 
 	BOOST_REQUIRE( !fs::exists( file1 ) && !fs::exists( file2 ) && !fs::exists( file3 ) && !fs::exists( full ) );
 
