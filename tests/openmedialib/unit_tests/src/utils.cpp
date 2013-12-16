@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <boost/test/unit_test.hpp>
 #include <openmedialib/ml/frame.hpp>
 
 using namespace olib::openmedialib::ml;
@@ -181,10 +182,12 @@ bool check_components( image_type_ptr im, int r, int g, int b, int a, int varian
 	const int src_rem = ( im->pitch( ) - im->linesize( ) ) / sizeof( typename T::data_type );
 	int samples[ 4 ];
 	const int components = image::arrange_rgb( im->ml_pixel_format( ), samples, r, g, b, a );
+	BOOST_REQUIRE( components == 4 || a == -1 );
 	const int var = ML_SCALE_SAMPLE( variance, ML_MAX_BIT_VALUE( im->bitdepth( ) ), 255 );
 
 	int h = im->height( );
 	bool ok = true;
+	const bool check_alpha = ( a >= 0 );
 
 	while( ok && h -- )
 	{
@@ -195,7 +198,7 @@ bool check_components( image_type_ptr im, int r, int g, int b, int a, int varian
 			switch( components )
 			{
 				case 4:
-					ok = in_range( int( *src ++ ), *c ++, var );
+					ok = !check_alpha || in_range( int( *src ++ ), *c ++, var );
 				case 3:
 					ok = ok && in_range( int( *src ++ ), *c ++, var );
 					ok = ok && in_range( int( *src ++ ), *c ++, var );
@@ -243,6 +246,7 @@ void print_alpha( image_type_ptr image )
 bool check_image( image_type_ptr image, image_type_ptr alpha, int r, int g, int b, int a, int variance )
 {
 	bool result = image;
+	const bool check_alpha = ( a >= 0 );
 
 	if ( result )
 	{
@@ -253,20 +257,29 @@ bool check_image( image_type_ptr image, image_type_ptr alpha, int r, int g, int 
 			result = check_plane( image, 0, y, variance );
 			result = result && check_plane( image, 1, u, variance );
 			result = result && check_plane( image, 2, v, variance );
-			if ( a >= 0 )
+			if ( check_alpha && pixfmt_has_alpha( image->ml_pixel_format( ) ) )
 			{
-				if ( !alpha ) result = result && check_plane( image, 3, a, variance );
-				else result = result && check_plane( alpha, 0, a, variance );
+				BOOST_REQUIRE( !alpha );
+				result = result && check_plane( image, 3, a, variance );
 			}
 		}
 		else if ( image::is_pixfmt_rgb( image->ml_pixel_format( ) ) )
 		{
-			result = check_components( image, r, g, b, a, variance );
+			if( pixfmt_has_alpha( image->ml_pixel_format( ) ) )
+				result = check_components( image, r, g, b, a, variance );
+			else
+				result = check_components( image, r, g, b, -1, variance );
 		}
 		else
 		{
 			result = false;
 		}
+	}
+
+	if ( check_alpha && !pixfmt_has_alpha( image->ml_pixel_format( ) ) )
+	{
+		BOOST_REQUIRE( alpha );
+		result = result && check_plane( alpha, 0, a, variance );
 	}
 
 	return result;
