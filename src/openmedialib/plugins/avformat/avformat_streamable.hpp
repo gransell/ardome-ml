@@ -136,11 +136,13 @@ struct whitelist
 inline bool is_streamable_old(std::string& inFormat, std::string& inCodec, bool inAmlIndexExists)
 {
 	bool _result = false;
+	const bool is_mov = ( inFormat.find( "mov" ) == 0 );
 
 	_result |= inFormat == "mpegts" && inCodec != "mpeg2video" && inAmlIndexExists;
 	_result |= inFormat == "mpeg" && inCodec == "mpeg2video";
 	_result |= inFormat == "mxf";
-	_result |= inFormat.find( "mov" ) == 0 && inCodec == "mpeg2video";
+	_result |= is_mov && inCodec == "mpeg2video";
+	_result |= is_mov && inCodec == "prores";
 
 	return _result;
 }

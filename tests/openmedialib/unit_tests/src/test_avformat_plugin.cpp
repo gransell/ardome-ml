@@ -476,10 +476,11 @@ void test_prores444_stream_analyze( std::wstring input, bool alpha )
 {
 	input_type_ptr inp = create_delayed_input( input );
 	BOOST_REQUIRE( inp );
-	inp->property( "packet_stream" ) = 1;
+	inp->property( "packet_stream" ) = -1;
 	inp->init();
 	frame_type_ptr frame = inp->fetch();
 	BOOST_REQUIRE( frame );
+	BOOST_REQUIRE( frame->get_stream() );
 	if ( alpha ) {
 		BOOST_CHECK_EQUAL( frame->pf( ), _CT("yuva444p16le") );
 	} else {
@@ -491,10 +492,11 @@ void test_prores422_stream_analyze( std::wstring input )
 {
 	input_type_ptr inp = create_delayed_input( input );
 	BOOST_REQUIRE( inp );
-	inp->property( "packet_stream" ) = 1;
+	inp->property( "packet_stream" ) = -1;
 	inp->init();
 	frame_type_ptr frame = inp->fetch();
 	BOOST_REQUIRE( frame );
+	BOOST_REQUIRE( frame->get_stream() );
 	BOOST_CHECK_EQUAL( frame->pf( ), _CT("yuv422p10le") );
 }
 
