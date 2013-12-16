@@ -4,6 +4,7 @@
 #include <set>
 
 namespace ml = olib::openmedialib::ml;
+namespace image = ml::image;
 
 BOOST_AUTO_TEST_SUITE( image_class )
 
@@ -458,6 +459,43 @@ BOOST_AUTO_TEST_CASE( frame_convert_object )
 	BOOST_CHECK( frame2->height( ) == 576 );
 	BOOST_CHECK( frame2->get_sar_num( ) == 16 );
 	BOOST_CHECK( frame2->get_sar_den( ) == 15 );
+}
+
+typedef struct
+{
+	image::MLPixelFormat pf;
+	int in[ 4 ];
+	int components;
+	int out[ 4 ];
+}
+rgb_arrangement;
+
+rgb_arrangement rgb[ ] = 
+{
+	// pf                                   in     components    out
+	{ image::ML_PIX_FMT_R8G8B8, 		{ 1, 2, 3, 4 }, 3, { 1, 2, 3, -1 } },
+	{ image::ML_PIX_FMT_B8G8R8, 		{ 1, 2, 3, 4 }, 3, { 3, 2, 1, -1 } },
+	{ image::ML_PIX_FMT_R8G8B8A8, 		{ 1, 2, 3, 4 }, 4, { 1, 2, 3, 4 } },
+	{ image::ML_PIX_FMT_B8G8R8A8, 		{ 1, 2, 3, 4 }, 4, { 3, 2, 1, 4 } },
+	{ image::ML_PIX_FMT_A8R8G8B8, 		{ 1, 2, 3, 4 }, 4, { 4, 1, 2, 3 } },
+	{ image::ML_PIX_FMT_A8B8G8R8, 		{ 1, 2, 3, 4 }, 4, { 4, 3, 2, 1 } },
+	{ image::ML_PIX_FMT_R16G16B16LE, 	{ 1, 2, 3, 4 }, 3, { 257, 514, 771, -1 } },
+};
+
+BOOST_AUTO_TEST_CASE( rgb_arrangement_test )
+{
+	int tests = sizeof( rgb ) / sizeof( rgb_arrangement );
+	for ( int i = 0; i < tests; i ++ )
+	{
+		const rgb_arrangement &test = rgb[ i ];
+		int samples[ 4 ];
+		const int components = image::arrange_rgb( test.pf, samples, test.in[ 0 ], test.in[ 1 ], test.in[ 2 ], test.in[ 3 ] );
+		BOOST_CHECK( components == test.components );
+		bool ok = true;
+		for ( int j = 0; ok && j < components; j ++ )
+			ok = samples[ j ] == test.out[ j ];
+		BOOST_CHECK( ok );
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END( )
