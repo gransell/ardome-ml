@@ -818,7 +818,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.den = prop_fps_num_.value< int >( );
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
-				c->pix_fmt = AVPixelFormat(ml::image::ML_to_AV( ml::image::string_to_MLPF( prop_pix_fmt_.value< std::wstring >( ) ) ));
+				c->pix_fmt = AVPixelFormat( ml::image::ML_to_AV( ml::image::string_to_MLPF(
+					olib::opencorelib::str_util::to_t_string( prop_pix_fmt_.value< std::wstring >( ) ) ) ) );
 
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
