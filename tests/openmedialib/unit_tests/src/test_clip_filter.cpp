@@ -11,7 +11,7 @@ using namespace olib::opencorelib::str_util;
 
 BOOST_AUTO_TEST_CASE(test_clip_filter)
 {
-    input_type_ptr input = create_input (L"avformat:" MEDIA_REPO_PREFIX TEST_FILE);
+    input_type_ptr input = create_input (L"avformat:" MEDIA_REPO_PREFIX_W TEST_FILE);
     
     BOOST_REQUIRE(input);
     BOOST_REQUIRE(input->init());

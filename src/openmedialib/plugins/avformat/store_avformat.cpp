@@ -258,8 +258,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 			properties( ).append( prop_audio_stream_id_ = 0 );
 			properties( ).append( prop_vfourcc_ = std::wstring( L"" ) );
 			properties( ).append( prop_afourcc_ = std::wstring( L"" ) );
-			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ? frame->pf( ) : olib::t_string( _CT("") ) );
-
+			properties( ).append( prop_pix_fmt_ = frame->has_image( ) ?
+				cl::str_util::to_wstring( frame->pf( ) ) : std::wstring( L"" ) );
 			properties( ).append( prop_audio_bit_rate_ = 128000 );
 			properties( ).append( prop_video_bit_rate_ = 400000 );
 			properties( ).append( prop_video_bit_rate_tolerance_ = 4000 * 1000 );
@@ -818,7 +818,7 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 				c->time_base.den = prop_fps_num_.value< int >( );
 				c->time_base.num = prop_fps_den_.value< int >( );
 				c->gop_size = prop_gop_size_.value< int >( );
-				c->pix_fmt = AVPixelFormat(ml::image::ML_to_AV( ml::image::string_to_MLPF( prop_pix_fmt_.value< olib::t_string >( ) ) ));
+				c->pix_fmt = AVPixelFormat(ml::image::ML_to_AV( ml::image::string_to_MLPF( prop_pix_fmt_.value< std::wstring >( ) ) ));
 
 				// Fix b frames
 				if ( prop_b_frames_.value< int >( ) )
@@ -1541,7 +1541,8 @@ class ML_PLUGIN_DECLSPEC avformat_store : public store_type
 					}
 				}
 
-				img_convert_ = sws_getCachedContext( img_convert_, width, height, c->pix_fmt, width, height, AVPixelFormat( ml::image::ML_to_AV( image->ml_pixel_format() ) ), SWS_BICUBIC, NULL, NULL, NULL );
+				const AVPixelFormat av_pf = AVPixelFormat( ml::image::ML_to_AV( image->ml_pixel_format() ) );
+				img_convert_ = sws_getCachedContext( img_convert_, width, height, av_pf, width, height, c->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL );
 				if ( img_convert_ != NULL )
 					sws_scale( img_convert_, input.data, input.linesize, 0, height, av_image_.data, av_image_.linesize );
 			}

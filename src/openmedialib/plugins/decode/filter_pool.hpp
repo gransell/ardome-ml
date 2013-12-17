@@ -28,28 +28,9 @@ public:
 protected:
 	virtual ml::filter_type_ptr filter_obtain( ) = 0;
 	virtual void filter_release( ml::filter_type_ptr ) = 0;
-	
 };
 
-
-class shared_filter_pool
-{
-public:
-	ml::filter_type_ptr filter_obtain( filter_pool *pool_token );
-
-	void filter_release( ml::filter_type_ptr filter, filter_pool *pool_token );
-	
-	void add_pool( filter_pool *pool );
-	
-	void remove_pool( filter_pool * pool );
-		
-private:
-	std::set< filter_pool * > pools_;
-	boost::recursive_mutex mtx_;
-		   
-};
-
-typedef Loki::SingletonHolder< shared_filter_pool, Loki::CreateUsingNew, Loki::PhoenixSingleton > the_shared_filter_pool;
+typedef boost::shared_ptr< filter_pool > filter_pool_ptr;
 
 } } } }
 

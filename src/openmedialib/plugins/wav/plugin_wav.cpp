@@ -21,7 +21,6 @@
 namespace pl = olib::openpluginlib;
 namespace ml = olib::openmedialib::ml;
 namespace io = ml::io;
-
 namespace pcos = olib::openpluginlib::pcos;
 
 // If this function would appear in a later version of avformat,
@@ -32,8 +31,12 @@ int avio_read_complete( AVIOContext *s, unsigned char *buf, int size )
 	while ( remaining > 0 )
 	{
 		int result = avio_read( s, buf, remaining );
-		if( result < 0 )
-			return result;
+
+		if( result == AVERROR_EOF ) {
+			return size - remaining;
+		}
+
+		ARENFORCE_MSG( result >= 0, "Failed to read audio" )( result );
 
 		remaining -= result;
 	}
@@ -280,7 +283,10 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 
 				case 24:
 					result = ml::audio::allocate( ml::audio::pcm24_id, frequency_, channels_, samples, false );
-					pack_24( result, buffer, samples * channels_ );
+					ml::audio::unpack_pcm24( static_cast< boost::uint32_t* >( result->pointer() ), 
+													  &buffer[ 0 ], 
+													  samples, 
+													  channels_ );
 					break;
 
 				case 32:
@@ -297,8 +303,8 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 			}
 
 			if (result) {
-				boost::int64_t samples = ((boost::int64_t)result->samples() * (boost::int64_t)nread) / (boost::int64_t)result->size();
-				result->original_samples( (int)samples );
+				boost::int64_t samples64 = ((boost::int64_t)result->samples() * (boost::int64_t)nread) / (boost::int64_t)result->size();
+				result->original_samples( (int)samples64 );
 			}
 
 			return result;
@@ -333,17 +339,6 @@ class ML_PLUGIN_DECLSPEC input_wav : public input_type
 		inline int get_le16( const std::vector< boost::uint8_t > &buffer, int o )
 		{
 			return boost::int16_t( buffer[ o ] | buffer[ o + 1 ] << 8 );
-		}
-
-		inline void pack_24( ml::audio_type_ptr &result, const std::vector< boost::uint8_t > &buffer, int samples )
-		{
-			const boost::uint8_t *src = &buffer[ 0 ];
-			int *dst = static_cast< int * >( result->pointer( ) );
-			while( samples -- )
-			{
-				*dst ++ = int( src[ 0 ] << 8 | src[ 1 ] << 16 | src[ 2 ] << 24 ) >> 8;
-				src += 3;
-			}
 		}
 
 		std::wstring spec_;

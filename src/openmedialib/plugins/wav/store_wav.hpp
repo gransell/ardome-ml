@@ -58,7 +58,7 @@ class ML_PLUGIN_DECLSPEC store_wav : public ml::store_type
 
 		AVIOContext *file_;
 		std::wstring resource_;
-		std::vector<unsigned char> conversion_buffer_;
+		std::vector<boost::uint8_t> conversion_buffer_;
 
 		pcos::property prop_enabled_;
 		pcos::property prop_deferrable_;

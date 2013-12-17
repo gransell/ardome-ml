@@ -102,6 +102,32 @@ BOOST_AUTO_TEST_CASE( amf_2123_failed_to_read_partial_ts )
 	BOOST_CHECK_EQUAL( inp->get_frames(), 1200 );
 }
 
+void test_gop_size_estimation( const char *file_path, int expected_gop_size )
+{
+	BOOST_MESSAGE( "Checking gop size estimation for file: " << file_path );
+	input_type_ptr inp = create_delayed_input( L"avformat:" MEDIA_REPO_PREFIX_W + to_wstring( file_path ) );
+	BOOST_REQUIRE( inp );
+	inp->property( "packet_stream" ) = 1;
+	BOOST_REQUIRE( inp->init() );
+
+	frame_type_ptr frame = inp->fetch();
+	BOOST_REQUIRE( frame );
+	stream_type_ptr stream = frame->get_stream();
+	BOOST_REQUIRE( stream );
+
+	const int gop_size = stream->estimated_gop_size();
+	BOOST_CHECK_EQUAL( gop_size, expected_gop_size );
+}
+
+BOOST_AUTO_TEST_CASE( gop_size_estimation )
+{
+	test_gop_size_estimation( "DV/DVCPro100_1080i50_4ch_16.dif", 1 );
+	test_gop_size_estimation( "MOV/DVCPro25/DVCPro25_PAL_4ch_16bit.mov", 1 );
+	test_gop_size_estimation( "MOV/DVCPro100/DVCPro100_1080i50_2ch_16bit.mov", 1 );
+	test_gop_size_estimation( "MOV/XDCamHD/XDCamHD_1080i50_6ch_24bit.mov", 12 );
+	test_gop_size_estimation( "MOV/XDCamHD/XDCamHD_1080i60_16ch_24bit.mov", 15 );
+	test_gop_size_estimation( "XDCamEX/AircraftFlyby-720P50FPS/XDZ10003_01.MP4", 25 );
+}
 
 BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 {
@@ -225,17 +251,17 @@ BOOST_AUTO_TEST_CASE( avformat_decode_AES )
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_50p )
 {
-	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_720p50_6ch_24bit.mov" );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/XDCamHD/XDCamHD_720p50_6ch_24bit.mov" );
 }
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_25p )
 {
-	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_1080p25_6ch_24bit.mov" );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/XDCamHD/XDCamHD_1080p25_6ch_24bit.mov" );
 }
 
 BOOST_AUTO_TEST_CASE( avformat_input_pcm24_30p )
 {
-	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/XDCamHD/XDCamHD_1080p29.97_6ch_24bit.mov" );
+	test_24pcm_input( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/XDCamHD/XDCamHD_1080p29.97_6ch_24bit.mov" );
 }
 
 #define abs( a ) a < 0 ? -1 * a : a
@@ -504,19 +530,19 @@ void test_prores422_stream_analyze( std::wstring input )
 BOOST_AUTO_TEST_CASE( avformat_prores_stream_analyze )
 {
 	//444
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i50_0ch.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080i59.94-DF_0ch.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p24_6ch_24bit.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p25_0ch.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p30_0ch.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p50_0ch.mov", true );
-	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes4444_1080p60_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080i50_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080i59.94-DF_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080p24_6ch_24bit.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080p25_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080p30_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080p50_0ch.mov", true );
+	test_prores444_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes4444_1080p60_0ch.mov", true );
 
 	//422
-	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_Proxy_1080p24_6ch_24bit.mov");
-	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_LT_1080p24_6ch_24bit.mov"); 
-	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_1080p24_6ch_24bit.mov"); 
-	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX L"/MOV/ProRes/ShortTests/ProRes422_HQ_1080p24_6ch_24bit.mov"); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes422_Proxy_1080p24_6ch_24bit.mov");
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes422_LT_1080p24_6ch_24bit.mov"); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes422_1080p24_6ch_24bit.mov"); 
+	test_prores422_stream_analyze( L"avformat:" MEDIA_REPO_PREFIX_W L"/MOV/ProRes/ShortTests/ProRes422_HQ_1080p24_6ch_24bit.mov"); 
 }
 
 input_type_ptr create_test_graph( int fps_num, int fps_den, int count )
@@ -665,16 +691,22 @@ void cleanup( const fs::path &p )
 	}
 }
 
+fs::path generate_unique_tmp_path( const olib::t_string &base_name )
+{
+	cl::uuid_16b unique_id;
+	const fs::path unique_path = 
+		cl::special_folder::get( cl::special_folder::temp ) /
+		( unique_id.to_hex_string() + base_name );
+	BOOST_REQUIRE( !fs::exists( unique_path ) );
+	return unique_path;
+}
+
 void store_test( const olib::t_string &filename, int fps_num, int fps_den, int count, builder_type write_output, checker_type checker = check_output )
 {
 	BOOST_REQUIRE_EQUAL( filename.find( _CT('/') ), olib::t_string::npos );
 	BOOST_REQUIRE_EQUAL( filename.find( _CT(':') ), olib::t_string::npos );
 
-	cl::uuid_16b unique_id;
-	const fs::path unique_path = 
-		cl::special_folder::get( cl::special_folder::temp ) /
-		( unique_id.to_hex_string() + filename );
-	BOOST_REQUIRE( !fs::exists( unique_path ) );
+	const fs::path unique_path = generate_unique_tmp_path( filename );
 	ARGUARD( boost::bind( &cleanup, unique_path ) );
 	const std::wstring decorated_path = L"avformat:" + to_wstring( unique_path.native() );
 	
@@ -893,6 +925,30 @@ BOOST_AUTO_TEST_CASE( aml_change_audio_spec )
 		BOOST_CHECK( audio->channels( ) == 6 );
 		BOOST_CHECK( audio->frequency( ) == 96000 );
 	}
+}
+
+BOOST_AUTO_TEST_CASE( amf_2332_segfault_when_generating_jpeg_from_yuv411p )
+{
+	input_type_ptr color_input = create_delayed_input( L"colour:" );
+	BOOST_REQUIRE( color_input );
+	color_input->property( "width" ) = 720;
+	color_input->property( "height" ) = 576;
+	color_input->property( "colourspace" ) = std::wstring( L"yuv411p" );
+	color_input->property( "r" ) = 128;
+
+	BOOST_REQUIRE( color_input->init() );
+	frame_type_ptr frame = color_input->fetch();
+	BOOST_REQUIRE( frame );
+
+	const fs::path unique_path = generate_unique_tmp_path( _CT("amf_2332.jpg") );
+	ARGUARD( boost::bind( &cleanup, unique_path ) );
+	const std::wstring store_uri = L"avformat:" + to_wstring( unique_path.native() );
+
+	store_type_ptr jpg_store = create_store( store_uri, frame );
+	BOOST_REQUIRE( jpg_store );
+	BOOST_REQUIRE( jpg_store->init() );
+	BOOST_REQUIRE( jpg_store->push( frame ) );
+	jpg_store->complete();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

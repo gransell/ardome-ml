@@ -46,7 +46,6 @@ class ML_PLUGIN_DECLSPEC filter_lazy : public filter_type, public filter_pool
 		std::wstring spec_;
 		ml::filter_type_ptr filter_;
 		std::deque< ml::filter_type_ptr > filters_;
-		ml::frame_type_ptr last_frame_;
 };
 
 

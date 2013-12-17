@@ -13,7 +13,7 @@ namespace
 		const std::string &expected_codec_suffix,
 		const std::string &expected_pixel_format )
 	{
-		const std::wstring full_uri( L"avformat:" MEDIA_REPO_PREFIX L"MOV/ProRes/ShortTests/" + media_file );
+		const std::wstring full_uri( L"avformat:" MEDIA_REPO_PREFIX_W L"MOV/ProRes/ShortTests/" + media_file );
 
 		input_type_ptr avformat_input = create_delayed_input( full_uri );
 		avformat_input->property( "packet_stream" ) = 1;

@@ -5,7 +5,8 @@
 #include <openmedialib/ml/types.hpp>
 #include <opencorelib/cl/str_util.hpp>
 
-#define MEDIA_REPO_PREFIX L"http://releases.ardendo.se/media-repository/"
+#define MEDIA_REPO_PREFIX "http://releases.ardendo.se/media-repository/"
+#define MEDIA_REPO_PREFIX_W L"http://releases.ardendo.se/media-repository/"
 #define MEDIA_REPO_REGRESSION_TESTS_PREFIX "http://releases.ardendo.se/media-repository/amf/RegressionTests"
 
 //Required in order to use wstrings with BOOST_CHECK_EQUAL

@@ -135,7 +135,7 @@ ML_DECLSPEC input_type_ptr create_delayed_input( const std::wstring &resource )
 	scoped_lock lock( mutex_ );
 	PL_LOG( pl::level::debug5, boost::format( "Looking for a plugin for: %1%" ) % cl::str_util::to_string( resource ) );
 	
-	input_creator_ptr creator = the_input_creator_handler::Instance( ).input_creator_for_id( cl::str_util::to_t_string( resource ) );
+	input_creator_ptr creator = the_input_creator_handler::instance( ).input_creator_for_id( cl::str_util::to_t_string( resource ) );
 	if( creator )
 	{
 		PL_LOG( pl::level::debug5, "Found input_creator for resource. Overrides plugins." );

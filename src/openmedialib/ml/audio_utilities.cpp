@@ -507,6 +507,15 @@ ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const
 	}
 }
 
+ML_DECLSPEC void unpack_pcm24( uint32_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels )
+{
+	for( uint32_t i = 0; i < samples * channels; ++i )
+	{
+		*dest ++ = uint32_t( src[ 0 ] << 8 | src[ 1 ] << 16 | src[ 2 ] << 24 );
+		src += 3;
+	}
+}
+
 // swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time. so the input data has to be 16-byte aligned.
 // pcm to aiff16. byteswap16_inplace
 ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes )

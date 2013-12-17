@@ -18,9 +18,27 @@ namespace
 }
 
 
-BOOST_AUTO_TEST_SUITE( audio_utilities )
+BOOST_AUTO_TEST_SUITE( test_audio_utilities )
 
-BOOST_AUTO_TEST_CASE( pack_pcm24_from_pcm32 )
+BOOST_AUTO_TEST_CASE( test_unpack_pcm24 )
+{
+	const int samples = 2, channels = 2, input_sample_size_in_bytes = 3, output_sample_size_in_bytes = 4;
+	uint8_t test_src[samples * channels * input_sample_size_in_bytes];
+	uint8_t test_dest[samples * channels * output_sample_size_in_bytes];
+
+	initialize_array( test_src, sizeof( test_src ) );
+	au::unpack_pcm24( (uint32_t*)test_dest, test_src, samples, channels );
+	
+	uint8_t *src = test_src, *dest = test_dest;
+	for( int i = 0; i < samples * channels; ++i, src += input_sample_size_in_bytes, dest += output_sample_size_in_bytes )
+	{
+		BOOST_CHECK_EQUAL( src[0], dest[1] );
+		BOOST_CHECK_EQUAL( src[1], dest[2] );
+		BOOST_CHECK_EQUAL( src[2], dest[3] );
+	}
+}
+
+BOOST_AUTO_TEST_CASE( test_pack_pcm24_from_pcm32 )
 {
 	const int samples = 2, channels = 2, input_sample_size_in_bytes = 4, output_sample_size_in_bytes = 3;
 	uint8_t test_src[samples * channels * input_sample_size_in_bytes];
@@ -38,7 +56,7 @@ BOOST_AUTO_TEST_CASE( pack_pcm24_from_pcm32 )
 	}
 }
 
-BOOST_AUTO_TEST_CASE( pack_aiff24_from_pcm32 )
+BOOST_AUTO_TEST_CASE( test_pack_aiff24_from_pcm32 )
 {	
 	const int samples = 2, channels = 2, input_sample_size_in_bytes = 4, output_sample_size_in_bytes = 3;
 	uint8_t test_src[samples * channels * input_sample_size_in_bytes];
@@ -56,7 +74,7 @@ BOOST_AUTO_TEST_CASE( pack_aiff24_from_pcm32 )
 	}
 }
 
-BOOST_AUTO_TEST_CASE( byteswap16_inplace )
+BOOST_AUTO_TEST_CASE( test_byteswap16_inplace )
 {	
 	// byteswap16_inplace uses SSE instructions that need input data to be 16-byte aligned. so use aligned_alloc to allocate test data.
 	boost::shared_ptr< uint8_t > test_buf( static_cast< uint8_t * >( olib::opencorelib::utilities::aligned_alloc( 16, 32 ) ), &olib::opencorelib::utilities::aligned_free );
@@ -425,4 +443,3 @@ BOOST_AUTO_TEST_CASE( frame_convert_object )
 }
 
 BOOST_AUTO_TEST_SUITE_END( )
-

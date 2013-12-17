@@ -652,9 +652,6 @@ class avformat_demux
 				{
 					case ml::stream_video:
 					{
-						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
-						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
-
 						/*  
 						 * The prores stream got incorrect pixelformat set.
 						 * The stream analyze function will look at the AVPacket
@@ -662,6 +659,15 @@ class avformat_demux
 						 *  */
 						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) {
 							prores_stream_analyze(&pkt_, codec);
+						}
+
+						// Avformat does not seem to have a clue of what the gop size is so we guess based on frame rate
+						int estimated_gop_size = ceil( (double)source->fps_num_ / source->fps_den_ ) / 2;
+
+						//If the intra only flag is set, then we can reliably assume gop size 1
+						const AVCodecDescriptor *codec_desc = avcodec_descriptor_get( stream->codec->codec_id );
+						if( codec_desc != NULL && bool( codec_desc->props & AV_CODEC_PROP_INTRA_ONLY ) )
+						{
 							estimated_gop_size = 1;
 						}
 
@@ -677,8 +683,9 @@ class avformat_demux
 							ml::image::MLPF_to_string( ml::image::AV_to_ML( ( codec->pix_fmt ) ) ),
 							ml::image::top_field_first,
 							estimated_gop_size ) );
+
+						break;
 					}
-					break;
 
 					case ml::stream_audio:
 						packet = stream_avformat_ptr( new stream_avformat( stream->codec->codec_id, pkt_.size, position, position,
@@ -2614,7 +2621,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				}
 
 				// If we need to discard packets, do that now
-				if( discard_audio_packet_count_ )
+				if( discard_audio_packet_count_ ) // && found <= get_position( ) - 1 )
 				{
 					discard_audio_packet_count_ --;
 					ret = 0;
@@ -2622,6 +2629,10 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					audio_buf_used_ = 0;
 					if ( !has_video( ) ) expected_packet_ ++;
 					break;
+				}
+				else
+				{
+					discard_audio_packet_count_  = 0;
 				}
 
 				// If no samples are returned, then break now

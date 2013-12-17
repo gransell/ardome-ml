@@ -33,7 +33,7 @@ filter_encode::filter_encode( )
 		, decoder_( )
 		, gop_encoder_( )
 		, is_long_gop_( false )
-		, last_frame_( )
+		, initialized_( false )
 		, profile_to_encoder_mappings_( )
 		, stream_validation_( false )
 {
@@ -45,13 +45,10 @@ filter_encode::filter_encode( )
 
 	// Enabled by default
 	properties( ).append( prop_enable_ = 1 );
-	
-	the_shared_filter_pool::Instance( ).add_pool( this );
 }
 
 filter_encode::~filter_encode( )
 {
-	the_shared_filter_pool::Instance( ).remove_pool( this );
 }
 
 // Indicates if the input will enforce a packet decode
@@ -161,17 +158,13 @@ void filter_encode::do_fetch( frame_type_ptr &frame )
 
 	int frameno = get_position( );
 
-	if ( last_frame_ == 0 )
+	if ( !initialized_ )
 	{
 		initialize_encoder_mapping( );
 		create_pushers( );
 	}
 
-	if ( last_frame_ && last_frame_->get_position( ) == get_position( ) )
-	{
-		frame = last_frame_->shallow();
-	}
-	else if ( gop_encoder_ )
+	if ( gop_encoder_ )
 	{
 		gop_encoder_->seek( frameno );
 		frame = gop_encoder_->fetch( );
@@ -183,7 +176,7 @@ void filter_encode::do_fetch( frame_type_ptr &frame )
 		frame->set_position( get_position( ) );
 
 		// Check the first frame here so that any unspecified properties are picked up at this point
-		if ( last_frame_ == 0 )
+		if ( !initialized_ )
 		{
 			matching( frame );
 			ARENFORCE_MSG( valid( frame ), "Invalid frame for encoder" );
@@ -193,11 +186,12 @@ void filter_encode::do_fetch( frame_type_ptr &frame )
 		if ( validate && stream_validation_ )
 			validate = true;
 
-		frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), this, validate ) );
+		boost::shared_ptr< filter_encode > shared_self =
+			boost::dynamic_pointer_cast< filter_encode >( shared_from_this( ) );
+		frame = ml::frame_type_ptr( new frame_lazy( frame, get_frames( ), shared_self, validate ) );
 	}
 
-	// Keep a reference to the last frame in case of a duplicated request
-	last_frame_ = frame->shallow();
+	initialized_ = true;
 }
 
 void filter_encode::initialize_encoder_mapping( )

@@ -3,6 +3,8 @@
 
 #include "frame_lazy.hpp"
 #include <opencorelib/cl/enforce_defines.hpp>
+#include <opencorelib/cl/assert_defines.hpp>
+#include <opencorelib/cl/guard_define.hpp>
 #include <openmedialib/ml/utilities.hpp>
 #include <openmedialib/ml/fix_stream.hpp>
 
@@ -16,40 +18,28 @@ static pl::pcos::key key_length_ = pl::pcos::key::from_string( "length" );
 
 namespace olib { namespace openmedialib { namespace ml { namespace decode {
 
-//########################################################################################
-
-frame_lazy::filter_pool_holder::filter_pool_holder( filter_pool *pool )
-	: pool_( pool )
-{ }
-
-frame_lazy::filter_pool_holder::~filter_pool_holder()
-{
+namespace {
+	const char *component_to_string( component comp )
+	{
+		switch( comp )
+		{
+			case eval_image: return "image";
+			case eval_stream: return "stream";
+		}
+		ARASSERT( false );
+		return "<ERROR: Add handling for component>";
+	}
 }
 
-ml::filter_type_ptr frame_lazy::filter_pool_holder::filter()
-{
-	filter_ = filter_ ? filter_ : the_shared_filter_pool::Instance().filter_obtain( pool_ );
-	return filter_;
-}
-
-void frame_lazy::filter_pool_holder::release( )
-{
-	if ( filter_ )
-		the_shared_filter_pool::Instance().filter_release( filter_, pool_ );
-	filter_ = ml::filter_type_ptr( );
-}
-
-//########################################################################################
-
-
-frame_lazy::frame_lazy( const frame_type_ptr &other, int frames, filter_pool *pool_token, bool validated )
+frame_lazy::frame_lazy( const frame_type_ptr &other, int frames, const filter_pool_ptr &filter_pool, bool validated )
 	: ml::frame_type( other.get( ) )
 	, parent_( other )
 	, frames_( frames )
-	, pool_holder_( new filter_pool_holder( pool_token ) )
 	, validated_( validated )
 	, evaluated_( 0 )
+	, filter_pool_( filter_pool )
 {
+	ARENFORCE( filter_pool );
 	ARENFORCE( other->get_position() < frames )(other->get_position())(frames);
 }
 
@@ -59,65 +49,66 @@ frame_lazy::~frame_lazy( )
 
 void frame_lazy::evaluate( component comp )
 {
-	filter_type_ptr filter;
 	evaluated_ |= comp;
-	if ( pool_holder_ && ( filter = pool_holder_->filter( ) ) )
+
+	filter_type_ptr filter = filter_pool_->filter_obtain( );
+	//After we've evaluated the frame, return the encoder/decoder filter to
+	//the filter pool.
+	ARGUARD( boost::bind( &filter_pool::filter_release, filter_pool_, filter ) );
+
+	ml::frame_type_ptr other = parent_;
 	{
-		ml::frame_type_ptr other = parent_;
+		ml::input_type_ptr pusher = filter->fetch_slot( 0 );
 
+		if ( pusher == 0 )
 		{
-			ml::input_type_ptr pusher = filter->fetch_slot( 0 );
-
-			if ( pusher == 0 )
-			{
-				pusher = ml::create_input( L"pusher:" );
-				pusher->property_with_key( key_length_ ) = frames_;
-				filter->connect( pusher );
-				filter->sync( );
-			}
-			else if ( pusher->get_uri( ) == L"pusher:" && pusher->get_frames( ) != frames_ )
-			{
-				pusher->property_with_key( key_length_ ) = frames_;
-				filter->sync( );
-			}
-
-			// Do any codec specific modifications of the packet to make it decodable
-			ml::fix_stream( other );
-
-			pusher->push( other );
-			filter->seek( other->get_position( ) );
-			other = filter->fetch( );
-
-			ARENFORCE( !other->in_error() );
-
-			//Empty pusher in case filter didn't read from it due to caching
-			pusher->fetch( );
+			pusher = ml::create_input( L"pusher:" );
+			pusher->property_with_key( key_length_ ) = frames_;
+			filter->connect( pusher );
+			filter->sync( );
+		}
+		else if ( pusher->get_uri( ) == L"pusher:" && pusher->get_frames( ) != frames_ )
+		{
+			pusher->property_with_key( key_length_ ) = frames_;
+			filter->sync( );
 		}
 
-		if ( comp == eval_image )
-		{
-			image_ = other->get_image( );
-			alpha_ = other->get_alpha( );
-		}
+		// Do any codec specific modifications of the packet to make it decodable
+		ml::fix_stream( other );
 
-		audio_ = other->get_audio( );
-		//properties_ = other->properties( );
-		if ( comp == eval_stream )
-		{
-			stream_ = other->get_stream( );
-		}
-		pts_ = other->get_pts( );
-		duration_ = other->get_duration( );
-		//sar_num_ = other->get_sar_num( );
-		//sar_den_ = other->get_sar_den( );
-		fps_num_ = other->get_fps_num( );
-		fps_den_ = other->get_fps_den( );
-		exceptions_ = other->exceptions( );
-		queue_ = other->queue( );
+		pusher->push( other );
+		filter->seek( other->get_position( ) );
+		other = filter->fetch( );
 
-		//We will not have any use for the filter now
-		pool_holder_->release();
+		ARENFORCE_MSG( !other->in_error(),
+			"Evaluation of %1% component on frame failed. Exception message was:\n%2%" )
+			( component_to_string( comp ) )
+			( other->exceptions()[0].first->what() );
+
+		//Empty pusher in case filter didn't read from it due to caching
+		pusher->fetch( );
 	}
+
+	if ( comp == eval_image )
+	{
+		image_ = other->get_image( );
+		alpha_ = other->get_alpha( );
+	}
+
+	audio_ = other->get_audio( );
+	//properties_ = other->properties( );
+	if ( comp == eval_stream )
+	{
+		stream_ = other->get_stream( );
+	}
+	pts_ = other->get_pts( );
+	duration_ = other->get_duration( );
+	//sar_num_ = other->get_sar_num( );
+	//sar_den_ = other->get_sar_den( );
+	fps_num_ = other->get_fps_num( );
+	fps_den_ = other->get_fps_den( );
+	exceptions_ = other->exceptions( );
+	queue_ = other->queue( );
 }
 
 /// Provide a shallow copy of the frame (and all attached frames)
@@ -144,7 +135,7 @@ bool frame_lazy::has_image( )
 /// Indicates if the frame has audio
 bool frame_lazy::has_audio( )
 {
-	return ( pool_holder_ && parent_->has_audio( ) ) || audio_;
+	return ( evaluated_ == 0 && parent_->has_audio( ) ) || audio_;
 }
 
 /// Set the image associated to the frame.
@@ -152,7 +143,7 @@ void frame_lazy::set_image( olib::openmedialib::ml::image_type_ptr image, bool d
 {
 	frame_type::set_image( image, decoded );
 	evaluated_ = eval_image | eval_stream;
-	pool_holder_.reset();
+	filter_pool_.reset();
 	if( parent_ )
 		parent_->set_image( image, decoded );
 }
@@ -203,7 +194,7 @@ frame_lazy::frame_lazy( const frame_lazy *org, const frame_type_ptr &other )
 	: ml::frame_type( org )
 	, parent_( other )
 	, frames_( org->frames_ )
-	, pool_holder_( org->pool_holder_ )
+	, filter_pool_( org->filter_pool_ )
 	, validated_( org->validated_ )
 	, evaluated_( org->evaluated_ )
 {

@@ -13,7 +13,6 @@ src = [ 'plugin_decode.cpp',
 		'filter_field_order.cpp',
 		'filter_lazy.cpp',
 		'filter_map_reduce.cpp',
-		'filter_pool.cpp',
 		'filter_rescale.cpp',
 		'frame_lazy.cpp',
 		]

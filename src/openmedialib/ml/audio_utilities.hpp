@@ -117,6 +117,12 @@ extern ML_DECLSPEC void pack_aiff24_from_pcm32( uint8_t *dest, const uint8_t *sr
 // output pcm24			C	B	A
 extern ML_DECLSPEC void pack_pcm24_from_pcm32( uint8_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
 
+// Unpack 24-bit audio from 24-bit storage to 32-bit storage 
+// byte position	3	2	1	0
+// input pcm32			C	B	A
+// output pcm24		C	B	A	X
+extern ML_DECLSPEC void unpack_pcm24( uint32_t *dest, const uint8_t *src, const uint32_t samples, const uint32_t channels );
+
 // Swaps the bytes of every 16-bit word. works on 128-bit (16-byte) chunks at a time (SSE). so the input data has to be 16-byte aligned.
 // num_bytes should be the total number of bytes in the buffer (data). It should be divisible by 16.
 extern ML_DECLSPEC void byteswap16_inplace( uint8_t *data, int32_t num_bytes );
