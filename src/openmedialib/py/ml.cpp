@@ -402,6 +402,7 @@ void py_stack( )
         .def( "push", push0, py::return_value_policy< py::reference_existing_object >( )  )
         .def( "push", push1, py::return_value_policy< py::reference_existing_object >( )  )
         .def( "pop", &ml::stack::pop )
+        .def( "release", &ml::stack::release )
     ;
 }
 

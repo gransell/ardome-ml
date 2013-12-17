@@ -947,7 +947,7 @@ class aml_stack
 			if ( !is_http_source && url != _CT("/") && is_file( paths_.back( ), url ) )
 				url = olib::t_path( paths_.back( ) / url ).native( );
 
-			if ( !inputs_.empty( ) )
+			if ( !inputs_.empty( ) && inputs_.back( ) )
 				properties = inputs_.back( )->properties( );
 
 			if ( ( ( arg != L":" && arg != L";" ) || ignore_ ) && state_ == 1 )
@@ -1120,14 +1120,16 @@ class aml_stack
 		void push( ml::input_type_ptr input )
 		{
 			if ( state_ != 0 )
-				throw std::string( "Synatx error - attempt to insert binary input in function" );
+				throw std::string( "Syntax error - attempt to insert binary input in function" );
+			if ( !input )
+				throw std::string( "Attempting to a push a null input" );
 			inputs_.push_back( input );
 		}
 
 		void push( ml::filter_type_ptr input )
 		{
 			if ( state_ != 0 )
-				throw std::string( "Synatx error - attempt to insert binary input in function" );
+				throw std::string( "Syntax error - attempt to insert binary input in function" );
 			inputs_.push_back( input );
 		}
 

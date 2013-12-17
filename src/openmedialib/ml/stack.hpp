@@ -28,6 +28,14 @@ class stack
 			return *this;
 		}
 
+		input_type_ptr release( )
+		{
+			stack_->property( "parse" ) = std::wstring( L"." );
+			input_type_ptr result = fetch_slot( );
+			connect( input_type_ptr( ) );
+			return result;
+		}
+
 		input_type_ptr pop( )
 		{
 			return push( L"." ).fetch_slot( );
