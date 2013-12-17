@@ -61,6 +61,7 @@ namespace ml = olib::openmedialib::ml;
 namespace pl = olib::openpluginlib;
 
 namespace pcos = olib::openpluginlib::pcos;
+using boost::algorithm::starts_with;
 
 namespace olib { namespace openmedialib { namespace ml {
 
@@ -1250,12 +1251,14 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					( error_code )( resource );
 			}
 
-			if (error == 0 && context_->pb && context_->pb->seekable && resource.find( L"rtsp://" ) != 0) 
+			const bool is_rtsp = starts_with( resource, L"rtsp://" );
+			if ( error == 0 && context_->pb && context_->pb->seekable && !is_rtsp ) 
 			{
+				const bool is_mov = starts_with( context_->iformat->name, "mov" );
 				boost::uint16_t index_entry_type = prop_video_index_.value< int >( ) == -1 ? 2 : 1;
 				if ( prop_ts_index_.value< std::wstring >( ) != L"" )
 					indexer_item_ = ml::indexer_request( prop_ts_index_.value< std::wstring >( ), ml::index_type::awi, index_entry_type );
-				else
+				else if( !is_mov ) //We don't support growing MOV files, so no point in looking for file growth
 					indexer_item_ = ml::indexer_request( resource, ml::index_type::media, index_entry_type );
 
 				if ( indexer_item_ && indexer_item_->index( ) )
