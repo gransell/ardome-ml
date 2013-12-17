@@ -610,8 +610,12 @@ class ML_PLUGIN_DECLSPEC filter_compositor : public ml::filter_type
 				// If we're not in deferred mode, we need to convert to a format which is supported now
 				ml::image::MLPixelFormat original_pf = result->ml_pixel_format( );
 
-				if ( !deferred && original_pf != ml::image::composite_pf( original_pf ) )
-					result = ml::frame_convert( ml::rescale_object_ptr( ), result, ml::image::composite_pf( original_pf ) );
+				// Avoid pixel format convert if we're not going to composite anything below anyway
+				if ( !frames.empty() )
+				{
+					if ( !deferred && original_pf != ml::image::composite_pf( original_pf ) )
+						result = ml::frame_convert( ml::rescale_object_ptr( ), result, ml::image::composite_pf( original_pf ) );
+				}
 
 				// Composite in bottom to top z order
 				for( frame_vec_it iter = frames.begin( ); iter != frames.end( ); ++iter )
