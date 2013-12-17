@@ -112,5 +112,8 @@ class stream_mock : public olib::openmedialib::ml::stream_type
 
 typedef boost::shared_ptr< stream_mock > stream_mock_ptr;
 
+bool check_frame( olib::openmedialib::ml::frame_type_ptr frame, int r, int g, int b, int a = -1, int variance = 5 );
+bool check_plane( olib::openmedialib::ml::image_type_ptr im, int plane, int value, int variance = 5 );
+
 #endif //#ifndef UTILS_ML_TESTS_H_INCLUDED_
 
