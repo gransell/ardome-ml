@@ -167,10 +167,10 @@ bool check_plane( image_type_ptr im, int plane, int value, int variance )
 bool check_plane( image_type_ptr im, int plane, int value, int variance )
 {
 	bool result = false;
-    if ( image::coerce< image::image_type_8 >( im ) )
-        result = check_plane< image::image_type_8 >( im, plane, value, variance );
-    else if ( image::coerce< image::image_type_16 >( im ) )
-        result = check_plane< image::image_type_16 >( im, plane, value, variance );
+	if ( image::coerce< image::image_type_8 >( im ) )
+		result = check_plane< image::image_type_8 >( im, plane, value, variance );
+	else if ( image::coerce< image::image_type_16 >( im ) )
+		result = check_plane< image::image_type_16 >( im, plane, value, variance );
 	return result;
 }
 
@@ -198,7 +198,9 @@ bool check_components( image_type_ptr im, int r, int g, int b, int a, int varian
 			switch( components )
 			{
 				case 4:
-					ok = !check_alpha || in_range( int( *src ++ ), *c ++, var );
+					ok = !check_alpha || in_range( int( *src ), *c, var );
+					src++;
+					c++;
 				case 3:
 					ok = ok && in_range( int( *src ++ ), *c ++, var );
 					ok = ok && in_range( int( *src ++ ), *c ++, var );
@@ -217,10 +219,10 @@ bool check_components( image_type_ptr im, int r, int g, int b, int a, int varian
 bool check_components( image_type_ptr im, int r, int g, int b, int a, int variance )
 {
 	bool result = false;
-    if ( image::coerce< image::image_type_8 >( im ) )
-        result = check_components< image::image_type_8 >( im, r, g, b, a, variance );
-    else if ( image::coerce< image::image_type_16 >( im ) )
-        result = check_components< image::image_type_16 >( im, r, g, b, a, variance );
+	if ( image::coerce< image::image_type_8 >( im ) )
+		result = check_components< image::image_type_8 >( im, r, g, b, a, variance );
+	else if ( image::coerce< image::image_type_16 >( im ) )
+		result = check_components< image::image_type_16 >( im, r, g, b, a, variance );
 	return result;
 }
 
