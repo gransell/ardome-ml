@@ -553,14 +553,19 @@ BOOST_AUTO_TEST_CASE( shift )
 
 BOOST_AUTO_TEST_CASE( arithmetic )
 {
-	// OTT behaviour, but has been useful :)
+#ifdef WIN32
+	const wchar_t *inf_str = L"1.#INF";
+#else
+	const wchar_t *inf_str = L"inf";
+#endif
 
+	// OTT behaviour, but has been useful :)
 	stack s;
 
 	BOOST_CHECK( s.push( "1 1 +" ).pop( )->get_uri( ) == L"2" );
 	BOOST_CHECK( s.push( "1 0 *" ).pop( )->get_uri( ) == L"0" );
 	BOOST_CHECK( s.push( "1 1 -" ).pop( )->get_uri( ) == L"0" );
-	BOOST_CHECK( s.push( "1 0 /" ).pop( )->get_uri( ) == L"inf" );
+	BOOST_CHECK( s.push( "1 0 /" ).pop( )->get_uri( ) == inf_str );
 }
 
 BOOST_AUTO_TEST_CASE( empty_release )
