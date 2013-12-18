@@ -85,22 +85,28 @@ BMDDisplayMode frame_to_display_mode( const ml::frame_type_ptr& frame )
 			return bmdModeHD720p60;
 		}
 	}
-	else // Assume SD material
+	else if( frame->width( ) == 720 )
 	{
-#if 0
 		if( img->field_order() == ml::image::progressive )
 		{
 			if( fps_num == 30000 && fps_den == 1001 )
 			{
-				return bmdModeNTSCp;
+				return bmdModeNTSC;
 			}
 			else if( fps_num == 25 && fps_den == 1 )
+			{
+				return bmdModePAL;
+			}
+			else if( fps_num == 60000 && fps_den == 1001 )
+			{
+				return bmdModeNTSCp;
+			}
+			else if( fps_num == 50 && fps_den == 1 )
 			{
 				return bmdModePALp;
 			}
 		}
 		else
-#endif
 		{
 			if( fps_num == 30000 && fps_den == 1001 )
 			{

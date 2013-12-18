@@ -54,6 +54,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		, frequency_( 0 )
 		, channels_( 0 )
 		, samples_( 0 )
+		, mode_( bmdModeUnknown )
 		{
 		}
 
@@ -86,6 +87,11 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 			height_ = height;
 		}
 
+		void set_mode( BMDDisplayMode mode )
+		{
+			mode_ = mode;
+		}
+
 		virtual HRESULT STDMETHODCALLTYPE QueryInterface( REFIID iid, LPVOID *ppv ) 
 		{ 
 			return E_NOINTERFACE; 
@@ -103,8 +109,73 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 
 		virtual HRESULT STDMETHODCALLTYPE VideoInputFormatChanged( BMDVideoInputFormatChangedEvents events, IDeckLinkDisplayMode *mode, BMDDetectedVideoInputFormatFlags flags )
 		{
-			fprintf( stderr, "mode changed\n" );
-			return S_OK;
+			// TODO: Handle some mode changes - same frame rate is acceptable
+			return S_FALSE;
+		}
+
+		ml::image_type_ptr copy_picture( IDeckLinkVideoInputFrame *picture )
+		{
+			// Copy image safely (doesn't assume alignment rules are the same in decklink and aml)
+			void *bytes;
+			picture->GetBytes( &bytes );
+			ml::image_type_ptr image = ml::image::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
+			image->set_position( frame_count_ );
+			const boost::uint8_t *src = static_cast< boost::uint8_t * >( bytes );
+			boost::uint8_t *dst = static_cast< boost::uint8_t * >( image->ptr( ) );
+			int height = picture->GetHeight( );
+			while( height -- )
+			{  
+				memcpy( dst, src, picture->GetRowBytes( ) );
+				src += image->pitch( );
+				dst += picture->GetRowBytes( );
+			}
+
+			// Sort out field order and sar
+			image->set_sar_num( 1 );
+			image->set_sar_den( 1 );
+			image->set_field_order( ml::image::progressive );
+
+			switch( mode_ )
+			{
+				case bmdModeNTSC:
+					image->set_field_order( ml::image::bottom_field_first );
+				case bmdModeNTSC2398:
+				case bmdModeNTSCp:
+					image->set_sar_num( 40 );
+					image->set_sar_den( 33 );
+					break;
+				case bmdModePAL:
+					image->set_field_order( ml::image::bottom_field_first );
+				case bmdModePALp:
+					image->set_sar_num( 118 );
+					image->set_sar_den( 81 );
+					break;
+				case bmdModeHD1080i50:
+				case bmdModeHD1080i5994:
+				case bmdModeHD1080i6000:
+					image->set_field_order( ml::image::top_field_first );
+					break;
+				case bmdModeHD1080p2398:
+				case bmdModeHD1080p24:
+				case bmdModeHD1080p25:
+				case bmdModeHD1080p2997:
+				case bmdModeHD1080p30:
+				case bmdModeHD1080p50:
+				case bmdModeHD1080p5994:
+				case bmdModeHD1080p6000:
+				case bmdModeHD720p50:
+				case bmdModeHD720p5994:
+				case bmdModeHD720p60:
+				case bmdMode2k2398:
+				case bmdMode2k24:
+				case bmdMode2k25:
+					break;
+				case bmdModeUnknown:
+					ARENFORCE_MSG( false, "Unknown decklink picture" );
+					break;
+			}
+
+			return image;
 		}
 
 		virtual HRESULT STDMETHODCALLTYPE VideoInputFrameArrived( IDeckLinkVideoInputFrame *picture, IDeckLinkAudioInputPacket *sound )
@@ -135,13 +206,9 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 				}
 				else
 				{
-					// TODO: sort out field order, sar and deal with non-matching pitch on the destination image
-					void *bytes;
-					picture->GetBytes( &bytes );
-					image = ml::image::allocate( pf_, picture->GetWidth( ), picture->GetHeight( ) );
-					image->set_position( frame_count_ );
-					memcpy( image->ptr( ), bytes, image->size( ) );
+					image = copy_picture( picture );
 				}
+
 				frame->set_image( image );
 				last_image_ = image;
 			}
@@ -202,6 +269,7 @@ class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
 		int frequency_;
 		int channels_;
 		boost::int64_t samples_;
+		BMDDisplayMode mode_;
 };
 
 class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
@@ -474,6 +542,7 @@ class ML_PLUGIN_DECLSPEC input_decklink : public ml::input_type
 				decklink_delegate_->set_fps( fps_num, fps_den );
 				decklink_delegate_->set_image( prop_pf_.value< std::wstring >( ), width, height );
 				decklink_delegate_->set_audio( ml::audio::af_to_id( cl::str_util::to_t_string( prop_af_.value< std::wstring >( ) ) ), prop_frequency_.value< int >( ), prop_channels_.value< int >( ) );
+				decklink_delegate_->set_mode( selectedDisplayMode );
 			}
 
 			// Attempt to enable the video feed

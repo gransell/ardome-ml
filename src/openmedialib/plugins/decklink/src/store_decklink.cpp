@@ -116,6 +116,7 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 			if( last_frame_->get_audio() )
 			{
 				// Decklink only supports 48 kHz atm.
+				ARENFORCE_MSG( last_frame_->frequency( ) == 48000, "Decklink only supports 48khz audio" );
 				BMDAudioSampleRate sample_rate = bmdAudioSampleRate48kHz;
 				BMDAudioSampleType sample_type = bmdAudioSampleType32bitInteger;
 				
@@ -154,16 +155,24 @@ class ML_PLUGIN_DECLSPEC store_decklink : public ml::store_type, public IDeckLin
 					cond_image_.wait( lck );
 				
 				IDeckLinkMutableVideoFrame *new_frame = NULL;
-				boost::int32_t bytes_per_row = img->pitch();
+				boost::int32_t bytes_per_row = img->linesize();
 				ARENFORCE_MSG( device_->CreateVideoFrame( img->width(), img->height(), bytes_per_row, decklink_pf_, bmdFrameFlagDefault, &new_frame) == S_OK,
 							   "Failed to allocate video frame on device" );
 				
 				du::decklink_mutable_video_frame_ptr temp( new_frame, false );
 				
-				char *data = 0;
-				ARENFORCE_MSG( temp->GetBytes( (void **)&data ) == S_OK, "Failed to get data pointer to downloaded frame" );
-				memcpy( data, img->ptr(), img->size() );
-				
+				boost::uint8_t *dst = 0;
+				ARENFORCE_MSG( temp->GetBytes( (void **)&dst ) == S_OK, "Failed to get data pointer to downloaded frame" );
+
+				const boost::uint8_t *src = static_cast< boost::uint8_t * >( img->ptr( ) );
+				int height = img->height( );
+				while( height -- )
+				{
+					memcpy( dst, src, bytes_per_row );
+					dst += bytes_per_row;
+					src += img->pitch( );
+				}
+
 				downloaded_image_.push_back( std::make_pair( frames_, img ) );
 	
 				device_->ScheduleVideoFrame( new_frame, frames_ * frame_duration_, frame_duration_, time_scale_ );
