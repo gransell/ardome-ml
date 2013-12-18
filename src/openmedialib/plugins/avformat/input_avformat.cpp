@@ -143,12 +143,6 @@ class avformat_source : public input_type
 		// These hold the frame rate of the container
 		int fps_num_, fps_den_;
 
-		// These hold the sample aspect ratio of the video
-		int sar_num_, sar_den_;
-
-		// These hold the dimensions of the video
-		int width_, height_;
-
 		// This holds the last packet read
 		AVPacket pkt_;
 
@@ -174,10 +168,6 @@ class avformat_source : public input_type
 			, last_packet_pos_( 0 )
 			, fps_num_( 25 )
 			, fps_den_( 1 )
-			, sar_num_( 59 )
-			, sar_den_( 54 )
-			, width_( 720 )
-			, height_( 576 )
 			, pkt_( )
 			, context_( 0 )
 			, io_context_( 0 )
@@ -197,6 +187,9 @@ class avformat_source : public input_type
 		virtual bool is_video_stream( int index ) = 0;
 
 		virtual bool is_indexing( ) = 0;
+
+		// Get sar from the requested stream
+		virtual void get_sar( AVStream *stream, int &sar_num, int &sar_den ) = 0;
 };
 
 class stream_cache
@@ -653,12 +646,21 @@ class avformat_demux
 				{
 					case ml::stream_video:
 					{
+						// Get the current dimensions
+						int width = codec->width;
+						int height = codec->height;
+
+						// Get the current sar information
+						int sar_num, sar_den;
+						source->get_sar( stream, sar_num, sar_den );
+
 						/*  
 						 * The prores stream got incorrect pixelformat set.
 						 * The stream analyze function will look at the AVPacket
 						 * and correct the pixelformat ( codec->pix_fmt )
 						 *  */
-						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) {
+						if (stream->codec->codec_id == AV_CODEC_ID_PRORES) 
+						{
 							prores_stream_analyze(&pkt_, codec);
 						}
 
@@ -679,8 +681,8 @@ class avformat_demux
 							position,
 							source->key_last_,
 							codec->bit_rate, 
-							ml::dimensions( source->width_, source->height_ ),
-							ml::fraction( source->sar_num_, source->sar_den_ ),
+							ml::dimensions( width, height ),
+							ml::fraction( sar_num, sar_den ),
 							ml::image::MLPF_to_string( ml::image::AV_to_ML( ( codec->pix_fmt ) ) ),
 							ml::image::top_field_first,
 							estimated_gop_size ) );
@@ -1116,15 +1118,24 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 		// Visual
 		virtual void get_fps( int &num, int &den ) const { num = fps_num_; den = fps_den_; }
-		virtual void get_sar( int &num, int &den ) const { num = sar_num_; den = sar_den_; }
 		virtual int get_video_streams( ) const { return video_indexes_.size( ); }
-		virtual int get_width( ) 
-		{ 
-			return get_video_stream( ) && get_video_stream( )->codec ? get_video_stream( )->codec->width : 0; 
-		}
-		virtual int get_height( ) 
+
+		// Get the sar information from the requested stream
+		void get_sar( AVStream *stream, int &sar_num, int &sar_den )
 		{
-			return get_video_stream( ) && get_video_stream( )->codec ? get_video_stream( )->codec->height : 0; 
+			ARENFORCE_MSG( stream && stream->codec, "Trying to get sar from an invalid stream" );
+
+			sar_num = stream->sample_aspect_ratio.num;
+			sar_den = stream->sample_aspect_ratio.den;
+
+			if ( stream->codec->sample_aspect_ratio.num )
+			{
+				sar_num = stream->codec->sample_aspect_ratio.num;
+				sar_den = stream->codec->sample_aspect_ratio.den;
+			}
+
+			sar_num = sar_num > 0 ? sar_num : 1;
+			sar_den = sar_den > 0 ? sar_den : 1;
 		}
 
 		// Audio
@@ -1559,25 +1570,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 				}
 			}
 
-			// Hmmph
-			if ( has_video( ) )
-			{
-				if ( get_video_stream( )->codec->sample_aspect_ratio.num )
-				{
-					sar_num_ = get_video_stream( )->codec->sample_aspect_ratio.num;
-					sar_den_ = get_video_stream( )->codec->sample_aspect_ratio.den;
-				}
-				else if ( get_video_stream( )->sample_aspect_ratio.num )
-				{
-					sar_num_ = get_video_stream( )->sample_aspect_ratio.num;
-					sar_den_ = get_video_stream( )->sample_aspect_ratio.den;
-				}
-
-				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
-				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
-			}
-
-			result->set_sar( sar_num_, sar_den_ );
 			result->set_fps( fps_num_, fps_den_ );
 			result->set_position( get_position( ) );
 			result->set_pts( expected_ * 1.0 / avformat_input::fps( ) );
@@ -1824,18 +1816,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			if ( has_video( ) )
 			{
 				AVStream *stream = get_video_stream( ) ? get_video_stream( ) : context_->streams[ 0 ];
-
-				width_ = stream->codec->width;
-				height_ = stream->codec->height;
-
-				sar_num_ = stream->codec->sample_aspect_ratio.num;
-				sar_den_ = stream->codec->sample_aspect_ratio.den;
-
-				sar_num_ = sar_num_ != 0 ? sar_num_ : 1;
-				sar_den_ = sar_den_ != 0 ? sar_den_ : 1;
-
 				get_fps_from_stream( stream );
-		                frames_ = stream->nb_frames;
+				frames_ = stream->nb_frames;
 			}
 			else if ( has_audio( ) )
 			{
@@ -1875,9 +1857,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					fps_num_ = 25;
 					fps_den_ = 1;
 				}
-
-				sar_num_ = 1;
-				sar_den_ = 1;
 			}
 
 			// Open the video and audio codecs
@@ -2299,7 +2278,8 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 		// Decode the image
 		int decode_image( bool &got_picture, AVPacket *packet )
 		{
-			AVCodecContext *codec_context = get_video_stream( )->codec;
+			AVStream *stream = get_video_stream( );
+			AVCodecContext *codec = stream->codec;
 
 			int ret = 0;
 			int got_pict = 0;
@@ -2337,7 +2317,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			{
 				ml::image_type_ptr image;
 
-				int error = avcodec_decode_video2( codec_context, av_frame_, &got_pict, packet );
+				int error = avcodec_decode_video2( codec, av_frame_, &got_pict, packet );
 
 				if ( error < 0 || ( !got_pict && packet->data == 0 ) || ( !got_pict && images_.size( ) == 0 ) )
 				{
@@ -2358,7 +2338,7 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 					key_search_ = false;
 
 				if ( error >= 0 && ( key_search_ == false && got_pict ) )
-					image = image_convert( );
+					image = convert_to_oil( scaler_, av_frame_, codec->pix_fmt, codec->width, codec->height );
 				else if ( images_.size( ) )
 					image = ml::image_type_ptr( images_.back( )->clone( ) );
 
@@ -2375,6 +2355,15 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 
 				if ( image )
 				{
+					// We need to set the sample aspect ratio on the image here as it could change before it's 
+					// associated with its frame
+
+					int sar_num, sar_den;
+					get_sar( stream, sar_num, sar_den );
+
+					image->set_sar_num( sar_num );
+					image->set_sar_den( sar_den );
+
 					// Correct position
 					if ( images_.size( ) == 0 && ( aml_index_ && aml_index_->usable( ) ) )
 						position = expected_packet_;
@@ -2402,16 +2391,6 @@ class ML_PLUGIN_DECLSPEC avformat_input : public avformat_source
 			}
 				
 			return ret;
-		}
-
-		ml::image_type_ptr image_convert( )
-		{
-			AVStream *stream = get_video_stream( );
-			AVCodecContext *codec_context = stream->codec;
-			int width = get_width( );
-			int height = get_height( );
-
-			return convert_to_oil( scaler_, av_frame_, codec_context->pix_fmt, width, height );
 		}
 
 		void store_image( ml::image_type_ptr image, int position )

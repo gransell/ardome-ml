@@ -927,6 +927,130 @@ BOOST_AUTO_TEST_CASE( aml_change_audio_spec )
 	}
 }
 
+BOOST_AUTO_TEST_CASE( aml_change_video_spec )
+{
+	// Creates 3 m2v files with differing video specs, checks that video spec matches expected for each frame while
+	// creating them, concatenates all files together, decodes resultant file and checks that things match as expected.
+	// They don't - see FUDGE stuff below.
+	//
+	// An additional tests is made on the resampler here to ensure that it will conform the varying input to the
+	// video spec given.
+
+	const fs::path file1 = unique( _CT("file1.m2v") );
+	const fs::path file2 = unique( _CT("file2.m2v") );
+	const fs::path file3 = unique( _CT("file3.m2v") );
+	const fs::path full = unique( _CT("full.m2v") );
+
+	BOOST_REQUIRE( !fs::exists( file1 ) && !fs::exists( file2 ) && !fs::exists( file3 ) && !fs::exists( full ) );
+
+	ARGUARD( boost::bind( &cleanup, file1 ) );
+	ARGUARD( boost::bind( &cleanup, file2 ) );
+	ARGUARD( boost::bind( &cleanup, file3 ) );
+	ARGUARD( boost::bind( &cleanup, full ) );
+
+	input_type_ptr input = stack( )
+	.push( L"test: filter:store @store.b_frames=2 store=" + to_wstring( file1.native( ) ) )
+	.push( L"colour: sar_num=16 sar_den=15 test: filter:compositor filter:store @store.b_frames=2 store=" + to_wstring( file2.native( ) ) )
+	.push( L"colour: sar_num=64 sar_den=45 test: filter:compositor filter:store @store.b_frames=2 store=" + to_wstring( file3.native( ) ) )
+	.push( L"filter:playlist slots=3" )
+	.pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) == 750 );
+
+	int width_pattern[ ] = { 512, 720, 720 };
+	int height_pattern[ ] = { 512, 576, 576 };
+	int sar_num_pattern[ ] = { 1, 16, 64 };
+	int sar_den_pattern[ ] = { 1, 15, 45 };
+
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		image_type_ptr image = frame->get_image( );
+		BOOST_REQUIRE( image );
+		BOOST_CHECK( image->width( ) == width_pattern[ i / 250 ] );
+		BOOST_CHECK( image->height( ) == height_pattern[ i / 250 ] );
+		BOOST_CHECK( frame->get_sar_num( ) == sar_num_pattern[ i / 250 ] );
+		BOOST_CHECK( frame->get_sar_den( ) == sar_den_pattern[ i / 250 ] );
+	}
+
+	input = input_type_ptr( );
+
+	std::ifstream if1( to_string( file1.native( ) ).c_str( ), std::ios_base::binary );
+	std::ifstream if2( to_string( file2.native( ) ).c_str( ), std::ios_base::binary );
+	std::ifstream if3( to_string( file3.native( ) ).c_str( ), std::ios_base::binary );
+	std::ofstream of( to_string( full.native( ) ).c_str( ), std::ios_base::binary );
+
+	of << if1.rdbuf( ) << if2.rdbuf( ) << if3.rdbuf( );
+	of.close();
+
+	// These fudges are necessary with mpeg stream concatenation afaict - the last frame
+	// of each section is lost somewhere in the decode (presuambly because a null is required
+	// to release the last image from the end of each section and that doesn't occur when 
+	// subsequent packets are available - presumably the last section will have that extra
+	// image available).
+
+	int FUDGE_section_size = 249;
+	int FUDGE_frame_count = FUDGE_section_size * 3;
+	
+	input = create_input( full.native( ) );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) >= FUDGE_frame_count );
+
+	for ( int i = 0; i < FUDGE_frame_count; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		image_type_ptr image = frame->get_image( );
+		BOOST_REQUIRE( image );
+		BOOST_CHECK( image->width( ) == width_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( image->height( ) == height_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( frame->get_sar_num( ) == sar_num_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( frame->get_sar_den( ) == sar_den_pattern[ i / FUDGE_section_size ] );
+	}
+
+#if 0
+	// Left out for now - has different behavour to the non-packet_stream case, but is currently
+	// broken with sar handling, and sees 250 frames per section, though the last is always corrupt.
+
+	input = stack( ).push( to_wstring( full.native( ) ) + L" packet_stream=1 filter:decode" ).pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) >= FUDGE_frame_count );
+
+	for ( int i = 0; i < FUDGE_frame_count; i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		image_type_ptr image = frame->get_image( );
+		BOOST_REQUIRE( image );
+		BOOST_CHECK( image->width( ) == width_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( image->height( ) == height_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( frame->get_sar_num( ) == sar_num_pattern[ i / FUDGE_section_size ] );
+		BOOST_CHECK( frame->get_sar_den( ) == sar_den_pattern[ i / FUDGE_section_size ] );
+	}
+#endif
+
+	input = stack( ).push( to_wstring( full.native( ) ) + L" filter:swscale width=1280 height=720 sar_num=1 sar_den=1" ).pop( );
+
+	BOOST_REQUIRE( input );
+	BOOST_CHECK( input->get_frames( ) >= FUDGE_frame_count );
+
+	for ( int i = 0; i < input->get_frames( ); i ++ )
+	{
+		frame_type_ptr frame = input->fetch( i );
+		BOOST_REQUIRE( frame );
+		image_type_ptr image = frame->get_image( );
+		BOOST_REQUIRE( image );
+		BOOST_CHECK( image->width( ) == 1280 );
+		BOOST_CHECK( image->height( ) == 720 );
+		BOOST_CHECK( frame->get_sar_num( ) == 1 );
+		BOOST_CHECK( frame->get_sar_den( ) == 1 );
+	}
+}
+
 BOOST_AUTO_TEST_CASE( amf_2332_segfault_when_generating_jpeg_from_yuv411p )
 {
 	input_type_ptr color_input = create_delayed_input( L"colour:" );
