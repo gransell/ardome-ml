@@ -299,12 +299,13 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 				{
 					for ( int plane = 0; plane < overlay->planes; plane ++ )
 					{
+						int p = plane == 0 ? 0 : plane == 1 ? 2 : 1;
 						uint8_t *dst = overlay->pixels[ plane ];
-						int dst_pitch = overlay->pitches[ plane ];
-						int w = img->linesize( plane );
-						int h = img->height( plane );
-						uint8_t *src = ml::image::coerce< ml::image::image_type_8 >( img )->data( plane );
-						int src_pitch = img->pitch( plane );
+						int dst_pitch = overlay->pitches[ p ];
+						int w = img->linesize( p );
+						int h = img->height( p );
+						uint8_t *src = ml::image::coerce< ml::image::image_type_8 >( img )->data( p );
+						int src_pitch = img->pitch( p );
 
 						while( h -- )
 						{
@@ -405,7 +406,7 @@ class ML_PLUGIN_DECLSPEC sdl_video : public store_type
 		{
 			if ( pf_ == _CT( "yuv422" ) )
 				return SDL_YUY2_OVERLAY;
-			return SDL_IYUV_OVERLAY;
+			return SDL_YV12_OVERLAY;
 		}
 
 		frame_type_ptr last_frame_;
