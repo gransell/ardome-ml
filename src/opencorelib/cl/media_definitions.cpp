@@ -4,6 +4,15 @@
 #include "./enforce.hpp"
 #include "str_util.hpp"
 
+namespace
+{
+	const olib::opencorelib::rational_time pal_fps( 25, 1 );
+	const olib::opencorelib::rational_time movie_fps( 24000, 1001 );
+	const olib::opencorelib::rational_time ntsc_fps( 30000, 1001 );
+	const olib::opencorelib::rational_time pal_50_fps( 50, 1 );
+	const olib::opencorelib::rational_time ntsc_60_fps( 60000, 1001 );
+}
+
 namespace olib
 {
    namespace opencorelib
@@ -12,13 +21,16 @@ namespace olib
 		{
 			CORE_API rational_time get_fps( type ft )
 			{
-				if( ft == pal ) return rational_time(25,1);
-				else if( ft == movie ) return rational_time(24000,1001);
-				else if ( ft == ntsc ) return rational_time(30000,1001);
-				else if ( ft == pal_50 ) return rational_time(50,1);
-				else if ( ft == ntsc_60 ) return rational_time(60000,1001);
-				ARENFORCE_MSG( false, "Unknown olib::opencorelib::frame_rate::type %i")(ft);
-				return rational_time(0,0);
+				switch( ft )
+				{
+					case pal: return pal_fps;
+					case movie: return movie_fps;
+					case ntsc: return ntsc_fps;
+					case pal_50: return pal_50_fps;
+					case ntsc_60: return ntsc_60_fps;
+				}
+				ARENFORCE_MSG( false, "Unknown olib::opencorelib::frame_rate::type %1%" )( ft );
+				return rational_time( 0, 0 );
 			}
 
 			CORE_API type get_type( const opencorelib::rational_time& rt )

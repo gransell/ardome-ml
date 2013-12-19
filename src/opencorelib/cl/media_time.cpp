@@ -5,6 +5,9 @@
 #include "assert.hpp"
 #include "log_defines.hpp"
 
+using boost::int64_t;
+using boost::uint32_t;
+using boost::int32_t;
 
 namespace olib
 {
@@ -54,166 +57,100 @@ namespace olib
 			return *this;
 		}
 
-		namespace
+		time_code media_time::to_time_code( frame_rate::type ft, bool drop_frame, bool wrap_around_at_24h ) const
 		{
-			//Max size of the frame part for the specific FPS
-			int get_framecount_for_framerate( olib::opencorelib::frame_rate::type ft )
+			if( drop_frame )
 			{
-				switch( ft )
-				{
-					case frame_rate::ntsc:
-						return 30;
-					case frame_rate::movie:
-						return 24;
-					case frame_rate::ntsc_60:
-						return 60;
-					default:
-						return boost::rational_cast< int >( frame_rate::get_fps( ft ) );
-				}
+				//Note: movie framerate is 24000/1001, but due to
+				//convention the timecodes never use drop frame
+				ARENFORCE_MSG( ft == frame_rate::ntsc || ft == frame_rate::ntsc_60,
+					"Drop frame can only be used with NTSC or NTSC 60" )
+					( frame_rate::to_string( ft ) );
 			}
-		}
 
-		time_code media_time::to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame, bool wrap_around_at_24h ) const
-		{
-			ARENFORCE_MSG( m_time >= 0, "Can not convert negative values to time codes.")(*this);
-			const rational_time full_day( 24 * 60 * 60, 1 );
-			rational_time time( m_time );
-
+			//Convert to frame count in target fps
+			int64_t num_frames_i64 = boost::rational_cast< int64_t >( m_time * frame_rate::get_fps( ft ) );
+			ARENFORCE_MSG( num_frames_i64 >= 0, "Can not convert negative values to time codes.")
+				( *this )( num_frames_i64 )( frame_rate::to_string( ft ) );
+			
+			//Perform 24-hour wrap around, if necessary
+			const uint32_t num_frames_in_24h = time_code::get_tc_count_in_24_hours( ft, drop_frame );
 			if( wrap_around_at_24h )
 			{
-				while( time >= full_day )
-				{
-					time -= full_day;
-				}
+				num_frames_i64 = num_frames_i64 % num_frames_in_24h;
 			}
 			else
 			{
-				ARENFORCE_MSG( time < full_day, 
-					"The wrap_around_at_24h parameter is false, and the time \"%1%\" is too large to be converted to timecode.")
-					( time );
+				ARENFORCE_MSG( num_frames_i64 < num_frames_in_24h, 
+					"The wrap_around_at_24h parameter is false, and the frame count %1% is too large to be converted to a timecode.")
+					( num_frames_i64 )( frame_rate::to_string( ft ) )( drop_frame );
 			}
 
-			time_code tc( drop_frame );
-			rational_time fps = frame_rate::get_fps(ft);  
-			if( !drop_frame )
+			//We now know that num_frames_i64 is non-negative and not larger than uint32
+			//max, so we can safely cast it.
+			uint32_t num_frames = static_cast< uint32_t >( num_frames_i64 );
+			const int tc_rate = time_code::get_tc_rate_for_framerate( ft );
+
+			if( drop_frame )
 			{
-				rational_time t = time;
-				if( ft == frame_rate::ntsc || ft == frame_rate::movie || ft == frame_rate::ntsc_60 )
-				{
-					//If we are not using drop frame, then the timecode
-					//will start to show lower time values than what the
-					//video shows. This lag will happen by a factor 
-					//(30000/1001) / 30 for NTSC, (24000/1001) / 24 for
-					//24p etc., so we simulate this by shortening the time
-					//by this factor.
-					t *= (fps / get_framecount_for_framerate( ft ) );
-					fps = rational_time(get_framecount_for_framerate( ft ), 1);
-				}
+				//Drop frame TC works as follows: When rolling over to a new whole minute, 
+				//the timecode is increased by 2 frames (4 frames in the case of NTSC 60),
+				//_except_ if the minute count is evenly divisible by 10.
+				//For example: 00:00:59:29 -> 00:01:00:02
+				//			   00:01:59:29 -> 00:02:00:02
+				//			   and:
+				//			   00:09:59:29 -> 00:10:00:00
+				//
+				//We simulate this by adding the extra frames to num_frames.
+				//The adjusted value of num_frames can then be used to create the
+				//result timecode just as with non-drop TCs.
+				const uint32_t frames_per_drop = ( ft == frame_rate::ntsc ? 2 : 4 );
+				const uint32_t frames_per_ten_mins = 10 * 60 * tc_rate - 9 * frames_per_drop;
+				const uint32_t ten_min_periods = num_frames / frames_per_ten_mins;
+				const uint32_t rest = num_frames - ten_min_periods * frames_per_ten_mins;
+				//First minute starts at xx:x0:00:00, so it has (60 * fps) TC frames
+				//Other minutes start at xx:xx:00:02/04, so they are (60 * fps - drop) TC frames
+				const uint32_t remaining_minutes = (rest < frames_per_drop)
+					? 0
+					: (rest - frames_per_drop) / (60 * tc_rate - frames_per_drop);
 
-				// Nr of whole frame seconds:
-				boost::int64_t whole_sec = t.numerator() / t.denominator(); 
-				tc.set_seconds(static_cast<boost::int32_t>(whole_sec % 60));
-				boost::int64_t whole_min = whole_sec / 60;
-				tc.set_minutes(static_cast<boost::uint32_t>(whole_min % 60));
-				tc.set_hours( static_cast<boost::uint32_t>(whole_min / 60 ));
-
-				rational_time frames(  t.numerator() % t.denominator(), 
-					t.denominator()); 
-				frames *= fps;
-				tc.set_frames( static_cast<boost::int32_t>(frames.numerator() / frames.denominator()) );
-			}
-			else
-			{
-				ARENFORCE_MSG( ft == frame_rate::ntsc || ft == frame_rate::ntsc_60, "Drop frame can only be used with NTSC or NTSC 60" )( frame_rate::to_string( ft ) );
-				rational_time totF = time * fps;
-
-				boost::int64_t tc_base_fps = get_framecount_for_framerate( ft );
-				const int frames_to_add_per_minute = ( ft == frame_rate::ntsc ? 2 : 4 );
-
-				// Note: description below is for NTSC 30. NTSC 60 is similar, but with 4 frames
-				// dropped each time instead of 2.
-
-				// How many frames have we dropped during the time we have played?
-				// We discard 2 frames every whole minute (except 0,10,20,30 ...)
-				// How many whole minutes do we have: mns = time / 60;
-				//									  m = mns.numerator() / mns.denominator();
-				// This is the number of dropped frames :  dropped = 2 * (m - m / 10);
-				// So if we have 10 minutes total, we have dropped 18 frames.
-				// This means that we have skipped forward on the counter, thus
-				// "adding" 18 more frames to our sequence.
-
-				//First, calculate the number of 10-minute blocks. For each of these blocks, 2 frames
-				//have been removed for 9 out of the 10 minutes.
-				int frames_per_ten_minutes = tc_base_fps * 60 * 10 - frames_to_add_per_minute*9;
-				boost::int64_t m1 = boost::rational_cast<boost::int64_t>( totF / frames_per_ten_minutes );
-
-				//Next, calculate the number of minutes in what's left
-				//The first minute happens at 30*60 = 1800 frames, the next at 2*30*60-2 = 3598 frames, etc. with
-				//1798 frames in between.
-				boost::int64_t m2 = boost::rational_cast<boost::int64_t>( ( totF - m1 * frames_per_ten_minutes - frames_to_add_per_minute ) / ( tc_base_fps * 60 - frames_to_add_per_minute ) );
-
-				//Now we have the total number of minutes passed, so we can calculate the exact number of drop frames to add
-				boost::int64_t m = m1 * 10 + m2;
-				boost::int64_t dropped = boost::int64_t(frames_to_add_per_minute) * (m - (m / boost::int64_t(10)));
-				totF += dropped;
-
-				//Now that we have compensated for the dropped frames, we are
-				//in the 30 fps domain again.
-				fps = rational_time(tc_base_fps, 1);
-
-				const rational_time fph(3600 * fps), fpm(60 * fps);
-
-				rational_time hrs = totF / fph;
-				tc.set_hours( static_cast<boost::uint32_t>(hrs.numerator() / hrs.denominator()) );	  
-				totF -= tc.get_hours() * fph;
-
-				rational_time mns = totF / fpm;
-				tc.set_minutes( static_cast<boost::uint32_t>( mns.numerator() / mns.denominator() ));
-				totF -= tc.get_minutes() * fpm;
-
-				rational_time secs = totF / fps ;
-				tc.set_seconds( static_cast<boost::uint32_t>( secs.numerator() / secs.denominator() ));    
-				totF -= tc.get_seconds() * fps;
-
-				tc.set_frames( static_cast<boost::uint32_t>(totF.numerator() / totF.denominator()));
+				num_frames += (ten_min_periods * 9 + remaining_minutes) * frames_per_drop;
 			}
 
-			ARASSERT_MSG(	(double)tc.get_frames() < ((double)fps.numerator()/fps.denominator()), 
-				_CT("Frame count is too high"))(tc.get_frames());
-			return tc;
+			//Finally, build up the resulting time code object
+			const uint32_t hours = num_frames / (3600 * tc_rate);
+			num_frames -= hours * (3600 * tc_rate);
+			const uint32_t minutes = num_frames / (60 * tc_rate);
+			num_frames -= minutes * (60 * tc_rate);
+			const uint32_t seconds = num_frames / tc_rate;
+			num_frames -= seconds * tc_rate;
+			ARASSERT( hours < 24 );
+			ARASSERT( minutes < 60 );
+			ARASSERT( seconds < 60 );
+			ARASSERT( num_frames < tc_rate );
+			return time_code( hours, minutes, seconds, num_frames, drop_frame );
 		}
 
 
 		CORE_API media_time from_time_code(olib::opencorelib::frame_rate::type ft, const time_code& tc )
 		{
-			boost::int64_t tc_base_fps = get_framecount_for_framerate( ft );
-			boost::int64_t total_frames;
-
+			const uint32_t tc_rate = time_code::get_tc_rate_for_framerate( ft );
+			uint32_t total_frames = tc.get_frames() + tc_rate * (tc.get_seconds() + 60 * tc.get_minutes() + 3600 * tc.get_hours());
 			if( tc.get_uses_drop_frame() )
 			{
 				ARENFORCE_MSG( ft == frame_rate::ntsc || ft == frame_rate::ntsc_60, "Drop frame can only be used with NTSC or NTSC 60" );
+				const uint32_t frames_per_drop = ( ft == frame_rate::ntsc ? 2 : 4 );
 
-				if( tc.get_frames() < 2 && tc.get_seconds() == 0 && tc.get_minutes() % 10 != 0 )
+				if( tc.get_frames() < frames_per_drop && tc.get_seconds() == 0 && tc.get_minutes() % 10 != 0 )
 				{
-					//This should possibly be an ARENFORCE instead
-					ARLOG_WARN("from_time_code(): Invalid NTSC timecode: \"%1%\"")( tc.to_string() );
+					//Nonexistent drop frame TC. This should possibly be an ARENFORCE instead.
+					ARLOG_WARN("from_time_code(): Invalid %1% timecode: \"%2%\"")
+						( frame_rate::to_string( ft ) )( tc.to_string() );
 				}
 
-				const int frames_to_add_per_minute = ( ft == frame_rate::ntsc ? 2 : 4 );
-
 				//Calculate the total minute count for drop frame compensation
-				boost::uint32_t m = 60 * tc.get_hours() + tc.get_minutes();
-
-				total_frames = 
-					tc.get_frames() + 
-					tc_base_fps * (tc.get_seconds() + 60 * tc.get_minutes() + 3600 * tc.get_hours()) -
-					frames_to_add_per_minute * (m - m / 10);
-			}
-			else
-			{
-				boost::int64_t seconds = tc.get_hours() * 3600 + tc.get_minutes() * 60 + tc.get_seconds();
-
-				total_frames = seconds * tc_base_fps + tc.get_frames();
+				const uint32_t total_minutes = 60 * tc.get_hours() + tc.get_minutes();
+				total_frames -= frames_per_drop * ( total_minutes - total_minutes / 10 );
 			}
 
 			return from_frame_number( ft, total_frames );
@@ -225,7 +162,7 @@ namespace olib
 			return os;
 		}
 
-		CORE_API media_time from_frame_number(olib::opencorelib::frame_rate::type ft, boost::int64_t fr_nr )
+		CORE_API media_time from_frame_number(olib::opencorelib::frame_rate::type ft, int64_t fr_nr )
 		{
 			media_time mt;
 			return mt.from_frame_number(ft, fr_nr);
@@ -234,18 +171,18 @@ namespace olib
 		media_time& media_time::from_frame_number(olib::opencorelib::frame_rate::type ft,  const rational_time& fr_nr )
 		{
 			rational_time fps(frame_rate::get_fps(ft));
-			m_time = fr_nr * (1 / fps);
+			m_time = fr_nr / fps;
 			return *this;
 		}
 
-		boost::int32_t media_time::to_frame_nr(olib::opencorelib::frame_rate::type ft ) const
+		int32_t media_time::to_frame_nr(olib::opencorelib::frame_rate::type ft ) const
 		{
 			rational_time fps(frame_rate::get_fps(ft));
 			rational_time frm_count = m_time * fps;
-			return static_cast<boost::int32_t>( frm_count.numerator() / frm_count.denominator() );
+			return static_cast<int32_t>( frm_count.numerator() / frm_count.denominator() );
 		}
 
-		void media_time::add_frames(olib::opencorelib::frame_rate::type ft , boost::int64_t nr_of_frames )
+		void media_time::add_frames(olib::opencorelib::frame_rate::type ft , int64_t nr_of_frames )
 		{
 			rational_time fps(frame_rate::get_fps(ft));
 			m_time += nr_of_frames * (1/fps);

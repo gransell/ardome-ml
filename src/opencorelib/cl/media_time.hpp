@@ -75,7 +75,7 @@ namespace olib
 			*/
 			time_code to_time_code(olib::opencorelib::frame_rate::type ft, bool drop_frame, bool wrap_around_at_24h = false ) const;
 
-			/// Converts the current time to a discreet frame number.
+			/// Converts the current time to a discrete frame number.
 			boost::int32_t to_frame_nr(olib::opencorelib::frame_rate::type ft ) const;
 
 			CORE_API friend media_time from_time_code(olib::opencorelib::frame_rate::type ft, const time_code& time_code );

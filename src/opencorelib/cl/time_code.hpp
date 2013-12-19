@@ -129,6 +129,13 @@ namespace olib
 				use media_time to do comparisons. */
 			CORE_API friend bool operator==(const time_code& lhs, const time_code& rhs);
 
+			/// For the given framerate, returns the number of frames it takes for a zero timecode
+			/// to wrap back to zero again, i.e. the total number of timecodes in 24 hours.
+			static boost::uint32_t get_tc_count_in_24_hours( frame_rate::type ft, bool drop_frame );
+
+			/// Returns the timecode rate for the given framerate.
+			static boost::uint32_t get_tc_rate_for_framerate( frame_rate::type ft );
+
 		private:
 			void check_valid()
 			{
